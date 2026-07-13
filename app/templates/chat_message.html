@@ -1,0 +1,44 @@
+<!-- User Message -->
+<div class="flex items-start space-x-3 justify-end max-w-[85%] ml-auto">
+    <div class="bg-amber-500/10 text-amber-200 border border-amber-500/20 rounded-2xl rounded-tr-none p-4 text-sm shadow-sm">
+        {{ user_msg }}
+    </div>
+    <div class="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center font-semibold text-xs text-gray-400 flex-shrink-0">
+        Bạn
+    </div>
+</div>
+
+<!-- Bot Response -->
+<div class="flex items-start space-x-3 max-w-[85%]">
+    <div class="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center font-semibold text-xs text-gray-950 flex-shrink-0">
+        AI
+    </div>
+    <div class="bg-gray-900 rounded-2xl rounded-tl-none p-4 text-sm text-gray-300 border border-gray-800 shadow-sm relative group">
+        <!-- Message Content -->
+        <div class="whitespace-pre-wrap leading-relaxed">{{ bot_msg }}</div>
+        
+        <!-- Metadata & Feedback -->
+        <div class="mt-4 pt-2 border-t border-gray-800/50 flex items-center justify-between text-xs text-gray-500">
+            <span class="font-mono text-[10px] tracking-wider opacity-60">Trace: {{ trace_id[:8] }}...</span>
+            
+            {% if cached %}
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 mr-2">
+                Semantic Cache Hit
+            </span>
+            {% endif %}
+            
+            <div class="flex items-center space-x-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                <form hx-post="/api/feedback" hx-swap="none" class="inline">
+                    <input type="hidden" name="trace_id" value="{{ trace_id }}">
+                    <input type="hidden" name="rating" value="up">
+                    <button type="submit" class="hover:text-amber-400 transition" title="Hữu ích">👍</button>
+                </form>
+                <form hx-post="/api/feedback" hx-swap="none" class="inline">
+                    <input type="hidden" name="trace_id" value="{{ trace_id }}">
+                    <input type="hidden" name="rating" value="down">
+                    <button type="submit" class="hover:text-red-400 transition" title="Không hữu ích">👎</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,20 @@
+# config.yml
+# NVIDIA NeMo Guardrails Configuration
+
+models:
+  - type: main
+    engine: openai
+    model: legal-core-model
+
+rails:
+  # Input rails block malicious or off-topic questions
+  input:
+    flows:
+      - check jailbreak
+      - check off topic
+
+  # Output rails block hallucinated responses
+  output:
+    flows:
+      - check hallucinations
+      - check safety response
