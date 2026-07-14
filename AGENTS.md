@@ -1,47 +1,56 @@
-# AGENTS.md - Quy tắc Vận hành cho AI Coding Agents (Vietlex Legal RAG)
+# AGENTS.md - Quy tắc Vận hành AI Agent (Vietlex Legal RAG)
 
-Tài liệu này định nghĩa các nguyên tắc phát triển bắt buộc mà mọi AI Agent phải tuân thủ nghiêm ngặt khi xây dựng, sửa đổi mã nguồn hoặc triển khai các tính năng trong dự án `vietlex-rag`.
-
----
-
-## 🚨 BẮT BUỘC: QUY TẮC NỀN TẢNG (CORE POLICIES)
-
-### 1. BẢO MẬT & GATEWAY AUTHENTICATION
-- **Nghiêm cấm** hardcode các API Key (ví dụ: `QDRANT_API_KEY`, `COHERE_API_KEY`, `OMNIGATE_API_KEY`). Mọi biến môi trường phải được tải thông qua `app/config.py` sử dụng Pydantic `BaseSettings`.
-- LangChain LLM client bắt buộc phải truyền `LITELLM_MASTER_KEY` trong headers/credentials để xác thực khi kết nối với cổng OmniGate.
-
-### 2. TUÂN THỦ KIẾN TRÚC SẠCH (CLEAN ARCHITECTURE COMPLIANCE)
-Dự án được phân rã theo cấu trúc Kiến trúc Sạch (Clean Architecture). AI Agent không được tùy ý tạo file ngoài các layer đã được quy định:
-- **`app/main.py`**: Điểm khởi chạy FastAPI, cấu hình Middleware, Rate Limiting, và Logfire.
-- **`app/api/`**: Chứa router và dependencies. Logic xử lý request/response và CORS/CSRF.
-- **`app/services/`**: Chứa core business logic (RAG pipeline, Semantic Cache, Guardrails, Evaluator).
-- **`app/ingestion/`**: Chứa parser văn bản luật và indexer lên Qdrant.
-- **`app/templates/`**: Chứa HTMX templates (`index.html`, `chat_message.html`).
-
-### 3. THỰC THI BẢO MẬT REQUEST (MIDDLEWARE & LIMITING)
-- **CORS**: Chỉ cho phép domain được cấu hình qua biến môi trường `FRONTEND_URL`.
-- **Rate Limiting**: Sử dụng `slowapi`. Giới hạn endpoint `POST /chat` ở mức tối đa **5 requests/phút trên mỗi IP**.
-- **CSRF Protection**: Token bảo mật phải được tạo khi `GET /` và được validate nghiêm ngặt trong `POST /chat`.
-
-### 4. LOGIC PIPELINES BẮT BUỘC
-- **Semantic Cache (Flow 1)**: Vector search với embedding `text-embedding-004` trên collection `vietlex_semantic_cache`. Chỉ chấp nhận hit cache khi score >= **0.96**.
-- **Advanced Retrieval (Flow 2)**:
-  1. Sử dụng LLM rewrite query sang thuật ngữ pháp lý chính thống.
-  2. Thực hiện Hybrid Search (Dense: `text-embedding-004` [Top 15] + Sparse: BM25 phân tách từ bởi PyVi [Top 15]).
-  3. Hợp nhất bằng Reciprocal Rank Fusion (RRF) -> Lấy Top 15.
-  4. Rerank bằng Cohere `rerank-multilingual-v3.0` -> Lấy Top 3.
-  5. Đưa Top 3 chunks vào prompt template LangChain để sinh câu trả lời qua model `legal-core-model`.
-- **Guardrails & Evaluation (Flow 3)**:
-  - Input Check (NeMo Guardrails) -> Advanced Retrieval -> Output Check (NeMo Guardrails).
-  - Kích hoạt Evaluator (Ragas) chạy dưới dạng background task sau khi hoàn thành sinh câu trả lời.
-
-### 5. GIÁM SÁT HIỆU NĂNG (OBSERVABILITY)
-- Phải khởi tạo Logfire trong `main.py`: `logfire.configure()` và `logfire.instrument_fastapi(app)`.
-- Sử dụng decorator `@logfire.instrument` cho mọi hàm chính trong `app/services/` để đo lường độ trễ (latency tracking).
+Tài liệu này chứa các quy tắc phát triển bắt buộc khi chỉnh sửa mã nguồn hoặc triển khai tính năng trong `vietlex-rag`.
 
 ---
 
-## 🗺️ BẢN ĐỒ SỔ TAY CHUYÊN MÔN
-AI Agent chỉ được tải các tài liệu hướng dẫn khi thực sự xử lý tác vụ tương ứng:
-- **Hướng dẫn API & Config**: [instructions.md](file:///d:/Download/ProfessionalLegalRAG/instructions.md)
-- **Sơ đồ Kiến trúc & Logic Flows**: [architecture/architecture.md](file:///d:/Download/ProfessionalLegalRAG/architecture/architecture.md)
+## 🚨 QUY TẮC BẮT BUỘC (CORE POLICIES)
+
+### 1. BẢO MẬT & XÁC THỰC
+- **Không hardcode API Key** (`QDRANT_API_KEY`, `COHERE_API_KEY`, `OMNIGATE_API_KEY`). Load qua `app/config.py` (sử dụng Pydantic `BaseSettings`).
+- API client gọi OmniGate phải truyền `LITELLM_MASTER_KEY` (hoặc `OMNIGATE_API_KEY`) trong header Authorization Bearer.
+
+### 2. KIẾN TRÚC SẠCH (CLEAN ARCHITECTURE)
+Tuyệt đối không tạo file ngoài các layer quy định:
+- `app/main.py`: Khởi chạy FastAPI, Middleware, Rate Limiting, Logfire.
+- `app/api/`: Router (`routes.py`) và Dependencies (`dependencies.py`).
+- `app/services/`: Core logic:
+  - `rag_pipeline.py`: RAG logic, query rewriter, hybrid search, RRF, Reranker.
+  - `semantic_cache.py`: Logic check/save cache vector.
+  - `guardrails.py`: NeMo Guardrails check.
+  - `evaluator.py`: Đánh giá Ragas (background task).
+- `app/ingestion/`: Parser luật và Qdrant indexer.
+- `app/templates/`: HTMX templates (`index.html`, `chat_message.html`).
+
+### 3. BẢO MẬT HTTP REQUEST
+- **CORS**: Chỉ cho phép domain cấu hình trong `FRONTEND_URL`.
+- **Rate Limiting**: Giới hạn `POST /chat` tối đa **5 requests/phút/IP** (dùng `slowapi`).
+- **CSRF**: Tạo token tại `GET /`, validate nghiêm ngặt trong `POST /chat`.
+
+### 4. THÔNG SỐ PIPELINE BẮT BUỘC
+- **Semantic Cache**:
+  - Vector search `text-embedding-004` trên collection `vietlex_semantic_cache`.
+  - Chỉ chấp nhận hit cache khi similarity score >= **0.96**.
+- **Retrieval & RAG**:
+  - Rewrite query bằng LLM.
+  - Hybrid Search Qdrant: Dense (`text-embedding-004`, Top 15) + Sparse (BM25 với PyVi segmentation, Top 15).
+  - Hợp nhất RRF (Reciprocal Rank Fusion) -> Lấy Top 15.
+  - Rerank qua Cohere `rerank-multilingual-v3.0` -> Lấy Top 3.
+  - Sinh câu trả lời qua model `legal-core-model` trên OmniGate.
+- **Guardrails & Evaluation**:
+  - Input Check -> RAG -> Output Check (dùng NeMo Guardrails).
+  - Chạy đánh giá Ragas dưới dạng background task.
+
+### 5. GIÁM SÁT (OBSERVABILITY)
+- Cấu hình Logfire trong `main.py`.
+- Sử dụng `@logfire.instrument` cho mọi hàm xử lý chính trong `app/services/` để đo độ trễ.
+
+### 6. KHÔNG MOCK TRONG PRODUCTION (PRODUCTION-GRADE EXECUTION)
+- **Tuyệt đối không sử dụng mock/placeholder** cho các module cốt lõi (Semantic Cache, RAG pipeline, Guardrails, Evaluator, Parser) khi triển khai thực tế. Mọi logic phải gọi API thực, kết nối Qdrant/Cohere thực và xử lý lỗi hoàn chỉnh.
+
+
+---
+
+## 🗺️ TÀI LIỆU THAM KHẢO
+- **Thiết lập & Cấu hình**: [instructions.md](file:///d:/Download/ProfessionalLegalRAG/instructions.md)
+- **Sơ đồ chi tiết & Kế hoạch**: [plan.md](file:///d:/Download/ProfessionalLegalRAG/plan.md)
