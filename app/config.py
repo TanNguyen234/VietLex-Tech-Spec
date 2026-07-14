@@ -16,8 +16,8 @@ class Settings(BaseSettings):
     COHERE_API_KEY: Optional[str] = None
     
     # LLM Gateway (OmniGate)
-    OMNIGATE_BASE_URL: str = "http://localhost:8000/v1"
-    OMNIGATE_API_KEY: str = "default_litellm_master_key"
+    OMNIGATE_BASE_URL: str = "https://llmgateway.onrender.com"
+    LITELLM_MASTER_KEY: str = "default_litellm_master_key"
     
     # Logfire Token
     LOGFIRE_TOKEN: Optional[str] = None
