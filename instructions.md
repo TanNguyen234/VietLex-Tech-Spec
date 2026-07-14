@@ -1,81 +1,84 @@
 # Hướng dẫn Phát triển & Thiết lập Hệ thống Vietlex Legal RAG
 
-Chào mừng bạn đến với không gian phát triển dự án **VIETLEX (ADVANCED LEGAL RAG)**. Hệ thống này được thiết kế theo cấu trúc Kiến trúc Sạch (Clean Architecture) sử dụng FastAPI, Qdrant, Guardrails, Logfire và HTMX.
+Dự án **VIETLEX (ADVANCED LEGAL RAG)** được xây dựng theo Clean Architecture dùng FastAPI, Qdrant, Guardrails, Logfire, và HTMX.
 
 ---
 
-## 🛠️ Thiết lập Môi trường & Xác thực
+## 🛠️ THIẾT LẬP MÔI TRƯỜNG & XÁC THỰC
 
-### 1. Cấu hình Biến môi trường (.env)
-Tạo file `.env` ở thư mục gốc của dự án với các biến môi trường sau:
+### 1. Cấu hình file `.env`
+Tạo file `.env` ở thư mục gốc:
 ```bash
-# Cổng API chính (FastAPI)
 HOST=0.0.0.0
 PORT=8000
 FRONTEND_URL=http://localhost:3000
 
-# Vector Database (Qdrant Cloud)
+# Qdrant Cloud Vector Database
 QDRANT_URL=https://your-qdrant-cluster.cloud.qdrant.io
 QDRANT_API_KEY=your_qdrant_api_key
 
-# Reranker (Cohere API)
+# Cohere API Key (Reranker)
 COHERE_API_KEY=your_cohere_api_key
 
-# Cổng LLM Gateway (OmniGate)
+# LLM Gateway (OmniGate)
 OMNIGATE_BASE_URL=http://localhost:8000/v1
-OMNIGATE_API_KEY=your_litellm_master_key # Khớp với LITELLM_MASTER_KEY
+OMNIGATE_API_KEY=your_litellm_master_key
 
-# Tracing & Logging (Logfire)
+# Tracing (Logfire)
 LOGFIRE_TOKEN=your_logfire_token
 ```
 
 ### 2. Thiết lập Môi trường ảo Python
-Khởi tạo và cài đặt các thư viện cần thiết:
 ```bash
-# Tạo virtual environment
+# Khởi tạo venv
 python -m venv .venv
 
-# Kích hoạt virtual environment (Windows Powershell)
+# Kích hoạt venv (Windows Powershell)
 .venv\Scripts\Activate.ps1
 
-# Cài đặt dependencies từ requirements.txt
+# Cài đặt thư viện
 pip install -r requirements.txt
 ```
 
 ---
 
-## 📁 Cấu trúc Thư mục Chi tiết
+## 📁 CẤU TRÚC THƯ MỤC CHI TIẾT
 
-- `app/`: Thư mục chính chứa mã nguồn ứng dụng FastAPI.
-  - `main.py`: Điểm khởi chạy, cấu hình middlewares (CORS, slowapi, CSRF), và tích hợp Pydantic Logfire.
-  - `config.py`: Định nghĩa Pydantic `BaseSettings` để tải và kiểm tra kiểu dữ liệu các biến môi trường.
-  - `api/`: Xử lý HTTP request-response.
-    - `routes.py`: Endpoint `/chat` (giao tiếp HTMX) và `/api/feedback`.
-    - `dependencies.py`: Dependency injection để xác thực người dùng và áp dụng rate limiter.
-  - `services/`: Core logic của hệ thống.
-    - `rag_pipeline.py`: Logic truy xuất nâng cao, query rewriter, hybrid search và RRF fusion.
-    - `semantic_cache.py`: Quản lý lưu trữ/truy vấn semantic cache trên Qdrant với ngưỡng độ tương đồng >= 0.96.
-    - `guardrails.py`: Cấu hình và kích hoạt NeMo Guardrails để kiểm tra input/output.
-    - `evaluator.py`: Tác vụ nền (background task) chạy đánh giá Ragas dưới dạng LLM-as-a-judge.
-  - `ingestion/`: Layer tiền xử lý dữ liệu.
-    - `parser.py`: Phân tách văn bản luật theo cấu trúc (Chương -> Mục -> Điều).
-    - `indexer.py`: Sử dụng PyVi phân tách từ tiếng Việt và đồng bộ hóa (upsert) lên Qdrant.
-  - `templates/`: Giao diện người dùng sử dụng Jinja2 + HTMX.
-    - `index.html`: Giao diện chính chứa khung chat.
-    - `chat_message.html`: Template phản hồi tin nhắn dạng partial htmx.
-
-- `guardrails_config/`: Cấu hình bảo mật và an toàn cho AI.
-  - `config.yml`: Quy định luồng hoạt động chính của NeMo.
-  - `prompts.yml`: Cấu hình prompts kiểm tra an toàn hệ thống.
+```text
+vietlex-rag/
+├── app/
+│   ├── main.py                # Điểm khởi chạy, cấu hình Middlewares & Logfire.
+│   ├── config.py              # Load & validate biến môi trường qua Pydantic Settings.
+│   ├── api/
+│   │   ├── routes.py          # Endpoint /chat (HTMX) và /api/feedback.
+│   │   └── dependencies.py    # Verify CSRF Token.
+│   ├── services/
+│   │   ├── rag_pipeline.py    # LLM Query Rewrite, Hybrid Search, RRF, Cohere Rerank.
+│   │   ├── semantic_cache.py  # Cache vector trên Qdrant (similarity >= 0.96).
+│   │   ├── guardrails.py      # NeMo Guardrails check Input/Output.
+│   │   └── evaluator.py       # Tác vụ nền đánh giá Ragas.
+│   ├── ingestion/
+│   │   ├── parser.py          # Tách văn bản luật thành Chương -> Mục -> Điều.
+│   │   ├── indexer.py         # PyVi Tokenizer & đồng bộ hóa Qdrant.
+│   │   └── qdrant_indexer.py  # Script import dataset mẫu lên Qdrant.
+│   └── templates/
+│       ├── index.html         # Giao diện khung chat.
+│       └── chat_message.html  # Template tin nhắn HTMX.
+├── guardrails_config/         # Cấu hình NeMo Guardrails.
+├── requirements.txt
+└── .env
+```
 
 ---
 
-## 🚀 Quy trình Hoạt động của Request
-Mọi request gửi tới endpoint `POST /chat` sẽ trải qua vòng đời sau:
-1. **CSRF Validation & Rate Limiting**: Xác thực CSRF Token và slowapi limiter (5/phút).
-2. **Semantic Cache Lookup**: Nếu khớp với score >= 0.96, trả về kết quả ngay lập tức và sinh Logfire trace.
-3. **Input Guardrails Check**: Kiểm tra tính an toàn thông tin qua NeMo.
-4. **Advanced Retrieval Pipeline (RAG)**: LLM Query Rewrite -> Hybrid Search (Dense + Sparse PyVi) -> RRF Fusion -> Cohere Reranker (Multilingual v3) -> LLM Generation.
-5. **Output Guardrails Check**: Kiểm tra câu trả lời sinh ra có bị ảo giác (hallucination) hay độc hại không.
-6. **Save Cache & Evaluate**: Lưu phản hồi vào Semantic Cache và kích hoạt Background Task gọi Ragas đánh giá chất lượng câu trả lời.
-7. **HTML Partial Return**: Trả về `chat_message.html` qua Jinja2 cho frontend cập nhật.
+## 🚀 QUY TRÌNH HOẠT ĐỘNG CỦA REQUEST
+Mỗi request `POST /chat` trải qua 9 bước:
+1. **CSRF & Rate Limit Validation**: Xác thực token CSRF và check rate limit (5/phút).
+2. **Semantic Cache Lookup**: Tìm kiếm vector trên Qdrant. Hit (score >= 0.96) -> Trả về ngay.
+3. **Input Guardrails Check**: NeMo check tính an toàn của câu hỏi.
+4. **Advanced Retrieval Pipeline**: LLM Rewrite -> Hybrid Search (Dense + Sparse PyVi) -> RRF Fusion -> Cohere Rerank -> LLM Generation.
+5. **Output Guardrails Check**: NeMo check câu trả lời tránh ảo giác.
+6. **Save Cache**: Lưu cặp câu hỏi - trả lời mới vào Semantic Cache.
+7. **Generate Trace ID**: Logfire tracing cho request.
+8. **Trigger Background Task**: Gọi Evaluator đánh giá Ragas bất đồng bộ.
+9. **Return HTML Partial**: Trả về `chat_message.html` cập nhật UI.
