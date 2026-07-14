@@ -1,109 +1,78 @@
 # TECHNICAL SPECIFICATION: VIETLEX (ADVANCED LEGAL RAG)
 
-**Target Audience:** AI Coding Agents / Backend Developers
-**Purpose:** Production-grade RAG pipeline using FastAPI, Qdrant, Guardrails, Logfire tracing, Semantic Caching, and asynchronous LLM evaluations.
+Tài liệu thiết kế kỹ thuật và trạng thái triển khai dự án Vietlex Legal RAG.
 
 ---
 
-## 1. System Architecture & Tech Stack
-- **Backend:** FastAPI, Uvicorn, Slowapi (Rate Limiting)
-- **Observability:** Pydantic Logfire
-- **Vector DB:** Qdrant Cloud (for Hybrid Search & Semantic Cache)
-- **LLM Communication:** LangChain (OpenAI client configured to point to OmniGate)
-- **Advanced RAG:** Cohere API (Reranker), NeMo Guardrails
-- **Evals:** Ragas (Automated background task)
-- **Frontend:** Jinja2 Templates, HTMX, TailwindCSS
+## 1. Kiến trúc Hệ thống & Công nghệ
+- **Backend**: FastAPI, Uvicorn, Slowapi (Rate Limiting)
+- **Giám sát**: Pydantic Logfire (Tracing & Logging)
+- **Vector Database**: Qdrant Cloud (Knowledge Base & Semantic Cache)
+- **LLM Gateway**: OmniGate (LangChain OpenAI client / embeddings)
+- **Advanced RAG**: Cohere Rerank API, NeMo Guardrails, PyVi Tokenizer
+- **Đánh giá**: Ragas (LLM-as-a-judge, chạy dưới dạng background task)
+- **Frontend**: Jinja2, HTMX, TailwindCSS
 
 ---
 
-## 2. Directory Structure (Clean Architecture)
-```text
-vietlex-rag/
-├── app/
-│   ├── main.py                # FastAPI app initialization, Middleware, Logfire init
-│   ├── config.py              # Pydantic BaseSettings for env vars
-│   ├── api/
-│   │   ├── routes.py          # /chat endpoint, /api/feedback endpoint
-│   │   └── dependencies.py    # Auth, RateLimiter injections
-│   ├── services/
-│   │   ├── rag_pipeline.py    # Core retrieval logic, RRF, Langchain prompts
-│   │   ├── semantic_cache.py  # Qdrant threshold search logic
-│   │   ├── guardrails.py      # NeMo initialization & invoke
-│   │   └── evaluator.py       # Background task running LLM-as-a-judge
-│   ├── ingestion/
-│   │   ├── parser.py          # Regex parser (Chương -> Mục -> Điều)
-│   │   └── indexer.py         # PyVi segmentation, Upsert to Qdrant
-│   └── templates/
-│       ├── index.html         # HTMX injected base UI
-│       └── chat_message.html  # HTMX partial response
-├── guardrails_config/
-│   ├── config.yml             # NeMo policies
-│   └── prompts.yml
-├── requirements.txt
-└── .env
-```
+## 2. Luồng Logic Xử lý (Logic Flows)
+
+### Flow 1: Semantic Caching (`app/services/semantic_cache.py`)
+1. Nhận `user_query`, gọi OmniGate `text-embedding-004` sinh vector 768-dim.
+2. Tìm kiếm trong Qdrant collection `vietlex_semantic_cache` (limit=1).
+3. Nếu similarity score >= **0.96**: Trả về `bot_response` đã cache.
+4. Nếu không: Trả về `None` (cache miss).
+
+### Flow 2: Advanced Retrieval Pipeline (`app/services/rag_pipeline.py`)
+1. **Query Rewrite**: LLM rewrite câu hỏi của user sang thuật ngữ pháp lý chuẩn.
+2. **Hybrid Search**:
+   - Dense Search: Tìm kiếm vector (`text-embedding-004`) trên Qdrant -> Top 15.
+   - Sparse Search: Tìm kiếm BM25 (dữ liệu tách từ bởi PyVi) -> Top 15.
+3. **RRF Fusion**: Áp dụng Reciprocal Rank Fusion kết hợp kết quả Dense & Sparse -> Top 15.
+4. **Reranking**: Gọi Cohere API `rerank-multilingual-v3.0` -> Lọc ra Top 3.
+5. **LLM Generation**: Format Top 3 vào prompt template, gọi model `legal-core-model` qua OmniGate sinh câu trả lời.
+
+### Flow 3: Request Lifecycle với Guardrails & Evals (`app/api/routes.py`)
+1. Nhận form request `POST /chat`. Kiểm tra CSRF Token và Rate Limiting.
+2. Check Semantic Cache. Nếu hit -> Trả về kết quả ngay.
+3. Apply NeMo Input Guardrails. Nếu vi phạm an toàn -> Trả về từ chối.
+4. Chạy Advanced Retrieval Pipeline -> Nhận `(bot_response, context_used)`.
+5. Apply NeMo Output Guardrails. Nếu phát hiện ảo giác -> Trả về fallback safe.
+6. Ghi interaction mới vào Semantic Cache (background task).
+7. Trigger Background Task: Chạy Ragas Evaluator đánh giá chất lượng câu trả lời.
+8. Trả về HTML partial `chat_message.html` qua Jinja2.
 
 ---
 
-## 3. Security Requirements (Strict Enforcement)
-AI Coder must implement these exactly in `main.py`:
-- **CORS:** Restrict to specified `FRONTEND_URL` environment variable.
-- **Rate Limiting:** Use `slowapi`. Restrict `POST /chat` to 5/minute per IP.
-- **CSRF Protection:** Generate secure token on `GET /`. Validate token on `POST /chat`.
-- **Gateway Auth:** Ensure LangChain LLM client uses `LITELLM_MASTER_KEY` to hit OmniGate.
+## 3. Bảng Checklist Tiến độ Dự án
 
----
-
-## 4. Logic Flows for AI Implementation
-
-### Flow 1: Semantic Caching (in `semantic_cache.py`)
-```text
-ALGORITHM check_semantic_cache(user_query):
-1. Call OmniGate text-embedding-004 to get vector of user_query.
-2. Search Qdrant collection 'vietlex_semantic_cache' with vector. limit=1.
-3. IF match.score >= 0.96:
-     RETURN match.payload['bot_response']
-4. ELSE:
-     RETURN None
-```
-
-### Flow 2: Advanced Retrieval Pipeline (in `rag_pipeline.py`)
-```text
-ALGORITHM run_advanced_rag(user_query):
-1. Query Rewriter: LLM reformulates user_query to formal legal terms.
-2. Hybrid Search (Qdrant):
-   a. Dense Search (text-embedding-004 vector) -> Top 15
-   b. Sparse Search (BM25, pre-tokenized by PyVi) -> Top 15
-3. Fusion: Apply Reciprocal Rank Fusion (RRF) on a & b -> Top 15 combined.
-4. Reranking: Call Cohere Rerank API (rerank-multilingual-v3.0) -> Top 3.
-5. Context Injection: Format Top 3 chunks into LangChain prompt template.
-6. LLM Generation: Call OmniGate (model="legal-core-model") with prompt.
-7. Return (bot_response, context_used).
-```
-
-### Flow 3: Request Lifecycle with Guardrails & Evals (in `routes.py`)
-```text
-ENDPOINT POST /chat:
-1. Extract form data (message, csrf_token). Validate CSRF.
-2. Check Semantic Cache. If hit, generate trace_id and return immediately.
-3. Apply NeMo Guardrails (Input check). If malicious/out-of-scope, return predefined rejection.
-4. Run Advanced Retrieval Pipeline -> gets (bot_response, context).
-5. Apply NeMo Guardrails (Output check). If hallucination detected, return safe fallback.
-6. Save interaction to Semantic Cache (Qdrant).
-7. Generate trace_id (UUID).
-8. TRIGGER BACKGROUND TASK: evaluator.run_llm_as_judge(user_query, context, bot_response, trace_id)
-9. RETURN HTML partial response (chat_message.html) via Jinja2.
-```
-
----
-
-## 5. Observability (Logfire)
-Initialize Logfire in `main.py`: `logfire.configure()` and `logfire.instrument_fastapi(app)`. Use `@logfire.instrument` decorator on key functions in `services/` to trace latency spanning.
-
----
-
-## 6. External Dependencies to Inject
-- `QDRANT_URL` and `QDRANT_API_KEY`
-- `COHERE_API_KEY` (for Reranker)
-- `OMNIGATE_BASE_URL` (e.g., http://localhost:8000/v1)
-- `OMNIGATE_API_KEY` (matches `LITELLM_MASTER_KEY`)
+| Module / Tính năng | Nhiệm vụ chi tiết | Trạng thái | File ảnh hưởng |
+| :--- | :--- | :---: | :--- |
+| **Hạ tầng & Setup** | Thiết lập cấu trúc thư mục Clean Architecture | `ĐÃ LÀM` | `app/` |
+| | Cấu hình biến môi trường và BaseSettings | `ĐÃ LÀM` | [config.py](file:///d:/Download/ProfessionalLegalRAG/app/config.py) |
+| | Tích hợp Logfire tracing cho FastAPI | `ĐÃ LÀM` | [main.py](file:///d:/Download/ProfessionalLegalRAG/app/main.py) |
+| **Bảo mật Request** | Giới hạn Rate Limiting 5 request/phút/IP | `ĐÃ LÀM` | [main.py](file:///d:/Download/ProfessionalLegalRAG/app/main.py) |
+| | CORS Middleware giới hạn theo domain | `ĐÃ LÀM` | [main.py](file:///d:/Download/ProfessionalLegalRAG/app/main.py) |
+| | CSRF Protection sinh & xác thực token | `ĐÃ LÀM` | [routes.py](file:///d:/Download/ProfessionalLegalRAG/app/api/routes.py), [dependencies.py](file:///d:/Download/ProfessionalLegalRAG/app/api/dependencies.py) |
+| **Ingestion Pipeline**| Tải dataset mẫu từ Hugging Face | `ĐÃ LÀM` | [qdrant_indexer.py](file:///d:/Download/ProfessionalLegalRAG/app/ingestion/qdrant_indexer.py) |
+| | Gọi OmniGate sinh embedding, giải quyết rate limit 429 | `ĐÃ LÀM` | [qdrant_indexer.py](file:///d:/Download/ProfessionalLegalRAG/app/ingestion/qdrant_indexer.py) |
+| | Upsert dữ liệu pháp luật hoàn chỉnh lên Qdrant | `ĐÃ LÀM` | [qdrant_indexer.py](file:///d:/Download/ProfessionalLegalRAG/app/ingestion/qdrant_indexer.py) |
+| | Parser tách văn bản thô theo Chương/Mục/Điều | `CẦN LÀM` (Đang Mock) | [parser.py](file:///d:/Download/ProfessionalLegalRAG/app/ingestion/parser.py) |
+| | Segment tiếng Việt (PyVi) + Indexer tự động | `CẦN LÀM` (Đang Mock) | [indexer.py](file:///d:/Download/ProfessionalLegalRAG/app/ingestion/indexer.py) |
+| **Semantic Cache** | Gọi embedding, truy vấn similarity >= 0.96 trên Qdrant | `CẦN LÀM` (Đang Mock) | [semantic_cache.py](file:///d:/Download/ProfessionalLegalRAG/app/services/semantic_cache.py) |
+| | Lưu cặp câu hỏi - trả lời mới vào Qdrant cache | `CẦN LÀM` (Đang Mock) | [semantic_cache.py](file:///d:/Download/ProfessionalLegalRAG/app/services/semantic_cache.py) |
+| **RAG Pipeline** | Query Rewrite bằng LLM qua OmniGate | `CẦN LÀM` (Đang Mock) | [rag_pipeline.py](file:///d:/Download/ProfessionalLegalRAG/app/services/rag_pipeline.py) |
+| | Thực hiện Dense Search thực tế trên Qdrant | `CẦN LÀM` (Đang Mock) | [rag_pipeline.py](file:///d:/Download/ProfessionalLegalRAG/app/services/rag_pipeline.py) |
+| | Thực hiện Sparse Search thực tế kết hợp PyVi | `CẦN LÀM` (Đang Mock) | [rag_pipeline.py](file:///d:/Download/ProfessionalLegalRAG/app/services/rag_pipeline.py) |
+| | Triển khai thuật toán RRF Fusion | `CẦN LÀM` (Đang Mock) | [rag_pipeline.py](file:///d:/Download/ProfessionalLegalRAG/app/services/rag_pipeline.py) |
+| | Gọi Cohere API `rerank-multilingual-v3.0` | `CẦN LÀM` (Đang Mock) | [rag_pipeline.py](file:///d:/Download/ProfessionalLegalRAG/app/services/rag_pipeline.py) |
+| | Sinh câu trả lời qua model `legal-core-model` | `CẦN LÀM` (Đang Mock) | [rag_pipeline.py](file:///d:/Download/ProfessionalLegalRAG/app/services/rag_pipeline.py) |
+| **Guardrails** | Cấu hình file YAML cho NVIDIA NeMo | `CẦN LÀM` (Đang Mock) | `guardrails_config/` |
+| | Tích hợp gọi check Input & Output thực tế | `CẦN LÀM` (Đang Mock) | [guardrails.py](file:///d:/Download/ProfessionalLegalRAG/app/services/guardrails.py) |
+| **Evaluator** | Tích hợp thư viện Ragas chạy offline/background | `CẦN LÀM` (Đang Mock) | [evaluator.py](file:///d:/Download/ProfessionalLegalRAG/app/services/evaluator.py) |
+| | Tính các chỉ số Faithfulness, Answer Relevance, Context Recall | `CẦN LÀM` (Đang Mock) | [evaluator.py](file:///d:/Download/ProfessionalLegalRAG/app/services/evaluator.py) |
+| **Frontend UI** | Dựng giao diện chat cơ bản với HTMX + Tailwind | `ĐÃ LÀM` | [index.html](file:///d:/Download/ProfessionalLegalRAG/app/templates/index.html) |
+| | Cải thiện UX/UI nâng cao, xử lý loading state | `SẼ LÀM` | [index.html](file:///d:/Download/ProfessionalLegalRAG/app/templates/index.html) |
+| **Tối ưu & Vận hành**| Song song hóa truy vấn Dense & Sparse Search | `SẼ LÀM` | [rag_pipeline.py](file:///d:/Download/ProfessionalLegalRAG/app/services/rag_pipeline.py) |
+| | Viết bộ kiểm thử tự động pytest | `SẼ LÀM` | `tests/` |
+| | Dashboard giám sát Logfire nâng cao | `SẼ LÀM` | Logfire Cloud |
