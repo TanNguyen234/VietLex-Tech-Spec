@@ -1,25 +1,65 @@
 import logfire
-from typing import Tuple, List
+import httpx
+import hashlib
+from typing import Tuple, List, Dict
+from pyvi import ViTokenizer
+from qdrant_client import AsyncQdrantClient
+from qdrant_client.models import SparseVector
 from app.config import get_settings
+from app.services.semantic_cache import get_embedding
 
 settings = get_settings()
 
+def text_to_sparse_vector(text: str) -> Dict[str, List]:
+    tokens = text.lower().split()
+    tf = {}
+    for token in tokens:
+        tf[token] = tf.get(token, 0) + 1
+        
+    indices = []
+    values = []
+    for token, count in tf.items():
+        hash_val = int(hashlib.md5(token.encode('utf-8')).hexdigest(), 16)
+        idx = hash_val % 1000000
+        indices.append(idx)
+        values.append(float(count))
+        
+    sorted_pairs = sorted(zip(indices, values))
+    return {
+        "indices": [p[0] for p in sorted_pairs],
+        "values": [p[1] for p in sorted_pairs]
+    }
+
 @logfire.instrument("Chạy luồng Advanced Retrieval Pipeline cho truy vấn: {user_query}")
 async def run_advanced_rag(user_query: str) -> Tuple[str, List[str]]:
-    # 1. Query Rewriter: LLM reformulates user_query to formal legal terms.
+    # 1. Query Rewriter
     rewritten_query = await rewrite_query(user_query)
     
-    # 2. Hybrid Search (Qdrant):
-    # a. Dense Search -> Top 15
-    dense_results = await dense_search(rewritten_query)
-    # b. Sparse Search -> Top 15
-    sparse_results = await sparse_search(rewritten_query)
+    # 2. Hybrid Search (Parallel via asyncio.gather)
+    import asyncio
+    dense_task = dense_search(rewritten_query)
+    sparse_task = sparse_search(rewritten_query)
     
-    # 3. Fusion: Reciprocal Rank Fusion (RRF) -> Top 15 combined.
+    dense_results, sparse_results = await asyncio.gather(dense_task, sparse_task)
+    
+    # 3. Fusion: Reciprocal Rank Fusion (RRF) -> Top 15
     fused_results = apply_rrf(dense_results, sparse_results, top_k=15)
     
-    # 4. Reranking: Cohere Rerank API (rerank-multilingual-v3.0) -> Top 3.
-    reranked_results = await cohere_rerank(rewritten_query, fused_results, top_k=3)
+    if not fused_results:
+        logfire.warning("Không tìm thấy kết quả truy vấn phù hợp từ Qdrant")
+        return "Xin lỗi, tôi không tìm thấy tài liệu pháp luật nào phù hợp để trả lời câu hỏi này.", []
+        
+    # Extract unique text contents for rerank
+    docs_to_rerank = []
+    seen_texts = set()
+    for doc in fused_results:
+        text = doc.payload.get("source_text", "")
+        if text and text not in seen_texts:
+            docs_to_rerank.append(text)
+            seen_texts.add(text)
+            
+    # 4. Reranking: Cohere Rerank -> Top 3
+    reranked_results = await cohere_rerank(rewritten_query, docs_to_rerank, top_k=3)
     
     # 5. Context Injection & LLM Generation
     bot_response = await generate_response(user_query, rewritten_query, reranked_results)
@@ -27,42 +67,168 @@ async def run_advanced_rag(user_query: str) -> Tuple[str, List[str]]:
     return bot_response, reranked_results
 
 async def rewrite_query(query: str) -> str:
-    # Placeholder for LLM Query Rewriter using OmniGate
     logfire.info("Đang rewrite query: {query}", query=query)
-    return f"[Rewritten legal query] {query}"
+    base_url = settings.OMNIGATE_BASE_URL.rstrip('/')
+    chat_url = f"{base_url}/v1/chat/completions" if not base_url.endswith('/v1') else f"{base_url}/chat/completions"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {settings.LITELLM_MASTER_KEY}"
+    }
+    prompt = (
+        "Bạn là chuyên gia pháp luật Việt Nam. Hãy viết lại câu hỏi sau đây thành một câu truy vấn ngắn gọn chứa các thuật ngữ pháp lý chính thống của Việt Nam để tìm kiếm luật hiệu quả nhất.\n"
+        f"Câu hỏi: {query}\n"
+        "Trả về DUY NHẤT câu truy vấn đã viết lại, không thêm bất kỳ lời dẫn giải nào."
+    )
+    payload = {
+        "model": "legal-core-model",
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.0
+    }
+    
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(chat_url, headers=headers, json=payload)
+            response.raise_for_status()
+            rewritten = response.json()["choices"][0]["message"]["content"].strip()
+            logfire.info("Query rewritten: {rewritten}", rewritten=rewritten)
+            return rewritten
+    except Exception as e:
+        logfire.error("Error rewriting query: {error}, falling back to original query", error=str(e))
+        return query
 
 async def dense_search(query: str) -> List[dict]:
-    # Placeholder for Qdrant Dense Search (text-embedding-004)
     logfire.info("Đang thực hiện Dense Search")
-    return [{"id": i, "content": f"Văn bản luật Dense Chunk #{i}", "score": 0.9 - (i * 0.02)} for i in range(15)]
+    try:
+        qdrant_client = AsyncQdrantClient(
+            url=settings.QDRANT_URL,
+            api_key=settings.QDRANT_API_KEY
+        )
+        query_vector = await get_embedding(query)
+        results = await qdrant_client.query_points(
+            collection_name="vietlex_knowledge_base",
+            query=query_vector,
+            limit=15
+        )
+        return results.points
+    except Exception as e:
+        logfire.error("Error during dense search: {error}", error=str(e))
+        return []
 
 async def sparse_search(query: str) -> List[dict]:
-    # Placeholder for Qdrant Sparse Search (BM25 + PyVi)
     logfire.info("Đang thực hiện Sparse Search")
-    return [{"id": i, "content": f"Văn bản luật Sparse Chunk #{i}", "score": 0.85 - (i * 0.02)} for i in range(15)]
+    try:
+        qdrant_client = AsyncQdrantClient(
+            url=settings.QDRANT_URL,
+            api_key=settings.QDRANT_API_KEY
+        )
+        # Tokenize query using PyVi
+        segmented_query = ViTokenizer.tokenize(query)
+        sparse_vec = text_to_sparse_vector(segmented_query)
+        
+        qdrant_sparse_vec = SparseVector(
+            indices=sparse_vec["indices"],
+            values=sparse_vec["values"]
+        )
+        
+        results = await qdrant_client.query_points(
+            collection_name="vietlex_knowledge_base",
+            query=qdrant_sparse_vec,
+            using="sparse-text",
+            limit=15
+        )
+        return results.points
+    except Exception as e:
+        logfire.error("Error during sparse search: {error}", error=str(e))
+        return []
 
-def apply_rrf(dense_results: List[dict], sparse_results: List[dict], top_k: int = 15) -> List[dict]:
-    # Placeholder implementation of Reciprocal Rank Fusion (RRF)
+def apply_rrf(dense_results: List, sparse_results: List, k: int = 60, top_k: int = 15) -> List:
     logfire.info("Đang chạy RRF Fusion")
-    # For boilerplate, just interleave them and remove duplicates
-    combined = []
-    seen_ids = set()
-    for d, s in zip(dense_results, sparse_results):
-        if d["id"] not in seen_ids:
-            combined.append(d)
-            seen_ids.add(d["id"])
-        if s["id"] not in seen_ids:
-            combined.append(s)
-            seen_ids.add(s["id"])
-    return combined[:top_k]
+    rrf_scores = {}
+    
+    def add_ranks(results):
+        for rank, hit in enumerate(results, start=1):
+            doc_id = hit.id
+            if doc_id not in rrf_scores:
+                rrf_scores[doc_id] = {"hit": hit, "score": 0.0}
+            rrf_scores[doc_id]["score"] += 1.0 / (k + rank)
 
-async def cohere_rerank(query: str, documents: List[dict], top_k: int = 3) -> List[str]:
-    # Placeholder for Cohere Rerank API
+    add_ranks(dense_results)
+    add_ranks(sparse_results)
+    
+    sorted_docs = sorted(rrf_scores.values(), key=lambda x: x["score"], reverse=True)
+    return [item["hit"] for item in sorted_docs[:top_k]]
+
+async def cohere_rerank(query: str, documents: List[str], top_k: int = 3) -> List[str]:
     logfire.info("Đang thực hiện Rerank qua Cohere")
-    return [doc["content"] for doc in documents[:top_k]]
+    if not documents:
+        return []
+        
+    rerank_url = "https://api.cohere.ai/v1/rerank"
+    headers = {
+        "Authorization": f"Bearer {settings.COHERE_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "model": "rerank-multilingual-v3.0",
+        "query": query,
+        "documents": documents,
+        "top_n": top_k
+    }
+    
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(rerank_url, headers=headers, json=payload)
+            response.raise_for_status()
+            results = response.json().get("results", [])
+            reranked = [documents[item["index"]] for item in results[:top_k]]
+            return reranked
+    except Exception as e:
+        logfire.error("Error during Cohere rerank: {error}, falling back to top_k of original docs", error=str(e))
+        return documents[:top_k]
 
 async def generate_response(original_query: str, rewritten_query: str, context: List[str]) -> str:
-    # Placeholder for LangChain LLM Client pointing to OmniGate (legal-core-model)
     logfire.info("Đang sinh câu trả lời bằng legal-core-model trên OmniGate")
-    context_str = "\n".join(context)
-    return f"Đây là câu trả lời được mô phỏng dựa trên các ngữ cảnh pháp lý sau:\n{context_str}"
+    if not context:
+        return "Không có ngữ cảnh pháp lý phù hợp để trả lời câu hỏi."
+        
+    base_url = settings.OMNIGATE_BASE_URL.rstrip('/')
+    chat_url = f"{base_url}/v1/chat/completions" if not base_url.endswith('/v1') else f"{base_url}/chat/completions"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {settings.LITELLM_MASTER_KEY}"
+    }
+    
+    context_str = "\n\n".join([f"[Tài liệu tham khảo #{i+1}]:\n{doc}" for i, doc in enumerate(context)])
+    
+    system_prompt = (
+        "Bạn là Trợ lý Pháp luật Việt Nam thông minh, chính xác và trung thực.\n"
+        "Nhiệm vụ của bạn là trả lời câu hỏi của người dùng bằng cách sử dụng THÔNG TIN và ĐIỀU LUẬT được cung cấp trong các Tài liệu tham khảo dưới đây.\n"
+        "Quy tắc nghiêm ngặt:\n"
+        "1. Trả lời một cách khách quan, rõ ràng, viện dẫn cụ thể theo số Điều, Khoản (nếu có trong tài liệu).\n"
+        "2. Chỉ trả lời dựa trên thông tin có trong Tài liệu tham khảo. Tuyệt đối không tự ý thêm thông tin, quy định pháp luật ngoài luồng hoặc tự suy đoán.\n"
+        "3. Nếu Tài liệu tham khảo không chứa đủ thông tin để trả lời, hãy báo rằng hệ thống chưa có dữ liệu điều luật chính xác cho câu hỏi này và từ chối trả lời lịch sự."
+    )
+    
+    user_prompt = (
+        f"Tài liệu tham khảo:\n{context_str}\n\n"
+        f"Câu hỏi của người dùng: {original_query}"
+    )
+    
+    payload = {
+        "model": "legal-core-model",
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ],
+        "temperature": 0.2
+    }
+    
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post(chat_url, headers=headers, json=payload)
+            response.raise_for_status()
+            bot_response = response.json()["choices"][0]["message"]["content"].strip()
+            return bot_response
+    except Exception as e:
+        logfire.error("Error generating answer: {error}", error=str(e))
+        return "Đã xảy ra lỗi khi kết nối với máy chủ sinh câu trả lời pháp luật."
