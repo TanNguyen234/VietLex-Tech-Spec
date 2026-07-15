@@ -1,7 +1,8 @@
+{% for msg in messages %}
 <!-- User Message -->
-<div class="flex items-start space-x-3 justify-end max-w-[80%] ml-auto">
+<div class="flex items-start space-x-3 justify-end max-w-[80%] ml-auto my-4">
     <div class="bg-[#D4AF37]/5 text-[#D4AF37] border border-[#D4AF37]/10 rounded-2xl rounded-tr-none px-4 py-3 text-sm shadow-sm leading-relaxed">
-        {{ user_msg }}
+        {{ msg.user_query }}
     </div>
     <div class="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center font-semibold text-xs text-slate-400 flex-shrink-0">
         <i class="ph ph-user text-sm"></i>
@@ -9,15 +10,15 @@
 </div>
 
 <!-- Bot Response -->
-<div class="flex items-start space-x-3 max-w-[85%]">
+<div class="flex items-start space-x-3 max-w-[85%] my-4">
     <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#D4AF37] to-[#F3E5AB] flex items-center justify-center font-semibold text-xs text-slate-950 flex-shrink-0 shadow-md shadow-amber-500/5">
         <i class="ph ph-robot text-sm"></i>
     </div>
-    <div class="bg-slate-900/40 rounded-2xl rounded-tl-none px-5 py-4.5 text-sm text-slate-300 border border-slate-900/80 shadow-md relative group transition-all duration-200 hover:border-slate-800/50 w-full">
+    <div class="bg-slate-900/40 rounded-2xl rounded-tl-none px-5 py-4.5 text-sm text-slate-350 border border-slate-900/80 shadow-md relative group transition-all duration-200 hover:border-slate-800/50 w-full">
         
         <!-- Message Content with Markdown Source -->
-        <div class="bot-message-markdown-source hidden">{{ bot_msg }}</div>
-        <div class="bot-message-rendered prose prose-invert max-w-none leading-relaxed font-serif text-slate-300">
+        <div class="bot-message-markdown-source hidden">{{ msg.bot_response }}</div>
+        <div class="bot-message-rendered prose prose-invert max-w-none leading-relaxed font-serif text-slate-350">
             <!-- Rendered markdown goes here -->
         </div>
         <script>
@@ -35,11 +36,11 @@
         </script>
         
         <!-- Citation Tags -->
-        {% if contexts %}
+        {% if msg.contexts %}
         <div class="mt-4 pt-3 border-t border-slate-900/60">
             <div class="text-[10px] font-mono text-slate-500 mb-2 uppercase tracking-wider font-semibold">Tài liệu tham chiếu (Qdrant):</div>
             <div class="flex flex-wrap gap-2">
-                {% for context in contexts %}
+                {% for context in msg.contexts %}
                 <button onclick="openCitationDrawer({{ loop.index }}, `{{ context | replace('`', '\\`') | replace('$', '\\$') }}`)"
                         class="px-2.5 py-1 rounded bg-[#D4AF37]/5 hover:bg-[#D4AF37]/20 border border-[#D4AF37]/15 text-[#D4AF37] text-[10px] font-medium transition-all duration-150 active:scale-95 flex items-center space-x-1">
                     <i class="ph ph-link-simple text-[11px]"></i>
@@ -53,8 +54,8 @@
         <!-- Metadata & Feedback Bar -->
         <div class="mt-4 pt-3 border-t border-slate-900 flex flex-wrap items-center justify-between gap-3 text-[10px] text-slate-500 font-mono">
             <div class="flex items-center space-x-2">
-                <span class="tracking-wider opacity-60">Trace ID: {{ trace_id[:8] }}</span>
-                {% if cached %}
+                <span class="tracking-wider opacity-60">Trace ID: {{ msg.trace_id[:8] }}</span>
+                {% if msg.cached %}
                 <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-[#D4AF37]/5 text-[#D4AF37] border border-[#D4AF37]/10 text-[9px]">
                     <i class="ph ph-lightning-bolt mr-0.5"></i>
                     Cache Hit
@@ -64,8 +65,15 @@
             
             <!-- Dynamic interactive feedback buttons -->
             <div class="flex items-center space-x-3.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                {% if msg.feedback and msg.feedback.rating %}
+                    {% if msg.feedback.rating == 'up' %}
+                    <span class="text-emerald-400">👍 Hữu ích</span>
+                    {% else %}
+                    <span class="text-red-400">👎 Không hữu ích</span>
+                    {% endif %}
+                {% else %}
                 <form hx-post="/api/feedback" hx-swap="outerHTML" class="inline">
-                    <input type="hidden" name="trace_id" value="{{ trace_id }}">
+                    <input type="hidden" name="trace_id" value="{{ msg.trace_id }}">
                     <input type="hidden" name="rating" value="up">
                     <button type="submit" 
                             class="hover:text-[#D4AF37] active:scale-90 transition-all duration-150 p-0.5" 
@@ -74,7 +82,7 @@
                     </button>
                 </form>
                 <form hx-post="/api/feedback" hx-swap="outerHTML" class="inline">
-                    <input type="hidden" name="trace_id" value="{{ trace_id }}">
+                    <input type="hidden" name="trace_id" value="{{ msg.trace_id }}">
                     <input type="hidden" name="rating" value="down">
                     <button type="submit" 
                             class="hover:text-red-400 active:scale-90 transition-all duration-150 p-0.5" 
@@ -82,11 +90,12 @@
                         <i class="ph ph-thumbs-down text-xs sm:text-sm"></i>
                     </button>
                 </form>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
+{% endfor %}
 
 <!-- Out-of-band swap for session input -->
 <input type="hidden" name="session_id" value="{{ session_id }}" id="session-id-input" hx-swap-oob="true">
-

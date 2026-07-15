@@ -1,0 +1,36 @@
+{% for session in sessions %}
+<div class="flex items-center justify-between p-2 rounded-xl border border-slate-900 bg-slate-900/10 hover:bg-slate-900/40 group transition-all duration-150 my-1 cursor-pointer">
+    <button hx-get="/sessions/{{ session.session_id }}"
+            hx-target="#chat-history"
+            hx-swap="innerHTML"
+            class="flex-1 text-left text-xs font-medium text-slate-350 hover:text-[#D4AF37] truncate mr-2">
+        <i class="ph ph-chat-centered-text mr-2 text-slate-500"></i>
+        <span>{{ session.title }}</span>
+    </button>
+    <div class="flex items-center space-x-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+        <!-- Rename Button -->
+        <button hx-post="/sessions/{{ session.session_id }}/rename"
+                hx-prompt="Nhập tên mới cho cuộc hội thoại:"
+                hx-target="#sidebar-sessions-list"
+                hx-swap="innerHTML"
+                class="text-slate-500 hover:text-[#D4AF37] p-0.5 transition-colors"
+                title="Đổi tên">
+            <i class="ph ph-pencil-simple text-xs"></i>
+        </button>
+        <!-- Delete Button -->
+        <button hx-delete="/sessions/{{ session.session_id }}"
+                hx-target="this"
+                hx-swap="outerHTML"
+                hx-confirm="Bạn có chắc chắn muốn xóa cuộc hội thoại này?"
+                class="text-slate-500 hover:text-red-400 p-0.5 transition-colors"
+                title="Xóa">
+            <i class="ph ph-trash text-xs"></i>
+        </button>
+    </div>
+</div>
+{% else %}
+<div class="text-[10px] text-slate-600 font-mono text-center py-6">
+    <i class="ph ph-chat-slash text-base mb-1 block opacity-55"></i>
+    Chưa có cuộc hội thoại nào
+</div>
+{% endfor %}

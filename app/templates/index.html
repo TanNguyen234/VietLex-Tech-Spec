@@ -4,19 +4,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VietLex - Trợ lý Pháp luật Thông minh</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS with Typography plugin -->
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Marked.js (Markdown parsing) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- DOMPurify (HTML sanitization) -->
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.8/dist/purify.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gold: {
+                            50: '#fdfbf7',
+                            100: '#fbf7ed',
+                            200: '#f5eacf',
+                            300: '#eddcb1',
+                            400: '#debe75',
+                            500: '#d4af37',
+                            600: '#be992c',
+                            700: '#9f7b23',
+                            800: '#7f5f1c',
+                            900: '#684d19',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,750;1,300&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
         
         body {
             font-family: 'Outfit', sans-serif;
         }
         
+        .font-serif {
+            font-family: 'Merriweather', serif;
+        }
+
         .font-mono {
             font-family: 'JetBrains Mono', monospace;
         }
@@ -25,7 +57,7 @@
             background: rgba(15, 23, 42, 0.45);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(212, 175, 55, 0.08);
         }
         
         .glass-card {
@@ -37,35 +69,35 @@
 
         /* Custom Scrollbar */
         ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+            width: 5px;
+            height: 5px;
         }
         ::-webkit-scrollbar-track {
             background: rgba(15, 23, 42, 0.05);
         }
         ::-webkit-scrollbar-thumb {
-            background: rgba(245, 158, 11, 0.15);
+            background: rgba(212, 175, 55, 0.15);
             border-radius: 999px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: rgba(245, 158, 11, 0.3);
+            background: rgba(212, 175, 55, 0.3);
         }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-[100dvh] flex flex-col justify-between overflow-x-hidden selection:bg-amber-500/20 selection:text-amber-300">
+<body class="bg-[#0B132B] text-slate-100 min-h-[100dvh] flex flex-col justify-between overflow-x-hidden selection:bg-gold-500/20 selection:text-gold-300">
     
     <!-- Top Decorative Gradient Header Glow -->
-    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[250px] bg-gradient-to-b from-amber-500/5 via-transparent to-transparent blur-3xl pointer-events-none z-0"></div>
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[250px] bg-gradient-to-b from-gold-500/5 via-transparent to-transparent blur-3xl pointer-events-none z-0"></div>
 
     <!-- Header -->
     <header class="relative border-b border-slate-900 bg-slate-950/80 sticky top-0 z-50 backdrop-blur-md">
-        <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-300 flex items-center justify-center font-bold text-slate-950 shadow-lg shadow-amber-500/10 transition-transform hover:scale-105">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-gold-500 to-gold-300 flex items-center justify-center font-bold text-slate-950 shadow-lg shadow-gold-500/10 transition-transform hover:scale-105">
                     <i class="ph ph-scale text-xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-base font-bold tracking-tight bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-200 bg-clip-text text-transparent">VIETLEX</h1>
+                    <h1 class="text-base font-bold tracking-tight bg-gradient-to-r from-gold-200 via-gold-400 to-yellow-200 bg-clip-text text-transparent">VIETLEX</h1>
                     <p class="text-[10px] text-slate-500 uppercase tracking-widest font-mono font-medium">Advanced Legal RAG</p>
                 </div>
             </div>
@@ -77,7 +109,7 @@
                 </span>
                 
                 <a href="/admin" 
-                   class="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-medium border border-slate-800 bg-slate-900/50 hover:bg-slate-900 hover:border-amber-500/30 text-slate-300 hover:text-amber-400 transition-all duration-200 active:scale-95">
+                   class="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-medium border border-slate-800 bg-slate-900/50 hover:bg-slate-900 hover:border-gold-500/30 text-slate-300 hover:text-gold-400 transition-all duration-200 active:scale-95">
                     <i class="ph ph-layout text-sm"></i>
                     <span>Admin Dashboard</span>
                 </a>
@@ -86,57 +118,111 @@
     </header>
 
     <!-- Main Container -->
-    <main class="relative z-10 flex-1 max-w-5xl w-full mx-auto px-4 py-6 flex flex-col justify-between overflow-hidden">
+    <main class="relative z-10 flex-1 max-w-6xl w-full mx-auto px-4 py-6 flex flex-col md:flex-row gap-6 overflow-hidden">
         
-        <!-- Chat Layout Bento Box -->
-        <div class="flex-1 glass-panel rounded-2xl flex flex-col overflow-hidden shadow-2xl">
+        <!-- Sidebar (Left Pane) -->
+        <aside class="flex flex-col w-full md:w-64 border border-slate-900 bg-slate-950/65 backdrop-blur-md p-4 rounded-2xl shrink-0 h-[220px] md:h-auto overflow-hidden">
+            <button id="new-chat-btn"
+                    hx-post="/sessions"
+                    hx-target="#chat-history"
+                    hx-swap="innerHTML"
+                    hx-on::before-request="document.getElementById('welcome-container')?.remove();"
+                    class="w-full border border-slate-800 bg-slate-900/30 hover:bg-slate-900 hover:border-gold-500/40 text-slate-200 hover:text-gold-400 text-xs font-semibold py-3 px-4 rounded-xl transition-all duration-150 flex items-center justify-center space-x-2 shadow-sm mb-4">
+                <i class="ph ph-plus-bold text-sm"></i>
+                <span>Cuộc hội thoại mới</span>
+            </button>
+            
+            <div class="text-[10px] text-slate-500 font-mono uppercase tracking-wider mb-2 font-semibold">Lịch sử hội thoại</div>
+            <div id="sidebar-sessions-list" 
+                 hx-get="/sessions" 
+                 hx-trigger="load, load-sessions from:body" 
+                 hx-swap="innerHTML"
+                 class="flex-1 overflow-y-auto pr-1">
+                 <!-- Sessions list will load here -->
+                 <div class="text-[10px] text-slate-600 font-mono text-center py-6">Đang tải lịch sử...</div>
+            </div>
+        </aside>
+
+        <!-- Chat Layout (Right Pane) -->
+        <div class="flex-1 glass-panel rounded-2xl flex flex-col overflow-hidden shadow-2xl h-[550px] md:h-auto">
             
             <!-- Chat Feed Area -->
-            <div id="chat-history" class="flex-1 p-6 space-y-6 overflow-y-auto min-h-[350px] max-h-[60dvh] scrollbar-thin">
+            <div id="chat-history" class="flex-1 p-6 space-y-6 overflow-y-auto scrollbar-thin">
                 
-                <!-- System Welcome Message -->
-                <div class="flex items-start space-x-3 max-w-[85%]">
-                    <div class="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center font-semibold text-xs text-amber-400 flex-shrink-0">
-                        <i class="ph ph-robot text-base"></i>
+                <div id="welcome-container" class="space-y-6">
+                    <!-- System Welcome Message -->
+                    <div class="flex items-start space-x-3 max-w-[85%]">
+                        <div class="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center font-semibold text-xs text-gold-400 flex-shrink-0">
+                            <i class="ph ph-robot text-base"></i>
+                        </div>
+                        <div class="bg-slate-900/60 rounded-2xl rounded-tl-none p-4 text-sm text-slate-300 border border-slate-900 leading-relaxed shadow-sm">
+                            Xin chào! Tôi là Trợ lý Pháp luật **VietLex**. Tôi có thể giúp gì cho bạn trong việc tra cứu Luật, Nghị định và Thông tư Việt Nam hôm nay?
+                        </div>
                     </div>
-                    <div class="bg-slate-900/60 rounded-2xl rounded-tl-none p-4 text-sm text-slate-300 border border-slate-900 leading-relaxed shadow-sm">
-                        Xin chào! Tôi là Trợ lý Pháp luật **VietLex**. Tôi có thể giúp gì cho bạn trong việc tra cứu Luật, Nghị định và Thông tư Việt Nam hôm nay?
+                    
+                    <!-- Suggested Prompts Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6 pl-11">
+                        <div onclick="selectPrompt('Thời gian thử việc tối đa theo luật lao động là bao lâu?')" 
+                             class="p-4 rounded-xl border border-slate-900 bg-slate-900/20 hover:bg-slate-900/60 hover:border-gold-500/30 transition-all duration-200 cursor-pointer text-xs text-slate-400 hover:text-slate-200 leading-relaxed">
+                            <i class="ph ph-briefcase text-sm text-gold-500 mb-1.5 block"></i>
+                            Thời gian thử việc tối đa theo luật lao động là bao lâu?
+                        </div>
+                        <div onclick="selectPrompt('Quy trình và hồ sơ thành lập công ty cổ phần?')" 
+                             class="p-4 rounded-xl border border-slate-900 bg-slate-900/20 hover:bg-slate-900/60 hover:border-gold-500/30 transition-all duration-200 cursor-pointer text-xs text-slate-400 hover:text-slate-200 leading-relaxed">
+                            <i class="ph ph-buildings text-sm text-gold-500 mb-1.5 block"></i>
+                            Quy trình và hồ sơ thành lập công ty cổ phần?
+                        </div>
+                        <div onclick="selectPrompt('Điều kiện để doanh nghiệp đơn phương chấm dứt hợp đồng lao động?')" 
+                             class="p-4 rounded-xl border border-slate-900 bg-slate-900/20 hover:bg-slate-900/60 hover:border-gold-500/30 transition-all duration-200 cursor-pointer text-xs text-slate-400 hover:text-slate-200 leading-relaxed">
+                            <i class="ph ph-file-text text-sm text-gold-500 mb-1.5 block"></i>
+                            Điều kiện đơn phương chấm dứt hợp đồng lao động?
+                        </div>
+                        <div onclick="selectPrompt('Các hình thức xử lý kỷ luật lao động hợp pháp là gì?')" 
+                             class="p-4 rounded-xl border border-slate-900 bg-slate-900/20 hover:bg-slate-900/60 hover:border-gold-500/30 transition-all duration-200 cursor-pointer text-xs text-slate-400 hover:text-slate-200 leading-relaxed">
+                            <i class="ph ph-gavel text-sm text-gold-500 mb-1.5 block"></i>
+                            Các hình thức xử lý kỷ luật lao động hợp pháp?
+                        </div>
                     </div>
                 </div>
+
             </div>
 
             <!-- Loading Indicator -->
             <div id="chat-loading" class="htmx-indicator px-6 py-3 border-t border-slate-900/30 bg-slate-900/10 flex items-center space-x-3 text-slate-400 text-xs font-medium">
                 <div class="flex space-x-1.5">
-                    <div class="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce"></div>
-                    <div class="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce [animation-delay:0.2s]"></div>
-                    <div class="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                    <div class="w-1.5 h-1.5 bg-gold-500 rounded-full animate-bounce"></div>
+                    <div class="w-1.5 h-1.5 bg-gold-500 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                    <div class="w-1.5 h-1.5 bg-gold-500 rounded-full animate-bounce [animation-delay:0.4s]"></div>
                 </div>
                 <span>VietLex đang trích xuất văn bản luật và phân tích...</span>
             </div>
 
             <!-- Form input -->
             <div class="border-t border-slate-900 bg-slate-950/60 p-4">
-                <form hx-post="/chat" 
+                <form id="chat-form"
+                      hx-post="/chat" 
                       hx-target="#chat-history" 
                       hx-swap="beforeend" 
                       hx-indicator="#chat-loading"
+                      hx-on::before-request="document.getElementById('welcome-container')?.remove();"
                       hx-on::after-request="this.reset(); document.getElementById('chat-history').scrollTop = document.getElementById('chat-history').scrollHeight"
                       class="flex items-center space-x-3">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <input type="hidden" name="session_id" value="default" id="session-id-input">
                     <div class="relative flex-1">
                         <input type="text" 
+                               id="chat-input"
                                name="message" 
                                placeholder="Hỏi về luật doanh nghiệp, lao động, dân sự..." 
                                required 
                                autocomplete="off"
-                               class="w-full bg-slate-900/40 border border-slate-800/80 rounded-xl pl-4 pr-10 py-3.5 text-sm focus:outline-none focus:border-amber-500/40 focus:ring-1 focus:ring-amber-500/20 transition-all duration-200 placeholder-slate-600 text-slate-200">
+                               class="w-full bg-slate-900/40 border border-slate-800/80 rounded-xl pl-4 pr-10 py-3.5 text-sm focus:outline-none focus:border-gold-500/40 focus:ring-1 focus:ring-gold-500/20 transition-all duration-200 placeholder-slate-600 text-slate-200">
                         <div class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-600">
                             <i class="ph ph-keyboard text-lg"></i>
                         </div>
                     </div>
                     <button type="submit" 
-                            class="bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-600 hover:to-amber-500 text-slate-950 font-bold px-5.5 py-3.5 rounded-xl text-sm transition-all duration-200 shadow-md shadow-amber-500/5 active:scale-95 inline-flex items-center space-x-2">
+                            class="bg-gradient-to-r from-gold-500 to-gold-400 hover:from-gold-600 hover:to-gold-500 text-slate-950 font-bold px-5.5 py-3.5 rounded-xl text-sm transition-all duration-200 shadow-md shadow-gold-500/5 active:scale-95 inline-flex items-center space-x-2">
                         <span>Gửi</span>
                         <i class="ph ph-paper-plane-tilt text-base font-bold"></i>
                     </button>
@@ -147,16 +233,49 @@
 
     <!-- Footer -->
     <footer class="relative z-10 border-t border-slate-900/50 bg-slate-950/20 py-4">
-        <div class="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-600 font-mono">
+        <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-600 font-mono">
             <div>&copy; 2026 VietLex Legal RAG System.</div>
             <div class="mt-1 sm:mt-0 flex items-center space-x-1">
                 <span>Thiết lập bởi OpenAI Embeddings</span>
-                <span class="text-amber-500/40">•</span>
+                <span class="text-gold-500/40">•</span>
                 <span>Qdrant Cloud</span>
-                <span class="text-amber-500/40">•</span>
+                <span class="text-gold-500/40">•</span>
                 <span>LiteLLM Gateway</span>
             </div>
         </div>
     </footer>
+
+    <!-- Citations Drawer Overlay -->
+    <div id="citation-drawer" class="fixed inset-y-0 right-0 z-[100] w-full sm:w-[450px] bg-slate-900 border-l border-slate-800 shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col">
+        <div class="p-4 border-b border-slate-800 bg-slate-950 flex items-center justify-between">
+            <h3 class="text-xs font-bold font-mono text-gold-400 uppercase tracking-wider">Văn Bản Luật Trích Dẫn</h3>
+            <button onclick="closeCitationDrawer()" class="text-slate-400 hover:text-slate-100 p-1.5 bg-slate-800/40 hover:bg-slate-800 rounded-lg active:scale-95 transition-all">
+                <i class="ph ph-x text-base"></i>
+            </button>
+        </div>
+        <div class="flex-1 p-6 overflow-y-auto text-xs text-slate-350 leading-relaxed font-serif" id="citation-drawer-content">
+            <!-- Content loaded here -->
+        </div>
+    </div>
+
+    <script>
+        function selectPrompt(text) {
+            const input = document.getElementById('chat-input');
+            input.value = text;
+            document.getElementById('chat-form').requestSubmit();
+        }
+
+        function openCitationDrawer(index, text) {
+            const drawer = document.getElementById('citation-drawer');
+            const content = document.getElementById('citation-drawer-content');
+            content.innerHTML = `<div class="mb-4 font-mono text-[9px] uppercase font-semibold text-[#D4AF37] bg-[#D4AF37]/5 border border-[#D4AF37]/10 px-2 py-0.5 rounded inline-block">Nguồn Trích Dẫn #${index}</div><div class="whitespace-pre-wrap font-serif text-slate-300 text-[12px] leading-relaxed">${text}</div>`;
+            drawer.classList.remove('translate-x-full');
+        }
+
+        function closeCitationDrawer() {
+            const drawer = document.getElementById('citation-drawer');
+            drawer.classList.add('translate-x-full');
+        }
+    </script>
 </body>
 </html>
