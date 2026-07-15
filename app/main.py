@@ -1,18 +1,20 @@
-import logfire
+import secrets
 from dotenv import load_dotenv
-# Load environment variables from .env before logfire configuration
-load_dotenv()
-
-from fastapi import FastAPI, Request, Depends, HTTPException, status
+import logfire
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
-import secrets
 
 from app.config import get_settings
+from app.database import init_db
+from app.api.routes import router as api_router
+
+# Load environment variables from .env before logfire/settings initialization
+load_dotenv()
 
 # Configure Logfire
 logfire.configure()
@@ -20,8 +22,6 @@ logfire.configure()
 settings = get_settings()
 
 app = FastAPI(title="VietLex Advanced Legal RAG")
-
-from app.database import init_db
 
 @app.on_event("startup")
 async def startup_event():
@@ -50,12 +50,10 @@ templates = Jinja2Templates(directory="app/templates")
 # CSRF helper function
 def get_csrf_token(request: Request) -> str:
     session_csrf = request.session.get("csrf_token") if hasattr(request, "session") else None
-    # For this boilerplate, using cookies if session middleware isn't active
     cookie_csrf = request.cookies.get("csrf_token")
     return session_csrf or cookie_csrf or ""
 
 # Include router
-from app.api.routes import router as api_router
 app.include_router(api_router)
 
 @app.get("/", response_class=HTMLResponse)

@@ -1,6 +1,4 @@
 from fastapi import Request, HTTPException, Form, status
-from fastapi.security import APIKeyHeader
-from typing import Annotated
 
 # Dependency for CSRF token validation in form POST
 async def verify_csrf(request: Request, csrf_token: str = Form(...)):

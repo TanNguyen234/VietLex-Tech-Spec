@@ -42,11 +42,12 @@ jobs:
       - name: Test with Pytest
         env:
           PYTHONPATH: .
-          QDRANT_URL: "http://localhost:6333"
-          QDRANT_API_KEY: "mock_key"
-          COHERE_API_KEY: "mock_key"
-          OMNIGATE_BASE_URL: "http://localhost:8000/v1"
-          LITELLM_MASTER_KEY: "mock_key"
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
+          OMNIGATE_BASE_URL: ${{ secrets.OMNIGATE_BASE_URL }}
+          LITELLM_MASTER_KEY: ${{ secrets.LITELLM_MASTER_KEY }}
+          MONGO_URL: ${{ secrets.MONGO_URL }}
         run: |
           pytest -v || echo "No tests found to run yet."
 
