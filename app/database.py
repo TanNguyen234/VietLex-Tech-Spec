@@ -133,12 +133,22 @@ async def update_feedback(trace_id: str, rating: str) -> bool:
         logfire.error("Failed to update feedback in MongoDB: {error}", error=str(e), trace_id=trace_id)
         return False
 
-async def get_admin_logs(limit: int = 50, skip: int = 0) -> List[Dict[str, Any]]:
+async def get_admin_logs(limit: int = 50, skip: int = 0, search_query: Optional[str] = None) -> List[Dict[str, Any]]:
     database = get_db()
     collection = database.evaluation_logs
     
+    query = {}
+    if search_query:
+        query = {
+            "$or": [
+                {"user_query": {"$regex": search_query, "$options": "i"}},
+                {"bot_response": {"$regex": search_query, "$options": "i"}},
+                {"trace_id": {"$regex": search_query, "$options": "i"}}
+            ]
+        }
+        
     try:
-        cursor = collection.find().sort("timestamp", -1).skip(skip).limit(limit)
+        cursor = collection.find(query).sort("timestamp", -1).skip(skip).limit(limit)
         logs = await cursor.to_list(length=limit)
         return logs
     except Exception as e:
@@ -219,3 +229,13 @@ async def get_admin_stats() -> Dict[str, Any]:
         logfire.error("Failed to calculate admin stats from MongoDB: {error}", error=str(e))
         
     return stats
+
+async def get_interaction(trace_id: str) -> Optional[Dict[str, Any]]:
+    database = get_db()
+    collection = database.evaluation_logs
+    try:
+        log = await collection.find_one({"_id": trace_id})
+        return log
+    except Exception as e:
+        logfire.error("Failed to fetch interaction from MongoDB: {error}", error=str(e), trace_id=trace_id)
+        return None

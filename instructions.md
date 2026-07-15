@@ -11,7 +11,7 @@ Tạo file `.env` ở thư mục gốc:
 ```bash
 HOST=0.0.0.0
 PORT=8000
-FRONTEND_URL=http://localhost:3000
+FRONTEND_URL=http://localhost:8000
 
 # Qdrant Cloud Vector Database
 QDRANT_URL=https://your-qdrant-cluster.cloud.qdrant.io

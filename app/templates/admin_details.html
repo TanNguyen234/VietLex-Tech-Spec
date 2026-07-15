@@ -1,0 +1,152 @@
+<!-- app/templates/admin_details.html -->
+<!-- Modal Backdrop -->
+<div id="detail-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm transition-opacity duration-300">
+    <!-- Modal Panel -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden transition-all duration-300 transform scale-100">
+        
+        <!-- Modal Header -->
+        <div class="px-6 py-4 border-b border-slate-800/80 flex items-center justify-between bg-slate-950/20">
+            <div>
+                <h3 class="text-sm font-bold text-slate-200 uppercase tracking-wider font-mono">Chi Tiết Lượt Tương Tác</h3>
+                <span class="text-[10px] text-slate-500 font-mono">ID: {{ log.trace_id }}</span>
+            </div>
+            <button onclick="document.getElementById('detail-modal').remove()" 
+                    class="text-slate-400 hover:text-slate-100 p-1.5 bg-slate-800/40 hover:bg-slate-800 rounded-lg transition-all duration-150 active:scale-90"
+                    title="Đóng">
+                <i class="ph ph-x text-lg"></i>
+            </button>
+        </div>
+        
+        <!-- Modal Body (Scrollable) -->
+        <div class="p-6 overflow-y-auto space-y-5 text-xs leading-relaxed text-slate-350">
+            <!-- Timestamp & Config -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 font-mono text-[10px] text-slate-500 pb-3 border-b border-slate-800/50">
+                <div>
+                    <span class="block uppercase font-semibold text-slate-500/70">Thời gian</span>
+                    <span class="text-slate-300 font-medium">{{ log.timestamp.strftime('%d/%m/%Y %H:%M:%S') if log.timestamp else 'N/A' }}</span>
+                </div>
+                <div>
+                    <span class="block uppercase font-semibold text-slate-500/70">Nguồn dữ liệu</span>
+                    <span class="text-slate-300 font-medium">{{ 'Semantic Cache' if log.cached else 'Advanced RAG' }}</span>
+                </div>
+                <div>
+                    <span class="block uppercase font-semibold text-slate-500/70">Input Guardrails</span>
+                    <span class="{{ 'text-emerald-400' if log.safety_status.input_safe else 'text-red-400 font-bold' }} font-medium">
+                        {{ 'An toàn' if log.safety_status.input_safe else 'Bị chặn' }}
+                    </span>
+                </div>
+                <div>
+                    <span class="block uppercase font-semibold text-slate-500/70">Output Guardrails</span>
+                    <span class="{{ 'text-emerald-400' if log.safety_status.output_safe else 'text-red-400 font-bold' }} font-medium">
+                        {{ 'An toàn' if log.safety_status.output_safe else 'Bị chặn' }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Rejection Reason if blocked -->
+            {% if log.safety_status.rejection_reason %}
+            <div class="p-3 bg-red-950/10 border border-red-900/20 rounded-xl text-red-300 font-mono text-[10px] leading-normal">
+                <strong class="uppercase text-[9px] text-red-400 block mb-1">Lý do chặn từ Guardrails:</strong>
+                {{ log.safety_status.rejection_reason }}
+            </div>
+            {% endif %}
+            
+            <!-- User Query -->
+            <div class="space-y-1.5">
+                <h4 class="font-bold text-slate-400 uppercase tracking-wider text-[10px] font-mono">Câu hỏi (User)</h4>
+                <div class="p-3.5 bg-slate-950/40 border border-slate-900 rounded-xl text-slate-200 whitespace-pre-wrap leading-relaxed">
+                    {{ log.user_query }}
+                </div>
+            </div>
+            
+            <!-- Bot Response -->
+            <div class="space-y-1.5">
+                <h4 class="font-bold text-slate-400 uppercase tracking-wider text-[10px] font-mono">Câu trả lời (VietLex AI)</h4>
+                <div class="p-3.5 bg-slate-950/40 border border-slate-900 rounded-xl text-slate-200 whitespace-pre-wrap leading-relaxed">
+                    {{ log.bot_response }}
+                </div>
+            </div>
+            
+            <!-- Ragas Quality Metrics -->
+            <div class="space-y-2">
+                <h4 class="font-bold text-slate-400 uppercase tracking-wider text-[10px] font-mono">Đánh giá Ragas (LLM-as-a-judge)</h4>
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- Faithfulness -->
+                    <div class="p-3.5 rounded-xl border border-slate-800/80 bg-slate-950/15 flex flex-col justify-between">
+                        <span class="text-[9px] text-slate-500 font-mono uppercase font-semibold">Faithfulness (Độ trung thực)</span>
+                        <div class="mt-1 flex items-baseline space-x-1">
+                            {% if log.metrics.faithfulness is not none %}
+                                {% if log.metrics.faithfulness >= 0.8 %}
+                                <span class="text-xl font-bold font-mono text-emerald-400">{{ log.metrics.faithfulness }}</span>
+                                {% elif log.metrics.faithfulness >= 0.5 %}
+                                <span class="text-xl font-bold font-mono text-yellow-400">{{ log.metrics.faithfulness }}</span>
+                                {% else %}
+                                <span class="text-xl font-bold font-mono text-red-400">{{ log.metrics.faithfulness }}</span>
+                                {% endif %}
+                                <span class="text-[9px] text-slate-500 font-mono">/ 1.0</span>
+                            {% else %}
+                            <span class="text-[11px] text-slate-500 italic">Đang chờ đánh giá</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <!-- Relevance -->
+                    <div class="p-3.5 rounded-xl border border-slate-800/80 bg-slate-950/15 flex flex-col justify-between">
+                        <span class="text-[9px] text-slate-500 font-mono uppercase font-semibold">Answer Relevance (Độ tương quan)</span>
+                        <div class="mt-1 flex items-baseline space-x-1">
+                            {% if log.metrics.answer_relevance is not none %}
+                                {% if log.metrics.answer_relevance >= 0.8 %}
+                                <span class="text-xl font-bold font-mono text-emerald-400">{{ log.metrics.answer_relevance }}</span>
+                                {% elif log.metrics.answer_relevance >= 0.5 %}
+                                <span class="text-xl font-bold font-mono text-yellow-400">{{ log.metrics.answer_relevance }}</span>
+                                {% else %}
+                                <span class="text-xl font-bold font-mono text-red-400">{{ log.metrics.answer_relevance }}</span>
+                                {% endif %}
+                                <span class="text-[9px] text-slate-500 font-mono">/ 1.0</span>
+                            {% else %}
+                            <span class="text-[11px] text-slate-500 italic">Đang chờ đánh giá</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contexts Used -->
+            <div class="space-y-2">
+                <h4 class="font-bold text-slate-400 uppercase tracking-wider text-[10px] font-mono">Ngữ cảnh văn bản luật trích xuất (Qdrant)</h4>
+                {% if log.contexts %}
+                <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {% for context in log.contexts %}
+                    <div class="p-3 bg-slate-950/20 border border-slate-800/40 rounded-lg text-slate-300 text-[11px] leading-relaxed relative">
+                        <span class="absolute right-2 top-2 text-[8px] font-mono text-slate-500 bg-slate-950 border border-slate-800/80 px-1 py-0.5 rounded font-medium uppercase">
+                            Chunk {{ loop.index }}
+                        </span>
+                        <div class="pr-12">{{ context }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="p-4 text-slate-500 italic font-mono text-center bg-slate-950/20 border border-slate-800/30 rounded-lg text-[11px]">
+                    Không có ngữ cảnh luật nào được trích xuất (Ví dụ: Trúng cache hoặc bị chặn).
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Modal Footer -->
+        <div class="px-6 py-4 bg-slate-950/40 border-t border-slate-800/85 flex items-center justify-between text-[10px] font-mono text-slate-500">
+            <div>
+                {% if log.feedback.rating == 'up' %}
+                <span>Phản hồi: <strong class="text-emerald-400 uppercase">Hữu ích 👍</strong></span>
+                {% elif log.feedback.rating == 'down' %}
+                <span>Phản hồi: <strong class="text-red-400 uppercase">Không hữu ích 👎</strong></span>
+                {% else %}
+                <span>Chưa có phản hồi từ người dùng.</span>
+                {% endif %}
+            </div>
+            <button onclick="document.getElementById('detail-modal').remove()"
+                    class="px-4 py-2 bg-slate-800 hover:bg-slate-700 hover:text-slate-100 text-slate-300 rounded-xl transition duration-150 active:scale-95 text-[11px] font-medium border border-slate-750">
+                Đóng
+            </button>
+        </div>
+    </div>
+</div>

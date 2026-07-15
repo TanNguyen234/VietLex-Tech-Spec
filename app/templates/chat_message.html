@@ -1,42 +1,54 @@
 <!-- User Message -->
-<div class="flex items-start space-x-3 justify-end max-w-[85%] ml-auto">
-    <div class="bg-amber-500/10 text-amber-200 border border-amber-500/20 rounded-2xl rounded-tr-none p-4 text-sm shadow-sm">
+<div class="flex items-start space-x-3 justify-end max-w-[80%] ml-auto">
+    <div class="bg-amber-500/5 text-amber-200 border border-amber-500/10 rounded-2xl rounded-tr-none px-4 py-3 text-sm shadow-sm leading-relaxed">
         {{ user_msg }}
     </div>
-    <div class="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center font-semibold text-xs text-gray-400 flex-shrink-0">
-        Bạn
+    <div class="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center font-semibold text-xs text-slate-400 flex-shrink-0">
+        <i class="ph ph-user text-sm"></i>
     </div>
 </div>
 
 <!-- Bot Response -->
 <div class="flex items-start space-x-3 max-w-[85%]">
-    <div class="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center font-semibold text-xs text-gray-950 flex-shrink-0">
-        AI
+    <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-amber-500 to-amber-300 flex items-center justify-center font-semibold text-xs text-slate-950 flex-shrink-0 shadow-md shadow-amber-500/5">
+        <i class="ph ph-robot text-sm"></i>
     </div>
-    <div class="bg-gray-900 rounded-2xl rounded-tl-none p-4 text-sm text-gray-300 border border-gray-800 shadow-sm relative group">
+    <div class="bg-slate-900/40 rounded-2xl rounded-tl-none px-5 py-4.5 text-sm text-slate-300 border border-slate-900/80 shadow-md relative group transition-all duration-200 hover:border-slate-800/50">
+        
         <!-- Message Content -->
         <div class="whitespace-pre-wrap leading-relaxed">{{ bot_msg }}</div>
         
-        <!-- Metadata & Feedback -->
-        <div class="mt-4 pt-2 border-t border-gray-800/50 flex items-center justify-between text-xs text-gray-500">
-            <span class="font-mono text-[10px] tracking-wider opacity-60">Trace: {{ trace_id[:8] }}...</span>
+        <!-- Metadata & Feedback Bar -->
+        <div class="mt-4 pt-3 border-t border-slate-900 flex flex-wrap items-center justify-between gap-3 text-[10px] text-slate-500 font-mono">
+            <div class="flex items-center space-x-2">
+                <span class="tracking-wider opacity-60">Trace ID: {{ trace_id[:8] }}</span>
+                {% if cached %}
+                <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-500/5 text-amber-400 border border-amber-500/10 text-[9px]">
+                    <i class="ph ph-lightning-bolt mr-0.5"></i>
+                    Cache Hit
+                </span>
+                {% endif %}
+            </div>
             
-            {% if cached %}
-            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 mr-2">
-                Semantic Cache Hit
-            </span>
-            {% endif %}
-            
-            <div class="flex items-center space-x-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                <form hx-post="/api/feedback" hx-swap="none" class="inline">
+            <!-- Dynamic interactive feedback buttons -->
+            <div class="flex items-center space-x-3.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <form hx-post="/api/feedback" hx-swap="outerHTML" class="inline">
                     <input type="hidden" name="trace_id" value="{{ trace_id }}">
                     <input type="hidden" name="rating" value="up">
-                    <button type="submit" class="hover:text-amber-400 transition" title="Hữu ích">👍</button>
+                    <button type="submit" 
+                            class="hover:text-amber-400 active:scale-90 transition-all duration-150 p-0.5" 
+                            title="Hữu ích">
+                        <i class="ph ph-thumbs-up text-xs sm:text-sm"></i>
+                    </button>
                 </form>
-                <form hx-post="/api/feedback" hx-swap="none" class="inline">
+                <form hx-post="/api/feedback" hx-swap="outerHTML" class="inline">
                     <input type="hidden" name="trace_id" value="{{ trace_id }}">
                     <input type="hidden" name="rating" value="down">
-                    <button type="submit" class="hover:text-red-400 transition" title="Không hữu ích">👎</button>
+                    <button type="submit" 
+                            class="hover:text-red-400 active:scale-90 transition-all duration-150 p-0.5" 
+                            title="Không hữu ích">
+                        <i class="ph ph-thumbs-down text-xs sm:text-sm"></i>
+                    </button>
                 </form>
             </div>
         </div>

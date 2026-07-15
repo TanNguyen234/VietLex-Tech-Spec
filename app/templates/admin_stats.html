@@ -1,0 +1,73 @@
+<!-- app/templates/admin_stats.html -->
+
+<!-- Card 1: Total Queries -->
+<div class="glass-panel p-5 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden group hover:border-slate-800 transition-colors">
+    <div class="absolute -right-4 -bottom-4 text-slate-900/10 text-7xl font-bold group-hover:scale-110 transition-transform duration-300">
+        <i class="ph ph-chat-centered-text"></i>
+    </div>
+    <span class="text-[10px] uppercase font-mono tracking-wider font-semibold text-slate-500">Tổng Số Truy Vấn</span>
+    <div class="mt-2 flex items-baseline space-x-1">
+        <span class="text-3xl font-extrabold text-slate-100 tracking-tight font-mono">{{ stats.total_queries }}</span>
+        <span class="text-[10px] text-slate-500 font-mono">lượt</span>
+    </div>
+</div>
+
+<!-- Card 2: Cache Hit Rate -->
+<div class="glass-panel p-5 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden group hover:border-slate-800 transition-colors">
+    <div class="absolute -right-4 -bottom-4 text-slate-900/10 text-7xl font-bold group-hover:scale-110 transition-transform duration-300">
+        <i class="ph ph-lightning"></i>
+    </div>
+    <span class="text-[10px] uppercase font-mono tracking-wider font-semibold text-slate-500">Tỷ lệ Trúng Cache</span>
+    <div class="mt-2 flex items-baseline space-x-1">
+        <span class="text-3xl font-extrabold text-amber-400 tracking-tight font-mono">{{ stats.cache_hit_rate }}</span>
+        <span class="text-xs text-amber-500/70 font-mono">%</span>
+    </div>
+</div>
+
+<!-- Card 3: Avg Faithfulness -->
+<div class="glass-panel p-5 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden group hover:border-slate-800 transition-colors">
+    <div class="absolute -right-4 -bottom-4 text-slate-900/10 text-7xl font-bold group-hover:scale-110 transition-transform duration-300">
+        <i class="ph ph-shield-check"></i>
+    </div>
+    <span class="text-[10px] uppercase font-mono tracking-wider font-semibold text-slate-500">Độ Trung Thực (Faithfulness)</span>
+    <div class="mt-2 flex items-baseline space-x-1">
+        {% if stats.avg_faithfulness >= 0.8 %}
+        <span class="text-3xl font-extrabold text-emerald-400 tracking-tight font-mono">{{ stats.avg_faithfulness }}</span>
+        {% elif stats.avg_faithfulness >= 0.5 %}
+        <span class="text-3xl font-extrabold text-yellow-400 tracking-tight font-mono">{{ stats.avg_faithfulness }}</span>
+        {% else %}
+        <span class="text-3xl font-extrabold text-red-400 tracking-tight font-mono">{{ stats.avg_faithfulness }}</span>
+        {% endif %}
+        <span class="text-[10px] text-slate-500 font-mono">/ 1.0</span>
+    </div>
+</div>
+
+<!-- Card 4: Avg Relevance -->
+<div class="glass-panel p-5 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden group hover:border-slate-800 transition-colors">
+    <div class="absolute -right-4 -bottom-4 text-slate-900/10 text-7xl font-bold group-hover:scale-110 transition-transform duration-300">
+        <i class="ph ph-bullseye"></i>
+    </div>
+    <span class="text-[10px] uppercase font-mono tracking-wider font-semibold text-slate-500">Tương Quan (Answer Relevance)</span>
+    <div class="mt-2 flex items-baseline space-x-1">
+        {% if stats.avg_relevance >= 0.8 %}
+        <span class="text-3xl font-extrabold text-emerald-400 tracking-tight font-mono">{{ stats.avg_relevance }}</span>
+        {% elif stats.avg_relevance >= 0.5 %}
+        <span class="text-3xl font-extrabold text-yellow-400 tracking-tight font-mono">{{ stats.avg_relevance }}</span>
+        {% else %}
+        <span class="text-3xl font-extrabold text-red-400 tracking-tight font-mono">{{ stats.avg_relevance }}</span>
+        {% endif %}
+        <span class="text-[10px] text-slate-500 font-mono">/ 1.0</span>
+    </div>
+</div>
+
+<!-- Card 5: Positive Feedback Rate -->
+<div class="glass-panel p-5 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden group hover:border-slate-800 transition-colors">
+    <div class="absolute -right-4 -bottom-4 text-slate-900/10 text-7xl font-bold group-hover:scale-110 transition-transform duration-300">
+        <i class="ph ph-thumbs-up"></i>
+    </div>
+    <span class="text-[10px] uppercase font-mono tracking-wider font-semibold text-slate-500">Bình chọn Hữu Ích</span>
+    <div class="mt-2 flex items-baseline space-x-1">
+        <span class="text-3xl font-extrabold text-slate-100 tracking-tight font-mono">{{ stats.positive_feedback_rate }}</span>
+        <span class="text-xs text-slate-550 font-mono">%</span>
+    </div>
+</div>

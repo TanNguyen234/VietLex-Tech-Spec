@@ -6,10 +6,10 @@ from fastapi.templating import Jinja2Templates
 
 from app.api.dependencies import verify_csrf
 from app.services.semantic_cache import check_semantic_cache, save_to_semantic_cache
-from app.services.guardrails import check_input_guardrails, check_output_guardrails
+from app.services.guardrails import check_input_guardrails, check_output_guardrails, redact_pii
 from app.services.rag_pipeline import run_advanced_rag
 from app.services.evaluator import run_llm_as_judge
-from app.database import log_interaction, update_feedback, get_admin_logs, get_admin_stats
+from app.database import log_interaction, update_feedback, get_admin_logs, get_admin_stats, get_interaction
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -22,6 +22,7 @@ async def chat(
     csrf_token: str = Form(...),
     csrf_valid: str = Depends(verify_csrf)
 ):
+    message = redact_pii(message)
     trace_id = str(uuid.uuid4())
     
     with logfire.span("Xử lý Chat Request: {message}", message=message) as span:
@@ -69,8 +70,9 @@ async def chat(
         bot_response, context_used = await run_advanced_rag(message)
         
         # Step 5: Apply NeMo Guardrails (Output Check)
-        output_safe, fallback_response = await check_output_guardrails(bot_response, context_used)
+        output_safe, fallback_response = await check_output_guardrails(bot_response, context_used, message)
         final_response = bot_response if output_safe else fallback_response
+        final_response = redact_pii(final_response)
         rejection_reason = None if output_safe else "Hallucination or unsafe output detected"
         
         # Save log to database
@@ -107,21 +109,44 @@ async def feedback(
         await update_feedback(trace_id, rating)
         return {"status": "success", "message": "Thank you for your feedback!"}
 
-@router.get("/admin/api/stats")
-async def admin_stats():
+@router.get("/admin", response_class=HTMLResponse)
+async def admin_page(request: Request):
     stats = await get_admin_stats()
-    return stats
+    logs = await get_admin_logs(limit=15, skip=0)
+    return templates.TemplateResponse(
+        request,
+        "admin.html",
+        {"stats": stats, "logs": logs, "search": "", "skip": 0, "limit": 15}
+    )
 
-@router.get("/admin/api/logs")
-async def admin_logs(limit: int = 50, skip: int = 0):
-    logs = await get_admin_logs(limit=limit, skip=skip)
-    for log in logs:
-        if "_id" in log:
-            log["_id"] = str(log["_id"])
-        if "timestamp" in log and log["timestamp"]:
-            log["timestamp"] = log["timestamp"].isoformat()
-        if "metrics" in log and log["metrics"] and "evaluated_at" in log["metrics"] and log["metrics"]["evaluated_at"]:
-            log["metrics"]["evaluated_at"] = log["metrics"]["evaluated_at"].isoformat()
-        if "feedback" in log and log["feedback"] and "updated_at" in log["feedback"] and log["feedback"]["updated_at"]:
-            log["feedback"]["updated_at"] = log["feedback"]["updated_at"].isoformat()
-    return logs
+@router.get("/admin/stats", response_class=HTMLResponse)
+async def admin_stats_partial(request: Request):
+    stats = await get_admin_stats()
+    return templates.TemplateResponse(
+        request,
+        "admin_stats.html",
+        {"stats": stats}
+    )
+
+@router.get("/admin/logs", response_class=HTMLResponse)
+async def admin_logs_partial(
+    request: Request,
+    search: str = "",
+    skip: int = 0,
+    limit: int = 15
+):
+    logs = await get_admin_logs(limit=limit, skip=skip, search_query=search)
+    return templates.TemplateResponse(
+        request,
+        "admin_logs.html",
+        {"logs": logs, "search": search, "skip": skip, "limit": limit}
+    )
+
+@router.get("/admin/details/{trace_id}", response_class=HTMLResponse)
+async def admin_details_partial(request: Request, trace_id: str):
+    log = await get_interaction(trace_id)
+    return templates.TemplateResponse(
+        request,
+        "admin_details.html",
+        {"log": log}
+    )

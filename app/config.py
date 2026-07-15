@@ -6,7 +6,7 @@ from functools import lru_cache
 class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 8000
-    FRONTEND_URL: str = "http://localhost:3000"
+    FRONTEND_URL: str = "http://localhost:8000"
     
     # Qdrant Database
     QDRANT_URL: str = "http://localhost:6333"

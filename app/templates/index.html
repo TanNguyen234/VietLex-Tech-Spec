@@ -3,75 +3,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VietLex - Advanced Legal RAG Assistant</title>
+    <title>VietLex - Trợ lý Pháp luật Thông minh</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
-        .glass {
-            background: rgba(17, 24, 39, 0.7);
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+        }
+        
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(245, 158, 11, 0.08);
+        }
+        
+        .glass-card {
+            background: rgba(30, 41, 59, 0.4);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.05);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(245, 158, 11, 0.15);
+            border-radius: 999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(245, 158, 11, 0.3);
         }
     </style>
 </head>
-<body class="bg-gray-950 text-gray-100 min-h-screen flex flex-col font-sans">
+<body class="bg-slate-950 text-slate-100 min-h-[100dvh] flex flex-col justify-between overflow-x-hidden selection:bg-amber-500/20 selection:text-amber-300">
+    
+    <!-- Top Decorative Gradient Header Glow -->
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[250px] bg-gradient-to-b from-amber-500/5 via-transparent to-transparent blur-3xl pointer-events-none z-0"></div>
+
     <!-- Header -->
-    <header class="border-b border-gray-900 bg-gray-950/80 sticky top-0 z-50 backdrop-blur-md">
+    <header class="relative border-b border-slate-900 bg-slate-950/80 sticky top-0 z-50 backdrop-blur-md">
         <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center font-bold text-gray-950 shadow-lg shadow-amber-500/20">
-                    VL
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-300 flex items-center justify-center font-bold text-slate-950 shadow-lg shadow-amber-500/10 transition-transform hover:scale-105">
+                    <i class="ph ph-scale text-xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-lg font-bold tracking-tight bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-200 bg-clip-text text-transparent">VIETLEX</h1>
-                    <p class="text-xs text-gray-500">Advanced Legal RAG Pipeline</p>
+                    <h1 class="text-base font-bold tracking-tight bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-200 bg-clip-text text-transparent">VIETLEX</h1>
+                    <p class="text-[10px] text-slate-500 uppercase tracking-widest font-mono font-medium">Advanced Legal RAG</p>
                 </div>
             </div>
-            <div class="flex items-center space-x-2">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            
+            <div class="flex items-center space-x-4">
+                <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/5 text-emerald-400 border border-emerald-500/10">
                     <span class="w-1.5 h-1.5 mr-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
-                    Hệ thống Sẵn sàng
+                    Hệ thống hoạt động
                 </span>
+                
+                <a href="/admin" 
+                   class="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-medium border border-slate-800 bg-slate-900/50 hover:bg-slate-900 hover:border-amber-500/30 text-slate-300 hover:text-amber-400 transition-all duration-200 active:scale-95">
+                    <i class="ph ph-layout text-sm"></i>
+                    <span>Admin Dashboard</span>
+                </a>
             </div>
         </div>
     </header>
 
     <!-- Main Container -->
-    <main class="flex-1 max-w-5xl w-full mx-auto px-4 py-8 flex flex-col overflow-hidden">
-        <!-- Chat Box -->
-        <div class="flex-1 glass rounded-2xl flex flex-col overflow-hidden shadow-2xl relative">
-            <!-- Messages history -->
-            <div id="chat-history" class="flex-1 p-6 space-y-6 overflow-y-auto min-h-[400px] max-h-[600px] scrollbar-thin scrollbar-thumb-gray-800">
-                <!-- Welcome Message -->
+    <main class="relative z-10 flex-1 max-w-5xl w-full mx-auto px-4 py-6 flex flex-col justify-between overflow-hidden">
+        
+        <!-- Chat Layout Bento Box -->
+        <div class="flex-1 glass-panel rounded-2xl flex flex-col overflow-hidden shadow-2xl">
+            
+            <!-- Chat Feed Area -->
+            <div id="chat-history" class="flex-1 p-6 space-y-6 overflow-y-auto min-h-[350px] max-h-[60dvh] scrollbar-thin">
+                
+                <!-- System Welcome Message -->
                 <div class="flex items-start space-x-3 max-w-[85%]">
-                    <div class="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center font-semibold text-xs text-gray-950 flex-shrink-0">
-                        AI
+                    <div class="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center font-semibold text-xs text-amber-400 flex-shrink-0">
+                        <i class="ph ph-robot text-base"></i>
                     </div>
-                    <div class="bg-gray-900 rounded-2xl rounded-tl-none p-4 text-sm text-gray-300 border border-gray-800">
-                        Xin chào! Tôi là Trợ lý Pháp luật thông minh **VietLex**. Tôi có thể giúp gì cho bạn trong việc tra cứu Luật, Nghị định và Thông tư Việt Nam hôm nay?
+                    <div class="bg-slate-900/60 rounded-2xl rounded-tl-none p-4 text-sm text-slate-300 border border-slate-900 leading-relaxed shadow-sm">
+                        Xin chào! Tôi là Trợ lý Pháp luật **VietLex**. Tôi có thể giúp gì cho bạn trong việc tra cứu Luật, Nghị định và Thông tư Việt Nam hôm nay?
                     </div>
                 </div>
             </div>
 
-            <!-- Form -->
-            <div class="border-t border-gray-900 p-4 bg-gray-950/50">
+            <!-- Loading Indicator -->
+            <div id="chat-loading" class="htmx-indicator px-6 py-3 border-t border-slate-900/30 bg-slate-900/10 flex items-center space-x-3 text-slate-400 text-xs font-medium">
+                <div class="flex space-x-1.5">
+                    <div class="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce"></div>
+                    <div class="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                    <div class="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                </div>
+                <span>VietLex đang trích xuất văn bản luật và phân tích...</span>
+            </div>
+
+            <!-- Form input -->
+            <div class="border-t border-slate-900 bg-slate-950/60 p-4">
                 <form hx-post="/chat" 
                       hx-target="#chat-history" 
                       hx-swap="beforeend" 
+                      hx-indicator="#chat-loading"
                       hx-on::after-request="this.reset(); document.getElementById('chat-history').scrollTop = document.getElementById('chat-history').scrollHeight"
                       class="flex items-center space-x-3">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                    <input type="text" 
-                           name="message" 
-                           placeholder="Nhập câu hỏi pháp luật của bạn..." 
-                           required 
-                           class="flex-1 bg-gray-900/50 border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 transition placeholder-gray-600">
+                    <div class="relative flex-1">
+                        <input type="text" 
+                               name="message" 
+                               placeholder="Hỏi về luật doanh nghiệp, lao động, dân sự..." 
+                               required 
+                               autocomplete="off"
+                               class="w-full bg-slate-900/40 border border-slate-800/80 rounded-xl pl-4 pr-10 py-3.5 text-sm focus:outline-none focus:border-amber-500/40 focus:ring-1 focus:ring-amber-500/20 transition-all duration-200 placeholder-slate-600 text-slate-200">
+                        <div class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-600">
+                            <i class="ph ph-keyboard text-lg"></i>
+                        </div>
+                    </div>
                     <button type="submit" 
-                            class="bg-gradient-to-tr from-amber-500 to-yellow-400 hover:from-amber-600 hover:to-yellow-500 text-gray-950 font-semibold px-6 py-3 rounded-xl text-sm transition shadow-lg shadow-amber-500/10 active:scale-95">
-                        Gửi
+                            class="bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-600 hover:to-amber-500 text-slate-950 font-bold px-5.5 py-3.5 rounded-xl text-sm transition-all duration-200 shadow-md shadow-amber-500/5 active:scale-95 inline-flex items-center space-x-2">
+                        <span>Gửi</span>
+                        <i class="ph ph-paper-plane-tilt text-base font-bold"></i>
                     </button>
                 </form>
             </div>
@@ -79,9 +146,16 @@
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-gray-900 bg-gray-950 py-4">
-        <div class="max-w-5xl mx-auto px-4 text-center text-xs text-gray-600">
-            &copy; 2026 VietLex Legal RAG System. Mọi quyền được bảo lưu.
+    <footer class="relative z-10 border-t border-slate-900/50 bg-slate-950/20 py-4">
+        <div class="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-600 font-mono">
+            <div>&copy; 2026 VietLex Legal RAG System.</div>
+            <div class="mt-1 sm:mt-0 flex items-center space-x-1">
+                <span>Thiết lập bởi OpenAI Embeddings</span>
+                <span class="text-amber-500/40">•</span>
+                <span>Qdrant Cloud</span>
+                <span class="text-amber-500/40">•</span>
+                <span>LiteLLM Gateway</span>
+            </div>
         </div>
     </footer>
 </body>

@@ -25,7 +25,8 @@ async def run_llm_as_judge(user_query: str, context: List[str], bot_response: st
         llm = ChatOpenAI(
             model="legal-core-model",
             api_key=settings.LITELLM_MASTER_KEY,
-            base_url=settings.OMNIGATE_BASE_URL
+            base_url=settings.OMNIGATE_BASE_URL,
+            default_headers={"drop_params": "true"}
         )
         embeddings = OpenAIEmbeddings(
             model="legal-embedding-model",
