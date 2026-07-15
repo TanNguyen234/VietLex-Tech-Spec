@@ -56,7 +56,7 @@ app.include_router(api_router)
 async def get_index(request: Request):
     # CSRF generation
     token = secrets.token_hex(32)
-    response = templates.TemplateResponse("index.html", {"request": request, "csrf_token": token})
+    response = templates.TemplateResponse(request, "index.html", {"csrf_token": token})
     # Save token in cookie for validation
     response.set_cookie(key="csrf_token", value=token, httponly=True, samesite="strict")
     return response

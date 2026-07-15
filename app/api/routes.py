@@ -29,8 +29,9 @@ async def chat(
         if cached_response:
             span.set_attribute("cache_hit", True)
             return templates.TemplateResponse(
+                request,
                 "chat_message.html", 
-                {"request": request, "user_msg": message, "bot_msg": cached_response, "trace_id": trace_id, "cached": True}
+                {"user_msg": message, "bot_msg": cached_response, "trace_id": trace_id, "cached": True}
             )
         
         span.set_attribute("cache_hit", False)
@@ -40,8 +41,9 @@ async def chat(
         if not input_safe:
             span.set_attribute("guardrails_blocked_input", True)
             return templates.TemplateResponse(
+                request,
                 "chat_message.html",
-                {"request": request, "user_msg": message, "bot_msg": rejection_message, "trace_id": trace_id}
+                {"user_msg": message, "bot_msg": rejection_message, "trace_id": trace_id}
             )
             
         # Step 4: Run Advanced Retrieval Pipeline (RAG)
@@ -59,8 +61,9 @@ async def chat(
         
         # Step 9: Return HTML partial response
         return templates.TemplateResponse(
+            request,
             "chat_message.html",
-            {"request": request, "user_msg": message, "bot_msg": final_response, "trace_id": trace_id}
+            {"user_msg": message, "bot_msg": final_response, "trace_id": trace_id}
         )
 
 @router.post("/api/feedback")
