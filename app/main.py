@@ -21,6 +21,12 @@ settings = get_settings()
 
 app = FastAPI(title="VietLex Advanced Legal RAG")
 
+from app.database import init_db
+
+@app.on_event("startup")
+async def startup_event():
+    await init_db()
+
 # Instrument FastAPI with Logfire
 logfire.instrument_fastapi(app)
 

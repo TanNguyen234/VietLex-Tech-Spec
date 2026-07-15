@@ -24,13 +24,13 @@ async def run_llm_as_judge(user_query: str, context: List[str], bot_response: st
         # Configure LLM and Embeddings for Ragas using OmniGate settings
         llm = ChatOpenAI(
             model="legal-core-model",
-            openai_api_key=settings.LITELLM_MASTER_KEY,
-            openai_api_base=settings.OMNIGATE_BASE_URL
+            api_key=settings.LITELLM_MASTER_KEY,
+            base_url=settings.OMNIGATE_BASE_URL
         )
         embeddings = OpenAIEmbeddings(
             model="legal-embedding-model",
-            openai_api_key=settings.LITELLM_MASTER_KEY,
-            openai_api_base=settings.OMNIGATE_BASE_URL
+            api_key=settings.LITELLM_MASTER_KEY,
+            base_url=settings.OMNIGATE_BASE_URL
         )
         
         # Format dataset for Ragas
@@ -55,6 +55,10 @@ async def run_llm_as_judge(user_query: str, context: List[str], bot_response: st
             "faithfulness": float(result.get("faithfulness", 0.0)),
             "answer_relevance": float(result.get("answer_relevancy", result.get("answer_relevance", 0.0)))
         }
+        
+        # Save evaluation results to MongoDB
+        from app.database import update_evaluation
+        await update_evaluation(trace_id, scores["faithfulness"], scores["answer_relevance"])
         
         logfire.info(
             "Đánh giá Ragas hoàn thành",
