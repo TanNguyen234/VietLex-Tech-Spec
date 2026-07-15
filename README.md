@@ -46,27 +46,27 @@ The admin panel showcases system stats (Total Queries, Cache Hit Rate, Average R
 
 ```mermaid
 graph TD
-    User([User]) -->|POST /chat| API[FastAPI Endpoints]
-    API -->|1. Redact PII| PII[PII Redactor]
-    PII -->|2. Check Cache| Cache[Semantic Cache Qdrant]
-    Cache -->|Cache Hit| Return[Return Response]
-    Cache -->|Cache Miss| InputRails[Input Guardrails]
-    InputRails -->|Blocked| Block[Return Safety Message]
-    InputRails -->|Safe| RAG[Advanced Retrieval]
+    User["User"] -->|POST /chat| API["FastAPI Endpoints"]
+    API -->|1. Redact PII| PII["PII Redactor"]
+    PII -->|2. Check Cache| Cache["Semantic Cache Qdrant"]
+    Cache -->|Cache Hit| Return["Return Response"]
+    Cache -->|Cache Miss| InputRails["Input Guardrails"]
+    InputRails -->|Blocked| Block["Return Safety Message"]
+    InputRails -->|Safe| RAG["Advanced Retrieval"]
     
-    RAG -->|Query Rewrite| Rewrite[LLM Rewrite]
-    Rewrite -->|Hybrid Search| Qdrant[(Qdrant Cloud)]
-    Qdrant -->|Dense + Sparse PyVi| RRF[RRF Fusion]
-    RRF -->|Top 15 Chunks| Rerank[Cohere Rerank v3]
-    Rerank -->|Top 3 Contexts| Generator[LLM Generator]
+    RAG -->|Query Rewrite| Rewrite["LLM Rewrite"]
+    Rewrite -->|Hybrid Search| Qdrant["Qdrant Cloud"]
+    Qdrant -->|Dense + Sparse PyVi| RRF["RRF Fusion"]
+    RRF -->|Top 15 Chunks| Rerank["Cohere Rerank v3"]
+    Rerank -->|Top 3 Contexts| Generator["LLM Generator"]
     
-    Generator -->|3. Validate Answer| OutputRails[Output Guardrails]
-    OutputRails -->|Hallucination Detected| Fallback[Return Fallback Message]
-    OutputRails -->|Safe| FinalResponse[Final Response]
+    Generator -->|3. Validate Answer| OutputRails["Output Guardrails"]
+    OutputRails -->|Hallucination Detected| Fallback["Return Fallback Message"]
+    OutputRails -->|Safe| FinalResponse["Final Response"]
     
-    FinalResponse -->|4. Save Log| DB[(MongoDB Atlas)]
+    FinalResponse -->|4. Save Log| DB["MongoDB Atlas"]
     FinalResponse -->|5. Update Cache| Cache
-    FinalResponse -->|6. Trigger BG Task| Ragas[Ragas Evaluator]
+    FinalResponse -->|6. Trigger BG Task| Ragas["Ragas Evaluator"]
     Ragas -->|Update Ragas Scores| DB
 ```
 
