@@ -16,18 +16,16 @@ def text_to_sparse_vector(text: str) -> Dict[str, List]:
     for token in tokens:
         tf[token] = tf.get(token, 0) + 1
         
-    indices = []
-    values = []
+    index_values = {}
     for token, count in tf.items():
         hash_val = int(hashlib.md5(token.encode('utf-8')).hexdigest(), 16)
         idx = hash_val % 1000000
-        indices.append(idx)
-        values.append(float(count))
+        index_values[idx] = index_values.get(idx, 0.0) + float(count)
         
-    sorted_pairs = sorted(zip(indices, values))
+    sorted_indices = sorted(index_values.keys())
     return {
-        "indices": [p[0] for p in sorted_pairs],
-        "values": [p[1] for p in sorted_pairs]
+        "indices": sorted_indices,
+        "values": [index_values[idx] for idx in sorted_indices]
     }
 
 @logfire.instrument("Đồng bộ hóa dữ liệu lên Qdrant")

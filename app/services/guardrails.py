@@ -57,10 +57,22 @@ async def call_llm_guard(prompt: str) -> str:
         "messages": [{"role": "user", "content": prompt}],
         "temperature": 0.0
     }
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        response = await client.post(chat_url, headers=headers, json=payload)
-        response.raise_for_status()
-        return response.json()["choices"][0]["message"]["content"].strip()
+    import asyncio
+    for attempt in range(5):
+        try:
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                response = await client.post(chat_url, headers=headers, json=payload)
+                if response.status_code in [429, 502, 503, 504]:
+                    sleep_time = (2 ** attempt) + 1
+                    await asyncio.sleep(sleep_time)
+                    continue
+                response.raise_for_status()
+                return response.json()["choices"][0]["message"]["content"].strip()
+        except Exception as e:
+            if attempt == 4:
+                raise e
+            await asyncio.sleep((2 ** attempt) + 1)
+    raise RuntimeError("Failed to call LLM guard after 5 attempts.")
 
 @logfire.instrument("Kiểm tra an toàn Input Guardrails")
 async def check_input_guardrails(message: str) -> Tuple[bool, str]:
@@ -118,7 +130,7 @@ async def check_output_guardrails(response: str, context: List[str], user_query:
     if not context:
         return True, ""
         
-    context_str = "\n\n".join(context)
+    context_str = "\n\n".join([doc[:6000] for doc in context])
     
     consolidated_output_prompt = (
         "Bạn là hệ thống kiểm soát an toàn đầu ra (Output Guardrails) cho chatbot VietLex.\n"

@@ -31,6 +31,12 @@
       "skillPath": "config/skills/ecosystem-primer/SKILL.md",
       "computedHash": "83d0d8922a89bd92d2031e2e3c3c785f32f84513d0785c3a3018690a81984b82"
     },
+    "improve-codebase-architecture": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/improve-codebase-architecture/SKILL.md",
+      "computedHash": "569299a60c8e93880f3b3c1eca55578f58f7e1a4155876edb4cb814da3d6b3ea"
+    },
     "langchain-dependencies": {
       "source": "langchain-ai/langchain-skills",
       "sourceType": "github",
@@ -102,6 +108,12 @@
       "sourceType": "github",
       "skillPath": "config/skills/swarm/SKILL.md",
       "computedHash": "1839bb3cb12115e36b4f7873d9bc4b3d97c5cd1140860f4f0032672dc1ec5241"
+    },
+    "writing-plans": {
+      "source": "obra/superpowers",
+      "sourceType": "github",
+      "skillPath": "skills/writing-plans/SKILL.md",
+      "computedHash": "b73b59d43c34c3fc225bfae419c458bb216af80df25fc0c545dfa7fd2a161722"
     }
   }
 }

@@ -1,6 +1,7 @@
 import logfire
 import httpx
 import hashlib
+import asyncio
 from typing import Tuple, List, Dict
 from pyvi import ViTokenizer
 from qdrant_client import AsyncQdrantClient
@@ -16,18 +17,16 @@ def text_to_sparse_vector(text: str) -> Dict[str, List]:
     for token in tokens:
         tf[token] = tf.get(token, 0) + 1
         
-    indices = []
-    values = []
+    index_values = {}
     for token, count in tf.items():
         hash_val = int(hashlib.md5(token.encode('utf-8')).hexdigest(), 16)
         idx = hash_val % 1000000
-        indices.append(idx)
-        values.append(float(count))
+        index_values[idx] = index_values.get(idx, 0.0) + float(count)
         
-    sorted_pairs = sorted(zip(indices, values))
+    sorted_indices = sorted(index_values.keys())
     return {
-        "indices": [p[0] for p in sorted_pairs],
-        "values": [p[1] for p in sorted_pairs]
+        "indices": sorted_indices,
+        "values": [index_values[idx] for idx in sorted_indices]
     }
 
 @logfire.instrument("Chạy luồng Advanced Retrieval Pipeline cho truy vấn: {user_query}")
@@ -85,25 +84,54 @@ async def rewrite_query(query: str) -> str:
         "temperature": 0.0
     }
     
-    try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(chat_url, headers=headers, json=payload)
-            response.raise_for_status()
-            rewritten = response.json()["choices"][0]["message"]["content"].strip()
-            logfire.info("Query rewritten: {rewritten}", rewritten=rewritten)
-            return rewritten
-    except Exception as e:
-        logfire.error("Error rewriting query: {error}, falling back to original query", error=str(e))
-        return query
+    import asyncio
+    for attempt in range(5):
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(chat_url, headers=headers, json=payload)
+                if response.status_code in [429, 502, 503, 504]:
+                    sleep_time = (2 ** attempt) + 1
+                    await asyncio.sleep(sleep_time)
+                    continue
+                response.raise_for_status()
+                rewritten = response.json()["choices"][0]["message"]["content"].strip()
+                logfire.info("Query rewritten: {rewritten}", rewritten=rewritten)
+                return rewritten
+        except Exception as e:
+            if attempt == 4:
+                logfire.error("Error rewriting query after 5 attempts: {error}, falling back to original query", error=str(e))
+                return query
+            await asyncio.sleep((2 ** attempt) + 1)
+    return query
 
 async def dense_search(query: str) -> List[dict]:
-    logfire.info("Đang thực hiện Dense Search")
+    logfire.info("Đang thực hiện Dense Search qua Qdrant Cloud Inference")
     try:
         qdrant_client = AsyncQdrantClient(
             url=settings.QDRANT_URL,
-            api_key=settings.QDRANT_API_KEY
+            api_key=settings.QDRANT_API_KEY,
+            cloud_inference=True
         )
-        query_vector = await get_embedding(query)
+        from qdrant_client.http.models import Document
+        # 1. Try Qdrant Cloud Inference
+        try:
+            results = await asyncio.wait_for(
+                qdrant_client.query_points(
+                    collection_name="vietlex_knowledge_base",
+                    query=Document(
+                        text=query,
+                        model="sentence-transformers/all-minilm-l6-v2"
+                    ),
+                    limit=15
+                ),
+                timeout=5.0
+            )
+            return results.points
+        except Exception as inf_err:
+            logfire.warning("Inference dense search failed or timed out: {error}. Falling back to gemini-embedding-2...", error=str(inf_err))
+            
+        # 2. Fallback to gemini-embedding-2 (384 dimensions)
+        query_vector = (await get_embedding(query))[:384]
         results = await qdrant_client.query_points(
             collection_name="vietlex_knowledge_base",
             query=query_vector,
@@ -198,7 +226,7 @@ async def generate_response(original_query: str, rewritten_query: str, context: 
         "Authorization": f"Bearer {settings.LITELLM_MASTER_KEY}"
     }
     
-    context_str = "\n\n".join([f"[Tài liệu tham khảo #{i+1}]:\n{doc}" for i, doc in enumerate(context)])
+    context_str = "\n\n".join([f"[Tài liệu tham khảo #{i+1}]:\n{doc[:6000]}" for i, doc in enumerate(context)])
     
     system_prompt = (
         "Bạn là Trợ lý Pháp luật Việt Nam thông minh, chính xác và trung thực.\n"
@@ -223,12 +251,21 @@ async def generate_response(original_query: str, rewritten_query: str, context: 
         "temperature": 0.2
     }
     
-    try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            response = await client.post(chat_url, headers=headers, json=payload)
-            response.raise_for_status()
-            bot_response = response.json()["choices"][0]["message"]["content"].strip()
-            return bot_response
-    except Exception as e:
-        logfire.error("Error generating answer: {error}", error=str(e))
-        return "Đã xảy ra lỗi khi kết nối với máy chủ sinh câu trả lời pháp luật."
+    import asyncio
+    for attempt in range(5):
+        try:
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                response = await client.post(chat_url, headers=headers, json=payload)
+                if response.status_code in [429, 502, 503, 504]:
+                    sleep_time = (2 ** attempt) + 1
+                    await asyncio.sleep(sleep_time)
+                    continue
+                response.raise_for_status()
+                bot_response = response.json()["choices"][0]["message"]["content"].strip()
+                return bot_response
+        except Exception as e:
+            if attempt == 4:
+                logfire.error("Error generating answer after 5 attempts: {error}", error=str(e))
+                return "Đã xảy ra lỗi khi kết nối với máy chủ sinh câu trả lời pháp luật."
+            await asyncio.sleep((2 ** attempt) + 1)
+    return "Đã xảy ra lỗi khi kết nối với máy chủ sinh câu trả lời pháp luật."

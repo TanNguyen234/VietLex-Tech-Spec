@@ -206,26 +206,23 @@
                       hx-indicator="#chat-loading"
                       hx-on::before-request="document.getElementById('welcome-container')?.remove();"
                       hx-on::after-request="this.reset(); document.getElementById('chat-history').scrollTop = document.getElementById('chat-history').scrollHeight"
-                      class="flex items-center space-x-3">
+                      class="w-full">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                     <input type="hidden" name="session_id" value="default" id="session-id-input">
-                    <div class="relative flex-1">
+                    <div class="relative w-full">
                         <input type="text" 
                                id="chat-input"
                                name="message" 
                                placeholder="Hỏi về luật doanh nghiệp, lao động, dân sự..." 
                                required 
                                autocomplete="off"
-                               class="w-full bg-slate-900/40 border border-slate-800/80 rounded-xl pl-4 pr-10 py-3.5 text-sm focus:outline-none focus:border-gold-500/40 focus:ring-1 focus:ring-gold-500/20 transition-all duration-200 placeholder-slate-600 text-slate-200">
-                        <div class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-600">
-                            <i class="ph ph-keyboard text-lg"></i>
-                        </div>
+                               class="w-full bg-slate-900/40 border border-slate-800/80 rounded-xl pl-4 pr-24 py-3.5 text-sm focus:outline-none focus:border-gold-500/40 focus:ring-1 focus:ring-gold-500/20 transition-all duration-200 placeholder-slate-600 text-slate-200">
+                        <button type="submit" 
+                                class="absolute right-2 top-1/2 -translate-y-1/2 bg-gradient-to-r from-gold-500 to-gold-400 hover:from-gold-600 hover:to-gold-500 text-slate-950 font-bold px-4 py-2 rounded-lg text-xs transition-all duration-200 shadow-md active:scale-95 inline-flex items-center space-x-1.5 whitespace-nowrap shrink-0">
+                            <span>Gửi</span>
+                            <i class="ph ph-paper-plane-tilt text-sm font-bold"></i>
+                        </button>
                     </div>
-                    <button type="submit" 
-                            class="bg-gradient-to-r from-gold-500 to-gold-400 hover:from-gold-600 hover:to-gold-500 text-slate-950 font-bold px-6 py-3.5 rounded-xl text-sm transition-all duration-200 shadow-md shadow-gold-500/5 active:scale-95 inline-flex items-center space-x-2 whitespace-nowrap shrink-0">
-                        <span>Gửi</span>
-                        <i class="ph ph-paper-plane-tilt text-base font-bold"></i>
-                    </button>
                 </form>
             </div>
         </div>

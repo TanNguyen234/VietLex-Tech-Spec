@@ -1,6 +1,7 @@
 import logfire
 import httpx
 import uuid
+import asyncio
 from typing import Optional
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.models import VectorParams, Distance, PointStruct
@@ -22,7 +23,26 @@ async def get_embedding(text: str) -> list:
     async with httpx.AsyncClient(timeout=30.0) as client:
         response = await client.post(embedding_url, headers=headers, json=payload)
         response.raise_for_status()
+        # text-embedding-004 is 768-dimensional
         return response.json()["data"][0]["embedding"][:768]
+
+async def ensure_cache_collection(client: AsyncQdrantClient, name: str):
+    recreate = False
+    if await client.collection_exists(name):
+        info = await client.get_collection(name)
+        current_size = info.config.params.vectors.size
+        if current_size != 768:
+            logfire.info("Semantic cache size is {size}, recreating with size 768", size=current_size)
+            await client.delete_collection(name)
+            recreate = True
+    else:
+        recreate = True
+        
+    if recreate:
+        await client.create_collection(
+            collection_name=name,
+            vectors_config=VectorParams(size=768, distance=Distance.COSINE)
+        )
 
 @logfire.instrument("Kiểm tra Semantic Cache cho truy vấn: {user_query}")
 async def check_semantic_cache(user_query: str) -> Optional[str]:
@@ -33,16 +53,10 @@ async def check_semantic_cache(user_query: str) -> Optional[str]:
         )
         collection_name = "vietlex_semantic_cache"
         
-        if not await qdrant_client.collection_exists(collection_name):
-            logfire.info("Collection {col} does not exist. Creating...", col=collection_name)
-            await qdrant_client.create_collection(
-                collection_name=collection_name,
-                vectors_config=VectorParams(size=768, distance=Distance.COSINE)
-            )
-            return None
-            
-        query_vector = await get_embedding(user_query)
+        await ensure_cache_collection(qdrant_client, collection_name)
         
+        # Use text-embedding-004 (via get_embedding fallback model group)
+        query_vector = await get_embedding(user_query)
         results = await qdrant_client.query_points(
             collection_name=collection_name,
             query=query_vector,
@@ -71,15 +85,11 @@ async def save_to_semantic_cache(user_query: str, bot_response: str):
         )
         collection_name = "vietlex_semantic_cache"
         
-        if not await qdrant_client.collection_exists(collection_name):
-            await qdrant_client.create_collection(
-                collection_name=collection_name,
-                vectors_config=VectorParams(size=768, distance=Distance.COSINE)
-            )
-            
-        query_vector = await get_embedding(user_query)
+        await ensure_cache_collection(qdrant_client, collection_name)
         point_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, user_query))
         
+        # Use text-embedding-004 (via get_embedding fallback model group)
+        query_vector = await get_embedding(user_query)
         await qdrant_client.upsert(
             collection_name=collection_name,
             points=[
@@ -93,6 +103,6 @@ async def save_to_semantic_cache(user_query: str, bot_response: str):
                 )
             ]
         )
-        logfire.info("Successfully saved to semantic cache")
+        logfire.info("Successfully saved to semantic cache using text-embedding-004")
     except Exception as e:
         logfire.error("Error saving to semantic cache: {error}", error=str(e))
