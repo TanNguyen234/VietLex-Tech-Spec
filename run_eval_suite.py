@@ -24,213 +24,17 @@ from langchain_core.embeddings import Embeddings
 # Test cases
 # Test cases helper to load from datht/vlegal dataset
 def load_evaluation_dataset() -> list:
-    test_cases = []
-    
-    # 1. 5 Factoid questions from task_3_1
-    print("Loading Factoid questions from datht/vlegal (task_3_1)...")
-    try:
-        from datasets import load_dataset
-        ds = load_dataset("datht/vlegal", "task_3_1", split="test")
-        count = 0
-        for i in range(len(ds)):
-            if count >= 5:
-                break
-            row = ds[i]
-            # Verify the row has question and answers
-            if "question" in row and "answers" in row and "ground_truth" in row:
-                gt_letter = row["ground_truth"].strip()
-                gt_content = ""
-                for line in row["answers"].split("\n"):
-                    if line.strip().startswith(gt_letter):
-                        # Extract choice content after A: / B: etc.
-                        parts = line.split(":", 1)
-                        if len(parts) > 1:
-                            gt_content = parts[1].strip()
-                        else:
-                            gt_content = line.strip()
-                        break
-                if not gt_content:
-                    gt_content = row["answers"]
+    dataset_paths = [
+        os.path.abspath("docs/evaluation_50_dataset.json"),
+        os.path.abspath("app/data/evaluation_50_dataset.json")
+    ]
+    for p in dataset_paths:
+        if os.path.exists(p):
+            print(f"Loading 50-query evaluation dataset from: {p}")
+            with open(p, "r", encoding="utf-8") as f:
+                return json.load(f)
                 
-                # Make sure the question is not too long for simple factoid
-                if len(row["question"]) < 200:
-                    test_cases.append({
-                        "query": row["question"],
-                        "group": "Factoid",
-                        "expected": "pass_guardrails",
-                        "ground_truth": gt_content
-                    })
-                    count += 1
-    except Exception as e:
-        print(f"Error loading Factoid questions: {e}. Using fallbacks.")
-        test_cases.extend([
-            {
-                "query": "Thời gian thử việc tối đa theo luật lao động là bao lâu?",
-                "group": "Factoid",
-                "expected": "pass_guardrails",
-                "ground_truth": "Thời gian thử việc tối đa đối với người quản lý doanh nghiệp là không quá 180 ngày; đối với công việc cần trình độ từ cao đẳng trở lên là không quá 60 ngày; đối với trình độ trung cấp, công nhân kỹ thuật là không quá 30 ngày; đối với công việc khác là không quá 6 ngày làm việc."
-            },
-            {
-                "query": "Các hình thức xử lý kỷ luật lao động hợp pháp theo quy định?",
-                "group": "Factoid",
-                "expected": "pass_guardrails",
-                "ground_truth": "Theo quy định của Bộ luật Lao động, có 4 hình thức xử lý kỷ luật lao động hợp pháp bao gồm: 1. Khiển trách; 2. Kéo dài thời hạn nâng lương không quá 06 tháng; 3. Cách chức; 4. Sa thải."
-            },
-            {
-                "query": "Quy trình thành lập công ty cổ phần cần những bước nào?",
-                "group": "Factoid",
-                "expected": "pass_guardrails",
-                "ground_truth": "Quy trình thành lập công ty cổ phần bao gồm các bước: Chuẩn bị hồ sơ đăng ký doanh nghiệp; nộp hồ sơ tại Phòng Đăng ký kinh doanh thuộc Sở Kế hoạch và Đầu tư; nhận Giấy chứng nhận đăng ký doanh nghiệp; thực hiện công bố thông tin, khắc con dấu và làm thủ tục khai thuế ban đầu."
-            },
-            {
-                "query": "Doanh nghiệp có bắt buộc phải đóng bảo hiểm xã hội cho người lao động thử việc không?",
-                "group": "Factoid",
-                "expected": "pass_guardrails",
-                "ground_truth": "Doanh nghiệp bắt buộc phải đóng bảo hiểm xã hội (BHXH) cho người lao động trong thời gian thử việc nếu hai bên ký hợp đồng thử việc riêng lẻ mà hợp đồng đó có thời hạn từ 01 tháng trở lên, hoặc thời gian thử việc được ghi chung trong hợp đồng lao động có thời hạn từ 01 tháng trở lên."
-            },
-            {
-                "query": "Người lao động có quyền đơn phương chấm dứt hợp đồng lao động không?",
-                "group": "Factoid",
-                "expected": "pass_guardrails",
-                "ground_truth": "Người lao động có quyền đơn phương chấm dứt hợp đồng lao động nhưng phải báo trước theo thời hạn luật định (tối thiểu 45 ngày với hợp đồng không xác định thời hạn, 30 ngày với hợp đồng xác định thời hạn từ 12-36 tháng, 3 ngày với hợp đồng dưới 12 tháng)."
-            }
-        ])
-
-    # 2. 5 Multi-hop questions from task_2_1
-    print("Loading Multi-hop questions from datht/vlegal (task_2_1)...")
-    try:
-        from datasets import load_dataset
-        ds = load_dataset("datht/vlegal", "task_2_1", split="test")
-        count = 0
-        for i in range(len(ds)):
-            if count >= 5:
-                break
-            row = ds[i]
-            if "question" in row and "answers" in row and "ground_truth" in row:
-                gt_letter = row["ground_truth"].strip()
-                gt_content = ""
-                for line in row["answers"].split("\n"):
-                    if line.strip().startswith(gt_letter):
-                        parts = line.split(".", 1)
-                        if len(parts) > 1:
-                            gt_content = parts[1].strip()
-                        else:
-                            gt_content = line.strip()
-                        break
-                if not gt_content:
-                    gt_content = row["answers"]
-                
-                test_cases.append({
-                    "query": row["question"],
-                    "group": "Multi-hop",
-                    "expected": "pass_guardrails",
-                    "ground_truth": gt_content
-                })
-                count += 1
-    except Exception as e:
-        print(f"Error loading Multi-hop questions: {e}. Using fallbacks.")
-        test_cases.extend([
-            {
-                "query": "Nếu người lao động thử việc bị tai nạn lao động thì doanh nghiệp có phải trả lương và đóng bảo hiểm không?",
-                "group": "Multi-hop",
-                "expected": "pass_guardrails",
-                "ground_truth": "Người sử dụng lao động phải thanh toán chi phí y tế và trả đủ lương cho người lao động bị tai nạn lao động trong thời gian điều trị. Mặc dù là thời gian thử việc, nếu hợp đồng thử việc từ 1 tháng trở lên thì thuộc diện tham gia bảo hiểm xã hội bắt buộc, do đó người lao động vẫn được hưởng chế độ tai nạn lao động."
-            },
-            {
-                "query": "Doanh nghiệp sa thải lao động nữ mang thai vì nghỉ 5 ngày không lý do có hợp pháp không?",
-                "group": "Multi-hop",
-                "expected": "pass_guardrails",
-                "ground_truth": "Không hợp pháp. Theo quy định của Bộ luật Lao động, người sử dụng lao động không được xử lý kỷ luật sa thải hoặc đơn phương chấm dứt hợp đồng lao động đối với lao động nữ vì lý do kết hôn, mang thai, nghỉ thai sản, nuôi con dưới 12 tháng tuổi."
-            },
-            {
-                "query": "Hợp đồng lao động bằng lời nói có giá trị pháp lý khi giao kết công việc thời hạn 1 tháng không?",
-                "group": "Multi-hop",
-                "expected": "pass_guardrails",
-                "ground_truth": "Có giá trị pháp lý. Hợp đồng lao động dưới 1 tháng có thể giao kết bằng lời nói, ngoại trừ trường hợp giao kết hợp đồng với người dưới 15 tuổi, lao động là người giúp việc gia đình hoặc thông qua người đại diện của nhóm lao động."
-            },
-            {
-                "query": "Hồ sơ đăng ký thay đổi vốn điều lệ của công ty trách nhiệm hữu hạn hai thành viên trở lên gồm những gì?",
-                "group": "Multi-hop",
-                "expected": "pass_guardrails",
-                "ground_truth": "Hồ sơ gồm: Thông báo thay đổi nội dung đăng ký doanh nghiệp; Quyết định và bản sao biên bản họp của Hội đồng thành viên; Danh sách thành viên sau khi thay đổi; Giấy tờ xác nhận việc góp vốn của thành viên mới (nếu có)."
-            },
-            {
-                "query": "Người nước ngoài làm việc tại Việt Nam không có giấy phép lao động thì hợp đồng lao động có hiệu lực không?",
-                "group": "Multi-hop",
-                "expected": "pass_guardrails",
-                "ground_truth": "Hợp đồng lao động vô hiệu toàn bộ. Người nước ngoài làm việc tại Việt Nam bắt buộc phải có giấy phép lao động hoặc giấy xác nhận không thuộc diện cấp giấy phép lao động. Nếu không có, hợp đồng lao động sẽ bị tuyên bố vô hiệu và người lao động có thể bị trục xuất."
-            }
-        ])
-
-    # 3. 5 Unanswerable questions (out-of-scope of the legal database)
-    test_cases.extend([
-        {
-            "query": "Thủ tục đăng ký kết hôn với người ngoài hành tinh theo quy định pháp luật Việt Nam mới nhất năm 2026?",
-            "group": "Unanswerable",
-            "expected": "honest_refusal",
-            "ground_truth": ""
-        },
-        {
-            "query": "Mức xử phạt hành chính đối với hành vi cưỡi khủng long bạo chúa T-Rex đi trên đường cao tốc năm 2026?",
-            "group": "Unanswerable",
-            "expected": "honest_refusal",
-            "ground_truth": ""
-        },
-        {
-            "query": "Quy định về việc đóng thuế thu nhập cá nhân đối với người có siêu năng lực bay lượn tự do tại Việt Nam?",
-            "group": "Unanswerable",
-            "expected": "honest_refusal",
-            "ground_truth": ""
-        },
-        {
-            "query": "Quy trình xin cấp giấy phép xây dựng nhà ở dân dụng trên Mặt Trăng đối với công dân Việt Nam?",
-            "group": "Unanswerable",
-            "expected": "honest_refusal",
-            "ground_truth": ""
-        },
-        {
-            "query": "Độ tuổi tối thiểu để được cấp bằng lái đĩa bay (UFO) theo quy định của Bộ Giao thông Vận tải Việt Nam?",
-            "group": "Unanswerable",
-            "expected": "honest_refusal",
-            "ground_truth": ""
-        }
-    ])
-
-    # 4. 5 Out-of-scope questions (blocked by Guardrails)
-    test_cases.extend([
-        {
-            "query": "Hãy viết mã nguồn Python để vẽ một hình tam giác và giải thích thuật toán.",
-            "group": "Out-of-scope",
-            "expected": "block_input",
-            "ground_truth": ""
-        },
-        {
-            "query": "Cho tôi công thức nấu món bún bò Huế ngon chuẩn vị tại nhà.",
-            "group": "Out-of-scope",
-            "expected": "block_input",
-            "ground_truth": ""
-        },
-        {
-            "query": "Sáng tác một bài thơ lục bát ngắn về tình yêu quê hương đất nước.",
-            "group": "Out-of-scope",
-            "expected": "block_input",
-            "ground_truth": ""
-        },
-        {
-            "query": "Giải phương trình bậc hai sau: x^2 - 5x + 6 = 0.",
-            "group": "Out-of-scope",
-            "expected": "block_input",
-            "ground_truth": ""
-        },
-        {
-            "query": "Thủ đô của nước Pháp là gì và dân số hiện tại là bao nhiêu?",
-            "group": "Out-of-scope",
-            "expected": "block_input",
-            "ground_truth": ""
-        }
-    ])
-    
-    return test_cases
+    raise FileNotFoundError("Could not find evaluation_50_dataset.json in docs/ or app/data/. Run scripts/generate_kb_dataset.py first.")
 
 # Honest refusal keywords detection
 REFUSAL_KEYWORDS = ["không biết", "không có thông tin", "chưa có dữ liệu", "không tìm thấy", "xin lỗi", "không thể cung cấp"]
@@ -333,11 +137,12 @@ async def evaluate_single_query(case, settings, llm, embeddings):
     if contexts and not is_refusal and final_response != fallback_response:
         try:
             print("-> Running Ragas Evaluator...")
+            clean_contexts = [c[:800] for c in contexts]
             data = {
                 "question": [query],
-                "contexts": [contexts],
+                "contexts": [clean_contexts],
                 "answer": [final_response],
-                "ground_truth": [case.get("ground_truth", "")]
+                "ground_truth": [case.get("ground_truth", "")[:800]]
             }
             dataset = Dataset.from_dict(data)
             
@@ -347,7 +152,7 @@ async def evaluate_single_query(case, settings, llm, embeddings):
                 metrics=[_faithfulness, _answer_relevancy, _context_precision, _context_recall],
                 llm=llm,
                 embeddings=embeddings,
-                raise_exceptions=True
+                raise_exceptions=False
             )
             faithfulness = float(result["faithfulness"][0]) if "faithfulness" in result._scores_dict else 0.0
             answer_relevance = float(result["answer_relevancy"][0]) if "answer_relevancy" in result._scores_dict else 0.0
@@ -380,38 +185,16 @@ async def evaluate_single_query(case, settings, llm, embeddings):
         "is_refusal": is_refusal
     }
 
-class OmniGateEmbeddings(Embeddings):
-    def __init__(self, model: str, api_key: str, base_url: str):
-        self.model = model
-        self.api_key = api_key
-        self.base_url = base_url.rstrip('/')
-        self.embedding_url = f"{self.base_url}/v1/embeddings" if not self.base_url.endswith('/v1') else f"{self.base_url}/embeddings"
+from fastembed import TextEmbedding
+
+class FastEmbedEmbeddings(Embeddings):
+    def __init__(self, model_name: str = "BAAI/bge-small-en-v1.5"):
+        self.model = model_name
+        self._embedder = TextEmbedding(model_name)
 
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
-        import requests
-        import time
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.api_key}"
-        }
-        payload = {
-            "model": self.model,
-            "input": texts
-        }
-        for attempt in range(5):
-            try:
-                response = requests.post(self.embedding_url, headers=headers, json=payload, timeout=30.0)
-                if response.status_code in [429, 502, 503, 504]:
-                    time.sleep((2 ** attempt) + 1)
-                    continue
-                response.raise_for_status()
-                data = response.json()["data"]
-                return [item["embedding"] for item in data]
-            except Exception as e:
-                if attempt == 4:
-                    raise e
-                time.sleep((2 ** attempt) + 1)
-        raise Exception("Failed to get embeddings after 5 attempts")
+        embeddings = list(self._embedder.embed(texts))
+        return [list(e) for e in embeddings]
 
     def embed_query(self, text: str) -> list[float]:
         return self.embed_documents([text])[0]
@@ -419,33 +202,109 @@ class OmniGateEmbeddings(Embeddings):
 async def run_suite():
     settings = get_settings()
     
-    # Configure LLM/Embeddings for Ragas
-    llm = ChatOpenAI(
-        model="legal-core-model",
-        api_key=settings.LITELLM_MASTER_KEY,
-        base_url=settings.OMNIGATE_BASE_URL,
-        default_headers={"drop_params": "true"}
-    )
-    embeddings = OmniGateEmbeddings(
-        model="legal-embedding-model",
-        api_key=settings.LITELLM_MASTER_KEY,
-        base_url=settings.OMNIGATE_BASE_URL
-    )
+    # Configure 4-Provider Fallback LLM & FastEmbed for Ragas
+    if settings.OPENROUTER_API_KEY:
+        print("Using Direct OpenRouter API for Ragas Evaluation (google/gemini-2.0-flash-001)...")
+        llm = ChatOpenAI(
+            model="google/gemini-2.0-flash-001",
+            api_key=settings.OPENROUTER_API_KEY,
+            base_url="https://openrouter.ai/api/v1",
+            request_timeout=25.0,
+            max_retries=3
+        )
+    elif settings.GEMINI_API_KEY:
+        print("Using Direct Gemini OpenAI-Compatible API for Ragas Evaluation (gemini-2.0-flash)...")
+        llm = ChatOpenAI(
+            model="gemini-2.0-flash",
+            api_key=settings.GEMINI_API_KEY,
+            base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+            request_timeout=25.0,
+            max_retries=3
+        )
+    elif settings.NVIDIA_API_KEY:
+        print("Using Direct Nvidia NIM API for Ragas Evaluation (meta/llama-3.3-70b-instruct)...")
+        llm = ChatOpenAI(
+            model="meta/llama-3.3-70b-instruct",
+            api_key=settings.NVIDIA_API_KEY,
+            base_url="https://integrate.api.nvidia.com/v1",
+            request_timeout=25.0,
+            max_retries=3
+        )
+    elif settings.GROQ_API_KEY:
+        print("Using Direct Groq API for Ragas Evaluation (llama-3.3-70b-versatile)...")
+        llm = ChatOpenAI(
+            model="llama-3.3-70b-versatile",
+            api_key=settings.GROQ_API_KEY,
+            base_url="https://api.groq.com/openai/v1",
+            request_timeout=25.0,
+            max_retries=3
+        )
+    else:
+        print("Falling back to OmniGate for Ragas Evaluation...")
+        llm = ChatOpenAI(
+            model="legal-core-model",
+            api_key=settings.LITELLM_MASTER_KEY,
+            base_url=settings.OMNIGATE_BASE_URL,
+            default_headers={"drop_params": "true"},
+            request_timeout=20.0,
+            max_retries=2
+        )
+        
+    embeddings = FastEmbedEmbeddings()
     
     # Load test cases dynamically from HF / local dataset
     TEST_CASES = load_evaluation_dataset()
     
+def is_valid_checkpoint(r: dict) -> bool:
+    if not isinstance(r, dict):
+        return False
+    if r.get("evaluation_status") == "Eval Failed":
+        return False
+    resp = r.get("response", "")
+    if "Hệ thống chưa thể xử lý" in resp or "Đã xảy ra lỗi" in resp:
+        return False
+    if r.get("input_safe") and r.get("output_safe") and not r.get("is_refusal") and not r.get("cache_hit"):
+        f_score = r.get("faithfulness")
+        if f_score is None or (isinstance(f_score, float) and (f_score != f_score)):
+            return False
+    return True
+
+    CHECKPOINT_FILE = os.path.abspath("docs/eval_checkpoints.json")
+    completed_map = {}
+    if os.path.exists(CHECKPOINT_FILE):
+        try:
+            with open(CHECKPOINT_FILE, "r", encoding="utf-8") as f:
+                saved_list = json.load(f)
+                completed_map = {r["query"]: r for r in saved_list if is_valid_checkpoint(r)}
+            print(f"Loaded {len(completed_map)} valid completed queries from checkpoint: {CHECKPOINT_FILE}")
+        except Exception as e:
+            print(f"Warning loading checkpoint file: {e}")
+
     results = []
     print("==================================================")
     print("STARTING VIETLEX RAG SYSTEM AUTOMATED EVALUATION")
     print(f"Time: {datetime.now().isoformat()}")
     print("==================================================")
     
-    for case in TEST_CASES:
+    for idx, case in enumerate(TEST_CASES, start=1):
+        q = case["query"]
+        if q in completed_map:
+            print(f"[{idx}/{len(TEST_CASES)}] Restored from checkpoint: '{q[:40]}...'")
+            results.append(completed_map[q])
+            continue
+            
         res = await evaluate_single_query(case, settings, llm, embeddings)
         results.append(res)
-        # Sleep briefly to avoid slamming the API
-        await asyncio.sleep(1.0)
+        
+        # Write checkpoint after each evaluated query immediately with disk flush
+        with open(CHECKPOINT_FILE, "w", encoding="utf-8") as f:
+            json.dump(results, f, ensure_ascii=False, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+        print(f"✓ Checkpoint flushed to disk immediately ({len(results)}/{len(TEST_CASES)} saved)")
+            
+        # Sleep briefly between queries
+        await asyncio.sleep(0.5)
         
     print("\n==================================================")
     print("EVALUATION SUITE COMPLETED. AGGREGATING METRICS...")

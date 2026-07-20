@@ -18,6 +18,12 @@ class Settings(BaseSettings):
     OMNIGATE_BASE_URL: str = "https://llmgateway.onrender.com"
     LITELLM_MASTER_KEY: str = "default_litellm_master_key"
     
+    # Direct APIs (Gemini, Groq, OpenRouter, Nvidia NIM)
+    GEMINI_API_KEY: Optional[str] = None
+    GROQ_API_KEY: Optional[str] = None
+    OPENROUTER_API_KEY: Optional[str] = None
+    NVIDIA_API_KEY: Optional[str] = None
+    
     # Logfire Token
     LOGFIRE_TOKEN: Optional[str] = None
     

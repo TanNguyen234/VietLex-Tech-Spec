@@ -4,9 +4,7 @@
 models:
   - type: main
     engine: openai
-    model: legal-core-model
-    parameters:
-      base_url: http://127.0.0.1:4000/v1
+    model: gpt-3.5-turbo
 
 rails:
   input:

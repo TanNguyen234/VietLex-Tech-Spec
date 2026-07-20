@@ -65,56 +65,47 @@ async def run_advanced_rag(user_query: str) -> Tuple[str, List[str]]:
     
     return bot_response, reranked_results
 
+import time
+
+_http_client: httpx.AsyncClient = None
+
+def get_http_client() -> httpx.AsyncClient:
+    global _http_client
+    if _http_client is None or _http_client.is_closed:
+        _http_client = httpx.AsyncClient(timeout=30.0, limits=httpx.Limits(max_keepalive_connections=20, max_connections=50))
+    return _http_client
+
 async def rewrite_query(query: str) -> str:
-    logfire.info("Đang rewrite query: {query}", query=query)
-    base_url = settings.OMNIGATE_BASE_URL.rstrip('/')
-    chat_url = f"{base_url}/v1/chat/completions" if not base_url.endswith('/v1') else f"{base_url}/chat/completions"
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {settings.LITELLM_MASTER_KEY}"
-    }
+    # Skip rewriting for short queries to reduce latency by 1-2 seconds
+    if len(query.split()) <= 10:
+        return query
+
+    logfire.info("Đang rewrite query qua Direct API: {query}", query=query)
     prompt = (
         "Bạn là chuyên gia pháp luật Việt Nam. Hãy viết lại câu hỏi sau đây thành một câu truy vấn ngắn gọn chứa các thuật ngữ pháp lý chính thống của Việt Nam để tìm kiếm luật hiệu quả nhất.\n"
         f"Câu hỏi: {query}\n"
         "Trả về DUY NHẤT câu truy vấn đã viết lại, không thêm bất kỳ lời dẫn giải nào."
     )
-    payload = {
-        "model": "legal-core-model",
-        "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0.0
-    }
-    
-    import asyncio
-    for attempt in range(5):
-        try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.post(chat_url, headers=headers, json=payload)
-                if response.status_code in [429, 502, 503, 504]:
-                    sleep_time = (2 ** attempt) + 1
-                    await asyncio.sleep(sleep_time)
-                    continue
-                response.raise_for_status()
-                rewritten = response.json()["choices"][0]["message"]["content"].strip()
-                logfire.info("Query rewritten: {rewritten}", rewritten=rewritten)
-                return rewritten
-        except Exception as e:
-            if attempt == 4:
-                logfire.error("Error rewriting query after 5 attempts: {error}, falling back to original query", error=str(e))
-                return query
-            await asyncio.sleep((2 ** attempt) + 1)
-    return query
+    try:
+        rewritten = await generate_llm_response(prompt)
+        logfire.info("Query rewritten: {rewritten}", rewritten=rewritten)
+        return rewritten
+    except Exception as e:
+        logfire.warning("Rewrite query failed: {error}, falling back to original query", error=str(e))
+        return query
 
 async def dense_search(query: str) -> List[dict]:
     logfire.info("Đang thực hiện Dense Search")
     try:
         qdrant_client = AsyncQdrantClient(
             url=settings.QDRANT_URL,
-            api_key=settings.QDRANT_API_KEY
+            api_key=settings.QDRANT_API_KEY,
+            timeout=30.0
         )
         
         # Get query vector via standard async embeddings
         query_vector = await get_embedding(query)
-        # vietlex_knowledge_base dense vector is 384-dimensional (first 384 dimensions of gemini-embedding-2)
+        # vietlex_knowledge_base dense vector is 384-dimensional
         dense_vector = query_vector[:384]
         
         results = await qdrant_client.query_points(
@@ -133,7 +124,8 @@ async def sparse_search(query: str) -> List[dict]:
     try:
         qdrant_client = AsyncQdrantClient(
             url=settings.QDRANT_URL,
-            api_key=settings.QDRANT_API_KEY
+            api_key=settings.QDRANT_API_KEY,
+            timeout=30.0
         )
         # Tokenize query using PyVi
         segmented_query = ViTokenizer.tokenize(query)
@@ -190,30 +182,25 @@ async def cohere_rerank(query: str, documents: List[str], top_k: int = 3) -> Lis
         "top_n": top_k
     }
     
+    client = get_http_client()
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(rerank_url, headers=headers, json=payload)
-            response.raise_for_status()
-            results = response.json().get("results", [])
-            reranked = [documents[item["index"]] for item in results[:top_k]]
-            return reranked
+        response = await client.post(rerank_url, headers=headers, json=payload, timeout=15.0)
+        response.raise_for_status()
+        results = response.json().get("results", [])
+        reranked = [documents[item["index"]] for item in results[:top_k]]
+        return reranked
     except Exception as e:
         logfire.error("Error during Cohere rerank: {error}, falling back to top_k of original docs", error=str(e))
         return documents[:top_k]
 
+from app.services.direct_llm import generate_llm_response
+
 async def generate_response(original_query: str, rewritten_query: str, context: List[str]) -> str:
-    logfire.info("Đang sinh câu trả lời bằng legal-core-model trên OmniGate")
+    logfire.info("Đang sinh câu trả lời bằng Direct Gemini/Groq API")
     if not context:
         return "Không có ngữ cảnh pháp lý phù hợp để trả lời câu hỏi."
         
-    base_url = settings.OMNIGATE_BASE_URL.rstrip('/')
-    chat_url = f"{base_url}/v1/chat/completions" if not base_url.endswith('/v1') else f"{base_url}/chat/completions"
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {settings.LITELLM_MASTER_KEY}"
-    }
-    
-    context_str = "\n\n".join([f"[Tài liệu tham khảo #{i+1}]:\n{doc[:6000]}" for i, doc in enumerate(context)])
+    context_str = "\n\n".join([f"[Tài liệu tham khảo #{i+1}]:\n{doc[:4000]}" for i, doc in enumerate(context)])
     
     system_prompt = (
         "Bạn là Trợ lý Pháp luật Việt Nam thông minh, chính xác và trung thực.\n"
@@ -229,30 +216,6 @@ async def generate_response(original_query: str, rewritten_query: str, context: 
         f"Câu hỏi của người dùng: {original_query}"
     )
     
-    payload = {
-        "model": "legal-core-model",
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt}
-        ],
-        "temperature": 0.2
-    }
-    
-    import asyncio
-    for attempt in range(5):
-        try:
-            async with httpx.AsyncClient(timeout=60.0) as client:
-                response = await client.post(chat_url, headers=headers, json=payload)
-                if response.status_code in [429, 502, 503, 504]:
-                    sleep_time = (2 ** attempt) + 1
-                    await asyncio.sleep(sleep_time)
-                    continue
-                response.raise_for_status()
-                bot_response = response.json()["choices"][0]["message"]["content"].strip()
-                return bot_response
-        except Exception as e:
-            if attempt == 4:
-                logfire.error("Error generating answer after 5 attempts: {error}", error=str(e))
-                return "Đã xảy ra lỗi khi kết nối với máy chủ sinh câu trả lời pháp luật."
-            await asyncio.sleep((2 ** attempt) + 1)
-    return "Đã xảy ra lỗi khi kết nối với máy chủ sinh câu trả lời pháp luật."
+    bot_response = await generate_llm_response(user_prompt, system_prompt)
+    return bot_response
+
