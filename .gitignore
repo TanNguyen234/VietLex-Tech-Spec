@@ -23,3 +23,7 @@ env/
 *.njsproj
 *.sln
 *.swp
+
+# Local Crawler and Agent Skills
+laws_project_crawler/
+.agents/
