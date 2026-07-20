@@ -199,6 +199,20 @@ class FastEmbedEmbeddings(Embeddings):
     def embed_query(self, text: str) -> list[float]:
         return self.embed_documents([text])[0]
 
+def is_valid_checkpoint(r: dict) -> bool:
+    if not isinstance(r, dict):
+        return False
+    if r.get("evaluation_status") == "Eval Failed":
+        return False
+    resp = r.get("response", "")
+    if "Hệ thống chưa thể xử lý" in resp or "Đã xảy ra lỗi" in resp:
+        return False
+    if r.get("input_safe") and r.get("output_safe") and not r.get("is_refusal") and not r.get("cache_hit"):
+        f_score = r.get("faithfulness")
+        if f_score is None or (isinstance(f_score, float) and (f_score != f_score)):
+            return False
+    return True
+
 async def run_suite():
     settings = get_settings()
     
@@ -255,20 +269,6 @@ async def run_suite():
     # Load test cases dynamically from HF / local dataset
     TEST_CASES = load_evaluation_dataset()
     
-def is_valid_checkpoint(r: dict) -> bool:
-    if not isinstance(r, dict):
-        return False
-    if r.get("evaluation_status") == "Eval Failed":
-        return False
-    resp = r.get("response", "")
-    if "Hệ thống chưa thể xử lý" in resp or "Đã xảy ra lỗi" in resp:
-        return False
-    if r.get("input_safe") and r.get("output_safe") and not r.get("is_refusal") and not r.get("cache_hit"):
-        f_score = r.get("faithfulness")
-        if f_score is None or (isinstance(f_score, float) and (f_score != f_score)):
-            return False
-    return True
-
     CHECKPOINT_FILE = os.path.abspath("docs/eval_checkpoints.json")
     completed_map = {}
     if os.path.exists(CHECKPOINT_FILE):
