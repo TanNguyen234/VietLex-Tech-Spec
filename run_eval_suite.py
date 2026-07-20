@@ -218,9 +218,9 @@ async def run_suite():
     
     # Configure 4-Provider Fallback LLM & FastEmbed for Ragas
     if settings.OPENROUTER_API_KEY:
-        print("Using Direct OpenRouter API for Ragas Evaluation (google/gemini-2.0-flash-001)...")
+        print("Using Direct OpenRouter API for Ragas Evaluation (meta-llama/llama-3.3-70b-instruct)...")
         llm = ChatOpenAI(
-            model="google/gemini-2.0-flash-001",
+            model="meta-llama/llama-3.3-70b-instruct",
             api_key=settings.OPENROUTER_API_KEY,
             base_url="https://openrouter.ai/api/v1",
             request_timeout=25.0,

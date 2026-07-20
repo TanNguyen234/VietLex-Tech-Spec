@@ -68,12 +68,12 @@ def get_rails():
         
         config = RailsConfig.from_path(config_dir)
         
-        target_model = "google/gemini-2.0-flash-001"
+        target_model = "meta-llama/llama-3.3-70b-instruct"
         target_base_url = "https://openrouter.ai/api/v1"
         target_key = settings.OPENROUTER_API_KEY
         
         if settings.OPENROUTER_API_KEY:
-            target_model = "google/gemini-2.0-flash-001"
+            target_model = "meta-llama/llama-3.3-70b-instruct"
             target_base_url = "https://openrouter.ai/api/v1"
             target_key = settings.OPENROUTER_API_KEY
         elif settings.GEMINI_API_KEY:

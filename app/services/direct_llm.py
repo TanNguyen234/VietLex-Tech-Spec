@@ -24,7 +24,7 @@ def get_direct_client() -> httpx.AsyncClient:
     return _http_client
 
 # 1. OpenRouter API
-async def call_openrouter_api(prompt: str, system_prompt: str = "", model: str = "google/gemini-2.0-flash-001") -> Optional[str]:
+async def call_openrouter_api(prompt: str, system_prompt: str = "", model: str = "meta-llama/llama-3.3-70b-instruct") -> Optional[str]:
     api_key = settings.OPENROUTER_API_KEY
     if not api_key:
         return None
