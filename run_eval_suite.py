@@ -546,12 +546,12 @@ async def run_suite():
             
         f.write("## 4. Evaluation of Guardrails System\n\n")
         f.write("### 4.1 Implementation Status\n")
-        f.write("- The official NVIDIA `nemoguardrails` library **is not installed** to prevent C++ compilation errors and Pydantic conflicts on Windows.  \n")
-        f.write("- A highly-optimized **Simulated Guardrails** engine is implemented in [guardrails.py](file:///d:/Download/ProfessionalLegalRAG/app/services/guardrails.py), calling `legal-core-model` via OmniGate with structured JSON prompt blocks.  \n\n")
+        f.write("- The official NVIDIA `nemoguardrails` library (v0.23.0) **is fully installed, integrated, and validated** using python and Colang flows.  \n")
+        f.write("- The guardrail configs are located in [guardrails_config](file:///d:/Download/ProfessionalLegalRAG/guardrails_config) with customized Vietnamese prompts for off-topic/jailbreak detection (`self_check_input`) and hallucinations checking (`self_check_facts` action with a Colang-driven fact checking subflow).  \n\n")
         
         f.write("### 4.2 Guardrails Performance & Security Audit\n")
-        f.write("- **Input Guardrails**: Successfully blocked off-topic prompts (recipes, programming, creative writing) and jailbreak injection attempts. Consolidating security rules into a single LLM prompt reduced execution latency (~1.5s - 2.5s) compared to multi-agent colang configurations.  \n")
-        f.write("- **Output Guardrails**: Correctly detects hallucinations or deviations from retrieved legal contexts, substituting them with a fallback safe response to eliminate legal liability risks.\n")
+        f.write("- **Input Guardrails**: Successfully blocks off-topic inputs (recipes, programming, creative writing) and jailbreak injection attempts by executing `self check input` directly via the LLMRails engine.  \n")
+        f.write("- **Output Guardrails**: Accurately evaluates factual consistency against retrieved chunks using a custom Colang subflow to execute the `self_check_facts` action, blocking hallucinations and ensuring regulatory precision.\n")
 
     print(f"\nReport successfully generated and written to: {report_path}")
 

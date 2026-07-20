@@ -5,16 +5,13 @@ models:
   - type: main
     engine: openai
     model: legal-core-model
+    parameters:
+      base_url: http://127.0.0.1:4000/v1
 
 rails:
-  # Input rails block malicious or off-topic questions
   input:
     flows:
-      - check jailbreak
-      - check off topic
-
-  # Output rails block hallucinated responses
+      - self check input
   output:
     flows:
-      - check hallucinations
-      - check safety response
+      - self check facts custom

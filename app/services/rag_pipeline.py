@@ -105,38 +105,24 @@ async def rewrite_query(query: str) -> str:
     return query
 
 async def dense_search(query: str) -> List[dict]:
-    logfire.info("Đang thực hiện Dense Search qua Qdrant Cloud Inference")
+    logfire.info("Đang thực hiện Dense Search")
     try:
         qdrant_client = AsyncQdrantClient(
             url=settings.QDRANT_URL,
-            api_key=settings.QDRANT_API_KEY,
-            cloud_inference=True
+            api_key=settings.QDRANT_API_KEY
         )
-        from qdrant_client.http.models import Document
-        # 1. Try Qdrant Cloud Inference
-        try:
-            results = await asyncio.wait_for(
-                qdrant_client.query_points(
-                    collection_name="vietlex_knowledge_base",
-                    query=Document(
-                        text=query,
-                        model="sentence-transformers/all-minilm-l6-v2"
-                    ),
-                    limit=15
-                ),
-                timeout=5.0
-            )
-            return results.points
-        except Exception as inf_err:
-            logfire.warning("Inference dense search failed or timed out: {error}. Falling back to gemini-embedding-2...", error=str(inf_err))
-            
-        # 2. Fallback to gemini-embedding-2 (384 dimensions)
-        query_vector = (await get_embedding(query))[:384]
+        
+        # Get query vector via standard async embeddings
+        query_vector = await get_embedding(query)
+        # vietlex_knowledge_base dense vector is 384-dimensional (first 384 dimensions of gemini-embedding-2)
+        dense_vector = query_vector[:384]
+        
         results = await qdrant_client.query_points(
             collection_name="vietlex_knowledge_base",
-            query=query_vector,
+            query=dense_vector,
             limit=15
         )
+        await qdrant_client.close()
         return results.points
     except Exception as e:
         logfire.error("Error during dense search: {error}", error=str(e))
@@ -164,6 +150,7 @@ async def sparse_search(query: str) -> List[dict]:
             using="sparse-text",
             limit=15
         )
+        await qdrant_client.close()
         return results.points
     except Exception as e:
         logfire.error("Error during sparse search: {error}", error=str(e))
