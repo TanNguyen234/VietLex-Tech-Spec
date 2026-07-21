@@ -12,13 +12,21 @@ from qdrant_client.models import Distance, VectorParams, PointStruct, SparseVect
 from pyvi import ViTokenizer
 from app.ingestion.indexer import text_to_sparse_vector
 from app.ingestion.parser import parse_legal_document
+import sys
 from app.config import get_settings
+
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stderr.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
 
 # Configure Logfire conditionally with local fallback
 try:
-    logfire.configure()
+    logfire.configure(console=False)
 except Exception:
-    logfire.configure(send_to_logfire=False)
+    logfire.configure(send_to_logfire=False, console=False)
 
 def load_gz_json(file_path: str) -> Dict:
     """Reads and parses a single gzip-compressed JSON file."""

@@ -27,3 +27,10 @@ env/
 # Local Crawler and Agent Skills
 laws_project_crawler/
 .agents/
+
+# Raw Data & Large Datasets
+app/data/raw_data/
+app/data/*.json
+app/data/*.json.gz
+*.md.report
+crawled_dataset_eda_report.md
