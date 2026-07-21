@@ -133,7 +133,7 @@ def run_crawler_ingestion(data_dir: str, collection_name: str = "vietlex_laws_cr
         }
     )
 
-    # 5. Ingestion in Batches via OmniGate
+    # 5. Ingestion in Parallel Batches via OmniGate
     base_url = settings.OMNIGATE_BASE_URL.rstrip('/')
     embedding_url = f"{base_url}/v1/embeddings" if not base_url.endswith('/v1') else f"{base_url}/embeddings"
     headers = {
@@ -142,11 +142,12 @@ def run_crawler_ingestion(data_dir: str, collection_name: str = "vietlex_laws_cr
     }
 
     batch_size = 16
-    for i in tqdm(range(0, len(chunks), batch_size), desc="Indexing chunks"):
-        batch_chunks = chunks[i:i+batch_size]
-        # Sanitize texts: ensure non-empty and truncate to safe 6000 character limit for embedding model
+    chunk_batches = [chunks[i:i+batch_size] for i in range(0, len(chunks), batch_size)]
+
+    def process_batch(batch_tuple):
+        batch_idx, batch_chunks = batch_tuple
         batch_texts = [
-            (c.get("content") or "").strip()[:6000] if (c.get("content") or "").strip() else "Nội dung văn bản luật"
+            (c.get("content") or "").strip()[:3000] if (c.get("content") or "").strip() else "Nội dung văn bản luật"
             for c in batch_chunks
         ]
         
@@ -155,40 +156,37 @@ def run_crawler_ingestion(data_dir: str, collection_name: str = "vietlex_laws_cr
             "input": batch_texts
         }
         
-        # Get embeddings with exponential backoff on retryable codes
         embeddings_data = None
-        for attempt in range(6):
+        for attempt in range(8):
             try:
                 response = requests.post(embedding_url, headers=headers, json=payload, timeout=60.0)
                 if response.status_code == 429:
-                    sleep_time = (2 ** attempt) + 2
-                    time.sleep(sleep_time)
+                    sleep_sec = (2 ** attempt) + 5
+                    time.sleep(sleep_sec)
                     continue
                 if response.status_code == 400:
-                    print(f"\n[Embedding 400 Bad Request at index {i}] Response: {response.text[:300]}")
-                    # Try truncating batch texts further if payload was too large
-                    payload["input"] = [t[:3000] for t in batch_texts]
+                    payload["input"] = [t[:1500] for t in batch_texts]
                     response = requests.post(embedding_url, headers=headers, json=payload, timeout=60.0)
                 response.raise_for_status()
-                embeddings_data = response.json()["data"]
-                break
-            except Exception as e:
-                logfire.warning("Embedding API error on attempt {attempt}: {err}", attempt=attempt, err=str(e))
-                if attempt == 5:
-                    print(f"\n[Error] Skipping batch at index {i} due to repeated embedding failure: {e}")
-                    embeddings_data = None
+                res_json = response.json()
+                if isinstance(res_json, dict) and "data" in res_json:
+                    embeddings_data = res_json["data"]
                     break
-                time.sleep((2 ** attempt) + 2)
+                else:
+                    time.sleep(3)
+            except Exception as e:
+                if attempt == 7:
+                    print(f"\n[Error] Skipping batch {batch_idx} due to embedding error: {e}")
+                    return 0
+                time.sleep((2 ** attempt) + 3)
 
         if not embeddings_data:
-            logfire.error("Could not fetch embeddings for batch starting at {idx}", idx=i)
-            continue
+            return 0
             
         # Build Qdrant points
         batch_points = []
         for chunk, item in zip(batch_chunks, embeddings_data):
-            # OmniGate legal-embedding-model vector dimension is configured as 768
-            vector = item["embedding"][:768]
+            vec = item["embedding"][:768] if isinstance(item, dict) and "embedding" in item else item[:768]
             point_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, chunk["content"]))
             
             segmented = ViTokenizer.tokenize(chunk["content"])
@@ -213,7 +211,7 @@ def run_crawler_ingestion(data_dir: str, collection_name: str = "vietlex_laws_cr
             batch_points.append(PointStruct(
                 id=point_id,
                 vector={
-                    "": vector,
+                    "": vec,
                     "sparse-text": SparseVector(
                         indices=sparse_vec["indices"],
                         values=sparse_vec["values"]
@@ -222,7 +220,7 @@ def run_crawler_ingestion(data_dir: str, collection_name: str = "vietlex_laws_cr
                 payload=payload_data
             ))
             
-        # Upsert batch to Qdrant with exponential backoff for transient 503/502 errors
+        # Upsert batch to Qdrant with exponential backoff for transient errors
         for upsert_attempt in range(6):
             try:
                 qdrant_client.upsert(
@@ -232,11 +230,22 @@ def run_crawler_ingestion(data_dir: str, collection_name: str = "vietlex_laws_cr
                 break
             except Exception as e:
                 if upsert_attempt == 5:
-                    print(f"\n[Qdrant Error] Failed to upsert batch after 6 attempts: {e}")
-                    raise e
-                sleep_sec = (2 ** upsert_attempt) + 3
-                print(f"\n[Qdrant Warning] 503/Network error on upsert attempt {upsert_attempt + 1}. Retrying in {sleep_sec}s...")
-                time.sleep(sleep_sec)
+                    print(f"\n[Qdrant Error] Failed to upsert batch {batch_idx} after 6 attempts: {e}")
+                    return 0
+                time.sleep((2 ** upsert_attempt) + 2)
+
+        return len(batch_points)
+
+    total_indexed = 0
+    import concurrent.futures
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+        futures = {executor.submit(process_batch, (idx, b)): idx for idx, b in enumerate(chunk_batches)}
+        for future in tqdm(concurrent.futures.as_completed(futures), total=len(chunk_batches), desc="Parallel Indexing Chunks"):
+            try:
+                count = future.result()
+                total_indexed += count
+            except Exception as e:
+                print(f"\n[Worker Exception]: {e}")
 
     print(f"\nIndexing completed successfully for collection '{collection_name}'!")
 
