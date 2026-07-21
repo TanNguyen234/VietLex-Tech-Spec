@@ -1,8 +1,8 @@
 import os
+import sys
 import gzip
 import json
 import uuid
-import requests
 import time
 import logfire
 from typing import List, Dict
@@ -12,8 +12,12 @@ from qdrant_client.models import Distance, VectorParams, PointStruct, SparseVect
 from pyvi import ViTokenizer
 from app.ingestion.indexer import text_to_sparse_vector
 from app.ingestion.parser import parse_legal_document
-import sys
 from app.config import get_settings
+
+# Configure Cache Paths to Drive D to avoid full C: drive (0GB free)
+os.environ["FASTEMBED_CACHE_PATH"] = "D:\\Download\\fastembed_cache"
+os.environ["HF_HOME"] = "D:\\Download\\hf_cache"
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 
 if sys.platform == "win32":
     try:
@@ -33,14 +37,18 @@ def load_gz_json(file_path: str) -> Dict:
     try:
         with gzip.open(file_path, "rt", encoding="utf-8") as f:
             return json.load(f)
-    except Exception as e:
-        logfire.error("Failed to read gzip file: {file}, error: {err}", file=file_path, err=str(e))
-        return {}
+    except Exception:
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            logfire.error("Failed to read file: {file}, error: {err}", file=file_path, err=str(e))
+            return {}
 
 def run_crawler_ingestion(data_dir: str, collection_name: str = "vietlex_laws_crawler_kb"):
     """
     Scans the specified directory for crawled .gz files, chunks the documents,
-    generates embeddings, and upserts them to Qdrant.
+    generates embeddings via Qdrant FastEmbed (multilingual-MiniLM), and upserts to Qdrant.
     """
     settings = get_settings()
     
@@ -78,7 +86,7 @@ def run_crawler_ingestion(data_dir: str, collection_name: str = "vietlex_laws_cr
         # Parse text into Chapter -> Section -> Article
         doc_chunks = parse_legal_document(full_text)
         
-        # Fallback: if regex parser yields nothing, chunk by paragraphs or char length
+        # Fallback: if regex parser yields nothing, chunk by paragraphs
         if not doc_chunks:
             paragraphs = [p.strip() for p in full_text.split("\n\n") if p.strip()]
             for idx, para in enumerate(paragraphs):
@@ -105,13 +113,21 @@ def run_crawler_ingestion(data_dir: str, collection_name: str = "vietlex_laws_cr
             chunks.append(chunk)
 
     logfire.info("Total extracted chunks ready for indexing: {count}", count=len(chunks))
-    print(f"Total chunks extracted: {len(chunks)}")
-    
+    print(f"\nTotal chunks extracted: {len(chunks)}")
     if not chunks:
         print("No valid chunks extracted from documents.")
         return
 
-    # 3. Connect to Qdrant Cloud
+    # 3. Initialize FastEmbed Multilingual Local Model (384 dimensions)
+    print("\nLoading Qdrant FastEmbed Local Model (sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2)...")
+    from fastembed import TextEmbedding
+    embed_model = TextEmbedding(
+        model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+        cache_dir="D:\\Download\\fastembed_cache"
+    )
+    print("FastEmbed local ONNX model initialized successfully!")
+
+    # 4. Connect to Qdrant Cloud
     logfire.info("Connecting to Qdrant Cloud at {url}...", url=settings.QDRANT_URL)
     qdrant_client = QdrantClient(
         url=settings.QDRANT_URL,
@@ -119,77 +135,40 @@ def run_crawler_ingestion(data_dir: str, collection_name: str = "vietlex_laws_cr
         timeout=30.0
     )
     
-    # 4. Recreate/initialize new collection
+    # 5. Recreate/initialize collection with 384 vector dimensions
     if qdrant_client.collection_exists(collection_name):
         logfire.info("Collection '{col}' already exists. Recreating...", col=collection_name)
         qdrant_client.delete_collection(collection_name)
 
-    logfire.info("Creating new collection '{col}' with vector size 768...", col=collection_name)
+    logfire.info("Creating new collection '{col}' with vector size 384...", col=collection_name)
     qdrant_client.create_collection(
         collection_name=collection_name,
-        vectors_config=VectorParams(size=768, distance=Distance.COSINE),
+        vectors_config=VectorParams(size=384, distance=Distance.COSINE),
         sparse_vectors_config={
             "sparse-text": SparseVectorParams()
         }
     )
 
-    # 5. Sequential Batch Indexing via OmniGate & Qdrant Cloud
-    base_url = settings.OMNIGATE_BASE_URL.rstrip('/')
-    embedding_url = f"{base_url}/v1/embeddings" if not base_url.endswith('/v1') else f"{base_url}/embeddings"
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {settings.LITELLM_MASTER_KEY}"
-    }
-
-    batch_size = 16
+    # 6. Fast Local Embedding Generation & Batch Upsert
+    batch_size = 64
     total_batches = (len(chunks) + batch_size - 1) // batch_size
-    print(f"\nStarting Indexing: Total {len(chunks)} chunks across {total_batches} batches...")
+    print(f"\nStarting FastEmbed Indexing: {len(chunks)} chunks across {total_batches} batches (batch_size={batch_size})...")
 
     total_indexed = 0
 
     for idx, i in enumerate(range(0, len(chunks), batch_size), 1):
         batch_chunks = chunks[i:i+batch_size]
         batch_texts = [
-            (c.get("content") or "").strip()[:2500] if (c.get("content") or "").strip() else "Nội dung văn bản luật"
+            (c.get("content") or "").strip()[:1500] if (c.get("content") or "").strip() else "Nội dung văn bản luật"
             for c in batch_chunks
         ]
         
-        payload = {
-            "model": "legal-embedding-model",
-            "input": batch_texts
-        }
+        # Generate embeddings locally via FastEmbed ONNX
+        batch_embeddings = list(embed_model.embed(batch_texts))
         
-        embeddings_data = None
-        for attempt in range(8):
-            try:
-                response = requests.post(embedding_url, headers=headers, json=payload, timeout=45.0)
-                if response.status_code == 429:
-                    sleep_sec = (2 ** attempt) + 3
-                    print(f"   [Batch {idx}/{total_batches}] 429 Rate Limit. Sleeping {sleep_sec}s...")
-                    time.sleep(sleep_sec)
-                    continue
-                if response.status_code == 400:
-                    payload["input"] = [t[:1200] for t in batch_texts]
-                    response = requests.post(embedding_url, headers=headers, json=payload, timeout=45.0)
-                response.raise_for_status()
-                res_json = response.json()
-                if isinstance(res_json, dict) and "data" in res_json:
-                    embeddings_data = res_json["data"]
-                    break
-            except Exception as e:
-                if attempt == 7:
-                    print(f"   [Batch {idx}/{total_batches} Error] Failed to fetch embeddings: {e}")
-                    break
-                time.sleep((2 ** attempt) + 2)
-
-        if not embeddings_data:
-            print(f"   [Batch {idx}/{total_batches}] Skipping due to missing embeddings.")
-            continue
-            
         # Build Qdrant points
         batch_points = []
-        for chunk, item in zip(batch_chunks, embeddings_data):
-            vec = item["embedding"][:768] if isinstance(item, dict) and "embedding" in item else item[:768]
+        for chunk, vector in zip(batch_chunks, batch_embeddings):
             point_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, chunk["content"]))
             
             segmented = ViTokenizer.tokenize(chunk["content"])
@@ -214,7 +193,7 @@ def run_crawler_ingestion(data_dir: str, collection_name: str = "vietlex_laws_cr
             batch_points.append(PointStruct(
                 id=point_id,
                 vector={
-                    "": vec,
+                    "": vector.tolist() if hasattr(vector, "tolist") else list(vector),
                     "sparse-text": SparseVector(
                         indices=sparse_vec["indices"],
                         values=sparse_vec["values"]
@@ -244,14 +223,14 @@ def run_crawler_ingestion(data_dir: str, collection_name: str = "vietlex_laws_cr
             print(f" - [Batch {idx}/{total_batches}] Indexed {len(batch_points)} points. Total Qdrant points: {total_indexed}/{len(chunks)}")
 
     print(f"\n==================================================")
-    print(f"Indexing completed successfully for collection '{collection_name}'!")
+    print(f"FastEmbed Indexing completed successfully for collection '{collection_name}'!")
     print(f"Total points indexed: {total_indexed}")
     print(f"==================================================")
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description="Vietlex Crawler Data Qdrant Indexer")
-    parser.add_argument("data_dir", type=str, help="Path to the directory containing crawled transform .gz files")
+    parser = argparse.ArgumentParser(description="Vietlex FastEmbed Legal Data Qdrant Indexer")
+    parser.add_argument("data_dir", type=str, help="Path to raw data directory")
     parser.add_argument("--collection", type=str, default="vietlex_laws_crawler_kb", help="Qdrant collection name")
     
     args = parser.parse_args()
