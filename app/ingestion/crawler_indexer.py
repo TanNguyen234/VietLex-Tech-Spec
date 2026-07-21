@@ -144,7 +144,11 @@ def run_crawler_ingestion(data_dir: str, collection_name: str = "vietlex_laws_cr
     batch_size = 16
     for i in tqdm(range(0, len(chunks), batch_size), desc="Indexing chunks"):
         batch_chunks = chunks[i:i+batch_size]
-        batch_texts = [c["content"] for c in batch_chunks]
+        # Sanitize texts: ensure non-empty and truncate to safe 6000 character limit for embedding model
+        batch_texts = [
+            (c.get("content") or "").strip()[:6000] if (c.get("content") or "").strip() else "Nội dung văn bản luật"
+            for c in batch_chunks
+        ]
         
         payload = {
             "model": "legal-embedding-model",
@@ -160,13 +164,20 @@ def run_crawler_ingestion(data_dir: str, collection_name: str = "vietlex_laws_cr
                     sleep_time = (2 ** attempt) + 2
                     time.sleep(sleep_time)
                     continue
+                if response.status_code == 400:
+                    print(f"\n[Embedding 400 Bad Request at index {i}] Response: {response.text[:300]}")
+                    # Try truncating batch texts further if payload was too large
+                    payload["input"] = [t[:3000] for t in batch_texts]
+                    response = requests.post(embedding_url, headers=headers, json=payload, timeout=60.0)
                 response.raise_for_status()
                 embeddings_data = response.json()["data"]
                 break
             except Exception as e:
                 logfire.warning("Embedding API error on attempt {attempt}: {err}", attempt=attempt, err=str(e))
                 if attempt == 5:
-                    raise e
+                    print(f"\n[Error] Skipping batch at index {i} due to repeated embedding failure: {e}")
+                    embeddings_data = None
+                    break
                 time.sleep((2 ** attempt) + 2)
 
         if not embeddings_data:
