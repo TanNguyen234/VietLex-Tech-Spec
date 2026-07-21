@@ -211,14 +211,23 @@ def run_crawler_ingestion(data_dir: str, collection_name: str = "vietlex_laws_cr
                 payload=payload_data
             ))
             
-        # Upsert batch to Qdrant
-        qdrant_client.upsert(
-            collection_name=collection_name,
-            points=batch_points
-        )
+        # Upsert batch to Qdrant with exponential backoff for transient 503/502 errors
+        for upsert_attempt in range(6):
+            try:
+                qdrant_client.upsert(
+                    collection_name=collection_name,
+                    points=batch_points
+                )
+                break
+            except Exception as e:
+                if upsert_attempt == 5:
+                    print(f"\n[Qdrant Error] Failed to upsert batch after 6 attempts: {e}")
+                    raise e
+                sleep_sec = (2 ** upsert_attempt) + 3
+                print(f"\n[Qdrant Warning] 503/Network error on upsert attempt {upsert_attempt + 1}. Retrying in {sleep_sec}s...")
+                time.sleep(sleep_sec)
 
-    logfire.info("Successfully finished indexing to collection '{col}'!", col=collection_name)
-    print(f"Indexing completed successfully for collection '{collection_name}'!")
+    print(f"\nIndexing completed successfully for collection '{collection_name}'!")
 
 if __name__ == "__main__":
     import argparse
