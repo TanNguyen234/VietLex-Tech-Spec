@@ -19,14 +19,13 @@ prompts:
   - task: self_check_facts
     max_length: 64000
     content: |
-      Nhiệm vụ của bạn là kiểm tra xem câu trả lời của trợ lý có hoàn toàn trùng khớp và được chứng minh bởi tài liệu chứng cứ được cung cấp dưới đây hay không.
-      Bạn chỉ được sử dụng nội dung của tài liệu chứng cứ và không dựa vào kiến thức bên ngoài.
+      Nhiệm vụ của bạn là kiểm tra xem câu trả lời của trợ lý có chứa ảo giác, sai lệch hoặc thông tin không được cung cấp trong tài liệu tham khảo dưới đây hay không.
 
-      Tài liệu chứng cứ: {{ evidence }}
-      Câu trả lời: {{ response }}
+      Tài liệu tham khảo: {{ evidence }}
+      Câu trả lời của trợ lý: {{ response }}
 
-      Hãy đánh giá mức độ chính xác của câu trả lời so với chứng cứ:
-      Trả lời "yes" nếu câu trả lời là chính xác và có cơ sở từ chứng cứ.
-      Trả lời "no" nếu câu trả lời chứa thông tin sai lệch, ảo giác hoặc không có cơ sở từ chứng cứ.
+      Hãy đánh giá:
+      Trả lời "yes" nếu câu trả lời chứa thông tin sai lệch, ảo giác hoặc không có trong tài liệu.
+      Trả lời "no" nếu câu trả lời hoàn toàn chính xác, trung thực và dựa trên tài liệu.
 
       Đánh giá (yes/no):

@@ -87,7 +87,8 @@ async def chat(
             return response
             
         # Step 4: Run Advanced Retrieval Pipeline (RAG)
-        bot_response, context_used = await run_advanced_rag(message)
+        bot_response, context_used, latency_info = await run_advanced_rag(message)
+
         
         # Step 5: Apply NeMo Guardrails (Output Check)
         output_safe, fallback_response = await check_output_guardrails(bot_response, context_used, message)

@@ -30,6 +30,12 @@ class Settings(BaseSettings):
     # MongoDB Connection URL
     MONGO_URL: Optional[str] = None
 
+    # Embedding & Rerank Cloud Microservice (Google Cloud Run)
+    EMBEDDING_API_URL: str = "https://embedding-service-283888990647.asia-southeast1.run.app/embed"
+    RERANK_API_URL: str = "https://embedding-service-283888990647.asia-southeast1.run.app/rerank"
+    EMBEDDING_SERVICE_API_KEY: Optional[str] = "igqwajhgjd127tihahskhw821iohklHhHKHE833KJ"
+
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 @lru_cache

@@ -34,3 +34,5 @@ app/data/*.json
 app/data/*.json.gz
 *.md.report
 crawled_dataset_eda_report.md
+# Added by code-review-graph
+.code-review-graph/
