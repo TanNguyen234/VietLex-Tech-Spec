@@ -9,6 +9,18 @@ from datetime import datetime
 sys.stdout.reconfigure(encoding='utf-8')
 sys.path.append('d:/Download/ProfessionalLegalRAG')
 
+# Compatibility shim for legacy ragas internal vertexai import in langchain_community
+import types
+try:
+    import langchain_google_vertexai
+    if "langchain_community.chat_models" not in sys.modules:
+        sys.modules["langchain_community.chat_models"] = types.ModuleType("langchain_community.chat_models")
+    v_mod = types.ModuleType("langchain_community.chat_models.vertexai")
+    v_mod.ChatVertexAI = getattr(langchain_google_vertexai, "ChatVertexAI", None)
+    sys.modules["langchain_community.chat_models.vertexai"] = v_mod
+except Exception:
+    pass
+
 import concurrent.futures
 import httpx
 from app.config import get_settings
@@ -22,19 +34,27 @@ from langchain_openai import ChatOpenAI
 from langchain_core.embeddings import Embeddings
 
 # Test cases
-# Test cases helper to load from datht/vlegal dataset
 def load_evaluation_dataset() -> list:
-    dataset_paths = [
-        os.path.abspath("docs/evaluation_50_dataset.json"),
-        os.path.abspath("app/data/evaluation_50_dataset.json")
-    ]
-    for p in dataset_paths:
-        if os.path.exists(p):
-            print(f"Loading 50-query evaluation dataset from: {p}")
-            with open(p, "r", encoding="utf-8") as f:
-                return json.load(f)
-                
-    raise FileNotFoundError("Could not find evaluation_50_dataset.json in docs/ or app/data/. Run scripts/generate_kb_dataset.py first.")
+    dataset_path = os.path.abspath("app/data/namsyntax_legal_qa_420.json")
+    if not os.path.exists(dataset_path):
+        raise FileNotFoundError(f"Could not find dataset at: {dataset_path}")
+        
+    print(f"Loading 30-query balanced evaluation dataset from: {dataset_path}")
+    with open(dataset_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+        
+    factoids = [c for c in data if c.get("question_type") == "factoid"][:12]
+    multihops = [c for c in data if c.get("question_type") == "multi-hop"][:12]
+    unanswerables = [c for c in data if c.get("question_type") == "unanswerable"][:6]
+    
+    selected = factoids + multihops + unanswerables
+    for item in selected:
+        q_type = item.get("question_type", "factoid")
+        item["group"] = q_type.capitalize()
+        item["expected"] = "pass_guardrails" if q_type != "unanswerable" else "honest_refusal"
+        item["ground_truth"] = item.get("ground_truth_answer", "")
+    return selected
+
 
 # Honest refusal keywords detection
 REFUSAL_KEYWORDS = ["không biết", "không có thông tin", "chưa có dữ liệu", "không tìm thấy", "xin lỗi", "không thể cung cấp"]
@@ -106,11 +126,13 @@ async def evaluate_single_query(case, settings, llm, embeddings):
         
     # 3. RAG Retrieval & Generation
     try:
-        bot_response, contexts = await run_advanced_rag(query)
+        bot_response, contexts, lat_info = await run_advanced_rag(query)
     except Exception as e:
         print(f"-> Error in RAG pipeline: {e}")
         bot_response = "Đã xảy ra lỗi hệ thống."
         contexts = []
+        lat_info = {"t_rewrite": 0.0, "t_dense": 0.0, "t_sparse": 0.0, "t_rrf": 0.0, "t_rerank": 0.0, "t_llm": 0.0, "t_total": 0.0}
+
         
     # 4. Output Guardrails
     try:
@@ -177,7 +199,9 @@ async def evaluate_single_query(case, settings, llm, embeddings):
         "response": final_response,
         "contexts": contexts,
         "latency": latency,
+        "lat_info": lat_info if 'lat_info' in locals() else {},
         "faithfulness": faithfulness,
+
         "answer_relevance": answer_relevance,
         "context_precision": context_precision,
         "context_recall": context_recall,
@@ -185,16 +209,22 @@ async def evaluate_single_query(case, settings, llm, embeddings):
         "is_refusal": is_refusal
     }
 
-from fastembed import TextEmbedding
-
-class FastEmbedEmbeddings(Embeddings):
-    def __init__(self, model_name: str = "BAAI/bge-small-en-v1.5"):
-        self.model = model_name
-        self._embedder = TextEmbedding(model_name)
+class CloudRunEmbeddings(Embeddings):
+    def __init__(self):
+        settings = get_settings()
+        self.api_url = settings.EMBEDDING_API_URL
+        self.api_key = settings.EMBEDDING_SERVICE_API_KEY
+        self.headers = {"Content-Type": "application/json"}
+        if self.api_key:
+            self.headers["Authorization"] = f"Bearer {self.api_key}"
 
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
-        embeddings = list(self._embedder.embed(texts))
-        return [list(e) for e in embeddings]
+        if not texts:
+            return []
+        import requests
+        resp = requests.post(self.api_url, json={"inputs": texts, "normalize": True}, headers=self.headers, timeout=120)
+        resp.raise_for_status()
+        return resp.json().get("embeddings", [])
 
     def embed_query(self, text: str) -> list[float]:
         return self.embed_documents([text])[0]
@@ -216,7 +246,7 @@ def is_valid_checkpoint(r: dict) -> bool:
 async def run_suite():
     settings = get_settings()
     
-    # Configure 4-Provider Fallback LLM & FastEmbed for Ragas
+    # Configure 4-Provider Fallback LLM & Cloud Run Embeddings for Ragas
     if settings.OPENROUTER_API_KEY:
         print("Using Direct OpenRouter API for Ragas Evaluation (meta-llama/llama-3.3-70b-instruct)...")
         llm = ChatOpenAI(
@@ -227,23 +257,15 @@ async def run_suite():
             max_retries=3
         )
     elif settings.GEMINI_API_KEY:
-        print("Using Direct Gemini OpenAI-Compatible API for Ragas Evaluation (gemini-2.0-flash)...")
+        print("Using Gemini API for Ragas Evaluation...")
         llm = ChatOpenAI(
-            model="gemini-2.0-flash",
+            model="gemini-1.5-flash",
             api_key=settings.GEMINI_API_KEY,
             base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
             request_timeout=25.0,
             max_retries=3
         )
-    elif settings.NVIDIA_API_KEY:
-        print("Using Direct Nvidia NIM API for Ragas Evaluation (meta/llama-3.3-70b-instruct)...")
-        llm = ChatOpenAI(
-            model="meta/llama-3.3-70b-instruct",
-            api_key=settings.NVIDIA_API_KEY,
-            base_url="https://integrate.api.nvidia.com/v1",
-            request_timeout=25.0,
-            max_retries=3
-        )
+
     elif settings.GROQ_API_KEY:
         print("Using Direct Groq API for Ragas Evaluation (llama-3.3-70b-versatile)...")
         llm = ChatOpenAI(

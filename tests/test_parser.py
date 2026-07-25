@@ -1,17 +1,23 @@
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import pytest
-from app.ingestion.parser import parse_legal_document
+from app.ingestion.parser import parse_legal_document_with_context
 
-def test_parse_legal_document_articles():
-    sample_text = """Chương I\nNHỮNG QUY ĐỊNH CHUNG\n\nĐiều 1. Phạm vi điều chỉnh\nBộ luật này quy định tiêu chuẩn lao động...\n\nĐiều 2. Đối tượng áp dụng\n1. Người lao động, người học nghề..."""
-    chunks = parse_legal_document(sample_text)
-    assert len(chunks) == 2
-    assert chunks[0]["article"] == "1"
-    assert "Phạm vi điều chỉnh" in chunks[0]["content"] or "Điều 1" in chunks[0]["content"]
-    assert chunks[1]["article"] == "2"
-
-def test_parse_legal_document_chapters():
-    sample_text = """Chương I\nQUY ĐỊNH CHUNG\n\nĐiều 1. Phạm vi\nNội dung 1\n\nChương II\nĐIỀU KHOẢN KHÁC\n\nĐiều 2. Áp dụng\nNội dung 2"""
-    chunks = parse_legal_document(sample_text)
-    assert len(chunks) == 2
-    assert chunks[0]["chapter"] == "I"
-    assert chunks[1]["chapter"] == "II"
+def test_parse_legal_document_with_context():
+    doc_text = """
+    Chương I
+    QUY ĐỊNH CHUNG
+    Mục 1
+    PHẠM VI ĐIỀU CHỈNH
+    Điều 1. Phạm vi điều chỉnh
+    Luật này quy định về hoạt động đấu thầu.
+    """
+    metadata = {
+        "title": "Luật Đấu thầu 2023",
+        "official_number": "22/2023/QH15"
+    }
+    chunks = parse_legal_document_with_context(doc_text, metadata)
+    assert len(chunks) == 1
+    assert "[Văn bản: Luật Đấu thầu 2023 | Số hiệu: 22/2023/QH15 | Chương I | Mục 1]" in chunks[0]["content"]
+    assert "Điều 1. Phạm vi điều chỉnh" in chunks[0]["content"]

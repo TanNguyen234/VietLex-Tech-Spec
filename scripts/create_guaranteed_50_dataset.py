@@ -3,19 +3,20 @@ import sys
 import json
 import asyncio
 import re
-from datasets import load_dataset
+from qdrant_client import AsyncQdrantClient
 
 # Ensure workspace root is in path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
+from app.config import get_settings
 from app.services.direct_llm import generate_llm_response
 
 CHECKPOINT_FILE = os.path.abspath("docs/dataset_gen_checkpoints.json")
 OUTPUT_FILE = os.path.abspath("docs/evaluation_50_dataset.json")
 
-# 15 Hardcoded Guardrails / Unanswerable / Out-of-scope test cases
+# 15 Static Guardrail / Refusal / Edge Case items
 STATIC_GUARDRAIL_CASES = [
     # Guardrails Blocked (5 items)
     {
@@ -127,10 +128,44 @@ STATIC_GUARDRAIL_CASES = [
     }
 ]
 
+async def synthesize_qa_from_text(source_text: str, doc_title: str) -> dict:
+    """Uses direct LLM to synthesize a natural Vietnamese legal query and ground truth answer."""
+    prompt = (
+        "Dưới đây là một đoạn trích văn bản pháp luật Việt Nam:\n"
+        f"--- Tên tài liệu: {doc_title} ---\n"
+        f"{source_text[:3000]}\n"
+        "--------------------------------------------------\n"
+        "Hãy đóng vai chuyên gia pháp luật Việt Nam. Dựa TRỰC TIẾP trên đoạn trích điều luật trên, hãy tạo:\n"
+        "1. Một câu hỏi pháp lý rõ ràng, tự nhiên mà người dân hoặc doanh nghiệp có thể tìm kiếm.\n"
+        "2. Một câu trả lời chính xác, đầy đủ dựa hoàn toàn vào thông tin trong đoạn trích trên.\n\n"
+        "Trả về DUY NHẤT một chuỗi JSON chuẩn (không dùng ```json, không thêm chữ nào khác) theo cấu trúc:\n"
+        '{"query": "Nội dung câu hỏi...", "ground_truth": "Nội dung câu trả lời..."}'
+    )
+    
+    try:
+        response_text = await generate_llm_response(prompt)
+        response_text = response_text.strip()
+        # Clean markdown codeblocks if LLM includes them
+        if response_text.startswith("```"):
+            response_text = re.sub(r"^```[a-zA-Z]*\n?", "", response_text)
+            response_text = re.sub(r"\n?```$", "", response_text).strip()
+            
+        data = json.loads(response_text)
+        if data.get("query") and data.get("ground_truth"):
+            return data
+    except Exception as e:
+        print(f"Warning generating QA for snippet: {e}")
+        
+    return None
+
 async def build_golden_dataset():
-    print("Loading HuggingFace golden dataset: 'NamSyntax/Vietnamese-Legal-QA-RAG'...")
-    hf_ds = load_dataset("NamSyntax/Vietnamese-Legal-QA-RAG", split="train")
-    print(f"Loaded {len(hf_ds)} rows from HuggingFace.")
+    settings = get_settings()
+    print("Connecting to Qdrant Cloud collection 'vietlex_laws_crawler_kb'...")
+    
+    client = AsyncQdrantClient(
+        url=settings.QDRANT_URL,
+        api_key=settings.QDRANT_API_KEY
+    )
     
     # 1. Load existing checkpoint items if present
     generated_items = []
@@ -148,57 +183,66 @@ async def build_golden_dataset():
     target_grounded_count = 35
     current_grounded = [it for it in generated_items if it.get("expected") == "pass_guardrails" and it.get("group") in group_types]
     
-    row_idx = 0
-    while len(current_grounded) < target_grounded_count and row_idx < len(hf_ds):
-        row = hf_ds[row_idx]
-        row_idx += 1
+    if len(current_grounded) < target_grounded_count:
+        print(f"Scrolling points from Qdrant 'vietlex_laws_crawler_kb' (Need {target_grounded_count - len(current_grounded)} more grounded QA pairs)...")
+        points, _ = await client.scroll(
+            collection_name="vietlex_laws_crawler_kb",
+            limit=200,
+            with_payload=True,
+            with_vectors=False
+        )
+        print(f"Retrieved {len(points)} points from Qdrant for dataset synthesis.")
         
-        q = row.get("question", "").strip()
-        a = row.get("ground_truth_answer") or row.get("answer") or ""
-        if isinstance(a, list):
-            a = " ".join([str(x) for x in a])
-        a = str(a).strip()
-        
-        ctx_raw = row.get("ground_truth_context") or row.get("context") or ""
-        if isinstance(ctx_raw, list):
-            ctx = " ".join([str(x) for x in ctx_raw])
-        else:
-            ctx = str(ctx_raw).strip()
-        
-        # Quality filters
-        if not q or not a or not ctx:
-            continue
-        if len(q) < 15 or len(a) < 10 or len(ctx) < 30:
-            continue
-        if "Cán bộ là công dân Việt Nam" in ctx and len(current_grounded) > 5:
-            continue
-        if q in existing_queries:
-            continue
+        pt_idx = 0
+        while len(current_grounded) < target_grounded_count and pt_idx < len(points):
+            pt = points[pt_idx]
+            pt_idx += 1
             
-        group_type = group_types[len(current_grounded) % len(group_types)]
-        
-        item = {
-            "query": q,
-            "group": group_type,
-            "expected": "pass_guardrails",
-            "ground_truth": a,
-            "source_snippet": ctx[:1000]
-        }
-        
-        existing_queries.add(q)
-        generated_items.append(item)
-        current_grounded.append(item)
-        
-        # Write checkpoint immediately with disk flush
-        with open(CHECKPOINT_FILE, "w", encoding="utf-8") as f:
-            json.dump(generated_items, f, ensure_ascii=False, indent=2)
-            f.flush()
-            os.fsync(f.fileno())
+            payload = pt.payload or {}
+            source_text = payload.get("source_text") or payload.get("text") or ""
+            doc_title = payload.get("title") or payload.get("official_number") or "Văn bản Pháp luật"
             
-        print(f"✓ Grounded item [{len(current_grounded)}/{target_grounded_count}] saved: '{q[:45]}...'")
-        await asyncio.sleep(0.05)
+            if len(source_text.strip()) < 150:
+                continue
+                
+            print(f"Synthesizing QA [{len(current_grounded)+1}/{target_grounded_count}] from chunk: '{doc_title[:45]}...'")
+            qa_pair = await synthesize_qa_from_text(source_text, doc_title)
+            
+            if not qa_pair:
+                continue
+                
+            q = qa_pair["query"].strip()
+            gt = qa_pair["ground_truth"].strip()
+            
+            if q in existing_queries or len(q) < 15 or len(gt) < 10:
+                continue
+                
+            group_type = group_types[len(current_grounded) % len(group_types)]
+            
+            item = {
+                "query": q,
+                "group": group_type,
+                "expected": "pass_guardrails",
+                "ground_truth": gt,
+                "source_snippet": source_text[:1000]
+            }
+            
+            existing_queries.add(q)
+            generated_items.append(item)
+            current_grounded.append(item)
+            
+            # Flush checkpoint immediately
+            with open(CHECKPOINT_FILE, "w", encoding="utf-8") as f:
+                json.dump(generated_items, f, ensure_ascii=False, indent=2)
+                f.flush()
+                os.fsync(f.fileno())
+                
+            print(f"✓ Grounded item [{len(current_grounded)}/{target_grounded_count}] saved: '{q[:50]}...'")
+            await asyncio.sleep(0.3)
 
-    # 2. Add 15 Static Guardrail / Edge Case items if not present
+    await client.close()
+
+    # 2. Add 15 Static Guardrail / Refusal / Edge Case items
     for g_item in STATIC_GUARDRAIL_CASES:
         if len(generated_items) >= 50:
             break
@@ -214,7 +258,7 @@ async def build_golden_dataset():
 
     final_50 = generated_items[:50]
     
-    # Write to docs/evaluation_50_dataset.json and app/data/evaluation_50_dataset.json
+    # Save to docs/evaluation_50_dataset.json and app/data/evaluation_50_dataset.json
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         json.dump(final_50, f, ensure_ascii=False, indent=2)
         f.flush()
@@ -228,7 +272,7 @@ async def build_golden_dataset():
         os.fsync(f.fileno())
         
     print("\n==================================================")
-    print(f"SUCCESS: Created exactly {len(final_50)} realistic evaluation items from HuggingFace!")
+    print(f"SUCCESS: Created exactly {len(final_50)} realistic evaluation items grounded in Qdrant!")
     print(f"Saved to: {OUTPUT_FILE}")
     print("==================================================")
 
