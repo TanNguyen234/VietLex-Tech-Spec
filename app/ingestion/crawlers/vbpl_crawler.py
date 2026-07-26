@@ -3,7 +3,7 @@ import json
 import logging
 from typing import Optional, List
 from bs4 import BeautifulSoup
-from scrapling import Selector, Fetcher, StealthyFetcher
+from scrapling import Selector
 from app.ingestion.scrapling_base import BaseLegalCrawler
 from app.ingestion.schemas import LegalDocumentSchema
 
@@ -249,4 +249,3 @@ class VBPLCrawler(BaseLegalCrawler):
                     return pw_doc
 
         return doc
-

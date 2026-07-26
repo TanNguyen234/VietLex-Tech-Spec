@@ -1,8 +1,5 @@
-import os
-import json
-import logfire
-from typing import List, Dict, Optional
-from app.ingestion.schemas import TextBlock, LegalASTNode
+from typing import List, Optional
+from app.ingestion.schemas import TextBlock
 from app.config import get_settings
 
 class LocalLLMFallback:
@@ -28,13 +25,6 @@ class LocalLLMFallback:
         """
         if not target_blocks:
             return "UNKNOWN"
-
-        prompt_context = {
-            "previous_blocks": [b.normalized_text for b in prev_blocks[-3:]],
-            "ambiguous_blocks": [b.normalized_text for b in target_blocks],
-            "next_blocks": [b.normalized_text for b in next_blocks[:3]],
-            "current_parser_state": current_state
-        }
 
         # Deterministic fallback without LLM call if LLM key/endpoint is unavailable
         # Or safely classify using regex heuristics

@@ -3,7 +3,7 @@ import logging
 import requests
 from abc import ABC, abstractmethod
 from typing import Optional
-from scrapling import Fetcher, Selector
+from scrapling import Fetcher
 from app.ingestion.schemas import LegalDocumentSchema
 
 # Suppress third-party noisy loggers to prevent terminal freezing

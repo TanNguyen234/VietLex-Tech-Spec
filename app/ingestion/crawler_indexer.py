@@ -5,13 +5,13 @@ import json
 import uuid
 import time
 import logfire
-from typing import List, Dict
+from typing import Any, Dict
 from tqdm import tqdm
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams, PointStruct, SparseVectorParams, SparseVector
+from qdrant_client.models import PointStruct, SparseVector
 from pyvi import ViTokenizer
 from app.ingestion.indexer import text_to_sparse_vector
-from app.ingestion.parser import parse_legal_document
+from app.ingestion.parser import parse_legal_document_with_context
 from app.config import get_settings
 
 # Configure Cache Paths to Drive D to avoid full C: drive (0GB free)
@@ -44,6 +44,54 @@ def load_gz_json(file_path: str) -> Dict:
         except Exception as e:
             logfire.error("Failed to read file: {file}, error: {err}", file=file_path, err=str(e))
             return {}
+
+
+def preflight_qdrant_collection(
+    qdrant_client: QdrantClient,
+    collection_name: str,
+    expected_vector_size: int,
+    expected_sparse_name: str = "sparse-text",
+):
+    """Read-only collection compatibility check before any write."""
+    if not qdrant_client.collection_exists(collection_name):
+        raise RuntimeError(
+            f"Qdrant collection '{collection_name}' does not exist. "
+            "Create/cutover collection outside crawler_indexer scope."
+        )
+
+    info = qdrant_client.get_collection(collection_name)
+    vector_size = _extract_dense_vector_size(info)
+    if vector_size != expected_vector_size:
+        raise RuntimeError(
+            f"Qdrant collection '{collection_name}' vector size mismatch: "
+            f"expected={expected_vector_size}, actual={vector_size}."
+        )
+
+    sparse_names = _extract_sparse_vector_names(info)
+    if sparse_names and expected_sparse_name not in sparse_names:
+        raise RuntimeError(
+            f"Qdrant collection '{collection_name}' missing sparse vector '{expected_sparse_name}'. "
+            f"available={sorted(sparse_names)}"
+        )
+
+
+def _extract_dense_vector_size(collection_info: Any) -> Any:
+    params = getattr(getattr(collection_info, "config", None), "params", None)
+    vectors = getattr(params, "vectors", None)
+    if isinstance(vectors, dict):
+        dense = vectors.get("") or next(iter(vectors.values()), None)
+        return getattr(dense, "size", None) if dense is not None else None
+    return getattr(vectors, "size", None)
+
+
+def _extract_sparse_vector_names(collection_info: Any) -> set:
+    params = getattr(getattr(collection_info, "config", None), "params", None)
+    sparse_vectors = getattr(params, "sparse_vectors", None)
+    if sparse_vectors is None:
+        sparse_vectors = getattr(params, "sparse_vectors_config", None)
+    if isinstance(sparse_vectors, dict):
+        return set(sparse_vectors.keys())
+    return set()
 
 def run_crawler_ingestion(data_dir: str, collection_name: str = "vietlex_laws_crawler_kb"):
     """
@@ -78,24 +126,21 @@ def run_crawler_ingestion(data_dir: str, collection_name: str = "vietlex_laws_cr
         url = doc_obj.get("url", "").strip()
         source = doc_obj.get("source", "").strip()
         source_id = str(doc_obj.get("source_id", ""))
-        attributes = doc_obj.get("attribute", {})
+        attributes = doc_obj.get("attribute", {}) or doc_obj.get("attributes", {})
         
         if not full_text:
             continue
             
-        # Parse text into Chapter -> Section -> Article
-        doc_chunks = parse_legal_document(full_text)
-        
-        # Fallback: if regex parser yields nothing, chunk by paragraphs
+        metadata = dict(doc_obj)
+        metadata["attributes"] = attributes
+        metadata.setdefault("raw_schema", doc_obj.get("schema", {}))
+
+        # Parse through integrity-first adapter. Failed/ambiguous documents are
+        # intentionally blocked from indexing.
+        doc_chunks = parse_legal_document_with_context(full_text, metadata=metadata)
         if not doc_chunks:
-            paragraphs = [p.strip() for p in full_text.split("\n\n") if p.strip()]
-            for idx, para in enumerate(paragraphs):
-                doc_chunks.append({
-                    "chapter": "Default",
-                    "section": "Default",
-                    "article": f"Para-{idx+1}",
-                    "content": para
-                })
+            logfire.warning("Document blocked by integrity gate: {source_id}", source_id=source_id)
+            continue
         
         # Append metadata to each chunk
         for chunk in doc_chunks:
@@ -118,7 +163,16 @@ def run_crawler_ingestion(data_dir: str, collection_name: str = "vietlex_laws_cr
         print("No valid chunks extracted from documents.")
         return
 
-    # 3. Initialize FastEmbed Multilingual Local Model (384 dimensions)
+    # 3. Connect to Qdrant Cloud and preflight existing collection.
+    logfire.info("Connecting to Qdrant Cloud at {url}...", url=settings.QDRANT_URL)
+    qdrant_client = QdrantClient(
+        url=settings.QDRANT_URL,
+        api_key=settings.QDRANT_API_KEY,
+        timeout=30.0
+    )
+    preflight_qdrant_collection(qdrant_client, collection_name, expected_vector_size=384)
+
+    # 4. Initialize FastEmbed Multilingual Local Model (384 dimensions)
     print("\nLoading Qdrant FastEmbed Local Model (sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2)...")
     from fastembed import TextEmbedding
     embed_model = TextEmbedding(
@@ -127,29 +181,7 @@ def run_crawler_ingestion(data_dir: str, collection_name: str = "vietlex_laws_cr
     )
     print("FastEmbed local ONNX model initialized successfully!")
 
-    # 4. Connect to Qdrant Cloud
-    logfire.info("Connecting to Qdrant Cloud at {url}...", url=settings.QDRANT_URL)
-    qdrant_client = QdrantClient(
-        url=settings.QDRANT_URL,
-        api_key=settings.QDRANT_API_KEY,
-        timeout=30.0
-    )
-    
-    # 5. Recreate/initialize collection with 384 vector dimensions
-    if qdrant_client.collection_exists(collection_name):
-        logfire.info("Collection '{col}' already exists. Recreating...", col=collection_name)
-        qdrant_client.delete_collection(collection_name)
-
-    logfire.info("Creating new collection '{col}' with vector size 384...", col=collection_name)
-    qdrant_client.create_collection(
-        collection_name=collection_name,
-        vectors_config=VectorParams(size=384, distance=Distance.COSINE),
-        sparse_vectors_config={
-            "sparse-text": SparseVectorParams()
-        }
-    )
-
-    # 6. Fast Local Embedding Generation & Batch Upsert
+    # 5. Fast Local Embedding Generation & Batch Upsert
     batch_size = 64
     total_batches = (len(chunks) + batch_size - 1) // batch_size
     print(f"\nStarting FastEmbed Indexing: {len(chunks)} chunks across {total_batches} batches (batch_size={batch_size})...")
@@ -169,7 +201,12 @@ def run_crawler_ingestion(data_dir: str, collection_name: str = "vietlex_laws_cr
         # Build Qdrant points
         batch_points = []
         for chunk, vector in zip(batch_chunks, batch_embeddings):
-            point_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, chunk["content"]))
+            point_basis = "|".join([
+                str(chunk.get("document_hash") or ""),
+                str(chunk.get("chunk_id") or ""),
+                str(chunk.get("content") or ""),
+            ])
+            point_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, point_basis))
             
             segmented = ViTokenizer.tokenize(chunk["content"])
             sparse_vec = text_to_sparse_vector(segmented)
@@ -187,7 +224,18 @@ def run_crawler_ingestion(data_dir: str, collection_name: str = "vietlex_laws_cr
                 "document_type": chunk["document_type"],
                 "issuing_body": chunk["issuing_body"],
                 "effective_date": chunk["effective_date"],
-                "expiry_date": chunk["expiry_date"]
+                "expiry_date": chunk["expiry_date"],
+                "document_hash": chunk.get("document_hash"),
+                "body_hash": chunk.get("body_hash"),
+                "audit_id": chunk.get("audit_id"),
+                "pipeline_version": chunk.get("pipeline_version"),
+                "template_id": chunk.get("template_id"),
+                "source_block_ids": chunk.get("source_block_ids", []),
+                "node_id": chunk.get("node_id"),
+                "node_type": chunk.get("node_type"),
+                "body_source": chunk.get("body_source"),
+                "candidate_decision": chunk.get("candidate_decision"),
+                "disposition": chunk.get("disposition")
             }
             
             batch_points.append(PointStruct(
@@ -222,10 +270,10 @@ def run_crawler_ingestion(data_dir: str, collection_name: str = "vietlex_laws_cr
             total_indexed += len(batch_points)
             print(f" - [Batch {idx}/{total_batches}] Indexed {len(batch_points)} points. Total Qdrant points: {total_indexed}/{len(chunks)}")
 
-    print(f"\n==================================================")
+    print("\n==================================================")
     print(f"FastEmbed Indexing completed successfully for collection '{collection_name}'!")
     print(f"Total points indexed: {total_indexed}")
-    print(f"==================================================")
+    print("==================================================")
 
 if __name__ == "__main__":
     import argparse

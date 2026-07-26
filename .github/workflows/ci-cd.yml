@@ -39,7 +39,13 @@ jobs:
           ruff check app/
 
       # Bước 5: Chạy Unit Test
-      - name: Test with Pytest
+      - name: Integrity preprocessing gate
+        env:
+          PYTHONPATH: .
+        run: |
+          pytest -q tests/test_integrity_postprocessing.py
+
+      - name: Parser postprocessing regression tests
         env:
           PYTHONPATH: .
           QDRANT_URL: ${{ secrets.QDRANT_URL }}
@@ -49,7 +55,7 @@ jobs:
           LITELLM_MASTER_KEY: ${{ secrets.LITELLM_MASTER_KEY }}
           MONGO_URL: ${{ secrets.MONGO_URL }}
         run: |
-          pytest -v || echo "No tests found to run yet."
+          pytest -v tests/test_parser.py tests/test_legal_postprocessing.py
 
   # --- PHASE 2: CONTINUOUS DEPLOYMENT (CD) ---
   build-and-push:

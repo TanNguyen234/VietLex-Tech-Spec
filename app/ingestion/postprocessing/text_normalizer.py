@@ -31,54 +31,57 @@ class TextNormalizer:
         blocks: List[TextBlock] = []
 
         if html_text and html_text.strip():
-            blocks = self._build_blocks_from_html(html_text, source)
+            blocks = self.build_html_blocks(html_text, source)
 
         if not blocks and full_text and full_text.strip():
-            blocks = self._build_blocks_from_plain_text(full_text, source)
+            blocks = self.build_plain_text_blocks(full_text, source)
 
         return blocks
 
-    def _build_blocks_from_html(self, html_text: str, source: Optional[str]) -> List[TextBlock]:
+    def build_html_blocks(self, html_text: str, source: Optional[str], block_prefix: str = "html") -> List[TextBlock]:
+        return self._build_blocks_from_html(html_text, source, block_prefix)
+
+    def build_plain_text_blocks(self, full_text: str, source: Optional[str], block_prefix: str = "full") -> List[TextBlock]:
+        return self._build_blocks_from_plain_text(full_text, source, block_prefix)
+
+    def _build_blocks_from_html(self, html_text: str, source: Optional[str], block_prefix: str) -> List[TextBlock]:
         blocks: List[TextBlock] = []
-        try:
-            soup = BeautifulSoup(html_text, "html.parser")
-            # Strip script, style, meta tags
-            for elem in soup(["script", "style", "meta", "noscript", "footer", "nav"]):
-                elem.decompose()
+        soup = BeautifulSoup(html_text, "html.parser")
+        # Strip script, style, meta tags
+        for elem in soup(["script", "style", "meta", "noscript", "footer", "nav"]):
+            elem.decompose()
 
-            raw_elements = soup.find_all(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'div', 'tr', 'li'])
-            order = 0
+        raw_elements = soup.find_all(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'div', 'tr', 'li'])
+        order = 0
 
-            for el in raw_elements:
-                # If element has child block tags, skip parent to avoid duplicate blocks
-                if el.find(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'tr', 'li']):
-                    continue
+        for el in raw_elements:
+            # If element has child block tags, skip parent to avoid duplicate blocks
+            if el.find(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'tr', 'li']):
+                continue
 
-                raw_t = el.get_text()
-                norm_t = self.normalize_text(raw_t)
+            raw_t = el.get_text()
+            norm_t = self.normalize_text(raw_t)
 
-                if not norm_t:
-                    continue
+            if not norm_t:
+                continue
 
-                order += 1
-                tag_name = el.name
-                dom_path = self._get_dom_path(el)
+            order += 1
+            tag_name = el.name
+            dom_path = self._get_dom_path(el)
 
-                blocks.append(TextBlock(
-                    block_id=f"block_{order:06d}",
-                    order=order,
-                    raw_text=raw_t,
-                    normalized_text=norm_t,
-                    source_tag=tag_name,
-                    dom_path=dom_path,
-                    source=source
-                ))
-        except Exception:
-            pass
+            blocks.append(TextBlock(
+                block_id=f"{block_prefix}_{order:06d}",
+                order=order,
+                raw_text=raw_t,
+                normalized_text=norm_t,
+                source_tag=tag_name,
+                dom_path=dom_path,
+                source=source
+            ))
 
         return blocks
 
-    def _build_blocks_from_plain_text(self, full_text: str, source: Optional[str]) -> List[TextBlock]:
+    def _build_blocks_from_plain_text(self, full_text: str, source: Optional[str], block_prefix: str) -> List[TextBlock]:
         blocks: List[TextBlock] = []
         norm_full = self.normalize_text(full_text)
         raw_paragraphs = [p.strip() for p in norm_full.split("\n") if p.strip()]
@@ -87,7 +90,7 @@ class TextNormalizer:
         for p in raw_paragraphs:
             order += 1
             blocks.append(TextBlock(
-                block_id=f"block_{order:06d}",
+                block_id=f"{block_prefix}_{order:06d}",
                 order=order,
                 raw_text=p,
                 normalized_text=p,

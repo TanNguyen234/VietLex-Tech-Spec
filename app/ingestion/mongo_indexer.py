@@ -3,7 +3,7 @@ import gzip
 import json
 import pymongo
 import logfire
-from typing import Dict, List
+from typing import Dict
 from tqdm import tqdm
 import sys
 from app.config import get_settings
@@ -99,7 +99,7 @@ def run_mongo_ingestion(data_dir: str, collection_name: str = "raw_legal_documen
     total_in_db = collection.count_documents({})
     logfire.info("MongoDB Ingestion Complete. Upserted new: {new}, Updated: {upd}, Total docs in collection '{col}': {total}",
                  new=upserted_count, upd=updated_count, col=collection_name, total=total_in_db)
-    print(f"\n[MongoDB Ingestion Completed]")
+    print("\n[MongoDB Ingestion Completed]")
     print(f" - Inserted new: {upserted_count}")
     print(f" - Updated existing: {updated_count}")
     print(f" - Total documents in collection '{collection_name}': {total_in_db}")

@@ -36,7 +36,8 @@ def main():
 
         doc = LegalDocumentSchema(**raw_data)
         processed = pipeline.process(doc)
-        print(f"-> Successfully processed {sample}: {len(processed.chunks)} chunks generated.")
+        print(json.dumps(processed.integrity_report.model_dump(mode="json"), ensure_ascii=False, indent=2))
+        print(f"-> Processed {sample}: disposition={processed.disposition.value}, chunks={len(processed.chunks)}")
 
 if __name__ == "__main__":
     main()

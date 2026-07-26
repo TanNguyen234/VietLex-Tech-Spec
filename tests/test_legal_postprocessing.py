@@ -5,11 +5,8 @@ import json
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from app.ingestion.schemas import LegalDocumentSchema
+from app.ingestion.schemas import LegalDocumentSchema, ProcessingDisposition
 from app.ingestion.postprocessing.pipeline import LegalPreprocessingPipeline
-from app.ingestion.postprocessing.metadata_resolver import MetadataResolver
-from app.ingestion.postprocessing.structure_parser import StructureParser
-from app.ingestion.postprocessing.text_normalizer import TextNormalizer
 
 @pytest.fixture
 def pipeline():
@@ -88,7 +85,13 @@ def test_real_sample_moj(pipeline):
         doc = LegalDocumentSchema(**data)
         res = pipeline.process(doc)
         assert res.source_id == data["source_id"]
-        assert len(res.chunks) > 0
+        assert res.audit_id
+        if res.disposition in {ProcessingDisposition.PASS, ProcessingDisposition.PASS_WITH_UNKNOWN_METADATA}:
+            assert len(res.chunks) > 0
+            assert all(chunk.audit_id == res.audit_id for chunk in res.chunks)
+        else:
+            assert len(res.chunks) == 0
+            assert res.validation.errors
 
 def test_real_sample_vbpl(pipeline):
     sample_path = os.path.join(os.path.dirname(__file__), "..", "data", "scrapling_raw", "trial_samples", "vbpl_sample.json")
@@ -98,7 +101,13 @@ def test_real_sample_vbpl(pipeline):
         doc = LegalDocumentSchema(**data)
         res = pipeline.process(doc)
         assert res.source_id == data["source_id"]
-        assert len(res.chunks) > 0
+        assert res.audit_id
+        if res.disposition in {ProcessingDisposition.PASS, ProcessingDisposition.PASS_WITH_UNKNOWN_METADATA}:
+            assert len(res.chunks) > 0
+            assert all(chunk.audit_id == res.audit_id for chunk in res.chunks)
+        else:
+            assert len(res.chunks) == 0
+            assert res.validation.errors
 
 def test_real_sample_vietlaw(pipeline):
     sample_path = os.path.join(os.path.dirname(__file__), "..", "data", "scrapling_raw", "trial_samples", "vietlaw_sample.json")
@@ -108,4 +117,10 @@ def test_real_sample_vietlaw(pipeline):
         doc = LegalDocumentSchema(**data)
         res = pipeline.process(doc)
         assert res.source_id == data["source_id"]
-        assert len(res.chunks) > 0
+        assert res.audit_id
+        if res.disposition in {ProcessingDisposition.PASS, ProcessingDisposition.PASS_WITH_UNKNOWN_METADATA}:
+            assert len(res.chunks) > 0
+            assert all(chunk.audit_id == res.audit_id for chunk in res.chunks)
+        else:
+            assert len(res.chunks) == 0
+            assert res.validation.errors

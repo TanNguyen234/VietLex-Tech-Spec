@@ -1,4 +1,3 @@
-import uuid
 from typing import Optional, List
 from app.ingestion.schemas import LegalASTNode, TextBlock
 
@@ -8,9 +7,9 @@ class DeterministicStateMachine:
     Ensures strict parent-child scope tracking and prevents context leakage across nodes.
     """
 
-    def __init__(self, doc_title: str = "Legal Document"):
+    def __init__(self, doc_title: str = "Legal Document", document_id: str = "doc_unk"):
         self.root = LegalASTNode(
-            node_id=f"doc_{uuid.uuid4().hex[:8]}",
+            node_id=f"doc_{document_id or 'doc_unk'}",
             node_type="document",
             title=doc_title,
             children=[],
@@ -25,6 +24,7 @@ class DeterministicStateMachine:
         self.current_point: Optional[LegalASTNode] = None
         self.current_subpoint: Optional[LegalASTNode] = None
         self.current_appendix: Optional[LegalASTNode] = None
+        self.unresolved_blocks: List[str] = []
 
     def add_chapter(self, number: str, title: str, block: TextBlock, confidence: float = 1.0) -> LegalASTNode:
         node = LegalASTNode(
@@ -40,6 +40,7 @@ class DeterministicStateMachine:
         )
         self.root.children.append(node)
         self.current_chapter = node
+        self.current_appendix = None
         self.current_section = None
         self.current_article = None
         self.current_clause = None
@@ -62,6 +63,7 @@ class DeterministicStateMachine:
         )
         parent.children.append(node)
         self.current_section = node
+        self.current_appendix = None
         self.current_article = None
         self.current_clause = None
         self.current_point = None
@@ -83,6 +85,7 @@ class DeterministicStateMachine:
         )
         parent.children.append(node)
         self.current_article = node
+        self.current_appendix = None
         # Context Isolation: Reset clause, point, subpoint
         self.current_clause = None
         self.current_point = None
@@ -103,6 +106,7 @@ class DeterministicStateMachine:
         )
         parent.children.append(node)
         self.current_clause = node
+        self.current_appendix = None
         # Context Isolation: Reset point, subpoint
         self.current_point = None
         self.current_subpoint = None
@@ -122,6 +126,7 @@ class DeterministicStateMachine:
         )
         parent.children.append(node)
         self.current_point = node
+        self.current_appendix = None
         # Context Isolation: Reset subpoint
         self.current_subpoint = None
         return node
@@ -157,6 +162,12 @@ class DeterministicStateMachine:
         )
         self.root.children.append(node)
         self.current_appendix = node
+        self.current_chapter = None
+        self.current_section = None
+        self.current_article = None
+        self.current_clause = None
+        self.current_point = None
+        self.current_subpoint = None
         return node
 
     def add_signature(self, block: TextBlock) -> LegalASTNode:
@@ -169,10 +180,20 @@ class DeterministicStateMachine:
             source_block_ids=[block.block_id]
         )
         self.root.children.append(node)
+        self.current_appendix = None
+        self.current_clause = None
+        self.current_point = None
+        self.current_subpoint = None
         return node
+
+    def add_unresolved(self, block: TextBlock, reason: str):
+        entry = f"{block.block_id}:{reason}"
+        self.unresolved_blocks.append(entry)
+        self.root.unresolved_block_ids.append(entry)
 
     def append_text_to_active_node(self, block: TextBlock):
         target = (
+            self.current_appendix or
             self.current_subpoint or
             self.current_point or
             self.current_clause or

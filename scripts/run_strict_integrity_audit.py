@@ -191,9 +191,20 @@ def get_ast_concatenated_text(node: LegalASTNode) -> str:
     return "\n".join(texts)
 
 def collect_node_counts(node: LegalASTNode, counts: Dict[str, int]):
-    nt = node.node_type
-    if nt in counts:
-        counts[nt] += 1
+    node_type_to_key = {
+        "chapter": "chapters",
+        "section": "sections",
+        "article": "articles",
+        "clause": "clauses",
+        "point": "points",
+        "subpoint": "subpoints",
+        "appendix": "appendices",
+        "signature": "signatures",
+        "unresolved": "unresolved",
+    }
+    key = node_type_to_key.get(node.node_type)
+    if key in counts:
+        counts[key] += 1
     for child in node.children:
         collect_node_counts(child, counts)
 
@@ -225,10 +236,10 @@ def check_ordering_violations(blocks: List[Any], root: LegalASTNode) -> List[str
 
     collect_bids(root)
     
-    # Extract order numbers from block_ids (e.g. block_000001 -> 1)
+    # Extract order numbers from block_ids (e.g. full_000001/html_000001 -> 1)
     orders = []
     for bid in traversed_block_ids:
-        m = re.search(r'block_(\d+)', bid)
+        m = re.search(r'(?:block|full|html)_(\d+)', bid)
         if m:
             orders.append(int(m.group(1)))
 

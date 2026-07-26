@@ -1,6 +1,6 @@
 import re
 
-from typing import Dict, Any, Optional
+from typing import Optional
 from app.ingestion.schemas import LegalDocumentSchema, ExtractedMetadata, ExtractedMetadataField
 
 # Document types list in Vietnamese legal system
@@ -15,9 +15,9 @@ class MetadataResolver:
     Resolves metadata fields with high fidelity and confidence scoring without LLM hallucination.
     """
 
-    def resolve(self, doc: LegalDocumentSchema) -> ExtractedMetadata:
+    def resolve(self, doc: LegalDocumentSchema, body_text: Optional[str] = None) -> ExtractedMetadata:
         title = doc.title or ""
-        full_text = doc.full_text or ""
+        full_text = body_text if body_text is not None else (doc.full_text or "")
         html_text = doc.html_text or ""
         url = doc.url or ""
 
@@ -81,37 +81,51 @@ class MetadataResolver:
         return ExtractedMetadataField(value="UNKNOWN", source="none", method="none", confidence=0.0, reason="not_found")
 
     def _extract_official_number(self, crawled_val: Optional[str], title: str, header: str, html: str) -> ExtractedMetadataField:
+        text_value = self._find_official_number_in_text(title, header)
         if crawled_val and crawled_val.strip() and crawled_val.strip() != "UNKNOWN":
+            clean_crawled = crawled_val.strip()
+            if text_value and text_value != clean_crawled:
+                return ExtractedMetadataField(
+                    value=clean_crawled,
+                    source="crawled_metadata",
+                    method="direct_with_conflict",
+                    confidence=0.6,
+                    reason="crawled_metadata_conflicts_with_body",
+                    evidence={"body_value": text_value},
+                    conflicts=[f"official_number crawler={clean_crawled} body={text_value}"],
+                )
             return ExtractedMetadataField(
-                value=crawled_val.strip(),
+                value=clean_crawled,
                 source="crawled_metadata",
                 method="direct",
-                confidence=1.0
+                confidence=0.85,
+                reason="crawled_metadata_present"
             )
 
-        # Pattern: Số: 52/2006/NĐ-CP or 22/2023/QH15 or 01/2021/TT-BTP
-        pattern = r'(?i)(?:Số|Số:)\s*([0-9]+(?:/[0-9]+)?(?:/[A-Za-z0-9_À-ỹ\-]+)?)'
-        
-        match = re.search(pattern, header)
-        if match:
+        if text_value:
             return ExtractedMetadataField(
-                value=match.group(1).strip(),
+                value=text_value,
                 source="full_text_header",
                 method="regex",
                 confidence=0.99
             )
 
+        return ExtractedMetadataField(value="UNKNOWN", source="none", method="none", confidence=0.0, reason="not_found")
+
+    def _find_official_number_in_text(self, title: str, header: str) -> Optional[str]:
+        # Pattern: Số: 52/2006/NĐ-CP or 22/2023/QH15 or 01/2021/TT-BTP
+        pattern = r'(?i)(?:Số|So|Số:|So:)\s*([0-9]+(?:/[0-9]+)?(?:/[A-Za-z0-9_À-ỹ\-]+)?)'
+        
+        match = re.search(pattern, header)
+        if match:
+            return match.group(1).strip()
+
         # Search in title
         match_title = re.search(r'\b([0-9]+/[0-9]{4}/[A-Za-z0-9_À-ỹ\-]+)\b', title)
         if match_title:
-            return ExtractedMetadataField(
-                value=match_title.group(1).strip(),
-                source="title",
-                method="regex",
-                confidence=0.95
-            )
+            return match_title.group(1).strip()
 
-        return ExtractedMetadataField(value="UNKNOWN", source="none", method="none", confidence=0.0, reason="not_found")
+        return None
 
     def _extract_issued_date(self, crawled_val: Optional[str], header: str, html: str) -> ExtractedMetadataField:
         if crawled_val and crawled_val.strip() and crawled_val.strip() != "UNKNOWN":

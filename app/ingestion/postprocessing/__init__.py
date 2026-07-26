@@ -11,6 +11,14 @@ from app.ingestion.schemas import (
     LegalASTNode,
     ValidationAuditResult,
     HierarchicalChunk,
+    ProcessingDisposition,
+    EvidenceNode,
+    EvidenceGraph,
+    ConfidenceExplanation,
+    TemplateRegistryEntry,
+    BodyCandidate,
+    BodyResolution,
+    IntegrityReport,
 )
 
 __all__ = [
@@ -22,4 +30,12 @@ __all__ = [
     "LegalASTNode",
     "ValidationAuditResult",
     "HierarchicalChunk",
+    "ProcessingDisposition",
+    "EvidenceNode",
+    "EvidenceGraph",
+    "ConfidenceExplanation",
+    "TemplateRegistryEntry",
+    "BodyCandidate",
+    "BodyResolution",
+    "IntegrityReport",
 ]

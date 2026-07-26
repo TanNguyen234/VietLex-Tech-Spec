@@ -1,11 +1,15 @@
-import uuid
-from typing import List, Dict, Optional
-from app.ingestion.schemas import LegalASTNode, HierarchicalChunk, ExtractedMetadata
+import hashlib
+from typing import Dict, List, Optional
+
+from app.ingestion.schemas import ExtractedMetadata, HierarchicalChunk, LegalASTNode
+
 
 class HierarchicalChunker:
     """
-    Hierarchical Parent-Child Chunker (Phase 8).
-    Creates Parent (Article) and Child (Clause/Point) chunks enriched with full citation headers.
+    Builds deterministic chunks from AST-owned node text.
+
+    `text` is owned source text only. `context_text` may add hierarchy/citation
+    context for retrieval, but it is not used as a reconstruction proof.
     """
 
     def chunk_ast(
@@ -13,19 +17,22 @@ class HierarchicalChunker:
         root: LegalASTNode,
         document_id: str,
         doc_title: str,
-        metadata: ExtractedMetadata
+        metadata: ExtractedMetadata,
+        document_hash: str = "",
+        body_hash: str = "",
+        audit_id: str = "",
+        pipeline_version: str = "",
+        template_id: str = "unknown",
     ) -> List[HierarchicalChunk]:
         chunks: List[HierarchicalChunk] = []
-
-        official_num = metadata.official_number.value or "Không có số hiệu"
-        doc_prefix = f"Văn bản: {doc_title} | Số hiệu: {official_num}"
-
-        # Traversal context state
-        context = {
+        official_num = metadata.official_number.value or "UNKNOWN"
+        doc_prefix = f"Document: {doc_title} | Number: {official_num}"
+        context: Dict[str, Optional[str]] = {
             "chapter": None,
             "section": None,
             "article": None,
-            "clause": None
+            "clause": None,
+            "point": None,
         }
 
         self._traverse_and_chunk(
@@ -34,9 +41,13 @@ class HierarchicalChunker:
             doc_prefix=doc_prefix,
             context=context,
             parent_chunk_id=None,
-            chunks=chunks
+            chunks=chunks,
+            document_hash=document_hash,
+            body_hash=body_hash,
+            audit_id=audit_id,
+            pipeline_version=pipeline_version,
+            template_id=template_id,
         )
-
         return chunks
 
     def _traverse_and_chunk(
@@ -46,130 +57,106 @@ class HierarchicalChunker:
         doc_prefix: str,
         context: Dict[str, Optional[str]],
         parent_chunk_id: Optional[str],
-        chunks: List[HierarchicalChunk]
+        chunks: List[HierarchicalChunk],
+        document_hash: str,
+        body_hash: str,
+        audit_id: str,
+        pipeline_version: str,
+        template_id: str,
     ):
         current_ctx = dict(context)
+        self._update_context(node, current_ctx)
 
-        if node.node_type == "chapter":
-            current_ctx["chapter"] = f"Chương {node.number or ''}".strip()
-            if node.title:
-                current_ctx["chapter"] += f": {node.title}"
-        elif node.node_type == "section":
-            current_ctx["section"] = f"Mục {node.number or ''}".strip()
-            if node.title:
-                current_ctx["section"] += f": {node.title}"
-        elif node.node_type == "article":
-            art_str = f"Điều {node.number or ''}".strip()
-            if node.title:
-                art_str += f". {node.title}"
-            current_ctx["article"] = art_str
-
-            # Create Parent Chunk for Article
-            art_chunk_id = f"chunk_art_{uuid.uuid4().hex[:8]}"
+        current_chunk_id = parent_chunk_id
+        if node.node_type != "document" and node.normalized_text.strip() and node.source_block_ids:
+            chunk_id = self._chunk_id(document_id, node)
             citation_str = self._build_citation_header(doc_prefix, current_ctx)
+            text = node.normalized_text.strip()
+            context_text = f"[{citation_str}]\n{text}" if citation_str else text
 
-            full_art_body = self._collect_node_text(node)
-            context_text = f"[{citation_str}]\n{full_art_body}"
-
-            art_chunk = HierarchicalChunk(
-                chunk_id=art_chunk_id,
-                parent_chunk_id=None,
-                document_id=document_id,
-                node_id=node.node_id,
-                node_type="article",
-                text=full_art_body,
-                context_text=context_text,
-                citation={
-                    "doc_title": doc_prefix,
-                    "chapter": current_ctx.get("chapter"),
-                    "section": current_ctx.get("section"),
-                    "article": current_ctx.get("article"),
-                    "clause": None,
-                    "point": None
-                }
-            )
-            chunks.append(art_chunk)
-
-            # Traverse child clauses or points under this Article
-            for child in node.children:
-                self._traverse_and_chunk(
-                    node=child,
-                    document_id=document_id,
-                    doc_prefix=doc_prefix,
-                    context=current_ctx,
-                    parent_chunk_id=art_chunk_id,
-                    chunks=chunks
-                )
-            return
-
-        elif node.node_type == "clause":
-            cls_str = f"Khoản {node.number or ''}".strip()
-            current_ctx["clause"] = cls_str
-
-            cls_chunk_id = f"chunk_cls_{uuid.uuid4().hex[:8]}"
-            citation_str = self._build_citation_header(doc_prefix, current_ctx)
-            cls_body = self._collect_node_text(node)
-            context_text = f"[{citation_str}]\n{cls_body}"
-
-            cls_chunk = HierarchicalChunk(
-                chunk_id=cls_chunk_id,
+            chunk = HierarchicalChunk(
+                chunk_id=chunk_id,
                 parent_chunk_id=parent_chunk_id,
                 document_id=document_id,
                 node_id=node.node_id,
-                node_type="clause",
-                text=cls_body,
+                node_type=node.node_type,
+                text=text,
                 context_text=context_text,
                 citation={
                     "doc_title": doc_prefix,
                     "chapter": current_ctx.get("chapter"),
                     "section": current_ctx.get("section"),
                     "article": current_ctx.get("article"),
-                    "clause": cls_str,
-                    "point": None
-                }
+                    "clause": current_ctx.get("clause"),
+                    "point": current_ctx.get("point"),
+                },
+                source_block_ids=list(node.source_block_ids),
+                document_hash=document_hash,
+                body_hash=body_hash,
+                audit_id=audit_id,
+                pipeline_version=pipeline_version,
+                template_id=template_id,
             )
-            chunks.append(cls_chunk)
+            chunks.append(chunk)
+            current_chunk_id = chunk_id
 
-            for child in node.children:
-                self._traverse_and_chunk(
-                    node=child,
-                    document_id=document_id,
-                    doc_prefix=doc_prefix,
-                    context=current_ctx,
-                    parent_chunk_id=cls_chunk_id,
-                    chunks=chunks
-                )
-            return
-
-        # Fallback for children
         for child in node.children:
             self._traverse_and_chunk(
                 node=child,
                 document_id=document_id,
                 doc_prefix=doc_prefix,
                 context=current_ctx,
-                parent_chunk_id=parent_chunk_id,
-                chunks=chunks
+                parent_chunk_id=current_chunk_id,
+                chunks=chunks,
+                document_hash=document_hash,
+                body_hash=body_hash,
+                audit_id=audit_id,
+                pipeline_version=pipeline_version,
+                template_id=template_id,
             )
+
+    def _update_context(self, node: LegalASTNode, ctx: Dict[str, Optional[str]]):
+        if node.node_type == "chapter":
+            ctx["chapter"] = self._label("Chuong", node)
+            ctx["section"] = None
+            ctx["article"] = None
+            ctx["clause"] = None
+            ctx["point"] = None
+        elif node.node_type == "section":
+            ctx["section"] = self._label("Muc", node)
+            ctx["article"] = None
+            ctx["clause"] = None
+            ctx["point"] = None
+        elif node.node_type == "article":
+            ctx["article"] = self._label("Dieu", node)
+            ctx["clause"] = None
+            ctx["point"] = None
+        elif node.node_type == "clause":
+            ctx["clause"] = self._label("Khoan", node)
+            ctx["point"] = None
+        elif node.node_type == "point":
+            ctx["point"] = self._label("Diem", node)
+        elif node.node_type == "appendix":
+            ctx["chapter"] = self._label("Phu luc", node)
+            ctx["section"] = None
+            ctx["article"] = None
+            ctx["clause"] = None
+            ctx["point"] = None
+
+    def _label(self, prefix: str, node: LegalASTNode) -> str:
+        label = f"{prefix} {node.number or ''}".strip()
+        if node.title:
+            label += f": {node.title}"
+        return label
 
     def _build_citation_header(self, doc_prefix: str, ctx: Dict[str, Optional[str]]) -> str:
         parts = [doc_prefix]
-        if ctx.get("chapter"):
-            parts.append(ctx["chapter"])
-        if ctx.get("section"):
-            parts.append(ctx["section"])
-        if ctx.get("article"):
-            parts.append(ctx["article"])
-        if ctx.get("clause"):
-            parts.append(ctx["clause"])
+        for key in ["chapter", "section", "article", "clause", "point"]:
+            if ctx.get(key):
+                parts.append(ctx[key] or "")
         return " | ".join(parts)
 
-    def _collect_node_text(self, node: LegalASTNode) -> str:
-        texts = []
-        if node.normalized_text:
-            texts.append(node.normalized_text)
-        for child in node.children:
-            c_text = self._collect_node_text(child)
-            if c_text:
-                texts.append(c_text)
-        return "\n".join(texts)
+    def _chunk_id(self, document_id: str, node: LegalASTNode) -> str:
+        basis = "|".join([document_id, node.node_id, ",".join(node.source_block_ids)])
+        digest = hashlib.sha256(basis.encode("utf-8")).hexdigest()[:16]
+        return f"chunk_{node.node_type}_{digest}"
