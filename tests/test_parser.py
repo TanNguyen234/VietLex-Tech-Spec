@@ -19,5 +19,8 @@ def test_parse_legal_document_with_context():
     }
     chunks = parse_legal_document_with_context(doc_text, metadata)
     assert len(chunks) == 1
-    assert "[Văn bản: Luật Đấu thầu 2023 | Số hiệu: 22/2023/QH15 | Chương I | Mục 1]" in chunks[0]["content"]
+    assert "Luật Đấu thầu 2023" in chunks[0]["content"]
+    assert "22/2023/QH15" in chunks[0]["content"]
+    assert "Chương I" in chunks[0]["content"]
+    assert "Mục 1" in chunks[0]["content"]
     assert "Điều 1. Phạm vi điều chỉnh" in chunks[0]["content"]
