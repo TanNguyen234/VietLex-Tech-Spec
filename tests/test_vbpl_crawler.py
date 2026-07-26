@@ -48,3 +48,11 @@ def test_vbpl_crawler_parse_mock():
     assert "Nội dung quy định chi tiết" in doc.full_text
     assert "Văn bản căn cứ" in doc.relations
     assert doc.relations["Văn bản căn cứ"][0] == "https://vbpl.vn/tw/Pages/vbpq-todan.aspx?ItemID=100"
+
+def test_vbpl_crawler_full_text_length():
+    crawler = VBPLCrawler(use_stealth=False)
+    url = "https://vbpl.vn/van-ban/chi-tiet/nghi-dinh-so-52-2006-nd-cp-ve-phat-hanh-trai-phieu-doanh-nghiep--16181"
+    doc = crawler.parse_document(url)
+    assert doc is not None
+    assert doc.official_number == "52/2006/NĐ-CP"
+    assert len(doc.full_text) > 20000, f"Expected full_text > 20000 chars, got {len(doc.full_text)}"

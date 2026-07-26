@@ -144,7 +144,7 @@ class VBPLCrawler(BaseLegalCrawler):
         full_text = "\n".join(lines)
 
         # Fallback if full_text is short or CSR placeholder, construct rich summary from Schema.org metadata
-        if len(full_text) < 100 or "Đang tải dữ liệu" in full_text or "Portal VBPL" in full_text:
+        if len(full_text) < 50 or "Đang tải dữ liệu" in full_text or "Portal VBPL" in full_text:
             meta_desc = f"Văn bản: {title}\nLoại văn bản: {doc_type}\nKý hiệu: {official_num}\nNgày ban hành: {issued_date}\nCơ quan ban hành: {issuing_org}\nTrạng thái: {status_val}\nURL: {url}"
             full_text = meta_desc
 
@@ -179,27 +179,74 @@ class VBPLCrawler(BaseLegalCrawler):
             relations=relations
         )
 
+    def fetch_with_playwright(self, url: str) -> Optional[str]:
+        """Renders Next.js dynamic client-side content with Playwright stealth browser context."""
+        from playwright.sync_api import sync_playwright
+        try:
+            with sync_playwright() as p:
+                browser = p.chromium.launch(headless=True)
+                context = browser.new_context(
+                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+                    locale="vi-VN",
+                    extra_http_headers={
+                        "Accept-Language": "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7"
+                    }
+                )
+                page = context.new_page()
+                page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+                page.goto(url, wait_until="networkidle", timeout=30000)
+                page.wait_for_timeout(2000)
+                
+                # Hide footer, header, nav elements to get clean document body
+                full_html = page.evaluate("""() => {
+                    const selectorsToHide = ['footer', 'header', 'nav', '.Footer_wrapMainFooter__e_pgb'];
+                    selectorsToHide.forEach(s => {
+                        document.querySelectorAll(s).forEach(el => el.remove());
+                    });
+                    return document.documentElement.outerHTML;
+                }""")
+                browser.close()
+                return full_html
+        except Exception as e:
+            logger.warning(f"[VBPL Playwright] Error rendering {url}: {e}")
+            return None
+
     def parse_document(self, url: str) -> Optional[LegalDocumentSchema]:
         if not is_valid_vbpl_legal_url(url):
             logger.info(f"[VBPL] Discarded non-legal document URL: {url}")
             return None
 
+        # Try static fetch first
         res = self.fetch_page(url)
-        if not res:
-            return None
-            
-        status = getattr(res, "status_code", getattr(res, "status", 200))
-        if status == 404:
-            return None
+        html_text = ""
+        if res:
+            status = getattr(res, "status_code", getattr(res, "status", 200))
+            if status == 404:
+                return None
+            html_text = res.body.decode("utf-8", errors="ignore") if hasattr(res, "body") else (res.text if hasattr(res, "text") else str(res))
 
-        html_text = res.body.decode("utf-8", errors="ignore") if hasattr(res, "body") else (res.text if hasattr(res, "text") else str(res))
-        if not html_text:
-            return None
+        doc = None
+        if html_text:
+            doc = self.parse_document_from_html(
+                url=url,
+                html_content=html_text,
+                attr_html="",
+                schema_html=""
+            )
 
-        return self.parse_document_from_html(
-            url=url,
-            html_content=html_text,
-            attr_html="",
-            schema_html=""
-        )
+        # If static doc is None or full_text is just loading shell placeholder (< 1000 chars), fallback to Playwright rendering
+        if not doc or not doc.full_text or len(doc.full_text) < 1000 or "Đang tải dữ liệu" in doc.full_text:
+            logger.info(f"[VBPL] Static HTML incomplete for {url}. Launching Playwright stealth renderer...")
+            rendered_html = self.fetch_with_playwright(url)
+            if rendered_html:
+                pw_doc = self.parse_document_from_html(
+                    url=url,
+                    html_content=rendered_html,
+                    attr_html="",
+                    schema_html=""
+                )
+                if pw_doc and len(pw_doc.full_text) >= 1000:
+                    return pw_doc
+
+        return doc
 
