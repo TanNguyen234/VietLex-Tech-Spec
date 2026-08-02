@@ -15,6 +15,7 @@ from app.api.routes import router as api_router
 from app.services.clients import close_clients
 from app.services.retrieval import reset_retriever
 from app.services.semantic_cache import ensure_semantic_cache_collection
+from app.services.guardrails import warm_guardrails
 
 # Load environment variables from .env before logfire/settings initialization
 load_dotenv()
@@ -28,6 +29,7 @@ async def startup_event():
     logfire.configure()
     await init_db()
     await ensure_semantic_cache_collection()
+    await warm_guardrails()
 
 @app.on_event("shutdown")
 async def shutdown_event():

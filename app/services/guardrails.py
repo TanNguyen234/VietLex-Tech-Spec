@@ -1,4 +1,5 @@
 import logfire
+import hashlib
 import json
 import re
 import asyncio
@@ -101,6 +102,17 @@ def get_rails():
         _rails_instance = LLMRails(config)
     return _rails_instance
 
+
+async def warm_guardrails() -> None:
+    """Initialize NeMo before the first request without blocking the loop."""
+    try:
+        await asyncio.to_thread(get_rails)
+    except Exception as error:
+        logfire.error(
+            "Guardrails startup warm-up failed: {error}",
+            error=str(error),
+        )
+
 # Fast pattern detection for obvious out-of-scope non-legal queries
 OUT_OF_SCOPE_PATTERNS = [
     r"mã nguồn python", r"bún bò huế", r"bài thơ", r"phương trình bậc hai",
@@ -174,6 +186,13 @@ async def check_output_guardrails(response: str, context: List[str], user_query:
             response_content = res.response[0].get("content", "")
             
         if response_content == "I'm sorry, I can't respond to that.":
+            logfire.warning(
+                "Output guardrail blocked response",
+                response_sha256=hashlib.sha256(
+                    response.encode("utf-8")
+                ).hexdigest(),
+                context_count=len(context),
+            )
             return False, "Hệ thống phát hiện nội dung câu trả lời không đồng nhất với tài liệu pháp luật chính thống. Vui lòng thử lại sau."
             
         return True, ""
