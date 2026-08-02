@@ -149,14 +149,24 @@ Tạo FTS5 một lần từ content store đã có; file được tạo nguyên 
 python -u -m app.ingestion.legal_fts build --batch-size 256
 ```
 
-FTS dùng chế độ `contentless` và `detail=column`: nội dung vẫn được lập chỉ mục
-để tìm kiếm nhưng không bị lưu lặp thêm một bản trong SQLite. Nếu build bị dừng
-do hết dung lượng hoặc ngắt tiến trình, file `.building` hợp lệ được giữ lại;
-chạy lại đúng lệnh trên sẽ tiếp tục từ document cuối đã commit.
+FTS chỉ lưu metadata phục vụ exact document number và title index `contentless`
+có BM25; full body vẫn nằm duy nhất trong content store. Nếu build bị dừng do
+hết dung lượng hoặc ngắt tiến trình, file `.building` hợp lệ được giữ lại; chạy
+lại đúng lệnh trên sẽ tiếp tục từ document cuối đã commit. Lệnh cũng tự compact
+file FTS body cũ bằng replacement nguyên tử mà không đọc/giải nén full text.
 
 Lệnh có thể mất thời gian và thêm dung lượng trên ổ D vì phải giải nén/index
 toàn bộ corpus, nhưng không gọi model hoặc API. Nếu chưa tạo FTS, runtime vẫn
 hoạt động bằng Pinecone và không tự build nặng trong request đầu tiên.
+
+Khi deploy online, `legal_fts.sqlite3` (khoảng 213 MiB với revision hiện tại)
+phải nằm trên persistent volume hoặc
+được tải về khi khởi động rồi mở read-only. Không nên thêm MongoDB chỉ để sao
+chép lại 518 nghìn document: Pinecone hybrid đã đảm nhiệm semantic+sparse và
+SQLite chỉ bổ sung exact document number/title BM25. Chỉ chuyển lexical layer
+sang MongoDB Atlas Search khi deployment có nhiều replica không dùng chung
+volume, hoặc MongoDB đã là document store chính; khi đó phải đo recall/latency
+trước khi bỏ SQLite.
 
 > [!IMPORTANT]
 > Index đã ingestion xong tiếp tục tương thích với runtime mới và không cần
