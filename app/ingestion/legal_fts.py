@@ -5,7 +5,7 @@ import os
 import re
 import sqlite3
 import time
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -18,7 +18,35 @@ _NUMBER_RE = re.compile(
     re.IGNORECASE,
 )
 _WORD_RE = re.compile(r"[^\W_]+", re.UNICODE)
-_BUILD_SCHEMA_VERSION = 2
+_TITLE_STOPWORDS = {
+    "biết",
+    "cho",
+    "câu",
+    "có",
+    "của",
+    "được",
+    "gì",
+    "hiện",
+    "hỏi",
+    "khi",
+    "là",
+    "lòng",
+    "nào",
+    "những",
+    "như",
+    "quy",
+    "sau",
+    "thế",
+    "theo",
+    "thì",
+    "tôi",
+    "trong",
+    "và",
+    "về",
+    "vui",
+    "xin",
+}
+_BUILD_SCHEMA_VERSION = 4
 
 
 @contextmanager
@@ -52,7 +80,7 @@ def _fts_query(query: str) -> str:
     terms: list[str] = []
     seen: set[str] = set()
     for raw in _WORD_RE.findall(query.casefold()):
-        if len(raw) < 2 or raw in seen:
+        if len(raw) < 2 or raw in seen or raw in _TITLE_STOPWORDS:
             continue
         seen.add(raw)
         terms.append(raw.replace('"', '""'))
@@ -79,19 +107,37 @@ class LegalFtsIndex:
         if not self.path.exists():
             return False
         try:
-            with sqlite3.connect(
-                f"file:{self.path}?mode=ro",
-                uri=True,
+            with closing(
+                sqlite3.connect(
+                    f"file:{self.path}?mode=ro",
+                    uri=True,
+                )
             ) as connection:
                 values = dict(
                     connection.execute(
                         "SELECT key, value FROM index_metadata"
                     ).fetchall()
                 )
+                version = int(
+                    connection.execute("PRAGMA user_version").fetchone()[0]
+                )
+                legacy_body = connection.execute(
+                    "SELECT 1 FROM sqlite_master "
+                    "WHERE type = 'table' AND name = 'legal_fts'"
+                ).fetchone()
+                title_count = int(
+                    connection.execute(
+                        "SELECT COUNT(*) FROM legal_title_fts"
+                    ).fetchone()[0]
+                )
+                expected = int(self._store.build_report().joined_count)
             return (
-                values.get("dataset_revision") == self._dataset_revision
+                version == _BUILD_SCHEMA_VERSION
+                and legacy_body is None
+                and values.get("dataset_revision") == self._dataset_revision
                 and int(values.get("document_count", "-1"))
-                == int(self._store.build_report().joined_count)
+                == expected
+                and title_count == expected
             )
         except (OSError, sqlite3.Error, TypeError, ValueError):
             return False
@@ -105,7 +151,113 @@ class LegalFtsIndex:
         sqlite_temp = (self.path.parent / "tmp").resolve()
         sqlite_temp.mkdir(parents=True, exist_ok=True)
         with _temporary_environment(sqlite_temp):
+            if self._has_complete_legacy_index():
+                self._compact_legacy_index()
+                return
             self._build(batch_size=batch_size)
+
+    def _has_complete_legacy_index(self) -> bool:
+        if not self.path.exists():
+            return False
+        expected = int(self._store.build_report().joined_count)
+        try:
+            with closing(
+                sqlite3.connect(
+                    f"file:{self.path.resolve()}?mode=ro",
+                    uri=True,
+                )
+            ) as connection:
+                values = dict(
+                    connection.execute(
+                        "SELECT key, value FROM index_metadata"
+                    ).fetchall()
+                )
+                document_count = int(
+                    connection.execute(
+                        "SELECT COUNT(*) FROM legal_documents"
+                    ).fetchone()[0]
+                )
+            return (
+                values.get("dataset_revision") == self._dataset_revision
+                and int(values.get("document_count", "-1")) == expected
+                and document_count == expected
+            )
+        except (OSError, sqlite3.Error, TypeError, ValueError):
+            return False
+
+    def _compact_legacy_index(self) -> None:
+        """Atomically replace a complete legacy body index with title-only FTS."""
+        compact = self.path.with_suffix(self.path.suffix + ".compacting")
+        if compact.resolve().parent != self.path.resolve().parent:
+            raise RuntimeError("FTS compact path escaped its target directory.")
+        if compact.exists():
+            compact.unlink()
+        connection = sqlite3.connect(compact)
+        try:
+            connection.execute("ATTACH DATABASE ? AS legacy", (str(self.path),))
+            connection.executescript(
+                f"""
+                PRAGMA user_version={_BUILD_SCHEMA_VERSION};
+                PRAGMA journal_mode=MEMORY;
+                PRAGMA synchronous=OFF;
+                CREATE TABLE legal_documents (
+                    document_id INTEGER PRIMARY KEY,
+                    normalized_number TEXT NOT NULL,
+                    document_number TEXT NOT NULL,
+                    title TEXT NOT NULL,
+                    legal_type TEXT NOT NULL,
+                    issuing_authority TEXT NOT NULL
+                );
+                CREATE INDEX legal_documents_number_idx
+                    ON legal_documents(normalized_number);
+                CREATE VIRTUAL TABLE legal_title_fts USING fts5(
+                    title,
+                    content='',
+                    tokenize='unicode61 remove_diacritics 0'
+                );
+                CREATE TABLE index_metadata (
+                    key TEXT PRIMARY KEY,
+                    value TEXT NOT NULL
+                );
+                """
+            )
+            with connection:
+                connection.execute(
+                    "INSERT INTO legal_documents "
+                    "SELECT * FROM legacy.legal_documents"
+                )
+                connection.execute(
+                    "INSERT INTO legal_title_fts(rowid, title) "
+                    "SELECT document_id, title FROM legal_documents"
+                )
+                connection.execute(
+                    "INSERT INTO index_metadata "
+                    "SELECT key, value FROM legacy.index_metadata"
+                )
+            expected = int(self._store.build_report().joined_count)
+            actual = int(
+                connection.execute(
+                    "SELECT COUNT(*) FROM legal_title_fts"
+                ).fetchone()[0]
+            )
+            integrity = connection.execute(
+                "PRAGMA integrity_check"
+            ).fetchone()[0]
+            if actual != expected or integrity != "ok":
+                raise RuntimeError(
+                    "Compacted FTS verification failed: "
+                    f"documents={actual}/{expected}, integrity={integrity}."
+                )
+            connection.execute("DETACH DATABASE legacy")
+        except Exception:
+            connection.close()
+            print(
+                f"FTS compaction paused; original retained at {self.path}",
+                flush=True,
+            )
+            raise
+        connection.close()
+        os.replace(compact, self.path)
 
     def _build(self, *, batch_size: int) -> None:
         temporary = self.path.with_suffix(self.path.suffix + ".building")
@@ -159,14 +311,9 @@ class LegalFtsIndex:
                 );
                 CREATE INDEX legal_documents_number_idx
                     ON legal_documents(normalized_number);
-                CREATE VIRTUAL TABLE legal_fts USING fts5(
-                    document_number,
+                CREATE VIRTUAL TABLE legal_title_fts USING fts5(
                     title,
-                    legal_type,
-                    issuing_authority,
-                    body,
                     content='',
-                    detail=column,
                     tokenize='unicode61 remove_diacritics 0'
                 );
                 CREATE TABLE index_metadata (
@@ -199,12 +346,24 @@ class LegalFtsIndex:
                 )
                 if not document_ids:
                     break
-                documents = self._store.get_many(document_ids)
+                metadata_getter = getattr(
+                    self._store,
+                    "get_metadata_many",
+                    None,
+                )
+                if callable(metadata_getter):
+                    metadata_by_id = metadata_getter(document_ids)
+                else:
+                    metadata_by_id = {
+                        document_id: document.metadata
+                        for document_id, document in self._store.get_many(
+                            document_ids
+                        ).items()
+                    }
                 metadata_rows: list[tuple[object, ...]] = []
-                fts_rows: list[tuple[object, ...]] = []
+                title_rows: list[tuple[object, ...]] = []
                 for document_id in document_ids:
-                    document = documents[document_id]
-                    metadata = document.metadata
+                    metadata = metadata_by_id[document_id]
                     metadata_rows.append(
                         (
                             document_id,
@@ -217,27 +376,16 @@ class LegalFtsIndex:
                             metadata.issuing_authority,
                         )
                     )
-                    fts_rows.append(
-                        (
-                            document_id,
-                            metadata.document_number,
-                            metadata.title,
-                            metadata.legal_type,
-                            metadata.issuing_authority,
-                            document.content,
-                        )
-                    )
+                    title_rows.append((document_id, metadata.title))
                 with connection:
                     connection.executemany(
                         "INSERT INTO legal_documents VALUES (?, ?, ?, ?, ?, ?)",
                         metadata_rows,
                     )
                     connection.executemany(
-                        "INSERT INTO legal_fts("
-                        "rowid, document_number, title, legal_type, "
-                        "issuing_authority, body"
-                        ") VALUES (?, ?, ?, ?, ?, ?)",
-                        fts_rows,
+                        "INSERT INTO legal_title_fts(rowid, title) "
+                        "VALUES (?, ?)",
+                        title_rows,
                     )
                 inserted += len(document_ids)
                 after_id = document_ids[-1]
@@ -277,9 +425,11 @@ class LegalFtsIndex:
             return []
         selected: list[int] = []
         seen: set[int] = set()
-        with sqlite3.connect(
-            f"file:{self.path}?mode=ro",
-            uri=True,
+        with closing(
+            sqlite3.connect(
+                f"file:{self.path}?mode=ro",
+                uri=True,
+            )
         ) as connection:
             for reference in extract_legal_references(query):
                 rows = connection.execute(
@@ -297,11 +447,18 @@ class LegalFtsIndex:
 
             expression = _fts_query(query)
             if expression:
-                rows = connection.execute(
-                    "SELECT rowid FROM legal_fts "
-                    "WHERE legal_fts MATCH ? ORDER BY bm25(legal_fts) LIMIT ?",
-                    (expression, limit * 2),
-                ).fetchall()
+                title_index = connection.execute(
+                    "SELECT 1 FROM sqlite_master "
+                    "WHERE type = 'table' AND name = 'legal_title_fts'"
+                ).fetchone()
+                rows = []
+                if title_index:
+                    rows = connection.execute(
+                        "SELECT rowid FROM legal_title_fts "
+                        "WHERE legal_title_fts MATCH ? "
+                        "ORDER BY bm25(legal_title_fts) LIMIT ?",
+                        (expression, limit * 2),
+                    ).fetchall()
                 for (document_id,) in rows:
                     value = int(document_id)
                     if value not in seen:

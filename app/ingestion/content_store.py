@@ -790,6 +790,19 @@ class ContentStore:
             )
         return documents
 
+    def get_metadata_many(
+        self,
+        document_ids: list[int],
+    ) -> dict[int, DocumentMetadata]:
+        """Read metadata without decompressing document bodies."""
+        if not document_ids:
+            return {}
+        with sqlite3.connect(
+            f"file:{self.path}?mode=ro",
+            uri=True,
+        ) as connection:
+            return _metadata_for_ids(connection, document_ids)
+
     def iter_document_ids(
         self,
         *,

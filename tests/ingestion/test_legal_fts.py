@@ -114,7 +114,7 @@ def test_build_restores_process_temp_environment(tmp_path, monkeypatch) -> None:
     assert {name: __import__("os").environ[name] for name in original} == original
 
 
-def test_fts_body_is_contentless_but_remains_searchable(tmp_path) -> None:
+def test_compact_fts_does_not_duplicate_document_bodies(tmp_path) -> None:
     path = tmp_path / "legal_fts.sqlite3"
     index = LegalFtsIndex(
         store=TinyContentStore(),
@@ -125,10 +125,17 @@ def test_fts_body_is_contentless_but_remains_searchable(tmp_path) -> None:
     index.ensure_built(batch_size=2)
 
     with closing(sqlite3.connect(path)) as connection:
-        stored_body = connection.execute(
-            "SELECT body FROM legal_fts LIMIT 1"
+        tables = {
+            row[0]
+            for row in connection.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table'"
+            )
+        }
+        stored_title = connection.execute(
+            "SELECT title FROM legal_title_fts LIMIT 1"
         ).fetchone()[0]
-    assert stored_body is None
+    assert "legal_fts" not in tables
+    assert stored_title is None
     assert index.search("thành lập doanh nghiệp", limit=1) == [427301]
 
 
@@ -170,3 +177,120 @@ def test_interrupted_build_is_retained_and_resumed(tmp_path) -> None:
 
     assert resumed.is_ready()
     assert resumed.search("bảo vệ môi trường", limit=1) == [431147]
+
+
+def test_title_rank_ignores_common_terms_in_unrelated_body(tmp_path) -> None:
+    class TitleRankingStore(TinyContentStore):
+        def __init__(self) -> None:
+            self.documents = {
+                1: _document(
+                    1,
+                    "01/2020/QĐ-UBND",
+                    "Quyết định về phụ cấp",
+                    (
+                        "Luật bảo vệ môi trường giấy phép được định nghĩa "
+                        "trong tài liệu tham khảo không liên quan."
+                    ),
+                ),
+                2: _document(
+                    2,
+                    "72/2020/QH14",
+                    "Luật Bảo vệ môi trường 2020",
+                    "Quy định chung.",
+                ),
+            }
+
+    index = LegalFtsIndex(
+        store=TitleRankingStore(),
+        path=tmp_path / "legal_fts.sqlite3",
+        dataset_revision="revision-1",
+    )
+    index.ensure_built(batch_size=2)
+
+    assert index.search(
+        "Giấy phép môi trường theo Luật Bảo vệ môi trường",
+        limit=1,
+    ) == [2]
+
+
+def test_title_rank_discards_long_polite_prefix(tmp_path) -> None:
+    index = LegalFtsIndex(
+        store=TinyContentStore(),
+        path=tmp_path / "legal_fts.sqlite3",
+        dataset_revision="revision-1",
+    )
+    index.ensure_built(batch_size=2)
+
+    assert index.search(
+        (
+            "Xin vui lòng cho tôi biết theo quy định hiện hành thì câu hỏi "
+            "của tôi về Luật Bảo vệ môi trường"
+        ),
+        limit=1,
+    ) == [431147]
+
+
+def test_complete_legacy_body_index_is_compacted_atomically(tmp_path) -> None:
+    path = tmp_path / "legal_fts.sqlite3"
+    store = TinyContentStore()
+    index = LegalFtsIndex(
+        store=store,
+        path=path,
+        dataset_revision="revision-1",
+    )
+    index.ensure_built(batch_size=2)
+    with closing(sqlite3.connect(path)) as connection:
+        connection.execute("PRAGMA user_version=3")
+        connection.execute(
+            "CREATE VIRTUAL TABLE legal_fts USING fts5("
+            "body, content='', detail=column)"
+        )
+        connection.executemany(
+            "INSERT INTO legal_fts(rowid, body) VALUES (?, ?)",
+            [(431147, "body duplicated"), (427301, "body duplicated")],
+        )
+        connection.commit()
+
+    migrated = LegalFtsIndex(
+        store=store,
+        path=path,
+        dataset_revision="revision-1",
+    )
+    migrated.ensure_built(batch_size=2)
+
+    assert migrated.is_ready()
+    with closing(sqlite3.connect(path)) as connection:
+        tables = {
+            row[0]
+            for row in connection.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table'"
+            )
+        }
+        version = connection.execute("PRAGMA user_version").fetchone()[0]
+    assert version == 4
+    assert "legal_fts" not in tables
+    assert migrated.search("Luật Bảo vệ môi trường", limit=1) == [431147]
+
+
+def test_fresh_build_reads_metadata_without_decompressing_bodies(
+    tmp_path,
+) -> None:
+    class MetadataOnlyStore(TinyContentStore):
+        def get_metadata_many(self, document_ids: list[int]):
+            return {
+                document_id: self.documents[document_id].metadata
+                for document_id in document_ids
+            }
+
+        def get_many(self, document_ids: list[int]):
+            raise AssertionError("FTS title build must not read document bodies")
+
+    index = LegalFtsIndex(
+        store=MetadataOnlyStore(),
+        path=tmp_path / "legal_fts.sqlite3",
+        dataset_revision="revision-1",
+    )
+
+    index.ensure_built(batch_size=2)
+
+    assert index.is_ready()
