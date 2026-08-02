@@ -11,6 +11,7 @@ import logfire
 
 from app.config import Settings, get_settings
 from app.ingestion.content_store import ContentStore
+from app.ingestion.legal_fts import LegalFtsIndex
 from app.ingestion.legal_text import EvidenceChunk, chunk_document
 from app.ingestion.pinecone_store import (
     FastSparseEncoder,
@@ -35,6 +36,19 @@ class RetrievalOutcome:
     status: str = "ok"
     diagnostics: dict[str, Any] = field(default_factory=dict)
     error: str | None = None
+
+
+def merge_document_ids(
+    lexical_ids: list[int],
+    pinecone_ids: list[int],
+) -> list[int]:
+    merged: list[int] = []
+    seen: set[int] = set()
+    for document_id in (*lexical_ids, *pinecone_ids):
+        if document_id not in seen:
+            merged.append(document_id)
+            seen.add(document_id)
+    return merged
 
 
 def lexical_prefilter(
@@ -185,12 +199,14 @@ class LegalRetriever:
         pinecone: Any,
         qdrant_inference: Any,
         reranker: Any,
+        fts_index: Any,
         content_store: Any,
     ) -> None:
         self._settings = settings
         self._pinecone = pinecone
         self._qdrant_inference = qdrant_inference
         self._reranker = reranker
+        self._fts_index = fts_index
         self._content_store = content_store
         report = content_store.build_report()
         self._sparse_encoder = FastSparseEncoder(
@@ -232,7 +248,10 @@ class LegalRetriever:
     async def _resolve_chunks(
         self,
         hits: list[Any],
+        lexical_document_ids: list[int] | None = None,
     ) -> list[EvidenceChunk]:
+        lexical_document_ids = lexical_document_ids or []
+        lexical_set = set(lexical_document_ids)
         payload_by_id: dict[int, dict[str, Any]] = {}
         for hit in hits:
             if isinstance(hit, dict):
@@ -252,22 +271,28 @@ class LegalRetriever:
             if document_id != content_store_key:
                 continue
             payload_by_id.setdefault(document_id, payload)
-        if not payload_by_id:
+        document_ids = merge_document_ids(
+            lexical_document_ids,
+            list(payload_by_id),
+        )
+        if not document_ids:
             return []
         documents = await asyncio.to_thread(
             self._content_store.get_many,
-            list(payload_by_id),
+            document_ids,
         )
         chunks: list[EvidenceChunk] = []
-        for document_id, payload in payload_by_id.items():
+        for document_id in document_ids:
             document = documents.get(document_id)
             if document is None:
                 continue
-            if (
-                payload.get("content_sha256")
-                != document.content_sha256
-            ):
-                continue
+            if document_id not in lexical_set:
+                payload = payload_by_id[document_id]
+                if (
+                    payload.get("content_sha256")
+                    != document.content_sha256
+                ):
+                    continue
             chunks.extend(
                 chunk_document(
                     document.metadata,
@@ -343,22 +368,41 @@ class LegalRetriever:
     ) -> RetrievalOutcome:
         latency = {
             "t_hybrid": 0.0,
+            "t_lexical": 0.0,
             "t_resolve_chunk": 0.0,
             "t_candidate": 0.0,
             "t_rerank": 0.0,
         }
         diagnostics: dict[str, Any] = {}
         try:
-            stage_started = time.perf_counter()
-            hits = await self._hybrid_documents(query, sparse_query)
-            latency["t_hybrid"] = round(
-                time.perf_counter() - stage_started,
-                6,
-            )
+            async def timed_hybrid() -> tuple[list[Any], float]:
+                started = time.perf_counter()
+                value = await self._hybrid_documents(query, sparse_query)
+                return value, time.perf_counter() - started
+
+            async def timed_lexical() -> tuple[list[int], float]:
+                started = time.perf_counter()
+                value = await asyncio.to_thread(
+                    self._fts_index.search,
+                    sparse_query or query,
+                    limit=self._settings.LEGAL_FTS_RESULT_LIMIT,
+                )
+                return value, time.perf_counter() - started
+
+            (hits, hybrid_seconds), (
+                lexical_document_ids,
+                lexical_seconds,
+            ) = await asyncio.gather(timed_hybrid(), timed_lexical())
+            latency["t_hybrid"] = round(hybrid_seconds, 6)
+            latency["t_lexical"] = round(lexical_seconds, 6)
             diagnostics["top_documents"] = self._hit_diagnostics(hits)
+            diagnostics["lexical_document_ids"] = lexical_document_ids
 
             stage_started = time.perf_counter()
-            chunks = await self._resolve_chunks(hits)
+            chunks = await self._resolve_chunks(
+                hits,
+                lexical_document_ids,
+            )
             latency["t_resolve_chunk"] = round(
                 time.perf_counter() - stage_started,
                 6,
@@ -473,11 +517,17 @@ def get_legal_retriever() -> LegalRetriever:
         content_store = ContentStore(
             settings.CONTENT_STORE_PATH
         )
+        fts_index = LegalFtsIndex(
+            store=content_store,
+            path=settings.LEGAL_FTS_PATH,
+            dataset_revision=settings.DATASET_REVISION,
+        )
         _retriever = LegalRetriever(
             settings=settings,
             pinecone=get_pinecone_index(),
             qdrant_inference=get_qdrant_inference_client(),
             reranker=get_remote_reranker(),
+            fts_index=fts_index,
             content_store=content_store,
         )
     return _retriever

@@ -99,6 +99,16 @@ class FakeReranker:
         )
 
 
+class FakeFts:
+    def __init__(self, document_ids: list[int] | None = None) -> None:
+        self.document_ids = document_ids or []
+        self.calls: list[tuple[str, int]] = []
+
+    def search(self, query: str, *, limit: int) -> list[int]:
+        self.calls.append((query, limit))
+        return self.document_ids[:limit]
+
+
 def test_lexical_prefilter_bounds_remote_rerank_input() -> None:
     retrieval = _retrieval_module()
     chunks = [
@@ -200,6 +210,15 @@ def test_candidate_selection_normalizes_query_once(monkeypatch) -> None:
     assert calls.count("thuế thu nhập") == 1
 
 
+def test_lexical_and_pinecone_ids_are_merged_without_duplicates() -> None:
+    retrieval = _retrieval_module()
+
+    assert retrieval.merge_document_ids(
+        [431147, 7],
+        [7, 9],
+    ) == [431147, 7, 9]
+
+
 def test_ranked_evidence_respects_score_document_and_token_limits() -> None:
     retrieval = _retrieval_module()
     ranked = [
@@ -261,6 +280,7 @@ async def test_hybrid_search_uses_rewrite_for_dense_and_original_for_sparse(
         pinecone=pinecone,
         qdrant_inference=object(),
         reranker=FakeReranker(),
+        fts_index=FakeFts(),
         content_store=InMemoryStore(),
     )
     original_encoder = retriever._sparse_encoder
@@ -297,6 +317,7 @@ async def test_retriever_uses_one_hybrid_query_and_returns_evidence(
         pinecone=pinecone,
         qdrant_inference=object(),
         reranker=FakeReranker(),
+        fts_index=FakeFts(),
         content_store=InMemoryStore(),
     )
     evidence = await retriever.retrieve("điều kiện khấu trừ thuế")
@@ -321,11 +342,13 @@ async def test_detailed_retrieval_reports_real_stage_timings(
         "embed_query",
         lambda *_args: [0.0] * settings.DENSE_VECTOR_SIZE,
     )
+    fts = FakeFts([1])
     retriever = retrieval.LegalRetriever(
         settings=settings,
         pinecone=FakePinecone(),
         qdrant_inference=object(),
         reranker=FakeReranker(),
+        fts_index=fts,
         content_store=InMemoryStore(),
     )
     outcome = await retriever.retrieve_detailed(
@@ -336,9 +359,14 @@ async def test_detailed_retrieval_reports_real_stage_timings(
     assert outcome.evidence
     assert outcome.error is None
     assert outcome.status == "ok"
+    assert fts.calls == [
+        ("Điều 1 khấu trừ thuế", settings.LEGAL_FTS_RESULT_LIMIT)
+    ]
+    assert outcome.diagnostics["lexical_document_ids"] == [1]
     assert outcome.diagnostics["rerank_provider"] == "qdrant"
     assert set(outcome.latency) == {
         "t_hybrid",
+        "t_lexical",
         "t_resolve_chunk",
         "t_candidate",
         "t_rerank",
@@ -362,6 +390,7 @@ async def test_retriever_fails_closed_when_content_hash_is_invalid(
         pinecone=FakePinecone(),
         qdrant_inference=object(),
         reranker=FakeReranker(),
+        fts_index=FakeFts(),
         content_store=BrokenStore(),
     )
 
@@ -386,6 +415,7 @@ async def test_reranker_failure_is_not_reported_as_no_candidate(
         pinecone=FakePinecone(),
         qdrant_inference=object(),
         reranker=FakeReranker(error=RuntimeError("rerank unavailable")),
+        fts_index=FakeFts(),
         content_store=InMemoryStore(),
     )
 

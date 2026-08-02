@@ -1,0 +1,88 @@
+from types import SimpleNamespace
+
+from app.ingestion.content_store import StoredDocument
+from app.ingestion.legal_fts import LegalFtsIndex
+from app.ingestion.legal_text import DocumentMetadata
+
+
+def _document(
+    document_id: int,
+    number: str,
+    title: str,
+    content: str,
+) -> StoredDocument:
+    return StoredDocument(
+        metadata=DocumentMetadata(
+            document_id=document_id,
+            document_number=number,
+            title=title,
+            source_url=f"https://example.invalid/{document_id}",
+            legal_type="Luật",
+            legal_sectors="",
+            issuing_authority="Quốc hội",
+            issuance_date="2020-01-01",
+        ),
+        content=content,
+        content_sha256=str(document_id) * 64,
+        content_store_key=str(document_id),
+        quality_flags=(),
+    )
+
+
+class TinyContentStore:
+    def __init__(self) -> None:
+        self.documents = {
+            431147: _document(
+                431147,
+                "72/2020/QH14",
+                "Luật Bảo vệ môi trường",
+                "Điều 1. Luật này quy định về hoạt động bảo vệ môi trường.",
+            ),
+            427301: _document(
+                427301,
+                "59/2020/QH14",
+                "Luật Doanh nghiệp",
+                "Điều 1. Luật này quy định việc thành lập doanh nghiệp.",
+            ),
+        }
+
+    def build_report(self):
+        return SimpleNamespace(joined_count=len(self.documents))
+
+    def iter_document_ids(self, *, after_id: int, limit: int):
+        return [
+            document_id
+            for document_id in sorted(self.documents)
+            if document_id > after_id
+        ][:limit]
+
+    def get_many(self, document_ids: list[int]):
+        return {
+            document_id: self.documents[document_id]
+            for document_id in document_ids
+        }
+
+
+def test_exact_document_number_is_ranked_first(tmp_path) -> None:
+    index = LegalFtsIndex(
+        store=TinyContentStore(),
+        path=tmp_path / "legal_fts.sqlite3",
+        dataset_revision="revision-1",
+    )
+    index.ensure_built(batch_size=1)
+
+    assert index.search(
+        "Luật số 72/2020/QH14 Điều 1",
+        limit=5,
+    )[0] == 431147
+
+
+def test_body_phrase_finds_relevant_legal_document(tmp_path) -> None:
+    index = LegalFtsIndex(
+        store=TinyContentStore(),
+        path=tmp_path / "legal_fts.sqlite3",
+        dataset_revision="revision-1",
+    )
+    index.ensure_built(batch_size=2)
+
+    assert index.search("hoạt động bảo vệ môi trường", limit=1) == [431147]

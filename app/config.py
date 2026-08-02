@@ -74,6 +74,8 @@ class Settings(BaseSettings):
     PINECONE_INGESTION_REPORT_PATH: Path = Path(
         "data/huggingface/pinecone_ingestion_report.json"
     )
+    LEGAL_FTS_PATH: Path = Path("data/huggingface/legal_fts.sqlite3")
+    LEGAL_FTS_RESULT_LIMIT: int = 12
 
     # Capacity-bounded Pinecone schema and ingestion tuning
     DENSE_INFERENCE_MODEL: str = "intfloat/multilingual-e5-small"
