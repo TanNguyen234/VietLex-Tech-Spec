@@ -127,6 +127,13 @@ Reranker chính là Qdrant Cloud
 breaker đang mở. Lỗi cả hai provider được báo là `reranker_error`, không bị
 biến thành câu từ chối do “không có dữ liệu”.
 
+Hybrid retrieval ghi timing riêng cho Qdrant embedding và Pinecone query.
+Pinecone query được retry tối đa 2 lượt với timeout 8 giây/lượt; nếu hybrid
+remote vẫn lỗi nhưng FTS có kết quả, request tiếp tục ở chế độ
+`lexical_fallback` thay vì trả lỗi toàn pipeline.
+Khi cả FTS và Pinecone đều có kết quả, ngân sách document được xen kẽ cân bằng
+giữa lexical và semantic để 12 kết quả FTS không chiếm hết candidate rerank.
+
 Luồng query dùng bản rewrite ngắn cho dense embedding nhưng giữ nguyên câu hỏi
 gốc cho sparse search để không làm mất số Điều, số hiệu văn bản, ngày tháng và
 tên riêng. Full text chỉ được chunk sau khi resolve từ SQLite: tách theo
@@ -168,12 +175,21 @@ retrieval và generation; chỉ thêm `--use-cache` khi chủ động đo luồn
 Có thể thêm `--skip-ragas` cho smoke test nhanh, nhưng kết quả đó không thay thế
 đánh giá cuối.
 
+Golden suite từ chối chạy nếu FTS chưa hoàn tất để tránh tạo báo cáo hybrid giả.
+Smoke test 6 câu thật, lưu artifact riêng và không ghi đè báo cáo đầy đủ:
+
+```powershell
+python -u run_eval_suite.py --fresh --factoids 2 --multihop 2 --unanswerable 2 --concurrency 1 --judge-concurrency 1 --checkpoint docs/smoke_eval_checkpoints.json --report docs/smoke_evaluation_report.md
+```
+
 Suite ghi checkpoint nguyên tử và tạo báo cáo tại `docs/system_evaluation_report.md`.
 Các metric gồm faithfulness, answer accuracy, context precision/recall,
 gold-context hit rate, retrieval MRR, answerable/unanswerable accuracy, refusal
 precision/recall và latency riêng cho queue/pipeline/Ragas. Judge ưu tiên Gemini
 để độc lập với answer model OpenRouter, sau đó NVIDIA, Groq, OpenRouter và
-OmniGate. Chạy suite sẽ phát sinh lượt đọc Pinecone,
+OmniGate; quota, timeout và lỗi 429/5xx sẽ tự chuyển sang provider kế tiếp.
+Guardrail timeout được ghi là lỗi kỹ thuật, không tính thành câu hỏi vi phạm.
+Chạy suite sẽ phát sinh lượt đọc Pinecone,
 Qdrant inference, reranker và chi phí judge API; dùng concurrency mặc định để
 tránh rate limit, không tăng đồng thời nếu chưa kiểm tra quota.
 
