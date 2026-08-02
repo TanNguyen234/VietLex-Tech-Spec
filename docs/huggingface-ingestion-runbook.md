@@ -136,6 +136,11 @@ FTS5 là index runtime độc lập, không cần reingest Pinecone:
 python -u -m app.ingestion.legal_fts build --batch-size 256
 ```
 
+Index dùng FTS5 `contentless`, không lưu lặp full text. Mỗi batch được commit
+riêng; nếu tiến trình bị ngắt, file `.building` được giữ và cùng câu lệnh sẽ
+resume từ document cuối đã hoàn thành. Chỉ file tạm sai schema hoặc khác
+`DATASET_REVISION` mới bị tạo lại từ đầu.
+
 ## Nguồn kỹ thuật
 
 - Pinecone database/operation/model quotas:

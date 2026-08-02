@@ -18,6 +18,7 @@ _NUMBER_RE = re.compile(
     re.IGNORECASE,
 )
 _WORD_RE = re.compile(r"[^\W_]+", re.UNICODE)
+_BUILD_SCHEMA_VERSION = 2
 
 
 @contextmanager
@@ -111,14 +112,40 @@ class LegalFtsIndex:
         temporary_resolved = temporary.resolve()
         if temporary_resolved.parent != self.path.resolve().parent:
             raise RuntimeError("FTS temporary path escaped its target directory.")
-        if temporary.exists():
-            temporary.unlink()
-
-        connection = sqlite3.connect(temporary)
-        try:
+        connection: sqlite3.Connection | None = None
+        resume = False
+        if temporary.exists() and temporary.stat().st_size > 0:
+            candidate: sqlite3.Connection | None = None
+            try:
+                candidate = sqlite3.connect(temporary)
+                version = int(
+                    candidate.execute("PRAGMA user_version").fetchone()[0]
+                )
+                revision_row = candidate.execute(
+                    "SELECT value FROM index_metadata "
+                    "WHERE key = 'build_dataset_revision'"
+                ).fetchone()
+                if (
+                    version == _BUILD_SCHEMA_VERSION
+                    and revision_row
+                    and revision_row[0] == self._dataset_revision
+                ):
+                    connection = candidate
+                    resume = True
+                else:
+                    candidate.close()
+            except sqlite3.Error:
+                if candidate is not None:
+                    candidate.close()
+                connection = None
+        if connection is None:
+            if temporary.exists():
+                temporary.unlink()
+            connection = sqlite3.connect(temporary)
             connection.executescript(
-                """
-                PRAGMA journal_mode=OFF;
+                f"""
+                PRAGMA user_version={_BUILD_SCHEMA_VERSION};
+                PRAGMA journal_mode=MEMORY;
                 PRAGMA synchronous=OFF;
                 PRAGMA temp_store=FILE;
                 PRAGMA cache_size=-65536;
@@ -133,12 +160,13 @@ class LegalFtsIndex:
                 CREATE INDEX legal_documents_number_idx
                     ON legal_documents(normalized_number);
                 CREATE VIRTUAL TABLE legal_fts USING fts5(
-                    document_id UNINDEXED,
                     document_number,
                     title,
                     legal_type,
                     issuing_authority,
                     body,
+                    content='',
+                    detail=column,
                     tokenize='unicode61 remove_diacritics 0'
                 );
                 CREATE TABLE index_metadata (
@@ -147,8 +175,23 @@ class LegalFtsIndex:
                 );
                 """
             )
-            after_id = -1
-            inserted = 0
+            with connection:
+                connection.execute(
+                    "INSERT INTO index_metadata VALUES (?, ?)",
+                    ("build_dataset_revision", self._dataset_revision),
+                )
+        try:
+            inserted, maximum_id = connection.execute(
+                "SELECT COUNT(*), MAX(document_id) FROM legal_documents"
+            ).fetchone()
+            inserted = int(inserted)
+            after_id = int(maximum_id) if maximum_id is not None else -1
+            if resume:
+                print(
+                    f"FTS resuming after document_id={after_id} "
+                    f"indexed={inserted}",
+                    flush=True,
+                )
             while True:
                 document_ids = self._store.iter_document_ids(
                     after_id=after_id,
@@ -190,7 +233,10 @@ class LegalFtsIndex:
                         metadata_rows,
                     )
                     connection.executemany(
-                        "INSERT INTO legal_fts VALUES (?, ?, ?, ?, ?, ?)",
+                        "INSERT INTO legal_fts("
+                        "rowid, document_number, title, legal_type, "
+                        "issuing_authority, body"
+                        ") VALUES (?, ?, ?, ?, ?, ?)",
                         fts_rows,
                     )
                 inserted += len(document_ids)
@@ -204,14 +250,13 @@ class LegalFtsIndex:
                 )
             with connection:
                 connection.executemany(
-                    "INSERT INTO index_metadata VALUES (?, ?)",
+                    "INSERT OR REPLACE INTO index_metadata VALUES (?, ?)",
                     (
                         ("dataset_revision", self._dataset_revision),
                         ("document_count", str(inserted)),
                         ("created_at", str(int(time.time()))),
                     ),
                 )
-                connection.execute("INSERT INTO legal_fts(legal_fts) VALUES('optimize')")
             integrity = connection.execute(
                 "PRAGMA integrity_check"
             ).fetchone()[0]
@@ -219,8 +264,10 @@ class LegalFtsIndex:
                 raise RuntimeError(f"FTS integrity check failed: {integrity}.")
         except Exception:
             connection.close()
-            if temporary.exists():
-                temporary.unlink()
+            print(
+                f"FTS build paused; resumable file retained at {temporary}",
+                flush=True,
+            )
             raise
         connection.close()
         os.replace(temporary, self.path)
@@ -251,7 +298,7 @@ class LegalFtsIndex:
             expression = _fts_query(query)
             if expression:
                 rows = connection.execute(
-                    "SELECT document_id FROM legal_fts "
+                    "SELECT rowid FROM legal_fts "
                     "WHERE legal_fts MATCH ? ORDER BY bm25(legal_fts) LIMIT ?",
                     (expression, limit * 2),
                 ).fetchall()

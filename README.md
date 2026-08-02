@@ -149,6 +149,11 @@ Tạo FTS5 một lần từ content store đã có; file được tạo nguyên 
 python -u -m app.ingestion.legal_fts build --batch-size 256
 ```
 
+FTS dùng chế độ `contentless` và `detail=column`: nội dung vẫn được lập chỉ mục
+để tìm kiếm nhưng không bị lưu lặp thêm một bản trong SQLite. Nếu build bị dừng
+do hết dung lượng hoặc ngắt tiến trình, file `.building` hợp lệ được giữ lại;
+chạy lại đúng lệnh trên sẽ tiếp tục từ document cuối đã commit.
+
 Lệnh có thể mất thời gian và thêm dung lượng trên ổ D vì phải giải nén/index
 toàn bộ corpus, nhưng không gọi model hoặc API. Nếu chưa tạo FTS, runtime vẫn
 hoạt động bằng Pinecone và không tự build nặng trong request đầu tiên.

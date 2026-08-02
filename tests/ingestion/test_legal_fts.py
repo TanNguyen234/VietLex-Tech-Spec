@@ -1,4 +1,8 @@
+import sqlite3
+from contextlib import closing
 from types import SimpleNamespace
+
+import pytest
 
 from app.ingestion.content_store import StoredDocument
 from app.ingestion.legal_fts import LegalFtsIndex
@@ -108,3 +112,61 @@ def test_build_restores_process_temp_environment(tmp_path, monkeypatch) -> None:
     index.ensure_built(batch_size=2)
 
     assert {name: __import__("os").environ[name] for name in original} == original
+
+
+def test_fts_body_is_contentless_but_remains_searchable(tmp_path) -> None:
+    path = tmp_path / "legal_fts.sqlite3"
+    index = LegalFtsIndex(
+        store=TinyContentStore(),
+        path=path,
+        dataset_revision="revision-1",
+    )
+
+    index.ensure_built(batch_size=2)
+
+    with closing(sqlite3.connect(path)) as connection:
+        stored_body = connection.execute(
+            "SELECT body FROM legal_fts LIMIT 1"
+        ).fetchone()[0]
+    assert stored_body is None
+    assert index.search("thành lập doanh nghiệp", limit=1) == [427301]
+
+
+def test_interrupted_build_is_retained_and_resumed(tmp_path) -> None:
+    class InterruptingStore(TinyContentStore):
+        def __init__(self) -> None:
+            super().__init__()
+            self.calls = 0
+
+        def get_many(self, document_ids: list[int]):
+            self.calls += 1
+            if self.calls == 2:
+                raise OSError("simulated interruption")
+            return super().get_many(document_ids)
+
+    path = tmp_path / "legal_fts.sqlite3"
+    interrupted = LegalFtsIndex(
+        store=InterruptingStore(),
+        path=path,
+        dataset_revision="revision-1",
+    )
+
+    with pytest.raises(OSError, match="simulated interruption"):
+        interrupted.ensure_built(batch_size=1)
+
+    building = path.with_suffix(path.suffix + ".building")
+    assert building.exists()
+    with closing(sqlite3.connect(building)) as connection:
+        assert connection.execute(
+            "SELECT COUNT(*) FROM legal_documents"
+        ).fetchone()[0] == 1
+
+    resumed = LegalFtsIndex(
+        store=TinyContentStore(),
+        path=path,
+        dataset_revision="revision-1",
+    )
+    resumed.ensure_built(batch_size=1)
+
+    assert resumed.is_ready()
+    assert resumed.search("bảo vệ môi trường", limit=1) == [431147]
