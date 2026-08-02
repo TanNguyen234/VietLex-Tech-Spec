@@ -1,10 +1,12 @@
 import logfire
-import httpx
 import json
 import re
 import asyncio
+import os
 from typing import Tuple, List
+from nemoguardrails import LLMRails, RailsConfig
 from app.config import get_settings
+from app.services.direct_llm import generate_llm_response
 
 settings = get_settings()
 
@@ -46,17 +48,12 @@ def parse_json_safely(text: str) -> dict:
         logfire.warning("Không thể parse JSON từ LLM Guardrails: {error}. Raw text: {text}", error=str(e), text=text)
         return {}
 
-from app.services.direct_llm import generate_llm_response
-
 async def call_llm_guard(prompt: str) -> str:
     try:
         return await generate_llm_response(prompt)
     except Exception as e:
         logfire.warning("LLM Guard call failed: {err}", err=str(e))
         return ""
-
-import os
-from nemoguardrails import LLMRails, RailsConfig
 
 _rails_instance = None
 

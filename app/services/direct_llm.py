@@ -1,8 +1,7 @@
 import time
 import httpx
 import logfire
-import asyncio
-from typing import Optional, List, Dict
+from typing import Optional
 from app.config import get_settings
 
 settings = get_settings()
@@ -24,7 +23,7 @@ def get_direct_client() -> httpx.AsyncClient:
     return _http_client
 
 # 1. OpenRouter API
-async def call_openrouter_api(prompt: str, system_prompt: str = "", model: str = "meta-llama/llama-3.3-70b-instruct") -> Optional[str]:
+async def call_openrouter_api(prompt: str, system_prompt: str = "", model: str = "meta-llama/llama-3.3-70b-instruct", *, max_output_tokens: int = 1024) -> Optional[str]:
     api_key = settings.OPENROUTER_API_KEY
     if not api_key:
         return None
@@ -44,7 +43,7 @@ async def call_openrouter_api(prompt: str, system_prompt: str = "", model: str =
         "model": model,
         "messages": messages,
         "temperature": 0.2,
-        "max_tokens": 1024
+        "max_tokens": max_output_tokens
     }
     client = get_direct_client()
     try:
@@ -63,7 +62,7 @@ async def call_openrouter_api(prompt: str, system_prompt: str = "", model: str =
     return None
 
 # 2. Gemini Direct API
-async def call_gemini_api(prompt: str, system_prompt: str = "", model: str = "gemini-2.0-flash") -> Optional[str]:
+async def call_gemini_api(prompt: str, system_prompt: str = "", model: str = "gemini-2.0-flash", *, max_output_tokens: int = 1024) -> Optional[str]:
     api_key = settings.GEMINI_API_KEY
     if not api_key:
         return None
@@ -79,7 +78,7 @@ async def call_gemini_api(prompt: str, system_prompt: str = "", model: str = "ge
         "contents": contents,
         "generationConfig": {
             "temperature": 0.2,
-            "maxOutputTokens": 1024
+            "maxOutputTokens": max_output_tokens
         }
     }
     client = get_direct_client()
@@ -101,7 +100,7 @@ async def call_gemini_api(prompt: str, system_prompt: str = "", model: str = "ge
     return None
 
 # 3. Nvidia NIM API
-async def call_nvidia_api(prompt: str, system_prompt: str = "", model: str = "meta/llama-3.3-70b-instruct") -> Optional[str]:
+async def call_nvidia_api(prompt: str, system_prompt: str = "", model: str = "meta/llama-3.3-70b-instruct", *, max_output_tokens: int = 1024) -> Optional[str]:
     api_key = settings.NVIDIA_API_KEY
     if not api_key:
         return None
@@ -119,7 +118,7 @@ async def call_nvidia_api(prompt: str, system_prompt: str = "", model: str = "me
         "model": model,
         "messages": messages,
         "temperature": 0.2,
-        "max_tokens": 1024
+        "max_tokens": max_output_tokens
     }
     client = get_direct_client()
     try:
@@ -138,7 +137,7 @@ async def call_nvidia_api(prompt: str, system_prompt: str = "", model: str = "me
     return None
 
 # 4. Groq Direct API
-async def call_groq_api(prompt: str, system_prompt: str = "", model: str = "llama-3.3-70b-versatile") -> Optional[str]:
+async def call_groq_api(prompt: str, system_prompt: str = "", model: str = "llama-3.3-70b-versatile", *, max_output_tokens: int = 1024) -> Optional[str]:
     api_key = settings.GROQ_API_KEY
     if not api_key:
         return None
@@ -156,7 +155,7 @@ async def call_groq_api(prompt: str, system_prompt: str = "", model: str = "llam
         "model": model,
         "messages": messages,
         "temperature": 0.2,
-        "max_tokens": 1024
+        "max_tokens": max_output_tokens
     }
     client = get_direct_client()
     try:
@@ -174,7 +173,12 @@ async def call_groq_api(prompt: str, system_prompt: str = "", model: str = "llam
         logfire.warning("Groq API error: {err}", err=str(e))
     return None
 
-async def generate_llm_response(prompt: str, system_prompt: str = "") -> str:
+async def generate_llm_response(
+    prompt: str,
+    system_prompt: str = "",
+    *,
+    max_output_tokens: int = 1024,
+) -> str:
     """
     4-Provider Direct Fallback Engine (OpenRouter -> Gemini -> Nvidia -> Groq).
     Auto-switches provider upon 429 rate limit or HTTP failure.
@@ -183,41 +187,41 @@ async def generate_llm_response(prompt: str, system_prompt: str = "") -> str:
     
     # 1. OpenRouter
     if settings.OPENROUTER_API_KEY and (now >= _cooldowns["openrouter"]):
-        res = await call_openrouter_api(prompt, system_prompt)
+        res = await call_openrouter_api(prompt, system_prompt, max_output_tokens=max_output_tokens)
         if res:
             return res
 
     # 2. Gemini Direct
     if settings.GEMINI_API_KEY and (now >= _cooldowns["gemini"]):
-        res = await call_gemini_api(prompt, system_prompt)
+        res = await call_gemini_api(prompt, system_prompt, max_output_tokens=max_output_tokens)
         if res:
             return res
 
     # 3. Nvidia NIM
     if settings.NVIDIA_API_KEY and (now >= _cooldowns["nvidia"]):
-        res = await call_nvidia_api(prompt, system_prompt)
+        res = await call_nvidia_api(prompt, system_prompt, max_output_tokens=max_output_tokens)
         if res:
             return res
 
     # 4. Groq Direct
     if settings.GROQ_API_KEY and (now >= _cooldowns["groq"]):
-        res = await call_groq_api(prompt, system_prompt)
+        res = await call_groq_api(prompt, system_prompt, max_output_tokens=max_output_tokens)
         if res:
             return res
 
     # Secondary fallback passes
     if settings.OPENROUTER_API_KEY:
-        res = await call_openrouter_api(prompt, system_prompt, model="meta-llama/llama-3.3-70b-instruct")
+        res = await call_openrouter_api(prompt, system_prompt, model="meta-llama/llama-3.3-70b-instruct", max_output_tokens=max_output_tokens)
         if res:
             return res
 
     if settings.GEMINI_API_KEY:
-        res = await call_gemini_api(prompt, system_prompt, model="gemini-1.5-flash")
+        res = await call_gemini_api(prompt, system_prompt, model="gemini-1.5-flash", max_output_tokens=max_output_tokens)
         if res:
             return res
 
     if settings.GROQ_API_KEY:
-        res = await call_groq_api(prompt, system_prompt, model="llama3-8b-8192")
+        res = await call_groq_api(prompt, system_prompt, model="llama3-8b-8192", max_output_tokens=max_output_tokens)
         if res:
             return res
 
