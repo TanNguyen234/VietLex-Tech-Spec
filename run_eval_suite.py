@@ -3,6 +3,7 @@ import asyncio
 import hashlib
 import json
 import os
+import re
 import sys
 import time
 from datetime import datetime
@@ -16,7 +17,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 DEFAULT_DATASET_PATH = PROJECT_ROOT / "app/data/namsyntax_legal_qa_420.json"
 DEFAULT_CHECKPOINT_PATH = PROJECT_ROOT / "docs/eval_checkpoints.json"
 DEFAULT_REPORT_PATH = PROJECT_ROOT / "docs/system_evaluation_report.md"
-EVALUATION_VERSION = "golden-v2-ragas-0.4"
+EVALUATION_VERSION = "golden-v3-ragas-0.4"
 
 
 def get_settings():
@@ -66,6 +67,16 @@ def _evenly_spaced(items: list[dict], count: int) -> list[dict]:
     ]
 
 
+def _interleave_groups(groups: list[list[dict]]) -> list[dict]:
+    result: list[dict] = []
+    max_length = max((len(group) for group in groups), default=0)
+    for index in range(max_length):
+        for group in groups:
+            if index < len(group):
+                result.append(group[index])
+    return result
+
+
 def load_evaluation_dataset(
     dataset_path: str | Path = DEFAULT_DATASET_PATH,
     *,
@@ -86,10 +97,12 @@ def load_evaluation_dataset(
         kind: [item for item in data if item.get("question_type") == kind]
         for kind in ("factoid", "multi-hop", "unanswerable")
     }
-    sampled = (
-        _evenly_spaced(grouped["factoid"], factoid_count)
-        + _evenly_spaced(grouped["multi-hop"], multihop_count)
-        + _evenly_spaced(grouped["unanswerable"], unanswerable_count)
+    sampled = _interleave_groups(
+        [
+            _evenly_spaced(grouped["factoid"], factoid_count),
+            _evenly_spaced(grouped["multi-hop"], multihop_count),
+            _evenly_spaced(grouped["unanswerable"], unanswerable_count),
+        ]
     )
     selected: list[dict] = []
     for item in sampled:
@@ -178,6 +191,9 @@ def runtime_evaluation_configuration(settings, *, run_ragas: bool) -> dict:
         "RERANK_RETURN_LIMIT",
         "RERANK_MIN_SCORE",
         "RERANK_TOP_K",
+        "QDRANT_RERANK_MODEL",
+        "PINECONE_RERANK_MODEL",
+        "LEGAL_FTS_RESULT_LIMIT",
         "LLM_CONTEXT_MAX_TOKENS",
         "LLM_MAX_OUTPUT_TOKENS",
     )
@@ -207,6 +223,119 @@ def is_honest_refusal(text: str) -> bool:
     text_lower = text.lower()
     return any(keyword in text_lower for keyword in REFUSAL_KEYWORDS)
 
+
+def _metric_terms(text: str) -> set[str]:
+    return {
+        term
+        for term in re.findall(r"[^\W_]+", text.casefold(), re.UNICODE)
+        if len(term) >= 2
+    }
+
+
+def retrieval_metrics(
+    contexts: list[str],
+    reference_contexts: list[str],
+) -> dict[str, float | bool]:
+    if not reference_contexts:
+        return {
+            "gold_context_hit": False,
+            "gold_context_recall": 0.0,
+            "reciprocal_rank": 0.0,
+        }
+    matched = 0
+    first_rank: int | None = None
+    normalized_contexts = [" ".join(item.casefold().split()) for item in contexts]
+    context_terms = [_metric_terms(item) for item in contexts]
+    for reference in reference_contexts:
+        normalized_reference = " ".join(reference.casefold().split())
+        reference_terms = _metric_terms(reference)
+        matched_rank: int | None = None
+        for rank, (normalized, terms) in enumerate(
+            zip(normalized_contexts, context_terms, strict=True),
+            start=1,
+        ):
+            overlap = (
+                len(reference_terms & terms) / len(reference_terms)
+                if reference_terms
+                else 0.0
+            )
+            if (
+                normalized_reference
+                and normalized_reference in normalized
+            ) or overlap >= 0.6:
+                matched_rank = rank
+                break
+        if matched_rank is not None:
+            matched += 1
+            if first_rank is None or matched_rank < first_rank:
+                first_rank = matched_rank
+    return {
+        "gold_context_hit": matched > 0,
+        "gold_context_recall": matched / len(reference_contexts),
+        "reciprocal_rank": 1.0 / first_rank if first_rank else 0.0,
+    }
+
+
+def summarize_outcomes(results: list[dict]) -> dict[str, float | int]:
+    answerable = [
+        result
+        for result in results
+        if result.get("expected") == "grounded_answer"
+        and not result.get("error")
+    ]
+    unanswerable = [
+        result
+        for result in results
+        if result.get("expected") == "honest_refusal"
+        and not result.get("error")
+    ]
+    answerable_correct = sum(
+        1
+        for result in answerable
+        if result.get("evaluation_status", "").startswith("Generated")
+        and not result.get("is_refusal")
+    )
+    correct_unanswerable = sum(
+        1
+        for result in unanswerable
+        if result.get("evaluation_status")
+        in {"Honest Refusal", "No Evidence"}
+        and result.get("is_refusal")
+    )
+    all_refusals = sum(
+        1
+        for result in results
+        if result.get("is_refusal") and not result.get("error")
+    )
+    valid_count = len(answerable) + len(unanswerable)
+    return {
+        "answerable_count": len(answerable),
+        "unanswerable_count": len(unanswerable),
+        "answerable_correct": answerable_correct,
+        "unanswerable_correct": correct_unanswerable,
+        "answerable_accuracy": (
+            answerable_correct / len(answerable) if answerable else 0.0
+        ),
+        "unanswerable_accuracy": (
+            correct_unanswerable / len(unanswerable)
+            if unanswerable
+            else 0.0
+        ),
+        "refusal_precision": (
+            correct_unanswerable / all_refusals if all_refusals else 0.0
+        ),
+        "refusal_recall": (
+            correct_unanswerable / len(unanswerable)
+            if unanswerable
+            else 0.0
+        ),
+        "overall_accuracy": (
+            (answerable_correct + correct_unanswerable) / valid_count
+            if valid_count
+            else 0.0
+        ),
+    }
+
 async def evaluate_single_query(
     case: dict,
     settings,
@@ -214,159 +343,176 @@ async def evaluate_single_query(
     evaluation_fingerprint: str,
     *,
     use_cache: bool = False,
+    queue_latency: float = 0.0,
 ) -> dict:
     query = case["query"]
     group = case["group"]
     expected = case["expected"]
-    
     print(f"\nEvaluating: [{group}] '{query}'")
-    
-    start_time = time.time()
-    
+
+    started = time.perf_counter()
+    input_guardrail_latency = 0.0
+    output_guardrail_latency = 0.0
+    ragas_latency = 0.0
+
+    def elapsed() -> float:
+        return queue_latency + time.perf_counter() - started
+
+    def base_result(**overrides) -> dict:
+        result = {
+            "query": query,
+            "group": group,
+            "expected": expected,
+            "cache_hit": False,
+            "input_safe": True,
+            "output_safe": True,
+            "response": "",
+            "contexts": [],
+            "latency": elapsed(),
+            "queue_latency": queue_latency,
+            "pipeline_latency": time.perf_counter() - started,
+            "input_guardrail_latency": input_guardrail_latency,
+            "output_guardrail_latency": output_guardrail_latency,
+            "ragas_latency": ragas_latency,
+            "judge_provider": getattr(
+                ragas_evaluator, "provider", {}
+            ).get("name") if ragas_evaluator else None,
+            "judge_model": getattr(
+                ragas_evaluator, "provider", {}
+            ).get("model") if ragas_evaluator else None,
+            "lat_info": {},
+            "retrieval_status": None,
+            "retrieval_diagnostics": {},
+            "gold_context_hit": False,
+            "gold_context_recall": 0.0,
+            "reciprocal_rank": 0.0,
+            "faithfulness": None,
+            "answer_accuracy": None,
+            "context_precision": None,
+            "context_recall": None,
+            "evaluation_status": "Eval Failed",
+            "is_refusal": False,
+            "evaluation_fingerprint": evaluation_fingerprint,
+            "error": None,
+        }
+        result.update(overrides)
+        return result
+
     cached_response = (
         await check_semantic_cache(query) if use_cache else None
     )
     cache_hit = cached_response is not None
-    
     if cache_hit:
-        latency = time.time() - start_time
+        latency = elapsed()
         print(f"-> Cache Hit! Latency: {latency:.2f}s")
-        return {
-            "query": query,
-            "group": group,
-            "expected": expected,
-            "cache_hit": True,
-            "input_safe": True,
-            "output_safe": True,
-            "response": cached_response,
-            "contexts": [],
-            "latency": latency,
-            "faithfulness": None,
-            "answer_accuracy": None,
-            "context_precision": None,
-            "context_recall": None,
-            "evaluation_status": "Cache Hit (not scored)",
-            "is_refusal": is_honest_refusal(cached_response),
-            "evaluation_fingerprint": evaluation_fingerprint,
-            "error": None,
-        }
-        
-    # 2. Input Guardrails
+        return base_result(
+            cache_hit=True,
+            response=cached_response,
+            latency=latency,
+            evaluation_status="Cache Hit (not scored)",
+            is_refusal=is_honest_refusal(cached_response),
+        )
+
+    guardrail_started = time.perf_counter()
     try:
         input_safe, rejection_message = await check_input_guardrails(query)
-    except Exception as e:
-        latency = time.time() - start_time
-        print(f"-> Input Guardrails Error: {e}")
-        return {
-            "query": query,
-            "group": group,
-            "expected": expected,
-            "cache_hit": False,
-            "input_safe": False,
-            "output_safe": False,
-            "response": "",
-            "contexts": [],
-            "latency": latency,
-            "faithfulness": None,
-            "answer_accuracy": None,
-            "context_precision": None,
-            "context_recall": None,
-            "evaluation_status": "Input Guardrail Error",
-            "is_refusal": False,
-            "evaluation_fingerprint": evaluation_fingerprint,
-            "error": str(e),
-        }
-    
+        input_guardrail_latency = time.perf_counter() - guardrail_started
+    except Exception as error:
+        input_guardrail_latency = time.perf_counter() - guardrail_started
+        print(f"-> Input Guardrails Error: {error}")
+        return base_result(
+            input_safe=False,
+            output_safe=False,
+            evaluation_status="Input Guardrail Error",
+            error=str(error),
+        )
+
     if not input_safe:
-        latency = time.time() - start_time
+        latency = elapsed()
         print(f"-> Blocked by Input Guardrails. Latency: {latency:.2f}s")
-        return {
-            "query": query,
-            "group": group,
-            "expected": expected,
-            "cache_hit": False,
-            "input_safe": False,
-            "output_safe": True,
-            "response": rejection_message,
-            "contexts": [],
-            "latency": latency,
-            "faithfulness": None,
-            "answer_relevance": None,
-            "context_precision": None,
-            "context_recall": None,
-            "evaluation_status": "Blocked Input",
-            "is_refusal": True,
-            "evaluation_fingerprint": evaluation_fingerprint,
-            "error": None,
-        }
-        
-    # 3. RAG Retrieval & Generation
+        return base_result(
+            input_safe=False,
+            response=rejection_message,
+            latency=latency,
+            evaluation_status="Blocked Input",
+            is_refusal=False,
+        )
+
     try:
         bot_response, contexts, lat_info = await run_advanced_rag(query)
-    except Exception as e:
-        print(f"-> Error in RAG pipeline: {e}")
-        return {
-            "query": query,
-            "group": group,
-            "expected": expected,
-            "cache_hit": False,
-            "input_safe": True,
-            "output_safe": False,
-            "response": "",
-            "contexts": [],
-            "latency": time.time() - start_time,
-            "faithfulness": None,
-            "answer_accuracy": None,
-            "context_precision": None,
-            "context_recall": None,
-            "evaluation_status": "RAG Error",
-            "is_refusal": False,
-            "evaluation_fingerprint": evaluation_fingerprint,
-            "error": str(e),
-        }
+    except Exception as error:
+        print(f"-> Error in RAG pipeline: {error}")
+        error_latency = getattr(error, "latency", {}) or {}
+        retrieval_status = getattr(error, "status", None)
+        diagnostics = getattr(error, "diagnostics", {}) or {}
+        return base_result(
+            output_safe=False,
+            lat_info=error_latency,
+            retrieval_status=retrieval_status,
+            retrieval_diagnostics=diagnostics,
+            evaluation_status=(
+                retrieval_status or "rag_error"
+            ),
+            error=str(error),
+        )
 
-        
-    # 4. Output Guardrails
+    retrieval_status = lat_info.get("retrieval_status")
+    retrieval_diagnostics = lat_info.get("retrieval_diagnostics", {})
+    guardrail_started = time.perf_counter()
     try:
-        output_safe, fallback_response = await check_output_guardrails(bot_response, contexts, query)
-    except Exception as e:
-        print(f"-> Output Guardrails Error: {e}")
-        return {
-            "query": query,
-            "group": group,
-            "expected": expected,
-            "cache_hit": False,
-            "input_safe": True,
-            "output_safe": False,
-            "response": bot_response,
-            "contexts": contexts,
-            "latency": time.time() - start_time,
-            "lat_info": lat_info,
-            "faithfulness": None,
-            "answer_accuracy": None,
-            "context_precision": None,
-            "context_recall": None,
-            "evaluation_status": "Output Guardrail Error",
-            "is_refusal": False,
-            "evaluation_fingerprint": evaluation_fingerprint,
-            "error": str(e),
-        }
-        
+        output_safe, fallback_response = await check_output_guardrails(
+            bot_response,
+            contexts,
+            query,
+        )
+        output_guardrail_latency = time.perf_counter() - guardrail_started
+    except Exception as error:
+        output_guardrail_latency = time.perf_counter() - guardrail_started
+        print(f"-> Output Guardrails Error: {error}")
+        direct_metrics = retrieval_metrics(
+            contexts,
+            case.get("reference_contexts", []),
+        )
+        return base_result(
+            output_safe=False,
+            response=bot_response,
+            contexts=contexts,
+            lat_info=lat_info,
+            retrieval_status=retrieval_status,
+            retrieval_diagnostics=retrieval_diagnostics,
+            evaluation_status="Output Guardrail Error",
+            error=str(error),
+            **direct_metrics,
+        )
+
     final_response = bot_response if output_safe else fallback_response
-    
-    latency = time.time() - start_time
-    print(f"-> RAG Done. Output Safe: {output_safe}. Latency: {latency:.2f}s")
-    
-    is_refusal = is_honest_refusal(final_response)
-    
-    # 5. Ragas evaluation (only if RAG response generated and NOT blocked or honest refusal)
+    pipeline_latency = time.perf_counter() - started
+    print(
+        f"-> RAG Done. Output Safe: {output_safe}. "
+        f"Latency: {queue_latency + pipeline_latency:.2f}s"
+    )
+    is_refusal = not contexts or is_honest_refusal(final_response)
+    direct_metrics = retrieval_metrics(
+        contexts,
+        case.get("reference_contexts", []),
+    )
     faithfulness = None
     answer_accuracy = None
     context_precision = None
     context_recall = None
-    eval_status = "Generated"
-    
-    if contexts and not is_refusal and output_safe and ragas_evaluator:
+    ragas_error: str | None = None
+
+    if not contexts:
+        eval_status = "No Evidence"
+    elif not output_safe:
+        eval_status = "Blocked Output"
+    elif is_refusal:
+        eval_status = "Honest Refusal"
+    elif ragas_evaluator is None:
+        eval_status = "Generated (Ragas skipped)"
+    else:
+        eval_status = "Generated"
+        ragas_started = time.perf_counter()
         try:
             print("-> Running Ragas Evaluator...")
             scores = await ragas_evaluator(
@@ -385,47 +531,35 @@ async def evaluate_single_query(
                 f"Precision: {context_precision:.2f}, "
                 f"Recall: {context_recall:.2f}"
             )
-        except Exception as e:
-            print(f"   Ragas Evaluation Error: {e}")
+        except Exception as error:
+            print(f"   Ragas Evaluation Error: {error}")
             eval_status = "Eval Failed"
-    elif is_refusal:
-        eval_status = "Honest Refusal"
-    elif not output_safe:
-        eval_status = "Blocked Output"
-    elif not contexts:
-        eval_status = "No Evidence"
-    elif ragas_evaluator is None:
-        eval_status = "Generated (Ragas skipped)"
-        
-    return {
-        "query": query,
-        "group": group,
-        "expected": expected,
-        "cache_hit": False,
-        "input_safe": True,
-        "output_safe": output_safe,
-        "response": final_response,
-        "contexts": contexts,
-        "latency": latency,
-        "lat_info": lat_info,
-        "faithfulness": faithfulness,
-        "answer_accuracy": answer_accuracy,
-        "context_precision": context_precision,
-        "context_recall": context_recall,
-        "evaluation_status": eval_status,
-        "is_refusal": is_refusal,
-        "evaluation_fingerprint": evaluation_fingerprint,
-        "error": None if eval_status != "Eval Failed" else "Ragas failed",
-    }
+            ragas_error = str(error)
+        finally:
+            ragas_latency = time.perf_counter() - ragas_started
+
+    return base_result(
+        output_safe=output_safe,
+        response=final_response,
+        contexts=contexts,
+        latency=elapsed(),
+        pipeline_latency=pipeline_latency,
+        ragas_latency=ragas_latency,
+        lat_info=lat_info,
+        retrieval_status=retrieval_status,
+        retrieval_diagnostics=retrieval_diagnostics,
+        faithfulness=faithfulness,
+        answer_accuracy=answer_accuracy,
+        context_precision=context_precision,
+        context_recall=context_recall,
+        evaluation_status=eval_status,
+        is_refusal=is_refusal,
+        error=ragas_error,
+        **direct_metrics,
+    )
 
 def select_judge_provider(settings) -> dict[str, str]:
     candidates = (
-        (
-            "OPENROUTER_API_KEY",
-            "OpenRouter",
-            "meta-llama/llama-3.3-70b-instruct",
-            "https://openrouter.ai/api/v1",
-        ),
         (
             "GEMINI_API_KEY",
             "Gemini",
@@ -443,6 +577,12 @@ def select_judge_provider(settings) -> dict[str, str]:
             "Groq",
             "llama-3.3-70b-versatile",
             "https://api.groq.com/openai/v1",
+        ),
+        (
+            "OPENROUTER_API_KEY",
+            "OpenRouter",
+            "meta-llama/llama-3.3-70b-instruct",
+            "https://openrouter.ai/api/v1",
         ),
     )
     for field, name, model, base_url in candidates:
@@ -571,6 +711,7 @@ def build_ragas_evaluator(settings, *, judge_concurrency: int):
     print(
         f"Using {provider['name']} {provider['model']} as Ragas judge."
     )
+    evaluate_case.provider = provider
     return evaluate_case
 
 def is_valid_checkpoint(r: dict, fingerprint: str) -> bool:
@@ -645,17 +786,7 @@ def write_report(path: Path, results: list[dict], *, use_cache: bool) -> None:
         if valid_inputs
         else 0.0
     )
-    outcome_correct = sum(
-        1
-        for result in valid_inputs
-        if (
-            result["is_refusal"]
-            == (result["group"] == "Unanswerable")
-        )
-    )
-    outcome_accuracy = (
-        100.0 * outcome_correct / len(valid_inputs) if valid_inputs else 0.0
-    )
+    outcomes = summarize_outcomes(results)
     avg_latency = (
         sum(result["latency"] for result in results) / total
         if total
@@ -670,6 +801,17 @@ def write_report(path: Path, results: list[dict], *, use_cache: bool) -> None:
             "context_recall",
         )
     }
+    average_queue = _average(results, "queue_latency") or 0.0
+    average_pipeline = _average(results, "pipeline_latency") or 0.0
+    average_ragas = _average(results, "ragas_latency") or 0.0
+    gold_hit_rate = 100.0 * (
+        sum(1 for result in results if result.get("gold_context_hit"))
+        / total
+        if total
+        else 0.0
+    )
+    gold_recall = _average(results, "gold_context_recall") or 0.0
+    mean_reciprocal_rank = _average(results, "reciprocal_rank") or 0.0
 
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as file:
@@ -689,10 +831,33 @@ def write_report(path: Path, results: list[dict], *, use_cache: bool) -> None:
         file.write("## Metrics\n\n")
         file.write("| Metric | Value |\n| :--- | ---: |\n")
         file.write(f"| Average end-to-end latency | {avg_latency:.2f}s |\n")
+        file.write(f"| Average queue latency | {average_queue:.2f}s |\n")
+        file.write(f"| Average online pipeline latency | {average_pipeline:.2f}s |\n")
+        file.write(f"| Average Ragas latency | {average_ragas:.2f}s |\n")
         file.write(f"| Evaluation failures | {errors}/{total} |\n")
         file.write(f"| Cache hits | {cache_hits}/{total} |\n")
         file.write(f"| Legal input pass rate | {legal_input_pass_rate:.1f}% |\n")
-        file.write(f"| Expected answer/refusal accuracy | {outcome_accuracy:.1f}% |\n")
+        file.write(
+            "| Answerable accuracy | "
+            f"{100.0 * outcomes['answerable_accuracy']:.1f}% "
+            f"({outcomes['answerable_correct']}/"
+            f"{outcomes['answerable_count']}) |\n"
+        )
+        file.write(
+            "| Unanswerable accuracy | "
+            f"{100.0 * outcomes['unanswerable_accuracy']:.1f}% "
+            f"({outcomes['unanswerable_correct']}/"
+            f"{outcomes['unanswerable_count']}) |\n"
+        )
+        file.write(
+            f"| Refusal precision | {100.0 * outcomes['refusal_precision']:.1f}% |\n"
+        )
+        file.write(
+            f"| Refusal recall | {100.0 * outcomes['refusal_recall']:.1f}% |\n"
+        )
+        file.write(f"| Gold context hit rate | {gold_hit_rate:.1f}% |\n")
+        file.write(f"| Gold context recall | {gold_recall:.2f} |\n")
+        file.write(f"| Retrieval MRR | {mean_reciprocal_rank:.2f} |\n")
         file.write(f"| Output blocked | {output_blocked}/{total} |\n")
         file.write(
             f"| Ragas Faithfulness | {_score_text(metrics['faithfulness'])} |\n"
@@ -788,13 +953,16 @@ async def run_suite(arguments=None) -> list[dict]:
     result_map = dict(completed)
 
     async def evaluate_case(case: dict) -> dict:
+        queued_at = time.perf_counter()
         async with semaphore:
+            queue_latency = time.perf_counter() - queued_at
             return await evaluate_single_query(
                 case,
                 settings,
                 ragas_evaluator,
                 fingerprint,
                 use_cache=args.use_cache,
+                queue_latency=queue_latency,
             )
 
     tasks = [

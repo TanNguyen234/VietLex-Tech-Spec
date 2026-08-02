@@ -48,14 +48,21 @@ def test_loader_maps_question_schema_and_samples_across_each_group(
         unanswerable_count=2,
     )
 
-    assert [item["query"] for item in selected[:3]] == [
+    assert [item["query"] for item in selected[::3]] == [
         "factoid-0",
         "factoid-2",
         "factoid-5",
     ]
     assert selected[0]["ground_truth"] == "answer-factoid-0"
     assert selected[0]["reference_contexts"] == ["context-factoid-0"]
-    assert selected[-1]["expected"] == "honest_refusal"
+    assert [item["group"] for item in selected[:6]] == [
+        "Factoid",
+        "Multi-hop",
+        "Unanswerable",
+        "Factoid",
+        "Multi-hop",
+        "Unanswerable",
+    ]
 
 
 def test_cli_defaults_measure_pipeline_without_semantic_cache() -> None:
@@ -69,7 +76,7 @@ def test_cli_defaults_measure_pipeline_without_semantic_cache() -> None:
     assert arguments.skip_ragas is False
 
 
-def test_judge_provider_prefers_configured_openrouter_endpoint() -> None:
+def test_judge_provider_is_independent_from_primary_openrouter_model() -> None:
     provider = run_eval_suite.select_judge_provider(
         SimpleNamespace(
             OPENROUTER_API_KEY="openrouter-key",
@@ -82,11 +89,41 @@ def test_judge_provider_prefers_configured_openrouter_endpoint() -> None:
     )
 
     assert provider == {
-        "name": "OpenRouter",
-        "model": "meta-llama/llama-3.3-70b-instruct",
-        "api_key": "openrouter-key",
-        "base_url": "https://openrouter.ai/api/v1",
+        "name": "Gemini",
+        "model": "gemini-2.0-flash",
+        "api_key": "gemini-key",
+        "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/",
     }
+
+
+def test_answerable_output_block_is_not_counted_as_correct() -> None:
+    metrics = run_eval_suite.summarize_outcomes(
+        [
+            {
+                "expected": "grounded_answer",
+                "evaluation_status": "Blocked Output",
+                "is_refusal": True,
+                "error": None,
+            }
+        ]
+    )
+
+    assert metrics["answerable_accuracy"] == 0.0
+    assert metrics["overall_accuracy"] == 0.0
+
+
+def test_reference_context_hit_reports_recall_and_reciprocal_rank() -> None:
+    metrics = run_eval_suite.retrieval_metrics(
+        [
+            "[Nguồn 1] Nội dung không liên quan.",
+            "[Nguồn 2] Cá nhân được khấu trừ thuế theo quy định.",
+        ],
+        ["Cá nhân được khấu trừ thuế theo quy định."],
+    )
+
+    assert metrics["gold_context_hit"] is True
+    assert metrics["gold_context_recall"] == 1.0
+    assert metrics["reciprocal_rank"] == 0.5
 
 
 def test_checkpoint_is_reused_only_for_the_same_evaluation_fingerprint() -> None:
@@ -186,3 +223,84 @@ async def test_query_evaluation_bypasses_semantic_cache_by_default(
     assert result["evaluation_status"] == "Generated (Ragas skipped)"
     assert result["evaluation_fingerprint"] == "fingerprint"
     assert result["answer_accuracy"] is None
+
+
+@pytest.mark.asyncio
+async def test_no_context_is_classified_before_refusal_keywords(
+    monkeypatch,
+) -> None:
+    async def safe_input(_query: str):
+        return True, ""
+
+    async def fake_rag(_query: str):
+        return (
+            "Xin lỗi, tôi không tìm thấy bằng chứng pháp luật đủ tin cậy.",
+            [],
+            {"retrieval_status": "no_candidate", "t_total": 0.01},
+        )
+
+    async def safe_output(_response, _contexts, _query):
+        return True, ""
+
+    monkeypatch.setattr(run_eval_suite, "check_input_guardrails", safe_input)
+    monkeypatch.setattr(run_eval_suite, "run_advanced_rag", fake_rag)
+    monkeypatch.setattr(run_eval_suite, "check_output_guardrails", safe_output)
+
+    result = await run_eval_suite.evaluate_single_query(
+        {
+            "query": "Không có căn cứ?",
+            "group": "Unanswerable",
+            "expected": "honest_refusal",
+            "ground_truth": "",
+            "reference_contexts": [],
+        },
+        settings=SimpleNamespace(),
+        ragas_evaluator=None,
+        evaluation_fingerprint="fingerprint",
+    )
+
+    assert result["evaluation_status"] == "No Evidence"
+    assert result["retrieval_status"] == "no_candidate"
+
+
+@pytest.mark.asyncio
+async def test_ragas_failure_preserves_exact_error_and_latency(
+    monkeypatch,
+) -> None:
+    async def safe_input(_query: str):
+        return True, ""
+
+    async def fake_rag(_query: str):
+        return (
+            "Câu trả lời có căn cứ.",
+            ["Căn cứ pháp lý chính xác."],
+            {"retrieval_status": "ok", "t_total": 0.01},
+        )
+
+    async def safe_output(_response, _contexts, _query):
+        return True, ""
+
+    async def failing_ragas(**_kwargs):
+        raise RuntimeError("judge quota exhausted")
+
+    monkeypatch.setattr(run_eval_suite, "check_input_guardrails", safe_input)
+    monkeypatch.setattr(run_eval_suite, "run_advanced_rag", fake_rag)
+    monkeypatch.setattr(run_eval_suite, "check_output_guardrails", safe_output)
+
+    result = await run_eval_suite.evaluate_single_query(
+        {
+            "query": "Điều kiện?",
+            "group": "Factoid",
+            "expected": "grounded_answer",
+            "ground_truth": "Câu trả lời.",
+            "reference_contexts": ["Căn cứ pháp lý chính xác."],
+        },
+        settings=SimpleNamespace(),
+        ragas_evaluator=failing_ragas,
+        evaluation_fingerprint="fingerprint",
+    )
+
+    assert result["evaluation_status"] == "Eval Failed"
+    assert result["error"] == "judge quota exhausted"
+    assert result["ragas_latency"] >= 0
+    assert result["latency"] >= result["pipeline_latency"]
