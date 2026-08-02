@@ -24,15 +24,15 @@ env/
 *.sln
 *.swp
 
-# Local Crawler and Agent Skills
-laws_project_crawler/
+# Local Agent Skills
 .agents/
 
 # Raw Data & Large Datasets
-app/data/raw_data/
 app/data/*.json
 app/data/*.json.gz
+data/huggingface/
+data/.tmp/
+data/tmp/
 *.md.report
-crawled_dataset_eda_report.md
 # Added by code-review-graph
 .code-review-graph/
