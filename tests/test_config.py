@@ -55,7 +55,6 @@ def test_secret_defaults_never_contain_credentials() -> None:
         "PIPECONE_API",
         "PINECONE_API_KEY",
         "LITELLM_MASTER_KEY",
-        "COHERE_API_KEY",
         "MONGO_URL",
     )
 

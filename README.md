@@ -1,10 +1,10 @@
 # VietLex — Vietnamese Legal RAG
 
 VietLex là hệ thống RAG cho tra cứu văn bản pháp luật Việt Nam. Corpus được lưu
-trên Pinecone; Qdrant Cloud chỉ được dùng như dịch vụ inference tạm thời để tạo
-vector `intfloat/multilingual-e5-small` 384 chiều. Kết quả tìm kiếm được phân
-đoạn theo cấu trúc pháp luật và rerank bằng `bge-reranker-v2-m3` trước khi gửi
-cho mô hình trả lời.
+trên Pinecone; Qdrant Cloud chỉ chạy inference từ xa để tạo vector
+`intfloat/multilingual-e5-small` 384 chiều và rerank bằng ColBERT. Nếu Qdrant
+tạm thời quá tải, pipeline fallback sang Pinecone Inference
+`bge-reranker-v2-m3`. Không có embedding hoặc reranker nào chạy local.
 
 > [!WARNING]
 > Corpus là dataset nghiên cứu bên thứ ba
@@ -34,15 +34,18 @@ flowchart LR
     Sparse --> Pinecone
 
     Query["Original query"] --> Rewrite["Short legal rewrite"]
+    Query --> FTS["SQLite FTS5 + exact document number"]
     Rewrite --> QueryEmbed["Dense query via Qdrant staging"]
     Query --> SparseQuery["Exact sparse query"]
     QueryEmbed --> Hybrid["Một Pinecone dense+sparse query"]
     SparseQuery --> Hybrid
-    Hybrid --> Resolve["Resolve full text từ SQLite"]
+    FTS --> Merge["Merge + deduplicate"]
+    Hybrid --> Merge
+    Merge --> Resolve["Resolve full text từ SQLite"]
     Resolve --> Chunk["Chương → Mục → Điều → Khoản"]
-    Chunk --> Bound["Tối đa 24 candidates; ≤2/document"]
-    Bound --> Rerank["BGE-reranker-v2-M3 top 8"]
-    Rerank --> Budget["Top 3; context ≤900 tokens"]
+    Chunk --> Bound["Tối đa 12 candidates; ≤2/document"]
+    Bound --> Rerank["Qdrant ColBERT; Pinecone BGE fallback"]
+    Rerank --> Budget["Top 3; context ≤720 tokens"]
     Budget --> Answer["Grounded answer ≤640 output tokens"]
 ```
 
@@ -55,7 +58,9 @@ Pinecone trả `QUOTA_EXCEEDED`.
 
 Dense embedding dùng Qdrant Cloud Inference với model
 `intfloat/multilingual-e5-small`. Qdrant chỉ giữ collection staging tối đa
-2.049 point ID cố định; toàn bộ dense+sparse vectors lâu dài nằm ở Pinecone.
+2.049 point ID cố định cho embedding và một collection rerank nhỏ, tạm thời cho
+tối đa 12 chunks/request. Toàn bộ dense+sparse vectors lâu dài vẫn nằm ở
+Pinecone; Qdrant không giữ bản sao corpus.
 
 ## Cài đặt
 
@@ -71,8 +76,7 @@ Copy-Item .env.example .env
 Secret bắt buộc:
 
 - `PIPECONE_API` hoặc `PINECONE_API_KEY`;
-- `QDRANT_URL`, `QDRANT_API_KEY` cho Cloud Inference;
-- `RERANK_API_URL`, `EMBEDDING_SERVICE_API_KEY` cho BGE reranker;
+- `QDRANT_URL`, `QDRANT_API_KEY` cho embedding và ColBERT Cloud Inference;
 - `OMNIGATE_BASE_URL`, `LITELLM_MASTER_KEY` cho answer model.
 
 Tên `PIPECONE_API` được hỗ trợ để tương thích với secret hiện có, dù chính tả
@@ -115,18 +119,32 @@ python -m app.ingestion.hf_pipeline verify
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-Runtime thực hiện một Pinecone hybrid read cho knowledge retrieval. Semantic
-cache nằm ở namespace riêng trong cùng index, dùng threshold `0.96`. Reranker
-Pinecone không được dùng vì quota Starter thấp; pipeline giữ BGE-reranker-v2-M3
-đã cấu hình sẵn.
+Runtime thực hiện một Pinecone hybrid read và một SQLite FTS5 read song song.
+Semantic cache nằm ở namespace riêng trong cùng index, dùng threshold `0.96`.
+Reranker chính là Qdrant Cloud
+`answerdotai/answerai-colbert-small-v1`; Pinecone
+`bge-reranker-v2-m3` chỉ được gọi khi Qdrant timeout, trả 429/5xx hoặc circuit
+breaker đang mở. Lỗi cả hai provider được báo là `reranker_error`, không bị
+biến thành câu từ chối do “không có dữ liệu”.
 
 Luồng query dùng bản rewrite ngắn cho dense embedding nhưng giữ nguyên câu hỏi
 gốc cho sparse search để không làm mất số Điều, số hiệu văn bản, ngày tháng và
 tên riêng. Full text chỉ được chunk sau khi resolve từ SQLite: tách theo
-Điều/Khoản, tối đa 280 whitespace tokens/chunk và overlap 24 tokens chỉ khi một
-đơn vị cấu trúc quá dài. Candidate rerank được giới hạn 24, tối đa 2 chunk mỗi
-document. Prompt cuối có một ngân sách toàn cục 900 tokens và output model tối
+Điều/Khoản, tối đa 220 whitespace tokens/chunk và overlap 24 tokens chỉ khi một
+đơn vị cấu trúc quá dài. Candidate rerank được giới hạn 12, tối đa 2 chunk mỗi
+document. Prompt cuối có một ngân sách toàn cục 720 tokens và output model tối
 đa 640 tokens; mọi giới hạn đều có thể chỉnh qua `.env`.
+
+Tạo FTS5 một lần từ content store đã có; file được tạo nguyên tử tại
+`data/huggingface/legal_fts.sqlite3` trên ổ D:
+
+```powershell
+python -u -m app.ingestion.legal_fts build --batch-size 256
+```
+
+Lệnh có thể mất thời gian và thêm dung lượng trên ổ D vì phải giải nén/index
+toàn bộ corpus, nhưng không gọi model hoặc API. Nếu chưa tạo FTS, runtime vẫn
+hoạt động bằng Pinecone và không tự build nặng trong request đầu tiên.
 
 > [!IMPORTANT]
 > Index đã ingestion xong tiếp tục tương thích với runtime mới và không cần
@@ -151,9 +169,11 @@ Có thể thêm `--skip-ragas` cho smoke test nhanh, nhưng kết quả đó kh�
 đánh giá cuối.
 
 Suite ghi checkpoint nguyên tử và tạo báo cáo tại `docs/system_evaluation_report.md`.
-Các metric gồm faithfulness, answer accuracy, context precision và context
-recall. Judge được chọn theo credential hiện có, ưu tiên OpenRouter rồi đến
-Gemini, NVIDIA, Groq và OmniGate. Chạy suite sẽ phát sinh lượt đọc Pinecone,
+Các metric gồm faithfulness, answer accuracy, context precision/recall,
+gold-context hit rate, retrieval MRR, answerable/unanswerable accuracy, refusal
+precision/recall và latency riêng cho queue/pipeline/Ragas. Judge ưu tiên Gemini
+để độc lập với answer model OpenRouter, sau đó NVIDIA, Groq, OpenRouter và
+OmniGate. Chạy suite sẽ phát sinh lượt đọc Pinecone,
 Qdrant inference, reranker và chi phí judge API; dùng concurrency mặc định để
 tránh rate limit, không tăng đồng thời nếu chưa kiểm tra quota.
 
@@ -161,9 +181,17 @@ tránh rate limit, không tăng đồng thời nếu chưa kiểm tra quota.
 
 ```powershell
 python -m pytest -q
-python -m ruff check app tests
 python -m compileall -q app tests
 git diff --check
+```
+
+Full suite mặc định dùng client giả và không tốn quota. Smoke sau dùng 3 chunks
+thật từ content store và gọi đúng một lượt Qdrant cùng một lượt Pinecone:
+
+```powershell
+$env:RUN_LIVE_RERANK_TEST='1'
+python -m pytest tests/integration/test_remote_reranker_live.py -q
+Remove-Item Env:RUN_LIVE_RERANK_TEST
 ```
 
 Test doubles chỉ tồn tại trong automated tests. Production không fallback sang

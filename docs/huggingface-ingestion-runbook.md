@@ -21,10 +21,10 @@ không xác nhận hiệu lực hiện hành và không thay thế tư vấn ph�
 
 ## Vai trò từng dịch vụ
 
-- Qdrant Cloud: chỉ sinh E5-small qua collection staging giới hạn 2.049 point.
+- Qdrant Cloud: sinh E5-small và rerank ColBERT qua các collection staging nhỏ.
 - Pinecone: persistent dense+sparse vectors và semantic-cache namespace.
 - SQLite/Zstandard: full legal text và provenance.
-- Cloud Run: BGE-reranker-v2-M3 ở query time; không chạy khi ingestion.
+- Pinecone Inference: BGE-reranker-v2-M3 fallback khi Qdrant tạm lỗi.
 
 Staging dùng ID cố định, vector on-disk, `m=0` và `indexing_threshold=0`; mỗi
 window ghi đè các ID cũ rồi chuyển vectors sang Pinecone.
@@ -95,8 +95,8 @@ abort thay vì bỏ qua dữ liệu từ xa.
 - Namespace upsert giới hạn 50 MB/s và 100 requests/s; cấu hình 16×128 nằm dưới
   các giới hạn request thiết kế, nhưng vẫn retry khi server throttle.
 - Không dùng Pinecone hosted embedding nên không tiêu embedding-token quota.
-- Không dùng Pinecone hosted reranker nên không tiêu quota 500 requests/tháng
-  của Starter.
+- Pinecone hosted reranker chỉ là fallback; circuit breaker tránh lặp lại
+  Qdrant timeout nhưng vẫn phải theo dõi inference quota của Pinecone.
 - Nếu nhận `QUOTA_EXCEEDED`, không xóa checkpoint/local store; giải phóng index
   Pinecone khác hoặc nâng plan rồi chạy lại.
 
@@ -121,12 +121,20 @@ Report cuối nằm tại
 ## Runtime retrieval mặc định
 
 - dense query: câu hỏi đã rewrite; sparse query: nguyên văn câu hỏi người dùng;
-- retrieve 24 document, chunk theo Điều/Khoản ở mức tối đa 280 tokens;
-- chọn tối đa 24 rerank candidates, tối đa 2 candidates/document;
-- BGE trả tối đa 8 kết quả; local policy lấy tối đa 3 evidence;
-- tổng context LLM tối đa 900 whitespace tokens, output tối đa 640 tokens;
+- Pinecone hybrid và SQLite FTS5 chạy song song rồi merge document IDs;
+- retrieve 24 document, chunk theo Điều/Khoản ở mức tối đa 220 tokens;
+- chọn tối đa 12 rerank candidates, tối đa 2 candidates/document;
+- Qdrant ColBERT là chính, Pinecone BGE là fallback, trả tối đa 6 kết quả;
+- local policy lấy tối đa 3 evidence trong tổng context 720 whitespace tokens;
+- output model tối đa 640 tokens;
 - `RERANK_MIN_SCORE=0.05` là cấu hình deployment, cần hiệu chỉnh bằng bộ câu hỏi
   có nhãn trước khi nâng threshold vì score normalization phụ thuộc service.
+
+FTS5 là index runtime độc lập, không cần reingest Pinecone:
+
+```powershell
+python -u -m app.ingestion.legal_fts build --batch-size 256
+```
 
 ## Nguồn kỹ thuật
 

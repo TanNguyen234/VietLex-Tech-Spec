@@ -41,9 +41,6 @@ class Settings(BaseSettings):
     PINECONE_RERANK_MODEL: str = "bge-reranker-v2-m3"
     PINECONE_RERANK_TIMEOUT_SECONDS: float = 12.0
     
-    # Cohere API
-    COHERE_API_KEY: Optional[str] = None
-    
     # LLM Gateway (OmniGate)
     OMNIGATE_BASE_URL: str = "https://llmgateway.onrender.com"
     LITELLM_MASTER_KEY: Optional[str] = None
