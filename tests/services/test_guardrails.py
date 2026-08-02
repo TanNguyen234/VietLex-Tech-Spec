@@ -20,6 +20,53 @@ async def test_warm_guardrails_initializes_rails_once(monkeypatch) -> None:
 
 
 @pytest.mark.asyncio
+async def test_warm_guardrails_propagates_initialization_failure(
+    monkeypatch,
+) -> None:
+    def fail():
+        raise RuntimeError("guardrail unavailable")
+
+    monkeypatch.setattr(guardrails, "get_rails", fail)
+
+    with pytest.raises(RuntimeError, match="guardrail unavailable"):
+        await guardrails.warm_guardrails()
+
+
+@pytest.mark.asyncio
+async def test_input_guardrail_failure_blocks_request(monkeypatch) -> None:
+    monkeypatch.setattr(
+        guardrails,
+        "get_rails",
+        lambda: (_ for _ in ()).throw(RuntimeError("offline")),
+    )
+
+    safe, message = await guardrails.check_input_guardrails(
+        "Điều kiện cấp phép là gì?"
+    )
+
+    assert safe is False
+    assert message
+
+
+@pytest.mark.asyncio
+async def test_output_guardrail_timeout_blocks_response(monkeypatch) -> None:
+    class SlowRails:
+        async def generate_async(self, **_kwargs):
+            raise TimeoutError("timeout")
+
+    monkeypatch.setattr(guardrails, "get_rails", lambda: SlowRails())
+
+    safe, message = await guardrails.check_output_guardrails(
+        "Câu trả lời",
+        ["Căn cứ pháp lý"],
+        "Câu hỏi",
+    )
+
+    assert safe is False
+    assert message
+
+
+@pytest.mark.asyncio
 async def test_output_block_audit_logs_hash_not_raw_answer(
     monkeypatch,
 ) -> None:

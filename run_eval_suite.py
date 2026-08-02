@@ -18,6 +18,7 @@ DEFAULT_DATASET_PATH = PROJECT_ROOT / "app/data/namsyntax_legal_qa_420.json"
 DEFAULT_CHECKPOINT_PATH = PROJECT_ROOT / "docs/eval_checkpoints.json"
 DEFAULT_REPORT_PATH = PROJECT_ROOT / "docs/system_evaluation_report.md"
 EVALUATION_VERSION = "golden-v3-ragas-0.4"
+ANSWER_ACCURACY_PASS_THRESHOLD = 0.5
 
 
 def get_settings():
@@ -235,12 +236,12 @@ def _metric_terms(text: str) -> set[str]:
 def retrieval_metrics(
     contexts: list[str],
     reference_contexts: list[str],
-) -> dict[str, float | bool]:
+) -> dict[str, float | bool | None]:
     if not reference_contexts:
         return {
-            "gold_context_hit": False,
-            "gold_context_recall": 0.0,
-            "reciprocal_rank": 0.0,
+            "gold_context_hit": None,
+            "gold_context_recall": None,
+            "reciprocal_rank": None,
         }
     matched = 0
     first_rank: int | None = None
@@ -285,49 +286,73 @@ def summarize_outcomes(results: list[dict]) -> dict[str, float | int]:
         "Output Guardrail Error",
     }
 
-    def eligible(result: dict) -> bool:
-        return result.get("evaluation_status") not in technical_statuses
+    def service_completed(result: dict) -> bool:
+        return (
+            result.get("evaluation_status") not in technical_statuses
+            and result.get("retrieval_status")
+            not in {"rag_error", "retrieval_error", "reranker_error"}
+        )
 
     answerable = [
         result
         for result in results
         if result.get("expected") == "grounded_answer"
-        and eligible(result)
     ]
     unanswerable = [
         result
         for result in results
         if result.get("expected") == "honest_refusal"
-        and eligible(result)
     ]
-    answerable_correct = sum(
+    grounded_generations = sum(
         1
         for result in answerable
+        if service_completed(result)
         if result.get("output_safe")
         and result.get("contexts")
         and not result.get("is_refusal")
         and result.get("evaluation_status") != "Blocked Output"
     )
+    answerable_correct = sum(
+        1
+        for result in answerable
+        if service_completed(result)
+        and result.get("output_safe")
+        and result.get("contexts")
+        and not result.get("is_refusal")
+        and isinstance(result.get("answer_accuracy"), (int, float))
+        and result["answer_accuracy"] >= ANSWER_ACCURACY_PASS_THRESHOLD
+    )
     correct_unanswerable = sum(
         1
         for result in unanswerable
-        if result.get("evaluation_status")
+        if service_completed(result)
+        and result.get("evaluation_status")
         in {"Honest Refusal", "No Evidence"}
         and result.get("is_refusal")
     )
     all_refusals = sum(
         1
         for result in results
-        if result.get("is_refusal") and eligible(result)
+        if result.get("is_refusal") and service_completed(result)
     )
     valid_count = len(answerable) + len(unanswerable)
     return {
         "answerable_count": len(answerable),
         "unanswerable_count": len(unanswerable),
         "answerable_correct": answerable_correct,
+        "grounded_generation_count": grounded_generations,
         "unanswerable_correct": correct_unanswerable,
         "answerable_accuracy": (
             answerable_correct / len(answerable) if answerable else 0.0
+        ),
+        "grounded_generation_rate": (
+            grounded_generations / len(answerable) if answerable else 0.0
+        ),
+        "service_completion_rate": (
+            sum(1 for result in results if service_completed(result))
+            / len(results)
+            if results
+            else 0.0
         ),
         "unanswerable_accuracy": (
             correct_unanswerable / len(unanswerable)
@@ -372,6 +397,9 @@ async def evaluate_single_query(
         return queue_latency + time.perf_counter() - started
 
     def base_result(**overrides) -> dict:
+        empty_retrieval_metrics = retrieval_metrics(
+            [], case.get("reference_contexts", [])
+        )
         result = {
             "query": query,
             "group": group,
@@ -396,9 +424,7 @@ async def evaluate_single_query(
             "lat_info": {},
             "retrieval_status": None,
             "retrieval_diagnostics": {},
-            "gold_context_hit": False,
-            "gold_context_recall": 0.0,
-            "reciprocal_rank": 0.0,
+            **empty_retrieval_metrics,
             "faithfulness": None,
             "answer_accuracy": None,
             "context_precision": None,
@@ -817,10 +843,17 @@ def write_report(path: Path, results: list[dict], *, use_cache: bool) -> None:
     average_queue = _average(results, "queue_latency") or 0.0
     average_pipeline = _average(results, "pipeline_latency") or 0.0
     average_ragas = _average(results, "ragas_latency") or 0.0
+    retrieval_eligible = [
+        result
+        for result in results
+        if result.get("gold_context_hit") is not None
+    ]
+    gold_hits = sum(
+        1 for result in retrieval_eligible if result["gold_context_hit"]
+    )
     gold_hit_rate = 100.0 * (
-        sum(1 for result in results if result.get("gold_context_hit"))
-        / total
-        if total
+        gold_hits / len(retrieval_eligible)
+        if retrieval_eligible
         else 0.0
     )
     gold_recall = _average(results, "gold_context_recall") or 0.0
@@ -857,6 +890,16 @@ def write_report(path: Path, results: list[dict], *, use_cache: bool) -> None:
             f"{outcomes['answerable_count']}) |\n"
         )
         file.write(
+            "| Grounded generation rate | "
+            f"{100.0 * outcomes['grounded_generation_rate']:.1f}% "
+            f"({outcomes['grounded_generation_count']}/"
+            f"{outcomes['answerable_count']}) |\n"
+        )
+        file.write(
+            "| Service completion rate | "
+            f"{100.0 * outcomes['service_completion_rate']:.1f}% |\n"
+        )
+        file.write(
             "| Unanswerable accuracy | "
             f"{100.0 * outcomes['unanswerable_accuracy']:.1f}% "
             f"({outcomes['unanswerable_correct']}/"
@@ -868,7 +911,10 @@ def write_report(path: Path, results: list[dict], *, use_cache: bool) -> None:
         file.write(
             f"| Refusal recall | {100.0 * outcomes['refusal_recall']:.1f}% |\n"
         )
-        file.write(f"| Gold context hit rate | {gold_hit_rate:.1f}% |\n")
+        file.write(
+            f"| Gold context hit rate | {gold_hit_rate:.1f}% "
+            f"({gold_hits}/{len(retrieval_eligible)}) |\n"
+        )
         file.write(f"| Gold context recall | {gold_recall:.2f} |\n")
         file.write(f"| Retrieval MRR | {mean_reciprocal_rank:.2f} |\n")
         file.write(f"| Output blocked | {output_blocked}/{total} |\n")
@@ -888,6 +934,12 @@ def write_report(path: Path, results: list[dict], *, use_cache: bool) -> None:
         file.write(
             "> Cache hits and honest refusals are not assigned artificial "
             "Ragas scores. Metric averages include scored generations only.\n\n"
+        )
+        file.write(
+            "> Answerable accuracy requires Ragas answer accuracy >= "
+            f"{ANSWER_ACCURACY_PASS_THRESHOLD:.2f}; technical failures remain "
+            "in denominators. Reference-less cases are excluded from direct "
+            "retrieval metrics.\n\n"
         )
         file.write("## Scenarios\n\n")
         file.write(

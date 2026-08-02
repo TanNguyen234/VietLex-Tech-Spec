@@ -112,6 +112,7 @@ async def warm_guardrails() -> None:
             "Guardrails startup warm-up failed: {error}",
             error=str(error),
         )
+        raise
 
 # Fast pattern detection for obvious out-of-scope non-legal queries
 OUT_OF_SCOPE_PATTERNS = [
@@ -150,11 +151,17 @@ async def check_input_guardrails(message: str) -> Tuple[bool, str]:
             
         return True, ""
     except asyncio.TimeoutError:
-        logfire.warning("Input Guardrails NeMo timed out (5s), passing input safely.")
-        return True, ""
+        logfire.warning("Input Guardrails NeMo timed out (5s); blocking request.")
+        return False, (
+            "Hệ thống kiểm tra an toàn đang tạm thời không khả dụng. "
+            "Vui lòng thử lại sau."
+        )
     except Exception as e:
         logfire.error("Lỗi khi chạy Input Guardrails: {error}", error=str(e))
-        return True, ""
+        return False, (
+            "Hệ thống kiểm tra an toàn đang tạm thời không khả dụng. "
+            "Vui lòng thử lại sau."
+        )
 
 @logfire.instrument("Kiểm tra an toàn Output Guardrails")
 async def check_output_guardrails(response: str, context: List[str], user_query: str = "") -> Tuple[bool, str]:
@@ -197,8 +204,14 @@ async def check_output_guardrails(response: str, context: List[str], user_query:
             
         return True, ""
     except asyncio.TimeoutError:
-        logfire.warning("Output Guardrails NeMo timed out (5s), passing output safely.")
-        return True, ""
+        logfire.warning("Output Guardrails NeMo timed out (5s); blocking response.")
+        return False, (
+            "Hệ thống chưa thể xác minh độ an toàn của câu trả lời. "
+            "Vui lòng thử lại sau."
+        )
     except Exception as e:
         logfire.error("Lỗi khi chạy Output Guardrails: {error}", error=str(e))
-        return True, ""
+        return False, (
+            "Hệ thống chưa thể xác minh độ an toàn của câu trả lời. "
+            "Vui lòng thử lại sau."
+        )

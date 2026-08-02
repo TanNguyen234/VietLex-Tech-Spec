@@ -127,7 +127,30 @@ def test_judge_failure_does_not_erase_online_answer_outcome() -> None:
     )
 
     assert metrics["answerable_count"] == 1
-    assert metrics["answerable_accuracy"] == 1.0
+    assert metrics["answerable_accuracy"] == 0.0
+    assert metrics["grounded_generation_rate"] == 1.0
+    assert metrics["service_completion_rate"] == 1.0
+
+
+def test_technical_failure_remains_in_accuracy_denominator() -> None:
+    metrics = run_eval_suite.summarize_outcomes(
+        [
+            {
+                "expected": "grounded_answer",
+                "evaluation_status": "retrieval_error",
+                "retrieval_status": "retrieval_error",
+                "is_refusal": False,
+                "output_safe": False,
+                "contexts": [],
+                "answer_accuracy": None,
+            }
+        ]
+    )
+
+    assert metrics["answerable_count"] == 1
+    assert metrics["answerable_accuracy"] == 0.0
+    assert metrics["overall_accuracy"] == 0.0
+    assert metrics["service_completion_rate"] == 0.0
 
 
 def test_reference_context_hit_reports_recall_and_reciprocal_rank() -> None:
@@ -142,6 +165,14 @@ def test_reference_context_hit_reports_recall_and_reciprocal_rank() -> None:
     assert metrics["gold_context_hit"] is True
     assert metrics["gold_context_recall"] == 1.0
     assert metrics["reciprocal_rank"] == 0.5
+
+
+def test_reference_less_case_is_excluded_from_retrieval_denominator() -> None:
+    metrics = run_eval_suite.retrieval_metrics([], [])
+
+    assert metrics["gold_context_hit"] is None
+    assert metrics["gold_context_recall"] is None
+    assert metrics["reciprocal_rank"] is None
 
 
 def test_checkpoint_is_reused_only_for_the_same_evaluation_fingerprint() -> None:
