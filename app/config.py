@@ -43,6 +43,11 @@ class Settings(BaseSettings):
     PINECONE_REGION: str = "us-east-1"
     PINECONE_RERANK_MODEL: str = "bge-reranker-v2-m3"
     PINECONE_RERANK_TIMEOUT_SECONDS: float = 12.0
+    HYBRID_EMBEDDING_TIMEOUT_SECONDS: float = 20.0
+    HYBRID_QUERY_TIMEOUT_SECONDS: float = 8.0
+    HYBRID_MAX_RETRIES: int = 2
+    HYBRID_RETRY_BASE_SECONDS: float = 0.25
+    HYBRID_RETRY_MAX_SECONDS: float = 1.0
     
     # LLM Gateway (OmniGate)
     OMNIGATE_BASE_URL: str = "https://llmgateway.onrender.com"

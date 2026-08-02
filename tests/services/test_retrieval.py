@@ -64,6 +64,18 @@ class FakePinecone:
         )
 
 
+class FlakyPinecone(FakePinecone):
+    def __init__(self, failures: int) -> None:
+        super().__init__()
+        self.failures = failures
+
+    def query(self, **kwargs):
+        self.calls.append(kwargs)
+        if len(self.calls) <= self.failures:
+            raise TimeoutError("pinecone timeout")
+        return super().query(**kwargs)
+
+
 class InMemoryStore:
     def build_report(self):
         return SimpleNamespace(average_sparse_document_length=100.0)
@@ -239,6 +251,20 @@ def test_lexical_and_pinecone_ids_are_merged_without_duplicates() -> None:
         [431147, 7],
         [7, 9],
     ) == [431147, 7, 9]
+
+
+def test_candidate_document_budget_preserves_lexical_and_semantic_sources() -> None:
+    retrieval = _retrieval_module()
+
+    selected = retrieval.balanced_document_ids(
+        list(range(1, 13)),
+        list(range(101, 113)),
+        limit=12,
+    )
+
+    assert selected[:4] == [1, 101, 2, 102]
+    assert len([item for item in selected if item < 100]) == 6
+    assert len([item for item in selected if item > 100]) == 6
 
 
 def test_ranked_evidence_respects_score_document_and_token_limits() -> None:
@@ -531,3 +557,63 @@ async def test_optional_fts_failure_keeps_pinecone_retrieval_available(
     assert outcome.status == "ok"
     assert outcome.evidence
     assert outcome.diagnostics["lexical_error"] == "fts unavailable"
+
+
+@pytest.mark.asyncio
+async def test_pinecone_timeout_retries_before_succeeding(monkeypatch) -> None:
+    retrieval = _retrieval_module()
+    settings = Settings(
+        _env_file=None,
+        HYBRID_MAX_RETRIES=2,
+        HYBRID_RETRY_BASE_SECONDS=0,
+    )
+    monkeypatch.setattr(
+        retrieval,
+        "embed_query",
+        lambda *_args: [0.0] * settings.DENSE_VECTOR_SIZE,
+    )
+    pinecone = FlakyPinecone(failures=1)
+    retriever = retrieval.LegalRetriever(
+        settings=settings,
+        pinecone=pinecone,
+        qdrant_inference=object(),
+        reranker=FakeReranker(),
+        fts_index=FakeFts(),
+        content_store=InMemoryStore(),
+    )
+
+    outcome = await retriever.retrieve_detailed("khấu trừ thuế")
+
+    assert outcome.status == "ok"
+    assert outcome.diagnostics["hybrid_query_attempts"] == 2
+
+
+@pytest.mark.asyncio
+async def test_hybrid_timeout_falls_back_to_lexical_results(
+    monkeypatch,
+) -> None:
+    retrieval = _retrieval_module()
+    settings = Settings(
+        _env_file=None,
+        HYBRID_MAX_RETRIES=1,
+    )
+    monkeypatch.setattr(
+        retrieval,
+        "embed_query",
+        lambda *_args: [0.0] * settings.DENSE_VECTOR_SIZE,
+    )
+    retriever = retrieval.LegalRetriever(
+        settings=settings,
+        pinecone=FlakyPinecone(failures=10),
+        qdrant_inference=object(),
+        reranker=FakeReranker(),
+        fts_index=FakeFts([1]),
+        content_store=InMemoryStore(),
+    )
+
+    outcome = await retriever.retrieve_detailed("khấu trừ thuế")
+
+    assert outcome.status == "ok"
+    assert outcome.evidence
+    assert outcome.diagnostics["retrieval_mode"] == "lexical_fallback"
+    assert outcome.diagnostics["hybrid_error_stage"] == "pinecone_query"

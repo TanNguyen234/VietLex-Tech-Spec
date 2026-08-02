@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import math
+import random
 import time
 from collections import Counter
 from dataclasses import dataclass, field
@@ -38,6 +39,54 @@ class RetrievalOutcome:
     error: str | None = None
 
 
+class HybridRetrievalError(RuntimeError):
+    def __init__(
+        self,
+        *,
+        stage: str,
+        attempts: int,
+        latency: float,
+        cause: Exception,
+    ) -> None:
+        self.stage = stage
+        self.attempts = attempts
+        self.latency = latency
+        self.cause_type = type(cause).__name__
+        self.cause_message = str(cause)[:300]
+        super().__init__(f"{stage} failed after {attempts} attempt(s): {cause}")
+
+    def diagnostics(self) -> dict[str, Any]:
+        return {
+            "hybrid_error_stage": self.stage,
+            "hybrid_error_attempts": self.attempts,
+            "hybrid_error_latency": round(self.latency, 6),
+            "hybrid_error_type": self.cause_type,
+            "hybrid_error_message": self.cause_message,
+        }
+
+
+def _is_transient_hybrid_error(error: Exception) -> bool:
+    if isinstance(error, (TimeoutError, asyncio.TimeoutError)):
+        return True
+    status_code = getattr(error, "status_code", None)
+    if status_code is None:
+        status_code = getattr(
+            getattr(error, "response", None),
+            "status_code",
+            None,
+        )
+    return status_code in {408, 429, 500, 502, 503, 504} or (
+        type(error).__name__
+        in {
+            "ConnectError",
+            "ConnectTimeout",
+            "ReadTimeout",
+            "ServiceException",
+            "TimeoutException",
+        }
+    )
+
+
 def merge_document_ids(
     lexical_ids: list[int],
     pinecone_ids: list[int],
@@ -49,6 +98,31 @@ def merge_document_ids(
             merged.append(document_id)
             seen.add(document_id)
     return merged
+
+
+def balanced_document_ids(
+    lexical_ids: list[int],
+    semantic_ids: list[int],
+    *,
+    limit: int,
+) -> list[int]:
+    if limit <= 0:
+        return []
+    selected: list[int] = []
+    seen: set[int] = set()
+    maximum = max(len(lexical_ids), len(semantic_ids))
+    for index in range(maximum):
+        for source in (lexical_ids, semantic_ids):
+            if index >= len(source):
+                continue
+            document_id = source[index]
+            if document_id in seen:
+                continue
+            selected.append(document_id)
+            seen.add(document_id)
+            if len(selected) >= limit:
+                return selected
+    return selected
 
 
 def lexical_prefilter(
@@ -214,17 +288,68 @@ class LegalRetriever:
             max_nonzero_terms=settings.PINECONE_SPARSE_MAX_NONZERO,
         )
 
+    async def _run_remote_stage(
+        self,
+        *,
+        stage: str,
+        operation: Any,
+        timeout: float,
+        attempts: int,
+    ) -> tuple[Any, int, float]:
+        started = time.perf_counter()
+        attempts = max(1, attempts)
+        for attempt in range(1, attempts + 1):
+            try:
+                value = await asyncio.wait_for(
+                    asyncio.to_thread(operation),
+                    timeout=max(0.1, timeout),
+                )
+                return value, attempt, time.perf_counter() - started
+            except Exception as error:
+                if (
+                    not _is_transient_hybrid_error(error)
+                    or attempt == attempts
+                ):
+                    raise HybridRetrievalError(
+                        stage=stage,
+                        attempts=attempt,
+                        latency=time.perf_counter() - started,
+                        cause=error,
+                    ) from error
+                delay = min(
+                    self._settings.HYBRID_RETRY_MAX_SECONDS,
+                    self._settings.HYBRID_RETRY_BASE_SECONDS
+                    * (2 ** (attempt - 1)),
+                )
+                if delay > 0:
+                    await asyncio.sleep(
+                        delay * (0.8 + random.random() * 0.4)
+                    )
+        raise RuntimeError("Hybrid retry loop ended unexpectedly.")
+
     async def _hybrid_documents(
         self,
         dense_query_text: str,
         sparse_query_text: str | None = None,
+        diagnostics: dict[str, Any] | None = None,
     ) -> list[Any]:
+        diagnostics = diagnostics if diagnostics is not None else {}
         sparse_query_text = sparse_query_text or dense_query_text
-        dense_query = await asyncio.to_thread(
-            embed_query,
-            self._qdrant_inference,
-            self._settings,
-            dense_query_text,
+        dense_query, embedding_attempts, embedding_latency = (
+            await self._run_remote_stage(
+                stage="qdrant_embedding",
+                operation=lambda: embed_query(
+                    self._qdrant_inference,
+                    self._settings,
+                    dense_query_text,
+                ),
+                timeout=self._settings.HYBRID_EMBEDDING_TIMEOUT_SECONDS,
+                attempts=1,
+            )
+        )
+        diagnostics["hybrid_embedding_attempts"] = embedding_attempts
+        diagnostics["hybrid_embedding_latency"] = round(
+            embedding_latency, 6
         )
         sparse_query = self._sparse_encoder.encode_query(sparse_query_text)
         dense_query, sparse_query_payload = scale_hybrid_query(
@@ -232,15 +357,21 @@ class LegalRetriever:
             sparse_query,
             alpha=self._settings.PINECONE_HYBRID_ALPHA,
         )
-        response = await asyncio.to_thread(
-            self._pinecone.query,
-            namespace=self._settings.PINECONE_NAMESPACE,
-            vector=dense_query,
-            sparse_vector=sparse_query_payload,
-            top_k=self._settings.RETRIEVAL_DOCUMENT_LIMIT,
-            include_metadata=True,
-            include_values=False,
+        response, query_attempts, query_latency = await self._run_remote_stage(
+            stage="pinecone_query",
+            operation=lambda: self._pinecone.query(
+                namespace=self._settings.PINECONE_NAMESPACE,
+                vector=dense_query,
+                sparse_vector=sparse_query_payload,
+                top_k=self._settings.RETRIEVAL_DOCUMENT_LIMIT,
+                include_metadata=True,
+                include_values=False,
+            ),
+            timeout=self._settings.HYBRID_QUERY_TIMEOUT_SECONDS,
+            attempts=self._settings.HYBRID_MAX_RETRIES,
         )
+        diagnostics["hybrid_query_attempts"] = query_attempts
+        diagnostics["hybrid_query_latency"] = round(query_latency, 6)
         if isinstance(response, dict):
             return list(response.get("matches") or [])
         return list(getattr(response, "matches", []) or [])
@@ -272,10 +403,11 @@ class LegalRetriever:
             if document_id != content_store_key:
                 continue
             payload_by_id.setdefault(document_id, payload)
-        document_ids = merge_document_ids(
+        document_ids = balanced_document_ids(
             lexical_document_ids,
             list(payload_by_id),
-        )[: self._settings.RERANK_CANDIDATE_LIMIT]
+            limit=self._settings.RERANK_CANDIDATE_LIMIT,
+        )
         if not document_ids:
             return []
         documents = await asyncio.to_thread(
@@ -393,10 +525,31 @@ class LegalRetriever:
         }
         diagnostics: dict[str, Any] = {}
         try:
-            async def timed_hybrid() -> tuple[list[Any], float]:
+            async def timed_hybrid() -> tuple[
+                list[Any], float, dict[str, Any], HybridRetrievalError | None
+            ]:
                 started = time.perf_counter()
-                value = await self._hybrid_documents(query, sparse_query)
-                return value, time.perf_counter() - started
+                details: dict[str, Any] = {}
+                try:
+                    value = await self._hybrid_documents(
+                        query,
+                        sparse_query,
+                        details,
+                    )
+                    return (
+                        value,
+                        time.perf_counter() - started,
+                        details,
+                        None,
+                    )
+                except HybridRetrievalError as error:
+                    details.update(error.diagnostics())
+                    return (
+                        [],
+                        time.perf_counter() - started,
+                        details,
+                        error,
+                    )
 
             async def timed_lexical() -> tuple[
                 list[int], float, str | None
@@ -416,17 +569,26 @@ class LegalRetriever:
                     )
                     return [], time.perf_counter() - started, str(error)
 
-            (hits, hybrid_seconds), (
+            (hits, hybrid_seconds, hybrid_details, hybrid_error), (
                 lexical_document_ids,
                 lexical_seconds,
                 lexical_error,
             ) = await asyncio.gather(timed_hybrid(), timed_lexical())
             latency["t_hybrid"] = round(hybrid_seconds, 6)
             latency["t_lexical"] = round(lexical_seconds, 6)
+            diagnostics.update(hybrid_details)
             diagnostics["top_documents"] = self._hit_diagnostics(hits)
             diagnostics["lexical_document_ids"] = lexical_document_ids
             if lexical_error:
                 diagnostics["lexical_error"] = lexical_error
+            if hybrid_error is not None:
+                if not lexical_document_ids:
+                    raise hybrid_error
+                diagnostics["retrieval_mode"] = "lexical_fallback"
+            elif lexical_document_ids:
+                diagnostics["retrieval_mode"] = "hybrid_lexical"
+            else:
+                diagnostics["retrieval_mode"] = "hybrid_only"
 
             stage_started = time.perf_counter()
             chunks = await self._resolve_chunks(
