@@ -5,6 +5,7 @@ import os
 import re
 import sqlite3
 import time
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -17,6 +18,22 @@ _NUMBER_RE = re.compile(
     re.IGNORECASE,
 )
 _WORD_RE = re.compile(r"[^\W_]+", re.UNICODE)
+
+
+@contextmanager
+def _temporary_environment(path: Path):
+    names = ("TEMP", "TMP", "TMPDIR")
+    previous = {name: os.environ.get(name) for name in names}
+    try:
+        for name in names:
+            os.environ[name] = str(path)
+        yield
+    finally:
+        for name, value in previous.items():
+            if value is None:
+                os.environ.pop(name, None)
+            else:
+                os.environ[name] = value
 
 
 def normalize_document_number(value: str) -> str:
@@ -86,8 +103,10 @@ class LegalFtsIndex:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         sqlite_temp = (self.path.parent / "tmp").resolve()
         sqlite_temp.mkdir(parents=True, exist_ok=True)
-        for name in ("TEMP", "TMP", "TMPDIR"):
-            os.environ[name] = str(sqlite_temp)
+        with _temporary_environment(sqlite_temp):
+            self._build(batch_size=batch_size)
+
+    def _build(self, *, batch_size: int) -> None:
         temporary = self.path.with_suffix(self.path.suffix + ".building")
         temporary_resolved = temporary.resolve()
         if temporary_resolved.parent != self.path.resolve().parent:

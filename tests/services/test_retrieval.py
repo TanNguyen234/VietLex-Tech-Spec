@@ -1,7 +1,6 @@
 import importlib
 from types import SimpleNamespace
 
-import httpx
 import pytest
 
 from app.config import Settings
@@ -80,6 +79,21 @@ class BrokenStore:
 
     def get_many(self, document_ids: list[int]):
         raise ContentIntegrityError("hash mismatch")
+
+
+class CountingStore:
+    def __init__(self) -> None:
+        self.requested_ids: list[int] = []
+
+    def build_report(self):
+        return SimpleNamespace(average_sparse_document_length=100.0)
+
+    def get_many(self, document_ids: list[int]):
+        self.requested_ids = list(document_ids)
+        return {
+            document_id: _stored_document(document_id)
+            for document_id in document_ids
+        }
 
 
 class FakeReranker:
@@ -266,6 +280,65 @@ def test_ranked_evidence_respects_score_document_and_token_limits() -> None:
 
     assert [chunk.document_id for chunk in selected] == [1, 2]
     assert sum(chunk.token_count for chunk in selected) == 240
+
+
+@pytest.mark.asyncio
+async def test_resolve_chunks_bounds_documents_and_chunks_before_reranking(
+    monkeypatch,
+) -> None:
+    retrieval = _retrieval_module()
+    settings = Settings(
+        _env_file=None,
+        RERANK_CANDIDATE_LIMIT=12,
+        RERANK_PER_DOCUMENT_LIMIT=2,
+    )
+    store = CountingStore()
+    retriever = retrieval.LegalRetriever(
+        settings=settings,
+        pinecone=object(),
+        qdrant_inference=object(),
+        reranker=FakeReranker(),
+        fts_index=FakeFts(),
+        content_store=store,
+    )
+    hits = [
+        {
+            "metadata": {
+                "document_id": document_id,
+                "content_store_key": str(document_id),
+                "content_sha256": "b" * 64,
+                "dataset_revision": settings.DATASET_REVISION,
+            }
+        }
+        for document_id in range(1, 31)
+    ]
+
+    def many_chunks(metadata, _content, **_kwargs):
+        return [
+            EvidenceChunk(
+                document_id=metadata.document_id,
+                document_number=metadata.document_number,
+                title=metadata.title,
+                source_url=metadata.source_url,
+                heading_path="",
+                article=None,
+                clause=None,
+                citation=f"{metadata.document_number}:{index}",
+                text=f"thuế thu nhập nội dung {index}",
+                token_count=5,
+            )
+            for index in range(100)
+        ]
+
+    monkeypatch.setattr(retrieval, "chunk_document", many_chunks)
+
+    chunks = await retriever._resolve_chunks(hits, [], "thuế thu nhập")
+
+    assert len(store.requested_ids) == settings.RERANK_CANDIDATE_LIMIT
+    assert len(chunks) <= (
+        settings.RERANK_CANDIDATE_LIMIT
+        * settings.RERANK_PER_DOCUMENT_LIMIT
+    )
 
 
 @pytest.mark.asyncio

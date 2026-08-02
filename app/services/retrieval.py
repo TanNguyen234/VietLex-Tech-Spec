@@ -249,6 +249,7 @@ class LegalRetriever:
         self,
         hits: list[Any],
         lexical_document_ids: list[int] | None = None,
+        query_text: str = "",
     ) -> list[EvidenceChunk]:
         lexical_document_ids = lexical_document_ids or []
         lexical_set = set(lexical_document_ids)
@@ -274,7 +275,7 @@ class LegalRetriever:
         document_ids = merge_document_ids(
             lexical_document_ids,
             list(payload_by_id),
-        )
+        )[: self._settings.RERANK_CANDIDATE_LIMIT]
         if not document_ids:
             return []
         documents = await asyncio.to_thread(
@@ -282,6 +283,8 @@ class LegalRetriever:
             document_ids,
         )
         chunks: list[EvidenceChunk] = []
+        query_terms = normalized_terms(query_text)
+        query_phrase = " ".join(query_text.casefold().split())
         for document_id in document_ids:
             document = documents.get(document_id)
             if document is None:
@@ -293,15 +296,30 @@ class LegalRetriever:
                     != document.content_sha256
                 ):
                     continue
-            chunks.extend(
-                chunk_document(
-                    document.metadata,
-                    document.content,
-                    max_tokens=self._settings.QUERY_CHUNK_MAX_TOKENS,
-                    overlap_tokens=(
-                        self._settings.QUERY_CHUNK_OVERLAP_TOKENS
+            document_chunks = chunk_document(
+                document.metadata,
+                document.content,
+                max_tokens=self._settings.QUERY_CHUNK_MAX_TOKENS,
+                overlap_tokens=(
+                    self._settings.QUERY_CHUNK_OVERLAP_TOKENS
+                ),
+            )
+            ranked_chunks = sorted(
+                enumerate(document_chunks),
+                key=lambda item: (
+                    -_lexical_score(
+                        query_terms,
+                        query_phrase,
+                        item[1],
                     ),
-                )
+                    item[0],
+                ),
+            )
+            chunks.extend(
+                chunk
+                for _, chunk in ranked_chunks[
+                    : self._settings.RERANK_PER_DOCUMENT_LIMIT
+                ]
             )
         return chunks
 
@@ -414,6 +432,7 @@ class LegalRetriever:
             chunks = await self._resolve_chunks(
                 hits,
                 lexical_document_ids,
+                sparse_query or query,
             )
             latency["t_resolve_chunk"] = round(
                 time.perf_counter() - stage_started,
@@ -481,6 +500,9 @@ class LegalRetriever:
                     "rerank_fallback_reason": (
                         rerank_outcome.fallback_reason
                     ),
+                    "rerank_attempts": rerank_outcome.attempts,
+                    "rerank_input_count": rerank_outcome.input_count,
+                    "rerank_output_count": rerank_outcome.output_count,
                     "reranked": [
                         {
                             "citation": bounded[item.index].citation,

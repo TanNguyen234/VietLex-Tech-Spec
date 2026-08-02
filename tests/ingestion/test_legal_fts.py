@@ -89,3 +89,22 @@ def test_body_phrase_finds_relevant_legal_document(tmp_path) -> None:
         "xin cho biết hoạt động bảo vệ môi trường áp dụng thế nào",
         limit=1,
     ) == [431147]
+
+
+def test_build_restores_process_temp_environment(tmp_path, monkeypatch) -> None:
+    original = {
+        "TEMP": "D:/sentinel/temp",
+        "TMP": "D:/sentinel/tmp",
+        "TMPDIR": "D:/sentinel/tmpdir",
+    }
+    for name, value in original.items():
+        monkeypatch.setenv(name, value)
+    index = LegalFtsIndex(
+        store=TinyContentStore(),
+        path=tmp_path / "legal_fts.sqlite3",
+        dataset_revision="revision-1",
+    )
+
+    index.ensure_built(batch_size=2)
+
+    assert {name: __import__("os").environ[name] for name in original} == original
