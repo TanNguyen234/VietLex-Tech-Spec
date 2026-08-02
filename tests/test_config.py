@@ -26,6 +26,11 @@ def test_migration_defaults_are_pinned_and_capacity_bounded() -> None:
     assert settings.RETRIEVAL_DOCUMENT_LIMIT == 24
     assert settings.LEXICAL_CHUNK_LIMIT == 64
     assert settings.RERANK_TOP_K == 3
+    assert settings.QDRANT_RERANK_MODEL == (
+        "answerdotai/answerai-colbert-small-v1"
+    )
+    assert settings.QDRANT_RERANK_VECTOR_SIZE == 96
+    assert settings.PINECONE_RERANK_MODEL == "bge-reranker-v2-m3"
     assert settings.CONTENT_STORE_PATH == Path(
         "data/huggingface/content_store.sqlite3"
     )

@@ -15,6 +15,14 @@ class Settings(BaseSettings):
     QDRANT_URL: str = "http://localhost:6333"
     QDRANT_API_KEY: Optional[str] = None
     QDRANT_INFERENCE_COLLECTION_NAME: str = "vietlex-embedding-staging"
+    QDRANT_RERANK_COLLECTION_NAME: str = "vietlex-rerank-staging"
+    QDRANT_RERANK_MODEL: str = "answerdotai/answerai-colbert-small-v1"
+    QDRANT_RERANK_VECTOR_NAME: str = "colbert"
+    QDRANT_RERANK_VECTOR_SIZE: int = 96
+    QDRANT_RERANK_TIMEOUT_SECONDS: float = 12.0
+    QDRANT_RERANK_MAX_RETRIES: int = 2
+    QDRANT_RERANK_RETRY_BASE_SECONDS: float = 0.25
+    QDRANT_RERANK_RETRY_MAX_SECONDS: float = 1.0
 
     # Pinecone vector storage. PIPECONE_API is retained because the existing
     # deployment secret uses that spelling; PINECONE_API_KEY is also accepted.
@@ -25,6 +33,8 @@ class Settings(BaseSettings):
     PINECONE_CACHE_NAMESPACE: str = "semantic-cache-v1"
     PINECONE_CLOUD: str = "aws"
     PINECONE_REGION: str = "us-east-1"
+    PINECONE_RERANK_MODEL: str = "bge-reranker-v2-m3"
+    PINECONE_RERANK_TIMEOUT_SECONDS: float = 12.0
     
     # Cohere API
     COHERE_API_KEY: Optional[str] = None
@@ -87,6 +97,8 @@ class Settings(BaseSettings):
     RERANK_RETURN_LIMIT: int = 8
     RERANK_MIN_SCORE: float = 0.05
     RERANK_TOP_K: int = 3
+    RERANK_CIRCUIT_BREAKER_FAILURES: int = 2
+    RERANK_CIRCUIT_BREAKER_COOLDOWN_SECONDS: float = 30.0
     LLM_CONTEXT_MAX_TOKENS: int = 900
     LLM_CONTEXT_PER_DOCUMENT_LIMIT: int = 2
     LLM_MAX_OUTPUT_TOKENS: int = 640

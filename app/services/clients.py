@@ -6,12 +6,14 @@ from qdrant_client import QdrantClient
 
 from app.config import get_settings, system_ssl_context
 from app.ingestion.qdrant_inference import create_inference_client
+from app.services.remote_reranker import RemoteReranker
 
 
 _http_client: httpx.AsyncClient | None = None
 _pinecone_client: Pinecone | None = None
 _pinecone_index: object | None = None
 _qdrant_inference_client: QdrantClient | None = None
+_remote_reranker: RemoteReranker | None = None
 
 
 def get_http_client() -> httpx.AsyncClient:
@@ -58,9 +60,20 @@ def get_qdrant_inference_client() -> QdrantClient:
     return _qdrant_inference_client
 
 
+def get_remote_reranker() -> RemoteReranker:
+    global _remote_reranker
+    if _remote_reranker is None:
+        _remote_reranker = RemoteReranker(
+            settings=get_settings(),
+            qdrant=get_qdrant_inference_client(),
+            pinecone=get_pinecone_client(),
+        )
+    return _remote_reranker
+
+
 async def close_clients() -> None:
     global _http_client, _pinecone_client, _pinecone_index
-    global _qdrant_inference_client
+    global _qdrant_inference_client, _remote_reranker
     if _http_client is not None:
         await _http_client.aclose()
     for client in (
@@ -75,3 +88,4 @@ async def close_clients() -> None:
     _pinecone_client = None
     _pinecone_index = None
     _qdrant_inference_client = None
+    _remote_reranker = None
