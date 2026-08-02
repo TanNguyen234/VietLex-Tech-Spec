@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     QDRANT_RERANK_MAX_RETRIES: int = 2
     QDRANT_RERANK_RETRY_BASE_SECONDS: float = 0.25
     QDRANT_RERANK_RETRY_MAX_SECONDS: float = 1.0
+    QDRANT_RERANK_STALE_SECONDS: int = 120
+    QDRANT_RERANK_CLEANUP_INTERVAL_SECONDS: int = 30
+    QDRANT_RERANK_MAX_STAGING_POINTS: int = 256
 
     # Pinecone vector storage. PIPECONE_API is retained because the existing
     # deployment secret uses that spelling; PINECONE_API_KEY is also accepted.
