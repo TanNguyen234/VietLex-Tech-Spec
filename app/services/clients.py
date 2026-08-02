@@ -4,7 +4,11 @@ import httpx
 from pinecone import Pinecone
 from qdrant_client import QdrantClient
 
-from app.config import get_settings, system_ssl_context
+from app.config import (
+    get_settings,
+    install_system_trust_store,
+    system_ssl_context,
+)
 from app.ingestion.qdrant_inference import create_inference_client
 from app.services.remote_reranker import RemoteReranker
 
@@ -38,7 +42,11 @@ def get_pinecone_client() -> Pinecone:
             raise RuntimeError(
                 "PIPECONE_API or PINECONE_API_KEY is required."
             )
-        _pinecone_client = Pinecone(api_key=settings.pinecone_api_key)
+        install_system_trust_store()
+        _pinecone_client = Pinecone(
+            api_key=settings.pinecone_api_key,
+            timeout=settings.PINECONE_RERANK_TIMEOUT_SECONDS,
+        )
     return _pinecone_client
 
 

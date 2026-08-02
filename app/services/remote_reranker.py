@@ -64,6 +64,7 @@ class RemoteReranker:
         self._qdrant = qdrant
         self._pinecone = pinecone
         self._collection_lock = threading.Lock()
+        self._collection_ready = False
         self._circuit_lock = threading.Lock()
         self._consecutive_failures = 0
         self._circuit_opened_at = 0.0
@@ -97,26 +98,38 @@ class RemoteReranker:
     def _ensure_qdrant_collection(self) -> None:
         collection_name = self._settings.QDRANT_RERANK_COLLECTION_NAME
         with self._collection_lock:
-            if self._qdrant.collection_exists(collection_name):
+            if self._collection_ready:
                 return
-            self._qdrant.create_collection(
+            if not self._qdrant.collection_exists(collection_name):
+                self._qdrant.create_collection(
+                    collection_name=collection_name,
+                    vectors_config={
+                        self._settings.QDRANT_RERANK_VECTOR_NAME: (
+                            models.VectorParams(
+                                size=self._settings.QDRANT_RERANK_VECTOR_SIZE,
+                                distance=models.Distance.COSINE,
+                                hnsw_config=models.HnswConfigDiff(m=0),
+                                on_disk=True,
+                                multivector_config=models.MultiVectorConfig(
+                                    comparator=(
+                                        models.MultiVectorComparator.MAX_SIM
+                                    )
+                                ),
+                            )
+                        )
+                    },
+                    optimizers_config=models.OptimizersConfigDiff(
+                        indexing_threshold=0
+                    ),
+                    on_disk_payload=True,
+                )
+            self._qdrant.create_payload_index(
                 collection_name=collection_name,
-                vectors_config={
-                    self._settings.QDRANT_RERANK_VECTOR_NAME: models.VectorParams(
-                        size=self._settings.QDRANT_RERANK_VECTOR_SIZE,
-                        distance=models.Distance.COSINE,
-                        hnsw_config=models.HnswConfigDiff(m=0),
-                        on_disk=True,
-                        multivector_config=models.MultiVectorConfig(
-                            comparator=models.MultiVectorComparator.MAX_SIM
-                        ),
-                    )
-                },
-                optimizers_config=models.OptimizersConfigDiff(
-                    indexing_threshold=0
-                ),
-                on_disk_payload=True,
+                field_name="request_id",
+                field_schema=models.PayloadSchemaType.KEYWORD,
+                wait=True,
             )
+            self._collection_ready = True
 
     def _request_filter(self, request_id: str) -> models.Filter:
         return models.Filter(
@@ -203,7 +216,7 @@ class RemoteReranker:
                     collection_name=(
                         self._settings.QDRANT_RERANK_COLLECTION_NAME
                     ),
-                    points_selector=request_filter,
+                    points_selector=point_ids,
                     wait=False,
                     timeout=timeout,
                 )

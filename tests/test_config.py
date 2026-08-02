@@ -26,6 +26,10 @@ def test_migration_defaults_are_pinned_and_capacity_bounded() -> None:
     assert settings.RETRIEVAL_DOCUMENT_LIMIT == 24
     assert settings.LEXICAL_CHUNK_LIMIT == 64
     assert settings.RERANK_TOP_K == 3
+    assert settings.QUERY_CHUNK_MAX_TOKENS == 220
+    assert settings.RERANK_CANDIDATE_LIMIT == 12
+    assert settings.RERANK_RETURN_LIMIT == 6
+    assert settings.LLM_CONTEXT_MAX_TOKENS == 720
     assert settings.QDRANT_RERANK_MODEL == (
         "answerdotai/answerai-colbert-small-v1"
     )
@@ -50,7 +54,6 @@ def test_secret_defaults_never_contain_credentials() -> None:
         "QDRANT_API_KEY",
         "PIPECONE_API",
         "PINECONE_API_KEY",
-        "EMBEDDING_SERVICE_API_KEY",
         "LITELLM_MASTER_KEY",
         "COHERE_API_KEY",
         "MONGO_URL",

@@ -10,7 +10,7 @@ from typing import Any, Iterable
 
 from pinecone import Pinecone, ServerlessSpec
 
-from app.config import Settings
+from app.config import Settings, install_system_trust_store
 from app.ingestion.content_store import StoredDocument
 from app.ingestion.legal_text import deterministic_point_id
 from app.ingestion.sparse_encoder import stable_term_id
@@ -162,6 +162,7 @@ def create_control_client(settings: Settings) -> Pinecone:
         raise RuntimeError(
             "PIPECONE_API or PINECONE_API_KEY is required."
         )
+    install_system_trust_store()
     return Pinecone(api_key=api_key)
 
 

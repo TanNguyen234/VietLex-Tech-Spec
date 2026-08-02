@@ -266,7 +266,11 @@ async def run_smoke(settings: Settings) -> PreflightResult:
         qdrant_inference_configured=bool(
             settings.QDRANT_URL and settings.QDRANT_API_KEY
         ),
-        reranker_configured=bool(settings.RERANK_API_URL),
+        reranker_configured=bool(
+            settings.QDRANT_URL
+            and settings.QDRANT_API_KEY
+            and settings.pinecone_api_key
+        ),
         joined_count=report.joined_count,
     )
     _write_json_atomic(
@@ -428,7 +432,6 @@ async def run_full(
         secrets=(
             settings.pinecone_api_key,
             settings.QDRANT_API_KEY,
-            settings.EMBEDDING_SERVICE_API_KEY,
         ),
     )
     completed = checkpoint.completed_batch_ids()

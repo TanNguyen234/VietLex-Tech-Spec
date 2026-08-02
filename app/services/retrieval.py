@@ -4,10 +4,9 @@ import asyncio
 import math
 import time
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
-import httpx
 import logfire
 
 from app.config import Settings, get_settings
@@ -22,16 +21,19 @@ from app.ingestion.sparse_encoder import (
     normalized_terms,
 )
 from app.services.clients import (
-    get_http_client,
     get_pinecone_index,
     get_qdrant_inference_client,
+    get_remote_reranker,
 )
+from app.services.remote_reranker import RerankOutcome
 
 
 @dataclass(frozen=True)
 class RetrievalOutcome:
     evidence: list[EvidenceChunk]
     latency: dict[str, float]
+    status: str = "ok"
+    diagnostics: dict[str, Any] = field(default_factory=dict)
     error: str | None = None
 
 
@@ -69,8 +71,11 @@ def lexical_prefilter(
     )[: max(0, limit)]
 
 
-def _lexical_score(query: str, chunk: EvidenceChunk) -> float:
-    query_terms = normalized_terms(query)
+def _lexical_score(
+    query_terms: list[str],
+    query_phrase: str,
+    chunk: EvidenceChunk,
+) -> float:
     normalized_text = " ".join(chunk.text.casefold().split())
     counts = Counter(normalized_terms(chunk.text))
     score = sum(
@@ -78,7 +83,6 @@ def _lexical_score(query: str, chunk: EvidenceChunk) -> float:
         for term in set(query_terms)
         if counts[term] > 0
     )
-    query_phrase = " ".join(query.casefold().split())
     if query_phrase and query_phrase in normalized_text:
         score += 8.0
     return score
@@ -95,8 +99,14 @@ def select_rerank_candidates(
     if limit <= 0 or per_document_limit <= 0:
         return []
 
+    query_terms = normalized_terms(query)
+    query_phrase = " ".join(query.casefold().split())
     scored = [
-        (_lexical_score(query, chunk), position, chunk)
+        (
+            _lexical_score(query_terms, query_phrase, chunk),
+            position,
+            chunk,
+        )
         for position, chunk in enumerate(chunks)
     ]
     selected: list[EvidenceChunk] = []
@@ -174,13 +184,13 @@ class LegalRetriever:
         settings: Settings,
         pinecone: Any,
         qdrant_inference: Any,
-        http_client: httpx.AsyncClient,
+        reranker: Any,
         content_store: Any,
     ) -> None:
         self._settings = settings
         self._pinecone = pinecone
         self._qdrant_inference = qdrant_inference
-        self._http_client = http_client
+        self._reranker = reranker
         self._content_store = content_store
         report = content_store.build_report()
         self._sparse_encoder = FastSparseEncoder(
@@ -274,63 +284,56 @@ class LegalRetriever:
         self,
         query: str,
         chunks: list[EvidenceChunk],
-    ) -> list[EvidenceChunk]:
+    ) -> tuple[list[EvidenceChunk], RerankOutcome]:
         if not chunks:
-            return []
+            return (
+                [],
+                RerankOutcome(
+                    results=[],
+                    provider="none",
+                    model="none",
+                    latency=0.0,
+                ),
+            )
         documents = [
             f"[{chunk.citation}]\n{chunk.text}" for chunk in chunks
         ]
-        headers = {"Content-Type": "application/json"}
-        if self._settings.EMBEDDING_SERVICE_API_KEY:
-            headers["Authorization"] = (
-                "Bearer "
-                f"{self._settings.EMBEDDING_SERVICE_API_KEY}"
-            )
-        response = await self._http_client.post(
-            self._settings.RERANK_API_URL,
-            headers=headers,
-            json={
-                "query": query,
-                "documents": documents,
-                "top_k": min(
-                    len(documents),
-                    self._settings.RERANK_RETURN_LIMIT,
+        outcome = await self._reranker.rerank(query, documents)
+        ranked = [
+            (item.score, chunks[item.index])
+            for item in outcome.results
+            if 0 <= item.index < len(chunks)
+        ]
+        return (
+            select_ranked_evidence(
+                ranked,
+                max_chunks=self._settings.RERANK_TOP_K,
+                max_tokens=self._settings.LLM_CONTEXT_MAX_TOKENS,
+                per_document_limit=(
+                    self._settings.LLM_CONTEXT_PER_DOCUMENT_LIMIT
                 ),
-            },
-        )
-        response.raise_for_status()
-        body = response.json()
-        results = body.get("results") if isinstance(body, dict) else None
-        if not isinstance(results, list):
-            return []
-        ranked: list[tuple[float, EvidenceChunk]] = []
-        for item in results:
-            if not isinstance(item, dict):
-                continue
-            try:
-                score = float(item["score"])
-            except (KeyError, TypeError, ValueError):
-                continue
-            if not math.isfinite(score):
-                continue
-            index = item.get("index")
-            if not isinstance(index, int):
-                returned_document = item.get("document")
-                try:
-                    index = documents.index(returned_document)
-                except ValueError:
-                    continue
-            if 0 <= index < len(chunks):
-                ranked.append((score, chunks[index]))
-        return select_ranked_evidence(
-            ranked,
-            max_chunks=self._settings.RERANK_TOP_K,
-            max_tokens=self._settings.LLM_CONTEXT_MAX_TOKENS,
-            per_document_limit=(
-                self._settings.LLM_CONTEXT_PER_DOCUMENT_LIMIT
+                min_score=self._settings.RERANK_MIN_SCORE,
             ),
-            min_score=self._settings.RERANK_MIN_SCORE,
+            outcome,
         )
+
+    @staticmethod
+    def _hit_diagnostics(hits: list[Any]) -> list[dict[str, Any]]:
+        result: list[dict[str, Any]] = []
+        for hit in hits:
+            if isinstance(hit, dict):
+                payload = hit.get("metadata") or {}
+                score = hit.get("score")
+            else:
+                payload = getattr(hit, "metadata", None) or {}
+                score = getattr(hit, "score", None)
+            result.append(
+                {
+                    "document_id": payload.get("document_id"),
+                    "score": score,
+                }
+            )
+        return result
 
     @logfire.instrument("Retrieve grounded legal evidence")
     async def retrieve_detailed(
@@ -344,6 +347,7 @@ class LegalRetriever:
             "t_candidate": 0.0,
             "t_rerank": 0.0,
         }
+        diagnostics: dict[str, Any] = {}
         try:
             stage_started = time.perf_counter()
             hits = await self._hybrid_documents(query, sparse_query)
@@ -351,6 +355,7 @@ class LegalRetriever:
                 time.perf_counter() - stage_started,
                 6,
             )
+            diagnostics["top_documents"] = self._hit_diagnostics(hits)
 
             stage_started = time.perf_counter()
             chunks = await self._resolve_chunks(hits)
@@ -358,6 +363,13 @@ class LegalRetriever:
                 time.perf_counter() - stage_started,
                 6,
             )
+            if not chunks:
+                return RetrievalOutcome(
+                    evidence=[],
+                    latency=latency,
+                    status="no_candidate",
+                    diagnostics=diagnostics,
+                )
 
             stage_started = time.perf_counter()
             bounded = select_rerank_candidates(
@@ -372,14 +384,63 @@ class LegalRetriever:
                 time.perf_counter() - stage_started,
                 6,
             )
+            diagnostics["candidate_citations"] = [
+                chunk.citation for chunk in bounded
+            ]
+            if not bounded:
+                return RetrievalOutcome(
+                    evidence=[],
+                    latency=latency,
+                    status="no_candidate",
+                    diagnostics=diagnostics,
+                )
 
             stage_started = time.perf_counter()
-            evidence = await self._rerank(query, bounded)
+            try:
+                evidence, rerank_outcome = await self._rerank(query, bounded)
+            except Exception as error:
+                latency["t_rerank"] = round(
+                    time.perf_counter() - stage_started,
+                    6,
+                )
+                logfire.error(
+                    "Legal reranking failed: {error}",
+                    error=str(error),
+                )
+                return RetrievalOutcome(
+                    evidence=[],
+                    latency=latency,
+                    status="reranker_error",
+                    diagnostics=diagnostics,
+                    error=str(error),
+                )
             latency["t_rerank"] = round(
                 time.perf_counter() - stage_started,
                 6,
             )
-            return RetrievalOutcome(evidence=evidence, latency=latency)
+            diagnostics.update(
+                {
+                    "rerank_provider": rerank_outcome.provider,
+                    "rerank_model": rerank_outcome.model,
+                    "rerank_fallback_reason": (
+                        rerank_outcome.fallback_reason
+                    ),
+                    "reranked": [
+                        {
+                            "citation": bounded[item.index].citation,
+                            "score": item.score,
+                        }
+                        for item in rerank_outcome.results
+                        if 0 <= item.index < len(bounded)
+                    ],
+                }
+            )
+            return RetrievalOutcome(
+                evidence=evidence,
+                latency=latency,
+                status="ok" if evidence else "no_candidate",
+                diagnostics=diagnostics,
+            )
         except Exception as error:
             logfire.error(
                 "Legal retrieval failed closed: {error}",
@@ -388,6 +449,8 @@ class LegalRetriever:
             return RetrievalOutcome(
                 evidence=[],
                 latency=latency,
+                status="retrieval_error",
+                diagnostics=diagnostics,
                 error=str(error),
             )
 
@@ -410,12 +473,11 @@ def get_legal_retriever() -> LegalRetriever:
         content_store = ContentStore(
             settings.CONTENT_STORE_PATH
         )
-        http_client = get_http_client()
         _retriever = LegalRetriever(
             settings=settings,
             pinecone=get_pinecone_index(),
             qdrant_inference=get_qdrant_inference_client(),
-            http_client=http_client,
+            reranker=get_remote_reranker(),
             content_store=content_store,
         )
     return _retriever

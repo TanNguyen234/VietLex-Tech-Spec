@@ -3,8 +3,13 @@ from typing import Optional
 from functools import lru_cache
 from pathlib import Path
 import ssl
+import threading
 
 import truststore
+
+
+_SYSTEM_TRUST_INSTALLED = False
+_SYSTEM_TRUST_LOCK = threading.Lock()
 
 class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
@@ -55,10 +60,6 @@ class Settings(BaseSettings):
     # MongoDB Connection URL
     MONGO_URL: Optional[str] = None
 
-    # Rerank Cloud Microservice (Google Cloud Run)
-    RERANK_API_URL: str = "https://embedding-service-283888990647.asia-southeast1.run.app/rerank"
-    EMBEDDING_SERVICE_API_KEY: Optional[str] = None
-
     # Pinned external legal corpus
     DATASET_REPOSITORY: str = "vohuutridung/vietnamese-legal-documents"
     DATASET_REVISION: str = "4d4e10b201544e8a4c49a1d3fa496595a7d486d0"
@@ -90,16 +91,16 @@ class Settings(BaseSettings):
 
     # Runtime two-stage retrieval
     RETRIEVAL_DOCUMENT_LIMIT: int = 24
-    QUERY_CHUNK_MAX_TOKENS: int = 280
+    QUERY_CHUNK_MAX_TOKENS: int = 220
     QUERY_CHUNK_OVERLAP_TOKENS: int = 24
-    RERANK_CANDIDATE_LIMIT: int = 24
+    RERANK_CANDIDATE_LIMIT: int = 12
     RERANK_PER_DOCUMENT_LIMIT: int = 2
-    RERANK_RETURN_LIMIT: int = 8
+    RERANK_RETURN_LIMIT: int = 6
     RERANK_MIN_SCORE: float = 0.05
     RERANK_TOP_K: int = 3
     RERANK_CIRCUIT_BREAKER_FAILURES: int = 2
     RERANK_CIRCUIT_BREAKER_COOLDOWN_SECONDS: float = 30.0
-    LLM_CONTEXT_MAX_TOKENS: int = 900
+    LLM_CONTEXT_MAX_TOKENS: int = 720
     LLM_CONTEXT_PER_DOCUMENT_LIMIT: int = 2
     LLM_MAX_OUTPUT_TOKENS: int = 640
     QUERY_REWRITE_MAX_CHARACTERS: int = 2_000
@@ -122,3 +123,13 @@ def get_settings() -> Settings:
 
 def system_ssl_context() -> ssl.SSLContext:
     return truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+
+
+def install_system_trust_store() -> None:
+    """Make third-party SDKs use the verified Windows trust store."""
+    global _SYSTEM_TRUST_INSTALLED
+    with _SYSTEM_TRUST_LOCK:
+        if _SYSTEM_TRUST_INSTALLED:
+            return
+        truststore.inject_into_ssl()
+        _SYSTEM_TRUST_INSTALLED = True

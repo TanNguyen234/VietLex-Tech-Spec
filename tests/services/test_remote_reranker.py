@@ -19,6 +19,7 @@ class FakeQdrant:
         self.upserts: list[dict] = []
         self.queries: list[dict] = []
         self.deletes: list[dict] = []
+        self.payload_indexes: list[dict] = []
 
     def collection_exists(self, _name: str) -> bool:
         return self.created > 0
@@ -26,6 +27,9 @@ class FakeQdrant:
     def create_collection(self, **_kwargs) -> bool:
         self.created += 1
         return True
+
+    def create_payload_index(self, **kwargs):
+        self.payload_indexes.append(kwargs)
 
     def upsert(self, **kwargs):
         self.upserts.append(kwargs)
@@ -79,6 +83,7 @@ async def test_qdrant_success_does_not_call_pinecone() -> None:
     assert [item.index for item in outcome.results] == [1, 0]
     assert pinecone.inference.calls == []
     assert len(qdrant.upserts) == 1
+    assert qdrant.payload_indexes[0]["field_name"] == "request_id"
     assert len(qdrant.queries) == 1
     assert len(qdrant.deletes) == 1
 
