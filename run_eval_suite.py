@@ -703,6 +703,20 @@ def is_transient_judge_error(error: Exception) -> bool:
         return True
     if isinstance(error, (TimeoutError, asyncio.TimeoutError)):
         return True
+    message = str(error).casefold()
+    if any(
+        marker in message
+        for marker in (
+            "error code: 429",
+            "quota exceeded",
+            "rate limit",
+            "timed out",
+            "timeout",
+            "connection error",
+            "service unavailable",
+        )
+    ):
+        return True
     return type(error).__name__ in {
         "APIConnectionError",
         "APITimeoutError",

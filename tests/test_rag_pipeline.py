@@ -4,6 +4,49 @@ from app.ingestion.legal_text import EvidenceChunk
 from app.services import rag_pipeline
 
 
+@pytest.mark.asyncio
+async def test_rewrite_query_rejects_repetitive_model_output(monkeypatch) -> None:
+    query = (
+        "Khi chi nhánh chấm dứt hoạt động thì doanh nghiệp chịu trách nhiệm "
+        "gì đối với nợ và người lao động?"
+    )
+
+    async def repetitive_response(*_args, **_kwargs) -> str:
+        return 'Trang, "Tr, "Tr, "Tr, "Tr, "Tr, "Tr, "Tr, "Tr, "Tr'
+
+    monkeypatch.setattr(
+        rag_pipeline,
+        "generate_llm_response",
+        repetitive_response,
+    )
+
+    assert await rag_pipeline.rewrite_query(query) == query
+
+
+@pytest.mark.asyncio
+async def test_rewrite_query_rejects_provider_exhaustion_message(
+    monkeypatch,
+) -> None:
+    query = (
+        "Khi chi nhánh chấm dứt hoạt động thì doanh nghiệp chịu trách nhiệm "
+        "gì đối với nợ và người lao động?"
+    )
+
+    async def unavailable_response(*_args, **_kwargs) -> str:
+        return (
+            "Hệ thống chưa thể xử lý do toàn bộ API Keys đang bị giới hạn "
+            "tốc độ. Vui lòng thử lại sau 30 giây."
+        )
+
+    monkeypatch.setattr(
+        rag_pipeline,
+        "generate_llm_response",
+        unavailable_response,
+    )
+
+    assert await rag_pipeline.rewrite_query(query) == query
+
+
 def _evidence() -> EvidenceChunk:
     return EvidenceChunk(
         document_id=1,

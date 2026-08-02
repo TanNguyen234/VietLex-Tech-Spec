@@ -132,6 +132,30 @@ async def test_transient_judge_quota_error_falls_back_to_next_provider() -> None
     assert attempted == ["Gemini", "OpenRouter"]
 
 
+@pytest.mark.asyncio
+async def test_wrapped_judge_quota_error_falls_back_to_next_provider() -> None:
+    providers = [
+        {"name": "Gemini", "model": "gemini"},
+        {"name": "NVIDIA", "model": "llama"},
+    ]
+    attempted: list[str] = []
+
+    async def evaluate(provider):
+        attempted.append(provider["name"])
+        if provider["name"] == "Gemini":
+            raise RuntimeError("Ragas metric failed: Error code: 429 quota")
+        return {"answer_accuracy": 0.75}
+
+    scores, provider = await run_eval_suite.run_with_provider_fallback(
+        providers,
+        evaluate,
+    )
+
+    assert scores == {"answer_accuracy": 0.75}
+    assert provider["name"] == "NVIDIA"
+    assert attempted == ["Gemini", "NVIDIA"]
+
+
 def test_answerable_output_block_is_not_counted_as_correct() -> None:
     metrics = run_eval_suite.summarize_outcomes(
         [

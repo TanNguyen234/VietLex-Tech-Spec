@@ -112,6 +112,8 @@ class Settings(BaseSettings):
     LLM_MAX_OUTPUT_TOKENS: int = 640
     QUERY_REWRITE_MAX_CHARACTERS: int = 2_000
     QUERY_REWRITE_MAX_OUTPUT_TOKENS: int = 96
+    QUERY_REWRITE_TIMEOUT_SECONDS: float = 8.0
+    GUARDRAIL_TIMEOUT_SECONDS: float = 8.0
 
     # Retained for deployments that still provide the old environment name.
     LEXICAL_CHUNK_LIMIT: int = 64

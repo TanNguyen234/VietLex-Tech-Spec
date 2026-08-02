@@ -32,6 +32,46 @@ async def test_warm_guardrails_propagates_initialization_failure(
         await guardrails.warm_guardrails()
 
 
+def test_get_rails_installs_system_trust_before_creating_client(
+    monkeypatch,
+) -> None:
+    events: list[str] = []
+    config = SimpleNamespace(models=[])
+    monkeypatch.setattr(guardrails, "_rails_instance", None)
+    monkeypatch.setattr(
+        guardrails,
+        "settings",
+        SimpleNamespace(
+            OPENROUTER_API_KEY="key",
+            GEMINI_API_KEY=None,
+            NVIDIA_API_KEY=None,
+            GROQ_API_KEY=None,
+            OMNIGATE_BASE_URL="https://example.invalid",
+            LITELLM_MASTER_KEY=None,
+        ),
+    )
+    monkeypatch.setattr(
+        guardrails.RailsConfig,
+        "from_path",
+        lambda _path: config,
+    )
+    monkeypatch.setattr(
+        guardrails,
+        "install_system_trust_store",
+        lambda: events.append("trust"),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        guardrails,
+        "LLMRails",
+        lambda _config: events.append("client") or object(),
+    )
+
+    guardrails.get_rails()
+
+    assert events == ["trust", "client"]
+
+
 @pytest.mark.asyncio
 async def test_input_guardrail_failure_is_reported_as_unavailable(
     monkeypatch,
@@ -69,6 +109,29 @@ async def test_output_guardrail_timeout_is_reported_as_unavailable(
             "Câu trả lời",
             ["Căn cứ pháp lý"],
             "Câu hỏi",
+        )
+
+
+@pytest.mark.asyncio
+async def test_input_guardrail_uses_configured_timeout(monkeypatch) -> None:
+    class SlowRails:
+        async def generate_async(self, **_kwargs):
+            await __import__("asyncio").sleep(0.02)
+            return SimpleNamespace(response=[])
+
+    monkeypatch.setattr(guardrails, "get_rails", lambda: SlowRails())
+    monkeypatch.setattr(
+        guardrails,
+        "settings",
+        SimpleNamespace(GUARDRAIL_TIMEOUT_SECONDS=0.001),
+    )
+
+    with pytest.raises(
+        guardrails.GuardrailUnavailableError,
+        match="input guardrail unavailable: timeout",
+    ):
+        await guardrails.check_input_guardrails(
+            "Điều kiện cấp giấy phép là gì?"
         )
 
 

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+import re
 import time
 from typing import Any, Dict, List, Tuple
 
@@ -138,13 +140,31 @@ async def rewrite_query(query: str) -> str:
         "Chỉ trả về truy vấn đã viết lại, không giải thích."
     )
     try:
-        rewritten = await generate_llm_response(
-            prompt,
-            max_output_tokens=(
-                get_settings().QUERY_REWRITE_MAX_OUTPUT_TOKENS
+        rewritten = await asyncio.wait_for(
+            generate_llm_response(
+                prompt,
+                max_output_tokens=(
+                    get_settings().QUERY_REWRITE_MAX_OUTPUT_TOKENS
+                ),
             ),
+            timeout=get_settings().QUERY_REWRITE_TIMEOUT_SECONDS,
         )
-        return rewritten.strip() or query
+        rewritten = rewritten.strip()
+        normalized_rewrite = rewritten.casefold()
+        words = re.findall(r"[^\W_]+", rewritten.casefold(), re.UNICODE)
+        unique_ratio = len(set(words)) / len(words) if words else 0.0
+        if (
+            len(words) < 2
+            or (len(words) >= 6 and unique_ratio < 0.5)
+            or len(rewritten) > len(query) * 2
+            or "hệ thống chưa thể xử lý" in normalized_rewrite
+            or "api keys đang bị giới hạn" in normalized_rewrite
+        ):
+            logfire.warning(
+                "Rejected malformed legal query rewrite; use original query."
+            )
+            return query
+        return rewritten
     except Exception as error:
         logfire.warning(
             "Legal query rewrite failed; use original query: {error}",

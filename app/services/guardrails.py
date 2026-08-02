@@ -6,7 +6,7 @@ import asyncio
 import os
 from typing import Tuple, List
 from nemoguardrails import LLMRails, RailsConfig
-from app.config import get_settings
+from app.config import get_settings, install_system_trust_store
 from app.services.direct_llm import generate_llm_response
 
 settings = get_settings()
@@ -72,6 +72,7 @@ _rails_instance = None
 def get_rails():
     global _rails_instance
     if _rails_instance is None:
+        install_system_trust_store()
         current_dir = os.path.dirname(os.path.abspath(__file__))
         config_dir = os.path.abspath(os.path.join(current_dir, "..", "..", "guardrails_config"))
         
@@ -150,7 +151,7 @@ async def check_input_guardrails(message: str) -> Tuple[bool, str]:
                 messages=[{"role": "user", "content": message}],
                 options={"rails": ["input"]}
             ),
-            timeout=5.0
+            timeout=settings.GUARDRAIL_TIMEOUT_SECONDS,
         )
         
         response_content = ""
@@ -162,7 +163,10 @@ async def check_input_guardrails(message: str) -> Tuple[bool, str]:
             
         return True, ""
     except asyncio.TimeoutError as error:
-        logfire.warning("Input Guardrails NeMo timed out (5s); blocking request.")
+        logfire.warning(
+            "Input Guardrails NeMo timed out; blocking request.",
+            timeout_seconds=settings.GUARDRAIL_TIMEOUT_SECONDS,
+        )
         raise GuardrailUnavailableError("input", "timeout") from error
     except Exception as e:
         logfire.error("Lỗi khi chạy Input Guardrails: {error}", error=str(e))
@@ -190,7 +194,7 @@ async def check_output_guardrails(response: str, context: List[str], user_query:
                 ],
                 options={"rails": ["output"]}
             ),
-            timeout=5.0
+            timeout=settings.GUARDRAIL_TIMEOUT_SECONDS,
         )
         
         response_content = ""
@@ -209,7 +213,10 @@ async def check_output_guardrails(response: str, context: List[str], user_query:
             
         return True, ""
     except asyncio.TimeoutError as error:
-        logfire.warning("Output Guardrails NeMo timed out (5s); blocking response.")
+        logfire.warning(
+            "Output Guardrails NeMo timed out; blocking response.",
+            timeout_seconds=settings.GUARDRAIL_TIMEOUT_SECONDS,
+        )
         raise GuardrailUnavailableError("output", "timeout") from error
     except Exception as e:
         logfire.error("Lỗi khi chạy Output Guardrails: {error}", error=str(e))
