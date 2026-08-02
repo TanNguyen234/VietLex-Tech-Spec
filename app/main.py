@@ -12,12 +12,12 @@ from slowapi.errors import RateLimitExceeded
 from app.config import get_settings
 from app.database import init_db
 from app.api.routes import router as api_router
+from app.services.clients import close_clients
+from app.services.retrieval import reset_retriever
+from app.services.semantic_cache import ensure_semantic_cache_collection
 
 # Load environment variables from .env before logfire/settings initialization
 load_dotenv()
-
-# Configure Logfire
-logfire.configure()
 
 settings = get_settings()
 
@@ -25,7 +25,14 @@ app = FastAPI(title="VietLex Advanced Legal RAG")
 
 @app.on_event("startup")
 async def startup_event():
+    logfire.configure()
     await init_db()
+    await ensure_semantic_cache_collection()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    await close_clients()
+    reset_retriever()
 
 # Instrument FastAPI with Logfire
 logfire.instrument_fastapi(app)

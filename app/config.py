@@ -1,22 +1,37 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
 from functools import lru_cache
+from pathlib import Path
+import ssl
+
+import truststore
 
 class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 8000
     FRONTEND_URL: str = "http://localhost:8000"
     
-    # Qdrant Database
+    # Qdrant Cloud is inference-only; large-vector storage lives in Pinecone.
     QDRANT_URL: str = "http://localhost:6333"
     QDRANT_API_KEY: Optional[str] = None
+    QDRANT_INFERENCE_COLLECTION_NAME: str = "vietlex-embedding-staging"
+
+    # Pinecone vector storage. PIPECONE_API is retained because the existing
+    # deployment secret uses that spelling; PINECONE_API_KEY is also accepted.
+    PIPECONE_API: Optional[str] = None
+    PINECONE_API_KEY: Optional[str] = None
+    PINECONE_INDEX_NAME: str = "vietlex-legal-rag-v1"
+    PINECONE_NAMESPACE: str = "legal-documents-v1"
+    PINECONE_CACHE_NAMESPACE: str = "semantic-cache-v1"
+    PINECONE_CLOUD: str = "aws"
+    PINECONE_REGION: str = "us-east-1"
     
     # Cohere API
     COHERE_API_KEY: Optional[str] = None
     
     # LLM Gateway (OmniGate)
     OMNIGATE_BASE_URL: str = "https://llmgateway.onrender.com"
-    LITELLM_MASTER_KEY: str = "default_litellm_master_key"
+    LITELLM_MASTER_KEY: Optional[str] = None
     
     # Direct APIs (Gemini, Groq, OpenRouter, Nvidia NIM)
     GEMINI_API_KEY: Optional[str] = None
@@ -30,10 +45,60 @@ class Settings(BaseSettings):
     # MongoDB Connection URL
     MONGO_URL: Optional[str] = None
 
-    # Embedding & Rerank Cloud Microservice (Google Cloud Run)
-    EMBEDDING_API_URL: str = "https://embedding-service-283888990647.asia-southeast1.run.app/embed"
+    # Rerank Cloud Microservice (Google Cloud Run)
     RERANK_API_URL: str = "https://embedding-service-283888990647.asia-southeast1.run.app/rerank"
-    EMBEDDING_SERVICE_API_KEY: Optional[str] = "igqwajhgjd127tihahskhw821iohklHhHKHE833KJ"
+    EMBEDDING_SERVICE_API_KEY: Optional[str] = None
+
+    # Pinned external legal corpus
+    DATASET_REPOSITORY: str = "vohuutridung/vietnamese-legal-documents"
+    DATASET_REVISION: str = "4d4e10b201544e8a4c49a1d3fa496595a7d486d0"
+    EXPECTED_DOCUMENT_COUNT: int = 518_255
+    DATASET_ROOT: Path = Path("data/huggingface")
+    CONTENT_STORE_PATH: Path = Path("data/huggingface/content_store.sqlite3")
+    INGESTION_STATE_PATH: Path = Path("data/huggingface/ingestion_state.sqlite3")
+    INGESTION_REPORT_PATH: Path = Path("data/huggingface/ingestion_report.json")
+    PINECONE_INGESTION_STATE_PATH: Path = Path(
+        "data/huggingface/pinecone_ingestion_state.sqlite3"
+    )
+    PINECONE_INGESTION_REPORT_PATH: Path = Path(
+        "data/huggingface/pinecone_ingestion_report.json"
+    )
+
+    # Capacity-bounded Pinecone schema and ingestion tuning
+    DENSE_INFERENCE_MODEL: str = "intfloat/multilingual-e5-small"
+    DENSE_VECTOR_SIZE: int = 384
+    DENSE_EMBEDDING_BACKEND: str = "qdrant"
+    QDRANT_INFERENCE_CONCURRENCY: int = 8
+    QDRANT_PREFER_GRPC: bool = False
+    QDRANT_INFERENCE_MAX_RETRIES: int = 8
+    QDRANT_INFERENCE_RETRY_BASE_SECONDS: float = 1.0
+    QDRANT_INFERENCE_RETRY_MAX_SECONDS: float = 30.0
+    UPLOAD_BATCH_SIZE: int = 128
+    INGESTION_BATCH_CONCURRENCY: int = 16
+    PINECONE_HYBRID_ALPHA: float = 0.75
+    PINECONE_SPARSE_MAX_NONZERO: int = 64
+
+    # Runtime two-stage retrieval
+    RETRIEVAL_DOCUMENT_LIMIT: int = 24
+    QUERY_CHUNK_MAX_TOKENS: int = 280
+    QUERY_CHUNK_OVERLAP_TOKENS: int = 24
+    RERANK_CANDIDATE_LIMIT: int = 24
+    RERANK_PER_DOCUMENT_LIMIT: int = 2
+    RERANK_RETURN_LIMIT: int = 8
+    RERANK_MIN_SCORE: float = 0.05
+    RERANK_TOP_K: int = 3
+    LLM_CONTEXT_MAX_TOKENS: int = 900
+    LLM_CONTEXT_PER_DOCUMENT_LIMIT: int = 2
+    LLM_MAX_OUTPUT_TOKENS: int = 640
+    QUERY_REWRITE_MAX_CHARACTERS: int = 2_000
+    QUERY_REWRITE_MAX_OUTPUT_TOKENS: int = 96
+
+    # Retained for deployments that still provide the old environment name.
+    LEXICAL_CHUNK_LIMIT: int = 64
+
+    @property
+    def pinecone_api_key(self) -> Optional[str]:
+        return self.PINECONE_API_KEY or self.PIPECONE_API
 
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
@@ -41,3 +106,7 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+def system_ssl_context() -> ssl.SSLContext:
+    return truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)

@@ -39,23 +39,11 @@ jobs:
           ruff check app/
 
       # Bước 5: Chạy Unit Test
-      - name: Integrity preprocessing gate
+      - name: Run unit tests
         env:
           PYTHONPATH: .
         run: |
-          pytest -q tests/test_integrity_postprocessing.py
-
-      - name: Parser postprocessing regression tests
-        env:
-          PYTHONPATH: .
-          QDRANT_URL: ${{ secrets.QDRANT_URL }}
-          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
-          COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
-          OMNIGATE_BASE_URL: ${{ secrets.OMNIGATE_BASE_URL }}
-          LITELLM_MASTER_KEY: ${{ secrets.LITELLM_MASTER_KEY }}
-          MONGO_URL: ${{ secrets.MONGO_URL }}
-        run: |
-          pytest -v tests/test_parser.py tests/test_legal_postprocessing.py
+          pytest -q
 
   # --- PHASE 2: CONTINUOUS DEPLOYMENT (CD) ---
   build-and-push:
