@@ -1,5 +1,12 @@
 # VietLex — Vietnamese Legal RAG
 
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-Production-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![RAG](https://img.shields.io/badge/RAG-Legal%20QA-6A5ACD)](#)
+[![License](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey)](https://creativecommons.org/licenses/by/4.0/)
+
+Ngôn ngữ: **Tiếng Việt** | [English](README.en.md)
+
 VietLex là hệ thống RAG cho tra cứu văn bản pháp luật Việt Nam. Corpus được lưu
 trên Pinecone; Qdrant Cloud chỉ chạy inference từ xa để tạo vector
 `intfloat/multilingual-e5-small` 384 chiều và rerank bằng ColBERT. Nếu Qdrant
@@ -12,6 +19,27 @@ tạm thời quá tải, pipeline fallback sang Pinecone Inference
 > không phải cơ sở dữ liệu pháp luật chính thức và không tự xác nhận hiệu lực
 > văn bản. Kết quả chỉ nhằm cung cấp thông tin, không phải tư vấn pháp lý. Luôn
 > đối chiếu nguồn chính thức hiện hành trước khi ra quyết định.
+
+## ⚡ Scripts nhanh (chuẩn repo lớn)
+
+> Các lệnh dưới đây giữ nguyên đầy đủ luồng hiện tại, chỉ đóng gói theo nhóm để
+> copy/paste nhanh khi phát triển và vận hành.
+
+| Script | Lệnh | Mục đích |
+| --- | --- | --- |
+| `setup` | `python -m venv .venv`<br>`.venv\Scripts\Activate.ps1`<br>`python -m pip install -r requirements.txt`<br>`Copy-Item .env.example .env` | Khởi tạo môi trường local |
+| `dev` | `uvicorn app.main:app --host 0.0.0.0 --port 8000` | Chạy API local |
+| `ingest:full` | `python -u -m app.ingestion.hf_pipeline full --delete-existing --yes` | Nạp lại toàn bộ corpus |
+| `ingest:download` | `python -m app.ingestion.hf_pipeline download` | Tải snapshot dataset |
+| `ingest:prepare` | `python -m app.ingestion.hf_pipeline prepare` | Chuẩn hóa dữ liệu trước khi index |
+| `ingest:smoke` | `python -m app.ingestion.hf_pipeline smoke` | Smoke ingestion |
+| `ingest:verify` | `python -m app.ingestion.hf_pipeline verify` | Verify trạng thái ingestion |
+| `fts:build` | `python -u -m app.ingestion.legal_fts build --batch-size 256` | Build SQLite FTS5 index |
+| `eval:full` | `python -u run_eval_suite.py --fresh --factoids 12 --multihop 12 --unanswerable 6 --concurrency 2 --judge-concurrency 4` | Chạy full golden evaluation |
+| `eval:smoke` | `python -u run_eval_suite.py --fresh --factoids 2 --multihop 2 --unanswerable 2 --concurrency 1 --judge-concurrency 1 --checkpoint docs/smoke_eval_checkpoints.json --report docs/smoke_evaluation_report.md` | Smoke evaluation nhanh |
+| `test` | `python -m pytest -q` | Chạy test suite |
+| `test:live-rerank` | `$env:RUN_LIVE_RERANK_TEST='1'`<br>`python -m pytest tests/integration/test_remote_reranker_live.py -q`<br>`Remove-Item Env:RUN_LIVE_RERANK_TEST` | Smoke live reranker |
+| `check` | `python -m compileall -q app tests`<br>`git diff --check` | Kiểm tra compile + whitespace diff |
 
 ## Corpus
 
