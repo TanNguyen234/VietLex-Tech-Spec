@@ -7,8 +7,8 @@
 > 46.58 documents/second without failures; batch 512 was rejected after
 > repeated inference 500s. BGE-reranker-v2-M3 remains unchanged.
 
-Date: 2026-07-29  
-Status: Approved in conversation; crawler-removal prerequisite completed  
+Date: 2026-07-29
+Status: Approved in conversation; crawler-removal prerequisite completed
 Project: VietLex Legal RAG
 
 ## 1. Objective

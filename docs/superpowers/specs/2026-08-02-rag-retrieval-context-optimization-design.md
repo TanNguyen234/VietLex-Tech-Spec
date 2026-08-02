@@ -1,7 +1,7 @@
 # RAG Retrieval and Context Optimization Design
 
-**Date:** 2026-08-02  
-**Status:** Approved by the user after the ingestion audit  
+**Date:** 2026-08-02
+**Status:** Approved by the user after the ingestion audit
 **Scope:** Runtime retrieval, legal chunking, reranking, LLM context budgeting, and future ingestion representation
 
 ## Constraints

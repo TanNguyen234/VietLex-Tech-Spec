@@ -1,122 +1,172 @@
-# VietLex: Production-Grade Vietnamese Legal RAG
+# VietLex — Vietnamese Legal RAG
 
-<p align="center">
-  <a href="https://github.com/TanNguyen234/VietLex-Tech-Spec/actions"><img src="https://github.com/TanNguyen234/VietLex-Tech-Spec/workflows/Vietlex%20Legal%20RAG%20CI/CD/badge.svg" alt="Build Status"></a>
-  <a href="https://www.python.org/downloads/release/python-3100/"><img src="https://img.shields.io/badge/python-3.10%2B-blue.svg" alt="Python Version"></a>
-  <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/badge/code%20style-ruff-black.svg" alt="Ruff Code Style"></a>
-  <a href="https://raw.githubusercontent.com/TanNguyen234/VietLex-Tech-Spec/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License"></a>
-</p>
+VietLex là hệ thống RAG cho tra cứu văn bản pháp luật Việt Nam. Corpus được lưu
+trên Pinecone; Qdrant Cloud chỉ được dùng như dịch vụ inference tạm thời để tạo
+vector `intfloat/multilingual-e5-small` 384 chiều. Kết quả tìm kiếm được phân
+đoạn theo cấu trúc pháp luật và rerank bằng `bge-reranker-v2-m3` trước khi gửi
+cho mô hình trả lời.
 
-VietLex is a production-grade Retrieval-Augmented Generation (RAG) system specialized in parsing, indexing, searching, and evaluating Vietnamese legal documents. Built on Clean Architecture principles using FastAPI, Qdrant Cloud, MongoDB Atlas, Cohere Multilingual Rerank, and a responsive Server-Side Rendered (SSR) frontend using HTMX and Tailwind CSS.
+> [!WARNING]
+> Corpus là dataset nghiên cứu bên thứ ba
+> [`vohuutridung/vietnamese-legal-documents`](https://huggingface.co/datasets/vohuutridung/vietnamese-legal-documents),
+> không phải cơ sở dữ liệu pháp luật chính thức và không tự xác nhận hiệu lực
+> văn bản. Kết quả chỉ nhằm cung cấp thông tin, không phải tư vấn pháp lý. Luôn
+> đối chiếu nguồn chính thức hiện hành trước khi ra quyết định.
 
----
+## Corpus
 
-## Key Features
+- Revision pin: `4d4e10b201544e8a4c49a1d3fa496595a7d486d0`
+- Số văn bản: `518.255`
+- License do publisher công bố: CC BY 4.0
+- Snapshot: 13 file, kiểm tra size và SHA-256
+- Full content: SQLite/Zstandard local, không đưa vào Pinecone
 
-* **Dual Storage Architecture (Data Lake + Vector Store)**:
-  * **MongoDB Atlas (`raw_legal_documents`)**: Stores raw crawled legal documents with full metadata, law attributes, signer information, and validity status.
-  * **Qdrant Cloud (`vietlex_laws_crawler_kb`)**: Stores chunked legal articles with dense embeddings (`legal-embedding-model`) and BM25 sparse vectors for hybrid retrieval.
-* **High-Accuracy Hybrid Retrieval**: Combining dense vector search (Google text-embeddings via OmniGate) and sparse search (BM25 tokenized with `PyVi`) using Reciprocal Rank Fusion (RRF) and Cohere Multilingual Rerank v3.0 to isolate the Top 3 most relevant context chunks.
-* **Semantic Caching**: Implemented a semantic cache layer on Qdrant (`vietlex_semantic_cache`). Requests with semantic similarity scores >= 0.96 bypass the generator pipeline, delivering immediate responses and reducing API token costs.
-* **Simulated Guardrails & Content Safety**: Integrated custom safety rails in `app/services/guardrails.py` using structured JSON-based LLM prompts:
-  * **Topic Control**: Restricts conversations exclusively to Vietnamese legal topics.
-  * **Jailbreak Protection**: Defends against system prompt injection and override attacks.
-  * **Hallucination Detection**: Auto-validates generated answers against retrieved legal contexts to prevent factual errors.
-* **Personally Identifiable Information (PII) Redaction**: Automatically detects and masks sensitive personal identifiers (Vietnamese phone numbers, email addresses, and National ID card numbers/CCCD) at both input and output stages.
-* **Evaluation & Observability**: Background evaluation tasks measure **Faithfulness**, **Answer Relevance**, **Context Precision**, and **Context Recall** using Ragas LLM-as-a-judge, with end-to-end trace logging monitored via Pydantic Logfire.
-* **Responsive Admin Panel**: Interactive dashboard built using HTMX for real-time KPI metrics, search filtering, and detailed inspection of individual conversation traces.
-
----
-
-## System Architecture
+## Kiến trúc
 
 ```mermaid
-graph TD
-    User["User"] -->|POST /chat| API["FastAPI Endpoints"]
-    API -->|1. Redact PII| PII["PII Redactor"]
-    PII -->|2. Check Cache| Cache["Semantic Cache Qdrant"]
-    Cache -->|Cache Hit| Return["Return Response"]
-    Cache -->|Cache Miss| InputRails["Input Guardrails"]
-    InputRails -->|Blocked| Block["Return Safety Message"]
-    InputRails -->|Safe| RAG["Advanced Retrieval"]
+flowchart LR
+    HF["Pinned Hugging Face snapshot"] --> Store["SQLite + Zstandard"]
+    Store --> Text["Dense: metadata + outline + representative body"]
+    Text --> Stage["Qdrant inference staging: E5-small 384"]
+    Stage --> Vector["Dense vector"]
+    Text --> Sparse["Fast Vietnamese lexical sparse, tối đa 64 terms"]
+    Vector --> Pinecone["Pinecone serverless"]
+    Sparse --> Pinecone
 
-    RAG -->|Query Rewrite| Rewrite["LLM Rewrite"]
-    Rewrite -->|Hybrid Search| Qdrant["Qdrant Cloud Collection"]
-    Qdrant -->|Dense + Sparse PyVi| RRF["RRF Fusion"]
-    RRF -->|Top 15 Chunks| Rerank["Cohere Rerank v3"]
-    Rerank -->|Top 3 Contexts| Generator["LLM Generator"]
-
-    Generator -->|3. Validate Answer| OutputRails["Output Guardrails"]
-    OutputRails -->|Hallucination Detected| Fallback["Return Fallback Message"]
-    OutputRails -->|Safe| FinalResponse["Final Response"]
-
-    FinalResponse -->|4. Save Log| DB["MongoDB Atlas Logs"]
-    FinalResponse -->|5. Update Cache| Cache
-    FinalResponse -->|6. Trigger BG Task| Ragas["Ragas Evaluator"]
-    Ragas -->|Update Ragas Scores| DB
+    Query["Original query"] --> Rewrite["Short legal rewrite"]
+    Rewrite --> QueryEmbed["Dense query via Qdrant staging"]
+    Query --> SparseQuery["Exact sparse query"]
+    QueryEmbed --> Hybrid["Một Pinecone dense+sparse query"]
+    SparseQuery --> Hybrid
+    Hybrid --> Resolve["Resolve full text từ SQLite"]
+    Resolve --> Chunk["Chương → Mục → Điều → Khoản"]
+    Chunk --> Bound["Tối đa 24 candidates; ≤2/document"]
+    Bound --> Rerank["BGE-reranker-v2-M3 top 8"]
+    Rerank --> Budget["Top 3; context ≤900 tokens"]
+    Budget --> Answer["Grounded answer ≤640 output tokens"]
 ```
 
----
+Pinecone lưu đúng một record/document với metadata tối thiểu: document ID,
+content-store key, corpus revision và content SHA-256. Với 384 dense values và
+tối đa 64 sparse values, raw vector payload ước tính khoảng 1,06 GB trước ID,
+metadata và index overhead. Thiết kế nhắm tới Starter 2 GB nhưng không thể bảo
+đảm quota nếu tài khoản còn chứa index khác; pipeline sẽ dừng rõ ràng khi
+Pinecone trả `QUOTA_EXCEEDED`.
 
-## Data Pipeline & Indexing
+Dense embedding dùng Qdrant Cloud Inference với model
+`intfloat/multilingual-e5-small`. Qdrant chỉ giữ collection staging tối đa
+2.049 point ID cố định; toàn bộ dense+sparse vectors lâu dài nằm ở Pinecone.
 
-### 1. Push Raw Documents to MongoDB Atlas
-Sync raw crawled legal files (`.json.gz` or `.json`) into MongoDB Atlas collection `raw_legal_documents`:
-```bash
-python -m app.ingestion.mongo_indexer app/data/raw_data
+## Cài đặt
+
+Yêu cầu Python 3.10+:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+Copy-Item .env.example .env
 ```
 
-### 2. Chunk & Index Vectors to Qdrant Cloud
-Parse legal text into Chapter/Section/Article structure, extract embeddings via OmniGate, generate BM25 sparse vectors, and upsert points to Qdrant collection `vietlex_laws_crawler_kb`:
-```bash
-python -m app.ingestion.crawler_indexer app/data/raw_data --collection vietlex_laws_crawler_kb
+Secret bắt buộc:
+
+- `PIPECONE_API` hoặc `PINECONE_API_KEY`;
+- `QDRANT_URL`, `QDRANT_API_KEY` cho Cloud Inference;
+- `RERANK_API_URL`, `EMBEDDING_SERVICE_API_KEY` cho BGE reranker;
+- `OMNIGATE_BASE_URL`, `LITELLM_MASTER_KEY` cho answer model.
+
+Tên `PIPECONE_API` được hỗ trợ để tương thích với secret hiện có, dù chính tả
+chuẩn của Pinecone là `PINECONE_API_KEY`. Không hardcode hoặc ghi secret vào
+log/checkpoint.
+
+## Nạp toàn bộ corpus
+
+Nếu snapshot và content store đã tồn tại, chạy trực tiếp:
+
+```powershell
+python -u -m app.ingestion.hf_pipeline full --delete-existing --yes
 ```
 
----
+Lần chạy mới sẽ:
 
-## Configuration & Setup
+1. xác minh snapshot, content store, credentials và đúng 518.255 documents;
+2. xóa/recreate index Pinecone `vietlex-legal-rag-v1`;
+3. encode E5-small qua Qdrant staging giới hạn dung lượng;
+4. chuẩn bị/upload theo window 16 batch × 128 documents;
+5. chỉ checkpoint batch sau khi Pinecone xác nhận upsert.
 
-### Environment Variables
-Create a `.env` file in the project root directory:
+Nếu bị ngắt, chạy lại cùng lệnh. Checkpoint Pinecone riêng nằm tại
+`data/huggingface/pinecone_ingestion_state.sqlite3`; completed batches không bị
+embed hoặc upload lại. Lệnh không chạy live benchmark hay reranker smoke để
+không lãng phí quota.
 
-```env
-# Server Configuration
-HOST=0.0.0.0
-PORT=8000
-FRONTEND_URL=http://localhost:8000
+Các phase tùy chọn:
 
-# Qdrant Database
-QDRANT_URL=https://your-qdrant-cluster.cloud.qdrant.io
-QDRANT_API_KEY=your_qdrant_api_key
-
-# Cohere API Key (for Reranker)
-COHERE_API_KEY=your_cohere_api_key
-
-# LLM Gateway (OmniGate)
-OMNIGATE_BASE_URL=https://llmgateway.onrender.com
-LITELLM_MASTER_KEY=your_litellm_master_key
-
-# MongoDB Connection URL
-MONGO_URL=mongodb+srv://user:pass@cluster.mongodb.net/Legal-RAG
-
-# Logfire Tracing
-LOGFIRE_TOKEN=your_logfire_token
+```powershell
+python -m app.ingestion.hf_pipeline download
+python -m app.ingestion.hf_pipeline prepare
+python -m app.ingestion.hf_pipeline smoke
+python -m app.ingestion.hf_pipeline verify
 ```
 
-### Running Locally
-```bash
-# Install dependencies
-pip install -r requirements.txt
+## Chạy ứng dụng
 
-# Launch FastAPI development server
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```powershell
+uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
----
+Runtime thực hiện một Pinecone hybrid read cho knowledge retrieval. Semantic
+cache nằm ở namespace riêng trong cùng index, dùng threshold `0.96`. Reranker
+Pinecone không được dùng vì quota Starter thấp; pipeline giữ BGE-reranker-v2-M3
+đã cấu hình sẵn.
 
-## Testing & Quality Assurance
+Luồng query dùng bản rewrite ngắn cho dense embedding nhưng giữ nguyên câu hỏi
+gốc cho sparse search để không làm mất số Điều, số hiệu văn bản, ngày tháng và
+tên riêng. Full text chỉ được chunk sau khi resolve từ SQLite: tách theo
+Điều/Khoản, tối đa 280 whitespace tokens/chunk và overlap 24 tokens chỉ khi một
+đơn vị cấu trúc quá dài. Candidate rerank được giới hạn 24, tối đa 2 chunk mỗi
+document. Prompt cuối có một ngân sách toàn cục 900 tokens và output model tối
+đa 640 tokens; mọi giới hạn đều có thể chỉnh qua `.env`.
 
-Run complete test suite including RAG pipeline tests, Qdrant search, Guardrails, and Ingestion logic:
-```bash
-pytest
+> [!IMPORTANT]
+> Index đã ingestion xong tiếp tục tương thích với runtime mới và không cần
+> rebuild. Code ingestion-v2 hiện tạo dense text theo thứ tự metadata → outline
+> → nội dung đại diện, đồng thời tạo sparse text riêng từ outline + full text.
+> Thay đổi representation này chỉ có hiệu lực khi chủ động rebuild toàn index;
+> không chạy lệnh `full --delete-existing --yes` chỉ để nhận tối ưu runtime.
+
+## Đánh giá golden dataset
+
+Golden suite mặc định lấy 30 câu từ `app/data/namsyntax_legal_qa_420.json`, cân
+bằng 12 factoid, 12 multi-hop và 6 unanswerable. Lần chạy đánh giá đầy đủ:
+
+```powershell
+python -u run_eval_suite.py --fresh --factoids 12 --multihop 12 --unanswerable 6 --concurrency 2 --judge-concurrency 4
 ```
+
+Nếu tiến trình bị ngắt, chạy lại cùng lệnh nhưng bỏ `--fresh` để tiếp tục từ
+checkpoint. Semantic cache bị bỏ qua mặc định để mỗi câu thực sự kiểm tra
+retrieval và generation; chỉ thêm `--use-cache` khi chủ động đo luồng cache.
+Có thể thêm `--skip-ragas` cho smoke test nhanh, nhưng kết quả đó không thay thế
+đánh giá cuối.
+
+Suite ghi checkpoint nguyên tử và tạo báo cáo tại `docs/system_evaluation_report.md`.
+Các metric gồm faithfulness, answer accuracy, context precision và context
+recall. Judge được chọn theo credential hiện có, ưu tiên OpenRouter rồi đến
+Gemini, NVIDIA, Groq và OmniGate. Chạy suite sẽ phát sinh lượt đọc Pinecone,
+Qdrant inference, reranker và chi phí judge API; dùng concurrency mặc định để
+tránh rate limit, không tăng đồng thời nếu chưa kiểm tra quota.
+
+## Kiểm thử
+
+```powershell
+python -m pytest -q
+python -m ruff check app tests
+python -m compileall -q app tests
+git diff --check
+```
+
+Test doubles chỉ tồn tại trong automated tests. Production không fallback sang
+vector giả hoặc kết quả chưa rerank.
+
+Chi tiết vận hành: [Hugging Face ingestion runbook](docs/huggingface-ingestion-runbook.md).
