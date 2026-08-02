@@ -39,6 +39,32 @@ async def check_output_guardrails(response: str, contexts: list[str], query: str
     return await check(response, contexts, query)
 
 
+async def warm_evaluation_guardrails() -> None:
+    from app.services.guardrails import warm_guardrails
+
+    await warm_guardrails()
+
+
+def require_evaluation_fts(index) -> None:
+    if not index.is_ready():
+        raise RuntimeError(
+            "Legal FTS is not ready. Run: python -u -m "
+            "app.ingestion.legal_fts build --batch-size 256"
+        )
+
+
+async def verify_evaluation_fts(settings) -> None:
+    from app.ingestion.content_store import ContentStore
+    from app.ingestion.legal_fts import LegalFtsIndex
+
+    index = LegalFtsIndex(
+        store=ContentStore(settings.CONTENT_STORE_PATH),
+        path=settings.LEGAL_FTS_PATH,
+        dataset_revision=settings.DATASET_REVISION,
+    )
+    await asyncio.to_thread(require_evaluation_fts, index)
+
+
 async def run_advanced_rag(query: str):
     from app.services.rag_pipeline import run_advanced_rag as run
 
@@ -202,9 +228,10 @@ def runtime_evaluation_configuration(settings, *, run_ragas: bool) -> dict:
         field: getattr(settings, field, None) for field in fields
     }
     if run_ragas:
-        judge = select_judge_provider(settings)
-        configuration["judge_name"] = judge["name"]
-        configuration["judge_model"] = judge["model"]
+        configuration["judge_chain"] = [
+            {"name": provider["name"], "model": provider["model"]}
+            for provider in configured_judge_providers(settings)
+        ]
     return configuration
 
 
@@ -392,6 +419,13 @@ async def evaluate_single_query(
     input_guardrail_latency = 0.0
     output_guardrail_latency = 0.0
     ragas_latency = 0.0
+    primary_judge = (
+        getattr(ragas_evaluator, "provider", {})
+        if ragas_evaluator
+        else {}
+    )
+    judge_provider_name = primary_judge.get("name")
+    judge_model_name = primary_judge.get("model")
 
     def elapsed() -> float:
         return queue_latency + time.perf_counter() - started
@@ -415,12 +449,8 @@ async def evaluate_single_query(
             "input_guardrail_latency": input_guardrail_latency,
             "output_guardrail_latency": output_guardrail_latency,
             "ragas_latency": ragas_latency,
-            "judge_provider": getattr(
-                ragas_evaluator, "provider", {}
-            ).get("name") if ragas_evaluator else None,
-            "judge_model": getattr(
-                ragas_evaluator, "provider", {}
-            ).get("model") if ragas_evaluator else None,
+            "judge_provider": judge_provider_name,
+            "judge_model": judge_model_name,
             "lat_info": {},
             "retrieval_status": None,
             "retrieval_diagnostics": {},
@@ -564,6 +594,10 @@ async def evaluate_single_query(
             answer_accuracy = scores["answer_accuracy"]
             context_precision = scores["context_precision"]
             context_recall = scores["context_recall"]
+            judge_provider_name = scores.get(
+                "_judge_provider", judge_provider_name
+            )
+            judge_model_name = scores.get("_judge_model", judge_model_name)
             print(
                 "   Ragas - Faithfulness: "
                 f"{faithfulness:.2f}, Accuracy: {answer_accuracy:.2f}, "
@@ -587,6 +621,8 @@ async def evaluate_single_query(
         lat_info=lat_info,
         retrieval_status=retrieval_status,
         retrieval_diagnostics=retrieval_diagnostics,
+        judge_provider=judge_provider_name,
+        judge_model=judge_model_name,
         faithfulness=faithfulness,
         answer_accuracy=answer_accuracy,
         context_precision=context_precision,
@@ -597,7 +633,7 @@ async def evaluate_single_query(
         **direct_metrics,
     )
 
-def select_judge_provider(settings) -> dict[str, str]:
+def configured_judge_providers(settings) -> list[dict[str, str]]:
     candidates = (
         (
             "GEMINI_API_KEY",
@@ -624,24 +660,76 @@ def select_judge_provider(settings) -> dict[str, str]:
             "https://openrouter.ai/api/v1",
         ),
     )
+    providers: list[dict[str, str]] = []
     for field, name, model, base_url in candidates:
         api_key = getattr(settings, field, None)
         if api_key:
-            return {
-                "name": name,
-                "model": model,
-                "api_key": api_key,
-                "base_url": base_url,
-            }
+            providers.append(
+                {
+                    "name": name,
+                    "model": model,
+                    "api_key": api_key,
+                    "base_url": base_url,
+                }
+            )
     gateway_key = getattr(settings, "LITELLM_MASTER_KEY", None)
     if gateway_key:
-        return {
-            "name": "OmniGate",
-            "model": "legal-core-model",
-            "api_key": gateway_key,
-            "base_url": settings.OMNIGATE_BASE_URL,
-        }
-    raise RuntimeError("No API key is configured for the Ragas judge.")
+        providers.append(
+            {
+                "name": "OmniGate",
+                "model": "legal-core-model",
+                "api_key": gateway_key,
+                "base_url": settings.OMNIGATE_BASE_URL,
+            }
+        )
+    if not providers:
+        raise RuntimeError("No API key is configured for the Ragas judge.")
+    return providers
+
+
+def select_judge_provider(settings) -> dict[str, str]:
+    return configured_judge_providers(settings)[0]
+
+
+def is_transient_judge_error(error: Exception) -> bool:
+    status_code = getattr(error, "status_code", None)
+    if status_code is None:
+        status_code = getattr(
+            getattr(error, "response", None),
+            "status_code",
+            None,
+        )
+    if status_code in {408, 409, 429, 500, 502, 503, 504}:
+        return True
+    if isinstance(error, (TimeoutError, asyncio.TimeoutError)):
+        return True
+    return type(error).__name__ in {
+        "APIConnectionError",
+        "APITimeoutError",
+        "ConnectError",
+        "ConnectTimeout",
+        "RateLimitError",
+        "ReadTimeout",
+        "TimeoutException",
+    }
+
+
+async def run_with_provider_fallback(providers, operation):
+    for index, provider in enumerate(providers):
+        try:
+            return await operation(provider), provider
+        except Exception as error:
+            has_fallback = index + 1 < len(providers)
+            if not has_fallback or not is_transient_judge_error(error):
+                raise
+            next_provider = providers[index + 1]
+            print(
+                f"Ragas judge {provider['name']} unavailable "
+                f"({type(error).__name__}); falling back to "
+                f"{next_provider['name']}.",
+                flush=True,
+            )
+    raise RuntimeError("Ragas judge fallback chain ended unexpectedly.")
 
 
 def _install_ragas_vertex_shim() -> None:
@@ -673,25 +761,31 @@ def build_ragas_evaluator(settings, *, judge_concurrency: int):
         Faithfulness,
     )
 
-    provider = select_judge_provider(settings)
-    client = AsyncOpenAI(
-        api_key=provider["api_key"],
-        base_url=provider["base_url"],
-        timeout=60.0,
-        max_retries=2,
-    )
-    llm = llm_factory(
-        provider["model"],
-        client=client,
-        temperature=0,
-        max_tokens=768,
-    )
-    metrics = {
-        "faithfulness": Faithfulness(llm=llm),
-        "answer_accuracy": AnswerAccuracy(llm=llm),
-        "context_precision": ContextPrecision(llm=llm),
-        "context_recall": ContextRecall(llm=llm),
-    }
+    providers = configured_judge_providers(settings)
+    metrics_by_provider: dict[str, dict] = {}
+
+    def provider_metrics(provider: dict[str, str]) -> dict:
+        key = f"{provider['name']}:{provider['model']}"
+        if key not in metrics_by_provider:
+            client = AsyncOpenAI(
+                api_key=provider["api_key"],
+                base_url=provider["base_url"],
+                timeout=60.0,
+                max_retries=1,
+            )
+            llm = llm_factory(
+                provider["model"],
+                client=client,
+                temperature=0,
+                max_tokens=768,
+            )
+            metrics_by_provider[key] = {
+                "faithfulness": Faithfulness(llm=llm),
+                "answer_accuracy": AnswerAccuracy(llm=llm),
+                "context_precision": ContextPrecision(llm=llm),
+                "context_recall": ContextRecall(llm=llm),
+            }
+        return metrics_by_provider[key]
     semaphore = asyncio.Semaphore(judge_concurrency)
 
     async def score(name: str, coroutine) -> tuple[str, float]:
@@ -702,15 +796,15 @@ def build_ragas_evaluator(settings, *, judge_concurrency: int):
             raise ValueError(f"Ragas {name} returned invalid score {value}.")
         return name, value
 
-    async def evaluate_case(
+    async def evaluate_with_provider(
+        provider: dict[str, str],
         *,
         query: str,
         response: str,
         contexts: list[str],
         reference: str,
     ) -> dict[str, float]:
-        if not reference:
-            raise ValueError("Golden reference answer is empty.")
+        metrics = provider_metrics(provider)
         scored = await asyncio.gather(
             score(
                 "faithfulness",
@@ -747,10 +841,40 @@ def build_ragas_evaluator(settings, *, judge_concurrency: int):
         )
         return dict(scored)
 
+    async def evaluate_case(
+        *,
+        query: str,
+        response: str,
+        contexts: list[str],
+        reference: str,
+    ) -> dict[str, float]:
+        if not reference:
+            raise ValueError("Golden reference answer is empty.")
+        scores, used_provider = await run_with_provider_fallback(
+            providers,
+            lambda provider: evaluate_with_provider(
+                provider,
+                query=query,
+                response=response,
+                contexts=contexts,
+                reference=reference,
+            ),
+        )
+        return {
+            **scores,
+            "_judge_provider": used_provider["name"],
+            "_judge_model": used_provider["model"],
+        }
+
     print(
-        f"Using {provider['name']} {provider['model']} as Ragas judge."
+        "Using Ragas judge chain: "
+        + " -> ".join(
+            f"{provider['name']} {provider['model']}"
+            for provider in providers
+        )
     )
-    evaluate_case.provider = provider
+    evaluate_case.provider = providers[0]
+    evaluate_case.providers = providers
     return evaluate_case
 
 def is_valid_checkpoint(r: dict, fingerprint: str) -> bool:
@@ -966,6 +1090,8 @@ async def run_suite(arguments=None) -> list[dict]:
     if args.concurrency <= 0:
         raise ValueError("concurrency must be positive.")
     settings = get_settings()
+    await verify_evaluation_fts(settings)
+    await warm_evaluation_guardrails()
     cases = load_evaluation_dataset(
         args.dataset,
         factoid_count=args.factoids,

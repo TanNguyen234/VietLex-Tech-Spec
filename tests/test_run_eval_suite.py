@@ -76,6 +76,15 @@ def test_cli_defaults_measure_pipeline_without_semantic_cache() -> None:
     assert arguments.skip_ragas is False
 
 
+def test_evaluation_preflight_rejects_unready_fts() -> None:
+    class UnreadyIndex:
+        def is_ready(self) -> bool:
+            return False
+
+    with pytest.raises(RuntimeError, match="app.ingestion.legal_fts build"):
+        run_eval_suite.require_evaluation_fts(UnreadyIndex())
+
+
 def test_judge_provider_is_independent_from_primary_openrouter_model() -> None:
     provider = run_eval_suite.select_judge_provider(
         SimpleNamespace(
@@ -94,6 +103,33 @@ def test_judge_provider_is_independent_from_primary_openrouter_model() -> None:
         "api_key": "gemini-key",
         "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/",
     }
+
+
+@pytest.mark.asyncio
+async def test_transient_judge_quota_error_falls_back_to_next_provider() -> None:
+    providers = [
+        {"name": "Gemini", "model": "gemini"},
+        {"name": "OpenRouter", "model": "llama"},
+    ]
+    attempted: list[str] = []
+
+    class QuotaError(RuntimeError):
+        status_code = 429
+
+    async def evaluate(provider):
+        attempted.append(provider["name"])
+        if provider["name"] == "Gemini":
+            raise QuotaError("quota exhausted")
+        return {"answer_accuracy": 0.75}
+
+    scores, provider = await run_eval_suite.run_with_provider_fallback(
+        providers,
+        evaluate,
+    )
+
+    assert scores == {"answer_accuracy": 0.75}
+    assert provider["name"] == "OpenRouter"
+    assert attempted == ["Gemini", "OpenRouter"]
 
 
 def test_answerable_output_block_is_not_counted_as_correct() -> None:
@@ -353,3 +389,35 @@ async def test_ragas_failure_preserves_exact_error_and_latency(
     assert result["error"] == "judge quota exhausted"
     assert result["ragas_latency"] >= 0
     assert result["latency"] >= result["pipeline_latency"]
+
+
+@pytest.mark.asyncio
+async def test_guardrail_unavailable_is_a_technical_evaluation_failure(
+    monkeypatch,
+) -> None:
+    from app.services.guardrails import GuardrailUnavailableError
+
+    async def unavailable(_query: str):
+        raise GuardrailUnavailableError("input", "timeout")
+
+    monkeypatch.setattr(
+        run_eval_suite,
+        "check_input_guardrails",
+        unavailable,
+    )
+
+    result = await run_eval_suite.evaluate_single_query(
+        {
+            "query": "Điều kiện cấp phép?",
+            "group": "Factoid",
+            "expected": "grounded_answer",
+            "ground_truth": "Có đủ điều kiện.",
+            "reference_contexts": ["Điều 1"],
+        },
+        settings=SimpleNamespace(),
+        ragas_evaluator=None,
+        evaluation_fingerprint="fingerprint",
+    )
+
+    assert result["evaluation_status"] == "Input Guardrail Error"
+    assert result["error"] == "input guardrail unavailable: timeout"

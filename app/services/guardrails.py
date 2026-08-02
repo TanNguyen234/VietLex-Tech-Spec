@@ -11,6 +11,17 @@ from app.services.direct_llm import generate_llm_response
 
 settings = get_settings()
 
+GUARDRAIL_UNAVAILABLE_MESSAGE = (
+    "Hệ thống kiểm tra an toàn đang tạm thời không khả dụng. "
+    "Vui lòng thử lại sau."
+)
+
+
+class GuardrailUnavailableError(RuntimeError):
+    def __init__(self, stage: str, reason: str) -> None:
+        self.stage = stage
+        super().__init__(f"{stage} guardrail unavailable: {reason}")
+
 def redact_pii(text: str) -> str:
     """
     Tự động nhận diện và ẩn thông tin cá nhân nhạy cảm (PII) trong tiếng Việt.
@@ -150,18 +161,12 @@ async def check_input_guardrails(message: str) -> Tuple[bool, str]:
             return False, "Hệ thống chỉ hỗ trợ giải đáp các thắc mắc liên quan đến pháp luật Việt Nam. Vui lòng đặt câu hỏi phù hợp."
             
         return True, ""
-    except asyncio.TimeoutError:
+    except asyncio.TimeoutError as error:
         logfire.warning("Input Guardrails NeMo timed out (5s); blocking request.")
-        return False, (
-            "Hệ thống kiểm tra an toàn đang tạm thời không khả dụng. "
-            "Vui lòng thử lại sau."
-        )
+        raise GuardrailUnavailableError("input", "timeout") from error
     except Exception as e:
         logfire.error("Lỗi khi chạy Input Guardrails: {error}", error=str(e))
-        return False, (
-            "Hệ thống kiểm tra an toàn đang tạm thời không khả dụng. "
-            "Vui lòng thử lại sau."
-        )
+        raise GuardrailUnavailableError("input", str(e)) from e
 
 @logfire.instrument("Kiểm tra an toàn Output Guardrails")
 async def check_output_guardrails(response: str, context: List[str], user_query: str = "") -> Tuple[bool, str]:
@@ -203,15 +208,9 @@ async def check_output_guardrails(response: str, context: List[str], user_query:
             return False, "Hệ thống phát hiện nội dung câu trả lời không đồng nhất với tài liệu pháp luật chính thống. Vui lòng thử lại sau."
             
         return True, ""
-    except asyncio.TimeoutError:
+    except asyncio.TimeoutError as error:
         logfire.warning("Output Guardrails NeMo timed out (5s); blocking response.")
-        return False, (
-            "Hệ thống chưa thể xác minh độ an toàn của câu trả lời. "
-            "Vui lòng thử lại sau."
-        )
+        raise GuardrailUnavailableError("output", "timeout") from error
     except Exception as e:
         logfire.error("Lỗi khi chạy Output Guardrails: {error}", error=str(e))
-        return False, (
-            "Hệ thống chưa thể xác minh độ an toàn của câu trả lời. "
-            "Vui lòng thử lại sau."
-        )
+        raise GuardrailUnavailableError("output", str(e)) from e

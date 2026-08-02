@@ -6,7 +6,13 @@ from fastapi.templating import Jinja2Templates
 
 from app.api.dependencies import verify_csrf
 from app.services.semantic_cache import check_semantic_cache, save_to_semantic_cache
-from app.services.guardrails import check_input_guardrails, check_output_guardrails, redact_pii
+from app.services.guardrails import (
+    GUARDRAIL_UNAVAILABLE_MESSAGE,
+    GuardrailUnavailableError,
+    check_input_guardrails,
+    check_output_guardrails,
+    redact_pii,
+)
 from app.services.rag_pipeline import run_advanced_rag
 from app.services.evaluator import run_llm_as_judge
 from app.database import (
@@ -63,7 +69,25 @@ async def chat(
         span.set_attribute("cache_hit", False)
         
         # Step 3: Apply NeMo Guardrails (Input Check)
-        input_safe, rejection_message = await check_input_guardrails(message)
+        try:
+            input_safe, rejection_message = await check_input_guardrails(message)
+        except GuardrailUnavailableError as error:
+            logfire.error(
+                "Input guardrail unavailable",
+                error=str(error),
+                trace_id=trace_id,
+            )
+            return templates.TemplateResponse(
+                request,
+                "chat_message.html",
+                {
+                    "user_msg": message,
+                    "bot_msg": GUARDRAIL_UNAVAILABLE_MESSAGE,
+                    "trace_id": trace_id,
+                    "session_id": session_id,
+                },
+                status_code=503,
+            )
         if not input_safe:
             span.set_attribute("guardrails_blocked_input", True)
             # Log blocked input interaction
@@ -91,7 +115,29 @@ async def chat(
 
         
         # Step 5: Apply NeMo Guardrails (Output Check)
-        output_safe, fallback_response = await check_output_guardrails(bot_response, context_used, message)
+        try:
+            output_safe, fallback_response = await check_output_guardrails(
+                bot_response,
+                context_used,
+                message,
+            )
+        except GuardrailUnavailableError as error:
+            logfire.error(
+                "Output guardrail unavailable",
+                error=str(error),
+                trace_id=trace_id,
+            )
+            return templates.TemplateResponse(
+                request,
+                "chat_message.html",
+                {
+                    "user_msg": message,
+                    "bot_msg": GUARDRAIL_UNAVAILABLE_MESSAGE,
+                    "trace_id": trace_id,
+                    "session_id": session_id,
+                },
+                status_code=503,
+            )
         final_response = bot_response if output_safe else fallback_response
         final_response = redact_pii(final_response)
         rejection_reason = None if output_safe else "Hallucination or unsafe output detected"
