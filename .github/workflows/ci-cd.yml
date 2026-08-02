@@ -36,7 +36,7 @@ jobs:
       # Bước 4: Kiểm tra format code (Linting) bằng Ruff
       - name: Lint with Ruff
         run: |
-          ruff check app/
+          ruff check --select E4,E7,E9,F app/
 
       # Bước 5: Chạy Unit Test
       - name: Run unit tests
