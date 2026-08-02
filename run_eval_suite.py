@@ -277,23 +277,36 @@ def retrieval_metrics(
 
 
 def summarize_outcomes(results: list[dict]) -> dict[str, float | int]:
+    technical_statuses = {
+        "rag_error",
+        "retrieval_error",
+        "reranker_error",
+        "Input Guardrail Error",
+        "Output Guardrail Error",
+    }
+
+    def eligible(result: dict) -> bool:
+        return result.get("evaluation_status") not in technical_statuses
+
     answerable = [
         result
         for result in results
         if result.get("expected") == "grounded_answer"
-        and not result.get("error")
+        and eligible(result)
     ]
     unanswerable = [
         result
         for result in results
         if result.get("expected") == "honest_refusal"
-        and not result.get("error")
+        and eligible(result)
     ]
     answerable_correct = sum(
         1
         for result in answerable
-        if result.get("evaluation_status", "").startswith("Generated")
+        if result.get("output_safe")
+        and result.get("contexts")
         and not result.get("is_refusal")
+        and result.get("evaluation_status") != "Blocked Output"
     )
     correct_unanswerable = sum(
         1
@@ -305,7 +318,7 @@ def summarize_outcomes(results: list[dict]) -> dict[str, float | int]:
     all_refusals = sum(
         1
         for result in results
-        if result.get("is_refusal") and not result.get("error")
+        if result.get("is_refusal") and eligible(result)
     )
     valid_count = len(answerable) + len(unanswerable)
     return {

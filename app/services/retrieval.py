@@ -91,12 +91,12 @@ def _lexical_score(
     chunk: EvidenceChunk,
 ) -> float:
     normalized_text = " ".join(chunk.text.casefold().split())
-    counts = Counter(normalized_terms(chunk.text))
-    score = sum(
-        1.0 + math.log(counts[term])
-        for term in set(query_terms)
-        if counts[term] > 0
-    )
+    score = 0.0
+    for term in set(query_terms):
+        phrase = term.replace("_", " ").casefold()
+        count = normalized_text.count(phrase)
+        if count:
+            score += 1.0 + math.log(count)
     if query_phrase and query_phrase in normalized_text:
         score += 8.0
     return score
@@ -380,23 +380,35 @@ class LegalRetriever:
                 value = await self._hybrid_documents(query, sparse_query)
                 return value, time.perf_counter() - started
 
-            async def timed_lexical() -> tuple[list[int], float]:
+            async def timed_lexical() -> tuple[
+                list[int], float, str | None
+            ]:
                 started = time.perf_counter()
-                value = await asyncio.to_thread(
-                    self._fts_index.search,
-                    sparse_query or query,
-                    limit=self._settings.LEGAL_FTS_RESULT_LIMIT,
-                )
-                return value, time.perf_counter() - started
+                try:
+                    value = await asyncio.to_thread(
+                        self._fts_index.search,
+                        sparse_query or query,
+                        limit=self._settings.LEGAL_FTS_RESULT_LIMIT,
+                    )
+                    return value, time.perf_counter() - started, None
+                except Exception as error:
+                    logfire.warning(
+                        "Optional legal FTS search failed: {error}",
+                        error=str(error),
+                    )
+                    return [], time.perf_counter() - started, str(error)
 
             (hits, hybrid_seconds), (
                 lexical_document_ids,
                 lexical_seconds,
+                lexical_error,
             ) = await asyncio.gather(timed_hybrid(), timed_lexical())
             latency["t_hybrid"] = round(hybrid_seconds, 6)
             latency["t_lexical"] = round(lexical_seconds, 6)
             diagnostics["top_documents"] = self._hit_diagnostics(hits)
             diagnostics["lexical_document_ids"] = lexical_document_ids
+            if lexical_error:
+                diagnostics["lexical_error"] = lexical_error
 
             stage_started = time.perf_counter()
             chunks = await self._resolve_chunks(

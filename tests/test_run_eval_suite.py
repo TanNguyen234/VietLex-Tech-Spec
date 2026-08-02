@@ -112,6 +112,24 @@ def test_answerable_output_block_is_not_counted_as_correct() -> None:
     assert metrics["overall_accuracy"] == 0.0
 
 
+def test_judge_failure_does_not_erase_online_answer_outcome() -> None:
+    metrics = run_eval_suite.summarize_outcomes(
+        [
+            {
+                "expected": "grounded_answer",
+                "evaluation_status": "Eval Failed",
+                "is_refusal": False,
+                "output_safe": True,
+                "contexts": ["Căn cứ"],
+                "error": "judge quota exhausted",
+            }
+        ]
+    )
+
+    assert metrics["answerable_count"] == 1
+    assert metrics["answerable_accuracy"] == 1.0
+
+
 def test_reference_context_hit_reports_recall_and_reciprocal_rank() -> None:
     metrics = run_eval_suite.retrieval_metrics(
         [

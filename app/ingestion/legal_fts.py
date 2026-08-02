@@ -40,7 +40,7 @@ def _fts_query(query: str) -> str:
         terms.append(raw.replace('"', '""'))
         if len(terms) >= 12:
             break
-    return " AND ".join(f'"{term}"' for term in terms)
+    return " OR ".join(f'"{term}"' for term in terms)
 
 
 class LegalFtsIndex:
@@ -84,6 +84,10 @@ class LegalFtsIndex:
         if self.is_ready():
             return
         self.path.parent.mkdir(parents=True, exist_ok=True)
+        sqlite_temp = (self.path.parent / "tmp").resolve()
+        sqlite_temp.mkdir(parents=True, exist_ok=True)
+        for name in ("TEMP", "TMP", "TMPDIR"):
+            os.environ[name] = str(sqlite_temp)
         temporary = self.path.with_suffix(self.path.suffix + ".building")
         temporary_resolved = temporary.resolve()
         if temporary_resolved.parent != self.path.resolve().parent:
@@ -97,7 +101,8 @@ class LegalFtsIndex:
                 """
                 PRAGMA journal_mode=OFF;
                 PRAGMA synchronous=OFF;
-                PRAGMA temp_store=MEMORY;
+                PRAGMA temp_store=FILE;
+                PRAGMA cache_size=-65536;
                 CREATE TABLE legal_documents (
                     document_id INTEGER PRIMARY KEY,
                     normalized_number TEXT NOT NULL,

@@ -100,12 +100,20 @@ class FakeReranker:
 
 
 class FakeFts:
-    def __init__(self, document_ids: list[int] | None = None) -> None:
+    def __init__(
+        self,
+        document_ids: list[int] | None = None,
+        *,
+        error: Exception | None = None,
+    ) -> None:
         self.document_ids = document_ids or []
+        self.error = error
         self.calls: list[tuple[str, int]] = []
 
     def search(self, query: str, *, limit: int) -> list[int]:
         self.calls.append((query, limit))
+        if self.error is not None:
+            raise self.error
         return self.document_ids[:limit]
 
 
@@ -207,7 +215,7 @@ def test_candidate_selection_normalizes_query_once(monkeypatch) -> None:
         per_document_limit=1,
     )
 
-    assert calls.count("thuế thu nhập") == 1
+    assert calls == ["thuế thu nhập"]
 
 
 def test_lexical_and_pinecone_ids_are_merged_without_duplicates() -> None:
@@ -423,3 +431,30 @@ async def test_reranker_failure_is_not_reported_as_no_candidate(
 
     assert outcome.status == "reranker_error"
     assert outcome.error == "rerank unavailable"
+
+
+@pytest.mark.asyncio
+async def test_optional_fts_failure_keeps_pinecone_retrieval_available(
+    monkeypatch,
+) -> None:
+    retrieval = _retrieval_module()
+    settings = Settings(_env_file=None)
+    monkeypatch.setattr(
+        retrieval,
+        "embed_query",
+        lambda *_args: [0.0] * settings.DENSE_VECTOR_SIZE,
+    )
+    retriever = retrieval.LegalRetriever(
+        settings=settings,
+        pinecone=FakePinecone(),
+        qdrant_inference=object(),
+        reranker=FakeReranker(),
+        fts_index=FakeFts(error=RuntimeError("fts unavailable")),
+        content_store=InMemoryStore(),
+    )
+
+    outcome = await retriever.retrieve_detailed("khấu trừ thuế")
+
+    assert outcome.status == "ok"
+    assert outcome.evidence
+    assert outcome.diagnostics["lexical_error"] == "fts unavailable"

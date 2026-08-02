@@ -85,4 +85,7 @@ def test_body_phrase_finds_relevant_legal_document(tmp_path) -> None:
     )
     index.ensure_built(batch_size=2)
 
-    assert index.search("hoạt động bảo vệ môi trường", limit=1) == [431147]
+    assert index.search(
+        "xin cho biết hoạt động bảo vệ môi trường áp dụng thế nào",
+        limit=1,
+    ) == [431147]
