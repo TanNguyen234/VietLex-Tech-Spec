@@ -20,8 +20,10 @@ def _evidence() -> EvidenceChunk:
 
 
 class FakeRetriever:
-    def __init__(self, evidence):
+    def __init__(self, evidence, *, status: str = "ok", error: str | None = None):
         self.evidence = evidence
+        self.status = status
+        self.error = error
         self.queries: list[tuple[str, str | None]] = []
 
     async def retrieve(self, query: str, sparse_query: str | None = None):
@@ -42,6 +44,9 @@ class FakeRetriever:
                 "t_candidate": 0.001,
                 "t_rerank": 0.03,
             },
+            status=self.status,
+            diagnostics={"rerank_provider": "qdrant"},
+            error=self.error,
         )
 
 
@@ -80,6 +85,33 @@ async def test_pipeline_fails_closed_without_calling_answer_model(
     assert contexts == []
     assert answer_called is False
     assert latency["t_total"] >= 0
+
+
+@pytest.mark.asyncio
+async def test_pipeline_does_not_turn_retrieval_error_into_honest_refusal(
+    monkeypatch,
+) -> None:
+    retriever = FakeRetriever(
+        [],
+        status="reranker_error",
+        error="both providers unavailable",
+    )
+
+    async def fake_rewrite(query: str) -> str:
+        return query
+
+    monkeypatch.setattr(
+        rag_pipeline,
+        "get_legal_retriever",
+        lambda: retriever,
+    )
+    monkeypatch.setattr(rag_pipeline, "rewrite_query", fake_rewrite)
+
+    with pytest.raises(rag_pipeline.RetrievalPipelineError) as captured:
+        await rag_pipeline.run_advanced_rag("điều kiện thuế")
+
+    assert captured.value.status == "reranker_error"
+    assert "both providers unavailable" in str(captured.value)
 
 
 @pytest.mark.asyncio

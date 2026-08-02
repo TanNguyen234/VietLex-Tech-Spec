@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import time
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import logfire
 
@@ -14,6 +14,20 @@ NO_EVIDENCE_RESPONSE = (
     "Xin lỗi, tôi không tìm thấy bằng chứng pháp luật đủ tin cậy "
     "trong kho dữ liệu để trả lời câu hỏi này."
 )
+
+
+class RetrievalPipelineError(RuntimeError):
+    def __init__(
+        self,
+        status: str,
+        message: str,
+        diagnostics: dict[str, Any],
+        latency: dict[str, Any] | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.status = status
+        self.diagnostics = diagnostics
+        self.latency = latency or {}
 
 
 def build_bounded_context(
@@ -46,7 +60,7 @@ def build_bounded_context(
 @logfire.instrument("Run advanced legal retrieval pipeline")
 async def run_advanced_rag(
     user_query: str,
-) -> Tuple[str, List[str], Dict[str, float]]:
+) -> Tuple[str, List[str], Dict[str, Any]]:
     started = time.perf_counter()
 
     rewrite_started = time.perf_counter()
@@ -72,7 +86,21 @@ async def run_advanced_rag(
         **retrieval_outcome.latency,
         "t_llm": 0.0,
         "t_total": 0.0,
+        "retrieval_status": retrieval_outcome.status,
+        "retrieval_diagnostics": retrieval_outcome.diagnostics,
+        "rewritten_query": rewritten_query,
     }
+    if retrieval_outcome.status in {
+        "retrieval_error",
+        "reranker_error",
+    }:
+        latency["t_total"] = round(time.perf_counter() - started, 3)
+        raise RetrievalPipelineError(
+            retrieval_outcome.status,
+            retrieval_outcome.error or "Legal retrieval failed.",
+            retrieval_outcome.diagnostics,
+            latency,
+        )
     if not contexts:
         latency["t_total"] = round(
             time.perf_counter() - started,
