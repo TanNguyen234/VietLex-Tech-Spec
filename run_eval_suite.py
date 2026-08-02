@@ -1,69 +1,220 @@
-import sys
-import os
-import time
+import argparse
 import asyncio
+import hashlib
 import json
+import os
+import sys
+import time
 from datetime import datetime
+from pathlib import Path
 
 # Configure UTF-8 encoding for stdout to handle Vietnamese characters on Windows
-sys.stdout.reconfigure(encoding='utf-8')
-sys.path.append('d:/Download/ProfessionalLegalRAG')
+sys.stdout.reconfigure(encoding="utf-8")
+PROJECT_ROOT = Path(__file__).resolve().parent
 
-# Compatibility shim for legacy ragas internal vertexai import in langchain_community
-import types
-try:
-    import langchain_google_vertexai
-    if "langchain_community.chat_models" not in sys.modules:
-        sys.modules["langchain_community.chat_models"] = types.ModuleType("langchain_community.chat_models")
-    v_mod = types.ModuleType("langchain_community.chat_models.vertexai")
-    v_mod.ChatVertexAI = getattr(langchain_google_vertexai, "ChatVertexAI", None)
-    sys.modules["langchain_community.chat_models.vertexai"] = v_mod
-except Exception:
-    pass
 
-import concurrent.futures
-import httpx
-from app.config import get_settings
-from app.services.guardrails import check_input_guardrails, check_output_guardrails
-from app.services.rag_pipeline import run_advanced_rag
-from app.services.semantic_cache import check_semantic_cache
-from datasets import Dataset
-from ragas import evaluate
-from ragas.metrics import _faithfulness, _answer_relevancy, _context_precision, _context_recall
-from langchain_openai import ChatOpenAI
-from langchain_core.embeddings import Embeddings
+DEFAULT_DATASET_PATH = PROJECT_ROOT / "app/data/namsyntax_legal_qa_420.json"
+DEFAULT_CHECKPOINT_PATH = PROJECT_ROOT / "docs/eval_checkpoints.json"
+DEFAULT_REPORT_PATH = PROJECT_ROOT / "docs/system_evaluation_report.md"
+EVALUATION_VERSION = "golden-v2-ragas-0.4"
 
-# Test cases
-def load_evaluation_dataset() -> list:
-    dataset_path = os.path.abspath("app/data/namsyntax_legal_qa_420.json")
-    if not os.path.exists(dataset_path):
-        raise FileNotFoundError(f"Could not find dataset at: {dataset_path}")
-        
-    print(f"Loading 30-query balanced evaluation dataset from: {dataset_path}")
-    with open(dataset_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-        
-    factoids = [c for c in data if c.get("question_type") == "factoid"][:12]
-    multihops = [c for c in data if c.get("question_type") == "multi-hop"][:12]
-    unanswerables = [c for c in data if c.get("question_type") == "unanswerable"][:6]
-    
-    selected = factoids + multihops + unanswerables
-    for item in selected:
-        q_type = item.get("question_type", "factoid")
-        item["group"] = q_type.capitalize()
-        item["expected"] = "pass_guardrails" if q_type != "unanswerable" else "honest_refusal"
-        item["ground_truth"] = item.get("ground_truth_answer", "")
+
+def get_settings():
+    from app.config import get_settings as load_settings
+
+    return load_settings()
+
+
+async def check_input_guardrails(query: str):
+    from app.services.guardrails import check_input_guardrails as check
+
+    return await check(query)
+
+
+async def check_output_guardrails(response: str, contexts: list[str], query: str):
+    from app.services.guardrails import check_output_guardrails as check
+
+    return await check(response, contexts, query)
+
+
+async def run_advanced_rag(query: str):
+    from app.services.rag_pipeline import run_advanced_rag as run
+
+    return await run(query)
+
+
+async def check_semantic_cache(query: str):
+    from app.services.semantic_cache import check_semantic_cache as check
+
+    return await check(query)
+
+
+def _evenly_spaced(items: list[dict], count: int) -> list[dict]:
+    if count < 0:
+        raise ValueError("Sample counts cannot be negative.")
+    if count == 0:
+        return []
+    if count > len(items):
+        raise ValueError(
+            f"Requested {count} samples from a group with {len(items)} rows."
+        )
+    if count == 1:
+        return [items[0]]
+    return [
+        items[index * (len(items) - 1) // (count - 1)]
+        for index in range(count)
+    ]
+
+
+def load_evaluation_dataset(
+    dataset_path: str | Path = DEFAULT_DATASET_PATH,
+    *,
+    factoid_count: int = 12,
+    multihop_count: int = 12,
+    unanswerable_count: int = 6,
+) -> list[dict]:
+    path = Path(dataset_path).resolve()
+    if not path.exists():
+        raise FileNotFoundError(f"Could not find dataset at: {path}")
+
+    with path.open("r", encoding="utf-8") as file:
+        data = json.load(file)
+    if not isinstance(data, list):
+        raise ValueError("Golden dataset must be a JSON array.")
+
+    grouped = {
+        kind: [item for item in data if item.get("question_type") == kind]
+        for kind in ("factoid", "multi-hop", "unanswerable")
+    }
+    sampled = (
+        _evenly_spaced(grouped["factoid"], factoid_count)
+        + _evenly_spaced(grouped["multi-hop"], multihop_count)
+        + _evenly_spaced(grouped["unanswerable"], unanswerable_count)
+    )
+    selected: list[dict] = []
+    for item in sampled:
+        question = str(item.get("question") or "").strip()
+        if not question:
+            raise ValueError("Golden dataset contains an empty question.")
+        kind = str(item.get("question_type") or "factoid")
+        selected.append(
+            {
+                **item,
+                "query": question,
+                "group": kind.capitalize(),
+                "expected": (
+                    "honest_refusal"
+                    if kind == "unanswerable"
+                    else "grounded_answer"
+                ),
+                "ground_truth": str(
+                    item.get("ground_truth_answer") or ""
+                ).strip(),
+                "reference_contexts": list(
+                    item.get("ground_truth_context") or []
+                ),
+            }
+        )
     return selected
 
 
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="Evaluate VietLex RAG against the 420-row golden dataset."
+    )
+    parser.add_argument("--dataset", type=Path, default=DEFAULT_DATASET_PATH)
+    parser.add_argument("--factoids", type=int, default=12)
+    parser.add_argument("--multihop", type=int, default=12)
+    parser.add_argument("--unanswerable", type=int, default=6)
+    parser.add_argument("--concurrency", type=int, default=2)
+    parser.add_argument("--judge-concurrency", type=int, default=4)
+    parser.add_argument("--use-cache", action="store_true")
+    parser.add_argument("--skip-ragas", action="store_true")
+    parser.add_argument("--fresh", action="store_true")
+    parser.add_argument(
+        "--checkpoint", type=Path, default=DEFAULT_CHECKPOINT_PATH
+    )
+    parser.add_argument("--report", type=Path, default=DEFAULT_REPORT_PATH)
+    return parser
+
+
+def evaluation_fingerprint(
+    cases: list[dict],
+    *,
+    run_ragas: bool,
+    use_cache: bool = False,
+    configuration: dict | None = None,
+) -> str:
+    identity = {
+        "version": EVALUATION_VERSION,
+        "run_ragas": run_ragas,
+        "use_cache": use_cache,
+        "configuration": configuration or {},
+        "cases": [
+            {
+                "query": case["query"],
+                "ground_truth": case.get("ground_truth", ""),
+                "reference_contexts": case.get("reference_contexts", []),
+            }
+            for case in cases
+        ],
+    }
+    payload = json.dumps(identity, ensure_ascii=False, sort_keys=True)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def runtime_evaluation_configuration(settings, *, run_ragas: bool) -> dict:
+    fields = (
+        "DATASET_REVISION",
+        "PINECONE_INDEX_NAME",
+        "PINECONE_NAMESPACE",
+        "DENSE_INFERENCE_MODEL",
+        "PINECONE_HYBRID_ALPHA",
+        "RETRIEVAL_DOCUMENT_LIMIT",
+        "QUERY_CHUNK_MAX_TOKENS",
+        "QUERY_CHUNK_OVERLAP_TOKENS",
+        "RERANK_CANDIDATE_LIMIT",
+        "RERANK_PER_DOCUMENT_LIMIT",
+        "RERANK_RETURN_LIMIT",
+        "RERANK_MIN_SCORE",
+        "RERANK_TOP_K",
+        "LLM_CONTEXT_MAX_TOKENS",
+        "LLM_MAX_OUTPUT_TOKENS",
+    )
+    configuration = {
+        field: getattr(settings, field, None) for field in fields
+    }
+    if run_ragas:
+        judge = select_judge_provider(settings)
+        configuration["judge_name"] = judge["name"]
+        configuration["judge_model"] = judge["model"]
+    return configuration
+
+
 # Honest refusal keywords detection
-REFUSAL_KEYWORDS = ["không biết", "không có thông tin", "chưa có dữ liệu", "không tìm thấy", "xin lỗi", "không thể cung cấp"]
+REFUSAL_KEYWORDS = [
+    "không biết",
+    "không có thông tin",
+    "chưa có dữ liệu",
+    "không tìm thấy",
+    "không đủ dữ liệu",
+    "tài liệu không đề cập",
+    "xin lỗi",
+    "không thể cung cấp",
+]
 
 def is_honest_refusal(text: str) -> bool:
     text_lower = text.lower()
     return any(keyword in text_lower for keyword in REFUSAL_KEYWORDS)
 
-async def evaluate_single_query(case, settings, llm, embeddings):
+async def evaluate_single_query(
+    case: dict,
+    settings,
+    ragas_evaluator,
+    evaluation_fingerprint: str,
+    *,
+    use_cache: bool = False,
+) -> dict:
     query = case["query"]
     group = case["group"]
     expected = case["expected"]
@@ -72,8 +223,9 @@ async def evaluate_single_query(case, settings, llm, embeddings):
     
     start_time = time.time()
     
-    # 1. Check Semantic Cache
-    cached_response = await check_semantic_cache(query)
+    cached_response = (
+        await check_semantic_cache(query) if use_cache else None
+    )
     cache_hit = cached_response is not None
     
     if cache_hit:
@@ -89,19 +241,41 @@ async def evaluate_single_query(case, settings, llm, embeddings):
             "response": cached_response,
             "contexts": [],
             "latency": latency,
-            "faithfulness": 1.0,
-            "answer_relevance": 1.0,
-            "evaluation_status": "Cache Hit",
-            "is_refusal": is_honest_refusal(cached_response)
+            "faithfulness": None,
+            "answer_accuracy": None,
+            "context_precision": None,
+            "context_recall": None,
+            "evaluation_status": "Cache Hit (not scored)",
+            "is_refusal": is_honest_refusal(cached_response),
+            "evaluation_fingerprint": evaluation_fingerprint,
+            "error": None,
         }
         
     # 2. Input Guardrails
     try:
         input_safe, rejection_message = await check_input_guardrails(query)
     except Exception as e:
-        print(f"-> Error/Timeout in Input Guardrails: {e}. Defaulting to safe=True.")
-        input_safe = True
-        rejection_message = ""
+        latency = time.time() - start_time
+        print(f"-> Input Guardrails Error: {e}")
+        return {
+            "query": query,
+            "group": group,
+            "expected": expected,
+            "cache_hit": False,
+            "input_safe": False,
+            "output_safe": False,
+            "response": "",
+            "contexts": [],
+            "latency": latency,
+            "faithfulness": None,
+            "answer_accuracy": None,
+            "context_precision": None,
+            "context_recall": None,
+            "evaluation_status": "Input Guardrail Error",
+            "is_refusal": False,
+            "evaluation_fingerprint": evaluation_fingerprint,
+            "error": str(e),
+        }
     
     if not input_safe:
         latency = time.time() - start_time
@@ -121,7 +295,9 @@ async def evaluate_single_query(case, settings, llm, embeddings):
             "context_precision": None,
             "context_recall": None,
             "evaluation_status": "Blocked Input",
-            "is_refusal": True
+            "is_refusal": True,
+            "evaluation_fingerprint": evaluation_fingerprint,
+            "error": None,
         }
         
     # 3. RAG Retrieval & Generation
@@ -129,18 +305,52 @@ async def evaluate_single_query(case, settings, llm, embeddings):
         bot_response, contexts, lat_info = await run_advanced_rag(query)
     except Exception as e:
         print(f"-> Error in RAG pipeline: {e}")
-        bot_response = "Đã xảy ra lỗi hệ thống."
-        contexts = []
-        lat_info = {"t_rewrite": 0.0, "t_dense": 0.0, "t_sparse": 0.0, "t_rrf": 0.0, "t_rerank": 0.0, "t_llm": 0.0, "t_total": 0.0}
+        return {
+            "query": query,
+            "group": group,
+            "expected": expected,
+            "cache_hit": False,
+            "input_safe": True,
+            "output_safe": False,
+            "response": "",
+            "contexts": [],
+            "latency": time.time() - start_time,
+            "faithfulness": None,
+            "answer_accuracy": None,
+            "context_precision": None,
+            "context_recall": None,
+            "evaluation_status": "RAG Error",
+            "is_refusal": False,
+            "evaluation_fingerprint": evaluation_fingerprint,
+            "error": str(e),
+        }
 
         
     # 4. Output Guardrails
     try:
         output_safe, fallback_response = await check_output_guardrails(bot_response, contexts, query)
     except Exception as e:
-        print(f"-> Error/Timeout in Output Guardrails: {e}. Defaulting to safe=True.")
-        output_safe = True
-        fallback_response = ""
+        print(f"-> Output Guardrails Error: {e}")
+        return {
+            "query": query,
+            "group": group,
+            "expected": expected,
+            "cache_hit": False,
+            "input_safe": True,
+            "output_safe": False,
+            "response": bot_response,
+            "contexts": contexts,
+            "latency": time.time() - start_time,
+            "lat_info": lat_info,
+            "faithfulness": None,
+            "answer_accuracy": None,
+            "context_precision": None,
+            "context_recall": None,
+            "evaluation_status": "Output Guardrail Error",
+            "is_refusal": False,
+            "evaluation_fingerprint": evaluation_fingerprint,
+            "error": str(e),
+        }
         
     final_response = bot_response if output_safe else fallback_response
     
@@ -151,36 +361,30 @@ async def evaluate_single_query(case, settings, llm, embeddings):
     
     # 5. Ragas evaluation (only if RAG response generated and NOT blocked or honest refusal)
     faithfulness = None
-    answer_relevance = None
+    answer_accuracy = None
     context_precision = None
     context_recall = None
     eval_status = "Generated"
     
-    if contexts and not is_refusal and final_response != fallback_response:
+    if contexts and not is_refusal and output_safe and ragas_evaluator:
         try:
             print("-> Running Ragas Evaluator...")
-            clean_contexts = [c[:800] for c in contexts]
-            data = {
-                "question": [query],
-                "contexts": [clean_contexts],
-                "answer": [final_response],
-                "ground_truth": [case.get("ground_truth", "")[:800]]
-            }
-            dataset = Dataset.from_dict(data)
-            
-            result = await asyncio.to_thread(
-                evaluate,
-                dataset=dataset,
-                metrics=[_faithfulness, _answer_relevancy, _context_precision, _context_recall],
-                llm=llm,
-                embeddings=embeddings,
-                raise_exceptions=False
+            scores = await ragas_evaluator(
+                query=query,
+                response=final_response,
+                contexts=contexts,
+                reference=case.get("ground_truth", ""),
             )
-            faithfulness = float(result["faithfulness"][0]) if "faithfulness" in result._scores_dict else 0.0
-            answer_relevance = float(result["answer_relevancy"][0]) if "answer_relevancy" in result._scores_dict else 0.0
-            context_precision = float(result["context_precision"][0]) if "context_precision" in result._scores_dict else 0.0
-            context_recall = float(result["context_recall"][0]) if "context_recall" in result._scores_dict else 0.0
-            print(f"   Ragas - Faithfulness: {faithfulness:.2f}, Relevance: {answer_relevance:.2f}, Precision: {context_precision:.2f}, Recall: {context_recall:.2f}")
+            faithfulness = scores["faithfulness"]
+            answer_accuracy = scores["answer_accuracy"]
+            context_precision = scores["context_precision"]
+            context_recall = scores["context_recall"]
+            print(
+                "   Ragas - Faithfulness: "
+                f"{faithfulness:.2f}, Accuracy: {answer_accuracy:.2f}, "
+                f"Precision: {context_precision:.2f}, "
+                f"Recall: {context_recall:.2f}"
+            )
         except Exception as e:
             print(f"   Ragas Evaluation Error: {e}")
             eval_status = "Eval Failed"
@@ -188,6 +392,10 @@ async def evaluate_single_query(case, settings, llm, embeddings):
         eval_status = "Honest Refusal"
     elif not output_safe:
         eval_status = "Blocked Output"
+    elif not contexts:
+        eval_status = "No Evidence"
+    elif ragas_evaluator is None:
+        eval_status = "Generated (Ragas skipped)"
         
     return {
         "query": query,
@@ -199,242 +407,419 @@ async def evaluate_single_query(case, settings, llm, embeddings):
         "response": final_response,
         "contexts": contexts,
         "latency": latency,
-        "lat_info": lat_info if 'lat_info' in locals() else {},
+        "lat_info": lat_info,
         "faithfulness": faithfulness,
-
-        "answer_relevance": answer_relevance,
+        "answer_accuracy": answer_accuracy,
         "context_precision": context_precision,
         "context_recall": context_recall,
         "evaluation_status": eval_status,
-        "is_refusal": is_refusal
+        "is_refusal": is_refusal,
+        "evaluation_fingerprint": evaluation_fingerprint,
+        "error": None if eval_status != "Eval Failed" else "Ragas failed",
     }
 
-class CloudRunEmbeddings(Embeddings):
-    def __init__(self):
-        settings = get_settings()
-        self.api_url = settings.EMBEDDING_API_URL
-        self.api_key = settings.EMBEDDING_SERVICE_API_KEY
-        self.headers = {"Content-Type": "application/json"}
-        if self.api_key:
-            self.headers["Authorization"] = f"Bearer {self.api_key}"
+def select_judge_provider(settings) -> dict[str, str]:
+    candidates = (
+        (
+            "OPENROUTER_API_KEY",
+            "OpenRouter",
+            "meta-llama/llama-3.3-70b-instruct",
+            "https://openrouter.ai/api/v1",
+        ),
+        (
+            "GEMINI_API_KEY",
+            "Gemini",
+            "gemini-2.0-flash",
+            "https://generativelanguage.googleapis.com/v1beta/openai/",
+        ),
+        (
+            "NVIDIA_API_KEY",
+            "NVIDIA NIM",
+            "meta/llama-3.3-70b-instruct",
+            "https://integrate.api.nvidia.com/v1",
+        ),
+        (
+            "GROQ_API_KEY",
+            "Groq",
+            "llama-3.3-70b-versatile",
+            "https://api.groq.com/openai/v1",
+        ),
+    )
+    for field, name, model, base_url in candidates:
+        api_key = getattr(settings, field, None)
+        if api_key:
+            return {
+                "name": name,
+                "model": model,
+                "api_key": api_key,
+                "base_url": base_url,
+            }
+    gateway_key = getattr(settings, "LITELLM_MASTER_KEY", None)
+    if gateway_key:
+        return {
+            "name": "OmniGate",
+            "model": "legal-core-model",
+            "api_key": gateway_key,
+            "base_url": settings.OMNIGATE_BASE_URL,
+        }
+    raise RuntimeError("No API key is configured for the Ragas judge.")
 
-    def embed_documents(self, texts: list[str]) -> list[list[float]]:
-        if not texts:
-            return []
-        import requests
-        resp = requests.post(self.api_url, json={"inputs": texts, "normalize": True}, headers=self.headers, timeout=120)
-        resp.raise_for_status()
-        return resp.json().get("embeddings", [])
 
-    def embed_query(self, text: str) -> list[float]:
-        return self.embed_documents([text])[0]
+def _install_ragas_vertex_shim() -> None:
+    """Avoid importing the unused and very slow Vertex AI integration."""
+    import types
 
-def is_valid_checkpoint(r: dict) -> bool:
+    if "langchain_community.chat_models" not in sys.modules:
+        sys.modules["langchain_community.chat_models"] = types.ModuleType(
+            "langchain_community.chat_models"
+        )
+    module_name = "langchain_community.chat_models.vertexai"
+    if module_name not in sys.modules:
+        vertex_module = types.ModuleType(module_name)
+        vertex_module.ChatVertexAI = None
+        sys.modules[module_name] = vertex_module
+
+
+def build_ragas_evaluator(settings, *, judge_concurrency: int):
+    if judge_concurrency <= 0:
+        raise ValueError("judge_concurrency must be positive.")
+    _install_ragas_vertex_shim()
+
+    from openai import AsyncOpenAI
+    from ragas.llms import llm_factory
+    from ragas.metrics.collections import (
+        AnswerAccuracy,
+        ContextPrecision,
+        ContextRecall,
+        Faithfulness,
+    )
+
+    provider = select_judge_provider(settings)
+    client = AsyncOpenAI(
+        api_key=provider["api_key"],
+        base_url=provider["base_url"],
+        timeout=60.0,
+        max_retries=2,
+    )
+    llm = llm_factory(
+        provider["model"],
+        client=client,
+        temperature=0,
+        max_tokens=768,
+    )
+    metrics = {
+        "faithfulness": Faithfulness(llm=llm),
+        "answer_accuracy": AnswerAccuracy(llm=llm),
+        "context_precision": ContextPrecision(llm=llm),
+        "context_recall": ContextRecall(llm=llm),
+    }
+    semaphore = asyncio.Semaphore(judge_concurrency)
+
+    async def score(name: str, coroutine) -> tuple[str, float]:
+        async with semaphore:
+            result = await coroutine
+        value = float(result.value)
+        if not 0.0 <= value <= 1.0:
+            raise ValueError(f"Ragas {name} returned invalid score {value}.")
+        return name, value
+
+    async def evaluate_case(
+        *,
+        query: str,
+        response: str,
+        contexts: list[str],
+        reference: str,
+    ) -> dict[str, float]:
+        if not reference:
+            raise ValueError("Golden reference answer is empty.")
+        scored = await asyncio.gather(
+            score(
+                "faithfulness",
+                metrics["faithfulness"].ascore(
+                    user_input=query,
+                    response=response,
+                    retrieved_contexts=contexts,
+                ),
+            ),
+            score(
+                "answer_accuracy",
+                metrics["answer_accuracy"].ascore(
+                    user_input=query,
+                    response=response,
+                    reference=reference,
+                ),
+            ),
+            score(
+                "context_precision",
+                metrics["context_precision"].ascore(
+                    user_input=query,
+                    reference=reference,
+                    retrieved_contexts=contexts,
+                ),
+            ),
+            score(
+                "context_recall",
+                metrics["context_recall"].ascore(
+                    user_input=query,
+                    reference=reference,
+                    retrieved_contexts=contexts,
+                ),
+            ),
+        )
+        return dict(scored)
+
+    print(
+        f"Using {provider['name']} {provider['model']} as Ragas judge."
+    )
+    return evaluate_case
+
+def is_valid_checkpoint(r: dict, fingerprint: str) -> bool:
     if not isinstance(r, dict):
         return False
+    if r.get("evaluation_fingerprint") != fingerprint:
+        return False
     if r.get("evaluation_status") == "Eval Failed":
+        return False
+    if r.get("error"):
         return False
     resp = r.get("response", "")
     if "Hệ thống chưa thể xử lý" in resp or "Đã xảy ra lỗi" in resp:
         return False
-    if r.get("input_safe") and r.get("output_safe") and not r.get("is_refusal") and not r.get("cache_hit"):
-        f_score = r.get("faithfulness")
-        if f_score is None or (isinstance(f_score, float) and (f_score != f_score)):
-            return False
+    if (
+        r.get("evaluation_status") != "Generated (Ragas skipped)"
+        and r.get("input_safe")
+        and r.get("output_safe")
+        and not r.get("is_refusal")
+        and not r.get("cache_hit")
+    ):
+        for metric in (
+            "faithfulness",
+            "answer_accuracy",
+            "context_precision",
+            "context_recall",
+        ):
+            score = r.get(metric)
+            if score is None or (
+                isinstance(score, float) and score != score
+            ):
+                return False
     return True
 
-async def run_suite():
-    settings = get_settings()
-    
-    # Configure 4-Provider Fallback LLM & Cloud Run Embeddings for Ragas
-    if settings.OPENROUTER_API_KEY:
-        print("Using Direct OpenRouter API for Ragas Evaluation (meta-llama/llama-3.3-70b-instruct)...")
-        llm = ChatOpenAI(
-            model="meta-llama/llama-3.3-70b-instruct",
-            api_key=settings.OPENROUTER_API_KEY,
-            base_url="https://openrouter.ai/api/v1",
-            request_timeout=25.0,
-            max_retries=3
-        )
-    elif settings.GEMINI_API_KEY:
-        print("Using Gemini API for Ragas Evaluation...")
-        llm = ChatOpenAI(
-            model="gemini-1.5-flash",
-            api_key=settings.GEMINI_API_KEY,
-            base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
-            request_timeout=25.0,
-            max_retries=3
-        )
+def _write_checkpoint(path: Path, results: list[dict]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    with temporary.open("w", encoding="utf-8") as file:
+        json.dump(results, file, ensure_ascii=False, indent=2)
+        file.flush()
+        os.fsync(file.fileno())
+    os.replace(temporary, path)
 
-    elif settings.GROQ_API_KEY:
-        print("Using Direct Groq API for Ragas Evaluation (llama-3.3-70b-versatile)...")
-        llm = ChatOpenAI(
-            model="llama-3.3-70b-versatile",
-            api_key=settings.GROQ_API_KEY,
-            base_url="https://api.groq.com/openai/v1",
-            request_timeout=25.0,
-            max_retries=3
-        )
-    else:
-        print("Falling back to OmniGate for Ragas Evaluation...")
-        llm = ChatOpenAI(
-            model="legal-core-model",
-            api_key=settings.LITELLM_MASTER_KEY,
-            base_url=settings.OMNIGATE_BASE_URL,
-            default_headers={"drop_params": "true"},
-            request_timeout=20.0,
-            max_retries=2
-        )
-        
-    embeddings = FastEmbedEmbeddings()
-    
-    # Load test cases dynamically from HF / local dataset
-    TEST_CASES = load_evaluation_dataset()
-    
-    CHECKPOINT_FILE = os.path.abspath("docs/eval_checkpoints.json")
-    completed_map = {}
-    if os.path.exists(CHECKPOINT_FILE):
-        try:
-            with open(CHECKPOINT_FILE, "r", encoding="utf-8") as f:
-                saved_list = json.load(f)
-                completed_map = {r["query"]: r for r in saved_list if is_valid_checkpoint(r)}
-            print(f"Loaded {len(completed_map)} valid completed queries from checkpoint: {CHECKPOINT_FILE}")
-        except Exception as e:
-            print(f"Warning loading checkpoint file: {e}")
 
-    results = []
-    print("==================================================")
-    print("STARTING VIETLEX RAG SYSTEM AUTOMATED EVALUATION")
-    print(f"Time: {datetime.now().isoformat()}")
-    print("==================================================")
-    
-    for idx, case in enumerate(TEST_CASES, start=1):
-        q = case["query"]
-        if q in completed_map:
-            print(f"[{idx}/{len(TEST_CASES)}] Restored from checkpoint: '{q[:40]}...'")
-            results.append(completed_map[q])
-            continue
-            
-        res = await evaluate_single_query(case, settings, llm, embeddings)
-        results.append(res)
-        
-        # Write checkpoint after each evaluated query immediately with disk flush
-        with open(CHECKPOINT_FILE, "w", encoding="utf-8") as f:
-            json.dump(results, f, ensure_ascii=False, indent=2)
-            f.flush()
-            os.fsync(f.fileno())
-        print(f"✓ Checkpoint flushed to disk immediately ({len(results)}/{len(TEST_CASES)} saved)")
-            
-        # Sleep briefly between queries
-        await asyncio.sleep(0.5)
-        
-    print("\n==================================================")
-    print("EVALUATION SUITE COMPLETED. AGGREGATING METRICS...")
-    print("==================================================")
-    
-    # Aggregations
+def _average(results: list[dict], field: str) -> float | None:
+    values = [
+        float(result[field])
+        for result in results
+        if result.get(field) is not None
+    ]
+    return sum(values) / len(values) if values else None
+
+
+def _score_text(value: float | None) -> str:
+    return "-" if value is None else f"{value:.2f}"
+
+
+def write_report(path: Path, results: list[dict], *, use_cache: bool) -> None:
     total = len(results)
-    cache_hits = sum(1 for r in results if r["cache_hit"])
-    input_blocked = sum(1 for r in results if not r["input_safe"])
-    output_blocked = sum(1 for r in results if not r["output_safe"])
-    honest_refusals = sum(1 for r in results if r["is_refusal"] and r["input_safe"])
-    
-    # Ragas stats (only valid for successful RAG generations)
-    valid_faithfulness = [r["faithfulness"] for r in results if r["faithfulness"] is not None]
-    valid_relevance = [r["answer_relevance"] for r in results if r["answer_relevance"] is not None]
-    valid_precision = [r["context_precision"] for r in results if r["context_precision"] is not None]
-    valid_recall = [r["context_recall"] for r in results if r["context_recall"] is not None]
-    
-    avg_faithfulness = sum(valid_faithfulness) / len(valid_faithfulness) if valid_faithfulness else 0.0
-    avg_relevance = sum(valid_relevance) / len(valid_relevance) if valid_relevance else 0.0
-    avg_precision = sum(valid_precision) / len(valid_precision) if valid_precision else 0.0
-    avg_recall = sum(valid_recall) / len(valid_recall) if valid_recall else 0.0
-    avg_latency = sum(r["latency"] for r in results) / total
-    
-    # Guardrails Accuracy
-    # Input Guardrails should block Out-of-scope, pass others
-    input_correct = 0
-    for r in results:
-        is_bad = r["group"] in ["Out-of-scope"]
-        if is_bad and not r["input_safe"]:
-            input_correct += 1
-        elif not is_bad and r["input_safe"]:
-            input_correct += 1
-    input_guardrails_accuracy = (input_correct / total) * 100
-    
-    # Write report
-    report_path = "d:/Download/ProfessionalLegalRAG/docs/system_evaluation_report.md"
-    os.makedirs(os.path.dirname(report_path), exist_ok=True)
-    
-    with open(report_path, "w", encoding="utf-8") as f:
-        f.write("# SYSTEM EVALUATION REPORT - VIETLEX LEGAL RAG\n\n")
-        f.write(f"**Evaluation Timestamp**: `{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}`  \n")
-        f.write(f"**Number of Test Queries**: `{total}` (diverse test set spanning 4 query groups)  \n")
-        f.write(f"**Execution Environment**: Windows Client connecting to Qdrant Cloud & OmniGate API  \n\n")
-        
-        f.write("## 1. Metrics Executive Summary\n\n")
-        f.write("The following metrics are measured directly from the system running the automated evaluation suite:\n\n")
-        
-        f.write("| Metric | Measured Value | Context |\n")
-        f.write("| :--- | :---: | :--- |\n")
-        f.write(f"| **Average Latency (Avg Latency)** | `{avg_latency:.2f} s` | Average end-to-end response time (includes reranking and guardrails steps) |\n")
-        f.write(f"| **Cache Hit Rate** | `{(cache_hits/total)*100:.1f}%` | Percentage of requests resolved directly by Qdrant Semantic Cache (similarity >= 0.96) |\n")
-        f.write(f"| **Input Guardrails Accuracy** | `{input_guardrails_accuracy:.1f}%` | Percentage of off-topic/jailbreak inputs correctly intercepted or approved |\n")
-        f.write(f"| **Output Block Rate** | `{output_blocked} query` | Number of outputs blocked by output guardrails due to hallucination detection |\n")
-        f.write(f"| **Honest Refusals** | `{honest_refusals} query` | Number of out-of-scope/no-data queries correctly refused to prevent hallucination |\n")
-        f.write(f"| **Ragas Faithfulness** | `{avg_faithfulness:.2f}` | Average faithfulness score (factual grounding against context, scale 0-1) |\n")
-        f.write(f"| **Ragas Answer Relevance** | `{avg_relevance:.2f}` | Average answer relevance score (scale 0-1) |\n")
-        f.write(f"| **Ragas Context Precision** | `{avg_precision:.2f}` | Average context precision (retrieval quality, scale 0-1) |\n")
-        f.write(f"| **Ragas Context Recall** | `{avg_recall:.2f}` | Average context recall (retrieved coverage against ground truth, scale 0-1) |\n\n")
-        
-        f.write("> [!IMPORTANT]\n")
-        f.write("> **Fair Refusal Policy on 'I Don't Know' Responses**:\n")
-        f.write("> System responses classified as `Honest Refusal` are correct and safe behaviors (to avoid making up laws). However, because they do not contain regulatory RAG text, they are excluded from the Ragas metrics (Faithfulness/Relevance/Precision/Recall) averages to reflect the true retrieval and generation quality of the active database.\n\n")
-        
-        f.write("## 2. Test Scenarios Log\n\n")
-        
-        # Table of results
-        f.write("| ID | Group | Test Query | Status | Latency | Faithfulness | Relevance | Precision | Recall | Response |\n")
-        f.write("| :-: | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |\n")
-        
-        for idx, r in enumerate(results):
-            f_str = f"{r['faithfulness']:.2f}" if r["faithfulness"] is not None else "-"
-            r_str = f"{r['answer_relevance']:.2f}" if r["answer_relevance"] is not None else "-"
-            p_str = f"{r['context_precision']:.2f}" if r["context_precision"] is not None else "-"
-            rec_str = f"{r['context_recall']:.2f}" if r["context_recall"] is not None else "-"
-            resp_clean = r["response"].replace("\n", " ").replace("|", "\\|")
-            if len(resp_clean) > 60:
-                resp_clean = resp_clean[:60] + "..."
-            
-            f.write(f"| {idx+1} | {r['group']} | {r['query']} | `{r['evaluation_status']}` | {r['latency']:.2f}s | {f_str} | {r_str} | {p_str} | {rec_str} | {resp_clean} |\n")
-            
-        f.write("\n## 3. Evidence Analysis (Selected Scenarios)\n\n")
-        
-        # Detailed logs for evidence
-        for idx, r in enumerate(results):
-            f.write(f"### Scenario #{idx+1}: {r['query']}\n")
-            f.write(f"- **Group**: {r['group']} | **Expected Outcome**: `{r['expected']}`  \n")
-            f.write(f"- **Actual Status**: `{r['evaluation_status']}` | **Latency**: `{r['latency']:.2f}s`  \n")
-            f.write(f"- **AI Response**:\n  > {r['response']}\n")
-            if r["contexts"]:
-                f.write("- **Retrieved Context Chunks**:\n")
-                for c_idx, ctx in enumerate(r["contexts"]):
-                    ctx_clean = ctx.strip().replace('\n', ' ')
-                    f.write(f"  {c_idx+1}. {ctx_clean[:120]}...\n")
-            if r["faithfulness"] is not None:
-                f.write(f"- **Ragas Scores**: Faithfulness: `{r['faithfulness']:.2f}` | Answer Relevance: `{r['answer_relevance']:.2f}` | Context Precision: `{r['context_precision']:.2f}` | Context Recall: `{r['context_recall']:.2f}`\n")
-            f.write("\n---\n\n")
-            
-        f.write("## 4. Evaluation of Guardrails System\n\n")
-        f.write("### 4.1 Implementation Status\n")
-        f.write("- The official NVIDIA `nemoguardrails` library (v0.23.0) **is fully installed, integrated, and validated** using python and Colang flows.  \n")
-        f.write("- The guardrail configs are located in [guardrails_config](file:///d:/Download/ProfessionalLegalRAG/guardrails_config) with customized Vietnamese prompts for off-topic/jailbreak detection (`self_check_input`) and hallucinations checking (`self_check_facts` action with a Colang-driven fact checking subflow).  \n\n")
-        
-        f.write("### 4.2 Guardrails Performance & Security Audit\n")
-        f.write("- **Input Guardrails**: Successfully blocks off-topic inputs (recipes, programming, creative writing) and jailbreak injection attempts by executing `self check input` directly via the LLMRails engine.  \n")
-        f.write("- **Output Guardrails**: Accurately evaluates factual consistency against retrieved chunks using a custom Colang subflow to execute the `self_check_facts` action, blocking hallucinations and ensuring regulatory precision.\n")
+    errors = sum(1 for result in results if result.get("error"))
+    cache_hits = sum(1 for result in results if result["cache_hit"])
+    output_blocked = sum(
+        1
+        for result in results
+        if result["evaluation_status"] == "Blocked Output"
+    )
+    valid_inputs = [result for result in results if not result.get("error")]
+    legal_input_pass_rate = (
+        100.0
+        * sum(1 for result in valid_inputs if result["input_safe"])
+        / len(valid_inputs)
+        if valid_inputs
+        else 0.0
+    )
+    outcome_correct = sum(
+        1
+        for result in valid_inputs
+        if (
+            result["is_refusal"]
+            == (result["group"] == "Unanswerable")
+        )
+    )
+    outcome_accuracy = (
+        100.0 * outcome_correct / len(valid_inputs) if valid_inputs else 0.0
+    )
+    avg_latency = (
+        sum(result["latency"] for result in results) / total
+        if total
+        else 0.0
+    )
+    metrics = {
+        name: _average(results, name)
+        for name in (
+            "faithfulness",
+            "answer_accuracy",
+            "context_precision",
+            "context_recall",
+        )
+    }
 
-    print(f"\nReport successfully generated and written to: {report_path}")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as file:
+        file.write("# SYSTEM EVALUATION REPORT - VIETLEX LEGAL RAG\n\n")
+        file.write(
+            f"**Evaluation Timestamp**: `{datetime.now():%Y-%m-%d %H:%M:%S}`  \n"
+        )
+        file.write(
+            f"**Number of Test Queries**: `{total}` across Factoid, "
+            "Multi-hop and Unanswerable groups  \n"
+        )
+        file.write(f"**Semantic cache enabled**: `{use_cache}`  \n")
+        file.write(
+            "**Dataset warning**: third-party research data; not an "
+            "official source of current Vietnamese law.\n\n"
+        )
+        file.write("## Metrics\n\n")
+        file.write("| Metric | Value |\n| :--- | ---: |\n")
+        file.write(f"| Average end-to-end latency | {avg_latency:.2f}s |\n")
+        file.write(f"| Evaluation failures | {errors}/{total} |\n")
+        file.write(f"| Cache hits | {cache_hits}/{total} |\n")
+        file.write(f"| Legal input pass rate | {legal_input_pass_rate:.1f}% |\n")
+        file.write(f"| Expected answer/refusal accuracy | {outcome_accuracy:.1f}% |\n")
+        file.write(f"| Output blocked | {output_blocked}/{total} |\n")
+        file.write(
+            f"| Ragas Faithfulness | {_score_text(metrics['faithfulness'])} |\n"
+        )
+        file.write(
+            f"| Ragas Answer Accuracy | {_score_text(metrics['answer_accuracy'])} |\n"
+        )
+        file.write(
+            "| Ragas Context Precision | "
+            f"{_score_text(metrics['context_precision'])} |\n"
+        )
+        file.write(
+            f"| Ragas Context Recall | {_score_text(metrics['context_recall'])} |\n\n"
+        )
+        file.write(
+            "> Cache hits and honest refusals are not assigned artificial "
+            "Ragas scores. Metric averages include scored generations only.\n\n"
+        )
+        file.write("## Scenarios\n\n")
+        file.write(
+            "| ID | Group | Query | Status | Latency | Faithfulness | "
+            "Accuracy | Precision | Recall |\n"
+        )
+        file.write(
+            "| :-: | :--- | :--- | :--- | ---: | ---: | ---: | ---: | ---: |\n"
+        )
+        for index, result in enumerate(results, start=1):
+            query = result["query"].replace("|", "\\|")
+            file.write(
+                f"| {index} | {result['group']} | {query} | "
+                f"{result['evaluation_status']} | {result['latency']:.2f}s | "
+                f"{_score_text(result['faithfulness'])} | "
+                f"{_score_text(result['answer_accuracy'])} | "
+                f"{_score_text(result['context_precision'])} | "
+                f"{_score_text(result['context_recall'])} |\n"
+            )
+
+
+async def run_suite(arguments=None) -> list[dict]:
+    args = arguments or build_parser().parse_args()
+    if args.concurrency <= 0:
+        raise ValueError("concurrency must be positive.")
+    settings = get_settings()
+    cases = load_evaluation_dataset(
+        args.dataset,
+        factoid_count=args.factoids,
+        multihop_count=args.multihop,
+        unanswerable_count=args.unanswerable,
+    )
+    run_ragas = not args.skip_ragas
+    fingerprint = evaluation_fingerprint(
+        cases,
+        run_ragas=run_ragas,
+        use_cache=args.use_cache,
+        configuration=runtime_evaluation_configuration(
+            settings,
+            run_ragas=run_ragas,
+        ),
+    )
+    ragas_evaluator = (
+        build_ragas_evaluator(
+            settings,
+            judge_concurrency=args.judge_concurrency,
+        )
+        if run_ragas
+        else None
+    )
+
+    checkpoint_path = Path(args.checkpoint).resolve()
+    completed: dict[str, dict] = {}
+    if checkpoint_path.exists() and not args.fresh:
+        try:
+            saved = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+            completed = {
+                result["query"]: result
+                for result in saved
+                if is_valid_checkpoint(result, fingerprint)
+            }
+        except (OSError, ValueError, TypeError, KeyError) as error:
+            print(f"Ignoring invalid checkpoint: {error}")
+
+    print("=" * 60)
+    print(f"VIETLEX GOLDEN EVALUATION: {len(cases)} queries")
+    print(
+        f"pipeline_concurrency={args.concurrency} "
+        f"judge_concurrency={args.judge_concurrency} "
+        f"cache={args.use_cache} ragas={run_ragas}"
+    )
+    print(f"Restored {len(completed)} valid checkpoint rows.")
+    print("=" * 60)
+
+    semaphore = asyncio.Semaphore(args.concurrency)
+    result_map = dict(completed)
+
+    async def evaluate_case(case: dict) -> dict:
+        async with semaphore:
+            return await evaluate_single_query(
+                case,
+                settings,
+                ragas_evaluator,
+                fingerprint,
+                use_cache=args.use_cache,
+            )
+
+    tasks = [
+        asyncio.create_task(evaluate_case(case))
+        for case in cases
+        if case["query"] not in completed
+    ]
+    for completed_task in asyncio.as_completed(tasks):
+        result = await completed_task
+        result_map[result["query"]] = result
+        ordered_partial = [
+            result_map[case["query"]]
+            for case in cases
+            if case["query"] in result_map
+        ]
+        _write_checkpoint(checkpoint_path, ordered_partial)
+        print(f"Checkpoint: {len(ordered_partial)}/{len(cases)}")
+
+    results = [result_map[case["query"]] for case in cases]
+    _write_checkpoint(checkpoint_path, results)
+    report_path = Path(args.report).resolve()
+    write_report(report_path, results, use_cache=args.use_cache)
+    print(f"Report written to: {report_path}")
+    return results
+
 
 if __name__ == "__main__":
     asyncio.run(run_suite())
