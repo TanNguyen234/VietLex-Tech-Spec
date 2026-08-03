@@ -1,0 +1,1187 @@
+[
+  {
+    "case_id": "case_001",
+    "question": "Theo Luật Bảo vệ môi trường, Giấy phép môi trường được định nghĩa như thế nào?",
+    "question_type": "factoid",
+    "answerable": true,
+    "query_used": "Theo Luật Bảo vệ môi trường, Giấy phép môi trường được định nghĩa như thế nào?",
+    "original_query": "Theo Luật Bảo vệ môi trường, Giấy phép môi trường được định nghĩa như thế nào?",
+    "rewritten_query": null,
+    "status": "ok",
+    "retrieved_evidence": [
+      {
+        "document_id": 543919,
+        "document_number": "509/UBND-NĐ",
+        "title": "Công văn 509/UBND-NĐ năm 2022 thực hiện công tác cấp giấy phép môi trường; cấp đổi, điều chỉnh, cấp lại, tước quyền sử dụng, thu hồi giấy phép môi trường; công tác đăng ký môi trường trên địa bàn quận Tân Phú, thành phố Hồ Chí Minh",
+        "source_url": "https://thuvienphapluat.vn/cong-van/Tai-nguyen-Moi-truong/Cong-van-509-UBND-ND-2022-cap-doi-dieu-chinh-giay-phep-moi-truong-Tan-Phu-Ho-Chi-Minh-543919.aspx",
+        "citation": "509/UBND-NĐ",
+        "article": null,
+        "clause": null,
+        "text": "đổi nguồn tiếp nhận nước thải và phương thức xả thải vào nguồn nước có yêu cầu bảo vệ nghiêm ngặt hơn, gửi hồ sơ đề nghị cấp lại giấy phép môi trường trước khi thực hiện việc thay đổi và chỉ được triển khai thực hiện sau khi được cấp giấy phép môi trường. Thời hạn cấp lại giấy phép môi trường: Không quá 20 ngày, kể từ ngày nhận được đầy đủ hồ sơ hợp. 4. Tước quyền sử dụng giấy phép môi trường (theo quy định tại khoản 4 Điều 44 Luật Bảo vệ môi trường) Khi chủ dự án đầu tư, cơ sở thực hiện hành vi vi phạm hành chính trong lĩnh vực bảo vệ môi trường đến mức phải tước quyền sử dụng giấy phép môi trường theo quy định của pháp luật về xử lý vi phạm hành chính. 5. Giấy phép môi trường bị thu hồi (theo quy định tại khoản 5 Điều 44 Luật Bảo vệ môi trường) - Giấy phép cấp không đúng thẩm quyền. - Giấy phép có nội dung trái quy định của pháp luật. III. ĐĂNG KÝ MÔI TRƯỜNG 1. Đối tượng phải đăng ký môi trường (theo quy định tại khoản 1 Điều 49 Luật Bảo vệ môi trường) - Dự án đầu tư có phát",
+        "token_count": 220,
+        "score": null
+      },
+      {
+        "document_id": 543919,
+        "document_number": "509/UBND-NĐ",
+        "title": "Công văn 509/UBND-NĐ năm 2022 thực hiện công tác cấp giấy phép môi trường; cấp đổi, điều chỉnh, cấp lại, tước quyền sử dụng, thu hồi giấy phép môi trường; công tác đăng ký môi trường trên địa bàn quận Tân Phú, thành phố Hồ Chí Minh",
+        "source_url": "https://thuvienphapluat.vn/cong-van/Tai-nguyen-Moi-truong/Cong-van-509-UBND-ND-2022-cap-doi-dieu-chinh-giay-phep-moi-truong-Tan-Phu-Ho-Chi-Minh-543919.aspx",
+        "citation": "509/UBND-NĐ",
+        "article": null,
+        "clause": null,
+        "text": "phải được quản lý theo quy định về quản lý chất thải khi đi vào vận hành chính thức. 2. Dự án đầu tư, cơ sở, khu sản xuất, kinh doanh, dịch vụ tập trung, cụm công nghiệp hoạt động trước ngày Luật này có hiệu lực thi hành có tiêu chí về môi trường như đối tượng quy định tại khoản 1 Điều 39 Luật Bảo vệ môi trường. 3. Đối tượng quy định tại khoản 1 Điều 39 Luật Bảo vệ môi trường thuộc trường hợp dự án đầu tư công khẩn cấp theo quy định của pháp luật về đầu tư công được miễn giấy phép môi trường. 2. Hồ sơ đề nghị cấp giấy phép môi trường (theo quy định tại khoản 1 Điều 43 Luật Bảo vệ môi trường và Điều 29 Nghị định số 08/2022/NĐ-CP) Theo quy định tại khoản 1 Điều 43 Luật Bảo vệ môi trường, hồ sơ đề nghị cấp giấy phép môi trường bao gồm: a) Văn bản đề nghị cấp giấy phép môi trường; b) Báo cáo đề xuất cấp giấy phép môi trường; c) Tài liệu pháp lý và kỹ thuật khác của dự án đầu tư, cơ sở, khu sản xuất, kinh doanh, dịch vụ tập trung, cụm công nghiệp. Theo quy định tại khoản 1 Điều",
+        "token_count": 220,
+        "score": null
+      },
+      {
+        "document_id": 525881,
+        "document_number": "14/2022/NQ-HĐND",
+        "title": "Nghị quyết 14/2022/NQ-HĐND quy định mức thu, chế độ thu, nộp, quản lý và sử dụng phí thẩm định cấp, cấp lại, điều chỉnh giấy phép môi trường trên địa bàn tỉnh Thái Nguyên",
+        "source_url": "https://thuvienphapluat.vn/van-ban/Thue-Phi-Le-Phi/Nghi-quyet-14-2022-NQ-HDND-muc-thu-nop-phi-tham-dinh-cap-giay-phep-moi-truong-Thai-Nguyen-525881.aspx",
+        "citation": "14/2022/NQ-HĐND, Điều 2",
+        "article": "Điều 2",
+        "clause": null,
+        "text": "7.800.000 | | 1.2 | Đối với dự án hoạt động trước ngày Luật Bảo vệ môi trường số 72/2020/QH14 có hiệu lực | 2.900.000 | | 2 | Phí thẩm định cấp lại, điều chỉnh giấy phép môi trường | | | 2.1 | Cấp lại giấy phép môi trường | 2.900.000 | | 2.2 | Cấp điều chỉnh giấy phép môi trường | 210.000 | Mức thu phí trên tính theo lần thẩm định cấp/cấp lại/điều chỉnh giấy phép môi trường. Mức phí không bao gồm chi phí lấy mẫu và phân tích mẫu chất thải. Chi phí lấy mẫu và phân tích mẫu chất thải do tổ chức, cá nhân đề nghị cấp giấy phép môi trường chi trả theo quy định của pháp luật.",
+        "token_count": 128,
+        "score": null
+      }
+    ],
+    "stage_trace": {
+      "pinecone_hits": [
+        {
+          "document_id": 322674.0,
+          "score": 5.758953094482422
+        },
+        {
+          "document_id": 208302.0,
+          "score": 5.575500965118408
+        },
+        {
+          "document_id": 543919.0,
+          "score": 5.510164260864258
+        },
+        {
+          "document_id": 640973.0,
+          "score": 5.428068161010742
+        },
+        {
+          "document_id": 621877.0,
+          "score": 5.41706657409668
+        },
+        {
+          "document_id": 500574.0,
+          "score": 5.4120659828186035
+        },
+        {
+          "document_id": 526569.0,
+          "score": 5.41057825088501
+        },
+        {
+          "document_id": 582261.0,
+          "score": 5.384574890136719
+        },
+        {
+          "document_id": 525881.0,
+          "score": 5.379683017730713
+        },
+        {
+          "document_id": 47401.0,
+          "score": 5.377119064331055
+        },
+        {
+          "document_id": 571008.0,
+          "score": 5.372799873352051
+        },
+        {
+          "document_id": 661804.0,
+          "score": 5.365355968475342
+        },
+        {
+          "document_id": 521799.0,
+          "score": 5.3521904945373535
+        },
+        {
+          "document_id": 446322.0,
+          "score": 5.346677780151367
+        },
+        {
+          "document_id": 515297.0,
+          "score": 5.343447208404541
+        },
+        {
+          "document_id": 522177.0,
+          "score": 5.338350296020508
+        },
+        {
+          "document_id": 613261.0,
+          "score": 5.334194660186768
+        },
+        {
+          "document_id": 581074.0,
+          "score": 5.334081172943115
+        },
+        {
+          "document_id": 615109.0,
+          "score": 5.332159996032715
+        },
+        {
+          "document_id": 516121.0,
+          "score": 5.31518030166626
+        },
+        {
+          "document_id": 573823.0,
+          "score": 5.311004638671875
+        },
+        {
+          "document_id": 564881.0,
+          "score": 5.300334930419922
+        },
+        {
+          "document_id": 643469.0,
+          "score": 5.2793169021606445
+        },
+        {
+          "document_id": 615120.0,
+          "score": 5.279310703277588
+        }
+      ],
+      "lexical_hits": [
+        7021,
+        38694,
+        238636,
+        431147,
+        115247,
+        661804,
+        241328,
+        59970,
+        460742,
+        527774,
+        527411,
+        529775
+      ],
+      "merged_document_ids": [],
+      "resolved_document_ids": [],
+      "locally_selected_chunks": [],
+      "reranker_input_chunks": [
+        "509/UBND-NĐ",
+        "509/UBND-NĐ",
+        "72/2020/QH14, Điều 42, Khoản 1",
+        "72/2020/QH14, Điều 136, Khoản 2",
+        "509/UBND-NĐ",
+        "509/UBND-NĐ",
+        "2796/KSONMT-CN&NH",
+        "72/2020/QH14, Điều 42, Khoản 2",
+        "1806/QĐ-MTg, Điều 3",
+        "72/2020/QH14, Điều 61, Khoản 3",
+        "1452/QĐ-UBND, Điều 3, Khoản 1",
+        "55/2014/QH13, Điều 143, Khoản 3",
+        "52/2005/QH11, Điều 122, Khoản 3",
+        "57/2010/QH12, Điều 4, Khoản 2",
+        "42/2025/TT-BCA, Điều 9, Khoản 4",
+        "52/2005/QH11, Điều 38, Khoản 3",
+        "14/2022/NQ-HĐND, Điều 2",
+        "10/QĐ-UBND, Điều 1, Khoản 1",
+        "1206/QĐ-UBND, Điều 1",
+        "5045/BTNMT-TCMT",
+        "1701/QĐ-BTNMT, Điều 3, Khoản 2",
+        "52/2005/QH11, Điều 53, Khoản 1",
+        "52/2005/QH11, Điều 110, Khoản 1",
+        "1452/QĐ-UBND, Điều 3, Khoản 1"
+      ],
+      "reranker_output_chunks": [
+        {
+          "citation": "509/UBND-NĐ",
+          "score": 33.366104
+        },
+        {
+          "citation": "509/UBND-NĐ",
+          "score": 33.352356
+        },
+        {
+          "citation": "14/2022/NQ-HĐND, Điều 2",
+          "score": 33.316555
+        },
+        {
+          "citation": "2796/KSONMT-CN&NH",
+          "score": 33.309097
+        },
+        {
+          "citation": "509/UBND-NĐ",
+          "score": 33.181
+        },
+        {
+          "citation": "1806/QĐ-MTg, Điều 3",
+          "score": 33.163662
+        }
+      ],
+      "final_evidence_chunks": [
+        "509/UBND-NĐ",
+        "509/UBND-NĐ",
+        "14/2022/NQ-HĐND, Điều 2"
+      ]
+    },
+    "latency": {
+      "t_rewrite": 0.0,
+      "t_retrieval": 5.1053,
+      "t_total": 5.1053,
+      "t_hybrid": 1.3583,
+      "t_lexical": 0.603,
+      "t_resolve_chunk": 0.7214,
+      "t_candidate": 0.0068,
+      "t_rerank": 3.0126
+    },
+    "metrics": {
+      "has_gold_labels": false,
+      "skip_reason": "missing_gold_label"
+    },
+    "error": null
+  },
+  {
+    "case_id": "case_002",
+    "question": "Mức phạt đối với tổ chức, cá nhân không có Giấy phép môi trường khi nhập khẩu phế liệu từ nước ngoài là bao nhiêu?",
+    "question_type": "unanswerable",
+    "answerable": false,
+    "query_used": "Mức phạt đối với tổ chức, cá nhân không có Giấy phép môi trường khi nhập khẩu phế liệu từ nước ngoài là bao nhiêu?",
+    "original_query": "Mức phạt đối với tổ chức, cá nhân không có Giấy phép môi trường khi nhập khẩu phế liệu từ nước ngoài là bao nhiêu?",
+    "rewritten_query": null,
+    "status": "ok",
+    "retrieved_evidence": [
+      {
+        "document_id": 277430,
+        "document_number": "2098/BTNMT-TCMT",
+        "title": "Công văn 2098/BTNMT-TCMT năm 2015 về nhập khẩu phế liệu do Bộ Tài nguyên và Môi trường ban hành",
+        "source_url": "https://thuvienphapluat.vn/cong-van/Xuat-nhap-khau/Cong-van-2098-BTNMT-TCMT-2015-nhap-khau-phe-lieu-277430.aspx",
+        "citation": "2098/BTNMT-TCMT",
+        "article": null,
+        "clause": null,
+        "text": "phép từng trường hợp cụ thể được phép nhập khẩu phế liệu trong Danh mục được phép nhập khẩu khi đáp ứng các quy định về bảo vệ môi trường. 2. Đối với phế liệu thu được trong quá trình sản xuất của doanh nghiệp chế xuất, doanh nghiệp trong khu phi thuế quan, đề nghị quý Tổng cục áp dụng quy định tại Khoản 3 Điều 1 Nghị định số 38/2015/NĐ-CP ngày 24 tháng 4 năm 2015 của Chính phủ về quản lý chất thải và phế liệu sau khi có hiệu lực. 3. Đối với việc nhập khẩu vỏ sò, vỏ ốc từ nước ngoài làm nguyên liệu sản xuất. Mặt hàng vỏ sò, vỏ ốc phục vụ sản xuất hàng thủ công mỹ nghệ không phải được thu hồi từ quá trình sản xuất hàng hóa và tiêu dùng. Vì vậy, mặt hàng này không được coi là phế liệu mà là nguyên liệu phục vụ sản xuất và không phải thực hiện các quy định liên quan đến hoạt động quản lý phế liệu nhập khẩu từ nước ngoài làm nguyên liệu sản xuất. Trên đây là một số ý kiến của Bộ Tài nguyên và Môi trường gửi quý Tổng cục nghiên cứu, chỉ đạo các đơn vị trực thuộc thực hiện./. Nơi nhận: -",
+        "token_count": 220,
+        "score": null
+      },
+      {
+        "document_id": 311505,
+        "document_number": "3242/BCT-HC",
+        "title": "Công văn 3242/BCT-HC năm 2016 về giải đáp nội dung liên quan đến khai báo hóa chất và Giấy phép nhập khẩu hóa chất do Bộ Công Thương ban hành",
+        "source_url": "https://thuvienphapluat.vn/cong-van/Xuat-nhap-khau/Cong-van-3242-BCT-HC-giai-dap-khai-bao-hoa-chat-giay-phep-nhap-khau-hoa-chat-2016-311505.aspx",
+        "citation": "3242/BCT-HC",
+        "article": null,
+        "clause": null,
+        "text": "Việt Nam”. Không áp dụng xác nhận khai báo hóa chất đối với các tổ chức, cá nhân mua hóa chất trong lãnh thổ Việt Nam; các tổ chức, cá nhân đã được cấp Giấy phép nhập khẩu tiền chất trong lĩnh vực công nghiệp; các tổ chức, cá nhân đã được cấp Giấy phép nhập khẩu tiền chất thuốc nổ; các tổ chức, cá nhân đã được cấp Giấy phép nhập khẩu hóa chất Bảng 1, 2, 3 (hóa chất thuộc diện kiểm soát của Công ước Cấm phát triển, sản xuất, tàng trữ, sử dụng và phá hủy vũ khí hóa học). Theo Luật Hải quan, thì Kho ngoại quan là khu vực kho, bãi lưu giữ hàng hóa đã làm thủ tục hải quan được gửi để chờ xuất khẩu; hàng hóa từ nước ngoài đưa vào gửi để chờ xuất khẩu ra nước ngoài hoặc nhập khẩu vào Việt Nam. Theo Điều 85, Nghị định 08/2015/NĐ-CP ngày 25 tháng 01 năm 2015 Quy định chi tiết và biện pháp thi hành Luật Hải quan về thủ tục Hải quan, kiểm tra, giám sát, kiểm soát hải quan thì Hàng hóa từ nước ngoài đưa vào kho ngoại quan gồm: - Hàng hóa của chủ hàng nước ngoài chưa ký hợp đồng bán hàng cho doanh nghiệp",
+        "token_count": 220,
+        "score": null
+      },
+      {
+        "document_id": 43282,
+        "document_number": "28-TC/TCT",
+        "title": "Thông tư 28-TC/TCT năm 1992 quy định mức miễn thuế xuất khẩu, thuế nhập khẩu và chế độ quản lý đối với hàng hoá nhập khẩu là quà biếu, quà tặng do Bộ Tài chính ban hành",
+        "source_url": "https://thuvienphapluat.vn/van-ban/Xuat-nhap-khau/Thong-tu-28-TC-TCT-quy-dinh-muc-mien-thue-xuat-nhap-khau-quan-ly-hang-hoa-nhap-khau-qua-bieu-qua-tang-43282.aspx",
+        "citation": "28-TC/TCT",
+        "article": null,
+        "clause": null,
+        "text": "đồng Bộ trưởng là hàng hoá được phép xuất khẩu, nhập khẩu không mang mục đích kinh doanh để kiếm lời bao gồm những trường hợp sau đây: 1. Đối với hàng xuất khẩu: a. Hàng hoá được phép xuất khẩu của các tổ chức, cá nhân Việt Nam để biếu tặng cho các tổ chức, cá nhân nước ngoài. b. Hàng hoá của các tổ chức hoặc cá nhân người nước ngoài được các tổ chức, cá nhân Việt Nam biếu, tặng khi vào làm việc, du lịch, thăm thân nhân tại Việt Nam được phép xuất khẩu ra nước ngoài. c. Hàng của các tổ chức Việt Nam đưa ra nước ngoài tham gia hội chợ, triển lãm, quảng cáo sau đó sử dụng để biếu, tặng cho các tổ chức, cá nhân nước ngoài. 2. Đối với hàng nhập khẩu: a. Hàng hoá của các tổ chức, cá nhân nước ngoài được phép nhập khẩu để biếu, tặng cho các tổ chức, cá nhân Việt Nam. b. Hàng hoá của các tổ chức, cá nhân nước ngoài được phép tạm nhập vào Việt Nam để dự hội chợ triển lãm nhưng không tái xuất mà xin phép để làm quà tặng, lưu niệm cho các tổ chức, cá nhân Việt Nam. c. Hàng hoá của các tổ",
+        "token_count": 220,
+        "score": null
+      }
+    ],
+    "stage_trace": {
+      "pinecone_hits": [
+        {
+          "document_id": 567125.0,
+          "score": 7.6478800773620605
+        },
+        {
+          "document_id": 292089.0,
+          "score": 7.5780863761901855
+        },
+        {
+          "document_id": 296291.0,
+          "score": 7.203046798706055
+        },
+        {
+          "document_id": 43282.0,
+          "score": 7.198616027832031
+        },
+        {
+          "document_id": 261329.0,
+          "score": 7.019853115081787
+        },
+        {
+          "document_id": 38287.0,
+          "score": 6.966541290283203
+        },
+        {
+          "document_id": 311505.0,
+          "score": 6.966294765472412
+        },
+        {
+          "document_id": 277430.0,
+          "score": 6.904661178588867
+        },
+        {
+          "document_id": 513451.0,
+          "score": 6.733816146850586
+        },
+        {
+          "document_id": 686973.0,
+          "score": 6.666335582733154
+        },
+        {
+          "document_id": 16172.0,
+          "score": 6.590522289276123
+        },
+        {
+          "document_id": 530787.0,
+          "score": 6.581258773803711
+        },
+        {
+          "document_id": 208554.0,
+          "score": 6.563091278076172
+        },
+        {
+          "document_id": 14634.0,
+          "score": 6.551332473754883
+        },
+        {
+          "document_id": 309649.0,
+          "score": 6.5470123291015625
+        },
+        {
+          "document_id": 453837.0,
+          "score": 6.53297233581543
+        },
+        {
+          "document_id": 285110.0,
+          "score": 6.4922590255737305
+        },
+        {
+          "document_id": 16408.0,
+          "score": 6.4733099937438965
+        },
+        {
+          "document_id": 554298.0,
+          "score": 6.465400695800781
+        },
+        {
+          "document_id": 110413.0,
+          "score": 6.433945655822754
+        },
+        {
+          "document_id": 185894.0,
+          "score": 6.42057466506958
+        },
+        {
+          "document_id": 399734.0,
+          "score": 6.41871976852417
+        },
+        {
+          "document_id": 513808.0,
+          "score": 6.412217140197754
+        },
+        {
+          "document_id": 38987.0,
+          "score": 6.409124851226807
+        }
+      ],
+      "lexical_hits": [
+        11341,
+        591850,
+        488176,
+        124274,
+        9710,
+        283156,
+        141350,
+        141595,
+        263773,
+        353328,
+        144431,
+        148786
+      ],
+      "merged_document_ids": [],
+      "resolved_document_ids": [],
+      "locally_selected_chunks": [],
+      "reranker_input_chunks": [
+        "41/2015/TT-BTNMT, Điều 16, Khoản 6",
+        "28-TC/TCT",
+        "2098/BTNMT-TCMT",
+        "28-TC/TCT",
+        "28-TC/TCT",
+        "14/VBHN-BTNMT, Điều 37, Khoản 3",
+        "41/2015/TT-BTNMT, Điều 16, Khoản 6",
+        "41/2015/TT-BTNMT, Điều 16, Khoản 6",
+        "41/2015/TT-BTNMT, Điều 16, Khoản 6",
+        "28-TC/TCT",
+        "14/VBHN-BTNMT, Điều 37, Khoản 1",
+        "110-HĐBT, Điều 17, Khoản 1",
+        "14/VBHN-BTNMT, Điều 37, Khoản 1",
+        "2598/TCMT-KSON",
+        "14/VBHN-BTNMT, Điều 12, Khoản 4",
+        "5852/TCT-PC",
+        "10149/CT-TTHT",
+        "2598/TCMT-KSON",
+        "3242/BCT-HC",
+        "2098/BTNMT-TCMT",
+        "110-HĐBT, Điều 21",
+        "2598/TCMT-KSON",
+        "3242/BCT-HC",
+        "4847/TCT-PCCS"
+      ],
+      "reranker_output_chunks": [
+        {
+          "citation": "2098/BTNMT-TCMT",
+          "score": 46.87411
+        },
+        {
+          "citation": "3242/BCT-HC",
+          "score": 46.797607
+        },
+        {
+          "citation": "28-TC/TCT",
+          "score": 46.743126
+        },
+        {
+          "citation": "41/2015/TT-BTNMT, Điều 16, Khoản 6",
+          "score": 46.674385
+        },
+        {
+          "citation": "2598/TCMT-KSON",
+          "score": 46.610138
+        },
+        {
+          "citation": "28-TC/TCT",
+          "score": 46.562622
+        }
+      ],
+      "final_evidence_chunks": [
+        "2098/BTNMT-TCMT",
+        "3242/BCT-HC",
+        "28-TC/TCT"
+      ]
+    },
+    "latency": {
+      "t_rewrite": 0.0,
+      "t_retrieval": 4.0341,
+      "t_total": 4.0341,
+      "t_hybrid": 0.8284,
+      "t_lexical": 1.0843,
+      "t_resolve_chunk": 0.2353,
+      "t_candidate": 0.0114,
+      "t_rerank": 2.701
+    },
+    "metrics": {
+      "has_gold_labels": false,
+      "skip_reason": "missing_gold_label"
+    },
+    "error": null
+  },
+  {
+    "case_id": "case_003",
+    "question": "Sự khác biệt cơ bản về tính chất áp dụng giữa quy chuẩn kỹ thuật môi trường và tiêu chuẩn môi trường là gì?",
+    "question_type": "multi-hop",
+    "answerable": true,
+    "query_used": "Sự khác biệt cơ bản về tính chất áp dụng giữa quy chuẩn kỹ thuật môi trường và tiêu chuẩn môi trường là gì?",
+    "original_query": "Sự khác biệt cơ bản về tính chất áp dụng giữa quy chuẩn kỹ thuật môi trường và tiêu chuẩn môi trường là gì?",
+    "rewritten_query": null,
+    "status": "ok",
+    "retrieved_evidence": [
+      {
+        "document_id": 694420,
+        "document_number": "07/2026/TT-BQP",
+        "title": "Thông tư 07/2026/TT-BQP ban hành, sửa đổi Quy chuẩn kỹ thuật quốc gia và Danh mục tiêu chuẩn kỹ thuật mật mã áp dụng bắt buộc trong lĩnh vực mật mã dân sự do Bộ trưởng Bộ Quốc phòng ban hành",
+        "source_url": "https://thuvienphapluat.vn/van-ban/Cong-nghe-thong-tin/Thong-tu-07-2026-TT-BQP-sua-doi-Quy-chuan-ky-thuat-quoc-gia-mat-ma-ap-dung-bat-buoc-dan-su-694420.aspx",
+        "citation": "07/2026/TT-BQP, Điều 4, Khoản 2",
+        "article": "Điều 4",
+        "clause": "2",
+        "text": "sự thuộc nhóm bảo mật dữ liệu lưu giữ là cần thiết để khắc phục các hạn chế, nâng cao chất lượng sản phẩm MMDS, đảm bảo an toàn và đồng bộ với các văn bản pháp luật liên quan. Quy chuẩn sửa đổi đáp ứng yêu cầu thực tiễn, phù hợp với tiến bộ khoa học kỹ thuật, thúc đẩy hội nhập quốc tế, nâng cao năng lực cạnh tranh của doanh nghiệp Việt Nam và bảo vệ lợi ích người tiêu dùng, góp phần xây dựng hệ thống tiêu chuẩn hóa bền vững theo Luật Tiêu chuẩn và Quy chuẩn kỹ thuật. 2.2 Tình hình tiêu chuẩn hóa tại Việt Nam Quy chuẩn kỹ thuật quốc gia trong lĩnh vực mật mã dân sự | TT | Ký hiệu | Tên quy chuẩn | Ghi chú | ||||| | 1 | QCVN 4 : 2016/BQP | Quy chuẩn kỹ thuật quốc gia về mã hóa dữ liệu sử dụng trong lĩnh vực ngân hàng | Ban hành kèm theo Thông tư 161/2016/TT-BQP ngày 21/10/2016 | | 2 | QCVN 5 : 2016/BQP | Quy chuẩn kỹ thuật quốc gia về chữ ký số sử dụng trong lĩnh vực ngân hàng | | | 3 | QCVN 6 : 2016/BQP | Quy chuẩn kỹ thuật quốc gia về quản",
+        "token_count": 220,
+        "score": null
+      },
+      {
+        "document_id": 580121,
+        "document_number": "70/2025/QH15",
+        "title": "Luật Tiêu chuẩn và quy chuẩn kỹ thuật sửa đổi 2025",
+        "source_url": "https://thuvienphapluat.vn/van-ban/Linh-vuc-khac/Luat-Tieu-chuan-va-quy-chuan-ky-thuat-sua-doi-2025-so-70-2025-QH15-580121.aspx",
+        "citation": "70/2025/QH15, Điều 21, Khoản 1",
+        "article": "Điều 21",
+        "clause": "1",
+        "text": "Điều 21. Xuất bản và phát hành tiêu chuẩn 1. Nguyên tắc xây dựng quy chuẩn kỹ thuật bao gồm: a) Mỗi sản phẩm, hàng hóa, dịch vụ, quá trình, môi trường hoặc đối tượng khác trong hoạt động kinh tế - xã hội chỉ được điều chỉnh bởi một quy chuẩn kỹ thuật quốc gia thống nhất trên phạm vi toàn quốc, trừ trường hợp pháp luật có quy định khác; b) Phù hợp thực tiễn Việt Nam, thông lệ quốc tế; bảo đảm tính thống nhất, đồng bộ trong hệ thống pháp luật và giữa các lĩnh vực quản lý nhà nước; bảo đảm tính khả thi, hiệu quả và đồng bộ với hoạt động đánh giá sự phù hợp; c) Bảo đảm sự tham gia của cơ quan, tổ chức, hiệp hội, doanh nghiệp, cá nhân là đối tượng chịu sự tác động của quy chuẩn kỹ thuật; d) Ưu tiên quy định các yêu cầu kỹ thuật dựa trên tính năng của sản phẩm, hàng hóa; hạn chế quy định các yêu cầu mang tính mô tả hoặc thiết kế chi tiết; đ) Quy chuẩn kỹ thuật có thể viện dẫn đến quy chuẩn kỹ thuật khác khi cần thiết; e) Quy chuẩn kỹ thuật địa phương không quy định các yêu cầu khác cho cùng",
+        "token_count": 220,
+        "score": null
+      },
+      {
+        "document_id": 479204,
+        "document_number": "283/KH-UBND",
+        "title": "Kế hoạch 283/KH-UBND năm 2020 xây dựng Quy chuẩn kỹ thuật địa phương về chất lượng nước sạch sử dụng cho mục đích sinh hoạt áp dụng trên địa bàn tỉnh Thừa Thiên Huế",
+        "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Ke-hoach-283-KH-UBND-2020-xay-dung-Quy-chuan-ky-thuat-ve-chat-luong-nuoc-sach-Hue-479204.aspx",
+        "citation": "283/KH-UBND",
+        "article": null,
+        "clause": null,
+        "text": "xã hội của tỉnh. 2. Yêu cầu: - Bảo đảm sự phù hợp với các quy định của Luật Tiêu chuẩn và Quy chuẩn kỹ thuật và các văn bản quy phạm pháp luật khác có liên quan. - Quy chuẩn kỹ thuật địa phương phải dựa trên nền tảng các tiêu chuẩn quốc gia, Quy chuẩn kỹ thuật quốc gia và nghiêm ngặt hơn so với Quy chuẩn kỹ thuật quốc gia nhằm đáp ứng yêu cầu đảm bảo chất lượng nguồn nước phục vụ cộng đồng trong thời đại công nghiệp hóa, hiện đại hóa. II. NỘI DUNG 1. Mục tiêu xây dựng kế hoạch: - Xây dựng quy chuẩn kỹ thuật địa phương về chất lượng nước sạch sử dụng cho mục đích sinh hoạt theo đúng quy định của Thông tư 41/2018/TT-BYT. - Quy chuẩn kỹ thuật địa phương xây dựng đáp ứng phù hợp điều kiện thực tế nguồn nước và hiện trạng cấp nước của địa phương. - Quy chuẩn kỹ thuật địa phương là cơ sở cho việc giám sát chất lượng nước, đảm bảo an toàn sức khỏe cho người sử dụng. III. PHƯƠNG PHÁP THỰC HIỆN 1. Các chỉ tiêu giám sát chất lượng nước của Quy chuẩn kỹ thuật địa phương được lựa chọn sẽ căn cứ trên: - Quy",
+        "token_count": 220,
+        "score": null
+      }
+    ],
+    "stage_trace": {
+      "pinecone_hits": [
+        {
+          "document_id": 330327.0,
+          "score": 7.677145957946777
+        },
+        {
+          "document_id": 580121.0,
+          "score": 7.601864337921143
+        },
+        {
+          "document_id": 127684.0,
+          "score": 7.492125511169434
+        },
+        {
+          "document_id": 57781.0,
+          "score": 7.4661545753479
+        },
+        {
+          "document_id": 238636.0,
+          "score": 7.434157371520996
+        },
+        {
+          "document_id": 410275.0,
+          "score": 7.415805816650391
+        },
+        {
+          "document_id": 424601.0,
+          "score": 7.396805763244629
+        },
+        {
+          "document_id": 123242.0,
+          "score": 7.382037162780762
+        },
+        {
+          "document_id": 265204.0,
+          "score": 7.369839668273926
+        },
+        {
+          "document_id": 457853.0,
+          "score": 7.368805408477783
+        },
+        {
+          "document_id": 483795.0,
+          "score": 7.347859859466553
+        },
+        {
+          "document_id": 403504.0,
+          "score": 7.312049865722656
+        },
+        {
+          "document_id": 368405.0,
+          "score": 7.176937103271484
+        },
+        {
+          "document_id": 670919.0,
+          "score": 7.174643516540527
+        },
+        {
+          "document_id": 315834.0,
+          "score": 7.124427795410156
+        },
+        {
+          "document_id": 288402.0,
+          "score": 7.112317085266113
+        },
+        {
+          "document_id": 127676.0,
+          "score": 7.019537925720215
+        },
+        {
+          "document_id": 127682.0,
+          "score": 7.008584022521973
+        },
+        {
+          "document_id": 127685.0,
+          "score": 6.98645544052124
+        },
+        {
+          "document_id": 127681.0,
+          "score": 6.985824108123779
+        },
+        {
+          "document_id": 479204.0,
+          "score": 6.983839511871338
+        },
+        {
+          "document_id": 39346.0,
+          "score": 6.977687358856201
+        },
+        {
+          "document_id": 54148.0,
+          "score": 6.960217475891113
+        },
+        {
+          "document_id": 127683.0,
+          "score": 6.959232330322266
+        }
+      ],
+      "lexical_hits": [
+        59299,
+        401774,
+        694420,
+        127814,
+        437348,
+        528005,
+        449808,
+        400329,
+        479204,
+        286959,
+        554644,
+        588676
+      ],
+      "merged_document_ids": [],
+      "resolved_document_ids": [],
+      "locally_selected_chunks": [],
+      "reranker_input_chunks": [
+        "70/2025/QH15, Điều 7a, Khoản 1",
+        "07/2026/TT-BQP, Điều 4, Khoản 2",
+        "10/2007/TT-BTNMT",
+        "07/2026/TT-BQP, Điều 4, Khoản 5",
+        "70/2025/QH15, Điều 7a, Khoản 2",
+        "07/2026/TT-BQP, Điều 4, Khoản 2",
+        "07/2026/TT-BQP, Điều 4, Khoản 2",
+        "106/KH-UBND, Điều 10, Khoản 8",
+        "70/2025/QH15, Điều 21, Khoản 1",
+        "70/2025/QH15, Điều 7a, Khoản 1",
+        "55/2014/QH13, Điều 147, Khoản 1",
+        "19/VBHN-VPQH, Điều 147, Khoản 1",
+        "13/VBHN-VPQH, Điều 147, Khoản 1",
+        "13/VBHN-VPQH, Điều 147, Khoản 1",
+        "47/2018/TT-BCT, Điều 2, Khoản 1",
+        "1596/QĐ-BKHCN, Điều 4, Khoản 3",
+        "25/2020/TT-BQP, Điều 5, Khoản 1",
+        "283/KH-UBND",
+        "283/KH-UBND",
+        "10/2007/TT-BTNMT",
+        "283/KH-UBND",
+        "96/2023/TT-BQP, Điều 3",
+        "16/2018/TT-BTNMT, Điều 14, Khoản 3",
+        "96/2023/TT-BQP, Điều 3"
+      ],
+      "reranker_output_chunks": [
+        {
+          "citation": "07/2026/TT-BQP, Điều 4, Khoản 2",
+          "score": 40.91208
+        },
+        {
+          "citation": "70/2025/QH15, Điều 21, Khoản 1",
+          "score": 40.613262
+        },
+        {
+          "citation": "283/KH-UBND",
+          "score": 40.604603
+        },
+        {
+          "citation": "16/2018/TT-BTNMT, Điều 14, Khoản 3",
+          "score": 40.5563
+        },
+        {
+          "citation": "283/KH-UBND",
+          "score": 40.511627
+        },
+        {
+          "citation": "1596/QĐ-BKHCN, Điều 4, Khoản 3",
+          "score": 40.43958
+        }
+      ],
+      "final_evidence_chunks": [
+        "07/2026/TT-BQP, Điều 4, Khoản 2",
+        "70/2025/QH15, Điều 21, Khoản 1",
+        "283/KH-UBND"
+      ]
+    },
+    "latency": {
+      "t_rewrite": 0.0,
+      "t_retrieval": 6.0754,
+      "t_total": 6.0754,
+      "t_hybrid": 1.2574,
+      "t_lexical": 0.668,
+      "t_resolve_chunk": 1.2889,
+      "t_candidate": 0.0168,
+      "t_rerank": 3.5033
+    },
+    "metrics": {
+      "has_gold_labels": false,
+      "skip_reason": "missing_gold_label"
+    },
+    "error": null
+  },
+  {
+    "case_id": "case_004",
+    "question": "Thời hạn cụ thể để thực hiện việc đăng ký môi trường đối với các cơ sở sản xuất mới thành lập là bao nhiêu ngày?",
+    "question_type": "unanswerable",
+    "answerable": false,
+    "query_used": "Thời hạn cụ thể để thực hiện việc đăng ký môi trường đối với các cơ sở sản xuất mới thành lập là bao nhiêu ngày?",
+    "original_query": "Thời hạn cụ thể để thực hiện việc đăng ký môi trường đối với các cơ sở sản xuất mới thành lập là bao nhiêu ngày?",
+    "rewritten_query": null,
+    "status": "ok",
+    "retrieved_evidence": [
+      {
+        "document_id": 68617,
+        "document_number": "2667/TCT-CS",
+        "title": "Công văn số 2667/TCT-CS về việc xác định ưu đãi thuế Thu nhập doanh nghiệp của chi nhánh do Tổng cục Thuế ban hành",
+        "source_url": "https://thuvienphapluat.vn/cong-van/Doanh-nghiep/Cong-van-2667-TCT-CS-xac-dinh-uu-dai-thue-TNDN-cua-chi-nhanh-68617.aspx",
+        "citation": "2667/TCT-CS",
+        "article": null,
+        "clause": null,
+        "text": "3 Điều 34 Nghị định này và việc miễn, giảm thuế quy định tại Điều này chỉ thực hiện đối với cơ sở kinh doanh mới thành lập hạch toán kinh tế độc lập và đăng ký nộp thuế thu nhập doanh nghiệp theo kê khai”. Tại điểm 2 Mục IV Phần E Thông tư số 134/2007/TT-BTC ngày 23/11/2007 của Bộ Tài chính về thuế TNDN hướng dẫn: “Cơ sở kinh doanh đang hoạt động có đầu tư lắp đặt dây chuyền sản xuất mới, mở rộng quy mô, đổi mới công nghệ, cải thiện môi trường sinh thái, nâng cao năng lực sản xuất được miễn thuế, giảm thuế TNDN cho phần thu nhập tăng thêm do đầu tư mang lại… Thời gian miễn thuế, giảm thuế đối với dự án đầu tư xây dựng dây chuyền sản xuất mới, mở rộng quy mô, đổi mới công nghệ, cải thiện môi trường sinh thái, nâng cao năng lực sản xuất được tính từ năm dự án đầu tư hoàn thành đưa vào sản xuất, kinh doanh có thu nhập. Đối với những dự án đầu tư có thời gian thực hiện dự án kéo dài và chia ra thành nhiều hạng mục đầu tư thì cơ sở kinh doanh có thể lựa chọn thời gian tính miễn thuế, giảm",
+        "token_count": 220,
+        "score": null
+      },
+      {
+        "document_id": 82216,
+        "document_number": "4376/TCT-CS",
+        "title": "Công văn số 4376/TCT-CS về việc ưu đãi đầu tư do Tổng cục Thuế ban hành",
+        "source_url": "https://thuvienphapluat.vn/cong-van/Doanh-nghiep/Cong-van-4376-TCT-CS-uu-dai-dau-tu-82216.aspx",
+        "citation": "4376/TCT-CS",
+        "article": null,
+        "clause": null,
+        "text": "trung và dài hạn để tiến hành các hoạt động đầu tư trên địa bàn cụ thể, trong khoảng thời gian xác định\". Tại điểm 3 Điều 50 Luật Đầu tư nêu trên quy định: \"3. Nhà đầu tư trong nước có dự án đầu tư gắn với việc thành lập tổ chức kinh tế thì thực hiện đăng ký kinh doanh theo quy định của Luật doanh nghiệp, pháp luật có liên quan và thực hiện thủ tục đầu tư theo quy định của Luật này\". Khi cơ sở sản xuất mới đi vào hoạt động phải thoả mãn điều kiện thực hiện đăng ký kinh doanh theo quy định của Luật doanh nghiệp, pháp luật có liên quan. Khi thực hiện đăng ký kinh doanh, nhà đầu tư phải có dự án đầu tư vào hoạt động sản xuất gắn với việc thành lập. Do đó, trường hợp \"cơ sở sản xuất mới thành lập\" theo điểm 1 Mục IV phần E Thông tư số 134/2007/TT-BTC nêu trên đã bao gồm dự án đầu tư gắn với việc thành lập. 3) Công tác quản lý thuế: Trường hợp công ty đăng ký thuế và nộp thuế tại tỉnh Cà Mau có dự án đầu tư tại tỉnh Kiên Giang, theo ý kiến của Cục thuế Cà Mau trường",
+        "token_count": 220,
+        "score": null
+      },
+      {
+        "document_id": 232044,
+        "document_number": "3048/BYT-TB-CT",
+        "title": "Công văn 3048/BYT-TB-CT năm 2014 hướng dẫn tạm thời việc gia hạn số đăng ký, thời hạn nộp hồ sơ đăng ký lại sinh phẩm chẩn đoán invitro do Bộ Y tế ban hành",
+        "source_url": "https://thuvienphapluat.vn/cong-van/The-thao-Y-te/Cong-van-3048-BYT-TB-CT-nam-2014-gia-han-so-dang-ky-ho-so-dang-ky-lai-sinh-pham-chan-doan-invitro-232044.aspx",
+        "citation": "3048/BYT-TB-CT",
+        "article": null,
+        "clause": null,
+        "text": "sẽ xem xét cho phép gia hạn hiệu lực số đăng ký đối với sinh phẩm chẩn đoán invitro đã hết hạn số đăng ký nếu đáp ứng tất cả các điều kiện sau đây: a) Đã nộp hồ sơ đăng ký lại tại Bộ Y tế trước ngày hết hạn số đăng ký cũ nhưng chưa được cấp lại số đăng ký; b) Có thông báo trúng thầu của các cơ sở khám bệnh, chữa bệnh trước ngày hết hạn số đăng ký mà chưa được cấp lại số đăng ký mới; c) Có hồ sơ đề nghị gia hạn hiệu lực số đăng ký của đơn vị đăng ký sản xuất, lưu hành thuốc theo quy định tại Khoản 2, Mục I công văn này. 2. Hồ sơ đề nghị gia hạn hiệu lực số đăng ký gồm: a) Công văn đề nghị gia hạn hiệu lực số đăng ký và nêu rõ lý do; b) Bản gốc hoặc bản sao có công chứng hợp lệ: - Thông báo trúng thầu trong thời hạn 06 tháng kể từ ngày có thông báo đối với các cơ sở khám bệnh, chữa bệnh tổ chức đấu thầu 06 tháng/lần hoặc trong thời hạn 01 năm kể từ ngày có thông báo đối với các cơ sở tổ chức đấu thầu",
+        "token_count": 220,
+        "score": null
+      }
+    ],
+    "stage_trace": {
+      "pinecone_hits": [
+        {
+          "document_id": 234977.0,
+          "score": 8.11268138885498
+        },
+        {
+          "document_id": 218982.0,
+          "score": 7.46769905090332
+        },
+        {
+          "document_id": 286232.0,
+          "score": 7.455692291259766
+        },
+        {
+          "document_id": 293213.0,
+          "score": 7.433894157409668
+        },
+        {
+          "document_id": 178388.0,
+          "score": 7.399077415466309
+        },
+        {
+          "document_id": 313304.0,
+          "score": 7.349626064300537
+        },
+        {
+          "document_id": 107648.0,
+          "score": 7.346860885620117
+        },
+        {
+          "document_id": 132764.0,
+          "score": 7.321022987365723
+        },
+        {
+          "document_id": 271191.0,
+          "score": 7.308377742767334
+        },
+        {
+          "document_id": 629586.0,
+          "score": 7.213308811187744
+        },
+        {
+          "document_id": 297247.0,
+          "score": 7.212798118591309
+        },
+        {
+          "document_id": 82216.0,
+          "score": 7.209922790527344
+        },
+        {
+          "document_id": 68617.0,
+          "score": 7.203466415405273
+        },
+        {
+          "document_id": 48003.0,
+          "score": 7.169219017028809
+        },
+        {
+          "document_id": 32514.0,
+          "score": 7.168134689331055
+        },
+        {
+          "document_id": 14173.0,
+          "score": 7.132018566131592
+        },
+        {
+          "document_id": 2971.0,
+          "score": 7.111200332641602
+        },
+        {
+          "document_id": 126525.0,
+          "score": 7.109222412109375
+        },
+        {
+          "document_id": 39245.0,
+          "score": 7.107483863830566
+        },
+        {
+          "document_id": 321353.0,
+          "score": 7.098004341125488
+        },
+        {
+          "document_id": 32441.0,
+          "score": 7.095118045806885
+        },
+        {
+          "document_id": 398107.0,
+          "score": 7.083089828491211
+        },
+        {
+          "document_id": 148781.0,
+          "score": 7.08008337020874
+        },
+        {
+          "document_id": 85734.0,
+          "score": 7.078620433807373
+        }
+      ],
+      "lexical_hits": [
+        208853,
+        232044,
+        313304,
+        35986,
+        342666,
+        13278,
+        275533,
+        646691,
+        488987,
+        648554,
+        665080,
+        318608
+      ],
+      "merged_document_ids": [],
+      "resolved_document_ids": [],
+      "locally_selected_chunks": [],
+      "reranker_input_chunks": [
+        "2577/BYT-QLD",
+        "437/BTC-TCHQ",
+        "437/BTC-TCHQ",
+        "11/2016/QĐ-UBND, Điều 6, Khoản 3",
+        "11/2016/QĐ-UBND, Điều 6, Khoản 2",
+        "8104/TNMT-TTĐK",
+        "8104/TNMT-TTĐK",
+        "4376/TCT-CS",
+        "1532/STC-GTĐT",
+        "1532/STC-GTĐT",
+        "11/2016/QĐ-UBND, Điều 6, Khoản 2",
+        "5890/BYT-QLD",
+        "3048/BYT-TB-CT",
+        "2667/TCT-CS",
+        "1532/STC-GTĐT",
+        "23/2025/QĐ-UBND, Điều 14, Khoản 1",
+        "5890/BYT-QLD",
+        "8104/TNMT-TTĐK",
+        "3048/BYT-TB-CT",
+        "5890/BYT-QLD",
+        "5890/BYT-QLD",
+        "3309/BYT-TB-CT",
+        "1532/STC-GTĐT",
+        "3048/BYT-TB-CT"
+      ],
+      "reranker_output_chunks": [
+        {
+          "citation": "2667/TCT-CS",
+          "score": 43.028366
+        },
+        {
+          "citation": "4376/TCT-CS",
+          "score": 42.857033
+        },
+        {
+          "citation": "3048/BYT-TB-CT",
+          "score": 42.799427
+        },
+        {
+          "citation": "8104/TNMT-TTĐK",
+          "score": 42.790195
+        },
+        {
+          "citation": "8104/TNMT-TTĐK",
+          "score": 42.75048
+        },
+        {
+          "citation": "8104/TNMT-TTĐK",
+          "score": 42.740723
+        }
+      ],
+      "final_evidence_chunks": [
+        "2667/TCT-CS",
+        "4376/TCT-CS",
+        "3048/BYT-TB-CT"
+      ]
+    },
+    "latency": {
+      "t_rewrite": 0.0,
+      "t_retrieval": 4.8947,
+      "t_total": 4.8947,
+      "t_hybrid": 0.7983,
+      "t_lexical": 0.4509,
+      "t_resolve_chunk": 0.1584,
+      "t_candidate": 0.0108,
+      "t_rerank": 3.9248
+    },
+    "metrics": {
+      "has_gold_labels": false,
+      "skip_reason": "missing_gold_label"
+    },
+    "error": null
+  },
+  {
+    "case_id": "case_005",
+    "question": "Hạn ngạch phát thải khí nhà kính được tính theo đơn vị cụ thể nào?",
+    "question_type": "factoid",
+    "answerable": true,
+    "query_used": "Hạn ngạch phát thải khí nhà kính được tính theo đơn vị cụ thể nào?",
+    "original_query": "Hạn ngạch phát thải khí nhà kính được tính theo đơn vị cụ thể nào?",
+    "rewritten_query": null,
+    "status": "ok",
+    "retrieved_evidence": [
+      {
+        "document_id": 625021,
+        "document_number": "119/2025/NĐ-CP",
+        "title": "Nghị định 119/2025/NĐ-CP sửa đổi Nghị định 06/2022/NĐ-CP quy định giảm nhẹ phát thải khí nhà kính và bảo vệ tầng ô-dôn",
+        "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Nghi-dinh-119-2025-ND-CP-sua-doi-Nghi-dinh-06-2022-ND-CP-giam-nhe-phat-thai-khi-nha-kinh-625021.aspx",
+        "citation": "119/2025/NĐ-CP, Điều 3, Khoản 2",
+        "article": "Điều 3",
+        "clause": "2",
+        "text": "Lượng phát thải khí nhà kính trung bình trên một đơn vị sản phẩm được xác định trên cơ sở lượng phát thải khí nhà kính trên đơn vị tính sản phẩm, bao gồm kWh điện đối với nhà máy nhiệt điện; tấn thép thô đối với cơ sở sản xuất sắt thép; tấn clinker đối với cơ sở sản xuất xi măng. Hạn ngạch phát thải khí nhà kính phân bổ cho cơ sở được tính theo công thức sau: Trong đó: Aa,y: Hạn ngạch phát thải khí nhà kính phân bổ cho cơ sở a trong năm y (tCO2tđ). Pa,(y-1;y-2;y-3): Sản lượng trung bình của cơ sở a sản xuất trong năm y-1, y-2, y-3 (đơn vị tính sản phẩm, như: kWh điện đối với nhà máy nhiệt điện; tấn thép thô đối với cơ sở sản xuất sắt thép; tấn clinker đối với cơ sở sản xuất xi măng…). B: Lượng phát thải khí nhà kính trung bình trên một đơn vị sản phẩm của các cơ sở thuộc lĩnh vực (cơ sở 1 đến cơ sở n) được phân bổ hạn ngạch (tCO2tđ/một đơn vị sản phẩm), được tính theo công thức như sau: Trong đó: E (y-1;y-2;y-3): Phát thải trung bình của cơ sở a trong năm y-1, y-2, y-3 (tấn CO2tđ) được xác định",
+        "token_count": 220,
+        "score": null
+      },
+      {
+        "document_id": 597750,
+        "document_number": "256/TCT-CS",
+        "title": "Công văn 256/TCT-CS năm 2024 thuế giá trị gia tăng chuyển nhượng tín chỉ giảm phát thải tự nguyện (VER) do Tổng cục Thuế ban hành",
+        "source_url": "https://thuvienphapluat.vn/cong-van/Thue-Phi-Le-Phi/Cong-van-256-TCT-CS-2024-thue-gia-tri-gia-tang-chuyen-nhuong-giam-phat-thai-tu-nguyen-597750.aspx",
+        "citation": "256/TCT-CS",
+        "article": null,
+        "clause": null,
+        "text": "đo lường của tín chỉ VER có tương tự như đơn vị đo lường của tín chỉ CERs theo quy định tại khoản 3 Điều 2 Quyết định số 130/2007/QĐ-TTg hay không? Hoạt động chuyển nhượng tín chỉ VER chưa được quy định cụ thể trong các văn bản quy phạm, như vậy hoạt động này có thuộc trường hợp không phải kê khai, tính nộp thuế GTGT hay không? 2. Căn cứ pháp lý: - Tại Điều 18 Nghị định số 06/2022/NĐ-CP ngày 07/01/2022 của Chính phủ quy định giảm nhẹ phát thải khí nhà kính và bảo vệ tầng ô-dôn, quy định: “Điều 18. Xác nhận tín chỉ các-bon, hạn ngạch phát thải khí nhà kính được giao dịch trên sàn giao dịch của thị trường các-bon trong nước 1. Bộ Tài nguyên và Môi trường xác nhận tín chỉ các-bon, hạn ngạch phát thải khí nhà kính được giao dịch trên sàn, bao gồm: a) Lượng tín chỉ các-bon thu được từ chương trình, dự án theo cơ chế trao đổi, bù trừ tín chỉ các-bon trong nước và quốc tế phù hợp với quy định của pháp luật và điều ước quốc tế mà nước Cộng hòa xã hội chủ nghĩa Việt Nam là thành viên; b) Hạn ngạch phát thải khí nhà kính được phân",
+        "token_count": 220,
+        "score": null
+      },
+      {
+        "document_id": 695619,
+        "document_number": "11/2026/TT-BNNMT",
+        "title": "Thông tư 11/2026/TT-BNNMT quy định quản lý, vận hành Hệ thống đăng ký quốc gia về hạn ngạch phát thải khí nhà kính và tín chỉ các-bon do Bộ trưởng Bộ Nông nghiệp và Môi trường ban hành",
+        "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Thong-tu-11-2026-TT-BNNMT-quan-ly-He-thong-dang-ky-quoc-gia-ve-han-ngach-phat-thai-khi-nha-kinh-695619.aspx",
+        "citation": "11/2026/TT-BNNMT, Điều 17, Khoản 2",
+        "article": "Điều 17",
+        "clause": "2",
+        "text": "Điều 17. Chuyển quyền sở hữu hạn ngạch phát thải khí nhà kính, tín chỉ các-bon ngoài hệ thống giao dịch các-bon 2. Việc chuyển quyền sở hữu hạn ngạch phát thải khí nhà kính, tín chỉ các- bon ngoài hệ thống giao dịch các-bon được thực hiện theo nguyên tắc sau: a) Hạn ngạch phát thải khí nhà kính, tín chỉ các-bon được đề nghị chuyển quyền sở hữu phải nằm trong tiểu khoản Đăng ký chung; b) Cơ quan, tổ chức chuyển quyền sở hữu hạn ngạch phát thải khí nhà kính, tín chỉ các-bon ngoài hệ thống giao dịch các-bon chịu trách nhiệm trước pháp luật về các vấn đề sau: Tính chính xác, trung thực của hồ sơ chuyển quyền sở hữu hạn ngạch phát thải khí nhà kính, tín chỉ các-bon ngoài hệ thống giao dịch các-bon; Các vi phạm xảy ra trước và sau khi nộp hồ sơ chuyển quyền sở hữu hạn ngạch phát thải khí nhà kính, tín chỉ các-bon ngoài hệ thống giao dịch các-bon; Các tranh chấp, thiệt hại phát sinh từ việc thi hành bản án, quyết định của Tòa án; quyết định của cơ quan thi hành án; phán quyết, quyết định của trọng tài theo quy định của pháp luật; c) Tổ chức tham gia thực hiện",
+        "token_count": 220,
+        "score": null
+      }
+    ],
+    "stage_trace": {
+      "pinecone_hits": [
+        {
+          "document_id": 657921.0,
+          "score": 4.504594802856445
+        },
+        {
+          "document_id": 597750.0,
+          "score": 4.4815449714660645
+        },
+        {
+          "document_id": 697510.0,
+          "score": 4.39612340927124
+        },
+        {
+          "document_id": 697010.0,
+          "score": 4.28083610534668
+        },
+        {
+          "document_id": 649674.0,
+          "score": 4.249053955078125
+        },
+        {
+          "document_id": 694504.0,
+          "score": 4.241077899932861
+        },
+        {
+          "document_id": 695619.0,
+          "score": 4.131440162658691
+        },
+        {
+          "document_id": 625021.0,
+          "score": 4.121991157531738
+        },
+        {
+          "document_id": 679978.0,
+          "score": 4.105263710021973
+        },
+        {
+          "document_id": 571448.0,
+          "score": 4.003875732421875
+        },
+        {
+          "document_id": 448225.0,
+          "score": 4.001938343048096
+        },
+        {
+          "document_id": 623193.0,
+          "score": 3.9628419876098633
+        },
+        {
+          "document_id": 538941.0,
+          "score": 3.89284610748291
+        },
+        {
+          "document_id": 583578.0,
+          "score": 3.7891712188720703
+        },
+        {
+          "document_id": 583534.0,
+          "score": 3.782585859298706
+        },
+        {
+          "document_id": 638219.0,
+          "score": 3.7604198455810547
+        },
+        {
+          "document_id": 547764.0,
+          "score": 3.7288331985473633
+        },
+        {
+          "document_id": 559595.0,
+          "score": 3.6681532859802246
+        },
+        {
+          "document_id": 641783.0,
+          "score": 3.6629228591918945
+        },
+        {
+          "document_id": 209565.0,
+          "score": 3.6287264823913574
+        },
+        {
+          "document_id": 636941.0,
+          "score": 3.6283907890319824
+        },
+        {
+          "document_id": 662231.0,
+          "score": 3.6196749210357666
+        },
+        {
+          "document_id": 651325.0,
+          "score": 3.6116368770599365
+        },
+        {
+          "document_id": 233201.0,
+          "score": 3.6103744506835938
+        }
+      ],
+      "lexical_hits": [
+        694504,
+        697010,
+        559595,
+        695619,
+        501161,
+        583966,
+        547764,
+        597191,
+        665162,
+        593332,
+        500104,
+        636941
+      ],
+      "merged_document_ids": [],
+      "resolved_document_ids": [],
+      "locally_selected_chunks": [],
+      "reranker_input_chunks": [
+        "11/2026/TT-BNNMT, Điều 9, Khoản 1",
+        "11/2026/TT-BNNMT, Điều 12, Khoản 1",
+        "119/2025/NĐ-CP, Điều 1, Khoản 3",
+        "11/2026/TT-BNNMT, Điều 17, Khoản 2",
+        "06/2022/NĐ-CP, Điều 19, Khoản 3",
+        "119/2025/NĐ-CP, Điều 3, Khoản 2",
+        "256/TCT-CS",
+        "119/2025/NĐ-CP, Điều 1, Khoản 7",
+        "11/2026/TT-BNNMT, Điều 15, Khoản 1",
+        "119/2025/NĐ-CP, Điều 1, Khoản 1",
+        "06/2022/NĐ-CP, Điều 3, Khoản 7",
+        "06/2022/NĐ-CP, Điều 7, Khoản 4",
+        "29/2026/NĐ-CP, Điều 13, Khoản 2",
+        "2287/TCT-CS",
+        "06/2022/NĐ-CP, Điều 10, Khoản 1",
+        "17/2022/TT-BTNMT, Điều 26",
+        "1296/BTNMT-BĐKH",
+        "29/2026/NĐ-CP, Điều 17, Khoản 1",
+        "256/TCT-CS",
+        "423/KH-UBND",
+        "256/TCT-CS",
+        "29/2026/NĐ-CP, Điều 13, Khoản 2",
+        "327/BĐKH-PTCBT",
+        "29/2026/NĐ-CP, Điều 13, Khoản 4"
+      ],
+      "reranker_output_chunks": [
+        {
+          "citation": "119/2025/NĐ-CP, Điều 3, Khoản 2",
+          "score": 27.793867
+        },
+        {
+          "citation": "256/TCT-CS",
+          "score": 27.622158
+        },
+        {
+          "citation": "11/2026/TT-BNNMT, Điều 17, Khoản 2",
+          "score": 27.615458
+        },
+        {
+          "citation": "29/2026/NĐ-CP, Điều 13, Khoản 4",
+          "score": 27.537834
+        },
+        {
+          "citation": "29/2026/NĐ-CP, Điều 13, Khoản 2",
+          "score": 27.492136
+        },
+        {
+          "citation": "2287/TCT-CS",
+          "score": 27.468168
+        }
+      ],
+      "final_evidence_chunks": [
+        "119/2025/NĐ-CP, Điều 3, Khoản 2",
+        "256/TCT-CS",
+        "11/2026/TT-BNNMT, Điều 17, Khoản 2"
+      ]
+    },
+    "latency": {
+      "t_rewrite": 0.0,
+      "t_retrieval": 4.3609,
+      "t_total": 4.3609,
+      "t_hybrid": 0.8086,
+      "t_lexical": 0.3319,
+      "t_resolve_chunk": 0.8312,
+      "t_candidate": 0.0067,
+      "t_rerank": 2.7129
+    },
+    "metrics": {
+      "has_gold_labels": false,
+      "skip_reason": "missing_gold_label"
+    },
+    "error": null
+  }
+]
