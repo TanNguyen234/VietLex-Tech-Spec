@@ -1,0 +1,411 @@
+[
+  {
+    "query": "Theo Luật Bảo vệ môi trường, Giấy phép môi trường được định nghĩa như thế nào?",
+    "group": "Factoid",
+    "expected": "grounded_answer",
+    "cache_hit": false,
+    "input_safe": false,
+    "output_safe": false,
+    "response": "",
+    "contexts": [],
+    "latency": 5.0143442999979015,
+    "queue_latency": 1.0299998393747956e-05,
+    "pipeline_latency": 5.014335599997139,
+    "input_guardrail_latency": 5.013841100000718,
+    "output_guardrail_latency": 0.0,
+    "ragas_latency": 0.0,
+    "judge_provider": "Gemini",
+    "judge_model": "gemini-2.0-flash",
+    "lat_info": {},
+    "retrieval_status": null,
+    "retrieval_diagnostics": {},
+    "gold_context_hit": false,
+    "gold_context_recall": 0.0,
+    "reciprocal_rank": 0.0,
+    "faithfulness": null,
+    "answer_accuracy": null,
+    "context_precision": null,
+    "context_recall": null,
+    "evaluation_status": "Input Guardrail Error",
+    "is_refusal": false,
+    "evaluation_fingerprint": "585d450d659f64eab5b62662637b5b38240e9eb3582762b238ac23df7520459e",
+    "error": "input guardrail unavailable: timeout"
+  },
+  {
+    "query": "Sự khác biệt cơ bản về tính chất áp dụng giữa quy chuẩn kỹ thuật môi trường và tiêu chuẩn môi trường là gì?",
+    "group": "Multi-hop",
+    "expected": "grounded_answer",
+    "cache_hit": false,
+    "input_safe": true,
+    "output_safe": true,
+    "response": "Dựa trên thông tin từ các tài liệu tham khảo, đặc biệt là [10/2007/TT-BTNMT], có thể thấy rằng:\n\n- Quy chuẩn kỹ thuật môi trường và tiêu chuẩn môi trường đều liên quan đến việc đảm bảo chất lượng và kiểm soát chất lượng trong quan trắc môi trường. Tuy nhiên, sự khác biệt cơ bản về tính chất áp dụng giữa chúng không được nêu rõ trong các tài liệu tham khảo cung cấp.\n\n- Theo [10/2007/TT-BTNMT], tiêu chuẩn Việt Nam (TCVN) được sử dụng theo quy định của Luật Bảo vệ môi trường và được hiểu như cụm từ quy chuẩn kỹ thuật về môi trường theo quy định của Luật Tiêu chuẩn và Quy chuẩn kỹ thuật. Điều này cho thấy có sự liên hệ giữa tiêu chuẩn môi trường và quy chuẩn kỹ thuật môi trường, nhưng không làm rõ sự khác biệt về tính chất áp dụng.\n\n- Để xác định sự khác biệt cơ bản về tính chất áp dụng giữa quy chuẩn kỹ thuật môi trường và tiêu chuẩn môi trường, cần tham khảo thêm các văn bản pháp luật cụ thể liên quan đến quy chuẩn kỹ thuật và tiêu chuẩn môi trường, hoặc các hướng dẫn chi tiết từ cơ quan có thẩm quyền.\n\nDo đó, với thông tin hiện có, không đủ dữ liệu để xác định chính xác sự khác biệt cơ bản về tính chất áp dụng giữa quy chuẩn kỹ thuật môi trường và tiêu chuẩn môi trường.",
+    "contexts": [
+      "[19/VBHN-VPQH, Điều 147, Khoản 1]\nNguồn: https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Van-ban-hop-nhat-19-VBHN-VPQH-2018-Luat-Bao-ve-moi-truong-410275.aspx\nTiêu đề: Văn bản hợp nhất 19/VBHN-VPQH năm 2018 hợp nhất Luật Bảo vệ môi trường do Văn phòng Quốc hội ban hành\nĐiều 147. Chi ngân sách nhà nước cho bảo vệ môi trường 1. Chi hoạt động sự nghiệp bảo vệ môi trường gồm: a) Xây dựng chiến lược, quy hoạch, kế hoạch, quy trình kỹ thuật, hướng dẫn kỹ thuật, định mức kinh tế kỹ thuật, quy chuẩn kỹ thuật môi trường, chương trình, đề án về bảo vệ môi trường; b) Thẩm định quy hoạch bảo vệ môi trường, báo cáo đánh giá môi trường chiến lược; c) Hoạt động quan trắc môi trường; xây dựng hệ thống thông tin môi trường và báo cáo môi trường; d) Hỗ trợ công tác thanh tra, kiểm tra; kiểm soát ô nhiễm môi trường, xử lý ô nhiễm môi trường, phòng ngừa, ứng phó và khắc phục sự cố môi trường; quản lý chất thải và bảo tồn đa dạng sinh học; đào tạo, truyền thông về bảo vệ môi trường; phổ biến và đánh giá tình hình thực hiện pháp luật về bảo vệ môi trường; hợp tác quốc tế về bảo vệ môi trường; đ) Các hoạt động quản lý bảo vệ môi trường khác.",
+      "[55/2014/QH13, Điều 147, Khoản 1]\nNguồn: https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-bao-ve-moi-truong-2014-238636.aspx\nTiêu đề: Luật bảo vệ môi trường 2014\nĐiều 147. Chi ngân sách nhà nước cho bảo vệ môi trường 1. Chi hoạt động sự nghiệp bảo vệ môi trường gồm: a) Xây dựng chiến lược, quy hoạch, kế hoạch, quy trình kỹ thuật, hướng dẫn kỹ thuật, định mức kinh tế kỹ thuật, quy chuẩn kỹ thuật môi trường, chương trình, đề án về bảo vệ môi trường; b) Thẩm định quy hoạch bảo vệ môi trường, báo cáo đánh giá môi trường chiến lược; c) Hoạt động quan trắc môi trường; xây dựng hệ thống thông tin môi trường và báo cáo môi trường; d) Hỗ trợ công tác thanh tra, kiểm tra; kiểm soát ô nhiễm môi trường, xử lý ô nhiễm môi trường, phòng ngừa, ứng phó và khắc phục sự cố môi trường; quản lý chất thải và bảo tồn đa dạng sinh học; đào tạo, truyền thông về bảo vệ môi trường; phổ biến và đánh giá tình hình thực hiện pháp luật về bảo vệ môi trường; hợp tác quốc tế về bảo vệ môi trường; đ) Các hoạt động quản lý bảo vệ môi trường khác.",
+      "[10/2007/TT-BTNMT]\nNguồn: https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Thong-tu-10-2007-TT-BTNMT-huong-dan-bao-dam-chat-luong-kiem-soat-chat-luong-quan-trac-moi-truong-57781.aspx\nTiêu đề: Thông tư 10/2007/TT-BTNMT hướng dẫn bảo đảm chất lượng và kiểm soát chất lượng trong quan trắc môi trường do Bộ Tài nguyên và Môi trường ban hành\ntrong quan trắc môi trường là một hệ thống tích hợp các hoạt động quản lý và kỹ thuật trong một tổ chức nhằm bảo đảm cho hoạt động quan trắc môi trường đạt được các tiêu chuẩn chất lượng đã quy định. 2. Kiểm soát chất lượng (Quality Control - viết tắt là QC) trong quan trắc môi trường là việc thực hiện các biện pháp để đánh giá, theo dõi và kịp thời điều chỉnh để đạt được độ chính xác và độ tập trung của các phép đo theo yêu cầu của các tiêu chuẩn chất lượng nhằm bảo đảm cho hoạt động quan trắc môi trường đạt các tiêu chuẩn chất lượng quy định. 3. Tiêu chuẩn Việt Nam (viết tắt là TCVN) trong Thông tư này được sử dụng theo quy định của Luật Bảo vệ môi trường và được hiểu như cụm từ quy chuẩn kỹ thuật về môi trường theo quy định của Luật Tiêu chuẩn và Quy chuẩn kỹ thuật. III. NGUYÊN TẮC BẢO ĐẢM CHẤT LƯỢNG VÀ KIỂM SOÁT CHẤT LƯỢNG TRONG QUAN TRẮC MÔI TRƯỜNG Việc bảo đảm chất lượng và kiểm soát chất lượng phải thực hiện xuyên suốt trong mọi hoạt động quan trắc môi trường và tuân thủ các nguyên tắc sau đây: 1. Trung thực, chính"
+    ],
+    "latency": 25.178304400000343,
+    "queue_latency": 4.9602902000006,
+    "pipeline_latency": 20.216403999998874,
+    "input_guardrail_latency": 0.6340764999986277,
+    "output_guardrail_latency": 3.0839616999983264,
+    "ragas_latency": 0.0,
+    "judge_provider": "Gemini",
+    "judge_model": "gemini-2.0-flash",
+    "lat_info": {
+      "t_rewrite": 2.671,
+      "t_retrieval": 9.789,
+      "t_hybrid": 2.851695,
+      "t_lexical": 0.677667,
+      "t_resolve_chunk": 0.209134,
+      "t_candidate": 0.002112,
+      "t_rerank": 3.386332,
+      "t_llm": 3.888,
+      "t_total": 16.348,
+      "retrieval_status": "ok",
+      "retrieval_diagnostics": {
+        "hybrid_embedding_attempts": 1,
+        "hybrid_embedding_latency": 1.240534,
+        "hybrid_query_attempts": 1,
+        "hybrid_query_latency": 1.610745,
+        "top_documents": [
+          {
+            "document_id": 330327.0,
+            "score": 7.686174392700195
+          },
+          {
+            "document_id": 580121.0,
+            "score": 7.608768939971924
+          },
+          {
+            "document_id": 127684.0,
+            "score": 7.502311706542969
+          },
+          {
+            "document_id": 57781.0,
+            "score": 7.476312160491943
+          },
+          {
+            "document_id": 238636.0,
+            "score": 7.439891338348389
+          },
+          {
+            "document_id": 410275.0,
+            "score": 7.420505046844482
+          },
+          {
+            "document_id": 424601.0,
+            "score": 7.403011322021484
+          },
+          {
+            "document_id": 123242.0,
+            "score": 7.395108699798584
+          },
+          {
+            "document_id": 265204.0,
+            "score": 7.383114337921143
+          },
+          {
+            "document_id": 457853.0,
+            "score": 7.3734331130981445
+          },
+          {
+            "document_id": 483795.0,
+            "score": 7.358224868774414
+          },
+          {
+            "document_id": 403504.0,
+            "score": 7.321724891662598
+          },
+          {
+            "document_id": 368405.0,
+            "score": 7.182781219482422
+          },
+          {
+            "document_id": 670919.0,
+            "score": 7.180462837219238
+          },
+          {
+            "document_id": 315834.0,
+            "score": 7.1344733238220215
+          },
+          {
+            "document_id": 288402.0,
+            "score": 7.124035835266113
+          },
+          {
+            "document_id": 127676.0,
+            "score": 7.029965877532959
+          },
+          {
+            "document_id": 127682.0,
+            "score": 7.018065929412842
+          },
+          {
+            "document_id": 127685.0,
+            "score": 6.995877265930176
+          },
+          {
+            "document_id": 127681.0,
+            "score": 6.995418071746826
+          },
+          {
+            "document_id": 479204.0,
+            "score": 6.9924845695495605
+          },
+          {
+            "document_id": 39346.0,
+            "score": 6.985954761505127
+          },
+          {
+            "document_id": 54148.0,
+            "score": 6.9714202880859375
+          },
+          {
+            "document_id": 127683.0,
+            "score": 6.969252109527588
+          }
+        ],
+        "lexical_document_ids": [
+          59299,
+          127814,
+          23014,
+          150623,
+          183205,
+          240050,
+          401774,
+          86969,
+          97022,
+          574154,
+          139455,
+          249007
+        ],
+        "retrieval_mode": "hybrid_lexical",
+        "candidate_citations": [
+          "70/2025/QH15, Điều 7a, Khoản 1",
+          "70/2025/QH15, Điều 7a, Khoản 1",
+          "10/2007/TT-BTNMT",
+          "55/2014/QH13, Điều 147, Khoản 1",
+          "19/VBHN-VPQH, Điều 147, Khoản 1",
+          "10/2007/TT-BTNMT",
+          "55/2014/QH13, Điều 143, Khoản 3",
+          "19/VBHN-VPQH, Điều 143, Khoản 3",
+          "219/QĐ.UB, Điều 3, Khoản 1",
+          "6980/VPCP-QHQT",
+          "219/QĐ.UB, Điều 3, Khoản 1",
+          "27/2017/TT-BTNMT, Điều 15, Khoản 3"
+        ],
+        "rerank_provider": "qdrant",
+        "rerank_model": "answerdotai/answerai-colbert-small-v1",
+        "rerank_fallback_reason": null,
+        "rerank_attempts": 1,
+        "rerank_input_count": 12,
+        "rerank_output_count": 6,
+        "reranked": [
+          {
+            "citation": "19/VBHN-VPQH, Điều 147, Khoản 1",
+            "score": 38.0887
+          },
+          {
+            "citation": "55/2014/QH13, Điều 147, Khoản 1",
+            "score": 38.06423
+          },
+          {
+            "citation": "10/2007/TT-BTNMT",
+            "score": 37.92802
+          },
+          {
+            "citation": "19/VBHN-VPQH, Điều 143, Khoản 3",
+            "score": 37.853325
+          },
+          {
+            "citation": "70/2025/QH15, Điều 7a, Khoản 1",
+            "score": 37.83971
+          },
+          {
+            "citation": "55/2014/QH13, Điều 143, Khoản 3",
+            "score": 37.827484
+          }
+        ]
+      },
+      "rewritten_query": "Sự khác biệt cơ bản về tính chất áp dụng giữa quy chuẩn kỹ thuật môi trường và tiêu chuẩn môi trường"
+    },
+    "retrieval_status": "ok",
+    "retrieval_diagnostics": {
+      "hybrid_embedding_attempts": 1,
+      "hybrid_embedding_latency": 1.240534,
+      "hybrid_query_attempts": 1,
+      "hybrid_query_latency": 1.610745,
+      "top_documents": [
+        {
+          "document_id": 330327.0,
+          "score": 7.686174392700195
+        },
+        {
+          "document_id": 580121.0,
+          "score": 7.608768939971924
+        },
+        {
+          "document_id": 127684.0,
+          "score": 7.502311706542969
+        },
+        {
+          "document_id": 57781.0,
+          "score": 7.476312160491943
+        },
+        {
+          "document_id": 238636.0,
+          "score": 7.439891338348389
+        },
+        {
+          "document_id": 410275.0,
+          "score": 7.420505046844482
+        },
+        {
+          "document_id": 424601.0,
+          "score": 7.403011322021484
+        },
+        {
+          "document_id": 123242.0,
+          "score": 7.395108699798584
+        },
+        {
+          "document_id": 265204.0,
+          "score": 7.383114337921143
+        },
+        {
+          "document_id": 457853.0,
+          "score": 7.3734331130981445
+        },
+        {
+          "document_id": 483795.0,
+          "score": 7.358224868774414
+        },
+        {
+          "document_id": 403504.0,
+          "score": 7.321724891662598
+        },
+        {
+          "document_id": 368405.0,
+          "score": 7.182781219482422
+        },
+        {
+          "document_id": 670919.0,
+          "score": 7.180462837219238
+        },
+        {
+          "document_id": 315834.0,
+          "score": 7.1344733238220215
+        },
+        {
+          "document_id": 288402.0,
+          "score": 7.124035835266113
+        },
+        {
+          "document_id": 127676.0,
+          "score": 7.029965877532959
+        },
+        {
+          "document_id": 127682.0,
+          "score": 7.018065929412842
+        },
+        {
+          "document_id": 127685.0,
+          "score": 6.995877265930176
+        },
+        {
+          "document_id": 127681.0,
+          "score": 6.995418071746826
+        },
+        {
+          "document_id": 479204.0,
+          "score": 6.9924845695495605
+        },
+        {
+          "document_id": 39346.0,
+          "score": 6.985954761505127
+        },
+        {
+          "document_id": 54148.0,
+          "score": 6.9714202880859375
+        },
+        {
+          "document_id": 127683.0,
+          "score": 6.969252109527588
+        }
+      ],
+      "lexical_document_ids": [
+        59299,
+        127814,
+        23014,
+        150623,
+        183205,
+        240050,
+        401774,
+        86969,
+        97022,
+        574154,
+        139455,
+        249007
+      ],
+      "retrieval_mode": "hybrid_lexical",
+      "candidate_citations": [
+        "70/2025/QH15, Điều 7a, Khoản 1",
+        "70/2025/QH15, Điều 7a, Khoản 1",
+        "10/2007/TT-BTNMT",
+        "55/2014/QH13, Điều 147, Khoản 1",
+        "19/VBHN-VPQH, Điều 147, Khoản 1",
+        "10/2007/TT-BTNMT",
+        "55/2014/QH13, Điều 143, Khoản 3",
+        "19/VBHN-VPQH, Điều 143, Khoản 3",
+        "219/QĐ.UB, Điều 3, Khoản 1",
+        "6980/VPCP-QHQT",
+        "219/QĐ.UB, Điều 3, Khoản 1",
+        "27/2017/TT-BTNMT, Điều 15, Khoản 3"
+      ],
+      "rerank_provider": "qdrant",
+      "rerank_model": "answerdotai/answerai-colbert-small-v1",
+      "rerank_fallback_reason": null,
+      "rerank_attempts": 1,
+      "rerank_input_count": 12,
+      "rerank_output_count": 6,
+      "reranked": [
+        {
+          "citation": "19/VBHN-VPQH, Điều 147, Khoản 1",
+          "score": 38.0887
+        },
+        {
+          "citation": "55/2014/QH13, Điều 147, Khoản 1",
+          "score": 38.06423
+        },
+        {
+          "citation": "10/2007/TT-BTNMT",
+          "score": 37.92802
+        },
+        {
+          "citation": "19/VBHN-VPQH, Điều 143, Khoản 3",
+          "score": 37.853325
+        },
+        {
+          "citation": "70/2025/QH15, Điều 7a, Khoản 1",
+          "score": 37.83971
+        },
+        {
+          "citation": "55/2014/QH13, Điều 143, Khoản 3",
+          "score": 37.827484
+        }
+      ]
+    },
+    "gold_context_hit": true,
+    "gold_context_recall": 0.5,
+    "reciprocal_rank": 0.3333333333333333,
+    "faithfulness": null,
+    "answer_accuracy": null,
+    "context_precision": null,
+    "context_recall": null,
+    "evaluation_status": "Honest Refusal",
+    "is_refusal": true,
+    "evaluation_fingerprint": "585d450d659f64eab5b62662637b5b38240e9eb3582762b238ac23df7520459e",
+    "error": null
+  }
+]

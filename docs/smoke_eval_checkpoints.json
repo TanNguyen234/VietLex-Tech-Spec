@@ -1,0 +1,2264 @@
+[
+  {
+    "query": "Theo Luật Bảo vệ môi trường, Giấy phép môi trường được định nghĩa như thế nào?",
+    "group": "Factoid",
+    "expected": "grounded_answer",
+    "cache_hit": false,
+    "input_safe": true,
+    "output_safe": true,
+    "response": "Dựa trên các tài liệu tham khảo được cung cấp, không có định nghĩa cụ thể về Giấy phép môi trường theo Luật Bảo vệ môi trường. Tuy nhiên, các tài liệu tham khảo cung cấp thông tin về các quy định và thủ tục liên quan đến việc cấp, cấp lại, điều chỉnh, và thu hồi Giấy phép môi trường.\n\nTheo Công văn 509/UBND-NĐ năm 2022, Giấy phép môi trường là một loại giấy phép được cấp cho các dự án đầu tư, cơ sở, khu sản xuất, kinh doanh, dịch vụ tập trung, cụm công nghiệp để đảm bảo rằng họ đáp ứng các tiêu chuẩn và quy định về bảo vệ môi trường.\n\nTuy nhiên, để có định nghĩa chính xác và đầy đủ về Giấy phép môi trường theo Luật Bảo vệ môi trường, cần tham khảo trực tiếp Luật Bảo vệ môi trường hoặc các văn bản pháp luật liên quan khác.\n\nKhông đủ dữ liệu để cung cấp định nghĩa chính xác về Giấy phép môi trường theo Luật Bảo vệ môi trường.",
+    "contexts": [
+      "[509/UBND-NĐ]\nNguồn: https://thuvienphapluat.vn/cong-van/Tai-nguyen-Moi-truong/Cong-van-509-UBND-ND-2022-cap-doi-dieu-chinh-giay-phep-moi-truong-Tan-Phu-Ho-Chi-Minh-543919.aspx\nTiêu đề: Công văn 509/UBND-NĐ năm 2022 thực hiện công tác cấp giấy phép môi trường; cấp đổi, điều chỉnh, cấp lại, tước quyền sử dụng, thu hồi giấy phép môi trường; công tác đăng ký môi trường trên địa bàn quận Tân Phú, thành phố Hồ Chí Minh\nphải được quản lý theo quy định về quản lý chất thải khi đi vào vận hành chính thức. 2. Dự án đầu tư, cơ sở, khu sản xuất, kinh doanh, dịch vụ tập trung, cụm công nghiệp hoạt động trước ngày Luật này có hiệu lực thi hành có tiêu chí về môi trường như đối tượng quy định tại khoản 1 Điều 39 Luật Bảo vệ môi trường. 3. Đối tượng quy định tại khoản 1 Điều 39 Luật Bảo vệ môi trường thuộc trường hợp dự án đầu tư công khẩn cấp theo quy định của pháp luật về đầu tư công được miễn giấy phép môi trường. 2. Hồ sơ đề nghị cấp giấy phép môi trường (theo quy định tại khoản 1 Điều 43 Luật Bảo vệ môi trường và Điều 29 Nghị định số 08/2022/NĐ-CP) Theo quy định tại khoản 1 Điều 43 Luật Bảo vệ môi trường, hồ sơ đề nghị cấp giấy phép môi trường bao gồm: a) Văn bản đề nghị cấp giấy phép môi trường; b) Báo cáo đề xuất cấp giấy phép môi trường; c) Tài liệu pháp lý và kỹ thuật khác của dự án đầu tư, cơ sở, khu sản xuất, kinh doanh, dịch vụ tập trung, cụm công nghiệp. Theo quy định tại khoản 1 Điều",
+      "[509/UBND-NĐ]\nNguồn: https://thuvienphapluat.vn/cong-van/Tai-nguyen-Moi-truong/Cong-van-509-UBND-ND-2022-cap-doi-dieu-chinh-giay-phep-moi-truong-Tan-Phu-Ho-Chi-Minh-543919.aspx\nTiêu đề: Công văn 509/UBND-NĐ năm 2022 thực hiện công tác cấp giấy phép môi trường; cấp đổi, điều chỉnh, cấp lại, tước quyền sử dụng, thu hồi giấy phép môi trường; công tác đăng ký môi trường trên địa bàn quận Tân Phú, thành phố Hồ Chí Minh\nđổi nguồn tiếp nhận nước thải và phương thức xả thải vào nguồn nước có yêu cầu bảo vệ nghiêm ngặt hơn, gửi hồ sơ đề nghị cấp lại giấy phép môi trường trước khi thực hiện việc thay đổi và chỉ được triển khai thực hiện sau khi được cấp giấy phép môi trường. Thời hạn cấp lại giấy phép môi trường: Không quá 20 ngày, kể từ ngày nhận được đầy đủ hồ sơ hợp. 4. Tước quyền sử dụng giấy phép môi trường (theo quy định tại khoản 4 Điều 44 Luật Bảo vệ môi trường) Khi chủ dự án đầu tư, cơ sở thực hiện hành vi vi phạm hành chính trong lĩnh vực bảo vệ môi trường đến mức phải tước quyền sử dụng giấy phép môi trường theo quy định của pháp luật về xử lý vi phạm hành chính. 5. Giấy phép môi trường bị thu hồi (theo quy định tại khoản 5 Điều 44 Luật Bảo vệ môi trường) - Giấy phép cấp không đúng thẩm quyền. - Giấy phép có nội dung trái quy định của pháp luật. III. ĐĂNG KÝ MÔI TRƯỜNG 1. Đối tượng phải đăng ký môi trường (theo quy định tại khoản 1 Điều 49 Luật Bảo vệ môi trường) - Dự án đầu tư có phát",
+      "[36/2022/QĐ-UBND, Điều 2, Khoản 2]\nNguồn: https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Quyet-dinh-36-2022-QD-UBND-uy-quyen-tham-dinh-giay-phep-moi-truong-khai-thac-khoang-san-Hue-526569.aspx\nTiêu đề: Quyết định 36/2022/QĐ-UBND về ủy quyền cho Sở Tài nguyên và Môi trường thực hiện thẩm định Báo cáo đánh giá tác động môi trường; Giấy phép môi trường; Phương án cải tạo, phục hồi môi trường trong hoạt động khai thác khoáng sản thuộc thẩm quyền của Ủy ban nhân dân tỉnh Thừa Thiên Huế\nĐiều 2. Trách nhiệm của Sở Tài nguyên và Môi trường 2. Tổ chức thẩm định hồ sơ cấp, cấp lại, cấp đổi, điều chỉnh Giấy phép môi trường a) Thực hiện thẩm định hồ sơ cấp, cấp lại Giấy phép môi trường theo quy định tại Điều 29 của Nghị định số 08/2022/NĐ-CP ngày 10/01/2022 của Chính phủ quy định chi tiết một số điều của Luật Bảo vệ môi trường: Tiếp nhận hồ sơ, công khai nội dung báo cáo đề xuất cấp, cấp lại Giấy phép môi trường trên trang thông tin điện tử của Sở Tài nguyên và Môi trường; thành lập Hội đồng thẩm định/Tổ kiểm tra/Đoàn kiểm tra; lấy ý kiến cơ quan, tổ chức, chuyên gia; tổ chức khảo sát thực tế; lấy mẫu phân tích chất lượng môi trường; tổ chức Hội đồng thẩm định/kiểm tra; thông báo hoàn thiện hoặc trả hồ sơ; rà soát hồ sơ sau khi chủ dự án đầu tư, cơ sở chỉnh sửa, bổ sung trước khi trình Ủy ban nhân dân tỉnh cấp, cấp lại Giấy phép môi trường. b) Thực hiện thẩm định hồ sơ cấp đổi, điều chỉnh Giấy phép môi trường theo quy định tại khoản 1, khoản 2 Điều 30 của Nghị định số 08/2022/NĐ-CP ngày 10/01/2022 của Chính phủ quy"
+    ],
+    "latency": 24.532292700001562,
+    "queue_latency": 2.2500000341096893e-05,
+    "pipeline_latency": 24.53048730000046,
+    "input_guardrail_latency": 1.0436372999993182,
+    "output_guardrail_latency": 3.383969700000307,
+    "ragas_latency": 0.0,
+    "judge_provider": "Gemini",
+    "judge_model": "gemini-2.0-flash",
+    "lat_info": {
+      "t_rewrite": 2.481,
+      "t_retrieval": 13.028,
+      "t_hybrid": 2.844097,
+      "t_lexical": 5.135871,
+      "t_resolve_chunk": 0.08694,
+      "t_candidate": 0.0039,
+      "t_rerank": 3.156394,
+      "t_llm": 4.281,
+      "t_total": 19.791,
+      "retrieval_status": "ok",
+      "retrieval_diagnostics": {
+        "hybrid_embedding_attempts": 1,
+        "hybrid_embedding_latency": 1.480083,
+        "hybrid_query_attempts": 1,
+        "hybrid_query_latency": 1.363204,
+        "top_documents": [
+          {
+            "document_id": 322674.0,
+            "score": 5.769050121307373
+          },
+          {
+            "document_id": 208302.0,
+            "score": 5.5876617431640625
+          },
+          {
+            "document_id": 543919.0,
+            "score": 5.5189924240112305
+          },
+          {
+            "document_id": 640973.0,
+            "score": 5.441385746002197
+          },
+          {
+            "document_id": 621877.0,
+            "score": 5.428262233734131
+          },
+          {
+            "document_id": 526569.0,
+            "score": 5.4242377281188965
+          },
+          {
+            "document_id": 500574.0,
+            "score": 5.423344135284424
+          },
+          {
+            "document_id": 525881.0,
+            "score": 5.393612861633301
+          },
+          {
+            "document_id": 582261.0,
+            "score": 5.392662048339844
+          },
+          {
+            "document_id": 47401.0,
+            "score": 5.388190269470215
+          },
+          {
+            "document_id": 571008.0,
+            "score": 5.3869147300720215
+          },
+          {
+            "document_id": 661804.0,
+            "score": 5.379698276519775
+          },
+          {
+            "document_id": 521799.0,
+            "score": 5.365243434906006
+          },
+          {
+            "document_id": 515297.0,
+            "score": 5.357174873352051
+          },
+          {
+            "document_id": 522177.0,
+            "score": 5.354763507843018
+          },
+          {
+            "document_id": 446322.0,
+            "score": 5.3506035804748535
+          },
+          {
+            "document_id": 613261.0,
+            "score": 5.347259998321533
+          },
+          {
+            "document_id": 581074.0,
+            "score": 5.345843315124512
+          },
+          {
+            "document_id": 615109.0,
+            "score": 5.343085289001465
+          },
+          {
+            "document_id": 573823.0,
+            "score": 5.328652381896973
+          },
+          {
+            "document_id": 516121.0,
+            "score": 5.3249664306640625
+          },
+          {
+            "document_id": 564881.0,
+            "score": 5.311466693878174
+          },
+          {
+            "document_id": 615120.0,
+            "score": 5.291872978210449
+          },
+          {
+            "document_id": 643469.0,
+            "score": 5.289833068847656
+          }
+        ],
+        "lexical_document_ids": [
+          2143,
+          2144,
+          2145,
+          2150,
+          2152,
+          2153,
+          2154,
+          2155,
+          2156,
+          2157,
+          2158,
+          2159
+        ],
+        "retrieval_mode": "hybrid_lexical",
+        "candidate_citations": [
+          "509/UBND-NĐ",
+          "509/UBND-NĐ",
+          "56/2024/QĐ-UBND, Điều 2, Khoản 2",
+          "21/CT-UBND",
+          "10/QĐ-UBND, Điều 1, Khoản 1",
+          "36/2022/QĐ-UBND, Điều 2, Khoản 2",
+          "10/QĐ-UBND, Điều 1, Khoản 2",
+          "2827/TCT-CS, Điều 3",
+          "21/CT-UBND",
+          "2827/TCT-CS, Điều 3",
+          "56/2024/QĐ-UBND, Điều 2, Khoản 4",
+          "36/2022/QĐ-UBND, Điều 2, Khoản 1"
+        ],
+        "rerank_provider": "qdrant",
+        "rerank_model": "answerdotai/answerai-colbert-small-v1",
+        "rerank_fallback_reason": null,
+        "rerank_attempts": 1,
+        "rerank_input_count": 12,
+        "rerank_output_count": 6,
+        "reranked": [
+          {
+            "citation": "509/UBND-NĐ",
+            "score": 25.050495
+          },
+          {
+            "citation": "509/UBND-NĐ",
+            "score": 25.026382
+          },
+          {
+            "citation": "36/2022/QĐ-UBND, Điều 2, Khoản 2",
+            "score": 24.930387
+          },
+          {
+            "citation": "56/2024/QĐ-UBND, Điều 2, Khoản 2",
+            "score": 24.918072
+          },
+          {
+            "citation": "56/2024/QĐ-UBND, Điều 2, Khoản 4",
+            "score": 24.886148
+          },
+          {
+            "citation": "2827/TCT-CS, Điều 3",
+            "score": 24.868105
+          }
+        ]
+      },
+      "rewritten_query": "Định nghĩa về Giấy phép môi trường theo Luật Bảo vệ môi trường"
+    },
+    "retrieval_status": "ok",
+    "retrieval_diagnostics": {
+      "hybrid_embedding_attempts": 1,
+      "hybrid_embedding_latency": 1.480083,
+      "hybrid_query_attempts": 1,
+      "hybrid_query_latency": 1.363204,
+      "top_documents": [
+        {
+          "document_id": 322674.0,
+          "score": 5.769050121307373
+        },
+        {
+          "document_id": 208302.0,
+          "score": 5.5876617431640625
+        },
+        {
+          "document_id": 543919.0,
+          "score": 5.5189924240112305
+        },
+        {
+          "document_id": 640973.0,
+          "score": 5.441385746002197
+        },
+        {
+          "document_id": 621877.0,
+          "score": 5.428262233734131
+        },
+        {
+          "document_id": 526569.0,
+          "score": 5.4242377281188965
+        },
+        {
+          "document_id": 500574.0,
+          "score": 5.423344135284424
+        },
+        {
+          "document_id": 525881.0,
+          "score": 5.393612861633301
+        },
+        {
+          "document_id": 582261.0,
+          "score": 5.392662048339844
+        },
+        {
+          "document_id": 47401.0,
+          "score": 5.388190269470215
+        },
+        {
+          "document_id": 571008.0,
+          "score": 5.3869147300720215
+        },
+        {
+          "document_id": 661804.0,
+          "score": 5.379698276519775
+        },
+        {
+          "document_id": 521799.0,
+          "score": 5.365243434906006
+        },
+        {
+          "document_id": 515297.0,
+          "score": 5.357174873352051
+        },
+        {
+          "document_id": 522177.0,
+          "score": 5.354763507843018
+        },
+        {
+          "document_id": 446322.0,
+          "score": 5.3506035804748535
+        },
+        {
+          "document_id": 613261.0,
+          "score": 5.347259998321533
+        },
+        {
+          "document_id": 581074.0,
+          "score": 5.345843315124512
+        },
+        {
+          "document_id": 615109.0,
+          "score": 5.343085289001465
+        },
+        {
+          "document_id": 573823.0,
+          "score": 5.328652381896973
+        },
+        {
+          "document_id": 516121.0,
+          "score": 5.3249664306640625
+        },
+        {
+          "document_id": 564881.0,
+          "score": 5.311466693878174
+        },
+        {
+          "document_id": 615120.0,
+          "score": 5.291872978210449
+        },
+        {
+          "document_id": 643469.0,
+          "score": 5.289833068847656
+        }
+      ],
+      "lexical_document_ids": [
+        2143,
+        2144,
+        2145,
+        2150,
+        2152,
+        2153,
+        2154,
+        2155,
+        2156,
+        2157,
+        2158,
+        2159
+      ],
+      "retrieval_mode": "hybrid_lexical",
+      "candidate_citations": [
+        "509/UBND-NĐ",
+        "509/UBND-NĐ",
+        "56/2024/QĐ-UBND, Điều 2, Khoản 2",
+        "21/CT-UBND",
+        "10/QĐ-UBND, Điều 1, Khoản 1",
+        "36/2022/QĐ-UBND, Điều 2, Khoản 2",
+        "10/QĐ-UBND, Điều 1, Khoản 2",
+        "2827/TCT-CS, Điều 3",
+        "21/CT-UBND",
+        "2827/TCT-CS, Điều 3",
+        "56/2024/QĐ-UBND, Điều 2, Khoản 4",
+        "36/2022/QĐ-UBND, Điều 2, Khoản 1"
+      ],
+      "rerank_provider": "qdrant",
+      "rerank_model": "answerdotai/answerai-colbert-small-v1",
+      "rerank_fallback_reason": null,
+      "rerank_attempts": 1,
+      "rerank_input_count": 12,
+      "rerank_output_count": 6,
+      "reranked": [
+        {
+          "citation": "509/UBND-NĐ",
+          "score": 25.050495
+        },
+        {
+          "citation": "509/UBND-NĐ",
+          "score": 25.026382
+        },
+        {
+          "citation": "36/2022/QĐ-UBND, Điều 2, Khoản 2",
+          "score": 24.930387
+        },
+        {
+          "citation": "56/2024/QĐ-UBND, Điều 2, Khoản 2",
+          "score": 24.918072
+        },
+        {
+          "citation": "56/2024/QĐ-UBND, Điều 2, Khoản 4",
+          "score": 24.886148
+        },
+        {
+          "citation": "2827/TCT-CS, Điều 3",
+          "score": 24.868105
+        }
+      ]
+    },
+    "gold_context_hit": false,
+    "gold_context_recall": 0.0,
+    "reciprocal_rank": 0.0,
+    "faithfulness": null,
+    "answer_accuracy": null,
+    "context_precision": null,
+    "context_recall": null,
+    "evaluation_status": "Honest Refusal",
+    "is_refusal": true,
+    "evaluation_fingerprint": "f676c65463f9303d83c138edb06a15ee4935625da44ba181ac0c90ffd06ba999",
+    "error": null
+  },
+  {
+    "query": "Sự khác biệt cơ bản về tính chất áp dụng giữa quy chuẩn kỹ thuật môi trường và tiêu chuẩn môi trường là gì?",
+    "group": "Multi-hop",
+    "expected": "grounded_answer",
+    "cache_hit": false,
+    "input_safe": true,
+    "output_safe": true,
+    "response": "Sự khác biệt cơ bản về tính chất áp dụng giữa quy chuẩn kỹ thuật môi trường và tiêu chuẩn môi trường là:\n\n- Quy chuẩn kỹ thuật môi trường là các quy định về kỹ thuật nhằm bảo vệ môi trường, được áp dụng bắt buộc đối với các tổ chức, cá nhân có hoạt động ảnh hưởng đến môi trường.\n\n- Tiêu chuẩn môi trường là các chỉ số, thông số về chất lượng môi trường, được sử dụng để đánh giá và quản lý chất lượng môi trường, nhưng không phải là quy định bắt buộc.\n\nNhư vậy, quy chuẩn kỹ thuật môi trường có tính chất áp dụng bắt buộc, trong khi tiêu chuẩn môi trường có tính chất áp dụng tự nguyện.",
+    "contexts": [
+      "[32/2011/TT-BTNMT, Điều 6, Khoản 4]\nNguồn: https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Thong-tu-32-2011-TT-BTNMT-quy-trinh-ky-thuat-quan-trac-chat-luong-nuoc-127684.aspx\nTiêu đề: Thông tư 32/2011/TT-BTNMT quy định quy trình kỹ thuật quan trắc chất lượng nước mưa do Bộ trưởng Bộ Tài nguyên và Môi trường ban hành\ntrị của các thông số quy định tại Bảng 1 Thông tư này thì áp dụng tiêu chuẩn quốc tế quy định tại Bảng 1 hoặc các tiêu chuẩn quốc tế khác có độ chính xác tương đương hoặc cao hơn. c) Khi phân tích mẫu nước mưa phải lưu ý: - Có thể pha loãng mẫu nếu lượng mẫu là nhỏ và mẫu có chứa hàm lượng các chất ô nhiễm cao, vượt quá giới hạn phân tích. Mẫu đã pha loãng không được sử dụng để đo pH và EC; - Trường hợp mẫu được pha loãng bằng nước khử ion thì phải đo nồng độ các ion cần phân tích cả trong nước khử ion sử dụng. d) Công tác bảo đảm chất lượng và kiểm soát chất lượng trong phòng thí nghiệm thực hiện theo các văn bản, quy định của Bộ Tài nguyên và Môi trường về hướng dẫn bảo đảm chất lượng và kiểm soát chất lượng trong quan trắc môi trường.",
+      "[19/VBHN-VPQH, Điều 147, Khoản 1]\nNguồn: https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Van-ban-hop-nhat-19-VBHN-VPQH-2018-Luat-Bao-ve-moi-truong-410275.aspx\nTiêu đề: Văn bản hợp nhất 19/VBHN-VPQH năm 2018 hợp nhất Luật Bảo vệ môi trường do Văn phòng Quốc hội ban hành\nĐiều 147. Chi ngân sách nhà nước cho bảo vệ môi trường 1. Chi hoạt động sự nghiệp bảo vệ môi trường gồm: a) Xây dựng chiến lược, quy hoạch, kế hoạch, quy trình kỹ thuật, hướng dẫn kỹ thuật, định mức kinh tế kỹ thuật, quy chuẩn kỹ thuật môi trường, chương trình, đề án về bảo vệ môi trường; b) Thẩm định quy hoạch bảo vệ môi trường, báo cáo đánh giá môi trường chiến lược; c) Hoạt động quan trắc môi trường; xây dựng hệ thống thông tin môi trường và báo cáo môi trường; d) Hỗ trợ công tác thanh tra, kiểm tra; kiểm soát ô nhiễm môi trường, xử lý ô nhiễm môi trường, phòng ngừa, ứng phó và khắc phục sự cố môi trường; quản lý chất thải và bảo tồn đa dạng sinh học; đào tạo, truyền thông về bảo vệ môi trường; phổ biến và đánh giá tình hình thực hiện pháp luật về bảo vệ môi trường; hợp tác quốc tế về bảo vệ môi trường; đ) Các hoạt động quản lý bảo vệ môi trường khác.",
+      "[55/2014/QH13, Điều 147, Khoản 1]\nNguồn: https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-bao-ve-moi-truong-2014-238636.aspx\nTiêu đề: Luật bảo vệ môi trường 2014\nĐiều 147. Chi ngân sách nhà nước cho bảo vệ môi trường 1. Chi hoạt động sự nghiệp bảo vệ môi trường gồm: a) Xây dựng chiến lược, quy hoạch, kế hoạch, quy trình kỹ thuật, hướng dẫn kỹ thuật, định mức kinh tế kỹ thuật, quy chuẩn kỹ thuật môi trường, chương trình, đề án về bảo vệ môi trường; b) Thẩm định quy hoạch bảo vệ môi trường, báo cáo đánh giá môi trường chiến lược; c) Hoạt động quan trắc môi trường; xây dựng hệ thống thông tin môi trường và báo cáo môi trường; d) Hỗ trợ công tác thanh tra, kiểm tra; kiểm soát ô nhiễm môi trường, xử lý ô nhiễm môi trường, phòng ngừa, ứng phó và khắc phục sự cố môi trường; quản lý chất thải và bảo tồn đa dạng sinh học; đào tạo, truyền thông về bảo vệ môi trường; phổ biến và đánh giá tình hình thực hiện pháp luật về bảo vệ môi trường; hợp tác quốc tế về bảo vệ môi trường; đ) Các hoạt động quản lý bảo vệ môi trường khác."
+    ],
+    "latency": 51.12960899999962,
+    "queue_latency": 24.470822999999655,
+    "pipeline_latency": 18.998680999999124,
+    "input_guardrail_latency": 0.706111299999975,
+    "output_guardrail_latency": 2.9931696000003285,
+    "ragas_latency": 7.658267400000113,
+    "judge_provider": "Gemini",
+    "judge_model": "gemini-2.0-flash",
+    "lat_info": {
+      "t_rewrite": 4.44,
+      "t_retrieval": 5.028,
+      "t_hybrid": 1.551137,
+      "t_lexical": 2.23032,
+      "t_resolve_chunk": 0.332593,
+      "t_candidate": 0.012159,
+      "t_rerank": 2.452563,
+      "t_llm": 5.831,
+      "t_total": 15.299,
+      "retrieval_status": "ok",
+      "retrieval_diagnostics": {
+        "hybrid_embedding_attempts": 1,
+        "hybrid_embedding_latency": 1.217113,
+        "hybrid_query_attempts": 1,
+        "hybrid_query_latency": 0.333668,
+        "top_documents": [
+          {
+            "document_id": 330327.0,
+            "score": 7.682453155517578
+          },
+          {
+            "document_id": 580121.0,
+            "score": 7.606544494628906
+          },
+          {
+            "document_id": 127684.0,
+            "score": 7.499091148376465
+          },
+          {
+            "document_id": 57781.0,
+            "score": 7.473395347595215
+          },
+          {
+            "document_id": 238636.0,
+            "score": 7.43862247467041
+          },
+          {
+            "document_id": 410275.0,
+            "score": 7.418969631195068
+          },
+          {
+            "document_id": 424601.0,
+            "score": 7.401042938232422
+          },
+          {
+            "document_id": 123242.0,
+            "score": 7.39150857925415
+          },
+          {
+            "document_id": 265204.0,
+            "score": 7.37961483001709
+          },
+          {
+            "document_id": 457853.0,
+            "score": 7.371901988983154
+          },
+          {
+            "document_id": 483795.0,
+            "score": 7.354577541351318
+          },
+          {
+            "document_id": 403504.0,
+            "score": 7.318474769592285
+          },
+          {
+            "document_id": 368405.0,
+            "score": 7.179213523864746
+          },
+          {
+            "document_id": 670919.0,
+            "score": 7.178716659545898
+          },
+          {
+            "document_id": 315834.0,
+            "score": 7.131213188171387
+          },
+          {
+            "document_id": 288402.0,
+            "score": 7.120841026306152
+          },
+          {
+            "document_id": 127676.0,
+            "score": 7.027162551879883
+          },
+          {
+            "document_id": 127682.0,
+            "score": 7.0151448249816895
+          },
+          {
+            "document_id": 127685.0,
+            "score": 6.993500232696533
+          },
+          {
+            "document_id": 127681.0,
+            "score": 6.992264747619629
+          },
+          {
+            "document_id": 479204.0,
+            "score": 6.988829135894775
+          },
+          {
+            "document_id": 39346.0,
+            "score": 6.983362674713135
+          },
+          {
+            "document_id": 54148.0,
+            "score": 6.968128204345703
+          },
+          {
+            "document_id": 127683.0,
+            "score": 6.966445446014404
+          }
+        ],
+        "lexical_document_ids": [
+          2143,
+          2144,
+          2145,
+          2150,
+          2152,
+          2153,
+          2154,
+          2155,
+          2156,
+          2157,
+          2158,
+          2159
+        ],
+        "retrieval_mode": "hybrid_lexical",
+        "candidate_citations": [
+          "70/2025/QH15, Điều 7a, Khoản 1",
+          "70/2025/QH15, Điều 7a, Khoản 1",
+          "10/2007/TT-BTNMT",
+          "55/2014/QH13, Điều 147, Khoản 1",
+          "19/VBHN-VPQH, Điều 147, Khoản 1",
+          "10/2007/TT-BTNMT",
+          "55/2014/QH13, Điều 143, Khoản 3",
+          "19/VBHN-VPQH, Điều 143, Khoản 3",
+          "27/2017/TT-BTNMT, Điều 15, Khoản 3",
+          "32/2011/TT-BTNMT, Điều 6, Khoản 4",
+          "27/2017/TT-BTNMT, Điều 15, Khoản 3",
+          "32/2011/TT-BTNMT, Điều 2, Khoản 1"
+        ],
+        "rerank_provider": "qdrant",
+        "rerank_model": "answerdotai/answerai-colbert-small-v1",
+        "rerank_fallback_reason": null,
+        "rerank_attempts": 1,
+        "rerank_input_count": 12,
+        "rerank_output_count": 6,
+        "reranked": [
+          {
+            "citation": "32/2011/TT-BTNMT, Điều 6, Khoản 4",
+            "score": 39.45055
+          },
+          {
+            "citation": "19/VBHN-VPQH, Điều 147, Khoản 1",
+            "score": 39.14102
+          },
+          {
+            "citation": "55/2014/QH13, Điều 147, Khoản 1",
+            "score": 39.12313
+          },
+          {
+            "citation": "10/2007/TT-BTNMT",
+            "score": 39.057106
+          },
+          {
+            "citation": "70/2025/QH15, Điều 7a, Khoản 1",
+            "score": 38.914097
+          },
+          {
+            "citation": "19/VBHN-VPQH, Điều 143, Khoản 3",
+            "score": 38.8475
+          }
+        ]
+      },
+      "rewritten_query": "Sự khác biệt cơ bản về tính chất áp dụng giữa quy chuẩn kỹ thuật môi trường và tiêu chuẩn môi trường."
+    },
+    "retrieval_status": "ok",
+    "retrieval_diagnostics": {
+      "hybrid_embedding_attempts": 1,
+      "hybrid_embedding_latency": 1.217113,
+      "hybrid_query_attempts": 1,
+      "hybrid_query_latency": 0.333668,
+      "top_documents": [
+        {
+          "document_id": 330327.0,
+          "score": 7.682453155517578
+        },
+        {
+          "document_id": 580121.0,
+          "score": 7.606544494628906
+        },
+        {
+          "document_id": 127684.0,
+          "score": 7.499091148376465
+        },
+        {
+          "document_id": 57781.0,
+          "score": 7.473395347595215
+        },
+        {
+          "document_id": 238636.0,
+          "score": 7.43862247467041
+        },
+        {
+          "document_id": 410275.0,
+          "score": 7.418969631195068
+        },
+        {
+          "document_id": 424601.0,
+          "score": 7.401042938232422
+        },
+        {
+          "document_id": 123242.0,
+          "score": 7.39150857925415
+        },
+        {
+          "document_id": 265204.0,
+          "score": 7.37961483001709
+        },
+        {
+          "document_id": 457853.0,
+          "score": 7.371901988983154
+        },
+        {
+          "document_id": 483795.0,
+          "score": 7.354577541351318
+        },
+        {
+          "document_id": 403504.0,
+          "score": 7.318474769592285
+        },
+        {
+          "document_id": 368405.0,
+          "score": 7.179213523864746
+        },
+        {
+          "document_id": 670919.0,
+          "score": 7.178716659545898
+        },
+        {
+          "document_id": 315834.0,
+          "score": 7.131213188171387
+        },
+        {
+          "document_id": 288402.0,
+          "score": 7.120841026306152
+        },
+        {
+          "document_id": 127676.0,
+          "score": 7.027162551879883
+        },
+        {
+          "document_id": 127682.0,
+          "score": 7.0151448249816895
+        },
+        {
+          "document_id": 127685.0,
+          "score": 6.993500232696533
+        },
+        {
+          "document_id": 127681.0,
+          "score": 6.992264747619629
+        },
+        {
+          "document_id": 479204.0,
+          "score": 6.988829135894775
+        },
+        {
+          "document_id": 39346.0,
+          "score": 6.983362674713135
+        },
+        {
+          "document_id": 54148.0,
+          "score": 6.968128204345703
+        },
+        {
+          "document_id": 127683.0,
+          "score": 6.966445446014404
+        }
+      ],
+      "lexical_document_ids": [
+        2143,
+        2144,
+        2145,
+        2150,
+        2152,
+        2153,
+        2154,
+        2155,
+        2156,
+        2157,
+        2158,
+        2159
+      ],
+      "retrieval_mode": "hybrid_lexical",
+      "candidate_citations": [
+        "70/2025/QH15, Điều 7a, Khoản 1",
+        "70/2025/QH15, Điều 7a, Khoản 1",
+        "10/2007/TT-BTNMT",
+        "55/2014/QH13, Điều 147, Khoản 1",
+        "19/VBHN-VPQH, Điều 147, Khoản 1",
+        "10/2007/TT-BTNMT",
+        "55/2014/QH13, Điều 143, Khoản 3",
+        "19/VBHN-VPQH, Điều 143, Khoản 3",
+        "27/2017/TT-BTNMT, Điều 15, Khoản 3",
+        "32/2011/TT-BTNMT, Điều 6, Khoản 4",
+        "27/2017/TT-BTNMT, Điều 15, Khoản 3",
+        "32/2011/TT-BTNMT, Điều 2, Khoản 1"
+      ],
+      "rerank_provider": "qdrant",
+      "rerank_model": "answerdotai/answerai-colbert-small-v1",
+      "rerank_fallback_reason": null,
+      "rerank_attempts": 1,
+      "rerank_input_count": 12,
+      "rerank_output_count": 6,
+      "reranked": [
+        {
+          "citation": "32/2011/TT-BTNMT, Điều 6, Khoản 4",
+          "score": 39.45055
+        },
+        {
+          "citation": "19/VBHN-VPQH, Điều 147, Khoản 1",
+          "score": 39.14102
+        },
+        {
+          "citation": "55/2014/QH13, Điều 147, Khoản 1",
+          "score": 39.12313
+        },
+        {
+          "citation": "10/2007/TT-BTNMT",
+          "score": 39.057106
+        },
+        {
+          "citation": "70/2025/QH15, Điều 7a, Khoản 1",
+          "score": 38.914097
+        },
+        {
+          "citation": "19/VBHN-VPQH, Điều 143, Khoản 3",
+          "score": 38.8475
+        }
+      ]
+    },
+    "gold_context_hit": true,
+    "gold_context_recall": 0.5,
+    "reciprocal_rank": 1.0,
+    "faithfulness": null,
+    "answer_accuracy": null,
+    "context_precision": null,
+    "context_recall": null,
+    "evaluation_status": "Eval Failed",
+    "is_refusal": false,
+    "evaluation_fingerprint": "f676c65463f9303d83c138edb06a15ee4935625da44ba181ac0c90ffd06ba999",
+    "error": "Error code: 429 - [{'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash\\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash\\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-2.0-flash\\nPlease retry in 56.561128149s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-2.0-flash'}}, {'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerMinutePerProjectPerModel-FreeTier', 'quotaDimensions': {'model': 'gemini-2.0-flash', 'location': 'global'}}, {'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_input_token_count', 'quotaId': 'GenerateContentInputTokensPerModelPerMinute-FreeTier', 'quotaDimensions': {'model': 'gemini-2.0-flash', 'location': 'global'}}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '56s'}]}}]"
+  },
+  {
+    "query": "Mức phạt đối với tổ chức, cá nhân không có Giấy phép môi trường khi nhập khẩu phế liệu từ nước ngoài là bao nhiêu?",
+    "group": "Unanswerable",
+    "expected": "honest_refusal",
+    "cache_hit": false,
+    "input_safe": true,
+    "output_safe": false,
+    "response": "Không đủ dữ liệu để trả lời câu hỏi của bạn.",
+    "contexts": [
+      "[3242/BCT-HC]\nNguồn: https://thuvienphapluat.vn/cong-van/Xuat-nhap-khau/Cong-van-3242-BCT-HC-giai-dap-khai-bao-hoa-chat-giay-phep-nhap-khau-hoa-chat-2016-311505.aspx\nTiêu đề: Công văn 3242/BCT-HC năm 2016 về giải đáp nội dung liên quan đến khai báo hóa chất và Giấy phép nhập khẩu hóa chất do Bộ Công Thương ban hành\nViệt Nam”. Không áp dụng xác nhận khai báo hóa chất đối với các tổ chức, cá nhân mua hóa chất trong lãnh thổ Việt Nam; các tổ chức, cá nhân đã được cấp Giấy phép nhập khẩu tiền chất trong lĩnh vực công nghiệp; các tổ chức, cá nhân đã được cấp Giấy phép nhập khẩu tiền chất thuốc nổ; các tổ chức, cá nhân đã được cấp Giấy phép nhập khẩu hóa chất Bảng 1, 2, 3 (hóa chất thuộc diện kiểm soát của Công ước Cấm phát triển, sản xuất, tàng trữ, sử dụng và phá hủy vũ khí hóa học). Theo Luật Hải quan, thì Kho ngoại quan là khu vực kho, bãi lưu giữ hàng hóa đã làm thủ tục hải quan được gửi để chờ xuất khẩu; hàng hóa từ nước ngoài đưa vào gửi để chờ xuất khẩu ra nước ngoài hoặc nhập khẩu vào Việt Nam. Theo Điều 85, Nghị định 08/2015/NĐ-CP ngày 25 tháng 01 năm 2015 Quy định chi tiết và biện pháp thi hành Luật Hải quan về thủ tục Hải quan, kiểm tra, giám sát, kiểm soát hải quan thì Hàng hóa từ nước ngoài đưa vào kho ngoại quan gồm: - Hàng hóa của chủ hàng nước ngoài chưa ký hợp đồng bán hàng cho doanh nghiệp",
+      "[73/2014/QĐ-TTg, Điều 3]\nNguồn: https://thuvienphapluat.vn/van-ban/Xuat-nhap-khau/Quyet-dinh-73-2014-QD-TTg-danh-muc-phe-lieu-duoc-phep-nhap-khau-tu-nuoc-ngoai-lam-nguyen-lieu-san-xuat-261329.aspx\nTiêu đề: Quyết định 73/2014/QĐ-TTg về danh mục phế liệu được phép nhập khẩu từ nước ngoài làm nguyên liệu sản xuất do Thủ tướng Chính phủ ban hành\nĐiều 3. Bộ Tài nguyên và Môi trường chủ trì, phối hợp với các Bộ, ngành có liên quan xây dựng và ban hành Quy chuẩn kỹ thuật quốc gia về môi trường đối với các loại phế liệu thuộc Phụ lục Danh mục phế liệu được phép nhập khẩu từ nước ngoài làm nguyên liệu sản xuất ban hành kèm theo Quyết định này.",
+      "[13/2023/QĐ-TTg, Điều 3, Khoản 2]\nNguồn: https://thuvienphapluat.vn/van-ban/Xuat-nhap-khau/Quyet-dinh-13-2023-QD-TTg-phe-lieu-duoc-phep-nhap-khau-tu-nuoc-ngoai-lam-nguyen-lieu-san-xuat-567125.aspx\nTiêu đề: Quyết định 13/2023/QĐ-TTg về Danh mục phế liệu được phép nhập khẩu từ nước ngoài làm nguyên liệu sản xuất do Thủ tướng Chính phủ ban hành\nĐiều 3. Điều khoản chuyển tiếp 2. Các phế liệu và mẩu vụn của nhựa có mã HS 3915 90 00 được phép nhập khẩu từ nước ngoài theo giấy phép môi trường thành phần hoặc giấy phép môi trường đã được cơ quan có thẩm quyền cấp trước ngày Quyết định này có hiệu lực thi hành được tiếp tục nhập khẩu đến hết hiệu lực của giấy phép môi trường thành phần hoặc giấy phép môi trường theo các mã HS tương ứng quy định tại Mục 2.3 hoặc Mục 2.5 trong Danh mục phế liệu được phép nhập khẩu từ nước ngoài làm nguyên liệu sản xuất ban hành kèm theo Quyết định này."
+    ],
+    "latency": 67.86868110000069,
+    "queue_latency": 51.13061910000033,
+    "pipeline_latency": 16.738063500000862,
+    "input_guardrail_latency": 0.9470033999987209,
+    "output_guardrail_latency": 5.009693699999843,
+    "ragas_latency": 0.0,
+    "judge_provider": "Gemini",
+    "judge_model": "gemini-2.0-flash",
+    "lat_info": {
+      "t_rewrite": 1.72,
+      "t_retrieval": 6.856,
+      "t_hybrid": 1.269661,
+      "t_lexical": 4.225748,
+      "t_resolve_chunk": 0.134968,
+      "t_candidate": 0.004344,
+      "t_rerank": 2.489787,
+      "t_llm": 2.204,
+      "t_total": 10.779,
+      "retrieval_status": "ok",
+      "retrieval_diagnostics": {
+        "hybrid_embedding_attempts": 1,
+        "hybrid_embedding_latency": 0.947171,
+        "hybrid_query_attempts": 1,
+        "hybrid_query_latency": 0.32207,
+        "top_documents": [
+          {
+            "document_id": 567125.0,
+            "score": 7.6544270515441895
+          },
+          {
+            "document_id": 292089.0,
+            "score": 7.582608222961426
+          },
+          {
+            "document_id": 296291.0,
+            "score": 7.209341049194336
+          },
+          {
+            "document_id": 43282.0,
+            "score": 7.200590133666992
+          },
+          {
+            "document_id": 261329.0,
+            "score": 7.0273542404174805
+          },
+          {
+            "document_id": 311505.0,
+            "score": 6.973633766174316
+          },
+          {
+            "document_id": 38287.0,
+            "score": 6.97116231918335
+          },
+          {
+            "document_id": 277430.0,
+            "score": 6.911994457244873
+          },
+          {
+            "document_id": 513451.0,
+            "score": 6.742643356323242
+          },
+          {
+            "document_id": 686973.0,
+            "score": 6.67249870300293
+          },
+          {
+            "document_id": 16172.0,
+            "score": 6.597405433654785
+          },
+          {
+            "document_id": 530787.0,
+            "score": 6.590330123901367
+          },
+          {
+            "document_id": 208554.0,
+            "score": 6.570928573608398
+          },
+          {
+            "document_id": 14634.0,
+            "score": 6.559218883514404
+          },
+          {
+            "document_id": 309649.0,
+            "score": 6.554005146026611
+          },
+          {
+            "document_id": 453837.0,
+            "score": 6.541107654571533
+          },
+          {
+            "document_id": 285110.0,
+            "score": 6.496105194091797
+          },
+          {
+            "document_id": 16408.0,
+            "score": 6.479576110839844
+          },
+          {
+            "document_id": 554298.0,
+            "score": 6.470419883728027
+          },
+          {
+            "document_id": 110413.0,
+            "score": 6.439467906951904
+          },
+          {
+            "document_id": 185894.0,
+            "score": 6.429064750671387
+          },
+          {
+            "document_id": 399734.0,
+            "score": 6.424961090087891
+          },
+          {
+            "document_id": 513808.0,
+            "score": 6.418039321899414
+          },
+          {
+            "document_id": 372647.0,
+            "score": 6.414388656616211
+          }
+        ],
+        "lexical_document_ids": [
+          2143,
+          2144,
+          2145,
+          2150,
+          2152,
+          2153,
+          2154,
+          2155,
+          2156,
+          2157,
+          2158,
+          2159
+        ],
+        "retrieval_mode": "hybrid_lexical",
+        "candidate_citations": [
+          "28-TC/TCT",
+          "28-TC/TCT",
+          "41/2015/TT-BTNMT, Điều 16, Khoản 6",
+          "41/2015/TT-BTNMT, Điều 16, Khoản 6",
+          "2598/TCMT-KSON",
+          "2598/TCMT-KSON",
+          "3242/BCT-HC",
+          "3242/BCT-HC",
+          "13/2023/QĐ-TTg, Điều 3, Khoản 2",
+          "13/2023/QĐ-TTg, Điều 3, Khoản 1",
+          "73/2014/QĐ-TTg, Điều 3",
+          "73/2014/QĐ-TTg, Điều 5"
+        ],
+        "rerank_provider": "qdrant",
+        "rerank_model": "answerdotai/answerai-colbert-small-v1",
+        "rerank_fallback_reason": null,
+        "rerank_attempts": 1,
+        "rerank_input_count": 12,
+        "rerank_output_count": 6,
+        "reranked": [
+          {
+            "citation": "3242/BCT-HC",
+            "score": 43.270443
+          },
+          {
+            "citation": "73/2014/QĐ-TTg, Điều 3",
+            "score": 43.26966
+          },
+          {
+            "citation": "13/2023/QĐ-TTg, Điều 3, Khoản 2",
+            "score": 43.142296
+          },
+          {
+            "citation": "28-TC/TCT",
+            "score": 43.092266
+          },
+          {
+            "citation": "41/2015/TT-BTNMT, Điều 16, Khoản 6",
+            "score": 42.96888
+          },
+          {
+            "citation": "28-TC/TCT",
+            "score": 42.95811
+          }
+        ]
+      },
+      "rewritten_query": "Mức xử phạt đối với tổ chức, cá nhân không có Giấy phép môi trường khi nhập khẩu phế liệu từ nước ngoài"
+    },
+    "retrieval_status": "ok",
+    "retrieval_diagnostics": {
+      "hybrid_embedding_attempts": 1,
+      "hybrid_embedding_latency": 0.947171,
+      "hybrid_query_attempts": 1,
+      "hybrid_query_latency": 0.32207,
+      "top_documents": [
+        {
+          "document_id": 567125.0,
+          "score": 7.6544270515441895
+        },
+        {
+          "document_id": 292089.0,
+          "score": 7.582608222961426
+        },
+        {
+          "document_id": 296291.0,
+          "score": 7.209341049194336
+        },
+        {
+          "document_id": 43282.0,
+          "score": 7.200590133666992
+        },
+        {
+          "document_id": 261329.0,
+          "score": 7.0273542404174805
+        },
+        {
+          "document_id": 311505.0,
+          "score": 6.973633766174316
+        },
+        {
+          "document_id": 38287.0,
+          "score": 6.97116231918335
+        },
+        {
+          "document_id": 277430.0,
+          "score": 6.911994457244873
+        },
+        {
+          "document_id": 513451.0,
+          "score": 6.742643356323242
+        },
+        {
+          "document_id": 686973.0,
+          "score": 6.67249870300293
+        },
+        {
+          "document_id": 16172.0,
+          "score": 6.597405433654785
+        },
+        {
+          "document_id": 530787.0,
+          "score": 6.590330123901367
+        },
+        {
+          "document_id": 208554.0,
+          "score": 6.570928573608398
+        },
+        {
+          "document_id": 14634.0,
+          "score": 6.559218883514404
+        },
+        {
+          "document_id": 309649.0,
+          "score": 6.554005146026611
+        },
+        {
+          "document_id": 453837.0,
+          "score": 6.541107654571533
+        },
+        {
+          "document_id": 285110.0,
+          "score": 6.496105194091797
+        },
+        {
+          "document_id": 16408.0,
+          "score": 6.479576110839844
+        },
+        {
+          "document_id": 554298.0,
+          "score": 6.470419883728027
+        },
+        {
+          "document_id": 110413.0,
+          "score": 6.439467906951904
+        },
+        {
+          "document_id": 185894.0,
+          "score": 6.429064750671387
+        },
+        {
+          "document_id": 399734.0,
+          "score": 6.424961090087891
+        },
+        {
+          "document_id": 513808.0,
+          "score": 6.418039321899414
+        },
+        {
+          "document_id": 372647.0,
+          "score": 6.414388656616211
+        }
+      ],
+      "lexical_document_ids": [
+        2143,
+        2144,
+        2145,
+        2150,
+        2152,
+        2153,
+        2154,
+        2155,
+        2156,
+        2157,
+        2158,
+        2159
+      ],
+      "retrieval_mode": "hybrid_lexical",
+      "candidate_citations": [
+        "28-TC/TCT",
+        "28-TC/TCT",
+        "41/2015/TT-BTNMT, Điều 16, Khoản 6",
+        "41/2015/TT-BTNMT, Điều 16, Khoản 6",
+        "2598/TCMT-KSON",
+        "2598/TCMT-KSON",
+        "3242/BCT-HC",
+        "3242/BCT-HC",
+        "13/2023/QĐ-TTg, Điều 3, Khoản 2",
+        "13/2023/QĐ-TTg, Điều 3, Khoản 1",
+        "73/2014/QĐ-TTg, Điều 3",
+        "73/2014/QĐ-TTg, Điều 5"
+      ],
+      "rerank_provider": "qdrant",
+      "rerank_model": "answerdotai/answerai-colbert-small-v1",
+      "rerank_fallback_reason": null,
+      "rerank_attempts": 1,
+      "rerank_input_count": 12,
+      "rerank_output_count": 6,
+      "reranked": [
+        {
+          "citation": "3242/BCT-HC",
+          "score": 43.270443
+        },
+        {
+          "citation": "73/2014/QĐ-TTg, Điều 3",
+          "score": 43.26966
+        },
+        {
+          "citation": "13/2023/QĐ-TTg, Điều 3, Khoản 2",
+          "score": 43.142296
+        },
+        {
+          "citation": "28-TC/TCT",
+          "score": 43.092266
+        },
+        {
+          "citation": "41/2015/TT-BTNMT, Điều 16, Khoản 6",
+          "score": 42.96888
+        },
+        {
+          "citation": "28-TC/TCT",
+          "score": 42.95811
+        }
+      ]
+    },
+    "gold_context_hit": false,
+    "gold_context_recall": 0.0,
+    "reciprocal_rank": 0.0,
+    "faithfulness": null,
+    "answer_accuracy": null,
+    "context_precision": null,
+    "context_recall": null,
+    "evaluation_status": "Output Guardrail Error",
+    "is_refusal": false,
+    "evaluation_fingerprint": "f676c65463f9303d83c138edb06a15ee4935625da44ba181ac0c90ffd06ba999",
+    "error": "output guardrail unavailable: timeout"
+  },
+  {
+    "query": "Cụm từ \"doanh nghiệp nhà nước\" trong Luật Ngân sách nhà nước số 83/2015/QH13 được thay thế bằng cụm từ nào theo quy định tại văn bản này?",
+    "group": "Factoid",
+    "expected": "grounded_answer",
+    "cache_hit": false,
+    "input_safe": true,
+    "output_safe": true,
+    "response": "Không đủ dữ liệu để trả lời câu hỏi này.",
+    "contexts": [
+      "[83/2015/QH13, Điều 12, Khoản 2]\nNguồn: https://thuvienphapluat.vn/van-ban/Tai-chinh-nha-nuoc/Luat-ngan-sach-nha-nuoc-nam-2015-281762.aspx\nTiêu đề: Luật ngân sách nhà nước 2015\nĐiều 12. Điều kiện thực hiện thu, chi ngân sách nhà nước 2. Chi ngân sách nhà nước chỉ được thực hiện khi đã có trong dự toán ngân sách được giao, trừ trường hợp quy định tại Điều 51 của Luật này; đã được thủ trưởng đơn vị sử dụng ngân sách, chủ đầu tư hoặc người được ủy quyền quyết định chi và đáp ứng các điều kiện trong từng trường hợp sau đây: a) Đối với chi đầu tư xây dựng cơ bản phải đáp ứng các điều kiện theo quy định của pháp luật về đầu tư công và xây dựng; b) Đối với chi thường xuyên phải bảo đảm đúng chế độ, tiêu chuẩn, định mức chi ngân sách do cơ quan nhà nước có thẩm quyền quy định; trường hợp các cơ quan, đơn vị đã được cấp có thẩm quyền cho phép thực hiện theo cơ chế tự chủ, tự chịu trách nhiệm về sử dụng biên chế và kinh phí thì thực hiện theo quy chế chi tiêu nội bộ và phù hợp với dự toán được giao tự chủ; c) Đối với chi dự trữ quốc gia phải bảo đảm các điều kiện theo quy định của pháp luật về dự trữ quốc gia; d) Đối với những gói thầu thuộc",
+      "[52/2015/QĐ-UBND, Điều 2, Khoản 2]\nNguồn: https://thuvienphapluat.vn/van-ban/The-thao-Y-te/Quyet-dinh-52-2015-QD-UBND-muc-gia-dich-vu-dieu-tri-nghien-bang-thuoc-thay-the-Lao-Cai-294808.aspx\nTiêu đề: Quyết định 52/2015/QĐ-UBND Quy định mức giá dịch vụ điều trị nghiện các chất dạng thuốc phiện bằng thuốc thay thế và mức hỗ trợ từ ngân sách Nhà nước cho đối tượng chính sách tham gia điều trị nghiện các chất dạng thuốc phiện bằng thuốc thay thế tại cơ sở điều trị của nhà nước thuộc tỉnh Lào Cai quản lý\nĐiều 2. Mức giá một số dịch vụ điều trị nghiện các chất dạng thuốc phiện bằng thuốc thay thế và mức hỗ trợ từ ngân sách Nhà nước cho các đối tượng chính sách tham gia điều trị nghiện các chất dạng thuốc phiện bằng thuốc thay thế tại các cơ sở điều trị của Nhà nước thuộc tỉnh Lào Cai quản lý 2. Đối với các đối tượng chính sách quy định tại Khoản 2 Điều 23 Nghị định số 96/2012/NĐ-CP ngày 15/11/2012 của Chính phủ quy định về điều trị nghiện các chất dạng thuốc phiện bằng thuốc thay thế, tham gia điều trị tại các cơ sở điều trị của Nhà nước thuộc tỉnh Lào Cai quản lý gồm: Thương binh; người bị nhiễm chất độc hóa học có tỷ lệ thương tật trên 81%; người nghèo; người cao tuổi cô đơn không nơi nương tựa; trẻ em mồ côi; người khuyết tật nặng và đặc biệt nặng (trừ trường hợp quy định tại khoản 3 Điều này) được ngân sách Nhà nước hỗ trợ 100% giá các dịch vụ điều trị nghiện các chất dạng thuốc phiện bằng thuốc thay thế quy định tại khoản 1 Điều này.",
+      "[52/2015/QĐ-UBND, Điều 2, Khoản 3]\nNguồn: https://thuvienphapluat.vn/van-ban/The-thao-Y-te/Quyet-dinh-52-2015-QD-UBND-muc-gia-dich-vu-dieu-tri-nghien-bang-thuoc-thay-the-Lao-Cai-294808.aspx\nTiêu đề: Quyết định 52/2015/QĐ-UBND Quy định mức giá dịch vụ điều trị nghiện các chất dạng thuốc phiện bằng thuốc thay thế và mức hỗ trợ từ ngân sách Nhà nước cho đối tượng chính sách tham gia điều trị nghiện các chất dạng thuốc phiện bằng thuốc thay thế tại cơ sở điều trị của nhà nước thuộc tỉnh Lào Cai quản lý\nĐiều 2. Mức giá một số dịch vụ điều trị nghiện các chất dạng thuốc phiện bằng thuốc thay thế và mức hỗ trợ từ ngân sách Nhà nước cho các đối tượng chính sách tham gia điều trị nghiện các chất dạng thuốc phiện bằng thuốc thay thế tại các cơ sở điều trị của Nhà nước thuộc tỉnh Lào Cai quản lý 3. Các đối tượng chính sách quy định tại Khoản 2 Điều 23 Nghị định số 96/2012/NĐ-CP không được ngân sách nhà nước hỗ trợ các giá dịch vụ điều trị nghiện các chất dạng thuốc phiện bằng thuốc thay thế quy định tại khoản 1 Điều này trong các trường hợp sau: a) Các đối tượng chính sách không tuân thủ quy định chuyên môn của cơ sở điều trị; b) Đối tượng chính sách đang tham gia điều trị nghiện chất dạng thuốc phiện có xét nghiệm dương tính với các chất dạng thuốc phiện từ 2 lần trở lên (trừ thuốc điều trị thay thế) sau khi đã đạt liều điều trị duy trì từ 12 tháng trở lên; c) Đối tượng được hỗ trợ từ nguồn kinh phí khác trong cùng một nội dung chi."
+    ],
+    "latency": 80.65673890000107,
+    "queue_latency": 67.86889710000105,
+    "pipeline_latency": 12.786267699999371,
+    "input_guardrail_latency": 0.6890182999995886,
+    "output_guardrail_latency": 3.5223065999998653,
+    "ragas_latency": 0.0,
+    "judge_provider": "Gemini",
+    "judge_model": "gemini-2.0-flash",
+    "lat_info": {
+      "t_rewrite": 2.006,
+      "t_retrieval": 5.437,
+      "t_hybrid": 1.359562,
+      "t_lexical": 3.150981,
+      "t_resolve_chunk": 0.094154,
+      "t_candidate": 0.002574,
+      "t_rerank": 2.188381,
+      "t_llm": 1.132,
+      "t_total": 8.575,
+      "retrieval_status": "ok",
+      "retrieval_diagnostics": {
+        "hybrid_embedding_attempts": 1,
+        "hybrid_embedding_latency": 1.033982,
+        "hybrid_query_attempts": 1,
+        "hybrid_query_latency": 0.325148,
+        "top_documents": [
+          {
+            "document_id": 388930.0,
+            "score": 10.005830764770508
+          },
+          {
+            "document_id": 294808.0,
+            "score": 9.97121524810791
+          },
+          {
+            "document_id": 77193.0,
+            "score": 9.553864479064941
+          },
+          {
+            "document_id": 635238.0,
+            "score": 9.0346040725708
+          },
+          {
+            "document_id": 284887.0,
+            "score": 9.022321701049805
+          },
+          {
+            "document_id": 174322.0,
+            "score": 8.964214324951172
+          },
+          {
+            "document_id": 363795.0,
+            "score": 8.929069519042969
+          },
+          {
+            "document_id": 295729.0,
+            "score": 8.922563552856445
+          },
+          {
+            "document_id": 515305.0,
+            "score": 8.916938781738281
+          },
+          {
+            "document_id": 183111.0,
+            "score": 8.909391403198242
+          },
+          {
+            "document_id": 341447.0,
+            "score": 8.887388229370117
+          },
+          {
+            "document_id": 268473.0,
+            "score": 8.861858367919922
+          },
+          {
+            "document_id": 662091.0,
+            "score": 8.845048904418945
+          },
+          {
+            "document_id": 514897.0,
+            "score": 8.836698532104492
+          },
+          {
+            "document_id": 465933.0,
+            "score": 8.789432525634766
+          },
+          {
+            "document_id": 221761.0,
+            "score": 8.767705917358398
+          },
+          {
+            "document_id": 301016.0,
+            "score": 8.76427173614502
+          },
+          {
+            "document_id": 683063.0,
+            "score": 8.730449676513672
+          },
+          {
+            "document_id": 491441.0,
+            "score": 8.703410148620605
+          },
+          {
+            "document_id": 187859.0,
+            "score": 8.69233512878418
+          },
+          {
+            "document_id": 3896.0,
+            "score": 8.667887687683105
+          },
+          {
+            "document_id": 668398.0,
+            "score": 8.66376781463623
+          },
+          {
+            "document_id": 265675.0,
+            "score": 8.63841438293457
+          },
+          {
+            "document_id": 389662.0,
+            "score": 8.61867904663086
+          }
+        ],
+        "lexical_document_ids": [
+          281762,
+          2143,
+          2144,
+          2145,
+          2150,
+          2152,
+          2153,
+          2154,
+          2155,
+          2156,
+          2157,
+          2158
+        ],
+        "retrieval_mode": "hybrid_lexical",
+        "candidate_citations": [
+          "93/2008/TT-BTC",
+          "67/2018/NQ-HĐND, Điều 1, Khoản 4",
+          "52/2015/QĐ-UBND, Điều 2, Khoản 3",
+          "07/2012/QĐ-UBND, Điều 2",
+          "52/2015/QĐ-UBND, Điều 2, Khoản 2",
+          "83/2015/QH13, Điều 12, Khoản 2",
+          "83/2015/QH13, Điều 9, Khoản 7",
+          "07/2012/QĐ-UBND, Điều 4",
+          "93/2008/TT-BTC",
+          "67/2018/NQ-HĐND, Điều 1, Khoản 2",
+          "08/2015/QĐ-UBND, Điều 1, Khoản 2",
+          "08/2015/QĐ-UBND, Điều 1, Khoản 1"
+        ],
+        "rerank_provider": "qdrant",
+        "rerank_model": "answerdotai/answerai-colbert-small-v1",
+        "rerank_fallback_reason": null,
+        "rerank_attempts": 1,
+        "rerank_input_count": 12,
+        "rerank_output_count": 6,
+        "reranked": [
+          {
+            "citation": "83/2015/QH13, Điều 12, Khoản 2",
+            "score": 43.552658
+          },
+          {
+            "citation": "52/2015/QĐ-UBND, Điều 2, Khoản 2",
+            "score": 43.20024
+          },
+          {
+            "citation": "52/2015/QĐ-UBND, Điều 2, Khoản 3",
+            "score": 43.115665
+          },
+          {
+            "citation": "08/2015/QĐ-UBND, Điều 1, Khoản 2",
+            "score": 43.111202
+          },
+          {
+            "citation": "83/2015/QH13, Điều 9, Khoản 7",
+            "score": 43.099613
+          },
+          {
+            "citation": "08/2015/QĐ-UBND, Điều 1, Khoản 1",
+            "score": 43.09475
+          }
+        ]
+      },
+      "rewritten_query": "\"doanh nghiệp nhà nước\" trong Luật Ngân sách nhà nước số 83/2015/QH13 được thay thế bằng cụm từ nào"
+    },
+    "retrieval_status": "ok",
+    "retrieval_diagnostics": {
+      "hybrid_embedding_attempts": 1,
+      "hybrid_embedding_latency": 1.033982,
+      "hybrid_query_attempts": 1,
+      "hybrid_query_latency": 0.325148,
+      "top_documents": [
+        {
+          "document_id": 388930.0,
+          "score": 10.005830764770508
+        },
+        {
+          "document_id": 294808.0,
+          "score": 9.97121524810791
+        },
+        {
+          "document_id": 77193.0,
+          "score": 9.553864479064941
+        },
+        {
+          "document_id": 635238.0,
+          "score": 9.0346040725708
+        },
+        {
+          "document_id": 284887.0,
+          "score": 9.022321701049805
+        },
+        {
+          "document_id": 174322.0,
+          "score": 8.964214324951172
+        },
+        {
+          "document_id": 363795.0,
+          "score": 8.929069519042969
+        },
+        {
+          "document_id": 295729.0,
+          "score": 8.922563552856445
+        },
+        {
+          "document_id": 515305.0,
+          "score": 8.916938781738281
+        },
+        {
+          "document_id": 183111.0,
+          "score": 8.909391403198242
+        },
+        {
+          "document_id": 341447.0,
+          "score": 8.887388229370117
+        },
+        {
+          "document_id": 268473.0,
+          "score": 8.861858367919922
+        },
+        {
+          "document_id": 662091.0,
+          "score": 8.845048904418945
+        },
+        {
+          "document_id": 514897.0,
+          "score": 8.836698532104492
+        },
+        {
+          "document_id": 465933.0,
+          "score": 8.789432525634766
+        },
+        {
+          "document_id": 221761.0,
+          "score": 8.767705917358398
+        },
+        {
+          "document_id": 301016.0,
+          "score": 8.76427173614502
+        },
+        {
+          "document_id": 683063.0,
+          "score": 8.730449676513672
+        },
+        {
+          "document_id": 491441.0,
+          "score": 8.703410148620605
+        },
+        {
+          "document_id": 187859.0,
+          "score": 8.69233512878418
+        },
+        {
+          "document_id": 3896.0,
+          "score": 8.667887687683105
+        },
+        {
+          "document_id": 668398.0,
+          "score": 8.66376781463623
+        },
+        {
+          "document_id": 265675.0,
+          "score": 8.63841438293457
+        },
+        {
+          "document_id": 389662.0,
+          "score": 8.61867904663086
+        }
+      ],
+      "lexical_document_ids": [
+        281762,
+        2143,
+        2144,
+        2145,
+        2150,
+        2152,
+        2153,
+        2154,
+        2155,
+        2156,
+        2157,
+        2158
+      ],
+      "retrieval_mode": "hybrid_lexical",
+      "candidate_citations": [
+        "93/2008/TT-BTC",
+        "67/2018/NQ-HĐND, Điều 1, Khoản 4",
+        "52/2015/QĐ-UBND, Điều 2, Khoản 3",
+        "07/2012/QĐ-UBND, Điều 2",
+        "52/2015/QĐ-UBND, Điều 2, Khoản 2",
+        "83/2015/QH13, Điều 12, Khoản 2",
+        "83/2015/QH13, Điều 9, Khoản 7",
+        "07/2012/QĐ-UBND, Điều 4",
+        "93/2008/TT-BTC",
+        "67/2018/NQ-HĐND, Điều 1, Khoản 2",
+        "08/2015/QĐ-UBND, Điều 1, Khoản 2",
+        "08/2015/QĐ-UBND, Điều 1, Khoản 1"
+      ],
+      "rerank_provider": "qdrant",
+      "rerank_model": "answerdotai/answerai-colbert-small-v1",
+      "rerank_fallback_reason": null,
+      "rerank_attempts": 1,
+      "rerank_input_count": 12,
+      "rerank_output_count": 6,
+      "reranked": [
+        {
+          "citation": "83/2015/QH13, Điều 12, Khoản 2",
+          "score": 43.552658
+        },
+        {
+          "citation": "52/2015/QĐ-UBND, Điều 2, Khoản 2",
+          "score": 43.20024
+        },
+        {
+          "citation": "52/2015/QĐ-UBND, Điều 2, Khoản 3",
+          "score": 43.115665
+        },
+        {
+          "citation": "08/2015/QĐ-UBND, Điều 1, Khoản 2",
+          "score": 43.111202
+        },
+        {
+          "citation": "83/2015/QH13, Điều 9, Khoản 7",
+          "score": 43.099613
+        },
+        {
+          "citation": "08/2015/QĐ-UBND, Điều 1, Khoản 1",
+          "score": 43.09475
+        }
+      ]
+    },
+    "gold_context_hit": false,
+    "gold_context_recall": 0.0,
+    "reciprocal_rank": 0.0,
+    "faithfulness": null,
+    "answer_accuracy": null,
+    "context_precision": null,
+    "context_recall": null,
+    "evaluation_status": "Honest Refusal",
+    "is_refusal": true,
+    "evaluation_fingerprint": "f676c65463f9303d83c138edb06a15ee4935625da44ba181ac0c90ffd06ba999",
+    "error": null
+  },
+  {
+    "query": "Khi chi nhánh của doanh nghiệp chấm dứt hoạt động, doanh nghiệp đó có những trách nhiệm gì liên quan đến nợ và người lao động của chi nhánh?",
+    "group": "Multi-hop",
+    "expected": "grounded_answer",
+    "cache_hit": false,
+    "input_safe": true,
+    "output_safe": true,
+    "response": "Căn cứ vào tài liệu tham khảo #1, khi chi nhánh của doanh nghiệp chấm dứt hoạt động, doanh nghiệp có trách nhiệm chi trả toàn bộ số tiền trợ cấp thôi việc cho người lao động, bao gồm cả phần trợ cấp thôi việc thuộc trách nhiệm chi trả của doanh nghiệp mà người lao động đã làm việc trước khi chuyển công tác trước ngày 01/01/1995. Doanh nghiệp sau đó sẽ gửi thông báo để yêu cầu hoàn trả số tiền đã được chi trả hộ.\n\nCăn cứ vào tài liệu tham khảo #2, khi người lao động chấm dứt hợp đồng lao động, người sử dụng lao động (doanh nghiệp) có trách nhiệm chi trả trợ cấp thôi việc cho người lao động. Trợ cấp thôi việc được tính dựa trên thời gian làm việc của người lao động và mức lương bình quân của 6 tháng liền kề trước khi chấm dứt hợp đồng lao động.\n\nCăn cứ vào tài liệu tham khảo #3, khi doanh nghiệp sáp nhập, hợp nhất, chia, tách hoặc chuyển quyền sở hữu, quyền quản lý hoặc quyền sử dụng tài sản, người sử dụng lao động kế tiếp phải chịu trách nhiệm tiếp tục thực hiện hợp đồng lao động với người lao động. Nếu người lao động chấm dứt hợp đồng lao động, người sử dụng lao động kế tiếp có trách nhiệm cộng cả thời gian người lao động làm việc cho mình và thời gian làm việc cho người sử dụng lao động liền kề trước đó để tính trả trợ cấp thôi việc cho người lao động.\n\nTóm lại, khi chi nhánh của doanh nghiệp chấm dứt hoạt động, doanh nghiệp có trách nhiệm:\n\n- Chi trả trợ cấp thôi việc cho người lao động\n- Tiếp tục thực hiện hợp đồng lao động với người lao động nếu doanh nghiệp kế tiếp\n- Cộng cả thời gian người lao động làm việc cho mình và thời gian làm việc cho người sử dụng lao động liền kề trước đó để tính trả trợ cấp thôi việc cho người lao động nếu người lao động chấm dứt hợp đồng lao động.",
+    "contexts": [
+      "[1939/LĐTBXH-LĐTL]\nNguồn: https://thuvienphapluat.vn/cong-van/Lao-dong-Tien-luong/Cong-van-1939-LDTBXH-LDTL-2014-giai-quyet-che-do-nguoi-lao-dong-cham-dut-hop-dong-234494.aspx\nTiêu đề: Công văn 1939/LĐTBXH-LĐTL năm 2014 giải quyết chế độ cho người lao động khi chấm dứt hợp đồng lao động do Bộ Lao động - Thương binh và Xã hội ban hành\ndoanh nghiệp là tiền lương, tiền công theo hợp đồng lao động ở công ty nhà nước cuối cùng. Công ty nhà nước cuối cùng có trách nhiệm chi trả toàn bộ số tiền trợ cấp thôi việc cho người lao động, kể cả phần trợ cấp thôi việc thuộc trách nhiệm chi trả của công ty nhà nước mà người lao động đã làm việc trước khi chuyển công tác trước ngày 01/01/1995, sau đó gửi thông báo để yêu cầu hoàn trả số tiền đã được chi trả hộ. Trường hợp công ty nhà nước được chi trả hộ đã chấm dứt hoạt động thì ngân sách nhà nước hoàn trả số tiền trợ cấp thôi việc đã được chi trả hộ theo hướng dẫn của Bộ Tài chính. c) Cách tính trả trợ cấp thôi việc cụ thể thực hiện theo quy định tại Nghị định số 44/2003/NĐ-CP ngày 09/5/2003 của Chính phủ, Nghị định số 127/2008/NĐ-CP ngày 12/12/2008 của Chính phủ và Thông tư số 17/2009/TT-BLĐTBXH ngày 26/5/2009 của Bộ Lao động - Thương binh và Xã hội. 2. Ngày 01/11/2013, Bộ Lao động - Thương binh và Xã hội đã có công văn số 4242/LĐTBXH-LĐTL trả lời Văn phòng Chính phủ về việc giải quyết chế độ đối với người lao động chấm dứt hợp",
+      "[864/LĐTBXH-LĐTL]\nNguồn: https://thuvienphapluat.vn/cong-van/Bao-hiem/Cong-van-864-LDTBXH-LDTL-huong-dan-chi-tra-tro-cap-thoi-viec-cho-nguoi-lao-dong-177338.aspx\nTiêu đề: Công văn 864/LĐTBXH-LĐTL hướng dẫn chi trả trợ cấp thôi việc cho người lao động do Bộ Lao động - Thương binh và Xã hội ban hành\nLao động thì người sử dụng lao động có trách nhiệm chi trả trợ cấp thôi việc mỗi năm làm việc nửa tháng lương, cộng phụ cấp lương (nếu có) cho người lao động làm việc thường xuyên trong doanh nghiệp từ đủ 12 tháng trở lên khi chấm dứt hợp đồng lao động. Theo nội dung công văn số 15-CV/CTHT nêu trên thì ông Phạm Văn Thắng làm việc theo chế độ hợp đồng lao động và có thời gian làm việc tại Công ty trách nhiệm hữu hạn Hồ Tây một thành viên từ tháng 4/1993 đến tháng 8/2006, khi chấm dứt hợp đồng lao động đúng pháp luật (chấm dứt theo Điều 36, Điều 37, các điểm a, c, d và đ khoản 1 Điều 38 Bộ luật Lao động sửa đổi, bổ sung) Công ty trách nhiệm hữu hạn Hồ Tây một thành viên có trách nhiệm chi trả trợ cấp thôi việc là thời điểm hai bên chấm dứt hợp đồng lao động. Tiền lương làm căn cứ tính trợ cấp thôi việc là tiền lương theo hợp đồng lao động, được tính bình quân của 6 tháng liền kề trước khi chấm dứt hợp đồng lao động, bao gồm tiền lương cấp bậc, chức vụ và phụ cấp khu vực, phụ cấp chức vụ",
+      "[4144/LĐTBXH-LĐTL]\nNguồn: https://thuvienphapluat.vn/cong-van/Lao-dong-Tien-luong/Cong-van-4144-LDTBXH-LDTL-nam-2014-tro-cap-thoi-viec-cho-nguoi-lao-dong-256041.aspx\nTiêu đề: Công văn 4144/LĐTBXH-LĐTL năm 2014 về trợ cấp thôi việc cho người lao động do Bộ Lao động - Thương binh và Xã hội ban hành\ntách doanh nghiệp, chuyển quyền sở hữu, quyền quản lý hoặc quyền sử dụng tài sản của doanh nghiệp thì người sử dụng lao động kế tiếp phải chịu trách nhiệm tiếp tục thực hiện hợp đồng lao động với người lao động. 3. Theo quy định tại Điều 2 Thông tư số 17/2009/TT-BLĐTBXH ngày 26/5/2009 của Bộ Lao động - Thương binh và Xã hội thì trường hợp sau khi sáp nhập, hợp nhất, chia, tách doanh nghiệp, chuyển quyền sở hữu, quyền quản lý hoặc quyền sử dụng tài sản doanh nghiệp mà người lao động chấm dứt hợp đồng lao động thì người sử dụng lao động kế tiếp có trách nhiệm cộng cả thời gian người lao động làm việc cho mình và thời gian làm việc cho người sử dụng lao động liền kề trước đó để tính trả trợ cấp thôi việc cho người lao động. Căn cứ các quy định nêu trên và nội dung công văn số 1569/SLĐTBXH-LĐVL của quý Sở thì hệ thống thoát nước thuộc Công ty Công trình đô thị Trà Vinh thuộc thị xã Trà Vinh (nay là thành phố Trà Vinh) được chuyển giao sang Công ty Cấp thoát nước Trà Vinh (nay là Công ty TNHH một thành viên cấp thoát nước Trà Vinh) theo Quyết"
+    ],
+    "latency": 145.10348649999833,
+    "queue_latency": 80.6570576999984,
+    "pipeline_latency": 63.62429650000013,
+    "input_guardrail_latency": 1.0544024000009813,
+    "output_guardrail_latency": 1.9993773999995028,
+    "ragas_latency": 0.8202488999995694,
+    "judge_provider": "Gemini",
+    "judge_model": "gemini-2.0-flash",
+    "lat_info": {
+      "t_rewrite": 27.13,
+      "t_retrieval": 4.88,
+      "t_hybrid": 1.665003,
+      "t_lexical": 1.857433,
+      "t_resolve_chunk": 0.035752,
+      "t_candidate": 0.002388,
+      "t_rerank": 2.983431,
+      "t_llm": 28.561,
+      "t_total": 60.57,
+      "retrieval_status": "ok",
+      "retrieval_diagnostics": {
+        "hybrid_embedding_attempts": 1,
+        "hybrid_embedding_latency": 1.349118,
+        "hybrid_query_attempts": 1,
+        "hybrid_query_latency": 0.315663,
+        "top_documents": [
+          {
+            "document_id": 634905.0,
+            "score": 8.886263847351074
+          },
+          {
+            "document_id": 511826.0,
+            "score": 7.944141864776611
+          },
+          {
+            "document_id": 234494.0,
+            "score": 7.765637397766113
+          },
+          {
+            "document_id": 177338.0,
+            "score": 7.721309661865234
+          },
+          {
+            "document_id": 256041.0,
+            "score": 7.559154987335205
+          },
+          {
+            "document_id": 368216.0,
+            "score": 7.496114253997803
+          },
+          {
+            "document_id": 348553.0,
+            "score": 7.494803428649902
+          },
+          {
+            "document_id": 469565.0,
+            "score": 7.487959384918213
+          },
+          {
+            "document_id": 277673.0,
+            "score": 7.396482467651367
+          },
+          {
+            "document_id": 2345.0,
+            "score": 7.35161018371582
+          },
+          {
+            "document_id": 400054.0,
+            "score": 7.302334308624268
+          },
+          {
+            "document_id": 678235.0,
+            "score": 7.223320960998535
+          },
+          {
+            "document_id": 212660.0,
+            "score": 7.201708793640137
+          },
+          {
+            "document_id": 262783.0,
+            "score": 7.1907148361206055
+          },
+          {
+            "document_id": 238381.0,
+            "score": 7.17595911026001
+          },
+          {
+            "document_id": 600872.0,
+            "score": 7.139107704162598
+          },
+          {
+            "document_id": 475382.0,
+            "score": 7.089177131652832
+          },
+          {
+            "document_id": 108663.0,
+            "score": 7.029102325439453
+          },
+          {
+            "document_id": 450631.0,
+            "score": 7.012031555175781
+          },
+          {
+            "document_id": 138257.0,
+            "score": 6.980407238006592
+          },
+          {
+            "document_id": 4113.0,
+            "score": 6.980304718017578
+          },
+          {
+            "document_id": 531825.0,
+            "score": 6.974478721618652
+          },
+          {
+            "document_id": 442424.0,
+            "score": 6.951648712158203
+          },
+          {
+            "document_id": 329874.0,
+            "score": 6.942183971405029
+          }
+        ],
+        "lexical_document_ids": [
+          2143,
+          2144,
+          2145,
+          2150,
+          2152,
+          2153,
+          2154,
+          2155,
+          2156,
+          2157,
+          2158,
+          2159
+        ],
+        "retrieval_mode": "hybrid_lexical",
+        "candidate_citations": [
+          "5725/TCT-QLN",
+          "5725/TCT-QLN",
+          "4144/LĐTBXH-LĐTL",
+          "1685/TCT-KK",
+          "1685/TCT-KK",
+          "864/LĐTBXH-LĐTL",
+          "1939/LĐTBXH-LĐTL",
+          "4144/LĐTBXH-LĐTL",
+          "1939/LĐTBXH-LĐTL",
+          "864/LĐTBXH-LĐTL",
+          "98067/CT-TTHT",
+          "105/2005/QĐ-UBND, Điều 5"
+        ],
+        "rerank_provider": "qdrant",
+        "rerank_model": "answerdotai/answerai-colbert-small-v1",
+        "rerank_fallback_reason": null,
+        "rerank_attempts": 1,
+        "rerank_input_count": 12,
+        "rerank_output_count": 6,
+        "reranked": [
+          {
+            "citation": "1939/LĐTBXH-LĐTL",
+            "score": 93.73226
+          },
+          {
+            "citation": "864/LĐTBXH-LĐTL",
+            "score": 93.58573
+          },
+          {
+            "citation": "4144/LĐTBXH-LĐTL",
+            "score": 93.57378
+          },
+          {
+            "citation": "1685/TCT-KK",
+            "score": 93.40343
+          },
+          {
+            "citation": "4144/LĐTBXH-LĐTL",
+            "score": 93.35282
+          },
+          {
+            "citation": "864/LĐTBXH-LĐTL",
+            "score": 93.31044
+          }
+        ]
+      },
+      "rewritten_query": "Trang, \"Tr, \"Tr, \"Tr, \"Tr, \"Tr, \"Tr, \"Tr, \"Tr, \"Tr, \"Tr, \"Tr, \"Tr, \"Tr, \"Tr, \"Tr, \"Tr, \"Tr, \"Tr, \"Tr, \"Tr, \"Tr, \"Tr, \"Tr, \"Tr, \"Tr, \"Tr, \"Tr, \"Tr, \"Tr, \"Tr, \"Tr,"
+    },
+    "retrieval_status": "ok",
+    "retrieval_diagnostics": {
+      "hybrid_embedding_attempts": 1,
+      "hybrid_embedding_latency": 1.349118,
+      "hybrid_query_attempts": 1,
+      "hybrid_query_latency": 0.315663,
+      "top_documents": [
+        {
+          "document_id": 634905.0,
+          "score": 8.886263847351074
+        },
+        {
+          "document_id": 511826.0,
+          "score": 7.944141864776611
+        },
+        {
+          "document_id": 234494.0,
+          "score": 7.765637397766113
+        },
+        {
+          "document_id": 177338.0,
+          "score": 7.721309661865234
+        },
+        {
+          "document_id": 256041.0,
+          "score": 7.559154987335205
+        },
+        {
+          "document_id": 368216.0,
+          "score": 7.496114253997803
+        },
+        {
+          "document_id": 348553.0,
+          "score": 7.494803428649902
+        },
+        {
+          "document_id": 469565.0,
+          "score": 7.487959384918213
+        },
+        {
+          "document_id": 277673.0,
+          "score": 7.396482467651367
+        },
+        {
+          "document_id": 2345.0,
+          "score": 7.35161018371582
+        },
+        {
+          "document_id": 400054.0,
+          "score": 7.302334308624268
+        },
+        {
+          "document_id": 678235.0,
+          "score": 7.223320960998535
+        },
+        {
+          "document_id": 212660.0,
+          "score": 7.201708793640137
+        },
+        {
+          "document_id": 262783.0,
+          "score": 7.1907148361206055
+        },
+        {
+          "document_id": 238381.0,
+          "score": 7.17595911026001
+        },
+        {
+          "document_id": 600872.0,
+          "score": 7.139107704162598
+        },
+        {
+          "document_id": 475382.0,
+          "score": 7.089177131652832
+        },
+        {
+          "document_id": 108663.0,
+          "score": 7.029102325439453
+        },
+        {
+          "document_id": 450631.0,
+          "score": 7.012031555175781
+        },
+        {
+          "document_id": 138257.0,
+          "score": 6.980407238006592
+        },
+        {
+          "document_id": 4113.0,
+          "score": 6.980304718017578
+        },
+        {
+          "document_id": 531825.0,
+          "score": 6.974478721618652
+        },
+        {
+          "document_id": 442424.0,
+          "score": 6.951648712158203
+        },
+        {
+          "document_id": 329874.0,
+          "score": 6.942183971405029
+        }
+      ],
+      "lexical_document_ids": [
+        2143,
+        2144,
+        2145,
+        2150,
+        2152,
+        2153,
+        2154,
+        2155,
+        2156,
+        2157,
+        2158,
+        2159
+      ],
+      "retrieval_mode": "hybrid_lexical",
+      "candidate_citations": [
+        "5725/TCT-QLN",
+        "5725/TCT-QLN",
+        "4144/LĐTBXH-LĐTL",
+        "1685/TCT-KK",
+        "1685/TCT-KK",
+        "864/LĐTBXH-LĐTL",
+        "1939/LĐTBXH-LĐTL",
+        "4144/LĐTBXH-LĐTL",
+        "1939/LĐTBXH-LĐTL",
+        "864/LĐTBXH-LĐTL",
+        "98067/CT-TTHT",
+        "105/2005/QĐ-UBND, Điều 5"
+      ],
+      "rerank_provider": "qdrant",
+      "rerank_model": "answerdotai/answerai-colbert-small-v1",
+      "rerank_fallback_reason": null,
+      "rerank_attempts": 1,
+      "rerank_input_count": 12,
+      "rerank_output_count": 6,
+      "reranked": [
+        {
+          "citation": "1939/LĐTBXH-LĐTL",
+          "score": 93.73226
+        },
+        {
+          "citation": "864/LĐTBXH-LĐTL",
+          "score": 93.58573
+        },
+        {
+          "citation": "4144/LĐTBXH-LĐTL",
+          "score": 93.57378
+        },
+        {
+          "citation": "1685/TCT-KK",
+          "score": 93.40343
+        },
+        {
+          "citation": "4144/LĐTBXH-LĐTL",
+          "score": 93.35282
+        },
+        {
+          "citation": "864/LĐTBXH-LĐTL",
+          "score": 93.31044
+        }
+      ]
+    },
+    "gold_context_hit": true,
+    "gold_context_recall": 1.0,
+    "reciprocal_rank": 1.0,
+    "faithfulness": null,
+    "answer_accuracy": null,
+    "context_precision": null,
+    "context_recall": null,
+    "evaluation_status": "Eval Failed",
+    "is_refusal": false,
+    "evaluation_fingerprint": "f676c65463f9303d83c138edb06a15ee4935625da44ba181ac0c90ffd06ba999",
+    "error": "Error code: 429 - [{'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-2.0-flash\\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash\\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash\\nPlease retry in 22.580777649s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_input_token_count', 'quotaId': 'GenerateContentInputTokensPerModelPerMinute-FreeTier', 'quotaDimensions': {'model': 'gemini-2.0-flash', 'location': 'global'}}, {'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerMinutePerProjectPerModel-FreeTier', 'quotaDimensions': {'model': 'gemini-2.0-flash', 'location': 'global'}}, {'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'location': 'global', 'model': 'gemini-2.0-flash'}}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '22s'}]}}]"
+  },
+  {
+    "query": "Mức xử phạt hành chính cụ thể đối với hành vi không báo cáo về việc tuân thủ quy định của Luật Doanh nghiệp theo yêu cầu của Cơ quan đăng ký kinh doanh là bao nhiêu?",
+    "group": "Unanswerable",
+    "expected": "honest_refusal",
+    "cache_hit": false,
+    "input_safe": true,
+    "output_safe": true,
+    "response": "Không đủ dữ liệu để trả lời câu hỏi của bạn. Các tài liệu tham khảo không cung cấp thông tin cụ thể về mức xử phạt hành chính đối với hành vi không báo cáo về việc tuân thủ quy định của Luật Doanh nghiệp theo yêu cầu của Cơ quan đăng ký kinh doanh. Để có thông tin chính xác, bạn nên kiểm tra lại trên nguồn chính thức hiện hành hoặc với người có chuyên môn.",
+    "contexts": [
+      "[602/TCT-PC]\nNguồn: https://thuvienphapluat.vn/cong-van/Thue-Phi-Le-Phi/Cong-van-602-TCT-PC-2023-xu-phat-vi-pham-ve-thue-doanh-nghiep-lam-thu-tuc-giai-the-585791.aspx\nTiêu đề: Công văn 602/TCT-PC năm 2023 xử phạt vi phạm hành chính về thuế, hóa đơn đối với doanh nghiệp đang làm thủ tục giải thể do Tổng cục Thuế ban hành\nvề đăng ký doanh nghiệp. Căn cứ các quy định nêu trên, trường hợp không ra quyết định xử phạt vi phạm hành chính về thuế, hóa đơn đối với doanh nghiệp bị giải thể phải căn cứ theo thông báo về việc doanh nghiệp giải thể của cơ quan đăng ký kinh doanh hoặc thông báo chấm dứt mã số thuế của cơ quan thuế (bản chính hoặc bản sao theo quy định). Do đó, khi doanh nghiệp đăng ký giải thể đối với trường hợp quy định tại các điểm a, b và c khoản 1 Điều 207 Luật Doanh nghiệp 2020 và đang trong giai đoạn cơ quan đăng ký kinh doanh thông báo tình trạng doanh nghiệp đang làm thủ tục giải thể trên Cổng thông tin quốc gia về đăng ký doanh nghiệp theo quy định tại khoản 2 Điều 70 Nghị định số 01/2021/NĐ-CP ngày 04/01/2021 của Chính phủ thì chưa đủ căn cứ để không ra quyết định xử phạt vi phạm hành chính về thuế, hóa đơn theo quy định tại điểm d khoản 1 Điều 38 Nghị định số 125/2020/NĐ-CP ngày 19/10/2020. Tổng cục Thuế trả lời để Cục Thuế được biết./. Nơi nhận: - Như trên; - Phó TCTr Phi Vân Tuấn (để báo cáo); - Vụ PC - BTC;",
+      "[214/TCT-CS]\nNguồn: https://thuvienphapluat.vn/cong-van/Thue-Phi-Le-Phi/Cong-van-214-TCT-CS-xu-phat-vi-pham-hanh-chinh-dang-ky-thue-bo-sung-thay-doi-dang-ky-thue-61930.aspx\nTiêu đề: Công văn số 214/TCT-CS về việc xử phạt vi phạm hành chính về đăng ký thuế, bổ sung thay đổi đăng ký thuế do Tổng cục Thuế ban hành\ncủa doanh nghiệp được Phòng đăng ký kinh doanh cấp đến thời điểm làm thủ tục cấp mã số thuế tại cơ quan thuế đã quá 2 năm thì thuộc trường hợp bị thu hồi giấy chứng nhận đăng ký kinh doanh. Vì vậy cơ quan thuế thông báo cho Phòng đăng ký kinh doanh –Sở Kế hoạch và Đầu tư Hà Nội làm thủ tục thu hồi giấy chứng nhận đăng ký kinh doanh theo qui định tại điều 46 Nghị định số 88/2006/NĐ-CP ngày 29/8/2006 của Chính phủ về đăng ký kinh doanh. 2. Về việc xử phạt vi phạm hành chính về thuế: - Đối với hành vi vi phạm phát sinh trước ngày 01/07/2007 thì bị xử phạt vi phạm pháp luật về thuế theo qui định tại Điều 3, Điều 11 Nghị định số 100/2004/NĐ-CP ngày 25/02/2004 của Chính phủ về xử phạt vi phạm hành chính trong lĩnh vực thuế, thời hiệu xử phạt là 05 năm trở về trước, kể từ ngày phát hiện có sự khai man, trốn thuế. - Đối với hành vi vi phạm phát sinh sau ngày 01/07/2007: Tại điểm 1 mục I phần B Thông tư số 61/2007/TT-BTC ngày 14/6/2007 của Bộ Tài chính hướng dẫn thực hiện xử lý vi phạm pháp luật về thuế đã qui",
+      "[4500TCT/CS]\nNguồn: https://thuvienphapluat.vn/cong-van/Thue-Phi-Le-Phi/Cong-van-4500-TCT-CS-mien-thue-thu-nhap-doanh-nghiep-29617.aspx\nTiêu đề: Công văn số 4500 TCT/CS ngày 18/12/2003 của Tổng cục Thuế về việc miễn thuế thu nhập doanh nghiệp\nthực tế hoặc khai man không được xét giảm thuế. Tuỳ theo lỗi của cơ sở sản xuất, kinh doanh, cơ quan thuế áp dụng các mức xử phạt hành chính hoặc chuyển cơ quan có thẩm quyền truy cứu trách nhiệm hình sự đối với hành vi quyết toán thuế thu nhập doanh nghiệp không đúng thực tế hoặc khai man của cơ sở sản xuất, kinh doanh. Trong mọi trường hợp, cơ quan thuế phải thực hiện truy thu đủ số thuế đối với cơ sở sản xuất, kinh doanh có hành vi khai man, trốn thuế và áp dụng các biện pháp xử phạt theo luật định”. Theo quy định nêu trên, doanh nghiệp thuộc diện miễn thuế TNDN theo quy định của Luật thuế TNDN hoặc Luật khuyến khích đầu tư trong nước có hành vi quyết toán thuế không đúng với thực tế sản xuất kinh doanh thì vẫn được miễn thuế thu nhập doanh nghiệp nhưng sẽ bị xử phạt vi phạm hành chính theo quy định hiện hành. Tổng cục thuế trả lời để Cục thuế biết và thực hiện. KT. TỔNG CỤC TRƯỞNG TỔNG CỤC THUẾ PHÓ TỔNG CỤC TRƯỞNG Nguyễn Thị Cúc"
+    ],
+    "latency": 158.35470440000245,
+    "queue_latency": 145.10417130000133,
+    "pipeline_latency": 13.249114100000952,
+    "input_guardrail_latency": 0.5768435999998474,
+    "output_guardrail_latency": 2.136568799998713,
+    "ragas_latency": 0.0,
+    "judge_provider": "Gemini",
+    "judge_model": "gemini-2.0-flash",
+    "lat_info": {
+      "t_rewrite": 1.441,
+      "t_retrieval": 6.394,
+      "t_hybrid": 1.263785,
+      "t_lexical": 3.789375,
+      "t_resolve_chunk": 0.048596,
+      "t_candidate": 0.004897,
+      "t_rerank": 2.550889,
+      "t_llm": 2.7,
+      "t_total": 10.535,
+      "retrieval_status": "ok",
+      "retrieval_diagnostics": {
+        "hybrid_embedding_attempts": 1,
+        "hybrid_embedding_latency": 0.941588,
+        "hybrid_query_attempts": 1,
+        "hybrid_query_latency": 0.321736,
+        "top_documents": [
+          {
+            "document_id": 585791.0,
+            "score": 10.13068962097168
+          },
+          {
+            "document_id": 221372.0,
+            "score": 9.892892837524414
+          },
+          {
+            "document_id": 531129.0,
+            "score": 9.835161209106445
+          },
+          {
+            "document_id": 493523.0,
+            "score": 9.817817687988281
+          },
+          {
+            "document_id": 61930.0,
+            "score": 9.716461181640625
+          },
+          {
+            "document_id": 29617.0,
+            "score": 9.677327156066895
+          },
+          {
+            "document_id": 166301.0,
+            "score": 9.630996704101562
+          },
+          {
+            "document_id": 107884.0,
+            "score": 9.614051818847656
+          },
+          {
+            "document_id": 91397.0,
+            "score": 9.549520492553711
+          },
+          {
+            "document_id": 495188.0,
+            "score": 9.528654098510742
+          },
+          {
+            "document_id": 223573.0,
+            "score": 9.520308494567871
+          },
+          {
+            "document_id": 51535.0,
+            "score": 9.480449676513672
+          },
+          {
+            "document_id": 355077.0,
+            "score": 9.468571662902832
+          },
+          {
+            "document_id": 612639.0,
+            "score": 9.450986862182617
+          },
+          {
+            "document_id": 252915.0,
+            "score": 9.428909301757812
+          },
+          {
+            "document_id": 376074.0,
+            "score": 9.405384063720703
+          },
+          {
+            "document_id": 423828.0,
+            "score": 9.396282196044922
+          },
+          {
+            "document_id": 9138.0,
+            "score": 9.380960464477539
+          },
+          {
+            "document_id": 130420.0,
+            "score": 9.299715042114258
+          },
+          {
+            "document_id": 455646.0,
+            "score": 9.285942077636719
+          },
+          {
+            "document_id": 134575.0,
+            "score": 9.284845352172852
+          },
+          {
+            "document_id": 598464.0,
+            "score": 9.280689239501953
+          },
+          {
+            "document_id": 13817.0,
+            "score": 9.243779182434082
+          },
+          {
+            "document_id": 151106.0,
+            "score": 9.236722946166992
+          }
+        ],
+        "lexical_document_ids": [
+          2143,
+          2144,
+          2145,
+          2150,
+          2152,
+          2153,
+          2154,
+          2155,
+          2156,
+          2157,
+          2158,
+          2159
+        ],
+        "retrieval_mode": "hybrid_lexical",
+        "candidate_citations": [
+          "602/TCT-PC",
+          "4047/BKHĐT-QLKTTW",
+          "214/TCT-CS",
+          "4500TCT/CS",
+          "4047/BKHĐT-QLKTTW",
+          "416/TCT-KK, Điều 108",
+          "4500TCT/CS",
+          "214/TCT-CS",
+          "416/TCT-KK, Điều 108",
+          "602/TCT-PC",
+          "3823/BTC-QLKT",
+          "3823/BTC-QLKT"
+        ],
+        "rerank_provider": "qdrant",
+        "rerank_model": "answerdotai/answerai-colbert-small-v1",
+        "rerank_fallback_reason": null,
+        "rerank_attempts": 1,
+        "rerank_input_count": 12,
+        "rerank_output_count": 6,
+        "reranked": [
+          {
+            "citation": "602/TCT-PC",
+            "score": 41.64461
+          },
+          {
+            "citation": "214/TCT-CS",
+            "score": 41.56562
+          },
+          {
+            "citation": "4500TCT/CS",
+            "score": 41.438755
+          },
+          {
+            "citation": "416/TCT-KK, Điều 108",
+            "score": 41.436474
+          },
+          {
+            "citation": "214/TCT-CS",
+            "score": 41.33559
+          },
+          {
+            "citation": "3823/BTC-QLKT",
+            "score": 41.32132
+          }
+        ]
+      },
+      "rewritten_query": "Xử phạt hành chính đối với hành vi không báo cáo về việc tuân thủ quy định của Luật Doanh nghiệp"
+    },
+    "retrieval_status": "ok",
+    "retrieval_diagnostics": {
+      "hybrid_embedding_attempts": 1,
+      "hybrid_embedding_latency": 0.941588,
+      "hybrid_query_attempts": 1,
+      "hybrid_query_latency": 0.321736,
+      "top_documents": [
+        {
+          "document_id": 585791.0,
+          "score": 10.13068962097168
+        },
+        {
+          "document_id": 221372.0,
+          "score": 9.892892837524414
+        },
+        {
+          "document_id": 531129.0,
+          "score": 9.835161209106445
+        },
+        {
+          "document_id": 493523.0,
+          "score": 9.817817687988281
+        },
+        {
+          "document_id": 61930.0,
+          "score": 9.716461181640625
+        },
+        {
+          "document_id": 29617.0,
+          "score": 9.677327156066895
+        },
+        {
+          "document_id": 166301.0,
+          "score": 9.630996704101562
+        },
+        {
+          "document_id": 107884.0,
+          "score": 9.614051818847656
+        },
+        {
+          "document_id": 91397.0,
+          "score": 9.549520492553711
+        },
+        {
+          "document_id": 495188.0,
+          "score": 9.528654098510742
+        },
+        {
+          "document_id": 223573.0,
+          "score": 9.520308494567871
+        },
+        {
+          "document_id": 51535.0,
+          "score": 9.480449676513672
+        },
+        {
+          "document_id": 355077.0,
+          "score": 9.468571662902832
+        },
+        {
+          "document_id": 612639.0,
+          "score": 9.450986862182617
+        },
+        {
+          "document_id": 252915.0,
+          "score": 9.428909301757812
+        },
+        {
+          "document_id": 376074.0,
+          "score": 9.405384063720703
+        },
+        {
+          "document_id": 423828.0,
+          "score": 9.396282196044922
+        },
+        {
+          "document_id": 9138.0,
+          "score": 9.380960464477539
+        },
+        {
+          "document_id": 130420.0,
+          "score": 9.299715042114258
+        },
+        {
+          "document_id": 455646.0,
+          "score": 9.285942077636719
+        },
+        {
+          "document_id": 134575.0,
+          "score": 9.284845352172852
+        },
+        {
+          "document_id": 598464.0,
+          "score": 9.280689239501953
+        },
+        {
+          "document_id": 13817.0,
+          "score": 9.243779182434082
+        },
+        {
+          "document_id": 151106.0,
+          "score": 9.236722946166992
+        }
+      ],
+      "lexical_document_ids": [
+        2143,
+        2144,
+        2145,
+        2150,
+        2152,
+        2153,
+        2154,
+        2155,
+        2156,
+        2157,
+        2158,
+        2159
+      ],
+      "retrieval_mode": "hybrid_lexical",
+      "candidate_citations": [
+        "602/TCT-PC",
+        "4047/BKHĐT-QLKTTW",
+        "214/TCT-CS",
+        "4500TCT/CS",
+        "4047/BKHĐT-QLKTTW",
+        "416/TCT-KK, Điều 108",
+        "4500TCT/CS",
+        "214/TCT-CS",
+        "416/TCT-KK, Điều 108",
+        "602/TCT-PC",
+        "3823/BTC-QLKT",
+        "3823/BTC-QLKT"
+      ],
+      "rerank_provider": "qdrant",
+      "rerank_model": "answerdotai/answerai-colbert-small-v1",
+      "rerank_fallback_reason": null,
+      "rerank_attempts": 1,
+      "rerank_input_count": 12,
+      "rerank_output_count": 6,
+      "reranked": [
+        {
+          "citation": "602/TCT-PC",
+          "score": 41.64461
+        },
+        {
+          "citation": "214/TCT-CS",
+          "score": 41.56562
+        },
+        {
+          "citation": "4500TCT/CS",
+          "score": 41.438755
+        },
+        {
+          "citation": "416/TCT-KK, Điều 108",
+          "score": 41.436474
+        },
+        {
+          "citation": "214/TCT-CS",
+          "score": 41.33559
+        },
+        {
+          "citation": "3823/BTC-QLKT",
+          "score": 41.32132
+        }
+      ]
+    },
+    "gold_context_hit": false,
+    "gold_context_recall": 0.0,
+    "reciprocal_rank": 0.0,
+    "faithfulness": null,
+    "answer_accuracy": null,
+    "context_precision": null,
+    "context_recall": null,
+    "evaluation_status": "Honest Refusal",
+    "is_refusal": true,
+    "evaluation_fingerprint": "f676c65463f9303d83c138edb06a15ee4935625da44ba181ac0c90ffd06ba999",
+    "error": null
+  }
+]
