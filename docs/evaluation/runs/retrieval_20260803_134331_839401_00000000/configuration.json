@@ -1,0 +1,14 @@
+{
+  "profile_name": "custom",
+  "RETRIEVAL_DOCUMENT_LIMIT": 24,
+  "RESOLVED_DOCUMENT_LIMIT": 16,
+  "LOCAL_CHUNKS_PER_DOCUMENT": 4,
+  "RERANK_INPUT_LIMIT": 24,
+  "FINAL_EVIDENCE_LIMIT": 3,
+  "INTENT_SCORING_ENABLED": true,
+  "eval_mode": "retrieval-only",
+  "judge_mode": "none",
+  "guardrail_mode": "off",
+  "rewrite_mode": "off",
+  "reranker_provider": "current"
+}
