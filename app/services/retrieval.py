@@ -170,10 +170,50 @@ INTENT_PATTERNS = {
 }
 
 
+from app.evaluation.schemas import StageCandidate
+
+
+def _hit_to_stage_candidate(hit: Any, source: str) -> StageCandidate:
+    if isinstance(hit, dict):
+        payload = hit.get("metadata") or {}
+        score = hit.get("score")
+    else:
+        payload = getattr(hit, "metadata", None) or {}
+        score = getattr(hit, "score", None)
+    return StageCandidate(
+        document_id=payload.get("document_id"),
+        document_number=payload.get("document_number"),
+        title=payload.get("title"),
+        source_url=payload.get("source_url"),
+        citation=payload.get("citation"),
+        article=payload.get("article"),
+        clause=payload.get("clause"),
+        score=float(score) if score is not None else None,
+        source=source,
+    )
+
+
+def _chunk_to_stage_candidate(chunk: EvidenceChunk, source: str, score: float | None = None) -> StageCandidate:
+    return StageCandidate(
+        document_id=chunk.document_id,
+        document_number=chunk.document_number,
+        title=chunk.title,
+        source_url=chunk.source_url,
+        citation=chunk.citation,
+        article=chunk.article,
+        clause=chunk.clause,
+        text=chunk.text,
+        score=score,
+        source=source,
+    )
+
+
 def _lexical_score(
     query_terms: list[str],
     query_phrase: str,
     chunk: EvidenceChunk,
+    *,
+    intent_scoring_enabled: bool = True,
 ) -> float:
     normalized_text = " ".join(chunk.text.casefold().split())
     query_lower = query_phrase.casefold()
@@ -187,12 +227,14 @@ def _lexical_score(
         score += 8.0
 
     # Legal intent boost (definition, penalty, deadline, authority, responsibility, condition, exception)
-    for intent, (query_kw, chunk_kw) in INTENT_PATTERNS.items():
-        if any(qkw in query_lower for qkw in query_kw):
-            if any(ckw in normalized_text for ckw in chunk_kw):
-                score += 4.0
+    if intent_scoring_enabled:
+        for intent, (query_kw, chunk_kw) in INTENT_PATTERNS.items():
+            if any(qkw in query_lower for qkw in query_kw):
+                if any(ckw in normalized_text for ckw in chunk_kw):
+                    score += 4.0
 
     return score
+
 
 
 def select_rerank_candidates(
@@ -201,6 +243,7 @@ def select_rerank_candidates(
     *,
     limit: int,
     per_document_limit: int,
+    intent_scoring_enabled: bool = True,
 ) -> list[EvidenceChunk]:
     """Prefer lexical evidence, then retain semantic document diversity."""
     if limit <= 0 or per_document_limit <= 0:
@@ -210,7 +253,12 @@ def select_rerank_candidates(
     query_phrase = " ".join(query.casefold().split())
     scored = [
         (
-            _lexical_score(query_terms, query_phrase, chunk),
+            _lexical_score(
+                query_terms,
+                query_phrase,
+                chunk,
+                intent_scoring_enabled=intent_scoring_enabled,
+            ),
             position,
             chunk,
         )
@@ -400,7 +448,13 @@ class LegalRetriever:
         hits: list[Any],
         lexical_document_ids: list[int] | None = None,
         query_text: str = "",
-    ) -> list[EvidenceChunk]:
+        *,
+        resolved_doc_limit: int | None = None,
+        local_chunks_limit: int | None = None,
+        intent_scoring_enabled: bool = True,
+    ) -> tuple[list[EvidenceChunk], list[EvidenceChunk], list[int]]:
+        doc_limit = resolved_doc_limit if resolved_doc_limit is not None else self._settings.RERANK_CANDIDATE_LIMIT
+        chunk_limit = local_chunks_limit if local_chunks_limit is not None else self._settings.RERANK_PER_DOCUMENT_LIMIT
         lexical_document_ids = lexical_document_ids or []
         lexical_set = set(lexical_document_ids)
         payload_by_id: dict[int, dict[str, Any]] = {}
@@ -425,15 +479,16 @@ class LegalRetriever:
         document_ids = balanced_document_ids(
             lexical_document_ids,
             list(payload_by_id),
-            limit=self._settings.RERANK_CANDIDATE_LIMIT,
+            limit=doc_limit,
         )
         if not document_ids:
-            return []
+            return [], [], []
         documents = await asyncio.to_thread(
             self._content_store.get_many,
             document_ids,
         )
-        chunks: list[EvidenceChunk] = []
+        all_structural_chunks: list[EvidenceChunk] = []
+        locally_selected_chunks: list[EvidenceChunk] = []
         query_terms = normalized_terms(query_text)
         query_phrase = " ".join(query_text.casefold().split())
         for document_id in document_ids:
@@ -455,6 +510,7 @@ class LegalRetriever:
                     self._settings.QUERY_CHUNK_OVERLAP_TOKENS
                 ),
             )
+            all_structural_chunks.extend(document_chunks)
             ranked_chunks = sorted(
                 enumerate(document_chunks),
                 key=lambda item: (
@@ -462,37 +518,30 @@ class LegalRetriever:
                         query_terms,
                         query_phrase,
                         item[1],
+                        intent_scoring_enabled=intent_scoring_enabled,
                     ),
                     item[0],
                 ),
             )
-            chunks.extend(
+            locally_selected_chunks.extend(
                 chunk
-                for _, chunk in ranked_chunks[
-                    : self._settings.RERANK_PER_DOCUMENT_LIMIT
-                ]
+                for _, chunk in ranked_chunks[:chunk_limit]
             )
-        return chunks
+        return all_structural_chunks, locally_selected_chunks, document_ids
 
     async def _rerank(
         self,
         query: str,
         chunks: list[EvidenceChunk],
+        *,
+        mode: str = "current",
+        final_evidence_limit: int = 3,
     ) -> tuple[list[EvidenceChunk], RerankOutcome]:
-        if not chunks:
-            return (
-                [],
-                RerankOutcome(
-                    results=[],
-                    provider="none",
-                    model="none",
-                    latency=0.0,
-                ),
-            )
-        documents = [
-            f"[{chunk.citation}]\n{chunk.text}" for chunk in chunks
-        ]
-        outcome = await self._reranker.rerank(query, documents)
+        documents = [chunk.formatted_context() for chunk in chunks]
+        try:
+            outcome = await self._reranker.rerank(query, documents, mode=mode)
+        except TypeError:
+            outcome = await self._reranker.rerank(query, documents)
         ranked = [
             (item.score, chunks[item.index])
             for item in outcome.results
@@ -501,7 +550,7 @@ class LegalRetriever:
         return (
             select_ranked_evidence(
                 ranked,
-                max_chunks=self._settings.RERANK_TOP_K,
+                max_chunks=final_evidence_limit,
                 max_tokens=self._settings.LLM_CONTEXT_MAX_TOKENS,
                 per_document_limit=(
                     self._settings.LLM_CONTEXT_PER_DOCUMENT_LIMIT
@@ -534,7 +583,20 @@ class LegalRetriever:
         self,
         query: str,
         sparse_query: str | None = None,
+        *,
+        profile: Any = None,
     ) -> RetrievalOutcome:
+        from app.evaluation.schemas import RetrievalStageTrace
+        
+        # Extract profile limits or fall back to settings defaults
+        retrieval_doc_limit = getattr(profile, "retrieval_document_limit", getattr(self._settings, "RETRIEVAL_DOCUMENT_LIMIT", 24))
+        resolved_doc_limit = getattr(profile, "resolved_document_limit", getattr(self._settings, "RESOLVED_DOCUMENT_LIMIT", 16))
+        local_chunks_limit = getattr(profile, "local_chunks_per_document", getattr(self._settings, "LOCAL_CHUNKS_PER_DOCUMENT", 4))
+        rerank_input_limit = getattr(profile, "rerank_input_limit", getattr(self._settings, "RERANK_INPUT_LIMIT", 24))
+        final_evidence_limit = getattr(profile, "final_evidence_limit", getattr(self._settings, "FINAL_EVIDENCE_LIMIT", 3))
+        intent_scoring_enabled = getattr(profile, "intent_scoring_enabled", getattr(self._settings, "INTENT_SCORING_ENABLED", True))
+        reranker_mode = getattr(profile, "reranker_mode", "current")
+
         latency = {
             "t_hybrid": 0.0,
             "t_lexical": 0.0,
@@ -543,6 +605,8 @@ class LegalRetriever:
             "t_rerank": 0.0,
         }
         diagnostics: dict[str, Any] = {}
+        stage_trace = RetrievalStageTrace()
+
         try:
             async def timed_hybrid() -> tuple[
                 list[Any], float, dict[str, Any], HybridRetrievalError | None
@@ -598,6 +662,19 @@ class LegalRetriever:
             diagnostics.update(hybrid_details)
             diagnostics["top_documents"] = self._hit_diagnostics(hits)
             diagnostics["lexical_document_ids"] = lexical_document_ids
+
+            stage_trace.pinecone_hits = [_hit_to_stage_candidate(h, "pinecone") for h in hits]
+            stage_trace.fts_hits = [
+                _hit_to_stage_candidate({"metadata": {"document_id": doc_id}}, "fts")
+                for doc_id in lexical_document_ids
+            ]
+
+            merged_ids = merge_document_ids(lexical_document_ids, [h.get("metadata", {}).get("document_id") if isinstance(h, dict) else getattr(getattr(h, "metadata", None), "document_id", None) for h in hits if h])
+            stage_trace.merged_document_candidates = [
+                _hit_to_stage_candidate({"metadata": {"document_id": doc_id}}, "merged")
+                for doc_id in merged_ids if doc_id is not None
+            ]
+
             if lexical_error:
                 diagnostics["lexical_error"] = lexical_error
             if hybrid_error is not None:
@@ -610,16 +687,32 @@ class LegalRetriever:
                 diagnostics["retrieval_mode"] = "hybrid_only"
 
             stage_started = time.perf_counter()
-            chunks = await self._resolve_chunks(
+            structural_chunks, local_chunks, resolved_ids = await self._resolve_chunks(
                 hits,
                 lexical_document_ids,
                 sparse_query or query,
+                resolved_doc_limit=resolved_doc_limit,
+                local_chunks_limit=local_chunks_limit,
+                intent_scoring_enabled=intent_scoring_enabled,
             )
             latency["t_resolve_chunk"] = round(
                 time.perf_counter() - stage_started,
                 6,
             )
-            if not chunks:
+
+            stage_trace.resolved_document_candidates = [
+                _hit_to_stage_candidate({"metadata": {"document_id": doc_id}}, "resolved")
+                for doc_id in resolved_ids
+            ]
+            stage_trace.structural_chunks_generated = [
+                _chunk_to_stage_candidate(c, "structural") for c in structural_chunks
+            ]
+            stage_trace.locally_selected_chunks = [
+                _chunk_to_stage_candidate(c, "local") for c in local_chunks
+            ]
+
+            if not local_chunks:
+                diagnostics["stage_trace"] = stage_trace
                 return RetrievalOutcome(
                     evidence=[],
                     latency=latency,
@@ -630,20 +723,23 @@ class LegalRetriever:
             stage_started = time.perf_counter()
             bounded = select_rerank_candidates(
                 sparse_query or query,
-                chunks,
-                limit=self._settings.RERANK_CANDIDATE_LIMIT,
-                per_document_limit=(
-                    self._settings.RERANK_PER_DOCUMENT_LIMIT
-                ),
+                local_chunks,
+                limit=rerank_input_limit,
+                per_document_limit=local_chunks_limit,
+                intent_scoring_enabled=intent_scoring_enabled,
             )
             latency["t_candidate"] = round(
                 time.perf_counter() - stage_started,
                 6,
             )
+            stage_trace.reranker_input_chunks = [
+                _chunk_to_stage_candidate(c, "reranker") for c in bounded
+            ]
             diagnostics["candidate_citations"] = [
                 chunk.citation for chunk in bounded
             ]
             if not bounded:
+                diagnostics["stage_trace"] = stage_trace
                 return RetrievalOutcome(
                     evidence=[],
                     latency=latency,
@@ -653,7 +749,9 @@ class LegalRetriever:
 
             stage_started = time.perf_counter()
             try:
-                evidence, rerank_outcome = await self._rerank(query, bounded)
+                evidence, rerank_outcome = await self._rerank(
+                    query, bounded, mode=reranker_mode, final_evidence_limit=final_evidence_limit
+                )
             except Exception as error:
                 latency["t_rerank"] = round(
                     time.perf_counter() - stage_started,
@@ -663,6 +761,7 @@ class LegalRetriever:
                     "Legal reranking failed: {error}",
                     error=str(error),
                 )
+                diagnostics["stage_trace"] = stage_trace
                 return RetrievalOutcome(
                     evidence=[],
                     latency=latency,
@@ -674,6 +773,17 @@ class LegalRetriever:
                 time.perf_counter() - stage_started,
                 6,
             )
+
+            stage_trace.reranker_output_chunks = [
+                _chunk_to_stage_candidate(bounded[item.index], "reranker_output", score=item.score)
+                for item in rerank_outcome.results
+                if 0 <= item.index < len(bounded)
+            ]
+            stage_trace.final_evidence_chunks = [
+                _chunk_to_stage_candidate(c, "final") for c in evidence
+            ]
+            diagnostics["stage_trace"] = stage_trace
+
             diagnostics.update(
                 {
                     "rerank_provider": rerank_outcome.provider,
@@ -705,6 +815,7 @@ class LegalRetriever:
                 "Legal retrieval failed closed: {error}",
                 error=str(error),
             )
+            diagnostics["stage_trace"] = stage_trace
             return RetrievalOutcome(
                 evidence=[],
                 latency=latency,

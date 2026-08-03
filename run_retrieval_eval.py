@@ -9,8 +9,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-# Ensure UTF-8 output on Windows
-sys.stdout.reconfigure(encoding="utf-8")
+# Ensure UTF-8 output on Windows with error handling
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 PROJECT_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
@@ -45,6 +46,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--dataset", type=Path, default=DEFAULT_DATASET_PATH)
     parser.add_argument(
+        "--profile",
+        choices=["legacy", "separated_no_intent", "separated_intent"],
+        default="separated_intent",
+        help="Evaluation profile (default: separated_intent)",
+    )
+    parser.add_argument(
         "--mode",
         choices=["retrieval-only", "answer"],
         default="retrieval-only",
@@ -73,6 +80,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--limit", type=int, default=None, help="Limit maximum number of cases to evaluate"
+    )
+    parser.add_argument(
+        "--verified-only",
+        action="store_true",
+        help="Filter evaluation to cases with verified gold evidence in the current corpus",
     )
     parser.add_argument(
         "--judge",
@@ -139,6 +151,7 @@ async def evaluate_single_retrieval_case(
     settings: Any,
     rewrite_mode: str,
     reranker_provider: str,
+    profile_name: str = "separated_intent",
 ) -> RetrievalCaseResult:
     from app.services.rag_pipeline import rewrite_query
     from app.services.retrieval import RetrievalOutcome, get_legal_retriever
@@ -164,23 +177,26 @@ async def evaluate_single_retrieval_case(
 
     retrieval_start = time.perf_counter()
     outcome: RetrievalOutcome = await retriever.retrieve_detailed(
-        query_used, sparse_query=case.question
+        query_used, sparse_query=case.question, profile=profile_name
     )
     t_retrieval = time.perf_counter() - retrieval_start
     t_total = time.perf_counter() - started
 
     # Extract stage traces
     diag = outcome.diagnostics or {}
-    stage_trace = RetrievalStageTrace(
-        pinecone_hits=diag.get("top_documents", []),
-        lexical_hits=diag.get("lexical_document_ids", []),
-        merged_document_ids=diag.get("merged_document_ids", []),
-        resolved_document_ids=diag.get("resolved_document_ids", []),
-        locally_selected_chunks=diag.get("locally_selected_chunks", []),
-        reranker_input_chunks=diag.get("candidate_citations", []),
-        reranker_output_chunks=diag.get("reranked", []),
-        final_evidence_chunks=[chunk.citation for chunk in outcome.evidence],
-    )
+    stage_trace = diag.get("stage_trace")
+    if stage_trace is None:
+        stage_trace = RetrievalStageTrace(
+            pinecone_hits=[],
+            lexical_hits=[],
+            merged_document_candidates=[],
+            resolved_document_candidates=[],
+            structural_chunks_generated=[],
+            locally_selected_chunks=[],
+            reranker_input_chunks=[],
+            reranker_output_chunks=[],
+            final_evidence_chunks=[],
+        )
 
     retrieved_chunks = [
         CandidateChunk(
@@ -238,7 +254,30 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
 
     raw_dataset = json.loads(dataset_path.read_text(encoding="utf-8"))
 
-    cases = [parse_golden_case(item, idx) for idx, item in enumerate(raw_dataset)]
+    sidecar_path = PROJECT_ROOT / "docs/evaluation/gold_labels/namsyntax_legal_qa_420_labels.json"
+    sidecar_labels: dict[str, list[dict]] = {}
+    if sidecar_path.exists():
+        raw_labels = json.loads(sidecar_path.read_text(encoding="utf-8"))
+        if isinstance(raw_labels, list):
+            for label in raw_labels:
+                cid = label.get("case_id")
+                if cid:
+                    sidecar_labels.setdefault(cid, []).append(label)
+        elif isinstance(raw_labels, dict):
+            sidecar_labels = raw_labels
+
+    cases = []
+    for idx, item in enumerate(raw_dataset):
+        case_id = str(item.get("case_id") or f"case_{idx+1:03d}")
+        if case_id in sidecar_labels:
+            item["gold_evidence"] = sidecar_labels[case_id]
+        cases.append(parse_golden_case(item, idx))
+    if args.verified_only:
+        cases = [
+            c for c in cases
+            if any(g.status == "verified" for g in c.gold_evidence)
+        ]
+
     if args.limit and args.limit > 0:
         # Sample evenly across groups if limit matches 30 (12 factoid, 12 multi-hop, 6 unanswerable)
         if args.limit == 30:
@@ -278,6 +317,7 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
                 settings,
                 args.rewrite,
                 args.reranker,
+                profile_name=args.profile,
             )
 
     tasks = [asyncio.create_task(worker(case)) for case in cases]

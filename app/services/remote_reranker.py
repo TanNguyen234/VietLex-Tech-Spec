@@ -403,6 +403,8 @@ class RemoteReranker:
         self,
         query: str,
         documents: list[str],
+        *,
+        mode: str = "current",
     ) -> RerankOutcome:
         if not documents:
             return RerankOutcome(
@@ -411,6 +413,19 @@ class RemoteReranker:
                 model="none",
                 latency=0.0,
             )
+
+        if mode == "pinecone-only":
+            return await self._pinecone_rerank(
+                query,
+                documents,
+                fallback_reason="pinecone_mode_forced",
+                attempts=1,
+            )
+
+        if mode == "qdrant-only":
+            return await self._qdrant_rerank(query, documents)
+
+        # mode == "current" (default): Qdrant primary with circuit breaker / fallback to Pinecone
         if self._circuit_is_open():
             return await self._pinecone_rerank(
                 query,
@@ -431,3 +446,4 @@ class RemoteReranker:
                     max(1, self._settings.QDRANT_RERANK_MAX_RETRIES) + 1
                 ),
             )
+

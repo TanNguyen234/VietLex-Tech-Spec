@@ -191,3 +191,60 @@ def test_run_retrieval_eval_defaults_to_no_judge():
     assert args.mode == "retrieval-only"
     assert args.rewrite == "off"
     assert args.guardrails == "off"
+
+
+# 7. Test Evaluation Profiles & Reranker Routing
+def test_evaluation_profiles():
+    from app.evaluation.profiles import get_evaluation_profile
+    legacy = get_evaluation_profile("legacy")
+    assert legacy.resolved_document_limit == 12
+    assert legacy.local_chunks_per_document == 2
+    assert legacy.rerank_input_limit == 12
+    assert legacy.intent_scoring_enabled is False
+
+    sep_intent = get_evaluation_profile("separated_intent")
+    assert sep_intent.resolved_document_limit == 16
+    assert sep_intent.local_chunks_per_document == 4
+    assert sep_intent.rerank_input_limit == 24
+    assert sep_intent.intent_scoring_enabled is True
+
+
+@pytest.mark.asyncio
+async def test_reranker_mode_routing():
+    from app.services.remote_reranker import RemoteReranker, RerankResult, RerankOutcome
+    mock_settings = MagicMock()
+    mock_settings.PINECONE_RERANK_MODEL = "bge-reranker-v2-m3"
+    mock_settings.PINECONE_RERANK_TIMEOUT_SECONDS = 12.0
+    mock_settings.QDRANT_RERANK_MODEL = "answerdotai/answerai-colbert-small-v1"
+    mock_settings.QDRANT_RERANK_TIMEOUT_SECONDS = 12.0
+    mock_settings.QDRANT_RERANK_MAX_RETRIES = 2
+    mock_settings.RERANK_RETURN_LIMIT = 3
+
+    mock_qdrant = MagicMock()
+    mock_pinecone = MagicMock()
+    mock_pinecone.inference.rerank.return_value = {"data": [{"index": 0, "score": 0.9}]}
+
+    reranker = RemoteReranker(settings=mock_settings, qdrant=mock_qdrant, pinecone=mock_pinecone)
+
+    # pinecone-only mode
+    outcome_pinecone = await reranker.rerank("query", ["doc1"], mode="pinecone-only")
+    assert outcome_pinecone.provider == "pinecone"
+    mock_qdrant.upsert.assert_not_called()
+
+    # qdrant-only mode
+    mock_pinecone.inference.rerank.reset_mock()
+    with patch.object(reranker, "_qdrant_once", return_value=[RerankResult(index=0, score=0.95)]):
+        outcome_qdrant = await reranker.rerank("query", ["doc1"], mode="qdrant-only")
+        assert outcome_qdrant.provider == "qdrant"
+        mock_pinecone.inference.rerank.assert_not_called()
+
+
+def test_run_dir_overwrite_protection(tmp_path):
+    from app.evaluation.run_manifest import prepare_run_directory
+    run_id = "test_run_123"
+    dir1 = prepare_run_directory(tmp_path, run_id)
+    assert dir1.exists()
+
+    with pytest.raises(FileExistsError):
+        prepare_run_directory(tmp_path, run_id)
+

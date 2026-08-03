@@ -2,8 +2,18 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from app.evaluation.schemas import EvaluationRunManifest
+
+
+def fmt_val(v: Any, is_pct: bool = False, decimals: int = 4) -> str:
+    if v is None:
+        return "N/A"
+    if isinstance(v, (int, float)):
+        if is_pct:
+            return f"{v * 100:.1f}%"
+        return f"{v:.{decimals}f}"
+    return str(v)
 
 
 def generate_markdown_report(
@@ -18,105 +28,114 @@ def generate_markdown_report(
     lines.append(f"# VIETLEX EVALUATION REPORT — {manifest.run_id}")
     lines.append("")
     lines.append(f"**Run ID**: `{manifest.run_id}`  ")
+    lines.append(f"**Profile**: `{manifest.profile_name}`  ")
     lines.append(f"**UTC Timestamp**: `{manifest.utc_timestamp}`  ")
     lines.append(f"**Git Commit SHA**: `{manifest.git_sha}`  ")
+    lines.append(f"**Git Dirty Status**: `{manifest.git_dirty}` (Diff SHA256: `{manifest.git_diff_sha256 or 'clean'}`)  ")
     lines.append(f"**Dataset Revision**: `{manifest.dataset_revision}`  ")
     lines.append(f"**Dataset SHA-256**: `{manifest.dataset_sha256}`  ")
+    lines.append(f"**Sidecar SHA-256**: `{manifest.gold_label_sidecar_sha256 or 'N/A'}`  ")
     lines.append(f"**Configuration Fingerprint**: `{manifest.configuration_fingerprint}`  ")
     lines.append(f"**Execution Command**: `{manifest.command}`  ")
     lines.append(f"**Evaluation Mode**: `{manifest.eval_mode}` | **Judge**: `{manifest.judge_mode}` | **Guardrails**: `{manifest.guardrail_mode}`  ")
     lines.append(f"**Query Rewrite**: `{manifest.rewrite_mode}` | **Reranker**: `{manifest.reranker_provider}`  ")
     lines.append("")
 
-    lines.append("## 1. Retrieval Performance Summary")
+    lines.append("## 1. System Reliability & Execution Status")
     lines.append("")
-    lines.append("| Metric | Value | Numerator / Denominator | Notes |")
+    lines.append("| Status Metric | Count / Value | Numerator / Denominator | Notes |")
     lines.append("| :--- | ---: | :---: | :--- |")
 
     tot = retrieval_summary.get("total_cases", 0)
     scored = retrieval_summary.get("scored_cases_count", 0)
     cov = retrieval_summary.get("coverage", 0.0)
 
-    lines.append(f"| Scored Coverage | {cov * 100:.1f}% | {scored}/{tot} | Cases with verified gold labels |")
-    lines.append(f"| No Candidate Rate | {retrieval_summary.get('no_candidate_rate', 0.0) * 100:.1f}% | {retrieval_summary.get('no_candidate_count', 0)}/{tot} | Empty candidate set |")
-    lines.append(f"| Retrieval Error Rate | {retrieval_summary.get('retrieval_error_rate', 0.0) * 100:.1f}% | {retrieval_summary.get('retrieval_error_count', 0)}/{tot} | Hybrid/FTS errors |")
-    lines.append(f"| Reranker Error Rate | {retrieval_summary.get('reranker_error_rate', 0.0) * 100:.1f}% | {retrieval_summary.get('reranker_error_count', 0)}/{tot} | Reranker API errors |")
+    lines.append(f"| Scored Gold Coverage | {fmt_val(cov, is_pct=True)} | {scored}/{tot} | Cases with verified gold labels |")
+    lines.append(f"| No Candidate Rate | {fmt_val(retrieval_summary.get('no_candidate_rate'), is_pct=True)} | {retrieval_summary.get('no_candidate_count', 0)}/{tot} | Empty candidate set |")
+    lines.append(f"| Retrieval Error Rate | {fmt_val(retrieval_summary.get('retrieval_error_rate'), is_pct=True)} | {retrieval_summary.get('retrieval_error_count', 0)}/{tot} | Hybrid/FTS technical errors |")
+    lines.append(f"| Reranker Error Rate | {fmt_val(retrieval_summary.get('reranker_error_rate'), is_pct=True)} | {retrieval_summary.get('reranker_error_count', 0)}/{tot} | Reranker API errors |")
+    lines.append("")
+
+    lines.append("## 2. Retrieval Quality Summary (Scored Cases)")
+    lines.append("")
+    lines.append("| Retrieval Metric | Value | Notes |")
+    lines.append("| :--- | ---: | :--- |")
 
     doc_rec = retrieval_summary.get("doc_recall", {})
     art_rec = retrieval_summary.get("article_recall", {})
     cl_rec = retrieval_summary.get("clause_recall", {})
 
-    def safe_val(d: dict, key: Any, default: float = 0.0) -> float:
-        if not isinstance(d, dict):
-            return default
-        v = d.get(key)
-        if v is None:
-            v = d.get(str(key))
-        if v is None or not isinstance(v, (int, float)):
-            return default
-        return float(v)
-
-    lines.append(f"| Document Recall @ 1 | {safe_val(doc_rec, 1):.4f} | - | Primary legal document hit |")
-    lines.append(f"| Document Recall @ 3 | {safe_val(doc_rec, 3):.4f} | - | Top 3 document candidates |")
-    lines.append(f"| Document Recall @ 5 | {safe_val(doc_rec, 5):.4f} | - | Top 5 document candidates |")
-    lines.append(f"| Document Recall @ 10 | {safe_val(doc_rec, 10):.4f} | - | Top 10 document candidates |")
-    lines.append(f"| Document Recall @ 24 | {safe_val(doc_rec, 24):.4f} | - | Pinecone max top_k limit |")
-    lines.append(f"| Article Recall @ 1 | {safe_val(art_rec, 1):.4f} | - | Top 1 article candidate |")
-    lines.append(f"| Article Recall @ 3 | {safe_val(art_rec, 3):.4f} | - | Top 3 article candidates |")
-    lines.append(f"| Article Recall @ 6 | {safe_val(art_rec, 6):.4f} | - | Top 6 article candidates |")
-    lines.append(f"| Clause Recall @ 1 | {safe_val(cl_rec, 1):.4f} | - | Top 1 clause candidate |")
-    lines.append(f"| Clause Recall @ 3 | {safe_val(cl_rec, 3):.4f} | - | Top 3 clause candidates |")
-    lines.append(f"| Clause Recall @ 6 | {safe_val(cl_rec, 6):.4f} | - | Top 6 clause candidates |")
-    lines.append(f"| Article MRR | {safe_val(retrieval_summary, 'mrr_article'):.4f} | - | Mean Reciprocal Rank |")
-    lines.append(f"| nDCG @ 10 | {safe_val(retrieval_summary, 'ndcg_10'):.4f} | - | Normalized DCG |")
-    lines.append(f"| Exact Citation Hit Rate | {safe_val(retrieval_summary, 'exact_reference_hit_rate') * 100:.1f}% | - | Article level citation hit |")
-    lines.append(f"| Multi-Hop All-Coverage | {safe_val(retrieval_summary, 'all_hop_coverage_rate') * 100:.1f}% | - | All required evidence hits |")
-    lines.append(f"| Multi-Hop Partial-Coverage | {safe_val(retrieval_summary, 'partial_hop_coverage_rate') * 100:.1f}% | - | At least one required hit |")
+    lines.append(f"| Document Recall @ 1 | {fmt_val(doc_rec.get(1))} | Primary document candidate hit |")
+    lines.append(f"| Document Recall @ 3 | {fmt_val(doc_rec.get(3))} | Top 3 document candidates |")
+    lines.append(f"| Document Recall @ 5 | {fmt_val(doc_rec.get(5))} | Top 5 document candidates |")
+    lines.append(f"| Document Recall @ 10 | {fmt_val(doc_rec.get(10))} | Top 10 document candidates |")
+    lines.append(f"| Document Recall @ 24 | {fmt_val(doc_rec.get(24))} | Max document candidate pool |")
+    lines.append(f"| Article Recall @ 1 | {fmt_val(art_rec.get(1))} | Top 1 article candidate |")
+    lines.append(f"| Article Recall @ 3 | {fmt_val(art_rec.get(3))} | Top 3 article candidates |")
+    lines.append(f"| Article Recall @ 6 | {fmt_val(art_rec.get(6))} | Top 6 article candidates |")
+    lines.append(f"| Clause Recall @ 1 | {fmt_val(cl_rec.get(1))} | Top 1 clause candidate |")
+    lines.append(f"| Clause Recall @ 3 | {fmt_val(cl_rec.get(3))} | Top 3 clause candidates |")
+    lines.append(f"| Clause Recall @ 6 | {fmt_val(cl_rec.get(6))} | Top 6 clause candidates |")
+    lines.append(f"| Article MRR | {fmt_val(retrieval_summary.get('mrr_article'))} | Mean Reciprocal Rank |")
+    lines.append(f"| nDCG @ 10 | {fmt_val(retrieval_summary.get('ndcg_10'))} | Normalized DCG |")
+    lines.append(f"| Exact Reference Hit Rate | {fmt_val(retrieval_summary.get('exact_reference_hit_rate'), is_pct=True)} | Exact citation match |")
+    lines.append(f"| Multi-Hop All-Coverage | {fmt_val(retrieval_summary.get('all_hop_coverage_rate'), is_pct=True)} | All required evidence hits |")
+    lines.append(f"| Multi-Hop Partial-Coverage | {fmt_val(retrieval_summary.get('partial_hop_coverage_rate'), is_pct=True)} | At least one required hit |")
     lines.append("")
 
+    fl_dist = retrieval_summary.get("first_loss_distribution", {})
+    if fl_dist:
+        lines.append("### First-Loss Stage Distribution (Gold Evidence Losses)")
+        lines.append("")
+        lines.append("| Pipeline Stage | Gold Items Lost First |")
+        lines.append("| :--- | ---: |")
+        for stg, count in fl_dist.items():
+            lines.append(f"| `{stg}` | {count} |")
+        lines.append("")
+
     if answer_summary:
-        lines.append("## 2. Generation & Answer Accuracy Summary")
+        lines.append("## 3. Generation & Answer Accuracy Summary")
         lines.append("")
         lines.append("| Metric | Value | Notes |")
         lines.append("| :--- | ---: | :--- |")
-        lines.append(f"| Answerable Accuracy | {answer_summary.get('answerable_accuracy', 0.0) * 100:.1f}% | Token F1 >= 0.50 |")
-        lines.append(f"| Unanswerable Accuracy | {answer_summary.get('unanswerable_accuracy', 0.0) * 100:.1f}% | Honest refusal classification |")
-        lines.append(f"| Refusal Precision | {answer_summary.get('refusal_precision', 0.0) * 100:.1f}% | Correct refusals / Total refusals |")
-        lines.append(f"| Refusal Recall | {answer_summary.get('refusal_recall', 0.0) * 100:.1f}% | Correct refusals / Unanswerable cases |")
-        lines.append(f"| Token F1 | {answer_summary.get('token_f1', 0.0):.4f} | Unigram token F1 |")
-        lines.append(f"| Character F1 | {answer_summary.get('char_f1', 0.0):.4f} | 3-gram character F1 |")
-        lines.append(f"| ROUGE-L | {answer_summary.get('rouge_l', 0.0):.4f} | Word LCS F1 |")
-        lines.append(f"| CHRF | {answer_summary.get('chrf', 0.0):.4f} | Character n-gram F-score |")
-        lines.append(f"| Citation Precision | {answer_summary.get('citation_precision', 0.0):.4f} | Valid citations / Total generated |")
-        lines.append(f"| Invalid Citation Rate | {answer_summary.get('invalid_citation_rate', 0.0) * 100:.1f}% | Hallucinated citations |")
+        lines.append(f"| Answer Similarity Pass Rate | {fmt_val(answer_summary.get('answer_similarity_pass_rate'), is_pct=True)} | Token F1 >= 0.50 |")
+        lines.append(f"| Unanswerable Accuracy | {fmt_val(answer_summary.get('unanswerable_accuracy'), is_pct=True)} | Honest refusal classification |")
+        lines.append(f"| Refusal Precision | {fmt_val(answer_summary.get('refusal_precision'), is_pct=True)} | Correct refusals / Total predicted refusals |")
+        lines.append(f"| Refusal Recall | {fmt_val(answer_summary.get('refusal_recall'), is_pct=True)} | Correct refusals / Unanswerable cases |")
+        lines.append(f"| Token F1 | {fmt_val(answer_summary.get('token_f1'))} | Unigram token F1 |")
+        lines.append(f"| Character F1 | {fmt_val(answer_summary.get('char_f1'))} | 3-gram character F1 |")
+        lines.append(f"| ROUGE-L | {fmt_val(answer_summary.get('rouge_l'))} | Word LCS F1 |")
+        lines.append(f"| CHRF | {fmt_val(answer_summary.get('chrf'))} | Character n-gram F-score |")
+        lines.append(f"| Citation Precision | {fmt_val(answer_summary.get('citation_precision'))} | Valid citations / Total generated |")
+        lines.append(f"| Invalid Citation Rate | {fmt_val(answer_summary.get('invalid_citation_rate'), is_pct=True)} | Hallucinated citations |")
         lines.append("")
 
-    lines.append("## 3. Stage-Level Latency Breakdown")
+    lines.append("## 4. Stage-Level Latency Breakdown")
     lines.append("")
     lines.append("| Stage / Operation | P50 (s) | P95 (s) | Mean (s) | Min (s) | Max (s) |")
     lines.append("| :--- | ---: | ---: | ---: | ---: | ---: |")
 
     for stage, stats in latency_summary.items():
         lines.append(
-            f"| `{stage}` | {stats['p50']:.4f}s | {stats['p95']:.4f}s | "
-            f"{stats['mean']:.4f}s | {stats['min']:.4f}s | {stats['max']:.4f}s |"
+            f"| `{stage}` | {fmt_val(stats.get('p50'))}s | {fmt_val(stats.get('p95'))}s | "
+            f"{fmt_val(stats.get('mean'))}s | {fmt_val(stats.get('min'))}s | {fmt_val(stats.get('max'))}s |"
         )
     lines.append("")
 
     if stage_survival_summary and "average_candidates_per_stage" in stage_survival_summary:
-        lines.append("## 4. Stage-Level Candidate Survival & Retention")
+        lines.append("## 5. Stage-Level Candidate Survival & Retention")
         lines.append("")
-        lines.append("| Retrieval Stage | Survival Rate | Avg Candidates per Query |")
+        lines.append("| Retrieval Stage | Query Active Rate | Avg Candidates per Query |")
         lines.append("| :--- | ---: | ---: |")
         surv = stage_survival_summary.get("stage_survival_rates", {})
         avgs = stage_survival_summary.get("average_candidates_per_stage", {})
         for stage_name, rate in surv.items():
-            avg_val = avgs.get(f"avg_{stage_name.replace('_chunks', '').replace('_ids', '')}", 0.0)
-            lines.append(f"| `{stage_name}` | {rate * 100:.1f}% | {avg_val:.2f} |")
+            avg_val = avgs.get(f"avg_{stage_name.replace('_chunks', '').replace('_candidates', '').replace('_generated', '')}", 0.0)
+            lines.append(f"| `{stage_name}` | {fmt_val(rate, is_pct=True)} | {avg_val:.2f} |")
         lines.append("")
 
     if case_results:
-        lines.append("## 5. Case-by-Case Execution Details")
+        lines.append("## 6. Case-by-Case Execution Details")
         lines.append("")
         lines.append("| Case ID | Group | Status | Latency | Article Recall | Token F1 | Refusal Category |")
         lines.append("| :---: | :--- | :--- | ---: | ---: | ---: | :--- |")
@@ -126,12 +145,12 @@ def generate_markdown_report(
             st = res.get("status", "ok")
             lat = res.get("latency", {}).get("t_total", res.get("latency", {}).get("t_retrieval", 0.0))
             m = res.get("metrics", {})
-            art_rec_val = m.get("article_recall", {}).get(3, "-") if isinstance(m.get("article_recall"), dict) else "-"
-            art_rec_str = f"{art_rec_val:.2f}" if isinstance(art_rec_val, (int, float)) else str(art_rec_val)
-            tok_f1_val = m.get("token_f1", "-")
-            tok_f1_str = f"{tok_f1_val:.2f}" if isinstance(tok_f1_val, (int, float)) else str(tok_f1_val)
+            art_rec_val = m.get("article_recall", {}).get(3, None) if isinstance(m.get("article_recall"), dict) else None
+            art_rec_str = fmt_val(art_rec_val, decimals=2)
+            tok_f1_val = m.get("token_f1", None)
+            tok_f1_str = fmt_val(tok_f1_val, decimals=2)
             cat = res.get("refusal_category", "-")
-            lines.append(f"| `{cid}` | {grp} | {st} | {lat:.2f}s | {art_rec_str} | {tok_f1_str} | `{cat}` |")
+            lines.append(f"| `{cid}` | {grp} | {st} | {fmt_val(lat, decimals=2)}s | {art_rec_str} | {tok_f1_str} | `{cat}` |")
         lines.append("")
 
     return "\n".join(lines)

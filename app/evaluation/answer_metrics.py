@@ -200,11 +200,11 @@ def extract_entities_dates_numbers(text: str) -> Dict[str, List[str]]:
     }
 
 
-def calculate_pattern_precision_recall(pred_items: List[str], ref_items: List[str]) -> Tuple[float, float]:
+def calculate_pattern_precision_recall(pred_items: List[str], ref_items: List[str]) -> Tuple[Optional[float], Optional[float]]:
     if not ref_items:
-        return (1.0, 1.0) if not pred_items else (0.0, 1.0)
+        return None, None
     if not pred_items:
-        return (0.0, 0.0)
+        return 0.0, 0.0
 
     pred_set = set(item.casefold() for item in pred_items)
     ref_set = set(item.casefold() for item in ref_items)
@@ -261,7 +261,7 @@ def calculate_case_answer_metrics(
         invalid_cites = len(pred_cites - ref_cites)
         invalid_cite_rate = round(invalid_cites / len(pred_cites), 4) if pred_cites else 0.0
     else:
-        cite_prec, cite_rec, cite_cov, invalid_cite_rate = 1.0, 1.0, 1.0, 0.0
+        cite_prec, cite_rec, cite_cov, invalid_cite_rate = None, None, None, None
 
     return {
         "refusal_category": category,
@@ -302,19 +302,19 @@ def aggregate_answer_metrics(case_results: List[Dict[str, Any]]) -> Dict[str, An
     )
     all_refusals = sum(1 for c in case_results if c.get("is_refusal"))
 
-    refusal_precision = (correct_unanswerable_refusals / all_refusals) if all_refusals else 0.0
-    refusal_recall = (correct_unanswerable_refusals / len(unanswerable)) if unanswerable else 0.0
-    unanswerable_accuracy = (correct_unanswerable_refusals / len(unanswerable)) if unanswerable else 0.0
+    refusal_precision = (correct_unanswerable_refusals / all_refusals) if all_refusals else None
+    refusal_recall = (correct_unanswerable_refusals / len(unanswerable)) if unanswerable else None
+    unanswerable_accuracy = (correct_unanswerable_refusals / len(unanswerable)) if unanswerable else None
 
-    # Answerable accuracy (token_f1 >= 0.5)
+    # Answer similarity pass rate (token_f1 >= 0.5)
     answerable_correct = sum(
         1 for c in answerable if c.get("metrics", {}).get("token_f1", 0.0) >= 0.5
     )
-    answerable_acc = (answerable_correct / len(answerable)) if answerable else 0.0
+    answer_similarity_pass_rate = (answerable_correct / len(answerable)) if answerable else None
 
-    def avg_metric(key: str) -> float:
-        vals = [c["metrics"][key] for c in case_results if "metrics" in c and key in c["metrics"]]
-        return round(sum(vals) / len(vals), 4) if vals else 0.0
+    def avg_metric(key: str) -> Optional[float]:
+        vals = [c["metrics"][key] for c in case_results if "metrics" in c and key in c["metrics"] and c["metrics"][key] is not None]
+        return round(sum(vals) / len(vals), 4) if vals else None
 
     return {
         "total_cases": total,
@@ -322,10 +322,10 @@ def aggregate_answer_metrics(case_results: List[Dict[str, Any]]) -> Dict[str, An
         "unanswerable_count": len(unanswerable),
         "refusal_categories_breakdown": dict(categories),
         "mixed_claim_refusal_rate": round(categories["mixed_claim_refusal"] / total, 4),
-        "refusal_precision": round(refusal_precision, 4),
-        "refusal_recall": round(refusal_recall, 4),
-        "unanswerable_accuracy": round(unanswerable_accuracy, 4),
-        "answerable_accuracy": round(answerable_acc, 4),
+        "refusal_precision": round(refusal_precision, 4) if refusal_precision is not None else None,
+        "refusal_recall": round(refusal_recall, 4) if refusal_recall is not None else None,
+        "unanswerable_accuracy": round(unanswerable_accuracy, 4) if unanswerable_accuracy is not None else None,
+        "answer_similarity_pass_rate": round(answer_similarity_pass_rate, 4) if answer_similarity_pass_rate is not None else None,
         "exact_match": avg_metric("exact_match"),
         "token_precision": avg_metric("token_precision"),
         "token_recall": avg_metric("token_recall"),
@@ -337,3 +337,4 @@ def aggregate_answer_metrics(case_results: List[Dict[str, Any]]) -> Dict[str, An
         "citation_recall": avg_metric("citation_recall"),
         "invalid_citation_rate": avg_metric("invalid_citation_rate"),
     }
+

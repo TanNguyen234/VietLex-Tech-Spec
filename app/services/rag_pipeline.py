@@ -62,18 +62,28 @@ def build_bounded_context(
 @logfire.instrument("Run advanced legal retrieval pipeline")
 async def run_advanced_rag(
     user_query: str,
-) -> Tuple[str, List[str], Dict[str, Any]]:
+    *,
+    rewrite_mode: str = "on",
+    profile: Any = None,
+) -> Tuple[str, List[str], Dict[str, Any], RetrievalOutcome]:
     started = time.perf_counter()
 
-    rewrite_started = time.perf_counter()
-    rewritten_query = await rewrite_query(user_query)
-    rewrite_seconds = time.perf_counter() - rewrite_started
+    if rewrite_mode == "off":
+        rewritten_query = user_query
+        rewrite_seconds = 0.0
+    else:
+        rewrite_started = time.perf_counter()
+        rewritten_query = await rewrite_query(user_query)
+        rewrite_seconds = time.perf_counter() - rewrite_started
 
     retrieval_started = time.perf_counter()
+    retrieval_kwargs: dict[str, Any] = {"sparse_query": user_query}
+    if profile is not None:
+        retrieval_kwargs["profile"] = profile
     retrieval_outcome: RetrievalOutcome = (
         await get_legal_retriever().retrieve_detailed(
             rewritten_query,
-            sparse_query=user_query,
+            **retrieval_kwargs,
         )
     )
     evidence = retrieval_outcome.evidence
@@ -91,6 +101,7 @@ async def run_advanced_rag(
         "retrieval_status": retrieval_outcome.status,
         "retrieval_diagnostics": retrieval_outcome.diagnostics,
         "rewritten_query": rewritten_query,
+        "retrieval_outcome": retrieval_outcome,
     }
     if retrieval_outcome.status in {
         "retrieval_error",
@@ -125,6 +136,7 @@ async def run_advanced_rag(
         3,
     )
     return response, contexts, latency
+
 
 
 @logfire.instrument("Rewrite legal search query")

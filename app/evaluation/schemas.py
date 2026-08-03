@@ -39,15 +39,30 @@ class CandidateChunk(BaseModel):
     score: Optional[float] = None
 
 
+class StageCandidate(BaseModel):
+    document_id: Optional[Union[int, str]] = None
+    document_number: Optional[str] = None
+    title: Optional[str] = None
+    source_url: Optional[str] = None
+    citation: Optional[str] = None
+    article: Optional[str] = None
+    clause: Optional[str] = None
+    text: Optional[str] = None
+    score: Optional[float] = None
+    source: str = "unknown"  # "pinecone" | "fts" | "merged" | "resolved" | "structural" | "local" | "reranker" | "final"
+
+
 class RetrievalStageTrace(BaseModel):
-    pinecone_hits: List[Dict[str, Any]] = Field(default_factory=list)
-    lexical_hits: List[int] = Field(default_factory=list)
-    merged_document_ids: List[int] = Field(default_factory=list)
-    resolved_document_ids: List[int] = Field(default_factory=list)
-    locally_selected_chunks: List[Dict[str, Any]] = Field(default_factory=list)
-    reranker_input_chunks: List[Union[str, Dict[str, Any]]] = Field(default_factory=list)
-    reranker_output_chunks: List[Dict[str, Any]] = Field(default_factory=list)
-    final_evidence_chunks: List[Union[str, Dict[str, Any]]] = Field(default_factory=list)
+    pinecone_hits: List[StageCandidate] = Field(default_factory=list)
+    fts_hits: List[StageCandidate] = Field(default_factory=list)
+    merged_document_candidates: List[StageCandidate] = Field(default_factory=list)
+    resolved_document_candidates: List[StageCandidate] = Field(default_factory=list)
+    structural_chunks_generated: List[StageCandidate] = Field(default_factory=list)
+    locally_selected_chunks: List[StageCandidate] = Field(default_factory=list)
+    reranker_input_chunks: List[StageCandidate] = Field(default_factory=list)
+    reranker_output_chunks: List[StageCandidate] = Field(default_factory=list)
+    final_evidence_chunks: List[StageCandidate] = Field(default_factory=list)
+
 
 
 class RetrievalCaseResult(BaseModel):
@@ -87,14 +102,21 @@ class EvaluationRunManifest(BaseModel):
     run_id: str
     utc_timestamp: str
     git_sha: str
+    git_dirty: bool = False
+    git_diff_sha256: Optional[str] = None
+    repository_root: str = ""
     dataset_revision: str
     dataset_sha256: str
+    evaluation_dataset_sha256: str = ""
+    gold_label_sidecar_sha256: Optional[str] = None
     configuration_fingerprint: str
     command: str
     eval_mode: str  # "retrieval-only" | "answer"
     judge_mode: str  # "none" | "ragas"
     guardrail_mode: str  # "off" | "shadow" | "enforce"
     rewrite_mode: str  # "off" | "on"
-    reranker_provider: str  # "current" | "pinecone-bge" | "qdrant-colbert"
+    reranker_provider: str  # "current" | "pinecone-bge" | "qdrant-colbert" | "pinecone-only" | "qdrant-only"
+    profile_name: str = "custom"
     configuration: Dict[str, Any] = Field(default_factory=dict)
     code_metric_version: str = "1.0.0"
+
