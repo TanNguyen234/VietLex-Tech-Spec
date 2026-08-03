@@ -159,12 +159,24 @@ def lexical_prefilter(
     )[: max(0, limit)]
 
 
+INTENT_PATTERNS = {
+    "definition": ({"định nghĩa", "là gì", "hiểu như thế nào", "khái niệm"}, {"là", "được hiểu là", "gồm", "nghĩa là"}),
+    "penalty": ({"xử phạt", "phạt tiền", "tội", "mức phạt", "phạt bao nhiêu", "bồi thường"}, {"phạt", "tội", "tước", "phạt tiền", "bồi thường", "bị phạt"}),
+    "deadline": ({"thời hạn", "thời hiệu", "bao lâu", "ngày", "tháng", "khi nào"}, {"thời hạn", "ngày", "tháng", "năm", "thời hiệu", "thời gian"}),
+    "authority": ({"cơ quan", "thẩm quyền", "ai có quyền", "bộ", "ủy ban", "đơn vị"}, {"thẩm quyền", "cơ quan", "bộ", "ủy ban", "thủ tướng", "chủ tịch"}),
+    "responsibility": ({"trách nhiệm", "nghĩa vụ", "bắt buộc", "phải"}, {"trách nhiệm", "nghĩa vụ", "bắt buộc", "phải", "có nghĩa vụ"}),
+    "condition": ({"điều kiện", "đối tượng", "được phép", "tiêu chuẩn", "quy chuẩn"}, {"điều kiện", "đối tượng", "tiêu chuẩn", "quy chuẩn", "yêu cầu"}),
+    "exception": ({"trừ trường hợp", "ngoại lệ", "không áp dụng", "loại trừ"}, {"trừ", "ngoại lệ", "không áp dụng", "loại trừ"}),
+}
+
+
 def _lexical_score(
     query_terms: list[str],
     query_phrase: str,
     chunk: EvidenceChunk,
 ) -> float:
     normalized_text = " ".join(chunk.text.casefold().split())
+    query_lower = query_phrase.casefold()
     score = 0.0
     for term in set(query_terms):
         phrase = term.replace("_", " ").casefold()
@@ -173,6 +185,13 @@ def _lexical_score(
             score += 1.0 + math.log(count)
     if query_phrase and query_phrase in normalized_text:
         score += 8.0
+
+    # Legal intent boost (definition, penalty, deadline, authority, responsibility, condition, exception)
+    for intent, (query_kw, chunk_kw) in INTENT_PATTERNS.items():
+        if any(qkw in query_lower for qkw in query_kw):
+            if any(ckw in normalized_text for ckw in chunk_kw):
+                score += 4.0
+
     return score
 
 
