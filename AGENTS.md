@@ -54,8 +54,10 @@ The implementation in `app/config.py` and current production code overrides olde
 - Full text is resolved locally, then chunked by legal structure
 - Current chunk limit: 220 approximate whitespace tokens
 - Current overlap: 24 tokens for oversized structural units
-- Current rerank input limit: 12 chunks
+- Rerank input limits, candidate limits, and document resolution limits are governed by evaluation profiles and runtime settings
 - Current final evidence: up to 3 chunks within 720 context tokens
+
+Configuration declarations in `app/config.py` do not prove runtime usage until verified by code execution. Any evaluation run executed from a dirty working tree must be recorded with `git_dirty=true` and a Git diff SHA-256 hash.
 
 ### Reranking
 
