@@ -8,17 +8,17 @@ import json
 import os
 import sys
 import time
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-# Ensure UTF-8 output on Windows with error handling
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 PROJECT_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from app.config import get_settings
+from app.evaluation.case_selection import CaseSelectionResult, build_cases, select_evaluation_cases
+from app.evaluation.gold_sidecar import GoldSidecar, load_gold_sidecar
 from app.evaluation.latency_metrics import calculate_stage_latency_summary
 from app.evaluation.profiles import EvaluationProfile, get_evaluation_profile
 from app.evaluation.reporting import write_run_report
@@ -26,13 +26,13 @@ from app.evaluation.retrieval_metrics import (
     aggregate_retrieval_metrics,
     calculate_case_retrieval_metrics,
     calculate_stage_survival_rates,
-    extract_citations_from_text,
 )
 from app.evaluation.run_manifest import (
     atomic_write_json,
     calculate_configuration_fingerprint,
     create_run_manifest,
     generate_unique_run_id,
+    get_git_provenance,
     prepare_run_directory,
 )
 from app.evaluation.schemas import (
@@ -44,6 +44,8 @@ from app.evaluation.schemas import (
 )
 
 DEFAULT_DATASET_PATH = PROJECT_ROOT / "app/data/namsyntax_legal_qa_420.json"
+DEFAULT_SIDECAR_PATH = PROJECT_ROOT / "docs/evaluation/gold_labels/namsyntax_legal_qa_420_labels_v2.json"
+DEFAULT_SUMMARY_PATH = PROJECT_ROOT / "docs/evaluation/gold_labels/namsyntax_legal_qa_420_audit_summary_v2.json"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -51,6 +53,7 @@ def build_parser() -> argparse.ArgumentParser:
         description="Run deterministic retrieval-only evaluation over VietLex legal dataset."
     )
     parser.add_argument("--dataset", type=Path, default=DEFAULT_DATASET_PATH)
+    parser.add_argument("--sidecar", type=Path, default=DEFAULT_SIDECAR_PATH)
     parser.add_argument(
         "--profile",
         choices=["legacy", "separated_no_intent", "separated_intent"],
@@ -82,62 +85,93 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--gold-policy",
-        choices=["all-required-verified", "any-verified"],
+        choices=["all-required-verified", "any-verified", "all-verified", "none"],
         default="all-required-verified",
         help="Selection policy for verified cases (default: all-required-verified)",
+    )
+    parser.add_argument(
+        "--preflight",
+        action="store_true",
+        help="Execute offline preflight check without making provider calls or writing run directories",
+    )
+    parser.add_argument(
+        "--require-clean-git",
+        action="store_true",
+        help="Require clean git status before execution",
     )
     parser.add_argument("--run-id", type=str, default=None, help="Optional custom Run ID")
     return parser
 
 
-def parse_golden_case(raw_item: dict, index: int) -> GoldenCase:
-    question = str(raw_item.get("question") or "").strip()
-    q_type = str(raw_item.get("question_type") or "factoid")
-    answerable = q_type != "unanswerable"
-    ref_ans = str(raw_item.get("ground_truth_answer") or "").strip()
-    ref_contexts = list(raw_item.get("ground_truth_context") or [])
+def perform_pre_execution_validation(
+    dataset_path: Path,
+    sidecar_path: Path,
+    summary_path: Path,
+    gold_policy: str,
+    verified_only: bool,
+    require_clean_git: bool,
+    limit: Optional[int] = None,
+) -> Tuple[List[GoldenCase], CaseSelectionResult, GoldSidecar, Dict[str, Any]]:
+    if not dataset_path.exists():
+        raise FileNotFoundError(f"Dataset file not found: {dataset_path}")
 
-    gold_evidence_list: List[GoldEvidence] = []
-    if "gold_evidence" in raw_item and isinstance(raw_item["gold_evidence"], list):
-        for g in raw_item["gold_evidence"]:
-            gold_evidence_list.append(GoldEvidence(**g))
-    else:
-        # Extract citations from ground_truth_context for diagnostic evidence matching
-        for ctx in ref_contexts:
-            cites = extract_citations_from_text(ctx)
-            for cite in cites:
-                gold_evidence_list.append(
-                    GoldEvidence(
-                        document_number=cite.get("document_number"),
-                        article=cite.get("article"),
-                        clause=cite.get("clause"),
-                        required=True,
-                        status="missing_gold_label",
-                    )
-                )
-
-    if not gold_evidence_list:
-        gold_evidence_list.append(
-            GoldEvidence(
-                required=True,
-                status="missing_gold_label",
-            )
+    # 1. Check Git cleanliness if required
+    git_sha, git_dirty, _, _, _, diff_sha, _ = get_git_provenance()
+    if require_clean_git and git_dirty:
+        raise ValueError(
+            f"Pre-execution validation failed: git working tree is dirty (SHA {git_sha[:8]}, diff {diff_sha[:8]}). "
+            "Clean working tree is required when --require-clean-git is specified."
         )
 
-    case_id = str(raw_item.get("case_id") or f"case_{index+1:03d}")
+    # 2. Load sidecar via canonical loader GoldSidecar
+    sidecar = load_gold_sidecar(sidecar_path)
 
-    return GoldenCase(
-        case_id=case_id,
-        question=question,
-        question_type=q_type,
-        answerable=answerable,
-        reference_answer=ref_ans,
-        reference_contexts=ref_contexts,
-        gold_evidence=gold_evidence_list,
-        expected_numbers=raw_item.get("expected_numbers", []),
-        expected_dates=raw_item.get("expected_dates", []),
-        expected_entities=raw_item.get("expected_entities", []),
-    )
+    # 3. Load machine-readable audit summary if available
+    audit_summary: Dict[str, Any] = {}
+    if summary_path.exists():
+        try:
+            audit_summary = json.loads(summary_path.read_text(encoding="utf-8"))
+            if audit_summary.get("total_evidence_items") != sidecar.metadata.total_evidence_items:
+                raise ValueError(
+                    f"Counter mismatch: audit summary total_evidence_items ({audit_summary.get('total_evidence_items')}) "
+                    f"!= sidecar total_evidence_items ({sidecar.metadata.total_evidence_items})"
+                )
+        except Exception as err:
+            raise ValueError(f"Pre-execution validation error reading audit summary {summary_path}: {err}") from err
+
+    # 4. Load dataset and build cases
+    raw_dataset = json.loads(dataset_path.read_text(encoding="utf-8"))
+    all_cases = build_cases(raw_dataset, sidecar.labels_by_case_id)
+
+    # 5. Apply gold policy case selection
+    effective_policy = gold_policy if verified_only else "none"
+    selection = select_evaluation_cases(all_cases, effective_policy, include_unanswerable=not verified_only)
+
+    selected_cases = selection.selected_cases
+    if limit and limit > 0:
+        if limit == 30:
+            factoids = [c for c in selected_cases if c.question_type == "factoid"][:12]
+            multihops = [c for c in selected_cases if c.question_type == "multi-hop"][:12]
+            unanswers = [c for c in selected_cases if c.question_type == "unanswerable"][:6]
+            selected_cases = factoids + multihops + unanswers
+        else:
+            selected_cases = selected_cases[:limit]
+
+        selection.selected_cases = selected_cases
+        selection.selected_case_ids = [c.case_id for c in selected_cases]
+        canonical_json = json.dumps(selection.selected_case_ids, separators=(",", ":"))
+        selection.selected_case_ids_sha256 = hashlib.sha256(canonical_json.encode("utf-8")).hexdigest()
+        selection.selected_case_count = len(selected_cases)
+
+    # FAIL CLOSED BEFORE PROVIDER CALLS IF SELECTED CASE COUNT IS ZERO (when verified-only)
+    if verified_only and selection.selected_case_count == 0:
+        print("=" * 60)
+        print("PRE-EXECUTION VALIDATION FAILED: Selected case count is ZERO.")
+        print(f"Policy: '{gold_policy}', Verified Evidence Items in Sidecar: {sidecar.metadata.total_evidence_items}")
+        print("Clean retrieval benchmark is BLOCKED due to 0 verified labels.")
+        print("=" * 60)
+
+    return all_cases, selection, sidecar, audit_summary
 
 
 async def evaluate_single_retrieval_case(
@@ -168,7 +202,6 @@ async def evaluate_single_retrieval_case(
     t_retrieval = time.perf_counter() - retrieval_start
     t_total = time.perf_counter() - started
 
-    # Extract stage traces
     diag = outcome.diagnostics or {}
     stage_trace = diag.get("stage_trace")
     if stage_trace is None:
@@ -199,7 +232,6 @@ async def evaluate_single_retrieval_case(
         for chunk in outcome.evidence
     ]
 
-    # Calculate deterministic metrics for this case with stage_trace
     metrics = calculate_case_retrieval_metrics(
         case.gold_evidence,
         retrieved_chunks,
@@ -237,10 +269,9 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
 
     settings = get_settings()
     dataset_path = Path(args.dataset).resolve()
-    if not dataset_path.exists():
-        raise FileNotFoundError(f"Could not find dataset at: {dataset_path}")
+    sidecar_path = Path(args.sidecar).resolve()
+    summary_path = DEFAULT_SUMMARY_PATH
 
-    # Build immutable effective profile
     base_profile = get_evaluation_profile(args.profile)
     effective_profile = dataclasses.replace(
         base_profile,
@@ -248,67 +279,18 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
         reranker_mode=args.reranker,
     )
 
-    raw_dataset = json.loads(dataset_path.read_text(encoding="utf-8"))
-
-    sidecar_path = (
-        PROJECT_ROOT / "docs/evaluation/gold_labels/namsyntax_legal_qa_420_labels_v2.json"
+    # Perform shared pre-execution validation
+    all_cases, selection, sidecar, audit_summary = perform_pre_execution_validation(
+        dataset_path=dataset_path,
+        sidecar_path=sidecar_path,
+        summary_path=summary_path,
+        gold_policy=args.gold_policy,
+        verified_only=args.verified_only,
+        require_clean_git=args.require_clean_git,
+        limit=args.limit,
     )
-    if not sidecar_path.exists():
-        sidecar_path = (
-            PROJECT_ROOT / "docs/evaluation/gold_labels/namsyntax_legal_qa_420_labels.json"
-        )
 
-    sidecar_labels: dict[str, list[dict]] = {}
-    if sidecar_path.exists():
-        raw_labels = json.loads(sidecar_path.read_text(encoding="utf-8"))
-        if isinstance(raw_labels, list):
-            for label in raw_labels:
-                cid = label.get("case_id")
-                if cid:
-                    sidecar_labels.setdefault(cid, []).append(label)
-        elif isinstance(raw_labels, dict):
-            sidecar_labels = raw_labels
-
-    cases = []
-    for idx, item in enumerate(raw_dataset):
-        case_id = str(item.get("case_id") or f"case_{idx+1:03d}")
-        if case_id in sidecar_labels:
-            item["gold_evidence"] = sidecar_labels[case_id]
-        cases.append(parse_golden_case(item, idx))
-
-    # Apply selection policy
-    if args.verified_only:
-        if args.gold_policy == "all-required-verified":
-            cases = [
-                c
-                for c in cases
-                if c.gold_evidence
-                and all(
-                    g.status == "verified"
-                    for g in c.gold_evidence
-                    if g.required
-                )
-            ]
-        else:  # any-verified
-            cases = [
-                c
-                for c in cases
-                if any(g.status == "verified" for g in c.gold_evidence)
-            ]
-
-    if args.limit and args.limit > 0:
-        if args.limit == 30:
-            factoids = [c for c in cases if c.question_type == "factoid"][:12]
-            multihops = [c for c in cases if c.question_type == "multi-hop"][:12]
-            unanswers = [c for c in cases if c.question_type == "unanswerable"][:6]
-            cases = factoids + multihops + unanswers
-        else:
-            cases = cases[: args.limit]
-
-    selected_case_ids = [c.case_id for c in cases]
-    selected_case_ids_sha256 = hashlib.sha256(
-        json.dumps(selected_case_ids).encode("utf-8")
-    ).hexdigest()
+    dataset_sha256 = hashlib.sha256(dataset_path.read_bytes()).hexdigest()
 
     config_dict = {
         "profile_name": effective_profile.name,
@@ -319,10 +301,100 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
         "rewrite_mode": effective_profile.rewrite_mode,
         "reranker_provider": effective_profile.reranker_mode,
         "gold_policy": args.gold_policy,
-        "selected_case_count": len(selected_case_ids),
-        "selected_case_ids_sha256": selected_case_ids_sha256,
+        "selected_case_count": selection.selected_case_count,
+        "selected_case_ids_sha256": selection.selected_case_ids_sha256,
     }
     fp = calculate_configuration_fingerprint(config_dict)
+
+    # -------------------------------------------------------------
+    # PREFLIGHT EXECUTION MODE (ZERO PROVIDER CALLS, NO RUN DIRS)
+    # -------------------------------------------------------------
+    if args.preflight:
+        print("=" * 60, flush=True)
+        print(f"OFFLINE PREFLIGHT CHECK — PROFILE: {effective_profile.name}", flush=True)
+        print(f"Dataset: {dataset_path} (SHA: {dataset_sha256[:8]})", flush=True)
+        print(f"Sidecar: {sidecar_path} (SHA: {sidecar.metadata.sidecar_sha256[:8]})", flush=True)
+        print(f"Gold Policy: {args.gold_policy} | Verified Only: {args.verified_only}", flush=True)
+        print(f"Configuration Fingerprint: {fp}", flush=True)
+        print(f"Declared Cases: {sidecar.metadata.total_cases} | Declared Evidence Items: {sidecar.metadata.total_evidence_items}", flush=True)
+        print(f"Selected Cases ({selection.selected_case_count}): {selection.selected_case_ids}", flush=True)
+        print(f"Selected Case IDs SHA-256: {selection.selected_case_ids_sha256}", flush=True)
+        print(f"Provider Calls: 0", flush=True)
+        print("=" * 60, flush=True)
+
+        preflight_dir = PROJECT_ROOT / "docs/evaluation/preflight"
+        preflight_dir.mkdir(parents=True, exist_ok=True)
+
+        preflight_payload = {
+            "dataset_sha256": dataset_sha256,
+            "sidecar_sha256": sidecar.metadata.sidecar_sha256,
+            "sidecar_schema_version": sidecar.metadata.schema_version,
+            "declared_total_cases": sidecar.metadata.total_cases,
+            "declared_total_evidence_items": sidecar.metadata.total_evidence_items,
+            "loaded_label_count": len(sidecar.labels),
+            "unique_labeled_case_count": len(sidecar.labels_by_case_id),
+            "gold_policy": args.gold_policy,
+            "verified_only": args.verified_only,
+            "selected_case_count": selection.selected_case_count,
+            "selected_case_ids": selection.selected_case_ids,
+            "selected_case_ids_sha256": selection.selected_case_ids_sha256,
+            "answerable_selected_count": selection.answerable_selected_count,
+            "fully_verified_factoid_count": selection.fully_verified_factoid_count,
+            "fully_verified_multihop_count": selection.fully_verified_multihop_count,
+            "partial_verified_multihop_count": selection.partial_verified_multihop_count,
+            "excluded_unanswerable_count": selection.excluded_unanswerable_count,
+            "excluded_no_verified_label_count": selection.excluded_no_verified_label_count,
+            "verified_evidence_item_count": selection.verified_evidence_item_count,
+            "profile_name": effective_profile.name,
+            "profile": effective_profile.to_dict(),
+            "configuration_fingerprint": fp,
+            "provider_calls": 0,
+        }
+
+        # Immutable preflight artifact per profile
+        profile_preflight_path = preflight_dir / f"preflight_{effective_profile.name}.json"
+        atomic_write_json(profile_preflight_path, preflight_payload)
+
+        # Convenience copy latest_preflight.json
+        latest_preflight_path = preflight_dir / "latest_preflight.json"
+        atomic_write_json(latest_preflight_path, preflight_payload)
+
+        # Build / update comparison artifact preflight_comparison.json across profiles
+        comparison_path = preflight_dir / "preflight_comparison.json"
+        comparison_dict: Dict[str, Any] = {}
+        if comparison_path.exists():
+            try:
+                comparison_dict = json.loads(comparison_path.read_text(encoding="utf-8"))
+            except Exception:
+                comparison_dict = {}
+
+        comparison_dict[effective_profile.name] = {
+            "profile_name": effective_profile.name,
+            "configuration_fingerprint": fp,
+            "selected_case_count": selection.selected_case_count,
+            "selected_case_ids_sha256": selection.selected_case_ids_sha256,
+            "retrieval_document_limit": effective_profile.retrieval_document_limit,
+            "resolved_document_limit": effective_profile.resolved_document_limit,
+            "local_chunks_per_document": effective_profile.local_chunks_per_document,
+            "rerank_input_limit": effective_profile.rerank_input_limit,
+            "intent_scoring_enabled": effective_profile.intent_scoring_enabled,
+        }
+        atomic_write_json(comparison_path, comparison_dict)
+
+        # Exit non-zero if selected_case_count == 0 when verified-only is specified
+        if args.verified_only and selection.selected_case_count == 0:
+            print("Preflight check exited non-zero: 0 selected cases under verified-only policy.")
+            sys.exit(1)
+
+        return preflight_payload
+
+    # -------------------------------------------------------------
+    # LIVE RETRIEVAL EVALUATION RUN
+    # -------------------------------------------------------------
+    if args.verified_only and selection.selected_case_count == 0:
+        raise ValueError("Cannot execute retrieval evaluation: selected case count is ZERO.")
+
+    cases = selection.selected_cases
 
     run_id = args.run_id or generate_unique_run_id(
         prefix="retrieval", config_fingerprint=fp
@@ -342,7 +414,7 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
         gold_sidecar_path=sidecar_path,
         profile_obj=effective_profile,
         gold_policy=args.gold_policy,
-        selected_case_ids=selected_case_ids,
+        selected_case_ids=selection.selected_case_ids,
     )
 
     runs_base_dir = PROJECT_ROOT / "docs/evaluation/runs"
@@ -361,7 +433,7 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
     print("=" * 60, flush=True)
 
     semaphore = asyncio.Semaphore(args.concurrency)
-    results: List[RetrievalCaseResult] = []
+    results_map: Dict[str, RetrievalCaseResult] = {}
 
     async def worker(case: GoldenCase) -> RetrievalCaseResult:
         async with semaphore:
@@ -375,31 +447,31 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
     completed_count = 0
     for completed_task in asyncio.as_completed(tasks):
         result = await completed_task
-        results.append(result)
+        results_map[result.case_id] = result
         completed_count += 1
         print(
             f"[{completed_count}/{len(cases)}] Completed Case [{result.case_id}]: status={result.status} latency={result.latency['t_retrieval']:.2f}s",
             flush=True,
         )
 
-    # Offline Metric Computation
-    case_results_dict = [res.model_dump() for res in results]
+    # Preserve dataset case ordering
+    ordered_results: List[RetrievalCaseResult] = [results_map[c.case_id] for c in cases]
+    case_results_dict = [res.model_dump() for res in ordered_results]
     retrieval_summary = aggregate_retrieval_metrics(case_results_dict)
-    stage_traces = [res.stage_trace for res in results]
+    stage_traces = [res.stage_trace for res in ordered_results]
     stage_survival_summary = calculate_stage_survival_rates(stage_traces)
     latency_summary = calculate_stage_latency_summary(
-        [res.latency for res in results]
+        [res.latency for res in ordered_results]
     )
 
-    # Atomic write run artifacts
     atomic_write_json(run_dir / "manifest.json", manifest.model_dump())
     atomic_write_json(run_dir / "configuration.json", manifest.configuration)
     atomic_write_json(
         run_dir / "evaluation_case_set.json",
         {
-            "selected_case_count": len(selected_case_ids),
-            "selected_case_ids": selected_case_ids,
-            "selected_case_ids_sha256": selected_case_ids_sha256,
+            "selected_case_count": selection.selected_case_count,
+            "selected_case_ids": selection.selected_case_ids,
+            "selected_case_ids_sha256": selection.selected_case_ids_sha256,
         },
     )
     atomic_write_json(run_dir / "retrieval_results.json", case_results_dict)

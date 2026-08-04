@@ -1,0 +1,35 @@
+{
+  "legacy": {
+    "profile_name": "legacy",
+    "configuration_fingerprint": "c2c47a3cbfa911ffb861c37c2238a3a4b4ab26972959f3368eee464e6e097d40",
+    "selected_case_count": 0,
+    "selected_case_ids_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "retrieval_document_limit": 24,
+    "resolved_document_limit": 12,
+    "local_chunks_per_document": 2,
+    "rerank_input_limit": 12,
+    "intent_scoring_enabled": false
+  },
+  "separated_no_intent": {
+    "profile_name": "separated_no_intent",
+    "configuration_fingerprint": "77e1b3c4895cd483ab18022a8953f28f4157cfd4366146845d37fd81775a7d47",
+    "selected_case_count": 0,
+    "selected_case_ids_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "retrieval_document_limit": 24,
+    "resolved_document_limit": 16,
+    "local_chunks_per_document": 4,
+    "rerank_input_limit": 24,
+    "intent_scoring_enabled": false
+  },
+  "separated_intent": {
+    "profile_name": "separated_intent",
+    "configuration_fingerprint": "37101b29b62fe051deac784212bfefad67f6655ee03947e72e8704ac7bc3496d",
+    "selected_case_count": 0,
+    "selected_case_ids_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "retrieval_document_limit": 24,
+    "resolved_document_limit": 16,
+    "local_chunks_per_document": 4,
+    "rerank_input_limit": 24,
+    "intent_scoring_enabled": true
+  }
+}
