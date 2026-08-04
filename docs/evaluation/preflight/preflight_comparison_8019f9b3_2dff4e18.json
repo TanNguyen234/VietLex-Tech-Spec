@@ -1,0 +1,28 @@
+{
+  "meta": {
+    "git_sha": "d70deeb38568f41346ee1168989d5c94288e9f96",
+    "git_dirty": true,
+    "git_diff_sha256": "b963f0d5c2d64bf59a53d809b217225309844ea567f8a27da47bca21febf6e6d",
+    "code_state_fingerprint": "2dff4e180154e9c2b17edb4728c552184e6388b230e7050d24259d9d92a8eb22",
+    "dataset_sha256": "84c93a522c1bc8eac7179aa808f70b59466fe9a55a4a9f98ddae07797c9662c7",
+    "sidecar_sha256": "8019f9b3e5370130663dc5fe28d051f5a0ed2ec191bcf9d9e422efcefbdad0c8",
+    "gold_policy": "all-required-verified",
+    "rewrite_mode": "off",
+    "reranker_mode": "current",
+    "provider_calls": 0,
+    "exit_status": "BLOCKED",
+    "blocked_reason": "selected_case_count_is_zero_under_verified_only"
+  },
+  "separated_no_intent": {
+    "profile_name": "separated_no_intent",
+    "configuration_fingerprint": "3d70b0f40fb6d27ff6539999aece5df9b9e20ea27a834872e891d6df1d5d2c3d",
+    "selected_case_count": 0,
+    "selected_case_ids_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "canonical_artifact_path": "D:\\Download\\ProfessionalLegalRAG\\docs\\evaluation\\preflight\\preflight_separated_no_intent_3d70b0f4_8019f9b3_2dff4e18.json",
+    "retrieval_document_limit": 24,
+    "resolved_document_limit": 16,
+    "local_chunks_per_document": 4,
+    "rerank_input_limit": 24,
+    "intent_scoring_enabled": false
+  }
+}

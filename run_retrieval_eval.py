@@ -9,7 +9,7 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -30,6 +30,7 @@ from app.evaluation.retrieval_metrics import (
 from app.evaluation.run_manifest import (
     atomic_write_json,
     calculate_configuration_fingerprint,
+    calculate_dataset_sha256,
     create_run_manifest,
     generate_unique_run_id,
     get_git_provenance,
@@ -123,8 +124,11 @@ def perform_pre_execution_validation(
             "Clean working tree is required when --require-clean-git is specified."
         )
 
-    # 2. Load sidecar via canonical loader GoldSidecar
-    sidecar = load_gold_sidecar(sidecar_path)
+    raw_dataset = json.loads(dataset_path.read_bytes().decode("utf-8"))
+    raw_dataset_case_ids = [f"case_{idx:03d}" for idx in range(1, len(raw_dataset) + 1)]
+
+    # 2. Load sidecar via canonical loader GoldSidecar validating exact case-set equality
+    sidecar = load_gold_sidecar(sidecar_path, dataset_case_ids=raw_dataset_case_ids)
 
     # 3. Load machine-readable audit summary if available
     audit_summary: Dict[str, Any] = {}
@@ -139,8 +143,7 @@ def perform_pre_execution_validation(
         except Exception as err:
             raise ValueError(f"Pre-execution validation error reading audit summary {summary_path}: {err}") from err
 
-    # 4. Load dataset and build cases
-    raw_dataset = json.loads(dataset_path.read_text(encoding="utf-8"))
+    # 4. Build cases
     all_cases = build_cases(raw_dataset, sidecar.labels_by_case_id)
 
     # 5. Apply gold policy case selection
@@ -149,29 +152,67 @@ def perform_pre_execution_validation(
 
     selected_cases = selection.selected_cases
     if limit and limit > 0:
-        if limit == 30:
-            factoids = [c for c in selected_cases if c.question_type == "factoid"][:12]
-            multihops = [c for c in selected_cases if c.question_type == "multi-hop"][:12]
-            unanswers = [c for c in selected_cases if c.question_type == "unanswerable"][:6]
-            selected_cases = factoids + multihops + unanswers
-        else:
-            selected_cases = selected_cases[:limit]
-
-        selection.selected_cases = selected_cases
-        selection.selected_case_ids = [c.case_id for c in selected_cases]
-        canonical_json = json.dumps(selection.selected_case_ids, separators=(",", ":"))
-        selection.selected_case_ids_sha256 = hashlib.sha256(canonical_json.encode("utf-8")).hexdigest()
-        selection.selected_case_count = len(selected_cases)
-
-    # FAIL CLOSED BEFORE PROVIDER CALLS IF SELECTED CASE COUNT IS ZERO (when verified-only)
-    if verified_only and selection.selected_case_count == 0:
-        print("=" * 60)
-        print("PRE-EXECUTION VALIDATION FAILED: Selected case count is ZERO.")
-        print(f"Policy: '{gold_policy}', Verified Evidence Items in Sidecar: {sidecar.metadata.total_evidence_items}")
-        print("Clean retrieval benchmark is BLOCKED due to 0 verified labels.")
-        print("=" * 60)
+        selected_cases = selected_cases[:limit]
+        selected_ids = [c.case_id for c in selected_cases]
+        selected_sha = hashlib.sha256(json.dumps(selected_ids).encode("utf-8")).hexdigest()
+        selection = dataclasses.replace(
+            selection,
+            selected_cases=selected_cases,
+            selected_case_count=len(selected_cases),
+            selected_case_ids=selected_ids,
+            selected_case_ids_sha256=selected_sha,
+        )
 
     return all_cases, selection, sidecar, audit_summary
+
+
+def parse_golden_case(raw_item: Dict[str, Any], idx: int) -> GoldenCase:
+    case_id = f"case_{idx+1:03d}"
+    q_type = raw_item.get("question_type", "factoid")
+    q_text = raw_item.get("question", "")
+    gt_ans = raw_item.get("ground_truth_answer", "")
+    gt_contexts = raw_item.get("ground_truth_context", [])
+
+    answerable = not (
+        q_type == "unanswerable" or "tài liệu không đề cập" in gt_ans.casefold()
+    )
+
+    ev_list: List[GoldEvidence] = []
+    for c_idx, ctx in enumerate(gt_contexts, start=1):
+        cites = extract_citations_from_text(ctx)
+        doc_num = cites[0]["document_number"] if cites else ""
+        art = cites[0]["article"] if cites else ""
+        cl = cites[0]["clause"] if cites else ""
+        req_lvl = "clause" if cl else ("article" if art else "document")
+
+        ev_list.append(
+            GoldEvidence(
+                evidence_item_id=f"{case_id}_ctx{c_idx:02d}_cit01",
+                case_id=case_id,
+                context_index=c_idx,
+                citation_index=1,
+                reference_anchor_hash=hashlib.sha256(ctx.encode("utf-8")).hexdigest()[:16],
+                document_number=doc_num or None,
+                article=art or None,
+                clause=cl or None,
+                required=answerable,
+                required_level=req_lvl,
+                status="unanswerable" if not answerable else "not_found_by_local_deterministic_audit",
+            )
+        )
+
+    return GoldenCase(
+        case_id=case_id,
+        question=q_text,
+        question_type=q_type,
+        answerable=answerable,
+        reference_answer=gt_ans,
+        reference_contexts=gt_contexts,
+        gold_evidence=ev_list,
+        expected_numbers=raw_item.get("expected_numbers", []),
+        expected_dates=raw_item.get("expected_dates", []),
+        expected_entities=raw_item.get("expected_entities", []),
+    )
 
 
 async def evaluate_single_retrieval_case(
@@ -179,86 +220,82 @@ async def evaluate_single_retrieval_case(
     settings: Any,
     effective_profile: EvaluationProfile,
 ) -> RetrievalCaseResult:
-    from app.services.rag_pipeline import rewrite_query
-    from app.services.retrieval import RetrievalOutcome, get_legal_retriever
+    from app.services.retrieval import get_retriever
 
+    retriever = get_retriever()
     started = time.perf_counter()
+
     query_used = case.question
-    rewritten_query = None
-    t_rewrite = 0.0
+    rewritten_q = None
 
     if effective_profile.rewrite_mode == "on":
-        rw_start = time.perf_counter()
-        rewritten_query = await rewrite_query(case.question)
-        t_rewrite = time.perf_counter() - rw_start
-        query_used = rewritten_query
+        try:
+            from app.services.query_rewriter import rewrite_query
 
-    retriever = get_legal_retriever()
+            t_rw_start = time.perf_counter()
+            rewritten_q = await rewrite_query(case.question)
+            t_rw = time.perf_counter() - t_rw_start
+            query_used = rewritten_q
+        except Exception:
+            t_rw = 0.0
+            query_used = case.question
+    else:
+        t_rw = 0.0
 
-    retrieval_start = time.perf_counter()
-    outcome: RetrievalOutcome = await retriever.retrieve_detailed(
-        query_used, sparse_query=case.question, profile=effective_profile
+    t_ret_start = time.perf_counter()
+    outcome = await retriever.retrieve_detailed(
+        query=query_used,
+        mode=effective_profile.reranker_mode,
+        retrieval_document_limit=effective_profile.retrieval_document_limit,
+        resolved_document_limit=effective_profile.resolved_document_limit,
+        local_chunks_per_document=effective_profile.local_chunks_per_document,
+        rerank_input_limit=effective_profile.rerank_input_limit,
+        rerank_return_limit=effective_profile.rerank_return_limit,
+        final_evidence_limit=effective_profile.final_evidence_limit,
+        intent_scoring_enabled=effective_profile.intent_scoring_enabled,
     )
-    t_retrieval = time.perf_counter() - retrieval_start
+    t_ret = time.perf_counter() - t_ret_start
     t_total = time.perf_counter() - started
-
-    diag = outcome.diagnostics or {}
-    stage_trace = diag.get("stage_trace")
-    if stage_trace is None:
-        stage_trace = RetrievalStageTrace(
-            pinecone_hits=[],
-            fts_hits=[],
-            merged_document_candidates=[],
-            resolved_document_candidates=[],
-            structural_chunks_generated=[],
-            locally_selected_chunks=[],
-            reranker_input_chunks=[],
-            reranker_output_chunks=[],
-            final_evidence_chunks=[],
-        )
 
     retrieved_chunks = [
         CandidateChunk(
-            document_id=chunk.document_id,
-            document_number=chunk.document_number,
-            title=chunk.title,
-            source_url=chunk.source_url,
-            citation=chunk.citation,
-            article=chunk.article,
-            clause=chunk.clause,
-            text=chunk.text,
-            token_count=chunk.token_count,
+            document_id=e.document_id,
+            document_number=e.document_number,
+            title=e.title,
+            source_url=e.source_url,
+            citation=e.citation,
+            article=e.article,
+            clause=e.clause,
+            text=e.text,
+            token_count=e.token_count,
+            score=e.score,
         )
-        for chunk in outcome.evidence
+        for e in outcome.evidence
     ]
 
     metrics = calculate_case_retrieval_metrics(
-        case.gold_evidence,
-        retrieved_chunks,
-        stage_trace=stage_trace,
+        case.gold_evidence, retrieved_chunks, stage_trace=outcome.stage_trace
     )
 
-    latency = {
-        "t_rewrite": round(t_rewrite, 4),
-        "t_retrieval": round(t_retrieval, 4),
+    latency_dict = {
+        "t_rewrite": round(t_rw, 4),
+        "t_retrieval": round(t_ret, 4),
         "t_total": round(t_total, 4),
-        **{k: round(v, 4) for k, v in outcome.latency.items()},
     }
 
     return RetrievalCaseResult(
         case_id=case.case_id,
         question=case.question,
+        original_query=case.question,
         question_type=case.question_type,
         answerable=case.answerable,
         query_used=query_used,
-        original_query=case.question,
-        rewritten_query=rewritten_query,
+        rewritten_query=rewritten_q,
         status=outcome.status,
         retrieved_evidence=retrieved_chunks,
-        stage_trace=stage_trace,
-        latency=latency,
+        stage_trace=outcome.stage_trace,
+        latency=latency_dict,
         metrics=metrics,
-        error=outcome.error,
     )
 
 
@@ -272,6 +309,8 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
     sidecar_path = Path(args.sidecar).resolve()
     summary_path = DEFAULT_SUMMARY_PATH
 
+    dataset_sha256 = calculate_dataset_sha256(dataset_path)
+
     base_profile = get_evaluation_profile(args.profile)
     effective_profile = dataclasses.replace(
         base_profile,
@@ -279,7 +318,7 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
         reranker_mode=args.reranker,
     )
 
-    # Perform shared pre-execution validation
+    # Perform pre-execution validation
     all_cases, selection, sidecar, audit_summary = perform_pre_execution_validation(
         dataset_path=dataset_path,
         sidecar_path=sidecar_path,
@@ -290,7 +329,10 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
         limit=args.limit,
     )
 
-    dataset_sha256 = hashlib.sha256(dataset_path.read_bytes()).hexdigest()
+    git_sha, git_dirty, _, _, _, diff_sha, _ = get_git_provenance()
+    code_state_fingerprint = hashlib.sha256(f"{git_sha}:{git_dirty}:{diff_sha}".encode("utf-8")).hexdigest()
+    code_state_sha8 = code_state_fingerprint[:8]
+    sidecar_sha8 = sidecar.metadata.sidecar_sha256[:8]
 
     config_dict = {
         "profile_name": effective_profile.name,
@@ -303,17 +345,21 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
         "gold_policy": args.gold_policy,
         "selected_case_count": selection.selected_case_count,
         "selected_case_ids_sha256": selection.selected_case_ids_sha256,
+        "git_sha": git_sha,
+        "git_dirty": git_dirty,
+        "git_diff_sha256": diff_sha,
+        "code_state_fingerprint": code_state_fingerprint,
     }
     fp = calculate_configuration_fingerprint(config_dict)
+    config_fp8 = fp[:8]
 
-    # -------------------------------------------------------------
-    # PREFLIGHT EXECUTION MODE (ZERO PROVIDER CALLS, NO RUN DIRS)
-    # -------------------------------------------------------------
+    # PREFLIGHT EXECUTION MODE
     if args.preflight:
         print("=" * 60, flush=True)
         print(f"OFFLINE PREFLIGHT CHECK — PROFILE: {effective_profile.name}", flush=True)
         print(f"Dataset: {dataset_path} (SHA: {dataset_sha256[:8]})", flush=True)
         print(f"Sidecar: {sidecar_path} (SHA: {sidecar.metadata.sidecar_sha256[:8]})", flush=True)
+        print(f"Code State: SHA {git_sha[:8]} | Dirty: {git_dirty} | Fingerprint: {code_state_sha8}", flush=True)
         print(f"Gold Policy: {args.gold_policy} | Verified Only: {args.verified_only}", flush=True)
         print(f"Configuration Fingerprint: {fp}", flush=True)
         print(f"Declared Cases: {sidecar.metadata.total_cases} | Declared Evidence Items: {sidecar.metadata.total_evidence_items}", flush=True)
@@ -325,7 +371,17 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
         preflight_dir = PROJECT_ROOT / "docs/evaluation/preflight"
         preflight_dir.mkdir(parents=True, exist_ok=True)
 
+        blocked_reason = None
+        exit_status = "OK"
+        if args.verified_only and selection.selected_case_count == 0:
+            blocked_reason = "selected_case_count_is_zero_under_verified_only"
+            exit_status = "BLOCKED"
+
         preflight_payload = {
+            "git_sha": git_sha,
+            "git_dirty": git_dirty,
+            "git_diff_sha256": diff_sha,
+            "code_state_fingerprint": code_state_fingerprint,
             "dataset_sha256": dataset_sha256,
             "sidecar_sha256": sidecar.metadata.sidecar_sha256,
             "sidecar_schema_version": sidecar.metadata.schema_version,
@@ -334,33 +390,32 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
             "loaded_label_count": len(sidecar.labels),
             "unique_labeled_case_count": len(sidecar.labels_by_case_id),
             "gold_policy": args.gold_policy,
+            "rewrite_mode": effective_profile.rewrite_mode,
+            "reranker_mode": effective_profile.reranker_mode,
             "verified_only": args.verified_only,
             "selected_case_count": selection.selected_case_count,
             "selected_case_ids": selection.selected_case_ids,
             "selected_case_ids_sha256": selection.selected_case_ids_sha256,
-            "answerable_selected_count": selection.answerable_selected_count,
-            "fully_verified_factoid_count": selection.fully_verified_factoid_count,
-            "fully_verified_multihop_count": selection.fully_verified_multihop_count,
-            "partial_verified_multihop_count": selection.partial_verified_multihop_count,
-            "excluded_unanswerable_count": selection.excluded_unanswerable_count,
-            "excluded_no_verified_label_count": selection.excluded_no_verified_label_count,
-            "verified_evidence_item_count": selection.verified_evidence_item_count,
             "profile_name": effective_profile.name,
             "profile": effective_profile.to_dict(),
             "configuration_fingerprint": fp,
             "provider_calls": 0,
+            "exit_status": exit_status,
+            "blocked_reason": blocked_reason,
         }
 
-        # Immutable preflight artifact per profile
-        profile_preflight_path = preflight_dir / f"preflight_{effective_profile.name}.json"
+        # Canonical immutable preflight artifact filename with code_state_sha8
+        profile_preflight_path = preflight_dir / f"preflight_{effective_profile.name}_{config_fp8}_{sidecar_sha8}_{code_state_sha8}.json"
         atomic_write_json(profile_preflight_path, preflight_payload)
 
         # Convenience copy latest_preflight.json
         latest_preflight_path = preflight_dir / "latest_preflight.json"
         atomic_write_json(latest_preflight_path, preflight_payload)
 
-        # Build / update comparison artifact preflight_comparison.json across profiles
-        comparison_path = preflight_dir / "preflight_comparison.json"
+        # Immutable comparison artifact filename
+        comparison_path = preflight_dir / f"preflight_comparison_{sidecar_sha8}_{code_state_sha8}.json"
+        latest_comparison_path = preflight_dir / "preflight_comparison.json"
+
         comparison_dict: Dict[str, Any] = {}
         if comparison_path.exists():
             try:
@@ -368,11 +423,27 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
             except Exception:
                 comparison_dict = {}
 
+        comparison_dict["meta"] = {
+            "git_sha": git_sha,
+            "git_dirty": git_dirty,
+            "git_diff_sha256": diff_sha,
+            "code_state_fingerprint": code_state_fingerprint,
+            "dataset_sha256": dataset_sha256,
+            "sidecar_sha256": sidecar.metadata.sidecar_sha256,
+            "gold_policy": args.gold_policy,
+            "rewrite_mode": effective_profile.rewrite_mode,
+            "reranker_mode": effective_profile.reranker_mode,
+            "provider_calls": 0,
+            "exit_status": exit_status,
+            "blocked_reason": blocked_reason,
+        }
+
         comparison_dict[effective_profile.name] = {
             "profile_name": effective_profile.name,
             "configuration_fingerprint": fp,
             "selected_case_count": selection.selected_case_count,
             "selected_case_ids_sha256": selection.selected_case_ids_sha256,
+            "canonical_artifact_path": str(profile_preflight_path),
             "retrieval_document_limit": effective_profile.retrieval_document_limit,
             "resolved_document_limit": effective_profile.resolved_document_limit,
             "local_chunks_per_document": effective_profile.local_chunks_per_document,
@@ -380,17 +451,15 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
             "intent_scoring_enabled": effective_profile.intent_scoring_enabled,
         }
         atomic_write_json(comparison_path, comparison_dict)
+        atomic_write_json(latest_comparison_path, comparison_dict)
 
-        # Exit non-zero if selected_case_count == 0 when verified-only is specified
-        if args.verified_only and selection.selected_case_count == 0:
+        if exit_status == "BLOCKED":
             print("Preflight check exited non-zero: 0 selected cases under verified-only policy.")
             sys.exit(1)
 
         return preflight_payload
 
-    # -------------------------------------------------------------
     # LIVE RETRIEVAL EVALUATION RUN
-    # -------------------------------------------------------------
     if args.verified_only and selection.selected_case_count == 0:
         raise ValueError("Cannot execute retrieval evaluation: selected case count is ZERO.")
 
@@ -444,25 +513,21 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
             )
 
     tasks = [asyncio.create_task(worker(case)) for case in cases]
-    completed_count = 0
     for completed_task in asyncio.as_completed(tasks):
         result = await completed_task
         results_map[result.case_id] = result
-        completed_count += 1
         print(
-            f"[{completed_count}/{len(cases)}] Completed Case [{result.case_id}]: status={result.status} latency={result.latency['t_retrieval']:.2f}s",
+            f"-> Completed Case [{result.case_id}]: status={result.status} "
+            f"doc_recall@1={result.metrics.get('doc_recall', {}).get(1, 0.0)} latency={result.latency['t_total']:.2f}s",
             flush=True,
         )
 
-    # Preserve dataset case ordering
-    ordered_results: List[RetrievalCaseResult] = [results_map[c.case_id] for c in cases]
-    case_results_dict = [res.model_dump() for res in ordered_results]
-    retrieval_summary = aggregate_retrieval_metrics(case_results_dict)
+    ordered_results = [results_map[c.case_id] for c in cases]
+    cases_dict = [res.model_dump() for res in ordered_results]
+    retrieval_summary = aggregate_retrieval_metrics(cases_dict)
     stage_traces = [res.stage_trace for res in ordered_results]
     stage_survival_summary = calculate_stage_survival_rates(stage_traces)
-    latency_summary = calculate_stage_latency_summary(
-        [res.latency for res in ordered_results]
-    )
+    latency_summary = calculate_stage_latency_summary([res.latency for res in ordered_results])
 
     atomic_write_json(run_dir / "manifest.json", manifest.model_dump())
     atomic_write_json(run_dir / "configuration.json", manifest.configuration)
@@ -474,7 +539,7 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
             "selected_case_ids_sha256": selection.selected_case_ids_sha256,
         },
     )
-    atomic_write_json(run_dir / "retrieval_results.json", case_results_dict)
+    atomic_write_json(run_dir / "retrieval_results.json", cases_dict)
 
     report_path = write_run_report(
         run_dir=run_dir,
@@ -482,18 +547,16 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
         retrieval_summary=retrieval_summary,
         stage_survival_summary=stage_survival_summary,
         latency_summary=latency_summary,
-        answer_summary=None,
-        case_results=case_results_dict,
+        case_results=cases_dict,
     )
 
-    print("=" * 60)
-    print(f"Retrieval Evaluation Completed. Report saved to:\n{report_path}")
-    print("=" * 60)
+    print("=" * 60, flush=True)
+    print(f"Retrieval Evaluation Completed. Report saved to:\n{report_path}", flush=True)
+    print("=" * 60, flush=True)
 
     return {
         "manifest": manifest.model_dump(),
         "summary": retrieval_summary,
-        "stage_survival": stage_survival_summary,
         "latency": latency_summary,
         "report_path": str(report_path),
     }
