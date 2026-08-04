@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import dataclasses
+import hashlib
+import json
 import os
 import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 # Ensure UTF-8 output on Windows with error handling
 if hasattr(sys.stdout, "reconfigure"):
@@ -17,6 +20,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from app.config import get_settings
 from app.evaluation.latency_metrics import calculate_stage_latency_summary
+from app.evaluation.profiles import EvaluationProfile, get_evaluation_profile
 from app.evaluation.reporting import write_run_report
 from app.evaluation.retrieval_metrics import (
     aggregate_retrieval_metrics,
@@ -26,8 +30,10 @@ from app.evaluation.retrieval_metrics import (
 )
 from app.evaluation.run_manifest import (
     atomic_write_json,
+    calculate_configuration_fingerprint,
     create_run_manifest,
     generate_unique_run_id,
+    prepare_run_directory,
 )
 from app.evaluation.schemas import (
     CandidateChunk,
@@ -52,26 +58,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="Evaluation profile (default: separated_intent)",
     )
     parser.add_argument(
-        "--mode",
-        choices=["retrieval-only", "answer"],
-        default="retrieval-only",
-        help="Evaluation mode (default: retrieval-only)",
-    )
-    parser.add_argument(
         "--rewrite",
         choices=["off", "on"],
         default="off",
         help="Query rewriting mode (default: off)",
     )
     parser.add_argument(
-        "--guardrails",
-        choices=["off", "shadow", "enforce"],
-        default="off",
-        help="Guardrails mode (default: off)",
-    )
-    parser.add_argument(
         "--reranker",
-        choices=["current", "pinecone-bge", "qdrant-colbert"],
+        choices=["current", "pinecone-only", "qdrant-only"],
         default="current",
         help="Reranker provider selection (default: current)",
     )
@@ -87,10 +81,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="Filter evaluation to cases with verified gold evidence in the current corpus",
     )
     parser.add_argument(
-        "--judge",
-        choices=["none", "ragas"],
-        default="none",
-        help="LLM judge mode (default: none)",
+        "--gold-policy",
+        choices=["all-required-verified", "any-verified"],
+        default="all-required-verified",
+        help="Selection policy for verified cases (default: all-required-verified)",
     )
     parser.add_argument("--run-id", type=str, default=None, help="Optional custom Run ID")
     return parser
@@ -149,9 +143,7 @@ def parse_golden_case(raw_item: dict, index: int) -> GoldenCase:
 async def evaluate_single_retrieval_case(
     case: GoldenCase,
     settings: Any,
-    rewrite_mode: str,
-    reranker_provider: str,
-    profile_name: str = "separated_intent",
+    effective_profile: EvaluationProfile,
 ) -> RetrievalCaseResult:
     from app.services.rag_pipeline import rewrite_query
     from app.services.retrieval import RetrievalOutcome, get_legal_retriever
@@ -161,23 +153,17 @@ async def evaluate_single_retrieval_case(
     rewritten_query = None
     t_rewrite = 0.0
 
-    if rewrite_mode == "on":
+    if effective_profile.rewrite_mode == "on":
         rw_start = time.perf_counter()
         rewritten_query = await rewrite_query(case.question)
         t_rewrite = time.perf_counter() - rw_start
         query_used = rewritten_query
 
     retriever = get_legal_retriever()
-    
-    # Reranker provider override if specified
-    if reranker_provider == "pinecone-bge":
-        settings.PINECONE_RERANK_MODEL = "bge-reranker-v2-m3"
-    elif reranker_provider == "qdrant-colbert":
-        settings.QDRANT_RERANK_MODEL = "answerdotai/answerai-colbert-small-v1"
 
     retrieval_start = time.perf_counter()
     outcome: RetrievalOutcome = await retriever.retrieve_detailed(
-        query_used, sparse_query=case.question, profile=profile_name
+        query_used, sparse_query=case.question, profile=effective_profile
     )
     t_retrieval = time.perf_counter() - retrieval_start
     t_total = time.perf_counter() - started
@@ -188,7 +174,7 @@ async def evaluate_single_retrieval_case(
     if stage_trace is None:
         stage_trace = RetrievalStageTrace(
             pinecone_hits=[],
-            lexical_hits=[],
+            fts_hits=[],
             merged_document_candidates=[],
             resolved_document_candidates=[],
             structural_chunks_generated=[],
@@ -213,8 +199,12 @@ async def evaluate_single_retrieval_case(
         for chunk in outcome.evidence
     ]
 
-    # Calculate deterministic metrics for this case
-    metrics = calculate_case_retrieval_metrics(case.gold_evidence, retrieved_chunks)
+    # Calculate deterministic metrics for this case with stage_trace
+    metrics = calculate_case_retrieval_metrics(
+        case.gold_evidence,
+        retrieved_chunks,
+        stage_trace=stage_trace,
+    )
 
     latency = {
         "t_rewrite": round(t_rewrite, 4),
@@ -250,11 +240,24 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
     if not dataset_path.exists():
         raise FileNotFoundError(f"Could not find dataset at: {dataset_path}")
 
-    import json
+    # Build immutable effective profile
+    base_profile = get_evaluation_profile(args.profile)
+    effective_profile = dataclasses.replace(
+        base_profile,
+        rewrite_mode=args.rewrite,
+        reranker_mode=args.reranker,
+    )
 
     raw_dataset = json.loads(dataset_path.read_text(encoding="utf-8"))
 
-    sidecar_path = PROJECT_ROOT / "docs/evaluation/gold_labels/namsyntax_legal_qa_420_labels.json"
+    sidecar_path = (
+        PROJECT_ROOT / "docs/evaluation/gold_labels/namsyntax_legal_qa_420_labels_v2.json"
+    )
+    if not sidecar_path.exists():
+        sidecar_path = (
+            PROJECT_ROOT / "docs/evaluation/gold_labels/namsyntax_legal_qa_420_labels.json"
+        )
+
     sidecar_labels: dict[str, list[dict]] = {}
     if sidecar_path.exists():
         raw_labels = json.loads(sidecar_path.read_text(encoding="utf-8"))
@@ -272,14 +275,28 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
         if case_id in sidecar_labels:
             item["gold_evidence"] = sidecar_labels[case_id]
         cases.append(parse_golden_case(item, idx))
+
+    # Apply selection policy
     if args.verified_only:
-        cases = [
-            c for c in cases
-            if any(g.status == "verified" for g in c.gold_evidence)
-        ]
+        if args.gold_policy == "all-required-verified":
+            cases = [
+                c
+                for c in cases
+                if c.gold_evidence
+                and all(
+                    g.status == "verified"
+                    for g in c.gold_evidence
+                    if g.required
+                )
+            ]
+        else:  # any-verified
+            cases = [
+                c
+                for c in cases
+                if any(g.status == "verified" for g in c.gold_evidence)
+            ]
 
     if args.limit and args.limit > 0:
-        # Sample evenly across groups if limit matches 30 (12 factoid, 12 multi-hop, 6 unanswerable)
         if args.limit == 30:
             factoids = [c for c in cases if c.question_type == "factoid"][:12]
             multihops = [c for c in cases if c.question_type == "multi-hop"][:12]
@@ -288,36 +305,70 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
         else:
             cases = cases[: args.limit]
 
+    selected_case_ids = [c.case_id for c in cases]
+    selected_case_ids_sha256 = hashlib.sha256(
+        json.dumps(selected_case_ids).encode("utf-8")
+    ).hexdigest()
+
+    config_dict = {
+        "profile_name": effective_profile.name,
+        "profile": effective_profile.to_dict(),
+        "eval_mode": "retrieval-only",
+        "judge_mode": "none",
+        "guardrail_mode": "off",
+        "rewrite_mode": effective_profile.rewrite_mode,
+        "reranker_provider": effective_profile.reranker_mode,
+        "gold_policy": args.gold_policy,
+        "selected_case_count": len(selected_case_ids),
+        "selected_case_ids_sha256": selected_case_ids_sha256,
+    }
+    fp = calculate_configuration_fingerprint(config_dict)
+
+    run_id = args.run_id or generate_unique_run_id(
+        prefix="retrieval", config_fingerprint=fp
+    )
+
     manifest = create_run_manifest(
-        run_id=args.run_id or generate_unique_run_id(prefix="retrieval"),
+        run_id=run_id,
         eval_mode="retrieval-only",
-        judge_mode=args.judge,
-        guardrail_mode=args.guardrails,
-        rewrite_mode=args.rewrite,
-        reranker_provider=args.reranker,
+        judge_mode="none",
+        guardrail_mode="off",
+        rewrite_mode=effective_profile.rewrite_mode,
+        reranker_provider=effective_profile.reranker_mode,
         dataset_path=dataset_path,
         settings=settings,
         command_str=" ".join(sys.argv),
+        profile_name=effective_profile.name,
+        gold_sidecar_path=sidecar_path,
+        profile_obj=effective_profile,
+        gold_policy=args.gold_policy,
+        selected_case_ids=selected_case_ids,
     )
+
+    runs_base_dir = PROJECT_ROOT / "docs/evaluation/runs"
+    run_dir = prepare_run_directory(runs_base_dir, manifest.run_id)
 
     print("=" * 60, flush=True)
     print(f"RETRIEVAL EVALUATION RUN: {manifest.run_id}", flush=True)
-    print(f"cases={len(cases)} mode={args.mode} rewrite={args.rewrite} guardrails={args.guardrails}", flush=True)
-    print(f"reranker={args.reranker} concurrency={args.concurrency} judge={args.judge}", flush=True)
+    print(
+        f"cases={len(cases)} profile={effective_profile.name} rewrite={effective_profile.rewrite_mode}",
+        flush=True,
+    )
+    print(
+        f"reranker={effective_profile.reranker_mode} concurrency={args.concurrency} gold_policy={args.gold_policy}",
+        flush=True,
+    )
     print("=" * 60, flush=True)
 
     semaphore = asyncio.Semaphore(args.concurrency)
     results: List[RetrievalCaseResult] = []
 
     async def worker(case: GoldenCase) -> RetrievalCaseResult:
-        # Acquire online pipeline semaphore strictly during online retrieval execution
         async with semaphore:
             return await evaluate_single_retrieval_case(
                 case,
                 settings,
-                args.rewrite,
-                args.reranker,
-                profile_name=args.profile,
+                effective_profile,
             )
 
     tasks = [asyncio.create_task(worker(case)) for case in cases]
@@ -326,21 +377,31 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
         result = await completed_task
         results.append(result)
         completed_count += 1
-        print(f"[{completed_count}/{len(cases)}] Completed Case [{result.case_id}]: status={result.status} latency={result.latency['t_retrieval']:.2f}s", flush=True)
+        print(
+            f"[{completed_count}/{len(cases)}] Completed Case [{result.case_id}]: status={result.status} latency={result.latency['t_retrieval']:.2f}s",
+            flush=True,
+        )
 
-    # Offline Metric Computation (after semaphore release!)
+    # Offline Metric Computation
     case_results_dict = [res.model_dump() for res in results]
     retrieval_summary = aggregate_retrieval_metrics(case_results_dict)
     stage_traces = [res.stage_trace for res in results]
     stage_survival_summary = calculate_stage_survival_rates(stage_traces)
-    latency_summary = calculate_stage_latency_summary([res.latency for res in results])
+    latency_summary = calculate_stage_latency_summary(
+        [res.latency for res in results]
+    )
 
-    # Atomic write run artifacts into docs/evaluation/runs/<run-id>/
-    run_dir = PROJECT_ROOT / "docs/evaluation/runs" / manifest.run_id
-    run_dir.mkdir(parents=True, exist_ok=True)
-
+    # Atomic write run artifacts
     atomic_write_json(run_dir / "manifest.json", manifest.model_dump())
     atomic_write_json(run_dir / "configuration.json", manifest.configuration)
+    atomic_write_json(
+        run_dir / "evaluation_case_set.json",
+        {
+            "selected_case_count": len(selected_case_ids),
+            "selected_case_ids": selected_case_ids,
+            "selected_case_ids_sha256": selected_case_ids_sha256,
+        },
+    )
     atomic_write_json(run_dir / "retrieval_results.json", case_results_dict)
 
     report_path = write_run_report(
