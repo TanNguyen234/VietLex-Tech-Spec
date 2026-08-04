@@ -1,5 +1,8 @@
 # VietLex Evaluation Framework Correctness Audit & Baseline Benchmark Report
 
+> [!WARNING]
+> **SUPERSEDED / INVALID BASELINE NOTICE**: The profile comparison results documented in Section 4 of this report are superseded and invalid for profile comparison due to evaluator profile-passing, limit-coupling, and candidate-tracing defects. See [INVALID_BASELINE_NOTICE.md](file:///d:/Download/ProfessionalLegalRAG/docs/evaluation/INVALID_BASELINE_NOTICE.md) for details. The benchmark tables in this document are retained strictly for historical reference.
+
 **Date**: 2026-08-03  
 **Repository**: `TanNguyen234/VietLex-Tech-Spec`  
 **Git Commit SHA**: `8bd5423da0daca16532a8c4820b7640fd48fac82`  
