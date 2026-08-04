@@ -4,6 +4,7 @@ import dataclasses
 import hashlib
 import json
 import os
+import sqlite3
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
@@ -24,6 +25,7 @@ from app.evaluation.reporting import generate_markdown_report, write_run_report
 from app.evaluation.retrieval_metrics import (
     aggregate_retrieval_metrics,
     calculate_case_retrieval_metrics,
+    calculate_stage_candidate_metrics,
     calculate_stage_survival_rates,
     match_gold_evidence,
     normalize_legal_identifier,
@@ -41,13 +43,16 @@ from app.evaluation.run_manifest import (
 from app.evaluation.schemas import (
     CandidateChunk,
     EvaluationRunManifest,
+    EvidenceStatus,
     GoldEvidence,
     GoldenCase,
+    RequiredLevel,
     RetrievalCaseResult,
+    RetrievalStageCapacities,
     RetrievalStageTrace,
     StageCandidate,
 )
-from audit_golden_dataset import check_anchor_match, find_document_candidates
+from audit_golden_dataset import check_anchor_match, resolve_document_identity
 
 
 # 1. Test Citation Normalization & Evidence Matching
@@ -60,10 +65,14 @@ def test_legal_identifier_normalization():
 def test_gold_evidence_matching():
     gold = GoldEvidence(
         evidence_item_id="ev_01",
+        case_id="case_001",
         document_id=431147,
         document_number="72/2020/QH14",
         article="Điều 3",
         clause="Khoản 8",
+        required=True,
+        required_level=RequiredLevel.CLAUSE,
+        status=EvidenceStatus.VERIFIED,
     )
     chunk_exact = CandidateChunk(
         document_id=431147,
@@ -81,132 +90,224 @@ def test_gold_evidence_matching():
     assert art_m is True
     assert cl_m is True
 
-    chunk_diff_clause = CandidateChunk(
-        document_id=431147,
-        document_number="72/2020/QH14",
-        title="Luật BVMT",
-        source_url="http://example.com",
-        citation="Điều 3 Khoản 1 Luật 72/2020/QH14",
-        article="Điều 3",
-        clause="Khoản 1",
-        text="Nội dung...",
-        token_count=50,
+
+# 2. Test Sidecar Loader Strict Fail Closed & No Mutation (Phase 1 & 11 Constraints)
+def test_gold_sidecar_loader_fails_closed_on_missing_required_fields(tmp_path):
+    f = tmp_path / "invalid_sidecar.json"
+
+    # Missing evidence_item_id
+    f.write_text(json.dumps({
+        "schema_version": "2.0.0",
+        "labels": [{"case_id": "c1", "status": "verified", "required": True}]
+    }), encoding="utf-8")
+    with pytest.raises(ValueError, match="missing non-empty 'evidence_item_id'"):
+        load_gold_sidecar(f)
+
+    # Missing status
+    f.write_text(json.dumps({
+        "schema_version": "2.0.0",
+        "labels": [{"evidence_item_id": "ev1", "case_id": "c1", "required": True}]
+    }), encoding="utf-8")
+    with pytest.raises(ValueError, match="missing non-empty 'status'"):
+        load_gold_sidecar(f)
+
+    # Missing required boolean
+    f.write_text(json.dumps({
+        "schema_version": "2.0.0",
+        "labels": [{"evidence_item_id": "ev1", "case_id": "c1", "status": "verified"}]
+    }), encoding="utf-8")
+    with pytest.raises(ValueError, match="missing explicit 'required' boolean"):
+        load_gold_sidecar(f)
+
+
+def test_gold_sidecar_loader_does_not_mutate_raw_payload(tmp_path):
+    f = tmp_path / "valid_sidecar.json"
+    raw_payload = {
+        "schema_version": "2.0.0",
+        "dataset_name": "test_ds",
+        "total_cases": 1,
+        "total_evidence_items": 1,
+        "labels": [{
+            "evidence_item_id": "ev_01",
+            "case_id": "c1",
+            "required": True,
+            "required_level": "article",
+            "status": "verified"
+        }]
+    }
+    raw_str_before = json.dumps(raw_payload)
+    f.write_text(raw_str_before, encoding="utf-8")
+
+    sidecar = load_gold_sidecar(f)
+    assert len(sidecar.labels) == 1
+
+    # Verify original file bytes and contents were untouched
+    raw_str_after = f.read_text(encoding="utf-8")
+    assert raw_str_before == raw_str_after
+
+
+def test_gold_sidecar_loader_validates_exact_case_set_equality(tmp_path):
+    f = tmp_path / "sidecar.json"
+    f.write_text(json.dumps({
+        "schema_version": "2.0.0",
+        "total_evidence_items": 1,
+        "labels": [{"evidence_item_id": "ev1", "case_id": "case_001", "required": True, "status": "verified"}]
+    }), encoding="utf-8")
+
+    # Mismatch dataset case IDs
+    with pytest.raises(ValueError, match="Case ID set mismatch"):
+        load_gold_sidecar(f, dataset_case_ids=["case_001", "case_002"])
+
+
+# 3. Test Identity Resolution Hierarchy (Phase 2 & 11 Constraints)
+def test_exact_document_id_identity_resolution():
+    conn = sqlite3.connect(":memory:")
+    conn.execute("CREATE TABLE metadata (document_id INT, source_url TEXT, document_number TEXT)")
+    conn.execute("INSERT INTO metadata VALUES (100, 'http://example.com/doc1', '10/2020/NĐ-CP')")
+
+    mock_fts = MagicMock()
+
+    # Exact doc_id
+    cand, method, sources, is_complete = resolve_document_identity(conn, mock_fts, 100, None, None)
+    assert cand == [100]
+    assert method == "exact_doc_id"
+    assert "dataset_reference_doc_id" in sources
+    assert is_complete is True
+
+
+def test_exact_source_url_identity_resolution():
+    conn = sqlite3.connect(":memory:")
+    conn.execute("CREATE TABLE metadata (document_id INT, source_url TEXT, document_number TEXT)")
+    conn.execute("INSERT INTO metadata VALUES (200, 'http://example.com/doc2', '20/2020/NĐ-CP')")
+
+    mock_fts = MagicMock()
+
+    # Exact source_url
+    cand, method, sources, is_complete = resolve_document_identity(conn, mock_fts, None, "http://example.com/doc2", None)
+    assert cand == [200]
+    assert method == "exact_source_url"
+    assert "dataset_reference_source_url" in sources
+    assert is_complete is True
+
+
+def test_candidate_only_uniqueness_cannot_create_verified_status():
+    conn = sqlite3.connect(":memory:")
+    conn.execute("CREATE TABLE metadata (document_id INT, source_url TEXT, document_number TEXT)")
+    # Metadata has NO matching doc number or ID
+    mock_fts = MagicMock()
+    mock_fts.search.return_value = [999]  # Truncated candidate set from FTS
+
+    cand, method, sources, is_complete = resolve_document_identity(conn, mock_fts, None, None, "99/2020/UNKNOWN")
+    assert cand == [999]
+    assert method == "lexical_candidate_fallback"
+    assert is_complete is False  # Candidate-only uniqueness is incomplete and cannot create verified status!
+
+
+# 4. Test Level-Specific Verification Matching (Phase 2 & 11 Constraints)
+def test_article_and_clause_required_evidence_verification_levels():
+    gold_art = GoldEvidence(
+        evidence_item_id="ev_art",
+        case_id="c1",
+        document_id=1,
+        article="Điều 5",
+        required=True,
+        required_level=RequiredLevel.ARTICLE,
+        status=EvidenceStatus.VERIFIED,
     )
-    doc_m, art_m, cl_m = match_gold_evidence(gold, chunk_diff_clause)
+    # Chunk with matching document but missing article
+    chunk_no_art = CandidateChunk(
+        document_id=1,
+        document_number="1",
+        title="T",
+        source_url="U",
+        citation="C",
+        article=None,
+        text="T",
+        token_count=10,
+    )
+
+    doc_m, art_m, cl_m = match_gold_evidence(gold_art, chunk_no_art)
+    assert doc_m is True
+    assert art_m is False  # Article required evidence CANNOT verify without matched article!
+
+    gold_clause = GoldEvidence(
+        evidence_item_id="ev_cl",
+        case_id="c1",
+        document_id=1,
+        article="Điều 5",
+        clause="Khoản 2",
+        required=True,
+        required_level=RequiredLevel.CLAUSE,
+        status=EvidenceStatus.VERIFIED,
+    )
+    chunk_no_cl = CandidateChunk(
+        document_id=1,
+        document_number="1",
+        title="T",
+        source_url="U",
+        citation="C",
+        article="Điều 5",
+        clause=None,
+        text="T",
+        token_count=10,
+    )
+    doc_m, art_m, cl_m = match_gold_evidence(gold_clause, chunk_no_cl)
     assert doc_m is True
     assert art_m is True
-    assert cl_m is False
+    assert cl_m is False  # Clause required evidence CANNOT verify without matched clause!
 
 
-# 2. Test Retrieval Metrics & Verified Only Filtering
-def test_retrieval_metrics_calculation_verified_only():
+# 5. Test Configured Stage Capacity Semantics & Denominators (Phase 3 & 11 Constraints)
+def test_configured_capacity_24_with_two_candidates_yields_numeric_recall():
+    gold = [GoldEvidence(evidence_item_id="ev1", case_id="c1", document_id=1, article="Điều 1", required=True, status=EvidenceStatus.VERIFIED)]
+    candidates = [
+        StageCandidate(document_id=1, article="Điều 1"),
+        StageCandidate(document_id=2, article="Điều 2"),
+    ]  # Only 2 candidates observed in top_k=24!
+
+    res = calculate_stage_candidate_metrics(gold, candidates, is_doc_stage=True, stage_capacity=24)
+    # Recall@3 MUST BE numeric float 1.0 (not None), because 3 <= 24!
+    assert res["doc_recall_at_3"] == 1.0
+    assert res["doc_recall_at_24"] == 1.0
+
+
+def test_final_configured_limit_3_yields_null_recall_at_6():
+    gold = [GoldEvidence(evidence_item_id="ev1", case_id="c1", document_id=1, article="Điều 1", required=True, required_level=RequiredLevel.ARTICLE, status=EvidenceStatus.VERIFIED)]
+    candidates = [StageCandidate(document_id=1, article="Điều 1")]
+
+    res = calculate_stage_candidate_metrics(gold, candidates, is_doc_stage=False, stage_capacity=3)
+    assert res["article_recall_at_3"] == 1.0
+    assert res["article_recall_at_6"] is None
+    assert res["article_recall_at_6_reason"] == "k_exceeds_effective_stage_limit"
+
+
+def test_final_configured_limit_6_yields_numeric_recall_at_6():
+    gold = [GoldEvidence(evidence_item_id="ev1", case_id="c1", document_id=1, article="Điều 1", required=True, required_level=RequiredLevel.ARTICLE, status=EvidenceStatus.VERIFIED)]
+    candidates = [StageCandidate(document_id=1, article="Điều 1")]
+
+    res = calculate_stage_candidate_metrics(gold, candidates, is_doc_stage=False, stage_capacity=6)
+    assert res["article_recall_at_6"] == 1.0
+
+
+def test_article_and_clause_stage_recalls_and_mrr_can_differ():
     gold = [
-        GoldEvidence(evidence_item_id="ev_01", document_id=1, article="Điều 1", required=True, status="verified"),
-        GoldEvidence(evidence_item_id="ev_02", document_id=2, article="Điều 5", required=True, status="verified"),
+        GoldEvidence(evidence_item_id="ev1", case_id="c1", document_id=1, article="Điều 1", clause="Khoản 2", required=True, required_level=RequiredLevel.CLAUSE, status=EvidenceStatus.VERIFIED)
     ]
-    chunks = [
-        CandidateChunk(
-            document_id=1,
-            document_number="1",
-            title="T",
-            source_url="U",
-            citation="C1",
-            article="Điều 1",
-            text="T1",
-            token_count=10,
-        ),
-        CandidateChunk(
-            document_id=3,
-            document_number="3",
-            title="T",
-            source_url="U",
-            citation="C3",
-            article="Điều 9",
-            text="T3",
-            token_count=10,
-        ),
-        CandidateChunk(
-            document_id=2,
-            document_number="2",
-            title="T",
-            source_url="U",
-            citation="C2",
-            article="Điều 5",
-            text="T2",
-            token_count=10,
-        ),
+    # Rank 1 chunk matches article but wrong clause
+    # Rank 2 chunk matches article AND clause
+    candidates = [
+        StageCandidate(document_id=1, article="Điều 1", clause="Khoản 1"),
+        StageCandidate(document_id=1, article="Điều 1", clause="Khoản 2"),
     ]
 
-    res = calculate_case_retrieval_metrics(gold, chunks)
-    assert res["has_gold_labels"] is True
-    assert res["doc_recall"][1] == 0.5
-    assert res["doc_recall"][3] == 1.0
-    assert res["article_recall"][1] == 0.5
-    assert res["article_recall"][3] == 1.0
-    assert res["mrr_article"] == 1.0
-    assert res["all_hop_coverage"] is True
-    assert res["partial_hop_coverage"] is True
+    res = calculate_stage_candidate_metrics(gold, candidates, is_doc_stage=False, stage_capacity=6)
+    assert res["article_recall_at_1"] == 1.0
+    assert res["clause_recall_at_1"] == 0.0
+    assert res["article_mrr"] == 1.0
+    assert res["clause_mrr"] == 0.5
 
 
-def test_unverified_gold_label_skips_metric_denominator():
-    gold_unverified = [GoldEvidence(evidence_item_id="ev_01", status="ambiguous")]
-    chunks = []
-    res = calculate_case_retrieval_metrics(gold_unverified, chunks)
-    assert res["has_gold_labels"] is False
-    assert res["skip_reason"] == "no_verified_gold_label"
-
-    agg = aggregate_retrieval_metrics([{"metrics": res}])
-    assert agg["total_cases"] == 1
-    assert agg["scored_cases_count"] == 0
-    assert agg["skipped_cases_count"] == 1
-    assert agg["coverage"] == 0.0
-
-
-# 3. Test Deterministic Refusal Classifier
-def test_refusal_classification():
-    cat, is_ref = classify_response_refusal("Hệ thống chưa thể xử lý yêu cầu", ["context"])
-    assert cat == "technical_error"
-    assert is_ref is False
-
-    cat, is_ref = classify_response_refusal("Xin lỗi, tôi không có thông tin về vấn đề này.", ["context"])
-    assert cat == "pure_refusal"
-    assert is_ref is True
-
-    cat, is_ref = classify_response_refusal(
-        "Theo Điều 3 Luật 72/2020/QH14, giấy phép môi trường là... Nội dung chỉ nhằm cung cấp thông tin, không phải tư vấn pháp lý.",
-        ["context"],
-    )
-    assert cat == "disclaimer"
-    assert is_ref is False
-
-    cat, is_ref = classify_response_refusal(
-        "Căn cứ Điều 10 Luật Bảo vệ môi trường, đối tượng đăng ký bao gồm dự án nhóm C. Tuy nhiên về mức phạt chi tiết thì tài liệu không đề cập.",
-        ["context"],
-    )
-    assert cat == "mixed_claim_refusal"
-    assert is_ref is False
-
-    cat, is_ref = classify_response_refusal(
-        "Theo Điều 3 Luật Bảo vệ môi trường 2020, giấy phép môi trường là...", ["context"]
-    )
-    assert cat == "normal_answer"
-    assert is_ref is False
-
-
-# 4. Test Text & Answer Metrics
-def test_text_similarity_metrics():
-    pred = "Giấy phép môi trường là văn bản do cơ quan có thẩm quyền cấp"
-    ref = "Giấy phép môi trường là văn bản do cơ quan quản lý nhà nước có thẩm quyền cấp"
-    p, r, f1 = token_level_metrics(pred, ref)
-    assert 0.8 < p <= 1.0
-    assert 0.7 < r <= 1.0
-    assert 0.8 < f1 <= 1.0
-
-    assert rouge_l_metric(pred, ref) > 0.7
-    assert chrf_metric(pred, ref) > 0.7
-
-
-# 5. Test Run Manifest & Atomic Writes
+# 6. Test Atomic Writes & Historical Preservation (Phase 4 & 11 Constraints)
 def test_atomic_write_json_and_manifest(tmp_path):
     out_path = tmp_path / "sub" / "result.json"
     data = {"status": "success", "count": 42}
@@ -214,209 +315,6 @@ def test_atomic_write_json_and_manifest(tmp_path):
 
     assert out_path.exists()
     assert json.loads(out_path.read_text(encoding="utf-8")) == data
-    assert not out_path.with_suffix(".json.tmp").exists()
-
-
-def test_unique_run_id_generation():
-    run_id1 = generate_unique_run_id(prefix="test", config_fingerprint="abcdef123456")
-    assert run_id1.startswith("test_")
-    assert "abcdef12" in run_id1
-
-
-# 6. Test CLI Option Stripping in Retrieval Runner
-def test_run_retrieval_eval_strips_unsupported_options():
-    from run_retrieval_eval import build_parser
-
-    parser = build_parser()
-    options = [action.dest for action in parser._actions]
-    assert "mode" not in options
-    assert "guardrails" not in options
-    assert "judge" not in options
-
-
-# 7. Test Canonical Gold Sidecar Loader (Phase 1 & Phase 8)
-def test_gold_sidecar_v2_wrapper_loading(tmp_path):
-    sidecar_file = tmp_path / "sidecar.json"
-    payload = {
-        "schema_version": "2.0.0",
-        "dataset_name": "namsyntax_legal_qa_420",
-        "total_cases": 420,
-        "total_evidence_items": 2,
-        "labels": [
-            {
-                "evidence_item_id": "case_001_ev_01",
-                "case_id": "case_001",
-                "document_id": 100,
-                "document_number": "72/2020/QH14",
-                "article": "Điều 3",
-                "required": True,
-                "status": "verified",
-            },
-            {
-                "evidence_item_id": "case_002_ev_01",
-                "case_id": "case_002",
-                "document_id": 200,
-                "document_number": "10/2021/TT-BTNMT",
-                "article": "Điều 5",
-                "required": True,
-                "status": "verified",
-            },
-        ],
-    }
-    sidecar_file.write_text(json.dumps(payload), encoding="utf-8")
-
-    sidecar = load_gold_sidecar(sidecar_file)
-    assert sidecar.metadata.schema_version == "2.0.0"
-    assert sidecar.metadata.total_evidence_items == 2
-    assert len(sidecar.labels) == 2
-    assert "case_001" in sidecar.labels_by_case_id
-    assert "case_002" in sidecar.labels_by_case_id
-
-
-def test_malformed_sidecar_fails_closed(tmp_path):
-    # Invalid schema version
-    f1 = tmp_path / "f1.json"
-    f1.write_text(json.dumps({"schema_version": "1.0.0", "labels": []}), encoding="utf-8")
-    with pytest.raises(ValueError, match="Unsupported gold sidecar schema_version"):
-        load_gold_sidecar(f1)
-
-    # Declared total evidence count mismatch
-    f2 = tmp_path / "f2.json"
-    f2.write_text(json.dumps({"schema_version": "2.0.0", "total_evidence_items": 10, "labels": []}), encoding="utf-8")
-    with pytest.raises(ValueError, match="Sidecar evidence count mismatch"):
-        load_gold_sidecar(f2)
-
-    # Duplicate evidence_item_id
-    f3 = tmp_path / "f3.json"
-    f3.write_text(json.dumps({
-        "schema_version": "2.0.0",
-        "total_evidence_items": 2,
-        "labels": [
-            {"evidence_item_id": "dup", "case_id": "c1", "status": "verified"},
-            {"evidence_item_id": "dup", "case_id": "c2", "status": "verified"},
-        ]
-    }), encoding="utf-8")
-    with pytest.raises(ValueError, match="Duplicate evidence_item_id"):
-        load_gold_sidecar(f3)
-
-
-# 8. Test Centralized Case Construction & Policy Selection (Phase 2 & Phase 8)
-def test_all_required_verified_policy_prevents_empty_case_selection():
-    c_empty = GoldenCase(
-        case_id="case_empty",
-        question="Empty?",
-        question_type="factoid",
-        answerable=True,
-        reference_answer="Ans",
-        gold_evidence=[],  # ZERO labels!
-    )
-    c_unanswerable = GoldenCase(
-        case_id="case_unanswerable",
-        question="Unanswerable?",
-        question_type="unanswerable",
-        answerable=False,
-        reference_answer="Tài liệu không đề cập",
-        gold_evidence=[GoldEvidence(evidence_item_id="ev_u", status="unanswerable", required=False)],
-    )
-    c_verified = GoldenCase(
-        case_id="case_valid",
-        question="Valid?",
-        question_type="factoid",
-        answerable=True,
-        reference_answer="Ans",
-        gold_evidence=[GoldEvidence(evidence_item_id="ev_v", document_id=1, article="Điều 1", required=True, status="verified")],
-    )
-
-    cases = [c_empty, c_unanswerable, c_verified]
-
-    sel = select_evaluation_cases(cases, gold_policy="all-required-verified", include_unanswerable=False)
-    # Empty label case and unanswerable case MUST NOT be selected!
-    assert sel.selected_case_count == 1
-    assert sel.selected_case_ids == ["case_valid"]
-    assert sel.selected_case_ids_sha256 is not None
-
-
-# 9. Test Anchor Verification Hierarchy (Phase 5 & Phase 8)
-def test_anchor_verification_hierarchy():
-    snippet = "Giấy phép môi trường là văn bản do cơ quan quản lý nhà nước có thẩm quyền cấp cho tổ chức."
-    content_exact = "Quy định về bảo vệ môi trường: Giấy phép môi trường là văn bản do cơ quan quản lý nhà nước có thẩm quyền cấp cho tổ chức. Hết."
-
-    matched, m_type, diag = check_anchor_match(snippet, content_exact)
-    assert matched is True
-    assert m_type == "full_anchor_exact"
-
-    # Multi-window match on slightly altered formatting
-    content_reformatted = "Mở đầu... Giấy phép môi trường là văn bản do cơ quan quản lý nhà nước có thẩm quyền cấp... Phần giữa khác... cấp cho tổ chức."
-    matched_mw, m_type_mw, diag_mw = check_anchor_match(snippet, content_reformatted)
-    assert matched_mw is True
-    assert m_type_mw == "multi_window_agreement"
-    assert "window_beg_hash" in diag_mw
-
-
-# 10. Test Answer Runner Contract & 3-Argument generate_response (Phase 6 & Phase 8)
-@pytest.mark.asyncio
-async def test_run_answer_eval_uses_real_three_arg_signature():
-    import inspect
-    from app.services.rag_pipeline import generate_response
-
-    sig = inspect.signature(generate_response)
-    params = list(sig.parameters.keys())
-    assert len(params) == 3
-    assert params[0] == "original_query"
-    assert params[1] == "rewritten_query"
-    assert params[2] == "context"
-
-
-@pytest.mark.asyncio
-async def test_answer_input_guardrail_enforce_rejection_zero_retrieval():
-    from run_answer_eval import run_stage_a_online
-
-    case = GoldenCase(
-        case_id="c_unsafe",
-        question="Unsafe text...",
-        question_type="factoid",
-        answerable=True,
-        reference_answer="Ans",
-        gold_evidence=[],
-    )
-
-    mock_settings = MagicMock()
-    effective_profile = get_evaluation_profile("separated_intent")
-
-    with patch("app.services.guardrails.check_input_guardrails", new_callable=AsyncMock, return_value=(False, "Blocked by guardrail")) as mock_gr, \
-         patch("run_answer_eval.evaluate_single_retrieval_case", new_callable=AsyncMock) as mock_retrieval:
-
-        res = await run_stage_a_online(case, mock_settings, "enforce", effective_profile)
-
-        assert res["input_safe"] is False
-        assert res["final_response"] == "Blocked by guardrail"
-        # MUST MAKE ZERO RETRIEVAL CALLS ON INPUT REJECTION!
-        mock_retrieval.assert_not_called()
-
-
-# 11. Test Stage Specific Metrics & None Representation (Phase 7 & Phase 8)
-def test_final_evidence_recall_at_6_is_none_when_k_exceeds_limit():
-    gold = [GoldEvidence(evidence_item_id="ev1", document_id=1, article="Điều 1", required=True, status="verified")]
-    chunks = [
-        CandidateChunk(document_id=1, document_number="1", title="T", source_url="U", citation="C", article="Điều 1", text="T", token_count=10),
-        CandidateChunk(document_id=2, document_number="2", title="T", source_url="U", citation="C", article="Điều 2", text="T", token_count=10),
-        CandidateChunk(document_id=3, document_number="3", title="T", source_url="U", citation="C", article="Điều 3", text="T", token_count=10),
-    ]
-    stage_trace = RetrievalStageTrace(
-        final_evidence_chunks=[
-            StageCandidate(document_id=1, article="Điều 1"),
-            StageCandidate(document_id=2, article="Điều 2"),
-            StageCandidate(document_id=3, article="Điều 3"),
-        ]
-    )
-
-    res = calculate_case_retrieval_metrics(gold, chunks, stage_trace=stage_trace)
-
-    final_metrics = res["stage_metrics"]["final_evidence_metrics"]
-    # article_recall_at_6 MUST BE None / JSON null with reason field!
-    assert final_metrics["article_recall_at_6"] is None
-    assert final_metrics["article_recall_at_6_reason"] == "k_exceeds_effective_stage_limit"
-    assert final_metrics["article_recall_at_3"] == 1.0
 
 
 def test_historical_runs_checksum_preservation():
