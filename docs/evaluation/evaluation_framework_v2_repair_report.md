@@ -61,17 +61,19 @@ This report documents the systematic repair of evaluator framework wiring, git p
 ## 3. Golden Dataset Audit V2 Results
 
 - **Total Test Cases**: `420`
-- **Total Evidence Items**: `440`
+- **Total Evidence Items**: `482`
+- **Verified Evidence Items**: `0`
 - **Sidecar Location**: `docs/evaluation/gold_labels/namsyntax_legal_qa_420_labels_v2.json`
+- **Audit Summary Location**: `docs/evaluation/gold_labels/namsyntax_legal_qa_420_audit_summary_v2.json`
 - **Report Location**: `docs/evaluation/golden_dataset_applicability_report_v2.md`
 
 ### Evidence Item Status Breakdown
 | Status | Item Count | Percentage |
 | :--- | ---: | ---: |
-| `document_number_not_found` | 240 | 54.5% |
-| `unanswerable` | 175 | 39.8% |
-| `verified` | 19 | 4.3% |
-| `document_found_anchor_not_found` | 6 | 1.4% |
+| `no_citation_extracted` | 228 | 47.3% |
+| `unanswerable` | 175 | 36.3% |
+| `not_found_by_local_deterministic_audit` | 78 | 16.2% |
+| `document_found_anchor_not_found` | 1 | 0.2% |
 
 ---
 

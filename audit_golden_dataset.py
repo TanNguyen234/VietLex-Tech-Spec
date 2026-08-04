@@ -24,7 +24,6 @@ def norm_text(text: str) -> str:
 
 def extract_legal_citations_from_text(text: str) -> List[Dict[str, str]]:
     citations = []
-    # Match document numbers like "72/2020/QH14", "10/2021/TT-BTNMT", "08/2022/NĐ-CP"
     doc_nums = re.findall(r"\b\d{1,4}/\d{4}/[A-ZĐ0-9-]+\b", text, re.IGNORECASE)
     articles = re.findall(r"\bĐiều\s+\d+[A-Za-z]?\b", text, re.IGNORECASE)
     clauses = re.findall(r"\bKhoản\s+\d+\b", text, re.IGNORECASE)
@@ -85,6 +84,36 @@ def find_document_candidates(
     return candidate_ids
 
 
+def check_anchor_match(snippet: str, content: str) -> Tuple[bool, str, Dict[str, Any]]:
+    norm_snip = norm_text(snippet)
+    norm_content = norm_text(content)
+
+    if norm_snip in norm_content:
+        return True, "full_anchor_exact", {"full_anchor_matched": True}
+
+    words = norm_snip.split()
+    if len(words) >= 20:
+        win_beg = " ".join(words[:12])
+        win_mid = " ".join(words[len(words) // 2 - 6 : len(words) // 2 + 6])
+        win_end = " ".join(words[-12:])
+
+        w_beg_match = win_beg in norm_content
+        w_mid_match = win_mid in norm_content
+        w_end_match = win_end in norm_content
+
+        match_count = sum([w_beg_match, w_mid_match, w_end_match])
+        window_diag = {
+            "window_beg_hash": hashlib.sha256(win_beg.encode("utf-8")).hexdigest()[:8],
+            "window_mid_hash": hashlib.sha256(win_mid.encode("utf-8")).hexdigest()[:8],
+            "window_end_hash": hashlib.sha256(win_end.encode("utf-8")).hexdigest()[:8],
+            "windows_matched": match_count,
+        }
+        if match_count >= 2:
+            return True, "multi_window_agreement", window_diag
+
+    return False, "none", {}
+
+
 def audit_golden_dataset() -> Dict[str, Any]:
     settings = get_settings()
     dataset_path = Path("app/data/namsyntax_legal_qa_420.json")
@@ -123,10 +152,9 @@ def audit_golden_dataset() -> Dict[str, Any]:
 
     labels_sidecar: List[Dict[str, Any]] = []
 
-    # Statistical counters by case and by evidence item
     type_counts: Dict[str, int] = {}
-    case_status_counts: Dict[str, int] = {}
     evidence_status_counts: Dict[str, int] = {}
+    case_status_counts: Dict[str, int] = {}
     confidence_counts: Dict[str, int] = {}
 
     verified_doc_count = 0
@@ -135,6 +163,7 @@ def audit_golden_dataset() -> Dict[str, Any]:
     multi_hop_all_covered = 0
     multi_hop_total = 0
     duplicate_questions: Dict[str, int] = {}
+    seen_evidence_ids: set[str] = set()
 
     for idx, case in enumerate(cases, start=1):
         if idx % 50 == 0 or idx == 1 or idx == len(cases):
@@ -154,7 +183,13 @@ def audit_golden_dataset() -> Dict[str, Any]:
         case_labels: List[Dict[str, Any]] = []
 
         if is_unanswerable:
+            ev_id = f"{case_id}_ev_01"
+            if ev_id in seen_evidence_ids:
+                raise ValueError(f"Duplicate evidence_item_id: {ev_id}")
+            seen_evidence_ids.add(ev_id)
+
             label = {
+                "evidence_item_id": ev_id,
                 "case_id": case_id,
                 "status": "unanswerable",
                 "document_id": None,
@@ -179,6 +214,11 @@ def audit_golden_dataset() -> Dict[str, Any]:
 
             all_snippets_verified = True
             for snip_idx, snippet in enumerate(gt_contexts, start=1):
+                ev_id = f"{case_id}_ev_{snip_idx:02d}"
+                if ev_id in seen_evidence_ids:
+                    raise ValueError(f"Duplicate evidence_item_id: {ev_id}")
+                seen_evidence_ids.add(ev_id)
+
                 norm_snip = norm_text(snippet)
                 anchor_hash = hashlib.sha256(norm_snip.encode("utf-8")).hexdigest()[:16]
 
@@ -190,12 +230,12 @@ def audit_golden_dataset() -> Dict[str, Any]:
                 candidate_ids = find_document_candidates(conn, fts_index, doc_num_hint, norm_snip)
                 retrieved_docs = content_store.get_many(candidate_ids) if candidate_ids else {}
 
-                # Full normalized anchor matching (no 30/60-char truncated prefix!)
+                # Anchor matching with multi-window agreement hierarchy
                 matching_docs = []
                 for doc_id, doc in retrieved_docs.items():
-                    norm_content = norm_text(doc.content)
-                    if norm_snip in norm_content:
-                        matching_docs.append((doc_id, doc))
+                    matched, match_type, window_diag = check_anchor_match(norm_snip, doc.content)
+                    if matched:
+                        matching_docs.append((doc_id, doc, match_type, window_diag))
 
                 match_count = len(matching_docs)
 
@@ -204,15 +244,15 @@ def audit_golden_dataset() -> Dict[str, Any]:
                     "extracted_article": art_hint,
                     "extracted_clause": cl_hint,
                     "candidate_doc_count": len(candidate_ids),
-                    "exact_full_anchor_matches": match_count,
+                    "anchor_matches": match_count,
                 }
 
-                # Mutually exclusive precedence assignment
                 if not extracted_cites and match_count == 0:
                     primary_status = "no_citation_extracted"
                     confidence = "unverified"
                     all_snippets_verified = False
                     label = {
+                        "evidence_item_id": ev_id,
                         "case_id": case_id,
                         "status": primary_status,
                         "document_id": None,
@@ -228,11 +268,13 @@ def audit_golden_dataset() -> Dict[str, Any]:
                         "notes": "No citation extracted and no matching content anchor found",
                     }
                 elif match_count == 1:
-                    matched_id, matched_doc = matching_docs[0]
+                    matched_id, matched_doc, match_type, window_diag = matching_docs[0]
+                    diagnostics.update(window_diag)
                     chunks = chunk_document(matched_doc.metadata, matched_doc.content)
                     matched_chunk = None
                     for chk in chunks:
-                        if norm_snip in norm_text(chk.text):
+                        chk_matched, _, _ = check_anchor_match(norm_snip, chk.text)
+                        if chk_matched:
                             matched_chunk = chk
                             break
 
@@ -240,8 +282,13 @@ def audit_golden_dataset() -> Dict[str, Any]:
                     cl_val = matched_chunk.clause if matched_chunk else cl_hint
 
                     primary_status = "verified"
-                    confidence = "exact_doc_number_and_anchor"
+                    confidence = (
+                        "exact_doc_number_and_anchor"
+                        if match_type == "full_anchor_exact"
+                        else "exact_doc_number_and_multi_window_anchor"
+                    )
                     label = {
+                        "evidence_item_id": ev_id,
                         "case_id": case_id,
                         "status": primary_status,
                         "document_id": matched_id,
@@ -249,12 +296,12 @@ def audit_golden_dataset() -> Dict[str, Any]:
                         "article": art_val,
                         "clause": cl_val,
                         "required": True,
-                        "verification_method": "exact_content_store_full_anchor_match",
+                        "verification_method": f"exact_content_store_{match_type}",
                         "verification_confidence": confidence,
                         "matching_document_count": 1,
                         "reference_anchor_hash": anchor_hash,
                         "diagnostics": diagnostics,
-                        "notes": f"Verified in doc {matched_id}",
+                        "notes": f"Verified in doc {matched_id} via {match_type}",
                     }
                     verified_doc_count += 1
                     if art_val:
@@ -263,24 +310,19 @@ def audit_golden_dataset() -> Dict[str, Any]:
                         verified_clause_count += 1
 
                 elif match_count > 1:
-                    matched_id, matched_doc = matching_docs[0]
-                    chunks = chunk_document(matched_doc.metadata, matched_doc.content)
-                    matched_chunk = None
-                    for chk in chunks:
-                        if norm_snip in norm_text(chk.text):
-                            matched_chunk = chk
-                            break
-
+                    matched_id, matched_doc, match_type, window_diag = matching_docs[0]
+                    diagnostics.update(window_diag)
                     primary_status = "ambiguous"
                     confidence = "ambiguous"
                     all_snippets_verified = False
                     label = {
+                        "evidence_item_id": ev_id,
                         "case_id": case_id,
                         "status": primary_status,
                         "document_id": matched_id,
                         "document_number": getattr(matched_doc.metadata, "document_number", doc_num_hint),
-                        "article": matched_chunk.article if matched_chunk else art_hint,
-                        "clause": matched_chunk.clause if matched_chunk else cl_hint,
+                        "article": art_hint or None,
+                        "clause": cl_hint or None,
                         "required": True,
                         "verification_method": "content_store_multi_match",
                         "verification_confidence": confidence,
@@ -299,6 +341,7 @@ def audit_golden_dataset() -> Dict[str, Any]:
                     confidence = "unverified"
                     all_snippets_verified = False
                     label = {
+                        "evidence_item_id": ev_id,
                         "case_id": case_id,
                         "status": primary_status,
                         "document_id": None,
@@ -318,7 +361,6 @@ def audit_golden_dataset() -> Dict[str, Any]:
                 evidence_status_counts[primary_status] = evidence_status_counts.get(primary_status, 0) + 1
                 confidence_counts[confidence] = confidence_counts.get(confidence, 0) + 1
 
-            # Case-level status
             case_statuses = set(lbl["status"] for lbl in case_labels)
             if "verified" in case_statuses and len(case_statuses) == 1:
                 case_status_counts["all_verified"] = case_status_counts.get("all_verified", 0) + 1
@@ -335,7 +377,12 @@ def audit_golden_dataset() -> Dict[str, Any]:
 
     conn.close()
 
-    # Save v2 sidecar JSON with schema_version: 2.0.0
+    # STRICT AUDIT ASSERTIONS
+    assert len(labels_sidecar) == len(seen_evidence_ids), "Declared evidence count != unique evidence IDs"
+    assert sum(evidence_status_counts.values()) == len(labels_sidecar), "Sum of evidence statuses != evidence count"
+    assert sum(case_status_counts.values()) == len(cases), "Sum of case primary statuses != 420"
+
+    # Save v2 sidecar JSON
     sidecar_dir = Path("docs/evaluation/gold_labels")
     sidecar_dir.mkdir(parents=True, exist_ok=True)
     sidecar_path = sidecar_dir / "namsyntax_legal_qa_420_labels_v2.json"
@@ -352,7 +399,28 @@ def audit_golden_dataset() -> Dict[str, Any]:
         json.dump(sidecar_payload, f, ensure_ascii=False, indent=2)
     print(f"Saved v2 sidecar labels to {sidecar_path}")
 
-    # Generate applicability report v2
+    # Save machine-readable audit summary JSON
+    summary_path = sidecar_dir / "namsyntax_legal_qa_420_audit_summary_v2.json"
+    audit_summary_payload = {
+        "schema_version": "2.0.0",
+        "dataset_name": "namsyntax_legal_qa_420",
+        "total_cases": len(cases),
+        "total_evidence_items": len(labels_sidecar),
+        "verified_evidence_items": evidence_status_counts.get("verified", 0),
+        "verified_doc_count": verified_doc_count,
+        "verified_art_count": verified_art_count,
+        "verified_clause_count": verified_clause_count,
+        "evidence_status_counts": evidence_status_counts,
+        "case_status_counts": case_status_counts,
+        "confidence_counts": confidence_counts,
+        "multi_hop_all_covered": multi_hop_all_covered,
+        "multi_hop_total": multi_hop_total,
+    }
+    with summary_path.open("w", encoding="utf-8") as f:
+        json.dump(audit_summary_payload, f, ensure_ascii=False, indent=2)
+    print(f"Saved machine-readable audit summary to {summary_path}")
+
+    # Generate applicability report v2 from the SAME in-memory result
     dups_count = sum(cnt - 1 for cnt in duplicate_questions.values() if cnt > 1)
     report_lines = []
     report_lines.append("# GOLDEN DATASET APPLICABILITY REPORT V2 — namsyntax_legal_qa_420")
@@ -360,7 +428,9 @@ def audit_golden_dataset() -> Dict[str, Any]:
     report_lines.append("**Dataset**: `app/data/namsyntax_legal_qa_420.json`  ")
     report_lines.append(f"**Total Test Cases**: `{len(cases)}`  ")
     report_lines.append(f"**Total Evidence Items**: `{len(labels_sidecar)}`  ")
+    report_lines.append(f"**Verified Evidence Items**: `{evidence_status_counts.get('verified', 0)}`  ")
     report_lines.append(f"**Sidecar Labels V2**: `{sidecar_path}`  ")
+    report_lines.append(f"**Audit Summary V2**: `{summary_path}`  ")
     report_lines.append("**Schema Version**: `2.0.0`  ")
     report_lines.append("")
 
@@ -410,14 +480,7 @@ def audit_golden_dataset() -> Dict[str, Any]:
         f.write("\n".join(report_lines))
     print(f"Saved applicability report v2 to {report_path}")
 
-    return {
-        "sidecar_path": str(sidecar_path),
-        "report_path": str(report_path),
-        "total_cases": len(cases),
-        "total_evidence_items": len(labels_sidecar),
-        "evidence_status_counts": evidence_status_counts,
-        "case_status_counts": case_status_counts,
-    }
+    return audit_summary_payload
 
 
 if __name__ == "__main__":

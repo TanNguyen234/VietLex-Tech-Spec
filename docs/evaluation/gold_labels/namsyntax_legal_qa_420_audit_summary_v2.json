@@ -1,0 +1,27 @@
+{
+  "schema_version": "2.0.0",
+  "dataset_name": "namsyntax_legal_qa_420",
+  "total_cases": 420,
+  "total_evidence_items": 482,
+  "verified_evidence_items": 0,
+  "verified_doc_count": 0,
+  "verified_art_count": 0,
+  "verified_clause_count": 0,
+  "evidence_status_counts": {
+    "no_citation_extracted": 228,
+    "unanswerable": 175,
+    "not_found_by_local_deterministic_audit": 78,
+    "document_found_anchor_not_found": 1
+  },
+  "case_status_counts": {
+    "no_citation_extracted": 187,
+    "unanswerable": 175,
+    "not_found_by_local_deterministic_audit": 57,
+    "document_found_anchor_not_found": 1
+  },
+  "confidence_counts": {
+    "unverified": 482
+  },
+  "multi_hop_all_covered": 0,
+  "multi_hop_total": 103
+}

@@ -3,7 +3,9 @@
 **Dataset**: `app/data/namsyntax_legal_qa_420.json`  
 **Total Test Cases**: `420`  
 **Total Evidence Items**: `482`  
+**Verified Evidence Items**: `0`  
 **Sidecar Labels V2**: `docs\evaluation\gold_labels\namsyntax_legal_qa_420_labels_v2.json`  
+**Audit Summary V2**: `docs\evaluation\gold_labels\namsyntax_legal_qa_420_audit_summary_v2.json`  
 **Schema Version**: `2.0.0`  
 
 ## 1. Dataset Breakdown by Question Type
