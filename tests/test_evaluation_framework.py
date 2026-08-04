@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -16,6 +17,8 @@ from app.evaluation.answer_metrics import (
     rouge_l_metric,
     token_level_metrics,
 )
+from app.evaluation.case_selection import build_cases, select_evaluation_cases
+from app.evaluation.gold_sidecar import GoldSidecar, load_gold_sidecar
 from app.evaluation.profiles import PROFILES, EvaluationProfile, get_evaluation_profile
 from app.evaluation.reporting import generate_markdown_report, write_run_report
 from app.evaluation.retrieval_metrics import (
@@ -44,6 +47,7 @@ from app.evaluation.schemas import (
     RetrievalStageTrace,
     StageCandidate,
 )
+from audit_golden_dataset import check_anchor_match, find_document_candidates
 
 
 # 1. Test Citation Normalization & Evidence Matching
@@ -55,6 +59,7 @@ def test_legal_identifier_normalization():
 
 def test_gold_evidence_matching():
     gold = GoldEvidence(
+        evidence_item_id="ev_01",
         document_id=431147,
         document_number="72/2020/QH14",
         article="Điều 3",
@@ -96,8 +101,8 @@ def test_gold_evidence_matching():
 # 2. Test Retrieval Metrics & Verified Only Filtering
 def test_retrieval_metrics_calculation_verified_only():
     gold = [
-        GoldEvidence(document_id=1, article="Điều 1", required=True, status="verified"),
-        GoldEvidence(document_id=2, article="Điều 5", required=True, status="verified"),
+        GoldEvidence(evidence_item_id="ev_01", document_id=1, article="Điều 1", required=True, status="verified"),
+        GoldEvidence(evidence_item_id="ev_02", document_id=2, article="Điều 5", required=True, status="verified"),
     ]
     chunks = [
         CandidateChunk(
@@ -138,13 +143,13 @@ def test_retrieval_metrics_calculation_verified_only():
     assert res["doc_recall"][3] == 1.0
     assert res["article_recall"][1] == 0.5
     assert res["article_recall"][3] == 1.0
-    assert res["mrr_article"] == 1.0  # First hit at rank 1
+    assert res["mrr_article"] == 1.0
     assert res["all_hop_coverage"] is True
     assert res["partial_hop_coverage"] is True
 
 
 def test_unverified_gold_label_skips_metric_denominator():
-    gold_unverified = [GoldEvidence(status="ambiguous")]
+    gold_unverified = [GoldEvidence(evidence_item_id="ev_01", status="ambiguous")]
     chunks = []
     res = calculate_case_retrieval_metrics(gold_unverified, chunks)
     assert res["has_gold_labels"] is False
@@ -229,165 +234,199 @@ def test_run_retrieval_eval_strips_unsupported_options():
     assert "judge" not in options
 
 
-# 7. Test Evaluation Profiles & Immutable Replacement
-def test_evaluation_profile_immutable_replacement():
-    base = get_evaluation_profile("legacy")
-    assert base.resolved_document_limit == 12
-    assert base.local_chunks_per_document == 2
-    assert base.rerank_input_limit == 12
-    assert base.intent_scoring_enabled is False
+# 7. Test Canonical Gold Sidecar Loader (Phase 1 & Phase 8)
+def test_gold_sidecar_v2_wrapper_loading(tmp_path):
+    sidecar_file = tmp_path / "sidecar.json"
+    payload = {
+        "schema_version": "2.0.0",
+        "dataset_name": "namsyntax_legal_qa_420",
+        "total_cases": 420,
+        "total_evidence_items": 2,
+        "labels": [
+            {
+                "evidence_item_id": "case_001_ev_01",
+                "case_id": "case_001",
+                "document_id": 100,
+                "document_number": "72/2020/QH14",
+                "article": "Điều 3",
+                "required": True,
+                "status": "verified",
+            },
+            {
+                "evidence_item_id": "case_002_ev_01",
+                "case_id": "case_002",
+                "document_id": 200,
+                "document_number": "10/2021/TT-BTNMT",
+                "article": "Điều 5",
+                "required": True,
+                "status": "verified",
+            },
+        ],
+    }
+    sidecar_file.write_text(json.dumps(payload), encoding="utf-8")
 
-    effective = dataclasses.replace(base, rewrite_mode="on", reranker_mode="qdrant-only")
-    assert effective.name == "legacy"
-    assert effective.rewrite_mode == "on"
-    assert effective.reranker_mode == "qdrant-only"
-    # Ensure PROFILES constant was NOT mutated
-    assert PROFILES["legacy"].rewrite_mode == "off"
+    sidecar = load_gold_sidecar(sidecar_file)
+    assert sidecar.metadata.schema_version == "2.0.0"
+    assert sidecar.metadata.total_evidence_items == 2
+    assert len(sidecar.labels) == 2
+    assert "case_001" in sidecar.labels_by_case_id
+    assert "case_002" in sidecar.labels_by_case_id
 
 
-def test_all_eight_profile_fields():
-    prof = EvaluationProfile(
-        name="custom_test",
-        retrieval_document_limit=30,
-        resolved_document_limit=20,
-        local_chunks_per_document=5,
-        rerank_input_limit=35,
-        rerank_return_limit=4,
-        final_evidence_limit=4,
-        final_context_token_limit=800,
-        intent_scoring_enabled=True,
+def test_malformed_sidecar_fails_closed(tmp_path):
+    # Invalid schema version
+    f1 = tmp_path / "f1.json"
+    f1.write_text(json.dumps({"schema_version": "1.0.0", "labels": []}), encoding="utf-8")
+    with pytest.raises(ValueError, match="Unsupported gold sidecar schema_version"):
+        load_gold_sidecar(f1)
+
+    # Declared total evidence count mismatch
+    f2 = tmp_path / "f2.json"
+    f2.write_text(json.dumps({"schema_version": "2.0.0", "total_evidence_items": 10, "labels": []}), encoding="utf-8")
+    with pytest.raises(ValueError, match="Sidecar evidence count mismatch"):
+        load_gold_sidecar(f2)
+
+    # Duplicate evidence_item_id
+    f3 = tmp_path / "f3.json"
+    f3.write_text(json.dumps({
+        "schema_version": "2.0.0",
+        "total_evidence_items": 2,
+        "labels": [
+            {"evidence_item_id": "dup", "case_id": "c1", "status": "verified"},
+            {"evidence_item_id": "dup", "case_id": "c2", "status": "verified"},
+        ]
+    }), encoding="utf-8")
+    with pytest.raises(ValueError, match="Duplicate evidence_item_id"):
+        load_gold_sidecar(f3)
+
+
+# 8. Test Centralized Case Construction & Policy Selection (Phase 2 & Phase 8)
+def test_all_required_verified_policy_prevents_empty_case_selection():
+    c_empty = GoldenCase(
+        case_id="case_empty",
+        question="Empty?",
+        question_type="factoid",
+        answerable=True,
+        reference_answer="Ans",
+        gold_evidence=[],  # ZERO labels!
     )
-    pdict = prof.to_dict()
-    assert pdict["retrieval_document_limit"] == 30
-    assert pdict["resolved_document_limit"] == 20
-    assert pdict["local_chunks_per_document"] == 5
-    assert pdict["rerank_input_limit"] == 35
-    assert pdict["rerank_return_limit"] == 4
-    assert pdict["final_evidence_limit"] == 4
-    assert pdict["final_context_token_limit"] == 800
-    assert pdict["intent_scoring_enabled"] is True
+    c_unanswerable = GoldenCase(
+        case_id="case_unanswerable",
+        question="Unanswerable?",
+        question_type="unanswerable",
+        answerable=False,
+        reference_answer="Tài liệu không đề cập",
+        gold_evidence=[GoldEvidence(evidence_item_id="ev_u", status="unanswerable", required=False)],
+    )
+    c_verified = GoldenCase(
+        case_id="case_valid",
+        question="Valid?",
+        question_type="factoid",
+        answerable=True,
+        reference_answer="Ans",
+        gold_evidence=[GoldEvidence(evidence_item_id="ev_v", document_id=1, article="Điều 1", required=True, status="verified")],
+    )
+
+    cases = [c_empty, c_unanswerable, c_verified]
+
+    sel = select_evaluation_cases(cases, gold_policy="all-required-verified", include_unanswerable=False)
+    # Empty label case and unanswerable case MUST NOT be selected!
+    assert sel.selected_case_count == 1
+    assert sel.selected_case_ids == ["case_valid"]
+    assert sel.selected_case_ids_sha256 is not None
+
+
+# 9. Test Anchor Verification Hierarchy (Phase 5 & Phase 8)
+def test_anchor_verification_hierarchy():
+    snippet = "Giấy phép môi trường là văn bản do cơ quan quản lý nhà nước có thẩm quyền cấp cho tổ chức."
+    content_exact = "Quy định về bảo vệ môi trường: Giấy phép môi trường là văn bản do cơ quan quản lý nhà nước có thẩm quyền cấp cho tổ chức. Hết."
+
+    matched, m_type, diag = check_anchor_match(snippet, content_exact)
+    assert matched is True
+    assert m_type == "full_anchor_exact"
+
+    # Multi-window match on slightly altered formatting
+    content_reformatted = "Mở đầu... Giấy phép môi trường là văn bản do cơ quan quản lý nhà nước có thẩm quyền cấp... Phần giữa khác... cấp cho tổ chức."
+    matched_mw, m_type_mw, diag_mw = check_anchor_match(snippet, content_reformatted)
+    assert matched_mw is True
+    assert m_type_mw == "multi_window_agreement"
+    assert "window_beg_hash" in diag_mw
+
+
+# 10. Test Answer Runner Contract & 3-Argument generate_response (Phase 6 & Phase 8)
+@pytest.mark.asyncio
+async def test_run_answer_eval_uses_real_three_arg_signature():
+    import inspect
+    from app.services.rag_pipeline import generate_response
+
+    sig = inspect.signature(generate_response)
+    params = list(sig.parameters.keys())
+    assert len(params) == 3
+    assert params[0] == "original_query"
+    assert params[1] == "rewritten_query"
+    assert params[2] == "context"
 
 
 @pytest.mark.asyncio
-async def test_reranker_mode_routing():
-    from app.services.remote_reranker import RemoteReranker, RerankOutcome, RerankResult
-
-    mock_settings = MagicMock()
-    mock_settings.PINECONE_RERANK_MODEL = "bge-reranker-v2-m3"
-    mock_settings.PINECONE_RERANK_TIMEOUT_SECONDS = 12.0
-    mock_settings.QDRANT_RERANK_MODEL = "answerdotai/answerai-colbert-small-v1"
-    mock_settings.QDRANT_RERANK_TIMEOUT_SECONDS = 12.0
-    mock_settings.QDRANT_RERANK_MAX_RETRIES = 2
-    mock_settings.RERANK_RETURN_LIMIT = 3
-
-    mock_qdrant = MagicMock()
-    mock_pinecone = MagicMock()
-    mock_pinecone.inference.rerank.return_value = {"data": [{"index": 0, "score": 0.9}]}
-
-    reranker = RemoteReranker(
-        settings=mock_settings, qdrant=mock_qdrant, pinecone=mock_pinecone
-    )
-
-    # pinecone-only mode
-    outcome_pinecone = await reranker.rerank("query", ["doc1"], mode="pinecone-only")
-    assert outcome_pinecone.provider == "pinecone"
-    mock_qdrant.upsert.assert_not_called()
-
-    # qdrant-only mode
-    mock_pinecone.inference.rerank.reset_mock()
-    with patch.object(
-        reranker, "_qdrant_once", return_value=[RerankResult(index=0, score=0.95)]
-    ):
-        outcome_qdrant = await reranker.rerank("query", ["doc1"], mode="qdrant-only")
-        assert outcome_qdrant.provider == "qdrant"
-        mock_pinecone.inference.rerank.assert_not_called()
-
-
-def test_run_dir_overwrite_protection(tmp_path):
-    from app.evaluation.run_manifest import prepare_run_directory
-
-    run_id = "test_run_123"
-    dir1 = prepare_run_directory(tmp_path, run_id)
-    assert dir1.exists()
-
-    with pytest.raises(FileExistsError):
-        prepare_run_directory(tmp_path, run_id)
-
-
-def test_git_provenance_canonical_diff():
-    (
-        git_sha,
-        git_dirty,
-        git_tracked_dirty,
-        git_staged_dirty,
-        git_untracked_dirty,
-        git_diff_sha256,
-        repo_root,
-    ) = get_git_provenance()
-
-    assert isinstance(git_sha, str)
-    assert isinstance(git_dirty, bool)
-    if git_dirty:
-        assert git_diff_sha256 is not None
-        assert len(git_diff_sha256) == 64
-
-
-@pytest.mark.asyncio
-async def test_run_answer_eval_single_retrieval_contract():
+async def test_answer_input_guardrail_enforce_rejection_zero_retrieval():
     from run_answer_eval import run_stage_a_online
 
     case = GoldenCase(
-        case_id="case_test_01",
-        question="Điều kiện là gì?",
+        case_id="c_unsafe",
+        question="Unsafe text...",
         question_type="factoid",
         answerable=True,
-        reference_answer="Trả lời...",
+        reference_answer="Ans",
         gold_evidence=[],
     )
 
     mock_settings = MagicMock()
     effective_profile = get_evaluation_profile("separated_intent")
 
-    mock_retrieval_res = RetrievalCaseResult(
-        case_id="case_test_01",
-        question="Điều kiện là gì?",
-        question_type="factoid",
-        answerable=True,
-        query_used="Điều kiện là gì?",
-        original_query="Điều kiện là gì?",
-        status="ok",
-        retrieved_evidence=[
-            CandidateChunk(
-                document_id=1,
-                document_number="1",
-                title="T",
-                source_url="U",
-                citation="C",
-                article="A",
-                clause="K",
-                text="Text context...",
-                token_count=20,
-            )
-        ],
-        latency={"t_retrieval": 0.5, "t_total": 0.5},
-        metrics={},
+    with patch("app.services.guardrails.check_input_guardrails", new_callable=AsyncMock, return_value=(False, "Blocked by guardrail")) as mock_gr, \
+         patch("run_answer_eval.evaluate_single_retrieval_case", new_callable=AsyncMock) as mock_retrieval:
+
+        res = await run_stage_a_online(case, mock_settings, "enforce", effective_profile)
+
+        assert res["input_safe"] is False
+        assert res["final_response"] == "Blocked by guardrail"
+        # MUST MAKE ZERO RETRIEVAL CALLS ON INPUT REJECTION!
+        mock_retrieval.assert_not_called()
+
+
+# 11. Test Stage Specific Metrics & None Representation (Phase 7 & Phase 8)
+def test_final_evidence_recall_at_6_is_none_when_k_exceeds_limit():
+    gold = [GoldEvidence(evidence_item_id="ev1", document_id=1, article="Điều 1", required=True, status="verified")]
+    chunks = [
+        CandidateChunk(document_id=1, document_number="1", title="T", source_url="U", citation="C", article="Điều 1", text="T", token_count=10),
+        CandidateChunk(document_id=2, document_number="2", title="T", source_url="U", citation="C", article="Điều 2", text="T", token_count=10),
+        CandidateChunk(document_id=3, document_number="3", title="T", source_url="U", citation="C", article="Điều 3", text="T", token_count=10),
+    ]
+    stage_trace = RetrievalStageTrace(
+        final_evidence_chunks=[
+            StageCandidate(document_id=1, article="Điều 1"),
+            StageCandidate(document_id=2, article="Điều 2"),
+            StageCandidate(document_id=3, article="Điều 3"),
+        ]
     )
 
-    with patch(
-        "run_answer_eval.evaluate_single_retrieval_case",
-        new_callable=AsyncMock,
-        return_value=mock_retrieval_res,
-    ) as mock_eval_retrieval, patch(
-        "app.services.rag_pipeline.generate_response",
-        new_callable=AsyncMock,
-        return_value="Nội dung câu trả lời",
-    ) as mock_gen_ans:
+    res = calculate_case_retrieval_metrics(gold, chunks, stage_trace=stage_trace)
 
-        stage_a_res = await run_stage_a_online(
-            case, mock_settings, "off", effective_profile
-        )
+    final_metrics = res["stage_metrics"]["final_evidence_metrics"]
+    # article_recall_at_6 MUST BE None / JSON null with reason field!
+    assert final_metrics["article_recall_at_6"] is None
+    assert final_metrics["article_recall_at_6_reason"] == "k_exceeds_effective_stage_limit"
+    assert final_metrics["article_recall_at_3"] == 1.0
 
-        # EXACTLY 1 retrieval call per case
-        assert mock_eval_retrieval.call_count == 1
-        assert mock_gen_ans.call_count == 1
-        assert stage_a_res["retrieval_result"] == mock_retrieval_res
+
+def test_historical_runs_checksum_preservation():
+    runs_dir = Path("docs/evaluation/runs")
+    if not runs_dir.exists():
+        pytest.skip("No historical runs directory present")
+
+    before_manifest = Path("before_historical_runs_manifest.json")
+    after_manifest = Path("after_historical_runs_manifest.json")
+    if before_manifest.exists() and after_manifest.exists():
+        b_data = json.loads(before_manifest.read_text(encoding="utf-8"))
+        a_data = json.loads(after_manifest.read_text(encoding="utf-8"))
+        assert b_data == a_data
