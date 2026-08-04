@@ -8,11 +8,9 @@ import json
 import os
 import sys
 import time
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-# Ensure UTF-8 output on Windows with error handling
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -24,6 +22,7 @@ from app.evaluation.answer_metrics import (
     calculate_case_answer_metrics,
     classify_response_refusal,
 )
+from app.evaluation.gold_sidecar import load_gold_sidecar
 from app.evaluation.latency_metrics import calculate_stage_latency_summary
 from app.evaluation.profiles import EvaluationProfile, get_evaluation_profile
 from app.evaluation.reporting import write_run_report
@@ -48,8 +47,10 @@ from app.evaluation.schemas import (
 )
 from run_retrieval_eval import (
     DEFAULT_DATASET_PATH,
+    DEFAULT_SIDECAR_PATH,
+    DEFAULT_SUMMARY_PATH,
     evaluate_single_retrieval_case,
-    parse_golden_case,
+    perform_pre_execution_validation,
 )
 
 
@@ -58,17 +59,12 @@ def build_parser() -> argparse.ArgumentParser:
         description="Run deterministic full pipeline answer evaluation over VietLex legal dataset."
     )
     parser.add_argument("--dataset", type=Path, default=DEFAULT_DATASET_PATH)
+    parser.add_argument("--sidecar", type=Path, default=DEFAULT_SIDECAR_PATH)
     parser.add_argument(
         "--profile",
         choices=["legacy", "separated_no_intent", "separated_intent"],
         default="separated_intent",
         help="Evaluation profile (default: separated_intent)",
-    )
-    parser.add_argument(
-        "--mode",
-        choices=["retrieval-only", "answer"],
-        default="answer",
-        help="Evaluation mode (default: answer)",
     )
     parser.add_argument(
         "--rewrite",
@@ -95,8 +91,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--limit", type=int, default=None, help="Limit maximum number of cases to evaluate"
     )
     parser.add_argument(
+        "--verified-only",
+        action="store_true",
+        help="Filter evaluation to cases with verified gold evidence in the current corpus",
+    )
+    parser.add_argument(
         "--gold-policy",
-        choices=["all-required-verified", "any-verified"],
+        choices=["all-required-verified", "any-verified", "all-verified", "none"],
         default="all-required-verified",
         help="Selection policy for verified cases (default: all-required-verified)",
     )
@@ -106,8 +107,33 @@ def build_parser() -> argparse.ArgumentParser:
         default="none",
         help="LLM judge mode (default: none)",
     )
+    parser.add_argument(
+        "--require-clean-git",
+        action="store_true",
+        help="Require clean git status before execution",
+    )
     parser.add_argument("--run-id", type=str, default=None, help="Optional custom Run ID")
     return parser
+
+
+def format_candidate_context(chunk: CandidateChunk) -> str:
+    parts = []
+    if chunk.citation:
+        parts.append(f"Dẫn chiếu: {chunk.citation}")
+    elif chunk.document_number:
+        cite_str = f"Văn bản {chunk.document_number}"
+        if chunk.article:
+            cite_str = f"{chunk.article} {cite_str}"
+        if chunk.clause:
+            cite_str = f"{chunk.clause} {cite_str}"
+        parts.append(f"Dẫn chiếu: {cite_str}")
+
+    if chunk.title:
+        parts.append(f"Tiêu đề: {chunk.title}")
+    if chunk.source_url:
+        parts.append(f"URL: {chunk.source_url}")
+    parts.append(f"Nội dung: {chunk.text}")
+    return "\n".join(parts)
 
 
 async def run_stage_a_online(
@@ -116,10 +142,6 @@ async def run_stage_a_online(
     guardrails_mode: str,
     effective_profile: EvaluationProfile,
 ) -> Dict[str, Any]:
-    """
-    Stage A: Execute online pipeline end-to-end under semaphore.
-    Executes single retrieval pass using effective_profile and returns raw pipeline output.
-    """
     from app.services.guardrails import (
         check_input_guardrails,
         check_output_guardrails,
@@ -139,18 +161,29 @@ async def run_stage_a_online(
             input_safe, rejection = await check_input_guardrails(case.question)
             input_guardrail_latency = time.perf_counter() - gr_start
             if not input_safe and guardrails_mode == "enforce":
-                retrieval_res = await evaluate_single_retrieval_case(
-                    case, settings, effective_profile
+                # STRICT REQUIREMENT: Input guardrail rejection MUST NOT execute retrieval!
+                empty_retrieval_res = RetrievalCaseResult(
+                    case_id=case.case_id,
+                    question=case.question,
+                    original_query=case.question,
+                    question_type=case.question_type,
+                    answerable=case.answerable,
+                    query_used=case.question,
+                    status="input_guardrail_rejected",
+                    retrieved_evidence=[],
+                    stage_trace=RetrievalStageTrace(),
+                    latency={"t_total": round(time.perf_counter() - started, 4)},
+                    metrics={},
                 )
                 return {
                     "case_id": case.case_id,
-                    "response": rejection,
+                    "raw_response": rejection,
                     "final_response": rejection,
                     "contexts": [],
                     "input_safe": False,
                     "output_safe": False,
                     "latency": {"t_total": round(time.perf_counter() - started, 4)},
-                    "retrieval_result": retrieval_res,
+                    "retrieval_result": empty_retrieval_res,
                 }
         except Exception:
             input_guardrail_latency = time.perf_counter() - gr_start
@@ -161,10 +194,11 @@ async def run_stage_a_online(
     retrieval_res = await evaluate_single_retrieval_case(
         case, settings, effective_profile
     )
-    contexts = [c.text for c in retrieval_res.retrieved_evidence]
+    contexts = [format_candidate_context(c) for c in retrieval_res.retrieved_evidence]
 
-    # 2. Answer Generation
-    bot_response = await generate_response(case.question, contexts)
+    # 2. Real 3-argument generate_response call: (original_query, rewritten_query, contexts)
+    rewritten_q = retrieval_res.rewritten_query or retrieval_res.query_used or case.question
+    bot_response = await generate_response(case.question, rewritten_q, contexts)
 
     # Output guardrails execution
     final_response = bot_response
@@ -214,17 +248,12 @@ async def run_stage_b_offline(
     settings: Any,
     judge_mode: str,
 ) -> AnswerCaseResult:
-    """
-    Stage B: Run offline deterministic metrics and optional Ragas audit outside semaphore.
-    Reuses retrieval_result from Stage A directly without retrieving again.
-    """
     raw_response = stage_a_result["raw_response"]
     final_response = stage_a_result["final_response"]
     contexts = stage_a_result["contexts"]
     latency = stage_a_result["latency"]
     retrieval_case_res: RetrievalCaseResult = stage_a_result["retrieval_result"]
 
-    # 1. Deterministic code metrics
     det_metrics = calculate_case_answer_metrics(
         pred_response=final_response,
         ref_answer=case.reference_answer,
@@ -238,7 +267,6 @@ async def run_stage_b_offline(
     ragas_scores = None
     ragas_error = None
 
-    # 2. Optional Ragas LLM judge audit (only if --judge ragas)
     if judge_mode == "ragas" and contexts and not det_metrics.get("is_refusal"):
         try:
             from run_eval_suite import build_ragas_evaluator
@@ -278,8 +306,8 @@ async def run_answer_evaluation(arguments=None) -> Dict[str, Any]:
 
     settings = get_settings()
     dataset_path = Path(args.dataset).resolve()
-    if not dataset_path.exists():
-        raise FileNotFoundError(f"Could not find dataset at: {dataset_path}")
+    sidecar_path = Path(args.sidecar).resolve()
+    summary_path = DEFAULT_SUMMARY_PATH
 
     base_profile = get_evaluation_profile(args.profile)
     effective_profile = dataclasses.replace(
@@ -288,17 +316,22 @@ async def run_answer_evaluation(arguments=None) -> Dict[str, Any]:
         reranker_mode=args.reranker,
     )
 
-    with dataset_path.open("r", encoding="utf-8") as f:
-        raw_dataset = json.load(f)
+    # Perform shared pre-execution validation
+    all_cases, selection, sidecar, audit_summary = perform_pre_execution_validation(
+        dataset_path=dataset_path,
+        sidecar_path=sidecar_path,
+        summary_path=summary_path,
+        gold_policy=args.gold_policy,
+        verified_only=args.verified_only,
+        require_clean_git=args.require_clean_git,
+        limit=args.limit,
+    )
 
-    cases = [parse_golden_case(item, idx) for idx, item in enumerate(raw_dataset)]
-    if args.limit and args.limit > 0:
-        cases = cases[: args.limit]
+    if args.verified_only and selection.selected_case_count == 0:
+        raise ValueError("Cannot execute answer evaluation: selected case count is ZERO.")
 
-    selected_case_ids = [c.case_id for c in cases]
-    selected_case_ids_sha256 = hashlib.sha256(
-        json.dumps(selected_case_ids).encode("utf-8")
-    ).hexdigest()
+    cases = selection.selected_cases
+    selected_case_ids = selection.selected_case_ids
 
     config_dict = {
         "profile_name": effective_profile.name,
@@ -310,7 +343,7 @@ async def run_answer_evaluation(arguments=None) -> Dict[str, Any]:
         "reranker_provider": effective_profile.reranker_mode,
         "gold_policy": args.gold_policy,
         "selected_case_count": len(selected_case_ids),
-        "selected_case_ids_sha256": selected_case_ids_sha256,
+        "selected_case_ids_sha256": selection.selected_case_ids_sha256,
     }
     fp = calculate_configuration_fingerprint(config_dict)
 
@@ -329,6 +362,7 @@ async def run_answer_evaluation(arguments=None) -> Dict[str, Any]:
         settings=settings,
         command_str=" ".join(sys.argv),
         profile_name=effective_profile.name,
+        gold_sidecar_path=sidecar_path,
         profile_obj=effective_profile,
         gold_policy=args.gold_policy,
         selected_case_ids=selected_case_ids,
@@ -340,7 +374,7 @@ async def run_answer_evaluation(arguments=None) -> Dict[str, Any]:
     print("=" * 60)
     print(f"FULL PIPELINE ANSWER EVALUATION RUN: {manifest.run_id}")
     print(
-        f"cases={len(cases)} mode={args.mode} profile={effective_profile.name} rewrite={effective_profile.rewrite_mode} guardrails={args.guardrails}"
+        f"cases={len(cases)} profile={effective_profile.name} rewrite={effective_profile.rewrite_mode} guardrails={args.guardrails}"
     )
     print(
         f"reranker={effective_profile.reranker_mode} concurrency={args.concurrency} judge={args.judge}"
@@ -348,16 +382,14 @@ async def run_answer_evaluation(arguments=None) -> Dict[str, Any]:
     print("=" * 60)
 
     semaphore = asyncio.Semaphore(args.concurrency)
-    answer_results: List[AnswerCaseResult] = []
+    answer_results_map: Dict[str, AnswerCaseResult] = {}
 
     async def evaluate_case(case: GoldenCase) -> AnswerCaseResult:
-        # Stage A: Run online under semaphore (single retrieval + generation)
         async with semaphore:
             stage_a_res = await run_stage_a_online(
                 case, settings, args.guardrails, effective_profile
             )
 
-        # Stage B: Offline metrics outside semaphore (reusing Stage A retrieval_result)
         return await run_stage_b_offline(
             case, stage_a_res, settings, args.judge
         )
@@ -365,31 +397,31 @@ async def run_answer_evaluation(arguments=None) -> Dict[str, Any]:
     tasks = [asyncio.create_task(evaluate_case(case)) for case in cases]
     for completed_task in asyncio.as_completed(tasks):
         res = await completed_task
-        answer_results.append(res)
+        answer_results_map[res.case_id] = res
         print(
             f"-> Completed Case [{res.case_id}]: category={res.refusal_category} "
             f"token_f1={res.metrics.get('token_f1', 0.0):.2f} latency={res.latency['t_total']:.2f}s"
         )
 
-    # Summaries
-    retrieval_cases_dict = [res.retrieval_result.model_dump() for res in answer_results]
+    # Preserve dataset case ordering
+    ordered_answer_results = [answer_results_map[c.case_id] for c in cases]
+    retrieval_cases_dict = [res.retrieval_result.model_dump() for res in ordered_answer_results]
     retrieval_summary = aggregate_retrieval_metrics(retrieval_cases_dict)
-    stage_traces = [res.retrieval_result.stage_trace for res in answer_results]
+    stage_traces = [res.retrieval_result.stage_trace for res in ordered_answer_results]
     stage_survival_summary = calculate_stage_survival_rates(stage_traces)
-    latency_summary = calculate_stage_latency_summary([res.latency for res in answer_results])
+    latency_summary = calculate_stage_latency_summary([res.latency for res in ordered_answer_results])
 
-    answer_cases_dict = [res.model_dump() for res in answer_results]
+    answer_cases_dict = [res.model_dump() for res in ordered_answer_results]
     answer_summary = aggregate_answer_metrics(answer_cases_dict)
 
-    # Atomic write run artifacts
     atomic_write_json(run_dir / "manifest.json", manifest.model_dump())
     atomic_write_json(run_dir / "configuration.json", manifest.configuration)
     atomic_write_json(
         run_dir / "evaluation_case_set.json",
         {
-            "selected_case_count": len(selected_case_ids),
+            "selected_case_count": selection.selected_case_count,
             "selected_case_ids": selected_case_ids,
-            "selected_case_ids_sha256": selected_case_ids_sha256,
+            "selected_case_ids_sha256": selection.selected_case_ids_sha256,
         },
     )
     atomic_write_json(run_dir / "retrieval_results.json", retrieval_cases_dict)
