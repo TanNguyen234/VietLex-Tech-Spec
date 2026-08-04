@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Dict, Any
 
 
-@dataclass
+@dataclass(frozen=True)
 class EvaluationProfile:
     name: str
     retrieval_document_limit: int = 24

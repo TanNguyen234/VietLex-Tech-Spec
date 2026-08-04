@@ -399,8 +399,17 @@ class LegalRetriever:
         dense_query_text: str,
         sparse_query_text: str | None = None,
         diagnostics: dict[str, Any] | None = None,
+        *,
+        retrieval_document_limit: int | None = None,
     ) -> list[Any]:
         diagnostics = diagnostics if diagnostics is not None else {}
+        top_k = (
+            retrieval_document_limit
+            if retrieval_document_limit is not None
+            else self._settings.RETRIEVAL_DOCUMENT_LIMIT
+        )
+        diagnostics["requested_top_k"] = top_k
+        diagnostics["effective_top_k"] = top_k
         sparse_query_text = sparse_query_text or dense_query_text
         dense_query, embedding_attempts, embedding_latency = (
             await self._run_remote_stage(
@@ -430,7 +439,7 @@ class LegalRetriever:
                 namespace=self._settings.PINECONE_NAMESPACE,
                 vector=dense_query,
                 sparse_vector=sparse_query_payload,
-                top_k=self._settings.RETRIEVAL_DOCUMENT_LIMIT,
+                top_k=top_k,
                 include_metadata=True,
                 include_values=False,
             ),
@@ -536,12 +545,10 @@ class LegalRetriever:
         *,
         mode: str = "current",
         final_evidence_limit: int = 3,
+        final_context_token_limit: int = 720,
     ) -> tuple[list[EvidenceChunk], RerankOutcome]:
         documents = [chunk.formatted_context() for chunk in chunks]
-        try:
-            outcome = await self._reranker.rerank(query, documents, mode=mode)
-        except TypeError:
-            outcome = await self._reranker.rerank(query, documents)
+        outcome = await self._reranker.rerank(query, documents, mode=mode)
         ranked = [
             (item.score, chunks[item.index])
             for item in outcome.results
@@ -551,7 +558,7 @@ class LegalRetriever:
             select_ranked_evidence(
                 ranked,
                 max_chunks=final_evidence_limit,
-                max_tokens=self._settings.LLM_CONTEXT_MAX_TOKENS,
+                max_tokens=final_context_token_limit,
                 per_document_limit=(
                     self._settings.LLM_CONTEXT_PER_DOCUMENT_LIMIT
                 ),
@@ -594,6 +601,7 @@ class LegalRetriever:
         local_chunks_limit = getattr(profile, "local_chunks_per_document", getattr(self._settings, "LOCAL_CHUNKS_PER_DOCUMENT", 4))
         rerank_input_limit = getattr(profile, "rerank_input_limit", getattr(self._settings, "RERANK_INPUT_LIMIT", 24))
         final_evidence_limit = getattr(profile, "final_evidence_limit", getattr(self._settings, "FINAL_EVIDENCE_LIMIT", 3))
+        final_context_token_limit = getattr(profile, "final_context_token_limit", getattr(self._settings, "LLM_CONTEXT_MAX_TOKENS", 720))
         intent_scoring_enabled = getattr(profile, "intent_scoring_enabled", getattr(self._settings, "INTENT_SCORING_ENABLED", True))
         reranker_mode = getattr(profile, "reranker_mode", "current")
 
@@ -618,6 +626,7 @@ class LegalRetriever:
                         query,
                         sparse_query,
                         details,
+                        retrieval_document_limit=retrieval_doc_limit,
                     )
                     return (
                         value,
@@ -750,7 +759,11 @@ class LegalRetriever:
             stage_started = time.perf_counter()
             try:
                 evidence, rerank_outcome = await self._rerank(
-                    query, bounded, mode=reranker_mode, final_evidence_limit=final_evidence_limit
+                    query,
+                    bounded,
+                    mode=reranker_mode,
+                    final_evidence_limit=final_evidence_limit,
+                    final_context_token_limit=final_context_token_limit,
                 )
             except Exception as error:
                 latency["t_rerank"] = round(

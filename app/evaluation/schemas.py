@@ -103,12 +103,19 @@ class EvaluationRunManifest(BaseModel):
     utc_timestamp: str
     git_sha: str
     git_dirty: bool = False
+    git_tracked_dirty: bool = False
+    git_staged_dirty: bool = False
+    git_untracked_dirty: bool = False
     git_diff_sha256: Optional[str] = None
     repository_root: str = ""
     dataset_revision: str
     dataset_sha256: str
     evaluation_dataset_sha256: str = ""
     gold_label_sidecar_sha256: Optional[str] = None
+    gold_policy: str = "all-required-verified"
+    selected_case_count: int = 0
+    selected_case_ids: List[str] = Field(default_factory=list)
+    selected_case_ids_sha256: Optional[str] = None
     configuration_fingerprint: str
     command: str
     eval_mode: str  # "retrieval-only" | "answer"
@@ -118,5 +125,5 @@ class EvaluationRunManifest(BaseModel):
     reranker_provider: str  # "current" | "pinecone-bge" | "qdrant-colbert" | "pinecone-only" | "qdrant-only"
     profile_name: str = "custom"
     configuration: Dict[str, Any] = Field(default_factory=dict)
-    code_metric_version: str = "1.0.0"
+    code_metric_version: str = "2.0.0"
 
