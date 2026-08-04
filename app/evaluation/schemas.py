@@ -5,12 +5,15 @@ from pydantic import BaseModel, Field
 
 
 class GoldEvidence(BaseModel):
+    evidence_item_id: Optional[str] = None
+    case_id: Optional[str] = None
     document_id: Optional[Union[int, str]] = None
     document_number: Optional[str] = None
     article: Optional[str] = None
     clause: Optional[str] = None
     required: bool = True
-    status: str = "verified"  # "verified" | "missing_gold_label"
+    status: str = "verified"
+    verification_confidence: Optional[str] = None
 
 
 class GoldenCase(BaseModel):
