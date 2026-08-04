@@ -1,19 +1,58 @@
-from __future__ import annotations
-
+from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 from pydantic import BaseModel, Field
 
 
+class EvidenceStatus(str, Enum):
+    VERIFIED = "verified"
+    DOCUMENT_VERIFIED_ARTICLE_UNRESOLVED = "document_verified_article_unresolved"
+    ARTICLE_VERIFIED_CLAUSE_UNRESOLVED = "article_verified_clause_unresolved"
+    STRUCTURAL_ANCHOR_NOT_FOUND = "structural_anchor_not_found"
+    NO_CITATION_EXTRACTED = "no_citation_extracted"
+    UNANSWERABLE = "unanswerable"
+    NOT_FOUND_BY_LOCAL_DETERMINISTIC_AUDIT = "not_found_by_local_deterministic_audit"
+    AMBIGUOUS = "ambiguous"
+
+
+class RequiredLevel(str, Enum):
+    DOCUMENT = "document"
+    ARTICLE = "article"
+    CLAUSE = "clause"
+
+
 class GoldEvidence(BaseModel):
-    evidence_item_id: Optional[str] = None
-    case_id: Optional[str] = None
+    evidence_item_id: str
+    case_id: str
+    context_index: int = 0
+    citation_index: int = 0
+    reference_anchor_hash: Optional[str] = None
     document_id: Optional[Union[int, str]] = None
     document_number: Optional[str] = None
     article: Optional[str] = None
     clause: Optional[str] = None
-    required: bool = True
-    status: str = "verified"
+    required: bool
+    required_level: RequiredLevel = RequiredLevel.ARTICLE
+    status: EvidenceStatus
     verification_confidence: Optional[str] = None
+    candidate_generation_method: Optional[str] = None
+    document_identity_method: Optional[str] = None
+    candidate_count_before_anchor: Optional[int] = None
+    corpus_search_limit: Optional[int] = None
+    anchor_match_method: Optional[str] = None
+    identity_hint_sources: List[str] = Field(default_factory=list)
+    is_metadata_search_complete: bool = False
+
+
+class RetrievalStageCapacities(BaseModel):
+    pinecone_document_limit: int = 24
+    fts_document_limit: int = 24
+    merged_document_limit: int = 24
+    resolved_document_limit: int = 16
+    structural_chunk_limit: int = 64
+    local_chunks_limit: int = 4
+    rerank_input_limit: int = 24
+    rerank_return_limit: int = 12
+    final_evidence_limit: int = 3
 
 
 class GoldenCase(BaseModel):

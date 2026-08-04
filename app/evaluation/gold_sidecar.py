@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 from pydantic import BaseModel, Field
 
 from app.evaluation.schemas import GoldEvidence
@@ -23,7 +23,9 @@ class GoldSidecar(BaseModel):
     labels_by_case_id: Dict[str, List[GoldEvidence]] = Field(default_factory=dict)
 
 
-def load_gold_sidecar(path: Path | str) -> GoldSidecar:
+def load_gold_sidecar(
+    path: Path | str, dataset_case_ids: Optional[Set[str] | List[str]] = None
+) -> GoldSidecar:
     sidecar_path = Path(path).resolve()
     if not sidecar_path.exists():
         raise FileNotFoundError(f"Gold sidecar file not found at: {sidecar_path}")
@@ -69,14 +71,21 @@ def load_gold_sidecar(path: Path | str) -> GoldSidecar:
 
         case_id = item.get("case_id")
         if not case_id or not isinstance(case_id, str):
-            raise ValueError(f"Label item at index {idx} missing valid 'case_id'.")
+            raise ValueError(f"Label item at index {idx} in {sidecar_path} missing non-empty 'case_id'.")
 
         evidence_id = item.get("evidence_item_id")
-        if not evidence_id:
-            # Fallback deterministic ID derivation if missing
-            anchor_h = item.get("reference_anchor_hash", f"{idx:04d}")
-            evidence_id = f"{case_id}_ev_{anchor_h}"
-            item["evidence_item_id"] = evidence_id
+        if not evidence_id or not isinstance(evidence_id, str):
+            raise ValueError(
+                f"Label item at index {idx} in {sidecar_path} missing non-empty 'evidence_item_id'. "
+                "Fallback generation is prohibited in V2.1."
+            )
+
+        status_val = item.get("status")
+        if not status_val or not isinstance(status_val, str):
+            raise ValueError(f"Label item at index {idx} in {sidecar_path} missing non-empty 'status'.")
+
+        if "required" not in item or item.get("required") is None:
+            raise ValueError(f"Label item at index {idx} in {sidecar_path} missing explicit 'required' boolean.")
 
         if evidence_id in seen_evidence_ids:
             raise ValueError(
@@ -91,6 +100,17 @@ def load_gold_sidecar(path: Path | str) -> GoldSidecar:
 
         validated_labels.append(label_obj)
         labels_by_case.setdefault(case_id, []).append(label_obj)
+
+    sidecar_case_ids = set(labels_by_case.keys())
+    if dataset_case_ids is not None:
+        expected_set = set(dataset_case_ids)
+        if sidecar_case_ids != expected_set:
+            diff_missing = expected_set - sidecar_case_ids
+            diff_extra = sidecar_case_ids - expected_set
+            raise ValueError(
+                f"Case ID set mismatch between dataset and sidecar: missing in sidecar={diff_missing}, "
+                f"extra in sidecar={diff_extra}"
+            )
 
     unique_case_count = len(labels_by_case)
     if declared_total_cases is not None and unique_case_count > declared_total_cases:
