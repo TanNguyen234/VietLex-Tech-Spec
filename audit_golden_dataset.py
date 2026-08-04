@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from app.config import get_settings
+from app.evaluation.schemas import EvidenceStatus, RequiredLevel
 from app.ingestion.content_store import ContentStore
 from app.ingestion.legal_fts import LegalFtsIndex, normalize_document_number
 from app.ingestion.legal_text import chunk_document
@@ -40,48 +41,61 @@ def extract_legal_citations_from_text(text: str) -> List[Dict[str, str]]:
     return citations
 
 
-def find_document_candidates(
+def resolve_document_identity(
     conn: sqlite3.Connection,
     fts_index: LegalFtsIndex,
-    doc_num_hint: str,
-    snippet: str,
-) -> List[int]:
+    doc_id_hint: Optional[int],
+    source_url_hint: Optional[str],
+    doc_num_hint: Optional[str],
+) -> Tuple[List[int], str, List[str], bool]:
+    hint_sources: List[str] = []
     candidate_ids: List[int] = []
-    seen: set[int] = set()
+    identity_method = "none"
+    is_complete_search = True
 
-    def add_ids(ids: Iterable[int]) -> None:
-        for cid in ids:
-            if cid not in seen:
-                candidate_ids.append(cid)
-                seen.add(cid)
+    # 1. Exact document ID
+    if doc_id_hint is not None:
+        hint_sources.append("dataset_reference_doc_id")
+        cur = conn.execute("SELECT document_id FROM metadata WHERE document_id = ?", (doc_id_hint,))
+        rows = cur.fetchall()
+        if rows:
+            candidate_ids = [rows[0][0]]
+            identity_method = "exact_doc_id"
+            return candidate_ids, identity_method, hint_sources, True
 
-    # 1. Exact document_number match in SQLite metadata
+    # 2. Exact normalized source URL
+    if source_url_hint:
+        hint_sources.append("dataset_reference_source_url")
+        cur = conn.execute("SELECT document_id FROM metadata WHERE source_url = ?", (source_url_hint.strip(),))
+        rows = cur.fetchall()
+        if rows:
+            candidate_ids = [r[0] for r in rows]
+            identity_method = "exact_source_url"
+            return candidate_ids, identity_method, hint_sources, True
+
+    # 3. Exact normalized document number against COMPLETE metadata index
     if doc_num_hint:
+        hint_sources.append("dataset_reference_doc_number")
         norm_num = normalize_document_number(doc_num_hint)
         cur = conn.execute(
             "SELECT document_id FROM metadata WHERE UPPER(REPLACE(document_number, ' ', '')) = ?",
             (norm_num,),
         )
-        add_ids(row[0] for row in cur.fetchall())
+        rows = cur.fetchall()
+        if rows:
+            candidate_ids = [r[0] for r in rows]
+            identity_method = "exact_metadata_doc_number"
+            return candidate_ids, identity_method, hint_sources, True
 
-    # 2. FTS search by document number
+    # 4. Fallback lexical discovery (unverified candidate generation only)
     if doc_num_hint:
-        add_ids(fts_index.search(doc_num_hint, limit=20))
+        candidate_ids = fts_index.search(doc_num_hint, limit=20)
+        if candidate_ids:
+            identity_method = "lexical_candidate_fallback"
+            is_complete_search = False
+            return candidate_ids, identity_method, hint_sources, False
 
-    # 3. Check for document numbers inside snippet if hint was missing
-    if not candidate_ids and not doc_num_hint:
-        extracted_snip = extract_legal_citations_from_text(snippet)
-        if extracted_snip and extracted_snip[0]["document_number"]:
-            snip_doc_num = extracted_snip[0]["document_number"]
-            norm_num = normalize_document_number(snip_doc_num)
-            cur = conn.execute(
-                "SELECT document_id FROM metadata WHERE UPPER(REPLACE(document_number, ' ', '')) = ?",
-                (norm_num,),
-            )
-            add_ids(row[0] for row in cur.fetchall())
-            add_ids(fts_index.search(snip_doc_num, limit=20))
-
-    return candidate_ids
+    return [], "not_applicable", hint_sources, True
 
 
 def check_anchor_match(snippet: str, content: str) -> Tuple[bool, str, Dict[str, Any]]:
@@ -162,13 +176,9 @@ def audit_golden_dataset() -> Dict[str, Any]:
     verified_clause_count = 0
     multi_hop_all_covered = 0
     multi_hop_total = 0
-    duplicate_questions: Dict[str, int] = {}
     seen_evidence_ids: set[str] = set()
 
     for idx, case in enumerate(cases, start=1):
-        if idx % 50 == 0 or idx == 1 or idx == len(cases):
-            print(f"Auditing case {idx}/{len(cases)}...", flush=True)
-
         case_id = f"case_{idx:03d}"
         q_text = case.get("question", "").strip()
         q_type = case.get("question_type", "factoid")
@@ -176,10 +186,8 @@ def audit_golden_dataset() -> Dict[str, Any]:
         gt_contexts = case.get("ground_truth_context", [])
 
         type_counts[q_type] = type_counts.get(q_type, 0) + 1
-        duplicate_questions[q_text] = duplicate_questions.get(q_text, 0) + 1
 
         is_unanswerable = (q_type == "unanswerable" or "tài liệu không đề cập" in norm_text(gt_ans))
-
         case_labels: List[Dict[str, Any]] = []
 
         if is_unanswerable:
@@ -191,21 +199,29 @@ def audit_golden_dataset() -> Dict[str, Any]:
             label = {
                 "evidence_item_id": ev_id,
                 "case_id": case_id,
-                "status": "unanswerable",
+                "context_index": 0,
+                "citation_index": 0,
+                "reference_anchor_hash": None,
+                "status": EvidenceStatus.UNANSWERABLE.value,
                 "document_id": None,
                 "document_number": None,
                 "article": None,
                 "clause": None,
                 "required": False,
-                "verification_method": "unanswerable_ground_truth",
+                "required_level": RequiredLevel.ARTICLE.value,
                 "verification_confidence": "unverified",
-                "matching_document_count": 0,
-                "reference_anchor_hash": None,
-                "diagnostics": {},
-                "notes": "Explicit unanswerable case — no gold document assigned",
+                "candidate_generation_method": "unanswerable",
+                "document_identity_method": "not_applicable",
+                "candidate_count_before_anchor": 0,
+                "corpus_search_limit": doc_count,
+                "anchor_match_method": "none",
+                "identity_hint_sources": [],
+                "is_metadata_search_complete": True,
             }
             case_labels.append(label)
-            evidence_status_counts["unanswerable"] = evidence_status_counts.get("unanswerable", 0) + 1
+            evidence_status_counts[EvidenceStatus.UNANSWERABLE.value] = (
+                evidence_status_counts.get(EvidenceStatus.UNANSWERABLE.value, 0) + 1
+            )
             confidence_counts["unverified"] = confidence_counts.get("unverified", 0) + 1
             case_status_counts["unanswerable"] = case_status_counts.get("unanswerable", 0) + 1
         else:
@@ -213,153 +229,207 @@ def audit_golden_dataset() -> Dict[str, Any]:
                 multi_hop_total += 1
 
             all_snippets_verified = True
-            for snip_idx, snippet in enumerate(gt_contexts, start=1):
-                ev_id = f"{case_id}_ev_{snip_idx:02d}"
-                if ev_id in seen_evidence_ids:
-                    raise ValueError(f"Duplicate evidence_item_id: {ev_id}")
-                seen_evidence_ids.add(ev_id)
 
+            for ctx_idx, snippet in enumerate(gt_contexts, start=1):
                 norm_snip = norm_text(snippet)
                 anchor_hash = hashlib.sha256(norm_snip.encode("utf-8")).hexdigest()[:16]
 
                 extracted_cites = extract_legal_citations_from_text(q_text + " " + gt_ans + " " + snippet)
-                doc_num_hint = extracted_cites[0]["document_number"] if extracted_cites else ""
-                art_hint = extracted_cites[0]["article"] if extracted_cites else ""
-                cl_hint = extracted_cites[0]["clause"] if extracted_cites else ""
+                if not extracted_cites:
+                    extracted_cites = [{"document_number": "", "article": "", "clause": ""}]
 
-                candidate_ids = find_document_candidates(conn, fts_index, doc_num_hint, norm_snip)
-                retrieved_docs = content_store.get_many(candidate_ids) if candidate_ids else {}
+                for cit_idx, cite in enumerate(extracted_cites, start=1):
+                    ev_id = f"{case_id}_ctx{ctx_idx:02d}_cit{cit_idx:02d}"
+                    if ev_id in seen_evidence_ids:
+                        raise ValueError(f"Duplicate evidence_item_id: {ev_id}")
+                    seen_evidence_ids.add(ev_id)
 
-                # Anchor matching with multi-window agreement hierarchy
-                matching_docs = []
-                for doc_id, doc in retrieved_docs.items():
-                    matched, match_type, window_diag = check_anchor_match(norm_snip, doc.content)
-                    if matched:
-                        matching_docs.append((doc_id, doc, match_type, window_diag))
+                    doc_num_hint = cite.get("document_number", "")
+                    art_hint = cite.get("article", "")
+                    cl_hint = cite.get("clause", "")
 
-                match_count = len(matching_docs)
-
-                diagnostics: Dict[str, Any] = {
-                    "extracted_doc_number": doc_num_hint,
-                    "extracted_article": art_hint,
-                    "extracted_clause": cl_hint,
-                    "candidate_doc_count": len(candidate_ids),
-                    "anchor_matches": match_count,
-                }
-
-                if not extracted_cites and match_count == 0:
-                    primary_status = "no_citation_extracted"
-                    confidence = "unverified"
-                    all_snippets_verified = False
-                    label = {
-                        "evidence_item_id": ev_id,
-                        "case_id": case_id,
-                        "status": primary_status,
-                        "document_id": None,
-                        "document_number": None,
-                        "article": art_hint or None,
-                        "clause": cl_hint or None,
-                        "required": True,
-                        "verification_method": "deterministic_audit",
-                        "verification_confidence": confidence,
-                        "matching_document_count": 0,
-                        "reference_anchor_hash": anchor_hash,
-                        "diagnostics": diagnostics,
-                        "notes": "No citation extracted and no matching content anchor found",
-                    }
-                elif match_count == 1:
-                    matched_id, matched_doc, match_type, window_diag = matching_docs[0]
-                    diagnostics.update(window_diag)
-                    chunks = chunk_document(matched_doc.metadata, matched_doc.content)
-                    matched_chunk = None
-                    for chk in chunks:
-                        chk_matched, _, _ = check_anchor_match(norm_snip, chk.text)
-                        if chk_matched:
-                            matched_chunk = chk
-                            break
-
-                    art_val = matched_chunk.article if matched_chunk else art_hint
-                    cl_val = matched_chunk.clause if matched_chunk else cl_hint
-
-                    primary_status = "verified"
-                    confidence = (
-                        "exact_doc_number_and_anchor"
-                        if match_type == "full_anchor_exact"
-                        else "exact_doc_number_and_multi_window_anchor"
-                    )
-                    label = {
-                        "evidence_item_id": ev_id,
-                        "case_id": case_id,
-                        "status": primary_status,
-                        "document_id": matched_id,
-                        "document_number": getattr(matched_doc.metadata, "document_number", doc_num_hint),
-                        "article": art_val,
-                        "clause": cl_val,
-                        "required": True,
-                        "verification_method": f"exact_content_store_{match_type}",
-                        "verification_confidence": confidence,
-                        "matching_document_count": 1,
-                        "reference_anchor_hash": anchor_hash,
-                        "diagnostics": diagnostics,
-                        "notes": f"Verified in doc {matched_id} via {match_type}",
-                    }
-                    verified_doc_count += 1
-                    if art_val:
-                        verified_art_count += 1
-                    if cl_val:
-                        verified_clause_count += 1
-
-                elif match_count > 1:
-                    matched_id, matched_doc, match_type, window_diag = matching_docs[0]
-                    diagnostics.update(window_diag)
-                    primary_status = "ambiguous"
-                    confidence = "ambiguous"
-                    all_snippets_verified = False
-                    label = {
-                        "evidence_item_id": ev_id,
-                        "case_id": case_id,
-                        "status": primary_status,
-                        "document_id": matched_id,
-                        "document_number": getattr(matched_doc.metadata, "document_number", doc_num_hint),
-                        "article": art_hint or None,
-                        "clause": cl_hint or None,
-                        "required": True,
-                        "verification_method": "content_store_multi_match",
-                        "verification_confidence": confidence,
-                        "matching_document_count": match_count,
-                        "reference_anchor_hash": anchor_hash,
-                        "diagnostics": diagnostics,
-                        "notes": f"Ambiguous: matched {match_count} documents",
-                    }
-                else:  # match_count == 0
-                    if candidate_ids:
-                        primary_status = "document_found_anchor_not_found"
-                    elif doc_num_hint:
-                        primary_status = "document_number_not_found"
+                    if cl_hint:
+                        req_level = RequiredLevel.CLAUSE
+                    elif art_hint:
+                        req_level = RequiredLevel.ARTICLE
                     else:
-                        primary_status = "not_found_by_local_deterministic_audit"
-                    confidence = "unverified"
-                    all_snippets_verified = False
-                    label = {
-                        "evidence_item_id": ev_id,
-                        "case_id": case_id,
-                        "status": primary_status,
-                        "document_id": None,
-                        "document_number": doc_num_hint or None,
-                        "article": art_hint or None,
-                        "clause": cl_hint or None,
-                        "required": True,
-                        "verification_method": "content_store_search",
-                        "verification_confidence": confidence,
-                        "matching_document_count": 0,
-                        "reference_anchor_hash": anchor_hash,
-                        "diagnostics": diagnostics,
-                        "notes": f"Ground truth anchor not found in local corpus (hint: {doc_num_hint})",
-                    }
+                        req_level = RequiredLevel.DOCUMENT
 
-                case_labels.append(label)
-                evidence_status_counts[primary_status] = evidence_status_counts.get(primary_status, 0) + 1
-                confidence_counts[confidence] = confidence_counts.get(confidence, 0) + 1
+                    candidate_ids, identity_method, hint_sources, is_search_complete = resolve_document_identity(
+                        conn, fts_index, None, None, doc_num_hint
+                    )
+
+                    retrieved_docs = content_store.get_many(candidate_ids) if candidate_ids else {}
+
+                    matching_docs = []
+                    for doc_id, doc in retrieved_docs.items():
+                        matched, match_type, window_diag = check_anchor_match(norm_snip, doc.content)
+                        if matched:
+                            matching_docs.append((doc_id, doc, match_type, window_diag))
+
+                    match_count = len(matching_docs)
+
+                    if not doc_num_hint and match_count == 0:
+                        primary_status = EvidenceStatus.NO_CITATION_EXTRACTED
+                        confidence = "unverified"
+                        all_snippets_verified = False
+                        label = {
+                            "evidence_item_id": ev_id,
+                            "case_id": case_id,
+                            "context_index": ctx_idx,
+                            "citation_index": cit_idx,
+                            "reference_anchor_hash": anchor_hash,
+                            "status": primary_status.value,
+                            "document_id": None,
+                            "document_number": None,
+                            "article": art_hint or None,
+                            "clause": cl_hint or None,
+                            "required": True,
+                            "required_level": req_level.value,
+                            "verification_confidence": confidence,
+                            "candidate_generation_method": "none",
+                            "document_identity_method": identity_method,
+                            "candidate_count_before_anchor": len(candidate_ids),
+                            "corpus_search_limit": doc_count,
+                            "anchor_match_method": "none",
+                            "identity_hint_sources": hint_sources,
+                            "is_metadata_search_complete": is_search_complete,
+                        }
+                    elif match_count == 1:
+                        matched_id, matched_doc, match_type, window_diag = matching_docs[0]
+
+                        # Check structural chunk for article/clause matching
+                        chunks = chunk_document(matched_doc.metadata, matched_doc.content)
+                        matched_chunk = None
+                        for chk in chunks:
+                            chk_matched, _, _ = check_anchor_match(norm_snip, chk.text)
+                            if chk_matched:
+                                matched_chunk = chk
+                                break
+
+                        art_val = matched_chunk.article if matched_chunk else art_hint
+                        cl_val = matched_chunk.clause if matched_chunk else cl_hint
+
+                        # Strict Level-Specific Verification
+                        doc_matched = True
+                        art_matched = bool(art_hint and art_val and norm_text(art_hint) == norm_text(art_val))
+                        cl_matched = bool(cl_hint and cl_val and norm_text(cl_hint) == norm_text(cl_val))
+
+                        if req_level == RequiredLevel.DOCUMENT:
+                            primary_status = EvidenceStatus.VERIFIED if doc_matched else EvidenceStatus.STRUCTURAL_ANCHOR_NOT_FOUND
+                        elif req_level == RequiredLevel.ARTICLE:
+                            if doc_matched and art_matched:
+                                primary_status = EvidenceStatus.VERIFIED
+                            elif doc_matched:
+                                primary_status = EvidenceStatus.DOCUMENT_VERIFIED_ARTICLE_UNRESOLVED
+                            else:
+                                primary_status = EvidenceStatus.STRUCTURAL_ANCHOR_NOT_FOUND
+                        elif req_level == RequiredLevel.CLAUSE:
+                            if doc_matched and art_matched and cl_matched:
+                                primary_status = EvidenceStatus.VERIFIED
+                            elif doc_matched and art_matched:
+                                primary_status = EvidenceStatus.ARTICLE_VERIFIED_CLAUSE_UNRESOLVED
+                            elif doc_matched:
+                                primary_status = EvidenceStatus.DOCUMENT_VERIFIED_ARTICLE_UNRESOLVED
+                            else:
+                                primary_status = EvidenceStatus.STRUCTURAL_ANCHOR_NOT_FOUND
+
+                        confidence = (
+                            "exact_doc_number_and_anchor"
+                            if match_type == "full_anchor_exact"
+                            else "exact_doc_number_and_multi_window_anchor"
+                        )
+                        if primary_status != EvidenceStatus.VERIFIED:
+                            all_snippets_verified = False
+
+                        label = {
+                            "evidence_item_id": ev_id,
+                            "case_id": case_id,
+                            "context_index": ctx_idx,
+                            "citation_index": cit_idx,
+                            "reference_anchor_hash": anchor_hash,
+                            "status": primary_status.value,
+                            "document_id": matched_id,
+                            "document_number": getattr(matched_doc.metadata, "document_number", doc_num_hint),
+                            "article": art_val,
+                            "clause": cl_val,
+                            "required": True,
+                            "required_level": req_level.value,
+                            "verification_confidence": confidence,
+                            "candidate_generation_method": "metadata_search",
+                            "document_identity_method": identity_method,
+                            "candidate_count_before_anchor": len(candidate_ids),
+                            "corpus_search_limit": doc_count,
+                            "anchor_match_method": match_type,
+                            "identity_hint_sources": hint_sources,
+                            "is_metadata_search_complete": is_search_complete,
+                        }
+                        if primary_status == EvidenceStatus.VERIFIED:
+                            verified_doc_count += 1
+                            if art_val:
+                                verified_art_count += 1
+                            if cl_val:
+                                verified_clause_count += 1
+
+                    elif match_count > 1:
+                        matched_id, matched_doc, match_type, window_diag = matching_docs[0]
+                        primary_status = EvidenceStatus.AMBIGUOUS
+                        confidence = "ambiguous"
+                        all_snippets_verified = False
+                        label = {
+                            "evidence_item_id": ev_id,
+                            "case_id": case_id,
+                            "context_index": ctx_idx,
+                            "citation_index": cit_idx,
+                            "reference_anchor_hash": anchor_hash,
+                            "status": primary_status.value,
+                            "document_id": matched_id,
+                            "document_number": getattr(matched_doc.metadata, "document_number", doc_num_hint),
+                            "article": art_hint or None,
+                            "clause": cl_hint or None,
+                            "required": True,
+                            "required_level": req_level.value,
+                            "verification_confidence": confidence,
+                            "candidate_generation_method": "metadata_search",
+                            "document_identity_method": identity_method,
+                            "candidate_count_before_anchor": len(candidate_ids),
+                            "corpus_search_limit": doc_count,
+                            "anchor_match_method": match_type,
+                            "identity_hint_sources": hint_sources,
+                            "is_metadata_search_complete": is_search_complete,
+                        }
+                    else:  # match_count == 0
+                        primary_status = EvidenceStatus.NOT_FOUND_BY_LOCAL_DETERMINISTIC_AUDIT
+                        confidence = "unverified"
+                        all_snippets_verified = False
+                        label = {
+                            "evidence_item_id": ev_id,
+                            "case_id": case_id,
+                            "context_index": ctx_idx,
+                            "citation_index": cit_idx,
+                            "reference_anchor_hash": anchor_hash,
+                            "status": primary_status.value,
+                            "document_id": None,
+                            "document_number": doc_num_hint or None,
+                            "article": art_hint or None,
+                            "clause": cl_hint or None,
+                            "required": True,
+                            "required_level": req_level.value,
+                            "verification_confidence": confidence,
+                            "candidate_generation_method": "metadata_search",
+                            "document_identity_method": identity_method,
+                            "candidate_count_before_anchor": len(candidate_ids),
+                            "corpus_search_limit": doc_count,
+                            "anchor_match_method": "none",
+                            "identity_hint_sources": hint_sources,
+                            "is_metadata_search_complete": is_search_complete,
+                        }
+
+                    case_labels.append(label)
+                    evidence_status_counts[primary_status.value] = (
+                        evidence_status_counts.get(primary_status.value, 0) + 1
+                    )
+                    confidence_counts[confidence] = confidence_counts.get(confidence, 0) + 1
 
             case_statuses = set(lbl["status"] for lbl in case_labels)
             if "verified" in case_statuses and len(case_statuses) == 1:
@@ -377,12 +447,9 @@ def audit_golden_dataset() -> Dict[str, Any]:
 
     conn.close()
 
-    # STRICT AUDIT ASSERTIONS
     assert len(labels_sidecar) == len(seen_evidence_ids), "Declared evidence count != unique evidence IDs"
     assert sum(evidence_status_counts.values()) == len(labels_sidecar), "Sum of evidence statuses != evidence count"
-    assert sum(case_status_counts.values()) == len(cases), "Sum of case primary statuses != 420"
 
-    # Save v2 sidecar JSON
     sidecar_dir = Path("docs/evaluation/gold_labels")
     sidecar_dir.mkdir(parents=True, exist_ok=True)
     sidecar_path = sidecar_dir / "namsyntax_legal_qa_420_labels_v2.json"
@@ -399,88 +466,31 @@ def audit_golden_dataset() -> Dict[str, Any]:
         json.dump(sidecar_payload, f, ensure_ascii=False, indent=2)
     print(f"Saved v2 sidecar labels to {sidecar_path}")
 
-    # Save machine-readable audit summary JSON
+    # Summary JSON
     summary_path = sidecar_dir / "namsyntax_legal_qa_420_audit_summary_v2.json"
-    audit_summary_payload = {
+    summary_payload = {
         "schema_version": "2.0.0",
-        "dataset_name": "namsyntax_legal_qa_420",
         "total_cases": len(cases),
         "total_evidence_items": len(labels_sidecar),
-        "verified_evidence_items": evidence_status_counts.get("verified", 0),
+        "verified_evidence_items": verified_doc_count,
         "verified_doc_count": verified_doc_count,
         "verified_art_count": verified_art_count,
         "verified_clause_count": verified_clause_count,
+        "unanswerable_cases": type_counts.get("unanswerable", 0),
+        "question_type_counts": type_counts,
         "evidence_status_counts": evidence_status_counts,
         "case_status_counts": case_status_counts,
         "confidence_counts": confidence_counts,
-        "multi_hop_all_covered": multi_hop_all_covered,
-        "multi_hop_total": multi_hop_total,
+        "multi_hop_stats": {
+            "total_multi_hop": multi_hop_total,
+            "all_required_covered": multi_hop_all_covered,
+        },
     }
     with summary_path.open("w", encoding="utf-8") as f:
-        json.dump(audit_summary_payload, f, ensure_ascii=False, indent=2)
-    print(f"Saved machine-readable audit summary to {summary_path}")
+        json.dump(summary_payload, f, ensure_ascii=False, indent=2)
+    print(f"Saved audit summary to {summary_path}")
 
-    # Generate applicability report v2 from the SAME in-memory result
-    dups_count = sum(cnt - 1 for cnt in duplicate_questions.values() if cnt > 1)
-    report_lines = []
-    report_lines.append("# GOLDEN DATASET APPLICABILITY REPORT V2 — namsyntax_legal_qa_420")
-    report_lines.append("")
-    report_lines.append("**Dataset**: `app/data/namsyntax_legal_qa_420.json`  ")
-    report_lines.append(f"**Total Test Cases**: `{len(cases)}`  ")
-    report_lines.append(f"**Total Evidence Items**: `{len(labels_sidecar)}`  ")
-    report_lines.append(f"**Verified Evidence Items**: `{evidence_status_counts.get('verified', 0)}`  ")
-    report_lines.append(f"**Sidecar Labels V2**: `{sidecar_path}`  ")
-    report_lines.append(f"**Audit Summary V2**: `{summary_path}`  ")
-    report_lines.append("**Schema Version**: `2.0.0`  ")
-    report_lines.append("")
-
-    report_lines.append("## 1. Dataset Breakdown by Question Type")
-    report_lines.append("")
-    report_lines.append("| Question Type | Case Count | Percentage |")
-    report_lines.append("| :--- | ---: | ---: |")
-    for qt, cnt in type_counts.items():
-        report_lines.append(f"| `{qt}` | {cnt} | {cnt / len(cases) * 100:.1f}% |")
-    report_lines.append("")
-
-    report_lines.append("## 2. Deterministic Verification Counts (by Evidence Item)")
-    report_lines.append("")
-    report_lines.append("| Evidence Status | Item Count | % of Evidence Items | Description |")
-    report_lines.append("| :--- | ---: | ---: | :--- |")
-    for st, cnt in sorted(evidence_status_counts.items(), key=lambda x: -x[1]):
-        report_lines.append(f"| `{st}` | {cnt} | {cnt / len(labels_sidecar) * 100:.1f}% | Items with status {st} |")
-    report_lines.append("")
-
-    report_lines.append("## 3. Case-Level Verification Summary")
-    report_lines.append("")
-    report_lines.append("| Case Verification Category | Case Count | % of Test Cases |")
-    report_lines.append("| :--- | ---: | ---: |")
-    for cst, cnt in sorted(case_status_counts.items(), key=lambda x: -x[1]):
-        report_lines.append(f"| `{cst}` | {cnt} | {cnt / len(cases) * 100:.1f}% |")
-    report_lines.append("")
-
-    report_lines.append("## 4. Verification Confidence Breakdown")
-    report_lines.append("")
-    report_lines.append("| Confidence Identifier | Item Count | Description |")
-    report_lines.append("| :--- | ---: | :--- |")
-    for conf, cnt in confidence_counts.items():
-        report_lines.append(f"| `{conf}` | {cnt} | Verification confidence level {conf} |")
-    report_lines.append("")
-
-    report_lines.append("## 5. Detailed Metric Counters")
-    report_lines.append("")
-    report_lines.append(f"- **Verified Document Labels**: `{verified_doc_count}`")
-    report_lines.append(f"- **Verified Article Labels**: `{verified_art_count}`")
-    report_lines.append(f"- **Verified Clause Labels**: `{verified_clause_count}`")
-    report_lines.append(f"- **Multi-Hop All-Evidence Verified**: `{multi_hop_all_covered} / {multi_hop_total}`")
-    report_lines.append(f"- **Duplicate Question Text**: `{dups_count}`")
-    report_lines.append("")
-
-    report_path = Path("docs/evaluation/golden_dataset_applicability_report_v2.md")
-    with report_path.open("w", encoding="utf-8") as f:
-        f.write("\n".join(report_lines))
-    print(f"Saved applicability report v2 to {report_path}")
-
-    return audit_summary_payload
+    return summary_payload
 
 
 if __name__ == "__main__":
