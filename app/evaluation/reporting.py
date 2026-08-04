@@ -122,16 +122,18 @@ def generate_markdown_report(
         )
     lines.append("")
 
-    if stage_survival_summary and "average_candidates_per_stage" in stage_survival_summary:
+    if stage_survival_summary and "stage_statistics" in stage_survival_summary:
         lines.append("## 5. Stage-Level Candidate Survival & Retention")
         lines.append("")
-        lines.append("| Retrieval Stage | Query Active Rate | Avg Candidates per Query |")
-        lines.append("| :--- | ---: | ---: |")
-        surv = stage_survival_summary.get("stage_survival_rates", {})
-        avgs = stage_survival_summary.get("average_candidates_per_stage", {})
-        for stage_name, rate in surv.items():
-            avg_val = avgs.get(f"avg_{stage_name.replace('_chunks', '').replace('_candidates', '').replace('_generated', '')}", 0.0)
-            lines.append(f"| `{stage_name}` | {fmt_val(rate, is_pct=True)} | {avg_val:.2f} |")
+        lines.append("| Retrieval Stage | Active Rate | Avg All | Avg Active | Min | P50 | P95 | Max |")
+        lines.append("| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
+        stats = stage_survival_summary.get("stage_statistics", {})
+        for stage_name, sdict in stats.items():
+            lines.append(
+                f"| `{stage_name}` | {fmt_val(sdict.get('active_rate'), is_pct=True)} | "
+                f"{sdict.get('mean_per_all_queries'):.2f} | {sdict.get('mean_per_active_query'):.2f} | "
+                f"{sdict.get('min')} | {sdict.get('p50'):.2f} | {sdict.get('p95'):.2f} | {sdict.get('max')} |"
+            )
         lines.append("")
 
     if case_results:

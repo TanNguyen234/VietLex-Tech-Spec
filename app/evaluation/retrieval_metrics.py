@@ -9,21 +9,17 @@ from app.evaluation.schemas import CandidateChunk, GoldEvidence, GoldenCase, Ret
 def normalize_legal_identifier(value: Optional[str]) -> str:
     if not value:
         return ""
-    # Strip whitespace, convert to lower, normalize spaces
     normalized = " ".join(value.casefold().split())
-    # Remove dots after numbers in clause if any (e.g., "1." -> "1")
     normalized = re.sub(r"(\d+)\.", r"\1", normalized)
     return normalized
 
 
 def extract_citations_from_text(text: str) -> List[Dict[str, str]]:
-    """Helper to extract doc numbers, articles, clauses from text strings for diagnostic matching."""
     citations: List[Dict[str, str]] = []
-    # Match patterns like "Điều 3", "Khoản 8", "Luật 72/2020/QH14"
     doc_nums = re.findall(r"\b\d{1,4}/\d{4}/[A-ZĐ0-9-]+\b", text, re.IGNORECASE)
     articles = re.findall(r"\bĐiều\s+\d+[A-Za-z]?\b", text, re.IGNORECASE)
     clauses = re.findall(r"\bKhoản\s+\d+\b", text, re.IGNORECASE)
-    
+
     doc_num = doc_nums[0].upper() if doc_nums else ""
     art = articles[0] if articles else ""
     cl = clauses[0] if clauses else ""
@@ -87,23 +83,23 @@ def match_gold_evidence(
     return match_gold_to_stage_candidate(gold, candidate)
 
 
-
 def calculate_case_retrieval_metrics(
     gold_evidence: List[GoldEvidence],
     retrieved_chunks: List[CandidateChunk],
     stage_trace: Optional[RetrievalStageTrace] = None,
 ) -> Dict[str, Any]:
-    """Calculate Document Recall@K on merged/resolved doc candidates, Article/Clause Recall@K on stage chunks, and gold survival trace."""
-    if not gold_evidence or all(g.status == "missing_gold_label" for g in gold_evidence):
+    """Calculate Document Recall@K on doc candidates, Article/Clause Recall@K on stage chunks, and gold survival trace."""
+    # STRICT QUALITY METRIC RULE: Use ONLY verified labels for quality evaluation!
+    verified_gold = [g for g in gold_evidence if g.status == "verified"]
+    if not verified_gold:
         return {
             "has_gold_labels": False,
-            "skip_reason": "missing_gold_label"
+            "skip_reason": "no_verified_gold_label"
         }
 
-    valid_gold = [g for g in gold_evidence if g.status != "missing_gold_label"]
-    required_gold = [g for g in valid_gold if g.required]
+    required_gold = [g for g in verified_gold if g.required]
     if not required_gold:
-        required_gold = valid_gold
+        required_gold = verified_gold
     total_req = len(required_gold)
 
     # Document Recall @ K using merged/resolved document candidates
@@ -170,34 +166,73 @@ def calculate_case_retrieval_metrics(
             dcg += 1.0 / math.log2(rank + 1)
     ndcg_10 = (dcg / idcg) if idcg > 0 else 0.0
 
-    # Gold Evidence Stage Survival & First Loss Tracing
+    # Gold Evidence Stage Survival & Tracing
     gold_survival: List[Dict[str, Any]] = []
     if stage_trace:
-        stages_to_check = [
+        source_stages = [
             ("pinecone", stage_trace.pinecone_hits),
             ("fts", stage_trace.fts_hits),
-            ("merge", stage_trace.merged_document_candidates),
-            ("resolution", stage_trace.resolved_document_candidates),
-            ("structural", stage_trace.structural_chunks_generated),
-            ("local_selection", stage_trace.locally_selected_chunks),
-            ("reranker_input", stage_trace.reranker_input_chunks),
-            ("reranker_output", stage_trace.reranker_output_chunks),
-            ("final_evidence", stage_trace.final_evidence_chunks),
         ]
+        pipeline_stages = [
+            ("merge", stage_trace.merged_document_candidates, True),
+            ("resolution", stage_trace.resolved_document_candidates, True),
+            ("structural", stage_trace.structural_chunks_generated, False),
+            ("local_selection", stage_trace.locally_selected_chunks, False),
+            ("reranker_input", stage_trace.reranker_input_chunks, False),
+            ("reranker_output", stage_trace.reranker_output_chunks, False),
+            ("final_evidence", stage_trace.final_evidence_chunks, False),
+        ]
+
         for idx, g in enumerate(required_gold):
             presence: Dict[str, bool] = {}
-            first_loss = None
-            for stage_name, stage_candidates in stages_to_check:
-                present = any(match_gold_to_stage_candidate(g, c)[1] for c in stage_candidates)
+
+            in_pinecone = any(match_gold_to_stage_candidate(g, c)[0] for c in stage_trace.pinecone_hits)
+            in_fts = any(match_gold_to_stage_candidate(g, c)[0] for c in stage_trace.fts_hits)
+            presence["present_in_pinecone"] = in_pinecone
+            presence["present_in_fts"] = in_fts
+
+            if not in_pinecone and not in_fts:
+                first_missing_source = "both_missing"
+            elif not in_pinecone:
+                first_missing_source = "pinecone"
+            elif not in_fts:
+                first_missing_source = "fts"
+            else:
+                first_missing_source = "none"
+
+            first_loss_overall = None
+            first_loss_after_union = None
+
+            all_stages = [
+                ("pinecone", stage_trace.pinecone_hits, True),
+                ("fts", stage_trace.fts_hits, True),
+            ] + pipeline_stages
+
+            for stage_name, stage_candidates, is_doc_stage in all_stages:
+                present = any(
+                    match_gold_to_stage_candidate(g, c)[0 if is_doc_stage else 1]
+                    for c in stage_candidates
+                )
                 presence[f"present_in_{stage_name}"] = present
-                if not present and first_loss is None:
-                    first_loss = stage_name
+                if not present and first_loss_overall is None:
+                    first_loss_overall = stage_name
+
+            for stage_name, stage_candidates, is_doc_stage in pipeline_stages:
+                present = any(
+                    match_gold_to_stage_candidate(g, c)[0 if is_doc_stage else 1]
+                    for c in stage_candidates
+                )
+                if not present and first_loss_after_union is None:
+                    first_loss_after_union = stage_name
+
             gold_survival.append({
                 "gold_index": idx,
                 "gold_document_number": g.document_number,
                 "gold_article": g.article,
                 "presence": presence,
-                "first_loss_stage": first_loss or "none",
+                "first_loss_stage": first_loss_overall or "none",
+                "first_missing_source_stage": first_missing_source,
+                "first_loss_after_union_stage": first_loss_after_union or "none",
             })
 
     all_hop_coverage = (len(matched_art_indices) == total_req)
@@ -240,7 +275,7 @@ def aggregate_retrieval_metrics(
             "total_cases": total_cases,
             "scored_cases_count": 0,
             "skipped_cases_count": skipped_cases,
-            "skip_reasons": {"missing_gold_label": skipped_cases},
+            "skip_reasons": {"no_verified_gold_label": skipped_cases},
             "coverage": 0.0,
             "no_candidate_rate": (no_candidate_count / total_cases) if total_cases else 0.0,
             "retrieval_error_rate": (retrieval_error_count / total_cases) if total_cases else 0.0,
@@ -254,7 +289,7 @@ def aggregate_retrieval_metrics(
         }
 
     denom = len(scored_cases)
-    
+
     doc_recall_sums = {k: 0.0 for k in (1, 3, 5, 10, 24)}
     art_recall_sums = {k: 0.0 for k in (1, 3, 6)}
     clause_recall_sums = {k: 0.0 for k in (1, 3, 6)}
@@ -265,6 +300,8 @@ def aggregate_retrieval_metrics(
     partial_hop_sum = 0
 
     first_loss_distribution: Dict[str, int] = {}
+    first_missing_source_distribution: Dict[str, int] = {}
+    first_loss_after_union_distribution: Dict[str, int] = {}
 
     for c in scored_cases:
         m = c["metrics"]
@@ -285,13 +322,17 @@ def aggregate_retrieval_metrics(
 
         for g_surv in m.get("gold_stage_survival", []):
             fl = g_surv.get("first_loss_stage", "none")
+            fms = g_surv.get("first_missing_source_stage", "none")
+            flu = g_surv.get("first_loss_after_union_stage", "none")
             first_loss_distribution[fl] = first_loss_distribution.get(fl, 0) + 1
+            first_missing_source_distribution[fms] = first_missing_source_distribution.get(fms, 0) + 1
+            first_loss_after_union_distribution[flu] = first_loss_after_union_distribution.get(flu, 0) + 1
 
     return {
         "total_cases": total_cases,
         "scored_cases_count": denom,
         "skipped_cases_count": skipped_cases,
-        "skip_reasons": {"missing_gold_label": skipped_cases},
+        "skip_reasons": {"no_verified_gold_label": skipped_cases},
         "coverage": round(denom / total_cases, 4) if total_cases else 0.0,
         "no_candidate_rate": round(no_candidate_count / total_cases, 4) if total_cases else 0.0,
         "no_candidate_count": no_candidate_count,
@@ -308,47 +349,75 @@ def aggregate_retrieval_metrics(
         "all_hop_coverage_rate": round(all_hop_sum / denom, 4),
         "partial_hop_coverage_rate": round(partial_hop_sum / denom, 4),
         "first_loss_distribution": first_loss_distribution,
+        "first_missing_source_distribution": first_missing_source_distribution,
+        "first_loss_after_union_distribution": first_loss_after_union_distribution,
         "numerator_scored": denom,
         "denominator_total": total_cases,
     }
 
 
+def _quantile(sorted_vals: List[float], q: float) -> float:
+    if not sorted_vals:
+        return 0.0
+    if len(sorted_vals) == 1:
+        return sorted_vals[0]
+    idx = (len(sorted_vals) - 1) * q
+    lower = int(idx)
+    upper = lower + 1
+    weight = idx - lower
+    if upper >= len(sorted_vals):
+        return sorted_vals[-1]
+    return sorted_vals[lower] * (1.0 - weight) + sorted_vals[upper] * weight
+
+
 def calculate_stage_survival_rates(
     stage_traces: List[RetrievalStageTrace]
 ) -> Dict[str, Any]:
-    """Track candidate retention and survival across all stages of retrieval."""
+    """Track candidate retention, survival, and quantiles across all stages of retrieval."""
     if not stage_traces:
         return {}
 
     total = len(stage_traces)
-    stage_counts = {
-        "pinecone_hits": sum(1 for t in stage_traces if t.pinecone_hits),
-        "fts_hits": sum(1 for t in stage_traces if t.fts_hits),
-        "merged_document_candidates": sum(1 for t in stage_traces if t.merged_document_candidates),
-        "resolved_document_candidates": sum(1 for t in stage_traces if t.resolved_document_candidates),
-        "structural_chunks_generated": sum(1 for t in stage_traces if t.structural_chunks_generated),
-        "locally_selected_chunks": sum(1 for t in stage_traces if t.locally_selected_chunks),
-        "reranker_input_chunks": sum(1 for t in stage_traces if t.reranker_input_chunks),
-        "reranker_output_chunks": sum(1 for t in stage_traces if t.reranker_output_chunks),
-        "final_evidence_chunks": sum(1 for t in stage_traces if t.final_evidence_chunks),
+    stage_list_map = {
+        "pinecone_hits": [len(t.pinecone_hits) for t in stage_traces],
+        "fts_hits": [len(t.fts_hits) for t in stage_traces],
+        "merged_document_candidates": [len(t.merged_document_candidates) for t in stage_traces],
+        "resolved_document_candidates": [len(t.resolved_document_candidates) for t in stage_traces],
+        "structural_chunks_generated": [len(t.structural_chunks_generated) for t in stage_traces],
+        "locally_selected_chunks": [len(t.locally_selected_chunks) for t in stage_traces],
+        "reranker_input_chunks": [len(t.reranker_input_chunks) for t in stage_traces],
+        "reranker_output_chunks": [len(t.reranker_output_chunks) for t in stage_traces],
+        "final_evidence_chunks": [len(t.final_evidence_chunks) for t in stage_traces],
     }
 
-    avg_counts = {
-        "avg_pinecone_hits": sum(len(t.pinecone_hits) for t in stage_traces) / total,
-        "avg_fts_hits": sum(len(t.fts_hits) for t in stage_traces) / total,
-        "avg_merged_docs": sum(len(t.merged_document_candidates) for t in stage_traces) / total,
-        "avg_resolved_docs": sum(len(t.resolved_document_candidates) for t in stage_traces) / total,
-        "avg_structural_chunks": sum(len(t.structural_chunks_generated) for t in stage_traces) / total,
-        "avg_local_chunks": sum(len(t.locally_selected_chunks) for t in stage_traces) / total,
-        "avg_reranker_input_chunks": sum(len(t.reranker_input_chunks) for t in stage_traces) / total,
-        "avg_reranker_output_chunks": sum(len(t.reranker_output_chunks) for t in stage_traces) / total,
-        "avg_final_evidence_chunks": sum(len(t.final_evidence_chunks) for t in stage_traces) / total,
-    }
+    stage_counts = {stage: sum(1 for cnt in counts if cnt > 0) for stage, counts in stage_list_map.items()}
+
+    stats: Dict[str, Dict[str, Any]] = {}
+    for stage, counts in stage_list_map.items():
+        active_counts = [c for c in counts if c > 0]
+        sorted_all = sorted(counts)
+        sorted_active = sorted(active_counts) if active_counts else [0]
+
+        mean_all = sum(counts) / total
+        mean_active = sum(active_counts) / len(active_counts) if active_counts else 0.0
+
+        # INVARIANT: If active rate is 100%, average count MUST be > 0
+        if stage_counts[stage] == total and total > 0 and mean_all <= 0.0:
+            raise ValueError(f"Invariant violation: stage '{stage}' active rate is 100% but mean candidates is {mean_all}")
+
+        stats[stage] = {
+            "total_candidates": sum(counts),
+            "active_query_count": stage_counts[stage],
+            "active_rate": round(stage_counts[stage] / total, 4),
+            "mean_per_all_queries": round(mean_all, 2),
+            "mean_per_active_query": round(mean_active, 2),
+            "min": sorted_all[0] if sorted_all else 0,
+            "max": sorted_all[-1] if sorted_all else 0,
+            "p50": round(_quantile([float(v) for v in sorted_all], 0.50), 2),
+            "p95": round(_quantile([float(v) for v in sorted_all], 0.95), 2),
+        }
 
     return {
         "total_queries": total,
-        "stage_active_query_counts": stage_counts,
-        "stage_survival_rates": {stage: round(cnt / total, 4) for stage, cnt in stage_counts.items()},
-        "average_candidates_per_stage": {stage: round(val, 2) for stage, val in avg_counts.items()}
+        "stage_statistics": stats,
     }
-
