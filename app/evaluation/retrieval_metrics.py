@@ -83,13 +83,66 @@ def match_gold_evidence(
     return match_gold_to_stage_candidate(gold, candidate)
 
 
+def calculate_stage_candidate_metrics(
+    gold_list: List[GoldEvidence],
+    candidates: List[Any],
+    is_doc_stage: bool,
+    max_k_limit: Optional[int] = None,
+) -> Dict[str, Any]:
+    total_req = len(gold_list)
+    if total_req == 0:
+        return {
+            "candidate_count": len(candidates),
+            "scored_case_count": 0,
+            "verified_evidence_item_count": 0,
+        }
+
+    k_list = (1, 3, 5, 10, 24) if is_doc_stage else (1, 3, 6)
+    hits_at_k: Dict[int, int] = {k: 0 for k in k_list}
+    matched_indices: Set[int] = set()
+    first_rank: Optional[int] = None
+
+    for rank, cand in enumerate(candidates, start=1):
+        for idx, g in enumerate(gold_list):
+            doc_m, art_m, cl_m = match_gold_to_stage_candidate(g, cand)
+            is_hit = doc_m if is_doc_stage else art_m
+            if is_hit:
+                matched_indices.add(idx)
+                if first_rank is None:
+                    first_rank = rank
+
+        for k in k_list:
+            if rank <= k:
+                hits_at_k[k] = len(matched_indices)
+
+    mrr = 1.0 / first_rank if first_rank else 0.0
+
+    res: Dict[str, Any] = {
+        "candidate_count": len(candidates),
+        "scored_case_count": 1,
+        "verified_evidence_item_count": total_req,
+        "mrr": round(mrr, 4),
+    }
+
+    actual_limit = max_k_limit if max_k_limit is not None else len(candidates)
+
+    for k in k_list:
+        prefix = "doc_recall" if is_doc_stage else "article_recall"
+        key = f"{prefix}_at_{k}"
+        if actual_limit is not None and k > actual_limit:
+            res[key] = None
+            res[f"{key}_reason"] = "k_exceeds_effective_stage_limit"
+        else:
+            res[key] = round(hits_at_k[k] / total_req, 4)
+
+    return res
+
+
 def calculate_case_retrieval_metrics(
     gold_evidence: List[GoldEvidence],
     retrieved_chunks: List[CandidateChunk],
     stage_trace: Optional[RetrievalStageTrace] = None,
 ) -> Dict[str, Any]:
-    """Calculate Document Recall@K on doc candidates, Article/Clause Recall@K on stage chunks, and gold survival trace."""
-    # STRICT QUALITY METRIC RULE: Use ONLY verified labels for quality evaluation!
     verified_gold = [g for g in gold_evidence if g.status == "verified"]
     if not verified_gold:
         return {
@@ -101,6 +154,38 @@ def calculate_case_retrieval_metrics(
     if not required_gold:
         required_gold = verified_gold
     total_req = len(required_gold)
+
+    # Calculate metrics across stage trace if provided
+    stage_metrics: Dict[str, Any] = {}
+    if stage_trace:
+        stage_metrics["pinecone_document_metrics"] = calculate_stage_candidate_metrics(
+            required_gold, stage_trace.pinecone_hits, is_doc_stage=True
+        )
+        stage_metrics["fts_document_metrics"] = calculate_stage_candidate_metrics(
+            required_gold, stage_trace.fts_hits, is_doc_stage=True
+        )
+        stage_metrics["merged_document_metrics"] = calculate_stage_candidate_metrics(
+            required_gold, stage_trace.merged_document_candidates, is_doc_stage=True
+        )
+        stage_metrics["resolved_document_metrics"] = calculate_stage_candidate_metrics(
+            required_gold, stage_trace.resolved_document_candidates, is_doc_stage=True
+        )
+
+        stage_metrics["structural_chunk_metrics"] = calculate_stage_candidate_metrics(
+            required_gold, stage_trace.structural_chunks_generated, is_doc_stage=False
+        )
+        stage_metrics["local_selection_metrics"] = calculate_stage_candidate_metrics(
+            required_gold, stage_trace.locally_selected_chunks, is_doc_stage=False
+        )
+        stage_metrics["reranker_input_metrics"] = calculate_stage_candidate_metrics(
+            required_gold, stage_trace.reranker_input_chunks, is_doc_stage=False
+        )
+        stage_metrics["reranker_output_metrics"] = calculate_stage_candidate_metrics(
+            required_gold, stage_trace.reranker_output_chunks, is_doc_stage=False
+        )
+        stage_metrics["final_evidence_metrics"] = calculate_stage_candidate_metrics(
+            required_gold, stage_trace.final_evidence_chunks, is_doc_stage=False, max_k_limit=3
+        )
 
     # Document Recall @ K using merged/resolved document candidates
     doc_candidates = []
@@ -127,12 +212,14 @@ def calculate_case_retrieval_metrics(
                 doc_hits_at_k[k] = len(matched_doc_indices)
 
     # Final evidence Article / Clause recall & MRR
-    art_hits_at_k: Dict[int, int] = {k: 0 for k in (1, 3, 6)}
-    clause_hits_at_k: Dict[int, int] = {k: 0 for k in (1, 3, 6)}
+    art_hits_at_k: Dict[int, Optional[int]] = {1: 0, 3: 0, 6: None}
+    clause_hits_at_k: Dict[int, Optional[int]] = {1: 0, 3: 0, 6: None}
     matched_art_indices: Set[int] = set()
     matched_clause_indices: Set[int] = set()
     first_art_rank: Optional[int] = None
     first_clause_rank: Optional[int] = None
+
+    final_limit = len(retrieved_chunks)
 
     for rank, chunk in enumerate(retrieved_chunks, start=1):
         for idx, g in enumerate(required_gold):
@@ -146,12 +233,14 @@ def calculate_case_retrieval_metrics(
                 if first_clause_rank is None:
                     first_clause_rank = rank
 
-        for k in art_hits_at_k:
-            if rank <= k and len(matched_art_indices) > 0:
+        for k in (1, 3):
+            if rank <= k:
                 art_hits_at_k[k] = len(matched_art_indices)
-        for k in clause_hits_at_k:
-            if rank <= k and len(matched_clause_indices) > 0:
                 clause_hits_at_k[k] = len(matched_clause_indices)
+
+    if final_limit >= 6:
+        art_hits_at_k[6] = len(matched_art_indices)
+        clause_hits_at_k[6] = len(matched_clause_indices)
 
     mrr_doc = 1.0 / first_doc_rank if first_doc_rank else 0.0
     mrr_art = 1.0 / first_art_rank if first_art_rank else 0.0
@@ -169,10 +258,6 @@ def calculate_case_retrieval_metrics(
     # Gold Evidence Stage Survival & Tracing
     gold_survival: List[Dict[str, Any]] = []
     if stage_trace:
-        source_stages = [
-            ("pinecone", stage_trace.pinecone_hits),
-            ("fts", stage_trace.fts_hits),
-        ]
         pipeline_stages = [
             ("merge", stage_trace.merged_document_candidates, True),
             ("resolution", stage_trace.resolved_document_candidates, True),
@@ -239,33 +324,44 @@ def calculate_case_retrieval_metrics(
     partial_hop_coverage = (len(matched_art_indices) > 0)
     exact_reference_hit = (len(matched_art_indices) > 0)
 
+    art_rec_out: Dict[int, Any] = {
+        1: round(art_hits_at_k[1] / total_req, 4) if art_hits_at_k[1] is not None else None,
+        3: round(art_hits_at_k[3] / total_req, 4) if art_hits_at_k[3] is not None else None,
+        6: round(art_hits_at_k[6] / total_req, 4) if art_hits_at_k[6] is not None else None,
+    }
+    cl_rec_out: Dict[int, Any] = {
+        1: round(clause_hits_at_k[1] / total_req, 4) if clause_hits_at_k[1] is not None else None,
+        3: round(clause_hits_at_k[3] / total_req, 4) if clause_hits_at_k[3] is not None else None,
+        6: round(clause_hits_at_k[6] / total_req, 4) if clause_hits_at_k[6] is not None else None,
+    }
+
     return {
         "has_gold_labels": True,
-        "doc_recall": {k: doc_hits_at_k[k] / total_req for k in doc_hits_at_k},
-        "article_recall": {k: art_hits_at_k[k] / total_req for k in art_hits_at_k},
-        "clause_recall": {k: clause_hits_at_k[k] / total_req for k in clause_hits_at_k},
-        "mrr_doc": mrr_doc,
-        "mrr_article": mrr_art,
-        "mrr_clause": mrr_clause,
-        "ndcg_10": ndcg_10,
+        "doc_recall": {k: round(doc_hits_at_k[k] / total_req, 4) for k in doc_hits_at_k},
+        "article_recall": art_rec_out,
+        "clause_recall": cl_rec_out,
+        "article_recall_at_6_reason": "k_exceeds_effective_stage_limit" if art_rec_out[6] is None else None,
+        "mrr_doc": round(mrr_doc, 4),
+        "mrr_article": round(mrr_art, 4),
+        "mrr_clause": round(mrr_clause, 4),
+        "ndcg_10": round(ndcg_10, 4),
         "exact_reference_hit": exact_reference_hit,
         "all_hop_coverage": all_hop_coverage,
         "partial_hop_coverage": partial_hop_coverage,
         "matched_required_count": len(matched_art_indices),
         "total_required_count": total_req,
         "gold_stage_survival": gold_survival,
+        "stage_metrics": stage_metrics,
     }
 
 
 def aggregate_retrieval_metrics(
     case_results: List[Dict[str, Any]]
 ) -> Dict[str, Any]:
-    """Aggregate retrieval metrics across all cases with explicit numerator, denominator, coverage, and skip reasons."""
     total_cases = len(case_results)
     scored_cases = [c for c in case_results if c.get("metrics", {}).get("has_gold_labels")]
     skipped_cases = total_cases - len(scored_cases)
 
-    # Status counts
     no_candidate_count = sum(1 for c in case_results if c.get("status") == "no_candidate")
     retrieval_error_count = sum(1 for c in case_results if c.get("status") == "retrieval_error")
     reranker_error_count = sum(1 for c in case_results if c.get("status") == "reranker_error")
@@ -289,10 +385,12 @@ def aggregate_retrieval_metrics(
         }
 
     denom = len(scored_cases)
+    total_verified_evidence_items = sum(c["metrics"]["total_required_count"] for c in scored_cases)
 
     doc_recall_sums = {k: 0.0 for k in (1, 3, 5, 10, 24)}
-    art_recall_sums = {k: 0.0 for k in (1, 3, 6)}
-    clause_recall_sums = {k: 0.0 for k in (1, 3, 6)}
+    art_recall_sums = {k: 0.0 for k in (1, 3, 6) if any(c["metrics"]["article_recall"].get(k) is not None for c in scored_cases)}
+    clause_recall_sums = {k: 0.0 for k in (1, 3, 6) if any(c["metrics"]["clause_recall"].get(k) is not None for c in scored_cases)}
+
     mrr_sum = 0.0
     ndcg_sum = 0.0
     exact_hit_sum = 0
@@ -306,11 +404,15 @@ def aggregate_retrieval_metrics(
     for c in scored_cases:
         m = c["metrics"]
         for k in doc_recall_sums:
-            doc_recall_sums[k] += m["doc_recall"][k]
-        for k in art_recall_sums:
-            art_recall_sums[k] += m["article_recall"][k]
-        for k in clause_recall_sums:
-            clause_recall_sums[k] += m["clause_recall"][k]
+            if m["doc_recall"].get(k) is not None:
+                doc_recall_sums[k] += m["doc_recall"][k]
+
+        for k in (1, 3, 6):
+            if k in art_recall_sums and m["article_recall"].get(k) is not None:
+                art_recall_sums[k] += m["article_recall"][k]
+            if k in clause_recall_sums and m["clause_recall"].get(k) is not None:
+                clause_recall_sums[k] += m["clause_recall"][k]
+
         mrr_sum += m["mrr_article"]
         ndcg_sum += m["ndcg_10"]
         if m["exact_reference_hit"]:
@@ -328,9 +430,24 @@ def aggregate_retrieval_metrics(
             first_missing_source_distribution[fms] = first_missing_source_distribution.get(fms, 0) + 1
             first_loss_after_union_distribution[flu] = first_loss_after_union_distribution.get(flu, 0) + 1
 
+    art_recall_out: Dict[int, Any] = {}
+    for k in (1, 3, 6):
+        if k in art_recall_sums:
+            art_recall_out[k] = round(art_recall_sums[k] / denom, 4)
+        else:
+            art_recall_out[k] = None
+
+    clause_recall_out: Dict[int, Any] = {}
+    for k in (1, 3, 6):
+        if k in clause_recall_sums:
+            clause_recall_out[k] = round(clause_recall_sums[k] / denom, 4)
+        else:
+            clause_recall_out[k] = None
+
     return {
         "total_cases": total_cases,
         "scored_cases_count": denom,
+        "verified_evidence_item_count": total_verified_evidence_items,
         "skipped_cases_count": skipped_cases,
         "skip_reasons": {"no_verified_gold_label": skipped_cases},
         "coverage": round(denom / total_cases, 4) if total_cases else 0.0,
@@ -341,8 +458,9 @@ def aggregate_retrieval_metrics(
         "reranker_error_rate": round(reranker_error_count / total_cases, 4) if total_cases else 0.0,
         "reranker_error_count": reranker_error_count,
         "doc_recall": {k: round(doc_recall_sums[k] / denom, 4) for k in doc_recall_sums},
-        "article_recall": {k: round(art_recall_sums[k] / denom, 4) for k in art_recall_sums},
-        "clause_recall": {k: round(clause_recall_sums[k] / denom, 4) for k in clause_recall_sums},
+        "article_recall": art_recall_out,
+        "clause_recall": clause_recall_out,
+        "article_recall_at_6_reason": "k_exceeds_effective_stage_limit" if art_recall_out[6] is None else None,
         "mrr_article": round(mrr_sum / denom, 4),
         "ndcg_10": round(ndcg_sum / denom, 4),
         "exact_reference_hit_rate": round(exact_hit_sum / denom, 4),
@@ -373,7 +491,6 @@ def _quantile(sorted_vals: List[float], q: float) -> float:
 def calculate_stage_survival_rates(
     stage_traces: List[RetrievalStageTrace]
 ) -> Dict[str, Any]:
-    """Track candidate retention, survival, and quantiles across all stages of retrieval."""
     if not stage_traces:
         return {}
 
@@ -401,7 +518,6 @@ def calculate_stage_survival_rates(
         mean_all = sum(counts) / total
         mean_active = sum(active_counts) / len(active_counts) if active_counts else 0.0
 
-        # INVARIANT: If active rate is 100%, average count MUST be > 0
         if stage_counts[stage] == total and total > 0 and mean_all <= 0.0:
             raise ValueError(f"Invariant violation: stage '{stage}' active rate is 100% but mean candidates is {mean_all}")
 
