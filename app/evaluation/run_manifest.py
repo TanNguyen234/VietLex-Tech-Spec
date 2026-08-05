@@ -55,16 +55,36 @@ def get_git_provenance() -> Tuple[str, bool, bool, bool, bool, Optional[str], st
             check=False,
         )
         untracked_files: list[str] = []
+        def _is_excluded(path_str: str) -> bool:
+            if path_str.startswith(".env"):
+                return True
+            if path_str.startswith("docs/evaluation/preflight/"):
+                return True
+            if path_str.startswith("docs/evaluation/runs/"):
+                return True
+            if path_str.startswith("docs/evaluation/evaluation_framework_") and path_str.endswith("_report.md"):
+                return True
+            if path_str.endswith(".tmp"):
+                return True
+            if "__pycache__/" in path_str:
+                return True
+            if ".pytest_cache/" in path_str:
+                return True
+            return False
+
         if status_res.returncode == 0 and status_res.stdout.strip():
             for line in status_res.stdout.splitlines():
                 if not line.strip():
                     continue
                 code = line[:2]
                 filepath = line[3:].strip()
+                
+                if _is_excluded(filepath):
+                    continue
+
                 if code.startswith("??"):
                     git_untracked_dirty = True
-                    if not filepath.startswith(".env") and not filepath.startswith("docs/evaluation/runs"):
-                        untracked_files.append(filepath)
+                    untracked_files.append(filepath)
                 else:
                     if code[0] in "MADRCU":
                         git_staged_dirty = True
@@ -74,8 +94,17 @@ def get_git_provenance() -> Tuple[str, bool, bool, bool, bool, Optional[str], st
         git_dirty = git_tracked_dirty or git_staged_dirty or git_untracked_dirty
 
         if git_dirty:
+            diff_args = [
+                "git", "diff", "HEAD", "--", ".",
+                ":!docs/evaluation/preflight",
+                ":!docs/evaluation/runs",
+                ":!docs/evaluation/evaluation_framework_*_report.md",
+                ":!*.tmp",
+                ":!__pycache__",
+                ":!.pytest_cache"
+            ]
             diff_res = subprocess.run(
-                ["git", "diff", "HEAD"],
+                diff_args,
                 capture_output=True,
                 text=True,
                 encoding="utf-8",
@@ -85,8 +114,17 @@ def get_git_provenance() -> Tuple[str, bool, bool, bool, bool, Optional[str], st
             )
             tracked_diff = diff_res.stdout if diff_res.returncode == 0 else ""
 
+            staged_args = [
+                "git", "diff", "--cached", "--", ".",
+                ":!docs/evaluation/preflight",
+                ":!docs/evaluation/runs",
+                ":!docs/evaluation/evaluation_framework_*_report.md",
+                ":!*.tmp",
+                ":!__pycache__",
+                ":!.pytest_cache"
+            ]
             staged_res = subprocess.run(
-                ["git", "diff", "--cached"],
+                staged_args,
                 capture_output=True,
                 text=True,
                 encoding="utf-8",

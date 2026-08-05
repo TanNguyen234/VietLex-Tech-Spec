@@ -64,6 +64,7 @@ def select_evaluation_cases(
     cases: List[GoldenCase],
     gold_policy: str,
     include_unanswerable: bool = False,
+    limit: Optional[int] = None,
 ) -> CaseSelectionResult:
     selected_cases: List[GoldenCase] = []
     selected_case_ids: List[str] = []
@@ -118,6 +119,8 @@ def select_evaluation_cases(
             selected_cases.append(case)
             selected_case_ids.append(case.case_id)
             verified_evidence_count += len(verified_labels)
+            if limit and len(selected_cases) >= limit:
+                break
 
             if len(required_labels) > 0 and len(required_verified) == len(required_labels):
                 if case.question_type == "multi-hop":

@@ -161,31 +161,37 @@ def decide_evidence_verification(
     art_hint: str,
     cl_hint: str,
     matched_chunk,
-) -> EvidenceStatus:
-    art_val = matched_chunk.article if matched_chunk else None
-    cl_val = matched_chunk.clause if matched_chunk else None
+) -> tuple[EvidenceStatus, Optional[str], Optional[str]]:
+    if not matched_chunk:
+        return EvidenceStatus.STRUCTURAL_ANCHOR_NOT_FOUND, None, None
+
+    art_val = matched_chunk.article
+    cl_val = matched_chunk.clause
 
     doc_matched = True
     art_matched = bool(art_hint and art_val and norm_text(art_hint) == norm_text(art_val))
     cl_matched = bool(cl_hint and cl_val and norm_text(cl_hint) == norm_text(cl_val))
 
     if req_level == RequiredLevel.DOCUMENT:
-        return EvidenceStatus.VERIFIED if doc_matched else EvidenceStatus.STRUCTURAL_ANCHOR_NOT_FOUND
+        return EvidenceStatus.VERIFIED, art_val, cl_val
     elif req_level == RequiredLevel.ARTICLE:
-        if doc_matched and art_matched:
-            return EvidenceStatus.VERIFIED
-        elif doc_matched:
-            return EvidenceStatus.DOCUMENT_VERIFIED_ARTICLE_UNRESOLVED
-        return EvidenceStatus.STRUCTURAL_ANCHOR_NOT_FOUND
+        if art_matched:
+            return EvidenceStatus.VERIFIED, art_val, cl_val
+        if not art_hint:
+            return EvidenceStatus.VERIFIED, art_val, cl_val
+        return EvidenceStatus.DOCUMENT_VERIFIED_ARTICLE_UNRESOLVED, art_val, cl_val
     elif req_level == RequiredLevel.CLAUSE:
-        if doc_matched and art_matched and cl_matched:
-            return EvidenceStatus.VERIFIED
-        elif doc_matched and art_matched:
-            return EvidenceStatus.ARTICLE_VERIFIED_CLAUSE_UNRESOLVED
-        elif doc_matched:
-            return EvidenceStatus.DOCUMENT_VERIFIED_ARTICLE_UNRESOLVED
-        return EvidenceStatus.STRUCTURAL_ANCHOR_NOT_FOUND
-    return EvidenceStatus.STRUCTURAL_ANCHOR_NOT_FOUND
+        if art_matched and cl_matched:
+            return EvidenceStatus.VERIFIED, art_val, cl_val
+        if art_matched and not cl_hint:
+            return EvidenceStatus.VERIFIED, art_val, cl_val
+        if not art_hint and not cl_hint:
+            return EvidenceStatus.VERIFIED, art_val, cl_val
+        if art_matched:
+            return EvidenceStatus.ARTICLE_VERIFIED_CLAUSE_UNRESOLVED, art_val, cl_val
+        return EvidenceStatus.DOCUMENT_VERIFIED_ARTICLE_UNRESOLVED, art_val, cl_val
+        
+    return EvidenceStatus.STRUCTURAL_ANCHOR_NOT_FOUND, art_val, cl_val
 
 
 def audit_golden_dataset() -> Dict[str, Any]:
@@ -367,7 +373,7 @@ def audit_golden_dataset() -> Dict[str, Any]:
                                 matched_chunk = chk
                                 break
 
-                        primary_status = decide_evidence_verification(
+                        primary_status, art_val, cl_val = decide_evidence_verification(
                             req_level, art_hint, cl_hint, matched_chunk
                         )
 
