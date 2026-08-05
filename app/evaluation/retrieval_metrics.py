@@ -25,45 +25,42 @@ def normalize_legal_identifier(value: Optional[str]) -> str:
 def extract_citations_from_text(text: str) -> List[Dict[str, str]]:
     citations: List[Dict[str, str]] = []
     
-    doc_nums = [(m.start(), m.group().upper()) for m in re.finditer(r"\b\d{1,4}/\d{4}/[A-ZĐ0-9-]+\b", text, re.IGNORECASE)]
-    articles = [(m.start(), m.group()) for m in re.finditer(r"\bĐiều\s+\d+[A-Za-z]?\b", text, re.IGNORECASE)]
-    clauses = [(m.start(), m.group()) for m in re.finditer(r"\bKhoản\s+\d+\b", text, re.IGNORECASE)]
-    
-    if not doc_nums and not articles and not clauses:
-        return citations
-
-    if not doc_nums:
-        # Standalone structural chunks
-        citations.append({
-            "document_number": "",
-            "article": articles[0][1] if articles else "",
-            "clause": clauses[0][1] if clauses else ""
-        })
-        return citations
-
-    for doc_pos, doc_num in doc_nums:
-        assoc_art = ""
-        assoc_cl = ""
+    items = []
+    for m in re.finditer(r"\b\d{1,4}/\d{4}/[A-ZĐ0-9-]+\b", text, re.IGNORECASE):
+        items.append((m.start(), "doc", m.group().upper()))
+    for m in re.finditer(r"\bĐiều\s+\d+[A-Za-z]?\b", text, re.IGNORECASE):
+        items.append((m.start(), "art", m.group()))
+    for m in re.finditer(r"\bKhoản\s+\d+\b", text, re.IGNORECASE):
+        items.append((m.start(), "clause", m.group()))
         
-        # Find nearest preceding structural hint within 100 characters
-        best_art = None
-        for art_pos, art in articles:
-            if art_pos < doc_pos and (doc_pos - art_pos) < 100:
-                best_art = art
-        if best_art:
-            assoc_art = best_art
+    if not items:
+        return citations
+
+    items.sort(key=lambda x: x[0])
+    
+    current_art = ""
+    current_cl = ""
+    for pos, type_, val in items:
+        if type_ == "clause":
+            current_cl = val
+        elif type_ == "art":
+            current_art = val
+        elif type_ == "doc":
+            cit = {
+                "document_number": val,
+                "article": current_art,
+                "clause": current_cl
+            }
+            if cit not in citations:
+                citations.append(cit)
+            current_art = ""
+            current_cl = ""
             
-        best_cl = None
-        for cl_pos, cl in clauses:
-            if cl_pos < doc_pos and (doc_pos - cl_pos) < 150:
-                best_cl = cl
-        if best_cl:
-            assoc_cl = best_cl
-            
+    if current_art or current_cl:
         cit = {
-            "document_number": doc_num,
-            "article": assoc_art,
-            "clause": assoc_cl
+            "document_number": "",
+            "article": current_art,
+            "clause": current_cl
         }
         if cit not in citations:
             citations.append(cit)
@@ -422,7 +419,7 @@ def aggregate_retrieval_metrics(
         vals = [metric_fn(c["metrics"]) for c in scored_cases if metric_fn(c["metrics"]) is not None]
         return round(sum(vals) / len(vals), 4) if vals else None
 
-    return {
+    result = {
         "total_cases": total_cases,
         "scored_cases_count": scored_count,
         "skipped_cases_count": total_cases - scored_count,
@@ -457,10 +454,21 @@ def aggregate_retrieval_metrics(
                 metrics = c.get("metrics", {})
                 sm = metrics.get("stage_metrics", {})
                 sm_stage = sm.get(stage, {})
-                keys.update(k for k, v in sm_stage.items() if isinstance(v, (int, float)) and k != "scored_case_count")
+                keys.update(k for k, v in sm_stage.items() if isinstance(v, (int, float)) and k != "scored_case_count" and not k.startswith("micro_"))
             
             for k in keys:
                 aggr_stages[stage][f"macro_{k}"] = macro_avg(lambda m: m.get("stage_metrics", {}).get(stage, {}).get(k))
+
+            # Micro metrics for stage survival
+            total_gold = sum(c["metrics"].get("stage_metrics", {}).get(stage, {}).get("total_gold_items", 0) for c in scored_cases)
+            if total_gold > 0:
+                found_doc = sum(c["metrics"].get("stage_metrics", {}).get(stage, {}).get("found_gold_documents", 0) for c in scored_cases)
+                found_art = sum(c["metrics"].get("stage_metrics", {}).get(stage, {}).get("found_gold_articles", 0) for c in scored_cases)
+                found_clause = sum(c["metrics"].get("stage_metrics", {}).get(stage, {}).get("found_gold_clauses", 0) for c in scored_cases)
+                aggr_stages[stage]["micro_doc_survival_rate"] = round(found_doc / total_gold, 4)
+                aggr_stages[stage]["micro_article_survival_rate"] = round(found_art / total_gold, 4)
+                aggr_stages[stage]["micro_clause_survival_rate"] = round(found_clause / total_gold, 4)
+
         result["stage_metrics"] = aggr_stages
 
     return result

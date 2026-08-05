@@ -113,7 +113,7 @@ class FakeReranker:
         self.error = error
         self.calls: list[tuple[str, list[str]]] = []
 
-    async def rerank(self, query: str, documents: list[str], mode: str = "current"):
+    async def rerank(self, query: str, documents: list[str], mode: str = "current", **kwargs):
         self.calls.append((query, documents))
         if self.error is not None:
             raise self.error

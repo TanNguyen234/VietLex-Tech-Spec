@@ -603,6 +603,7 @@ class LegalRetriever:
         rerank_input_limit = getattr(profile, "rerank_input_limit", getattr(self._settings, "RERANK_INPUT_LIMIT", 24))
         final_evidence_limit = getattr(profile, "final_evidence_limit", getattr(self._settings, "FINAL_EVIDENCE_LIMIT", 3))
         final_context_token_limit = getattr(profile, "final_context_token_limit", getattr(self._settings, "LLM_CONTEXT_MAX_TOKENS", 720))
+        rerank_return_limit = getattr(profile, "rerank_return_limit", None)
         intent_scoring_enabled = getattr(profile, "intent_scoring_enabled", getattr(self._settings, "INTENT_SCORING_ENABLED", True))
         reranker_mode = getattr(profile, "reranker_mode", "current")
 
