@@ -44,15 +44,15 @@ class GoldEvidence(BaseModel):
 
 
 class RetrievalStageCapacities(BaseModel):
-    pinecone_document_limit: int = 24
-    fts_document_limit: int = 24
-    merged_document_limit: int = 24
-    resolved_document_limit: int = 16
-    structural_chunk_limit: int = 64
-    local_chunks_limit: int = 4
-    rerank_input_limit: int = 24
-    rerank_return_limit: int = 12
-    final_evidence_limit: int = 3
+    pinecone_document_limit: Optional[int] = 24
+    fts_document_limit: Optional[int] = 24
+    merged_document_limit: Optional[int] = 24
+    resolved_document_limit: Optional[int] = 16
+    structural_chunk_limit: Optional[int] = 64
+    local_chunks_limit: Optional[int] = 4
+    rerank_input_limit: Optional[int] = 24
+    rerank_return_limit: Optional[int] = 12
+    final_evidence_limit: Optional[int] = 3
 
 
 class GoldenCase(BaseModel):
