@@ -25,19 +25,47 @@ def norm_text(text: str) -> str:
 
 def extract_legal_citations_from_text(text: str) -> List[Dict[str, str]]:
     citations = []
-    doc_nums = re.findall(r"\b\d{1,4}/\d{4}/[A-ZĐ0-9-]+\b", text, re.IGNORECASE)
-    articles = re.findall(r"\bĐiều\s+\d+[A-Za-z]?\b", text, re.IGNORECASE)
-    clauses = re.findall(r"\bKhoản\s+\d+\b", text, re.IGNORECASE)
+    doc_nums = [(m.start(), m.group().upper()) for m in re.finditer(r"\b\d{1,4}/\d{4}/[A-ZĐ0-9-]+\b", text, re.IGNORECASE)]
+    articles = [(m.start(), m.group()) for m in re.finditer(r"\bĐiều\s+\d+[A-Za-z]?\b", text, re.IGNORECASE)]
+    clauses = [(m.start(), m.group()) for m in re.finditer(r"\bKhoản\s+\d+\b", text, re.IGNORECASE)]
 
-    doc_num = doc_nums[0].upper() if doc_nums else ""
-    art = articles[0] if articles else ""
-    cl = clauses[0] if clauses else ""
-    if doc_num or art or cl:
+    if not doc_nums and not articles and not clauses:
+        return citations
+
+    if not doc_nums:
         citations.append({
-            "document_number": doc_num,
-            "article": art,
-            "clause": cl,
+            "document_number": "",
+            "article": articles[0][1] if articles else "",
+            "clause": clauses[0][1] if clauses else ""
         })
+        return citations
+
+    for doc_pos, doc_num in doc_nums:
+        assoc_art = ""
+        assoc_cl = ""
+        
+        best_art = None
+        for art_pos, art in articles:
+            if art_pos < doc_pos and (doc_pos - art_pos) < 100:
+                best_art = art
+        if best_art:
+            assoc_art = best_art
+            
+        best_cl = None
+        for cl_pos, cl in clauses:
+            if cl_pos < doc_pos and (doc_pos - cl_pos) < 150:
+                best_cl = cl
+        if best_cl:
+            assoc_cl = best_cl
+            
+        cit = {
+            "document_number": doc_num,
+            "article": assoc_art,
+            "clause": assoc_cl
+        }
+        if cit not in citations:
+            citations.append(cit)
+            
     return citations
 
 
@@ -126,6 +154,38 @@ def check_anchor_match(snippet: str, content: str) -> Tuple[bool, str, Dict[str,
             return True, "multi_window_agreement", window_diag
 
     return False, "none", {}
+
+
+def decide_evidence_verification(
+    req_level: RequiredLevel,
+    art_hint: str,
+    cl_hint: str,
+    matched_chunk,
+) -> EvidenceStatus:
+    art_val = matched_chunk.article if matched_chunk else None
+    cl_val = matched_chunk.clause if matched_chunk else None
+
+    doc_matched = True
+    art_matched = bool(art_hint and art_val and norm_text(art_hint) == norm_text(art_val))
+    cl_matched = bool(cl_hint and cl_val and norm_text(cl_hint) == norm_text(cl_val))
+
+    if req_level == RequiredLevel.DOCUMENT:
+        return EvidenceStatus.VERIFIED if doc_matched else EvidenceStatus.STRUCTURAL_ANCHOR_NOT_FOUND
+    elif req_level == RequiredLevel.ARTICLE:
+        if doc_matched and art_matched:
+            return EvidenceStatus.VERIFIED
+        elif doc_matched:
+            return EvidenceStatus.DOCUMENT_VERIFIED_ARTICLE_UNRESOLVED
+        return EvidenceStatus.STRUCTURAL_ANCHOR_NOT_FOUND
+    elif req_level == RequiredLevel.CLAUSE:
+        if doc_matched and art_matched and cl_matched:
+            return EvidenceStatus.VERIFIED
+        elif doc_matched and art_matched:
+            return EvidenceStatus.ARTICLE_VERIFIED_CLAUSE_UNRESOLVED
+        elif doc_matched:
+            return EvidenceStatus.DOCUMENT_VERIFIED_ARTICLE_UNRESOLVED
+        return EvidenceStatus.STRUCTURAL_ANCHOR_NOT_FOUND
+    return EvidenceStatus.STRUCTURAL_ANCHOR_NOT_FOUND
 
 
 def audit_golden_dataset() -> Dict[str, Any]:
@@ -307,32 +367,9 @@ def audit_golden_dataset() -> Dict[str, Any]:
                                 matched_chunk = chk
                                 break
 
-                        art_val = matched_chunk.article if matched_chunk else art_hint
-                        cl_val = matched_chunk.clause if matched_chunk else cl_hint
-
-                        # Strict Level-Specific Verification
-                        doc_matched = True
-                        art_matched = bool(art_hint and art_val and norm_text(art_hint) == norm_text(art_val))
-                        cl_matched = bool(cl_hint and cl_val and norm_text(cl_hint) == norm_text(cl_val))
-
-                        if req_level == RequiredLevel.DOCUMENT:
-                            primary_status = EvidenceStatus.VERIFIED if doc_matched else EvidenceStatus.STRUCTURAL_ANCHOR_NOT_FOUND
-                        elif req_level == RequiredLevel.ARTICLE:
-                            if doc_matched and art_matched:
-                                primary_status = EvidenceStatus.VERIFIED
-                            elif doc_matched:
-                                primary_status = EvidenceStatus.DOCUMENT_VERIFIED_ARTICLE_UNRESOLVED
-                            else:
-                                primary_status = EvidenceStatus.STRUCTURAL_ANCHOR_NOT_FOUND
-                        elif req_level == RequiredLevel.CLAUSE:
-                            if doc_matched and art_matched and cl_matched:
-                                primary_status = EvidenceStatus.VERIFIED
-                            elif doc_matched and art_matched:
-                                primary_status = EvidenceStatus.ARTICLE_VERIFIED_CLAUSE_UNRESOLVED
-                            elif doc_matched:
-                                primary_status = EvidenceStatus.DOCUMENT_VERIFIED_ARTICLE_UNRESOLVED
-                            else:
-                                primary_status = EvidenceStatus.STRUCTURAL_ANCHOR_NOT_FOUND
+                        primary_status = decide_evidence_verification(
+                            req_level, art_hint, cl_hint, matched_chunk
+                        )
 
                         confidence = (
                             "exact_doc_number_and_anchor"
