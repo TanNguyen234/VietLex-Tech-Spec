@@ -24,19 +24,50 @@ def normalize_legal_identifier(value: Optional[str]) -> str:
 
 def extract_citations_from_text(text: str) -> List[Dict[str, str]]:
     citations: List[Dict[str, str]] = []
-    doc_nums = re.findall(r"\b\d{1,4}/\d{4}/[A-ZĐ0-9-]+\b", text, re.IGNORECASE)
-    articles = re.findall(r"\bĐiều\s+\d+[A-Za-z]?\b", text, re.IGNORECASE)
-    clauses = re.findall(r"\bKhoản\s+\d+\b", text, re.IGNORECASE)
+    
+    doc_nums = [(m.start(), m.group().upper()) for m in re.finditer(r"\b\d{1,4}/\d{4}/[A-ZĐ0-9-]+\b", text, re.IGNORECASE)]
+    articles = [(m.start(), m.group()) for m in re.finditer(r"\bĐiều\s+\d+[A-Za-z]?\b", text, re.IGNORECASE)]
+    clauses = [(m.start(), m.group()) for m in re.finditer(r"\bKhoản\s+\d+\b", text, re.IGNORECASE)]
+    
+    if not doc_nums and not articles and not clauses:
+        return citations
 
-    doc_num = doc_nums[0].upper() if doc_nums else ""
-    art = articles[0] if articles else ""
-    cl = clauses[0] if clauses else ""
-    if doc_num or art or cl:
+    if not doc_nums:
+        # Standalone structural chunks
         citations.append({
-            "document_number": doc_num,
-            "article": art,
-            "clause": cl
+            "document_number": "",
+            "article": articles[0][1] if articles else "",
+            "clause": clauses[0][1] if clauses else ""
         })
+        return citations
+
+    for doc_pos, doc_num in doc_nums:
+        assoc_art = ""
+        assoc_cl = ""
+        
+        # Find nearest preceding structural hint within 100 characters
+        best_art = None
+        for art_pos, art in articles:
+            if art_pos < doc_pos and (doc_pos - art_pos) < 100:
+                best_art = art
+        if best_art:
+            assoc_art = best_art
+            
+        best_cl = None
+        for cl_pos, cl in clauses:
+            if cl_pos < doc_pos and (doc_pos - cl_pos) < 150:
+                best_cl = cl
+        if best_cl:
+            assoc_cl = best_cl
+            
+        cit = {
+            "document_number": doc_num,
+            "article": assoc_art,
+            "clause": assoc_cl
+        }
+        if cit not in citations:
+            citations.append(cit)
+            
     return citations
 
 
@@ -142,7 +173,7 @@ def calculate_stage_candidate_metrics(
 
         for k in k_list:
             key = f"doc_recall_at_{k}"
-            if k > stage_capacity:
+            if stage_capacity is not None and k > stage_capacity:
                 res[key] = None
                 res[f"{key}_reason"] = "k_exceeds_effective_stage_limit"
             elif len(doc_gold) == 0:
@@ -195,7 +226,7 @@ def calculate_stage_candidate_metrics(
 
         for k in k_list:
             art_key = f"article_recall_at_{k}"
-            if k > stage_capacity:
+            if stage_capacity is not None and k > stage_capacity:
                 res[art_key] = None
                 res[f"{art_key}_reason"] = "k_exceeds_effective_stage_limit"
             elif len(art_gold) == 0:
@@ -205,7 +236,7 @@ def calculate_stage_candidate_metrics(
                 res[art_key] = round(art_hits_at_k[k] / len(art_gold), 4)
 
             cl_key = f"clause_recall_at_{k}"
-            if k > stage_capacity:
+            if stage_capacity is not None and k > stage_capacity:
                 res[cl_key] = None
                 res[f"{cl_key}_reason"] = "k_exceeds_effective_stage_limit"
             elif len(clause_gold) == 0:
@@ -298,7 +329,7 @@ def calculate_case_retrieval_metrics(
 
     doc_recall_res: Dict[int, Optional[float]] = {}
     for k in (1, 3, 5, 10, 24):
-        if k > caps.resolved_document_limit:
+        if caps.resolved_document_limit is not None and k > caps.resolved_document_limit:
             doc_recall_res[k] = None
         elif len(doc_gold) == 0:
             doc_recall_res[k] = None
@@ -335,7 +366,7 @@ def calculate_case_retrieval_metrics(
     art_recall_res: Dict[int, Optional[float]] = {}
     clause_recall_res: Dict[int, Optional[float]] = {}
     for k in (1, 3, 6):
-        if k > caps.final_evidence_limit:
+        if caps.final_evidence_limit is not None and k > caps.final_evidence_limit:
             art_recall_res[k] = None
             clause_recall_res[k] = None
         else:
@@ -412,6 +443,27 @@ def aggregate_retrieval_metrics(
         "macro_all_hop_coverage": macro_avg(lambda m: 1.0 if m.get("all_hop_coverage") else 0.0),
         "macro_partial_hop_coverage": macro_avg(lambda m: 1.0 if m.get("partial_hop_coverage") else 0.0),
     }
+
+    if scored_count > 0 and scored_cases[0].get("metrics", {}).get("stage_metrics"):
+        stage_names = scored_cases[0]["metrics"]["stage_metrics"].keys()
+        aggr_stages = {}
+        for stage in stage_names:
+            aggr_stages[stage] = {
+                "avg_scored_case_count": macro_avg(lambda m: m.get("stage_metrics", {}).get(stage, {}).get("scored_case_count")),
+            }
+            # Only add specific metric keys like candidate_count, recall, etc.
+            keys = set()
+            for c in scored_cases:
+                metrics = c.get("metrics", {})
+                sm = metrics.get("stage_metrics", {})
+                sm_stage = sm.get(stage, {})
+                keys.update(k for k, v in sm_stage.items() if isinstance(v, (int, float)) and k != "scored_case_count")
+            
+            for k in keys:
+                aggr_stages[stage][f"macro_{k}"] = macro_avg(lambda m: m.get("stage_metrics", {}).get(stage, {}).get(k))
+        result["stage_metrics"] = aggr_stages
+
+    return result
 
 
 def calculate_stage_survival_rates(

@@ -91,12 +91,12 @@ def generate_markdown_report(
         lines.append("| :--- | ---: | ---: | ---: | ---: | ---: | ---: | :--- |")
         for stg_name, smetrics in stage_metrics_map.items():
             cap = smetrics.get("configured_stage_capacity", "N/A")
-            sc_cases = smetrics.get("scored_case_count", 0)
-            v_items = smetrics.get("verified_evidence_item_count", 0)
-            r1 = smetrics.get("doc_recall_at_1", smetrics.get("article_recall_at_1"))
-            r3 = smetrics.get("doc_recall_at_3", smetrics.get("article_recall_at_3"))
-            r6 = smetrics.get("doc_recall_at_6", smetrics.get("article_recall_at_6"))
-            null_rsn = smetrics.get("article_recall_at_6_reason", smetrics.get("doc_recall_at_6_reason", "-"))
+            sc_cases = smetrics.get("avg_scored_case_count", smetrics.get("scored_case_count", 0))
+            v_items = smetrics.get("macro_verified_evidence_item_count", smetrics.get("verified_evidence_item_count", 0))
+            r1 = smetrics.get("macro_doc_recall_at_1", smetrics.get("macro_article_recall_at_1", smetrics.get("doc_recall_at_1", smetrics.get("article_recall_at_1"))))
+            r3 = smetrics.get("macro_doc_recall_at_3", smetrics.get("macro_article_recall_at_3", smetrics.get("doc_recall_at_3", smetrics.get("article_recall_at_3"))))
+            r6 = smetrics.get("macro_doc_recall_at_6", smetrics.get("macro_article_recall_at_6", smetrics.get("doc_recall_at_6", smetrics.get("article_recall_at_6"))))
+            null_rsn = smetrics.get("macro_article_recall_at_6_reason", smetrics.get("macro_doc_recall_at_6_reason", smetrics.get("article_recall_at_6_reason", smetrics.get("doc_recall_at_6_reason", "-"))))
             lines.append(
                 f"| `{stg_name}` | {cap} | {sc_cases} | {v_items} | "
                 f"{fmt_val(r1)} | {fmt_val(r3)} | {fmt_val(r6)} | `{null_rsn}` |"
