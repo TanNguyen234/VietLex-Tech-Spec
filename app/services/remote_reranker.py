@@ -214,6 +214,7 @@ class RemoteReranker:
         self,
         query: str,
         documents: list[str],
+        rerank_return_limit: int | None = None,
     ) -> list[RerankResult]:
         self._ensure_qdrant_collection()
         request_id = str(uuid.uuid4())
@@ -261,7 +262,7 @@ class RemoteReranker:
                 query_filter=request_filter,
                 limit=min(
                     len(documents),
-                    self._settings.RERANK_RETURN_LIMIT,
+                    rerank_return_limit if rerank_return_limit is not None else self._settings.RERANK_RETURN_LIMIT,
                 ),
                 with_payload=True,
                 with_vectors=False,
@@ -307,13 +308,14 @@ class RemoteReranker:
         self,
         query: str,
         documents: list[str],
+        rerank_return_limit: int | None = None,
     ) -> RerankOutcome:
         started = time.perf_counter()
         attempts = max(1, self._settings.QDRANT_RERANK_MAX_RETRIES)
         for attempt in range(1, attempts + 1):
             try:
                 results = await asyncio.wait_for(
-                    asyncio.to_thread(self._qdrant_once, query, documents),
+                    asyncio.to_thread(self._qdrant_once, query, documents, rerank_return_limit),
                     timeout=self._settings.QDRANT_RERANK_TIMEOUT_SECONDS,
                 )
                 self._record_qdrant_success()
@@ -353,6 +355,7 @@ class RemoteReranker:
         *,
         fallback_reason: str,
         attempts: int = 1,
+        rerank_return_limit: int | None = None,
     ) -> RerankOutcome:
         started = time.perf_counter()
         response = await asyncio.wait_for(
@@ -363,7 +366,7 @@ class RemoteReranker:
                 documents=documents,
                 top_n=min(
                     len(documents),
-                    self._settings.RERANK_RETURN_LIMIT,
+                    rerank_return_limit if rerank_return_limit is not None else self._settings.RERANK_RETURN_LIMIT,
                 ),
                 return_documents=False,
             ),
@@ -405,6 +408,7 @@ class RemoteReranker:
         documents: list[str],
         *,
         mode: str = "current",
+        rerank_return_limit: int | None = None,
     ) -> RerankOutcome:
         if not documents:
             return RerankOutcome(
@@ -420,10 +424,11 @@ class RemoteReranker:
                 documents,
                 fallback_reason="pinecone_mode_forced",
                 attempts=1,
+                rerank_return_limit=rerank_return_limit,
             )
 
         if mode == "qdrant-only":
-            return await self._qdrant_rerank(query, documents)
+            return await self._qdrant_rerank(query, documents, rerank_return_limit=rerank_return_limit)
 
         # mode == "current" (default): Qdrant primary with circuit breaker / fallback to Pinecone
         if self._circuit_is_open():
@@ -432,9 +437,10 @@ class RemoteReranker:
                 documents,
                 fallback_reason="qdrant_circuit_open",
                 attempts=1,
+                rerank_return_limit=rerank_return_limit,
             )
         try:
-            return await self._qdrant_rerank(query, documents)
+            return await self._qdrant_rerank(query, documents, rerank_return_limit=rerank_return_limit)
         except Exception as error:
             if not is_transient_provider_error(error):
                 raise
@@ -445,5 +451,6 @@ class RemoteReranker:
                 attempts=(
                     max(1, self._settings.QDRANT_RERANK_MAX_RETRIES) + 1
                 ),
+                rerank_return_limit=rerank_return_limit,
             )
 

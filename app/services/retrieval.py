@@ -546,9 +546,10 @@ class LegalRetriever:
         mode: str = "current",
         final_evidence_limit: int = 3,
         final_context_token_limit: int = 720,
+        rerank_return_limit: int | None = None,
     ) -> tuple[list[EvidenceChunk], RerankOutcome]:
         documents = [chunk.formatted_context() for chunk in chunks]
-        outcome = await self._reranker.rerank(query, documents, mode=mode)
+        outcome = await self._reranker.rerank(query, documents, mode=mode, rerank_return_limit=rerank_return_limit)
         ranked = [
             (item.score, chunks[item.index])
             for item in outcome.results
@@ -764,6 +765,7 @@ class LegalRetriever:
                     mode=reranker_mode,
                     final_evidence_limit=final_evidence_limit,
                     final_context_token_limit=final_context_token_limit,
+                    rerank_return_limit=rerank_return_limit,
                 )
             except Exception as error:
                 latency["t_rerank"] = round(
@@ -799,6 +801,7 @@ class LegalRetriever:
 
             diagnostics.update(
                 {
+                    "rerank_requested_return_limit": rerank_return_limit if rerank_return_limit is not None else getattr(self._settings, "RERANK_RETURN_LIMIT", 12),
                     "rerank_provider": rerank_outcome.provider,
                     "rerank_model": rerank_outcome.model,
                     "rerank_fallback_reason": (
