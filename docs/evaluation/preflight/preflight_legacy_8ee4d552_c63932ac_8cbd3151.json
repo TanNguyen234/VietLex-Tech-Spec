@@ -1,0 +1,35 @@
+{
+  "meta": {
+    "git_sha": "2d78d2b62fd0a06f6321770ec1f84f2157433fea",
+    "git_dirty": true,
+    "git_diff_sha256": "b1b105694115846a6358f0e5bbceb4059c63f5a1e99ebb71dc60e8ea0149cd99",
+    "code_state_fingerprint": "8cbd31511c1bfa211996090b466c1d121cf77656eee0d789a884b086b0a7b683",
+    "dataset_sha256": "84c93a522c1bc8eac7179aa808f70b59466fe9a55a4a9f98ddae07797c9662c7",
+    "sidecar_sha256": "c63932ac4101a37ab189d665ea181c4672faac8e9de035d0d83797384d5aa18a",
+    "gold_policy": "all-required-verified",
+    "verified_only": true,
+    "provider_calls": 0,
+    "batch_status": "BLOCKED",
+    "blocked_reason": "selected_case_count_is_zero_under_verified_only",
+    "profile_name": "legacy"
+  },
+  "case_selection": {
+    "selected_case_count": 0,
+    "selected_case_ids": [],
+    "selected_case_ids_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "profiles": {
+    "legacy": {
+      "profile_name": "legacy",
+      "configuration_fingerprint": "8ee4d5524025422313803d904c635742874ab4dcfc07fd5e585529a153cfed51",
+      "selected_case_count": 0,
+      "selected_case_ids_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "canonical_artifact_path": "D:\\Download\\ProfessionalLegalRAG\\docs\\evaluation\\preflight\\preflight_legacy_8ee4d552_c63932ac_8cbd3151.json",
+      "retrieval_document_limit": 24,
+      "resolved_document_limit": 12,
+      "local_chunks_per_document": 2,
+      "rerank_input_limit": 12,
+      "intent_scoring_enabled": false
+    }
+  }
+}

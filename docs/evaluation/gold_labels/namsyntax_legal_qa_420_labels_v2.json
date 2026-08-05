@@ -2,7 +2,7 @@
   "schema_version": "2.0.0",
   "dataset_name": "namsyntax_legal_qa_420",
   "total_cases": 420,
-  "total_evidence_items": 482,
+  "total_evidence_items": 483,
   "labels": [
     {
       "evidence_item_id": "case_001_ctx01_cit01",
@@ -10573,7 +10573,31 @@
       "status": "not_found_by_local_deterministic_audit",
       "document_id": null,
       "document_number": "83/2015/QH13",
-      "article": "Điều 35",
+      "article": null,
+      "clause": null,
+      "required": true,
+      "required_level": "document",
+      "verification_confidence": "unverified",
+      "candidate_generation_method": "metadata_search",
+      "document_identity_method": "exact_metadata_doc_number",
+      "candidate_count_before_anchor": 1,
+      "corpus_search_limit": 518255,
+      "anchor_match_method": "none",
+      "identity_hint_sources": [
+        "dataset_reference_doc_number"
+      ],
+      "is_metadata_search_complete": true
+    },
+    {
+      "evidence_item_id": "case_419_ctx01_cit02",
+      "case_id": "case_419",
+      "context_index": 1,
+      "citation_index": 2,
+      "reference_anchor_hash": "0b16317844d874b3",
+      "status": "not_found_by_local_deterministic_audit",
+      "document_id": null,
+      "document_number": "83/2015/QH13",
+      "article": "Điều 37",
       "clause": "khoản 1",
       "required": true,
       "required_level": "clause",

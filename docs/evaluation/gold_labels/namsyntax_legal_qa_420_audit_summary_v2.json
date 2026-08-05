@@ -1,7 +1,7 @@
 {
   "schema_version": "2.0.0",
   "total_cases": 420,
-  "total_evidence_items": 482,
+  "total_evidence_items": 483,
   "verified_evidence_items": 0,
   "verified_doc_count": 0,
   "verified_art_count": 0,
@@ -15,7 +15,7 @@
   "evidence_status_counts": {
     "no_citation_extracted": 306,
     "unanswerable": 175,
-    "not_found_by_local_deterministic_audit": 1
+    "not_found_by_local_deterministic_audit": 2
   },
   "case_status_counts": {
     "no_citation_extracted": 244,
@@ -23,7 +23,7 @@
     "not_found_by_local_deterministic_audit": 1
   },
   "confidence_counts": {
-    "unverified": 482
+    "unverified": 483
   },
   "multi_hop_stats": {
     "total_multi_hop": 103,
