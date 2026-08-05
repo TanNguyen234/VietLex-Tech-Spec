@@ -93,7 +93,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--preflight",
         action="store_true",
-        help="Execute offline preflight check without making provider calls or writing run directories",
+        help="Execute offline preflight check for a single profile without making provider calls",
+    )
+    parser.add_argument(
+        "--preflight-all-profiles",
+        action="store_true",
+        help="Execute batch offline preflight check for all profiles without making provider calls",
     )
     parser.add_argument(
         "--require-clean-git",
@@ -155,13 +160,12 @@ def perform_pre_execution_validation(
         selected_cases = selected_cases[:limit]
         selected_ids = [c.case_id for c in selected_cases]
         selected_sha = hashlib.sha256(json.dumps(selected_ids).encode("utf-8")).hexdigest()
-        selection = dataclasses.replace(
-            selection,
-            selected_cases=selected_cases,
-            selected_case_count=len(selected_cases),
-            selected_case_ids=selected_ids,
-            selected_case_ids_sha256=selected_sha,
-        )
+        selection = selection.model_copy(update={
+            "selected_cases": selected_cases,
+            "selected_case_count": len(selected_cases),
+            "selected_case_ids": selected_ids,
+            "selected_case_ids_sha256": selected_sha,
+        })
 
     return all_cases, selection, sidecar, audit_summary
 
@@ -220,9 +224,10 @@ async def evaluate_single_retrieval_case(
     settings: Any,
     effective_profile: EvaluationProfile,
 ) -> RetrievalCaseResult:
-    from app.services.retrieval import get_retriever
+    from app.services.retrieval import get_legal_retriever
+    from app.evaluation.capacities import build_stage_capacities
 
-    retriever = get_retriever()
+    retriever = get_legal_retriever()
     started = time.perf_counter()
 
     query_used = case.question
@@ -245,16 +250,12 @@ async def evaluate_single_retrieval_case(
     t_ret_start = time.perf_counter()
     outcome = await retriever.retrieve_detailed(
         query=query_used,
-        mode=effective_profile.reranker_mode,
-        retrieval_document_limit=effective_profile.retrieval_document_limit,
-        resolved_document_limit=effective_profile.resolved_document_limit,
-        local_chunks_per_document=effective_profile.local_chunks_per_document,
-        rerank_input_limit=effective_profile.rerank_input_limit,
-        rerank_return_limit=effective_profile.rerank_return_limit,
-        final_evidence_limit=effective_profile.final_evidence_limit,
-        intent_scoring_enabled=effective_profile.intent_scoring_enabled,
+        profile=effective_profile,
     )
     t_ret = time.perf_counter() - t_ret_start
+
+    caps = build_stage_capacities(effective_profile, settings)
+    metrics = calculate_case_retrieval_metrics(case, outcome, capacities=caps)
     t_total = time.perf_counter() - started
 
     retrieved_chunks = [
@@ -353,70 +354,14 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
     fp = calculate_configuration_fingerprint(config_dict)
     config_fp8 = fp[:8]
 
-    # PREFLIGHT EXECUTION MODE
-    if args.preflight:
-        print("=" * 60, flush=True)
-        print(f"OFFLINE PREFLIGHT CHECK — PROFILE: {effective_profile.name}", flush=True)
-        print(f"Dataset: {dataset_path} (SHA: {dataset_sha256[:8]})", flush=True)
-        print(f"Sidecar: {sidecar_path} (SHA: {sidecar.metadata.sidecar_sha256[:8]})", flush=True)
-        print(f"Code State: SHA {git_sha[:8]} | Dirty: {git_dirty} | Fingerprint: {code_state_sha8}", flush=True)
-        print(f"Gold Policy: {args.gold_policy} | Verified Only: {args.verified_only}", flush=True)
-        print(f"Configuration Fingerprint: {fp}", flush=True)
-        print(f"Declared Cases: {sidecar.metadata.total_cases} | Declared Evidence Items: {sidecar.metadata.total_evidence_items}", flush=True)
-        print(f"Selected Cases ({selection.selected_case_count}): {selection.selected_case_ids}", flush=True)
-        print(f"Selected Case IDs SHA-256: {selection.selected_case_ids_sha256}", flush=True)
-        print(f"Provider Calls: 0", flush=True)
-        print("=" * 60, flush=True)
-
+    if args.preflight or args.preflight_all_profiles:
+        profiles_to_check = ["legacy", "separated_no_intent", "separated_intent"] if args.preflight_all_profiles else [effective_profile.name]
+        
         preflight_dir = PROJECT_ROOT / "docs/evaluation/preflight"
         preflight_dir.mkdir(parents=True, exist_ok=True)
-
-        blocked_reason = None
-        exit_status = "OK"
-        if args.verified_only and selection.selected_case_count == 0:
-            blocked_reason = "selected_case_count_is_zero_under_verified_only"
-            exit_status = "BLOCKED"
-
-        preflight_payload = {
-            "git_sha": git_sha,
-            "git_dirty": git_dirty,
-            "git_diff_sha256": diff_sha,
-            "code_state_fingerprint": code_state_fingerprint,
-            "dataset_sha256": dataset_sha256,
-            "sidecar_sha256": sidecar.metadata.sidecar_sha256,
-            "sidecar_schema_version": sidecar.metadata.schema_version,
-            "declared_total_cases": sidecar.metadata.total_cases,
-            "declared_total_evidence_items": sidecar.metadata.total_evidence_items,
-            "loaded_label_count": len(sidecar.labels),
-            "unique_labeled_case_count": len(sidecar.labels_by_case_id),
-            "gold_policy": args.gold_policy,
-            "rewrite_mode": effective_profile.rewrite_mode,
-            "reranker_mode": effective_profile.reranker_mode,
-            "verified_only": args.verified_only,
-            "selected_case_count": selection.selected_case_count,
-            "selected_case_ids": selection.selected_case_ids,
-            "selected_case_ids_sha256": selection.selected_case_ids_sha256,
-            "profile_name": effective_profile.name,
-            "profile": effective_profile.to_dict(),
-            "configuration_fingerprint": fp,
-            "provider_calls": 0,
-            "exit_status": exit_status,
-            "blocked_reason": blocked_reason,
-        }
-
-        # Canonical immutable preflight artifact filename with code_state_sha8
-        profile_preflight_path = preflight_dir / f"preflight_{effective_profile.name}_{config_fp8}_{sidecar_sha8}_{code_state_sha8}.json"
-        atomic_write_json(profile_preflight_path, preflight_payload)
-
-        # Convenience copy latest_preflight.json
-        latest_preflight_path = preflight_dir / "latest_preflight.json"
-        atomic_write_json(latest_preflight_path, preflight_payload)
-
-        # Immutable comparison artifact filename
-        comparison_path = preflight_dir / f"preflight_comparison_{sidecar_sha8}_{code_state_sha8}.json"
-        latest_comparison_path = preflight_dir / "preflight_comparison.json"
-
+        
         comparison_dict: Dict[str, Any] = {}
+        comparison_path = preflight_dir / f"preflight_comparison_{sidecar_sha8}_{code_state_sha8}.json"
         if comparison_path.exists():
             try:
                 comparison_dict = json.loads(comparison_path.read_text(encoding="utf-8"))
@@ -431,33 +376,95 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
             "dataset_sha256": dataset_sha256,
             "sidecar_sha256": sidecar.metadata.sidecar_sha256,
             "gold_policy": args.gold_policy,
-            "rewrite_mode": effective_profile.rewrite_mode,
-            "reranker_mode": effective_profile.reranker_mode,
             "provider_calls": 0,
-            "exit_status": exit_status,
-            "blocked_reason": blocked_reason,
         }
+        
+        final_payload = None
 
-        comparison_dict[effective_profile.name] = {
-            "profile_name": effective_profile.name,
-            "configuration_fingerprint": fp,
-            "selected_case_count": selection.selected_case_count,
-            "selected_case_ids_sha256": selection.selected_case_ids_sha256,
-            "canonical_artifact_path": str(profile_preflight_path),
-            "retrieval_document_limit": effective_profile.retrieval_document_limit,
-            "resolved_document_limit": effective_profile.resolved_document_limit,
-            "local_chunks_per_document": effective_profile.local_chunks_per_document,
-            "rerank_input_limit": effective_profile.rerank_input_limit,
-            "intent_scoring_enabled": effective_profile.intent_scoring_enabled,
-        }
+        for p_name in profiles_to_check:
+            p_obj = get_evaluation_profile(p_name)
+            p_eff = dataclasses.replace(p_obj, rewrite_mode=args.rewrite, reranker_mode=args.reranker)
+            
+            p_config_dict = config_dict.copy()
+            p_config_dict["profile_name"] = p_eff.name
+            p_config_dict["profile"] = p_eff.to_dict()
+            p_fp = calculate_configuration_fingerprint(p_config_dict)
+            p_config_fp8 = p_fp[:8]
+
+            print("=" * 60, flush=True)
+            print(f"OFFLINE PREFLIGHT CHECK — PROFILE: {p_eff.name}", flush=True)
+            print(f"Dataset: {dataset_path} (SHA: {dataset_sha256[:8]})", flush=True)
+            print(f"Sidecar: {sidecar_path} (SHA: {sidecar.metadata.sidecar_sha256[:8]})", flush=True)
+            print(f"Code State: SHA {git_sha[:8]} | Dirty: {git_dirty} | Fingerprint: {code_state_sha8}", flush=True)
+            print(f"Gold Policy: {args.gold_policy} | Verified Only: {args.verified_only}", flush=True)
+            print(f"Configuration Fingerprint: {p_fp}", flush=True)
+            print(f"Declared Cases: {sidecar.metadata.total_cases} | Declared Evidence Items: {sidecar.metadata.total_evidence_items}", flush=True)
+            print(f"Selected Cases ({selection.selected_case_count}): {selection.selected_case_ids}", flush=True)
+            print(f"Selected Case IDs SHA-256: {selection.selected_case_ids_sha256}", flush=True)
+            print(f"Provider Calls: 0", flush=True)
+            print("=" * 60, flush=True)
+
+            blocked_reason = None
+            exit_status = "OK"
+            if args.verified_only and selection.selected_case_count == 0:
+                blocked_reason = "selected_case_count_is_zero_under_verified_only"
+                exit_status = "BLOCKED"
+
+            preflight_payload = {
+                "git_sha": git_sha,
+                "git_dirty": git_dirty,
+                "git_diff_sha256": diff_sha,
+                "code_state_fingerprint": code_state_fingerprint,
+                "dataset_sha256": dataset_sha256,
+                "sidecar_sha256": sidecar.metadata.sidecar_sha256,
+                "sidecar_schema_version": sidecar.metadata.schema_version,
+                "declared_total_cases": sidecar.metadata.total_cases,
+                "declared_total_evidence_items": sidecar.metadata.total_evidence_items,
+                "loaded_label_count": len(sidecar.labels),
+                "unique_labeled_case_count": len(sidecar.labels_by_case_id),
+                "gold_policy": args.gold_policy,
+                "rewrite_mode": p_eff.rewrite_mode,
+                "reranker_mode": p_eff.reranker_mode,
+                "verified_only": args.verified_only,
+                "selected_case_count": selection.selected_case_count,
+                "selected_case_ids": selection.selected_case_ids,
+                "selected_case_ids_sha256": selection.selected_case_ids_sha256,
+                "profile_name": p_eff.name,
+                "profile": p_eff.to_dict(),
+                "configuration_fingerprint": p_fp,
+                "provider_calls": 0,
+                "exit_status": exit_status,
+                "blocked_reason": blocked_reason,
+            }
+
+            profile_preflight_path = preflight_dir / f"preflight_{p_eff.name}_{p_config_fp8}_{sidecar_sha8}_{code_state_sha8}.json"
+            atomic_write_json(profile_preflight_path, preflight_payload)
+            
+            if not args.preflight_all_profiles:
+                atomic_write_json(preflight_dir / "latest_preflight.json", preflight_payload)
+                final_payload = preflight_payload
+
+            comparison_dict[p_eff.name] = {
+                "profile_name": p_eff.name,
+                "configuration_fingerprint": p_fp,
+                "selected_case_count": selection.selected_case_count,
+                "selected_case_ids_sha256": selection.selected_case_ids_sha256,
+                "canonical_artifact_path": str(profile_preflight_path),
+                "retrieval_document_limit": p_eff.retrieval_document_limit,
+                "resolved_document_limit": p_eff.resolved_document_limit,
+                "local_chunks_per_document": p_eff.local_chunks_per_document,
+                "rerank_input_limit": p_eff.rerank_input_limit,
+                "intent_scoring_enabled": p_eff.intent_scoring_enabled,
+            }
+
         atomic_write_json(comparison_path, comparison_dict)
-        atomic_write_json(latest_comparison_path, comparison_dict)
+        atomic_write_json(preflight_dir / "preflight_comparison.json", comparison_dict)
 
-        if exit_status == "BLOCKED":
+        if any(v.get("exit_status") == "BLOCKED" for v in [preflight_payload]):
             print("Preflight check exited non-zero: 0 selected cases under verified-only policy.")
             sys.exit(1)
 
-        return preflight_payload
+        return final_payload or comparison_dict
 
     # LIVE RETRIEVAL EVALUATION RUN
     if args.verified_only and selection.selected_case_count == 0:
