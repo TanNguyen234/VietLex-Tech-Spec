@@ -38,8 +38,9 @@ VietLex là hệ thống Retrieval-Augmented Generation (RAG) phục vụ tra c�
 | `ingest:smoke` | `python -m app.ingestion.hf_pipeline smoke` | Smoke ingestion |
 | `ingest:verify` | `python -m app.ingestion.hf_pipeline verify` | Verify trạng thái ingestion |
 | `fts:build` | `python -u -m app.ingestion.legal_fts build --batch-size 256` | Build SQLite FTS5 index |
-| `eval:full` | `python -u run_eval_suite.py --fresh --factoids 12 --multihop 12 --unanswerable 6 --concurrency 2 --judge-concurrency 4` | Chạy full golden evaluation |
-| `eval:smoke` | `python -u run_eval_suite.py --fresh --factoids 2 --multihop 2 --unanswerable 2 --concurrency 1 --judge-concurrency 1 --checkpoint docs/smoke_eval_checkpoints.json --report docs/smoke_evaluation_report.md` | Smoke evaluation nhanh |
+| `eval:preflight` | `python -u run_retrieval_eval.py --preflight-all-profiles --verified-only --gold-policy all-required-verified --rewrite off --reranker current` | Kiểm tra provider-free cho mọi profile |
+| `eval:retrieval` | `python -u run_retrieval_eval.py --profile separated_intent --verified-only --gold-policy all-required-verified --rewrite off --reranker current` | Đánh giá retrieval bằng metric xác định |
+| `eval:answer` | `python -u run_answer_eval.py --profile separated_intent --verified-only --judge none --guardrails off` | Đánh giá câu trả lời, không dùng LLM judge |
 | `test` | `python -m pytest -q` | Chạy test suite |
 | `test:live-rerank` | `$env:RUN_LIVE_RERANK_TEST='1'`<br>`python -m pytest tests/integration/test_remote_reranker_live.py -q`<br>`Remove-Item Env:RUN_LIVE_RERANK_TEST` | Smoke live reranker |
 | `check` | `python -m compileall -q app tests`<br>`git diff --check` | Kiểm tra compile + whitespace diff |
@@ -212,33 +213,44 @@ python -u -m app.ingestion.legal_fts build --batch-size 256
 
 ## Đánh giá Hệ thống (Golden Benchmark)
 
-Bộ dữ liệu đánh giá chuẩn (Golden Suite) mặc định lấy 30 câu hỏi từ `app/data/namsyntax_legal_qa_420.json`, phân bổ cân bằng: **12 factoid**, **12 multi-hop**, và **6 unanswerable**.
+Nguồn đánh giá hiện tại gồm 420 câu hỏi trong `app/data/namsyntax_legal_qa_420.json`. Metric xác định trong code là mặc định; Ragas và các LLM judge khác chỉ là audit tùy chọn. Xem trạng thái có hiệu lực tại [`docs/evaluation/CURRENT_STATUS.md`](docs/evaluation/CURRENT_STATUS.md).
 
-### Chạy Đánh giá Đầy đủ (Full Benchmark)
-
-```powershell
-python -u run_eval_suite.py --fresh --factoids 12 --multihop 12 --unanswerable 6 --concurrency 2 --judge-concurrency 4
-```
-
-* **Checkpoint & Cache:** Nếu tiến trình bị ngắt, chạy lại lệnh và bỏ tham số `--fresh` để tiếp tục từ checkpoint. Semantic cache bị bỏ qua mặc định để đánh giá chính xác retrieval và generation (thêm `--use-cache` nếu muốn đo luồng cache).
-* **Ragas:** Có thể thêm `--skip-ragas` cho smoke test nhanh, nhưng kết quả này không thay thế được báo cáo đánh giá chính thức.
-* **Điều kiện tiên quyết:** Golden suite sẽ từ chối chạy nếu FTS index chưa được build hoàn tất nhằm tránh tạo ra các báo cáo hybrid giả.
-
-### Chạy Smoke Test Đánh giá (6 câu)
-
-Smoke test 6 câu thật, lưu artifact riêng biệt và không ghi đè báo cáo đầy đủ:
+### Preflight provider-free
 
 ```powershell
-python -u run_eval_suite.py --fresh --factoids 2 --multihop 2 --unanswerable 2 --concurrency 1 --judge-concurrency 1 --checkpoint docs/smoke_eval_checkpoints.json --report docs/smoke_evaluation_report.md
+python -u run_retrieval_eval.py --preflight-all-profiles --verified-only --gold-policy all-required-verified --rewrite off --reranker current
 ```
 
-### Báo cáo & Tiêu chí Đánh giá (Metrics)
+Preflight không gọi Pinecone, Qdrant, reranker, generation, guardrail hoặc LLM judge. Nó ghi một batch artifact bất biến cho ba profile và trả exit code khác 0 nếu bất kỳ profile nào chưa đủ điều kiện. Với sidecar hiện tại (**420 cases, 483 evidence items, 0 verified**), kết quả đúng phải là `BLOCKED` và exit code 1.
 
-Suite lưu checkpoint nguyên tử và xuất báo cáo tại `docs/system_evaluation_report.md`. Các chỉ số đo lường bao gồm:
-* **Metrics:** Faithfulness, Answer Accuracy, Context Precision / Recall, Gold-Context Hit Rate, Retrieval MRR, Answerable / Unanswerable Accuracy, Refusal Precision / Recall, và Latency chi tiết (Queue / Pipeline / Ragas).
-* **LLM Judge Priority:** Thứ tự ưu tiên LLM Judge để đảm bảo tính độc lập với Answer Model (OpenRouter): **Gemini → NVIDIA → Groq → OpenRouter → OmniGate**. Quota, timeout hoặc lỗi 429/5xx sẽ tự động chuyển đổi (failover) sang provider tiếp theo.
-* **Guardrail Failures:** Timeout từ Guardrail được ghi nhận là lỗi kỹ thuật, không tính thành câu hỏi vi phạm.
-* **Chi phí:** Chạy suite sẽ phát sinh chi phí lượt đọc Pinecone, Qdrant inference, reranker và judge API. Sử dụng mức concurrency mặc định để tránh dính rate limit.
+### Đánh giá retrieval và answer
+
+Chỉ chạy sau khi preflight đạt và có gold evidence đã xác minh:
+
+```powershell
+python -u run_retrieval_eval.py --profile separated_intent --verified-only --gold-policy all-required-verified --rewrite off --reranker current
+python -u run_answer_eval.py --profile separated_intent --verified-only --judge none --guardrails off
+```
+
+Mỗi lần chạy tạo thư mục riêng tại `docs/evaluation/runs/<run-id>/` với manifest, configuration, case set, raw results và report. Không tái sử dụng hoặc ghi đè artifact của lần chạy khác.
+
+Metric retrieval xác định gồm Document/Article/Clause Recall@K, MRR, nDCG@10, exact-reference hit, multi-hop coverage, candidate survival/first loss, no-candidate rate và technical-error rates. Metric answer xác định gồm exact match, token/character F1, ROUGE-L, CHRF, number/date/entity, citation và refusal metrics. Mọi aggregate phải công bố numerator, denominator, coverage, skipped cases và skip reasons.
+
+### Legacy compatibility và Ragas audit tùy chọn
+
+`run_eval_suite.py` được giữ để tương thích với workflow cũ, nhưng nay cũng mặc định `--judge none`:
+
+```powershell
+python -u run_eval_suite.py --fresh --factoids 12 --multihop 12 --unanswerable 6 --concurrency 2 --judge none
+```
+
+Chỉ bật Ragas khi chủ động thực hiện audit có ngân sách và chấp nhận phụ thuộc provider:
+
+```powershell
+python -u run_eval_suite.py --fresh --factoids 12 --multihop 12 --unanswerable 6 --concurrency 2 --judge ragas --judge-concurrency 4
+```
+
+Ragas có thể phát sinh chi phí và lỗi quota/timeout; kết quả của nó không thay thế metric retrieval xác định. Lỗi kỹ thuật của judge hoặc guardrail phải được ghi riêng, không được phân loại thành hallucination hay vi phạm nội dung.
 
 ---
 

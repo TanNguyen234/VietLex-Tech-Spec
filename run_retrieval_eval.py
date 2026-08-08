@@ -5,22 +5,22 @@ import asyncio
 import dataclasses
 import hashlib
 import json
-import os
 import sys
 import time
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Dict, List, Optional, Tuple
-
-if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-PROJECT_ROOT = Path(__file__).resolve().parent
-sys.path.insert(0, str(PROJECT_ROOT))
 
 from app.config import get_settings
 from app.evaluation.case_selection import CaseSelectionResult, build_cases, select_evaluation_cases
 from app.evaluation.gold_sidecar import GoldSidecar, load_gold_sidecar
 from app.evaluation.latency_metrics import calculate_stage_latency_summary
+from app.evaluation.legal_citations import parse_legal_citations
 from app.evaluation.profiles import EvaluationProfile, get_evaluation_profile
+from app.evaluation.preflight import (
+    build_preflight_batch,
+    persist_preflight_batch,
+)
+from app.evaluation.provenance import collect_git_provenance
 from app.evaluation.reporting import write_run_report
 from app.evaluation.retrieval_metrics import (
     aggregate_retrieval_metrics,
@@ -29,6 +29,7 @@ from app.evaluation.retrieval_metrics import (
 )
 from app.evaluation.run_manifest import (
     atomic_write_json,
+    build_run_configuration,
     calculate_configuration_fingerprint,
     calculate_dataset_sha256,
     create_run_manifest,
@@ -43,6 +44,10 @@ from app.evaluation.schemas import (
     RetrievalCaseResult,
     RetrievalStageTrace,
 )
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+PROJECT_ROOT = Path(__file__).resolve().parent
 
 DEFAULT_DATASET_PATH = PROJECT_ROOT / "app/data/namsyntax_legal_qa_420.json"
 DEFAULT_SIDECAR_PATH = PROJECT_ROOT / "docs/evaluation/gold_labels/namsyntax_legal_qa_420_labels_v2.json"
@@ -101,6 +106,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Execute batch offline preflight check for all profiles without making provider calls",
     )
     parser.add_argument(
+        "--preflight-output-dir",
+        type=Path,
+        default=PROJECT_ROOT / "docs/evaluation/preflight",
+        help="Repository-local output directory for preflight artifacts",
+    )
+    parser.add_argument(
         "--require-clean-git",
         action="store_true",
         help="Require clean git status before execution",
@@ -122,12 +133,16 @@ def perform_pre_execution_validation(
         raise FileNotFoundError(f"Dataset file not found: {dataset_path}")
 
     # 1. Check Git cleanliness if required
-    git_sha, git_dirty, _, _, _, diff_sha, _ = get_git_provenance()
-    if require_clean_git and git_dirty:
-        raise ValueError(
-            f"Pre-execution validation failed: git working tree is dirty (SHA {git_sha[:8]}, diff {diff_sha[:8]}). "
-            "Clean working tree is required when --require-clean-git is specified."
-        )
+    if require_clean_git:
+        git_sha, git_dirty, _, _, _, diff_sha, _ = get_git_provenance()
+        if git_dirty:
+            diff_label = (diff_sha or "unavailable")[:8]
+            raise ValueError(
+                "Pre-execution validation failed: git working tree is "
+                f"dirty (SHA {git_sha[:8]}, diff {diff_label}). Clean "
+                "working tree is required when --require-clean-git is "
+                "specified."
+            )
 
     raw_dataset = json.loads(dataset_path.read_bytes().decode("utf-8"))
     raw_dataset_case_ids = [f"case_{idx:03d}" for idx in range(1, len(raw_dataset) + 1)]
@@ -171,32 +186,47 @@ def parse_golden_case(raw_item: Dict[str, Any], idx: int) -> GoldenCase:
     gt_contexts = raw_item.get("ground_truth_context", [])
 
     answerable = not (
-        q_type == "unanswerable" or "tài liệu không đề cập" in gt_ans.casefold()
+        q_type == "unanswerable"
+        or "tài liệu không đề cập" in gt_ans.casefold()
     )
 
     ev_list: List[GoldEvidence] = []
     for c_idx, ctx in enumerate(gt_contexts, start=1):
-        cites = extract_citations_from_text(ctx)
-        doc_num = cites[0]["document_number"] if cites else ""
-        art = cites[0]["article"] if cites else ""
-        cl = cites[0]["clause"] if cites else ""
-        req_lvl = "clause" if cl else ("article" if art else "document")
-
-        ev_list.append(
-            GoldEvidence(
-                evidence_item_id=f"{case_id}_ctx{c_idx:02d}_cit01",
-                case_id=case_id,
-                context_index=c_idx,
-                citation_index=1,
-                reference_anchor_hash=hashlib.sha256(ctx.encode("utf-8")).hexdigest()[:16],
-                document_number=doc_num or None,
-                article=art or None,
-                clause=cl or None,
-                required=answerable,
-                required_level=req_lvl,
-                status="unanswerable" if not answerable else "not_found_by_local_deterministic_audit",
+        citations = parse_legal_citations(ctx)
+        for citation_idx, citation in enumerate(
+            citations or [None],
+            start=1,
+        ):
+            doc_num = citation.document_number if citation else ""
+            art = citation.article if citation else ""
+            cl = citation.clause if citation else ""
+            req_lvl = (
+                "clause" if cl else ("article" if art else "document")
             )
-        )
+
+            ev_list.append(
+                GoldEvidence(
+                    evidence_item_id=(
+                        f"{case_id}_ctx{c_idx:02d}_cit{citation_idx:02d}"
+                    ),
+                    case_id=case_id,
+                    context_index=c_idx,
+                    citation_index=citation_idx,
+                    reference_anchor_hash=hashlib.sha256(
+                        ctx.encode("utf-8")
+                    ).hexdigest()[:16],
+                    document_number=doc_num or None,
+                    article=art or None,
+                    clause=cl or None,
+                    required=answerable,
+                    required_level=req_lvl,
+                    status=(
+                        "unanswerable"
+                        if not answerable
+                        else "not_found_by_local_deterministic_audit"
+                    ),
+                )
+            )
 
     return GoldenCase(
         case_id=case_id,
@@ -222,34 +252,83 @@ async def evaluate_single_retrieval_case(
 
     retriever = get_legal_retriever()
     started = time.perf_counter()
+    caps = build_stage_capacities(effective_profile, settings)
 
     query_used = case.question
     rewritten_q = None
+    technical_errors: Dict[str, str] = {}
 
     if effective_profile.rewrite_mode == "on":
+        t_rw_start = time.perf_counter()
         try:
-            from app.services.query_rewriter import rewrite_query
+            from app.services.rag_pipeline import rewrite_query
 
-            t_rw_start = time.perf_counter()
-            rewritten_q = await rewrite_query(case.question)
+            rewritten_q = await rewrite_query(
+                case.question,
+                raise_on_error=True,
+            )
             t_rw = time.perf_counter() - t_rw_start
             query_used = rewritten_q
-        except Exception:
-            t_rw = 0.0
+        except Exception as error:
+            t_rw = time.perf_counter() - t_rw_start
             query_used = case.question
+            technical_errors["rewrite"] = f"{type(error).__name__}: {error}"
     else:
         t_rw = 0.0
 
     t_ret_start = time.perf_counter()
-    outcome = await retriever.retrieve_detailed(
-        query_used,
-        sparse_query=case.question,
-        profile=effective_profile,
-    )
+    try:
+        outcome = await retriever.retrieve_detailed(
+            query_used,
+            sparse_query=case.question,
+            profile=effective_profile,
+        )
+    except Exception as error:
+        message = f"{type(error).__name__}: {error}"
+        technical_errors["retrieval"] = message
+        return RetrievalCaseResult(
+            case_id=case.case_id,
+            question=case.question,
+            original_query=case.question,
+            question_type=case.question_type,
+            answerable=case.answerable,
+            query_used=query_used,
+            rewritten_query=rewritten_q,
+            status="retrieval_error",
+            stage_trace=RetrievalStageTrace(),
+            latency={
+                "t_rewrite": round(t_rw, 4),
+                "t_retrieval": round(
+                    time.perf_counter() - t_ret_start, 4
+                ),
+                "t_total": round(time.perf_counter() - started, 4),
+            },
+            metrics=calculate_case_retrieval_metrics(
+                case.gold_evidence,
+                [],
+                stage_trace=RetrievalStageTrace(),
+                capacities=caps,
+                status="retrieval_error",
+            ),
+            error=message,
+            technical_errors=technical_errors,
+        )
     t_ret = time.perf_counter() - t_ret_start
 
-    caps = build_stage_capacities(effective_profile, settings)
     t_total = time.perf_counter() - started
+
+    stage_trace = outcome.diagnostics.get("stage_trace")
+    if not isinstance(stage_trace, RetrievalStageTrace):
+        stage_trace = RetrievalStageTrace()
+
+    if outcome.status == "retrieval_error":
+        technical_errors["retrieval"] = (
+            outcome.error or "retrieval_error_without_error_detail"
+        )
+    elif outcome.status == "reranker_error":
+        technical_errors["reranker"] = (
+            outcome.error or "reranker_error_without_error_detail"
+        )
 
     retrieved_chunks = [
         CandidateChunk(
@@ -270,8 +349,9 @@ async def evaluate_single_retrieval_case(
     metrics = calculate_case_retrieval_metrics(
         case.gold_evidence,
         retrieved_chunks,
-        stage_trace=outcome.stage_trace,
+        stage_trace=stage_trace,
         capacities=caps,
+        status=outcome.status,
     )
 
     latency_dict = {
@@ -290,10 +370,23 @@ async def evaluate_single_retrieval_case(
         rewritten_query=rewritten_q,
         status=outcome.status,
         retrieved_evidence=retrieved_chunks,
-        stage_trace=outcome.stage_trace,
+        stage_trace=stage_trace,
         latency=latency_dict,
         metrics=metrics,
+        error=outcome.error,
+        technical_errors=technical_errors,
     )
+
+
+def document_recall_at(
+    metrics: Dict[str, Any],
+    k: int,
+) -> Optional[float]:
+    by_k = metrics.get("document_recall", {})
+    metric = by_k.get(k)
+    if metric is None:
+        metric = by_k.get(str(k))
+    return metric.get("value") if isinstance(metric, dict) else None
 
 
 async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
@@ -329,122 +422,75 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
         limit=args.limit,
     )
 
-    git_sha, git_dirty, _, _, _, diff_sha, _ = get_git_provenance()
-    code_state_fingerprint = hashlib.sha256(f"{git_sha}:{git_dirty}:{diff_sha}".encode("utf-8")).hexdigest()
-    code_state_sha8 = code_state_fingerprint[:8]
-    sidecar_sha8 = sidecar.metadata.sidecar_sha256[:8]
-
-    config_dict = {
-        "profile_name": effective_profile.name,
-        "profile": effective_profile.to_dict(),
-        "eval_mode": "retrieval-only",
-        "judge_mode": "none",
-        "guardrail_mode": "off",
-        "rewrite_mode": effective_profile.rewrite_mode,
-        "reranker_provider": effective_profile.reranker_mode,
-        "gold_policy": args.gold_policy,
-        "selected_case_count": selection.selected_case_count,
-        "selected_case_ids_sha256": selection.selected_case_ids_sha256,
-        "git_sha": git_sha,
-        "git_dirty": git_dirty,
-        "git_diff_sha256": diff_sha,
-        "code_state_fingerprint": code_state_fingerprint,
-    }
-    fp = calculate_configuration_fingerprint(config_dict)
-    config_fp8 = fp[:8]
-
     if args.preflight or args.preflight_all_profiles:
-        profiles_to_check = ["legacy", "separated_no_intent", "separated_intent"] if args.preflight_all_profiles else [effective_profile.name]
-        
-        preflight_dir = PROJECT_ROOT / "docs/evaluation/preflight"
-        preflight_dir.mkdir(parents=True, exist_ok=True)
-        
-        comparison_dict = {
-            "meta": {
-                "git_sha": git_sha,
-                "git_dirty": git_dirty,
-                "git_diff_sha256": diff_sha,
-                "code_state_fingerprint": code_state_fingerprint,
-                "dataset_sha256": dataset_sha256,
-                "sidecar_sha256": sidecar.metadata.sidecar_sha256,
-                "gold_policy": args.gold_policy,
-                "verified_only": args.verified_only,
-                "provider_calls": 0,
-                "batch_status": "OK",
-                "blocked_reason": None,
-            },
-            "case_selection": {
-                "selected_case_count": selection.selected_case_count,
-                "selected_case_ids": selection.selected_case_ids,
-                "selected_case_ids_sha256": selection.selected_case_ids_sha256,
-            },
-            "profiles": {}
-        }
-        
-        if args.verified_only and selection.selected_case_count == 0:
-            comparison_dict["meta"]["batch_status"] = "BLOCKED"
-            comparison_dict["meta"]["blocked_reason"] = "selected_case_count_is_zero_under_verified_only"
+        preflight_dir = Path(args.preflight_output_dir).resolve()
+        try:
+            preflight_relative = preflight_dir.relative_to(
+                PROJECT_ROOT
+            ).as_posix()
+        except ValueError as error:
+            raise ValueError(
+                "--preflight-output-dir must remain inside the repository"
+            ) from error
 
-        for p_name in profiles_to_check:
-            p_obj = get_evaluation_profile(p_name)
-            p_eff = dataclasses.replace(p_obj, rewrite_mode=args.rewrite, reranker_mode=args.reranker)
-            
-            p_config_dict = config_dict.copy()
-            p_config_dict["profile_name"] = p_eff.name
-            p_config_dict["profile"] = p_eff.to_dict()
-            p_fp = calculate_configuration_fingerprint(p_config_dict)
-            p_config_fp8 = p_fp[:8]
-
-            print("=" * 60, flush=True)
-            print(f"OFFLINE PREFLIGHT CHECK — PROFILE: {p_eff.name}", flush=True)
-            print(f"Dataset: {dataset_path} (SHA: {dataset_sha256[:8]})", flush=True)
-            print(f"Sidecar: {sidecar_path} (SHA: {sidecar.metadata.sidecar_sha256[:8]})", flush=True)
-            print(f"Code State: SHA {git_sha[:8]} | Dirty: {git_dirty} | Fingerprint: {code_state_sha8}", flush=True)
-            print(f"Gold Policy: {args.gold_policy} | Verified Only: {args.verified_only}", flush=True)
-            print(f"Configuration Fingerprint: {p_fp}", flush=True)
-            print(f"Declared Cases: {sidecar.metadata.total_cases} | Declared Evidence Items: {sidecar.metadata.total_evidence_items}", flush=True)
-            print(f"Selected Cases ({selection.selected_case_count}): {selection.selected_case_ids}", flush=True)
-            print(f"Selected Case IDs SHA-256: {selection.selected_case_ids_sha256}", flush=True)
-            print(f"Provider Calls: 0", flush=True)
-            print("=" * 60, flush=True)
-
-            comparison_dict["profiles"][p_eff.name] = {
-                "profile_name": p_eff.name,
-                "configuration_fingerprint": p_fp,
-                "selected_case_count": selection.selected_case_count,
-                "selected_case_ids_sha256": selection.selected_case_ids_sha256,
-                "canonical_artifact_path": str(preflight_dir / f"preflight_{p_eff.name}_{p_config_fp8}_{sidecar_sha8}_{code_state_sha8}.json"),
-                "retrieval_document_limit": p_eff.retrieval_document_limit,
-                "resolved_document_limit": p_eff.resolved_document_limit,
-                "local_chunks_per_document": p_eff.local_chunks_per_document,
-                "rerank_input_limit": p_eff.rerank_input_limit,
-                "intent_scoring_enabled": p_eff.intent_scoring_enabled,
-            }
-
-            preflight_payload = comparison_dict.copy()
-            preflight_payload["meta"]["profile_name"] = p_eff.name
-            
-            profile_preflight_path = preflight_dir / f"preflight_{p_eff.name}_{p_config_fp8}_{sidecar_sha8}_{code_state_sha8}.json"
-            atomic_write_json(profile_preflight_path, preflight_payload)
-            
-            if not args.preflight_all_profiles:
-                atomic_write_json(preflight_dir / "latest_preflight.json", preflight_payload)
-
-        comparison_path = preflight_dir / f"preflight_comparison_{sidecar_sha8}_{code_state_sha8}.json"
-        atomic_write_json(comparison_path, comparison_dict)
-        atomic_write_json(preflight_dir / "preflight_comparison.json", comparison_dict)
-
-        if comparison_dict["meta"]["batch_status"] == "BLOCKED":
-            print("Preflight check exited non-zero: 0 selected cases under verified-only policy.")
-            sys.exit(1)
-
-        return comparison_dict
+        provenance = collect_git_provenance(PROJECT_ROOT)
+        profile_batch = (
+            [
+                dataclasses.replace(
+                    get_evaluation_profile(name),
+                    rewrite_mode=args.rewrite,
+                    reranker_mode=args.reranker,
+                )
+                for name in (
+                    "legacy",
+                    "separated_no_intent",
+                    "separated_intent",
+                )
+            ]
+            if args.preflight_all_profiles
+            else [effective_profile]
+        )
+        payload = build_preflight_batch(
+            profiles=profile_batch,
+            selection=selection,
+            provenance=provenance,
+            dataset_sha256=dataset_sha256,
+            dataset_revision=getattr(
+                settings, "DATASET_REVISION", "unknown"
+            ),
+            sidecar_sha256=sidecar.metadata.sidecar_sha256,
+            gold_policy=args.gold_policy,
+            verified_only=args.verified_only,
+            artifact_prefix=PurePosixPath(preflight_relative),
+        )
+        persist_preflight_batch(
+            payload=payload,
+            output_dir=preflight_dir,
+        )
+        if payload["meta"]["batch_status"] == "BLOCKED":
+            raise SystemExit(1)
+        return payload
 
     # LIVE RETRIEVAL EVALUATION RUN
     if args.verified_only and selection.selected_case_count == 0:
         raise ValueError("Cannot execute retrieval evaluation: selected case count is ZERO.")
 
     cases = selection.selected_cases
+
+    config_dict = build_run_configuration(
+        profile_name=effective_profile.name,
+        profile=effective_profile.to_dict(),
+        eval_mode="retrieval-only",
+        judge_mode="none",
+        guardrail_mode="off",
+        rewrite_mode=effective_profile.rewrite_mode,
+        reranker_provider=effective_profile.reranker_mode,
+        gold_policy=args.gold_policy,
+        selected_case_ids=selection.selected_case_ids,
+        selected_case_ids_sha256=selection.selected_case_ids_sha256,
+        settings=settings,
+    )
+    fp = calculate_configuration_fingerprint(config_dict)
 
     run_id = args.run_id or generate_unique_run_id(
         prefix="retrieval", config_fingerprint=fp
@@ -460,6 +506,7 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
         dataset_path=dataset_path,
         settings=settings,
         command_str=" ".join(sys.argv),
+        selected_case_ids_sha256=selection.selected_case_ids_sha256,
         profile_name=effective_profile.name,
         gold_sidecar_path=sidecar_path,
         profile_obj=effective_profile,
@@ -497,9 +544,11 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
     for completed_task in asyncio.as_completed(tasks):
         result = await completed_task
         results_map[result.case_id] = result
+        recall_at_1 = document_recall_at(result.metrics, 1)
         print(
             f"-> Completed Case [{result.case_id}]: status={result.status} "
-            f"doc_recall@1={result.metrics.get('doc_recall', {}).get(1, 0.0)} latency={result.latency['t_total']:.2f}s",
+            f"doc_recall@1={recall_at_1 if recall_at_1 is not None else 'N/A'} "
+            f"latency={result.latency['t_total']:.2f}s",
             flush=True,
         )
 

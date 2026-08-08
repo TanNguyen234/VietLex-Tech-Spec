@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from typing import Any, Dict, List
+from typing import Dict, List
 
 
 def calculate_percentile(data: List[float], percentile: float) -> float:

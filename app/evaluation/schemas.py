@@ -1,6 +1,6 @@
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
-from pydantic import BaseModel, Field
+from typing import Any, Dict, List, Literal, Optional, Union
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class EvidenceStatus(str, Enum):
@@ -106,6 +106,125 @@ class RetrievalStageTrace(BaseModel):
     final_evidence_chunks: List[StageCandidate] = Field(default_factory=list)
 
 
+class RatioMetricV3(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    numerator: float
+    denominator: float
+    value: Optional[float] = None
+    reason: Optional[str] = None
+
+
+class MultiHopCaseMetricsV3(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    all_required: bool
+    matched_required_items: int
+    required_items: int
+    all_required_metric: RatioMetricV3
+    partial_metric: RatioMetricV3
+
+
+class StageCaseMetricsV3(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    configured_capacity: Optional[int] = None
+    candidate_count: int
+    scored_case_count: int
+    applicable_gold_counts: Dict[str, int]
+    matched_gold_counts: Dict[str, int]
+    recall: Dict[str, Dict[int, RatioMetricV3]]
+    mrr: Dict[str, RatioMetricV3]
+    null_reason_counts: Dict[str, int] = Field(default_factory=dict)
+
+
+class RetrievalCaseMetricsV3(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    metric_version: Literal["3.0.0"] = "3.0.0"
+    relevance_definition: Literal[
+        "binary_unique_required_evidence_v1"
+    ] = "binary_unique_required_evidence_v1"
+    status: str
+    applicable: bool
+    skip_reason: Optional[str] = None
+    applicable_gold_counts: Dict[str, int]
+    matched_gold_counts: Dict[str, int]
+    document_recall: Dict[int, RatioMetricV3]
+    article_recall: Dict[int, RatioMetricV3]
+    clause_recall: Dict[int, RatioMetricV3]
+    mrr: Dict[str, RatioMetricV3]
+    ndcg_at_10: RatioMetricV3
+    exact_reference_hit: RatioMetricV3
+    multi_hop: MultiHopCaseMetricsV3
+    no_candidate: bool = False
+    retrieval_technical_error: bool = False
+    reranker_technical_error: bool = False
+    stages: Dict[str, StageCaseMetricsV3]
+    first_loss_by_evidence: Dict[str, str] = Field(default_factory=dict)
+
+
+
+class StrictMetricModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+
+class EvaluationSchemaError(ValueError):
+    status = "schema_error"
+
+
+class AggregateMetric(StrictMetricModel):
+    macro: Optional[float] = None
+    micro: Optional[float] = None
+    numerator: float = 0.0
+    denominator: float = 0.0
+    scored_cases: int = 0
+    skipped_cases: int = 0
+    skip_reasons: Dict[str, int] = Field(default_factory=dict)
+    reason: Optional[str] = None
+
+
+class CandidateDistribution(StrictMetricModel):
+    count: int
+    min: Optional[float] = None
+    mean: Optional[float] = None
+    p50: Optional[float] = None
+    p95: Optional[float] = None
+    max: Optional[float] = None
+
+
+class StageAggregateMetrics(StrictMetricModel):
+    configured_capacity: Optional[int] = None
+    scored_case_count: int
+    applicable_gold_counts: Dict[str, int]
+    matched_gold_counts: Dict[str, int]
+    recall: Dict[str, Dict[int, AggregateMetric]]
+    mrr: Dict[str, AggregateMetric]
+    candidates: CandidateDistribution
+    first_loss_evidence_count: int = 0
+    null_reason_counts: Dict[str, int] = Field(default_factory=dict)
+
+
+class RetrievalAggregateMetrics(StrictMetricModel):
+    metric_version: Literal["3.0.0"] = "3.0.0"
+    total_cases: int
+    scored_cases: int
+    skipped_cases: int
+    coverage: AggregateMetric
+    skip_reason_counts: Dict[str, int]
+    document_recall: Dict[int, AggregateMetric]
+    article_recall: Dict[int, AggregateMetric]
+    clause_recall: Dict[int, AggregateMetric]
+    mrr: Dict[str, AggregateMetric]
+    ndcg_at_10: AggregateMetric
+    exact_reference_hit: AggregateMetric
+    multi_hop_all_required: AggregateMetric
+    multi_hop_partial: AggregateMetric
+    no_candidate_rate: AggregateMetric
+    retrieval_technical_error_rate: AggregateMetric
+    reranker_technical_error_rate: AggregateMetric
+    stages: Dict[str, StageAggregateMetrics]
+
 
 class RetrievalCaseResult(BaseModel):
     case_id: str
@@ -121,6 +240,7 @@ class RetrievalCaseResult(BaseModel):
     latency: Dict[str, float] = Field(default_factory=dict)
     metrics: Dict[str, Any] = Field(default_factory=dict)
     error: Optional[str] = None
+    technical_errors: Dict[str, str] = Field(default_factory=dict)
 
 
 class AnswerCaseResult(BaseModel):
@@ -138,6 +258,8 @@ class AnswerCaseResult(BaseModel):
     metrics: Dict[str, Any] = Field(default_factory=dict)
     ragas_metrics: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
+    status: str = "ok"
+    technical_errors: Dict[str, str] = Field(default_factory=dict)
 
 
 class EvaluationRunManifest(BaseModel):
@@ -149,6 +271,11 @@ class EvaluationRunManifest(BaseModel):
     git_staged_dirty: bool = False
     git_untracked_dirty: bool = False
     git_diff_sha256: Optional[str] = None
+    git_diff_status: str = "clean"
+    git_diff_reason: Optional[str] = None
+    source_state_sha256: Optional[str] = None
+    provenance_status: str = "ok"
+    provenance_error: Optional[str] = None
     repository_root: str = ""
     dataset_revision: str
     dataset_sha256: str
@@ -167,5 +294,5 @@ class EvaluationRunManifest(BaseModel):
     reranker_provider: str  # "current" | "pinecone-bge" | "qdrant-colbert" | "pinecone-only" | "qdrant-only"
     profile_name: str = "custom"
     configuration: Dict[str, Any] = Field(default_factory=dict)
-    code_metric_version: str = "2.0.0"
-
+    configured_provider_models: Dict[str, Any] = Field(default_factory=dict)
+    code_metric_version: str = "3.0.0"

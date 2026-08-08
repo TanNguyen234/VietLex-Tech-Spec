@@ -25,7 +25,12 @@ env/
 *.swp
 
 # Local Agent Skills
-.agents/
+.worktrees/
+.agents/*
+!.agents/skills/
+.agents/skills/*
+!.agents/skills/vietlex-lean-superpowers/
+!.agents/skills/vietlex-lean-superpowers/**
 
 # Raw Data & Large Datasets
 app/data/*.json

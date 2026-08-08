@@ -235,3 +235,44 @@ async def test_staging_hard_limit_uses_pinecone_without_upsert() -> None:
 
     assert outcome.provider == "pinecone"
     assert qdrant.upserts == []
+
+
+@pytest.mark.asyncio
+async def test_pinecone_override_sets_exact_top_n() -> None:
+    settings = Settings(_env_file=None)
+    qdrant = FakeQdrant()
+    inference = FakeInference()
+    reranker = RemoteReranker(
+        settings=settings,
+        qdrant=qdrant,
+        pinecone=SimpleNamespace(inference=inference),
+    )
+
+    await reranker.rerank(
+        "tax",
+        ["Article 1", "Article 2", "Article 3"],
+        mode="pinecone-only",
+        rerank_return_limit=1,
+    )
+
+    assert inference.calls[0]["top_n"] == 1
+
+
+@pytest.mark.asyncio
+async def test_qdrant_override_sets_exact_query_limit() -> None:
+    settings = Settings(_env_file=None, QDRANT_RERANK_MAX_RETRIES=1)
+    qdrant = FakeQdrant()
+    reranker = RemoteReranker(
+        settings=settings,
+        qdrant=qdrant,
+        pinecone=SimpleNamespace(inference=FakeInference()),
+    )
+
+    await reranker.rerank(
+        "tax",
+        ["Article 1", "Article 2", "Article 3"],
+        mode="qdrant-only",
+        rerank_return_limit=1,
+    )
+
+    assert qdrant.queries[0]["limit"] == 1
