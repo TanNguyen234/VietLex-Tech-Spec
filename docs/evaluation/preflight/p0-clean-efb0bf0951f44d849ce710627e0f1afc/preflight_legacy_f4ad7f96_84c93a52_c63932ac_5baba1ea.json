@@ -1,0 +1,49 @@
+{
+  "case_selection": {
+    "selected_case_count": 0,
+    "selected_case_ids": [],
+    "selected_case_ids_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "meta": {
+    "batch_configuration_fingerprint": "d787ae6dd31d8badcb8147a9d18e6ff1c9839baea35773f014ed08f22faed36f",
+    "batch_status": "BLOCKED",
+    "blocked_reason": "selected_case_count_is_zero_under_verified_only",
+    "dataset_revision": "4d4e10b201544e8a4c49a1d3fa496595a7d486d0",
+    "dataset_sha256": "84c93a522c1bc8eac7179aa808f70b59466fe9a55a4a9f98ddae07797c9662c7",
+    "git_diff_reason": null,
+    "git_diff_sha256": null,
+    "git_diff_status": "clean",
+    "git_dirty": false,
+    "git_sha": "bbd68c7dc10d6059e78ce202c606b7951694b3ad",
+    "gold_policy": "all-required-verified",
+    "provenance_error": null,
+    "provenance_status": "ok",
+    "provider_calls": 0,
+    "sidecar_sha256": "c63932ac4101a37ab189d665ea181c4672faac8e9de035d0d83797384d5aa18a",
+    "source_state_sha256": "5baba1eaa4d85bc229d888b99629a5a6ffc20160460d2e490b43acb490934d21",
+    "status_code": "preflight_blocked",
+    "verified_only": true
+  },
+  "profile": {
+    "canonical_artifact_path": "docs/evaluation/preflight/p0-clean-efb0bf0951f44d849ce710627e0f1afc/preflight_legacy_f4ad7f96_84c93a52_c63932ac_5baba1ea.json",
+    "configuration_fingerprint": "f4ad7f962a887cb091206556b32c87469cba32c9d28e8957637d492d41436fd3",
+    "profile": {
+      "final_context_token_limit": 720,
+      "final_evidence_limit": 3,
+      "intent_scoring_enabled": false,
+      "local_chunks_per_document": 2,
+      "name": "legacy",
+      "rerank_input_limit": 12,
+      "rerank_return_limit": 3,
+      "reranker_mode": "current",
+      "resolved_document_limit": 12,
+      "retrieval_document_limit": 24,
+      "rewrite_mode": "off"
+    },
+    "profile_name": "legacy",
+    "selected_case_count": 0,
+    "selected_case_ids_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "source_state_sha256": "5baba1eaa4d85bc229d888b99629a5a6ffc20160460d2e490b43acb490934d21"
+  },
+  "schema_version": "3.0.0"
+}

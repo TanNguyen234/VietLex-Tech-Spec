@@ -1,6 +1,6 @@
 # VietLex Evaluation Current Status
 
-**Status:** P0 and lean workflow verified locally; clean committed baseline NOT RUN
+**Status:** P0 and lean workflow verified on merged local `main`; live baseline BLOCKED by zero verified gold
 
 - Historical 2026-08-03 retrieval runs remain invalid for decision-making.
 - Current sidecar: 420 cases, 483 evidence items, 0 verified evidence items.
@@ -29,17 +29,18 @@ Verified on 2026-08-08 from Git SHA `4e40be6ab1871e3b64ca6f560f317bed215e05e1` w
 - CRG incremental review, independent code review, and focused re-review found no remaining Critical or Important issue.
 - Lean-skill pressure tests preserved all critical quality/authority gates while removing an unnecessary implementation worktree and adding explicit query/rerun caps.
 
-## Provider-free P0 preflight
+## Provider-free clean P0 preflight
 
-- Artifact: `docs/evaluation/preflight/p0-final-a4a93aded267483bb3bf54a89c723275/`.
+- Artifact: `docs/evaluation/preflight/p0-clean-efb0bf0951f44d849ce710627e0f1afc/`.
 - Expected process exit: 1 (`BLOCKED`).
 - Profiles: 3 (`legacy`, `separated_no_intent`, `separated_intent`).
 - Selected cases: 0 under `all-required-verified` and `verified-only`.
 - Provider calls: 0.
-- Source-state SHA-256 at P0 preflight: `0f60228d92ea45f2da2e5bccdd351e9418f8f7c2d4662c733583b43646ecfc8a`.
+- Git SHA: `bbd68c7dc10d6059e78ce202c606b7951694b3ad` with `git_dirty=false`.
+- Source-state SHA-256: `5baba1eaa4d85bc229d888b99629a5a6ffc20160460d2e490b43acb490934d21`.
 - Selected-case-set SHA-256: `4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945`.
 - All canonical artifact paths are repository-relative POSIX paths.
 
-Remote data modified: **no**. Live benchmark, live provider evaluation, ingestion, migration, deployment, commit, and push: **NOT RUN**.
+Remote data modified: **no**. P0 source commit and local `main` merge: **COMPLETED**. Live benchmark, live provider evaluation, ingestion, migration, deployment, and push: **NOT RUN**.
 
-The latest verified source-state SHA-256 after adding the project-local lean workflow is `3eb7e2a71b91431b1a3d04f14e8010037c75712ddec1c6edfa9e252621995c05`. A matching clean provider-free preflight remains **NOT RUN** until after the source commit.
+The merged-result full suite passed `219 passed, 1 skipped in 73.36s`. The clean provider-free preflight matches the source state above; P1 may build adjudication tooling, but human evidence promotion remains required.
