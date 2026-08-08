@@ -2,20 +2,24 @@ from __future__ import annotations
 
 import hashlib
 from copy import deepcopy
+from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
 
 from app.evaluation.adjudication import (
     AdjudicationCandidate,
+    build_promotion_summary,
     build_promotion_preview,
     build_decision_template,
     build_queue_payload,
     canonical_sha256,
     select_stratified_case_ids,
+    validate_preview_approval,
     validate_decisions,
 )
-from app.evaluation.gold_sidecar import GoldSidecar, GoldSidecarMetadata
+from app.evaluation.artifact_io import ArtifactCollisionError, write_immutable_json
+from app.evaluation.gold_sidecar import GoldSidecar, GoldSidecarMetadata, load_gold_sidecar
 from app.evaluation.provenance import GitProvenance
 from app.evaluation.schemas import EvidenceStatus, GoldEvidence, GoldenCase
 
@@ -925,3 +929,115 @@ def test_validate_decisions_returns_and_preview_applies_two_rows_in_queue_order(
 
     assert [item.selected_candidate_id for item in validated] == ["review-candidate", "second-candidate"]
     assert [item["evidence_item_id"] for item in preview["per_evidence_diff"]] == ["review-evidence", "second-evidence"]
+
+
+def _verified_preview() -> dict:
+    queue, queue_sha256 = _review_queue()
+    decisions = _review_decisions(queue_sha256)
+    decisions["decisions"][0]["queue_row_id"] = queue["rows"][0]["queue_row_id"]
+    return build_promotion_preview(
+        queue_payload=queue, queue_sha256=queue_sha256, decisions_payload=decisions,
+        source_sidecar_payload=_source_sidecar(), source_sidecar_sha256="d" * 64,
+        dataset_case_ids=["review-case", "other-case"], provenance=_provenance(),
+    )
+
+
+@pytest.mark.parametrize("approval", [None, "", " ", "not-a-hash", "A" * 64, "b" * 64])
+def test_validate_preview_approval_rejects_missing_malformed_or_nonmatching_approval_hash(approval):
+    # Break caught: persistence can be authorized by anything other than the exact canonical preview hash.
+    preview = _verified_preview()
+
+    with pytest.raises(ValueError, match="approved_preview_sha256"):
+        validate_preview_approval(preview, approval)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize("declared_hash", [None, "", "not-a-hash", "A" * 64])
+def test_validate_preview_approval_requires_a_well_formed_declared_hash(declared_hash):
+    # Break caught: a syntactically invalid self-hash can be approved.
+    preview = _verified_preview()
+    preview["preview_sha256"] = declared_hash
+
+    with pytest.raises(ValueError, match="preview_sha256"):
+        validate_preview_approval(preview, "a" * 64)
+
+
+def test_validate_preview_approval_recomputes_core_hash_and_is_pure():
+    # Break caught: post-preview changes are accepted by replaying the original declared hash.
+    preview = _verified_preview()
+    original = deepcopy(preview)
+    preview["status_counts"]["after"]["verified"] = 999
+
+    with pytest.raises(ValueError, match="canonical"):
+        validate_preview_approval(preview, original["preview_sha256"])
+    assert preview["preview_sha256"] == original["preview_sha256"]
+    assert preview["status_counts"]["after"]["verified"] == 999
+
+
+def test_validate_preview_approval_rejects_nonobject_or_legacy_notes_proposed_sidecar():
+    # Break caught: the promotion gate accepts non-sidecar JSON or private raw notes.
+    preview = _verified_preview()
+    preview["proposed_sidecar"] = []
+    preview["preview_sha256"] = canonical_sha256({key: value for key, value in preview.items() if key != "preview_sha256"})
+    with pytest.raises(ValueError, match="proposed_sidecar"):
+        validate_preview_approval(preview, preview["preview_sha256"])
+
+    preview = _verified_preview()
+    preview["proposed_sidecar"]["labels"][0]["adjudication_notes"] = "private"
+    preview["preview_sha256"] = canonical_sha256({key: value for key, value in preview.items() if key != "preview_sha256"})
+    with pytest.raises(ValueError, match="adjudication_notes"):
+        validate_preview_approval(preview, preview["preview_sha256"])
+
+
+def test_exact_approval_is_nonpersistent_and_proposed_sidecar_remains_immutable_loadable(tmp_path: Path):
+    # Break caught: approval writes as a side effect or promotion persistence loses sidecar compatibility.
+    preview = _verified_preview()
+    sidecar_path = tmp_path / "gold.json"
+
+    assert validate_preview_approval(preview, preview["preview_sha256"]) is None
+    assert not sidecar_path.exists()
+    assert write_immutable_json(sidecar_path, preview["proposed_sidecar"]) == "created"
+    assert load_gold_sidecar(sidecar_path, dataset_case_ids=["review-case", "other-case"]).metadata.total_evidence_items == 2
+    original_bytes = sidecar_path.read_bytes()
+    assert write_immutable_json(sidecar_path, preview["proposed_sidecar"]) == "reused"
+    with pytest.raises(ArtifactCollisionError):
+        write_immutable_json(sidecar_path, {"different": True})
+    assert sidecar_path.read_bytes() == original_bytes
+
+
+def test_build_promotion_summary_is_pure_redacts_sidecar_and_blocks_small_verified_set():
+    # Break caught: the handoff summary leaks notes/sidecar or permits fewer than 30 verified cases.
+    preview = _verified_preview()
+    original = deepcopy(preview)
+
+    summary = build_promotion_summary(preview)
+
+    assert summary["preview_sha256"] == preview["preview_sha256"]
+    assert summary["source_hashes"] == preview["source_hashes"]
+    assert summary["provenance"] == preview["provenance"]
+    assert summary["status_counts"] == preview["status_counts"]
+    assert summary["per_evidence_diff"] == preview["per_evidence_diff"]
+    assert summary["verified_evidence_count"] == preview["verified_evidence_count"]
+    assert summary["fully_verified_selected_case_count"] == 1
+    assert summary["negative_counts"] == preview["negative_counts"]
+    assert summary["proposed_sidecar_sha256"] == canonical_sha256(preview["proposed_sidecar"])
+    assert summary["status"] == "BLOCKED_INSUFFICIENT_VERIFIED_CASES"
+    assert "proposed_sidecar" not in summary
+    assert "notes" not in str(summary)
+    assert preview == original
+
+
+def test_build_promotion_summary_preserves_negative_diffs_and_sets_ready_only_in_gate_range():
+    # Break caught: negative evidence disappears from the summary or the 30–50-case gate is weakened.
+    preview = _verified_preview()
+    preview["negative_counts"] = {"rejected": 1, "corpus_missing": 0, "ambiguous": 0, "insufficient_evidence": 0}
+    preview["per_evidence_diff"][0]["after_status"] = "rejected"
+    preview["fully_verified_selected_case_count"] = 30
+    preview["preview_sha256"] = canonical_sha256({key: value for key, value in preview.items() if key != "preview_sha256"})
+
+    assert build_promotion_summary(preview)["status"] == "READY_FOR_P2"
+    preview["fully_verified_selected_case_count"] = 51
+    preview["preview_sha256"] = canonical_sha256({key: value for key, value in preview.items() if key != "preview_sha256"})
+    summary = build_promotion_summary(preview)
+    assert summary["status"] == "BLOCKED_INSUFFICIENT_VERIFIED_CASES"
+    assert summary["negative_counts"]["rejected"] == 1
+    assert summary["per_evidence_diff"][0]["after_status"] == "rejected"

@@ -594,3 +594,104 @@ def _status_counts(labels: Sequence[Mapping[str, Any]]) -> dict[str, int]:
         if isinstance(status, str):
             counts[status] = counts.get(status, 0) + 1
     return dict(sorted(counts.items()))
+
+
+def validate_preview_approval(
+    preview_payload: Mapping[str, Any], approved_preview_sha256: str,
+) -> None:
+    """Fail closed unless explicit approval names the exact immutable preview."""
+    preview = _validate_promotion_preview(preview_payload)
+    declared_hash = _require_sha256(preview.get("preview_sha256"), "preview_sha256")
+    approved_hash = _require_sha256(approved_preview_sha256, "approved_preview_sha256")
+    recomputed_hash = canonical_sha256({
+        key: value for key, value in preview.items() if key != "preview_sha256"
+    })
+    if declared_hash != recomputed_hash:
+        raise ValueError("preview_sha256 does not match the canonical preview payload")
+    if approved_hash != declared_hash:
+        raise ValueError("approved_preview_sha256 does not match preview_sha256")
+
+
+def build_promotion_summary(preview_payload: Mapping[str, Any]) -> dict[str, Any]:
+    """Build a non-sensitive, deterministic handoff summary for an approved preview."""
+    preview = _validate_promotion_preview(preview_payload)
+    declared_hash = _require_sha256(preview.get("preview_sha256"), "preview_sha256")
+    recomputed_hash = canonical_sha256({
+        key: value for key, value in preview.items() if key != "preview_sha256"
+    })
+    if declared_hash != recomputed_hash:
+        raise ValueError("preview_sha256 does not match the canonical preview payload")
+    fully_verified_case_count = preview["fully_verified_selected_case_count"]
+    return {
+        "preview_sha256": declared_hash,
+        "source_hashes": deepcopy(dict(preview["source_hashes"])),
+        "provenance": deepcopy(dict(preview["provenance"])),
+        "status_counts": deepcopy(dict(preview["status_counts"])),
+        "per_evidence_diff": deepcopy(list(preview["per_evidence_diff"])),
+        "verified_evidence_count": preview["verified_evidence_count"],
+        "fully_verified_selected_case_count": fully_verified_case_count,
+        "negative_counts": deepcopy(dict(preview["negative_counts"])),
+        "proposed_sidecar_sha256": canonical_sha256(preview["proposed_sidecar"]),
+        "status": (
+            "READY_FOR_P2"
+            if 30 <= fully_verified_case_count <= 50
+            else "BLOCKED_INSUFFICIENT_VERIFIED_CASES"
+        ),
+    }
+
+
+def _validate_promotion_preview(preview_payload: Mapping[str, Any]) -> Mapping[str, Any]:
+    preview = _require_mapping(preview_payload, "preview_payload")
+    for field_name in (
+        "preview_sha256", "source_hashes", "provenance", "status_counts",
+        "per_evidence_diff", "verified_evidence_count",
+        "fully_verified_selected_case_count", "negative_counts", "proposed_sidecar",
+    ):
+        if field_name not in preview:
+            raise ValueError(f"preview is missing required {field_name}")
+    source_hashes = _require_mapping(preview["source_hashes"], "source_hashes")
+    for field_name in ("queue_sha256", "decisions_sha256", "source_sidecar_sha256"):
+        _require_sha256(source_hashes.get(field_name), f"source_hashes.{field_name}")
+    _require_mapping(preview["provenance"], "provenance")
+    status_counts = _require_mapping(preview["status_counts"], "status_counts")
+    for field_name in ("before", "after"):
+        _validate_count_mapping(status_counts.get(field_name), f"status_counts.{field_name}")
+    diffs = preview["per_evidence_diff"]
+    if not isinstance(diffs, list):
+        raise ValueError("per_evidence_diff must be a list")
+    for item in diffs:
+        diff = _require_mapping(item, "per_evidence_diff entry")
+        for field_name in ("case_id", "evidence_item_id", "before_status", "after_status"):
+            _require_nonblank(diff.get(field_name), f"per_evidence_diff.{field_name}")
+        if "notes" in diff or "adjudication_notes" in diff:
+            raise ValueError("per_evidence_diff must not contain raw decision notes")
+    _require_nonnegative_int(preview["verified_evidence_count"], "verified_evidence_count")
+    _require_nonnegative_int(
+        preview["fully_verified_selected_case_count"], "fully_verified_selected_case_count"
+    )
+    negative_counts = _validate_count_mapping(preview["negative_counts"], "negative_counts")
+    if set(negative_counts) != _NEGATIVE_DECISION_STATUSES:
+        raise ValueError("negative_counts must contain every negative decision status")
+    proposed_sidecar = _require_mapping(preview["proposed_sidecar"], "proposed_sidecar")
+    labels = proposed_sidecar.get("labels")
+    if not isinstance(labels, list):
+        raise ValueError("proposed_sidecar.labels must be a list")
+    for label in labels:
+        label_mapping = _require_mapping(label, "proposed_sidecar label")
+        if "adjudication_notes" in label_mapping:
+            raise ValueError("proposed_sidecar contains legacy raw adjudication_notes")
+    return preview
+
+
+def _validate_count_mapping(value: Any, field_name: str) -> Mapping[str, Any]:
+    counts = _require_mapping(value, field_name)
+    for name, count in counts.items():
+        _require_nonblank(name, f"{field_name} key")
+        _require_nonnegative_int(count, f"{field_name}.{name}")
+    return counts
+
+
+def _require_nonnegative_int(value: Any, field_name: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ValueError(f"{field_name} must be a non-negative integer")
+    return value
