@@ -17,6 +17,141 @@ from app.evaluation.provenance import GitProvenance
 from app.evaluation.schemas import EvidenceStatus, GoldEvidence, GoldenCase
 
 
+class _FakeFts:
+    def __init__(self, ids: list[int]) -> None:
+        self.ids = ids
+        self.queries: list[tuple[str, int]] = []
+
+    def search(self, query: str, *, limit: int) -> list[int]:
+        self.queries.append((query, limit))
+        return list(self.ids)
+
+
+class _FakeContentStore:
+    def __init__(self, documents: dict[int, object]) -> None:
+        self.documents = documents
+        self.requests: list[list[int]] = []
+
+    def get_many(self, document_ids: list[int]) -> dict[int, object]:
+        self.requests.append(list(document_ids))
+        return {
+            document_id: self.documents[document_id]
+            for document_id in document_ids
+            if document_id in self.documents
+        }
+
+
+def _stored_document(document_id: int, *, number: str, content: str):
+    from types import SimpleNamespace
+
+    return SimpleNamespace(
+        metadata=SimpleNamespace(
+            document_id=document_id,
+            document_number=number,
+            title=f"Title {document_id}",
+            source_url=f"https://example.test/doc-{document_id}",
+        ),
+        content=content,
+        content_sha256=hashlib.sha256(content.encode("utf-8")).hexdigest(),
+    )
+
+
+def test_candidate_discovery_is_bounded_per_case_and_preserves_anchor_provenance():
+    # Break caught: discovery searches/fetches for each evidence row, loses source ordering,
+    # or reports an inferred structural location not backed by the shared anchor matcher.
+    from app.evaluation.adjudication_candidates import discover_adjudication_candidates
+
+    case = GoldenCase(
+        case_id="discovery-case",
+        question="Ap dung 12/2026/ND-CP the nao?",
+        question_type="multi-hop",
+        answerable=True,
+        reference_answer="Theo 13/2026/ND-CP.",
+        reference_contexts=[
+            "\u0110i\u1ec1u 2\n1. Neo dung cua mot doan tham chieu dai du de xac minh nguon tai lieu nay.",
+            "Tham chieu 14/2026/ND-CP.",
+        ],
+    )
+    anchor = case.reference_contexts[0]
+    labels = [
+        GoldEvidence(
+            evidence_item_id="evidence-source", case_id=case.case_id,
+            document_id=2, document_number="12/2026/ND-CP", article="\u0110i\u1ec1u 2",
+            clause="Kho\u1ea3n 1", required=True, required_level="clause",
+            status=EvidenceStatus.AMBIGUOUS,
+        ),
+        GoldEvidence(
+            evidence_item_id="evidence-second", case_id=case.case_id,
+            required=False, status=EvidenceStatus.AMBIGUOUS,
+        ),
+    ]
+    fts = _FakeFts([3, 2, 4])
+    store = _FakeContentStore({
+        2: _stored_document(2, number="12/2026/ND-CP", content=anchor),
+        3: _stored_document(3, number="13/2026/ND-CP", content="No anchor."),
+        4: _stored_document(4, number="14/2026/ND-CP", content="No anchor either."),
+    })
+
+    discovered = discover_adjudication_candidates(
+        cases_by_id={case.case_id: case}, labels_by_case_id={case.case_id: labels},
+        selected_case_ids=[case.case_id], content_store=store, fts_index=fts,
+        candidate_limit=3,
+    )
+
+    assert len(fts.queries) == 1
+    query, limit = fts.queries[0]
+    assert limit == 3
+    assert "Ap dung 12/2026/ND-CP the nao?" in query
+    assert {"12/2026/ND-CP", "13/2026/ND-CP", "14/2026/ND-CP"} <= set(query.split())
+    assert store.requests == [[2, 3, 4]]
+    candidates = discovered[case.case_id]
+    assert [candidate.document_id for candidate in candidates] == [2, 3, 4]
+    assert [candidate.rank for candidate in candidates] == [1, 2, 3]
+    reordered = discover_adjudication_candidates(
+        cases_by_id={case.case_id: case}, labels_by_case_id={case.case_id: labels},
+        selected_case_ids=[case.case_id], content_store=store, fts_index=_FakeFts([4, 3, 2]),
+        candidate_limit=3,
+    )
+    assert candidates[0].candidate_id == reordered[case.case_id][0].candidate_id
+    assert candidates[0].document_number == "12/2026/ND-CP"
+    assert candidates[0].title == "Title 2"
+    assert candidates[0].source_url == "https://example.test/doc-2"
+    assert candidates[0].content_sha256 == hashlib.sha256(anchor.encode("utf-8")).hexdigest()
+    assert candidates[0].discovery_method == "source_sidecar_document_id"
+    assert candidates[0].anchor_match_method == "full_anchor_exact"
+    assert candidates[0].anchor_diagnostics == {"full_anchor_matched": True}
+    assert candidates[0].article == "\u0110i\u1ec1u 2"
+    assert candidates[0].clause == "1"
+    assert candidates[0].required_level_supported is True
+    assert candidates[1].anchor_match_method == "none"
+    assert candidates[1].required_level_supported is False
+
+
+@pytest.mark.parametrize(
+    ("candidate_limit", "selected_case_ids", "labels", "documents", "message"),
+    [
+        (0, ["case"], [GoldEvidence(evidence_item_id="zero", case_id="case", required=True, status=EvidenceStatus.AMBIGUOUS)], {}, "candidate_limit"),
+        (1, ["missing"], [], {}, "unknown selected case"),
+        (1, ["case"], [], {}, "missing labels"),
+        (1, ["case"], [GoldEvidence(evidence_item_id="missing", case_id="case", required=True, status=EvidenceStatus.AMBIGUOUS)], {}, "missing retrieved documents"),
+        (1, ["case"], [GoldEvidence(evidence_item_id="bad", case_id="case", document_id="bad", required=True, status=EvidenceStatus.AMBIGUOUS)], {}, "invalid corpus document identity"),
+    ],
+)
+def test_candidate_discovery_fails_closed_for_invalid_inputs(
+    candidate_limit, selected_case_ids, labels, documents, message,
+):
+    # Break caught: invalid discovery inputs silently produce partial or unbounded candidate lists.
+    from app.evaluation.adjudication_candidates import discover_adjudication_candidates
+
+    case = _case("case", "factoid")
+    with pytest.raises(ValueError, match=message):
+        discover_adjudication_candidates(
+            cases_by_id={case.case_id: case}, labels_by_case_id={"case": labels},
+            selected_case_ids=selected_case_ids, content_store=_FakeContentStore(documents),
+            fts_index=_FakeFts([1]), candidate_limit=candidate_limit,
+        )
+
+
 def _case(case_id: str, question_type: str) -> GoldenCase:
     return GoldenCase(
         case_id=case_id,

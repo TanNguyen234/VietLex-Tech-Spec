@@ -48,6 +48,13 @@ class AdjudicationCandidate(BaseModel):
     text: str | None = None
     score: float | None = None
     discovery_method: str | None = None
+    rank: int | None = None
+    content_sha256: str | None = None
+    anchor_match_method: str | None = None
+    anchor_diagnostics: dict[str, Any] = Field(default_factory=dict)
+    structural_citation: str | None = None
+    structural_chunk_sha256: str | None = None
+    required_level_supported: bool = False
 
 
 class AdjudicationQueueRow(BaseModel):
