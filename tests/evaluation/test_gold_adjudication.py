@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from copy import deepcopy
 from pathlib import Path
 
@@ -1074,3 +1075,157 @@ def test_validate_preview_approval_requires_valid_schema_and_exact_case_sections
 
     with pytest.raises(ValueError, match="schema_version|exact_case_set"):
         validate_preview_approval(preview, preview["preview_sha256"])
+
+
+def _write_cli_review_inputs(tmp_path: Path) -> tuple[Path, Path, dict[int, object]]:
+    """Create a hand-checkable exact 80-case set for the provider-free CLI."""
+    dataset_rows = []
+    labels = []
+    documents: dict[int, object] = {}
+    for index in range(80):
+        question_type = "factoid" if index < 40 else "multi-hop"
+        case_id = f"cli-{index:03d}"
+        anchor = f"Evidence for {case_id}."
+        document_id = index + 1
+        dataset_rows.append({
+            "case_id": case_id,
+            "question": f"Question for {case_id}",
+            "question_type": question_type,
+            "ground_truth_answer": f"Answer for {case_id}",
+            "ground_truth_context": [anchor],
+        })
+        labels.append({
+            "evidence_item_id": f"{case_id}-evidence",
+            "case_id": case_id,
+            "document_id": document_id,
+            "document_number": f"{document_id}/2026/ND-CP",
+            "required": True,
+            "required_level": "document",
+            "status": "ambiguous",
+        })
+        documents[document_id] = _stored_document(
+            document_id,
+            number=f"{document_id}/2026/ND-CP",
+            content=anchor,
+        )
+    dataset_path = tmp_path / "dataset.json"
+    sidecar_path = tmp_path / "labels.json"
+    dataset_path.write_text(json.dumps(dataset_rows), encoding="utf-8")
+    sidecar_path.write_text(json.dumps({
+        "schema_version": "2.0.0",
+        "total_cases": 80,
+        "total_evidence_items": 80,
+        "labels": labels,
+    }), encoding="utf-8")
+    return dataset_path, sidecar_path, documents
+
+
+def test_gold_adjudication_cli_is_import_safe_and_help_is_provider_free(monkeypatch):
+    # Break caught: importing or rendering CLI help constructs a corpus or provider client.
+    import run_gold_adjudication as cli
+
+    def forbidden_runtime_dependencies():
+        raise AssertionError("help must not load runtime dependencies")
+
+    monkeypatch.setattr(cli, "_runtime_dependencies", forbidden_runtime_dependencies)
+    with pytest.raises(SystemExit, match="0"):
+        cli.main(["--help"])
+
+
+def test_gold_adjudication_cli_queue_preview_and_promotion_are_immutable(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+):
+    # Break caught: CLI skips exact bindings, emits mutable/non-auditable artifacts,
+    # or promotes a source sidecar without an exact approved preview.
+    import run_gold_adjudication as cli
+
+    dataset_path, sidecar_path, documents = _write_cli_review_inputs(tmp_path)
+    content_store_path = tmp_path / "content.sqlite3"
+    fts_path = tmp_path / "fts.sqlite3"
+    content_store_path.touch()
+    fts_path.touch()
+
+    class FakeStore(_FakeContentStore):
+        def __init__(self, _path: Path) -> None:
+            super().__init__(documents)
+
+    class FakeFts(_FakeFts):
+        def __init__(self, *, store: object, path: Path, dataset_revision: str) -> None:
+            del store, path, dataset_revision
+            super().__init__([])
+
+    original = cli._runtime_dependencies()
+    dependencies = cli.RuntimeDependencies(
+        **{**original.__dict__, "ContentStore": FakeStore, "LegalFtsIndex": FakeFts}
+    )
+    monkeypatch.setattr(cli, "_runtime_dependencies", lambda: dependencies)
+    monkeypatch.setattr(cli, "repository_root", lambda: tmp_path)
+
+    queue_root = tmp_path / "queue-runs"
+    assert cli.main([
+        "queue", "--dataset", str(dataset_path), "--sidecar", str(sidecar_path),
+        "--content-store", str(content_store_path), "--fts", str(fts_path),
+        "--candidate-limit", "1", "--output-root", str(queue_root), "--run-id", "queue-1",
+    ]) == 0
+    queue_run = queue_root / "queue-1"
+    assert sorted(path.name for path in queue_run.iterdir()) == [
+        "decision_template.json", "queue.json", "queue_summary.json",
+    ]
+    queue = json.loads((queue_run / "queue.json").read_text(encoding="utf-8"))
+    template = json.loads((queue_run / "decision_template.json").read_text(encoding="utf-8"))
+    summary = json.loads((queue_run / "queue_summary.json").read_text(encoding="utf-8"))
+    assert len(queue["selected_case_ids"]) == 40
+    assert {row["question_type"] for row in queue["rows"]} == {"factoid", "multi-hop"}
+    assert {entry["decision"]["status"] for entry in template["decisions"]} == {"pending"}
+    assert template["queue_sha256"] == dependencies.canonical_sha256(queue)
+    assert summary["provider_calls"] == 0
+    assert all(not Path(value).is_absolute() and "\\" not in value for value in summary["artifact_paths"].values())
+
+    for index, (entry, row) in enumerate(zip(template["decisions"], queue["rows"], strict=True)):
+        entry["decision"] = {
+            "status": "rejected" if index < 11 else "verified",
+            "selected_candidate_id": None if index < 11 else row["candidates"][0]["candidate_id"],
+            "confidence": "high", "notes": "not supported" if index < 11 else "", "reviewer_identity": "reviewer",
+            "reviewed_at_utc": "2026-08-08T00:00:00Z",
+        }
+    decisions_path = tmp_path / "decisions.json"
+    decisions_path.write_text(json.dumps(template), encoding="utf-8")
+    preview_root = tmp_path / "preview-runs"
+    assert cli.main([
+        "preview", "--dataset", str(dataset_path), "--sidecar", str(sidecar_path),
+        "--queue", str(queue_run / "queue.json"), "--decisions", str(decisions_path),
+        "--output-root", str(preview_root), "--run-id", "preview-1",
+    ]) == 0
+    preview_path = preview_root / "preview-1" / "preview.json"
+    preview = json.loads(preview_path.read_text(encoding="utf-8"))
+    assert '"adjudication_notes":' not in json.dumps(preview["proposed_sidecar"])
+
+    source_before = sidecar_path.read_bytes()
+    promotion_root = tmp_path / "promotion-runs"
+    assert cli.main([
+        "promote", "--dataset", str(dataset_path), "--sidecar", str(sidecar_path),
+        "--queue", str(queue_run / "queue.json"), "--decisions", str(decisions_path),
+        "--preview", str(preview_path), "--approve-preview-sha256", preview["preview_sha256"],
+        "--output-root", str(promotion_root), "--run-id", "promotion-1",
+    ]) == 0
+    promotion_run = promotion_root / "promotion-1"
+    assert sorted(path.name for path in promotion_run.iterdir()) == [
+        "labels_v2.json", "promotion_summary.json",
+    ]
+    assert sidecar_path.read_bytes() == source_before
+    promotion_summary = json.loads((promotion_run / "promotion_summary.json").read_text(encoding="utf-8"))
+    assert promotion_summary["status"] == "BLOCKED_INSUFFICIENT_VERIFIED_CASES"
+    assert promotion_summary["negative_counts"]["rejected"] == 11
+
+
+def test_gold_adjudication_cli_rejects_external_outputs_and_missing_approval_before_writing(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+):
+    # Break caught: invalid output roots or absent approval values create an artifact directory.
+    import run_gold_adjudication as cli
+
+    monkeypatch.setattr(cli, "repository_root", lambda: tmp_path / "repository")
+    with pytest.raises(ValueError, match="inside the repository"):
+        cli.main(["queue", "--output-root", str(tmp_path / "outside")])
+    with pytest.raises(SystemExit):
+        cli.build_parser().parse_args(["promote"])
