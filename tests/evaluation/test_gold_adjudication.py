@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+from copy import deepcopy
 
 import pytest
 from pydantic import ValidationError
@@ -729,3 +730,181 @@ def test_promotion_preview_copies_only_selected_candidate_and_rejects_bad_sideca
             source_sidecar_payload=source, source_sidecar_sha256="d" * 64,
             dataset_case_ids=["review-case", "other-case"], provenance=_provenance(),
         )
+
+
+@pytest.mark.parametrize(
+    ("mutate_queue", "mutate_decisions", "message"),
+    [
+        (lambda queue: queue["rows"][0].update(question="tampered"), lambda decisions: None, "queue_sha256"),
+        (lambda queue: None, lambda decisions: decisions.update(queue_sha256="b" * 64), "queue_sha256"),
+        (lambda queue: None, lambda decisions: decisions.update(decisions=[]), "exactly one"),
+        (lambda queue: None, lambda decisions: decisions.update(decisions=[{
+            **decisions["decisions"][0], "queue_row_id": "extra-row", "evidence_item_id": "extra-evidence"
+        }]), "missing or extra"),
+        (lambda queue: None, lambda decisions: decisions.update(decisions=[
+            decisions["decisions"][0], deepcopy(decisions["decisions"][0])
+        ]), "duplicate"),
+    ],
+)
+def test_validate_decisions_rejects_queue_binding_and_row_set_drift(mutate_queue, mutate_decisions, message):
+    # Break caught: a complete-looking review artifact can be replayed against a changed or incomplete queue.
+    queue, queue_sha256 = _review_queue()
+    decisions = _review_decisions(queue_sha256)
+    decisions["decisions"][0]["queue_row_id"] = queue["rows"][0]["queue_row_id"]
+    mutate_queue(queue)
+    mutate_decisions(decisions)
+
+    with pytest.raises(ValueError, match=message):
+        validate_decisions(queue, decisions, queue_sha256=queue_sha256)
+
+
+@pytest.mark.parametrize(
+    "timestamp",
+    ["2026-08-08T01:02:03", "not-a-timestamp", "2026-08-08T01:02:03+01:00"],
+)
+def test_validate_decisions_rejects_non_utc_or_malformed_timestamps(timestamp):
+    # Break caught: timestamp parsing accepts a local, invalid, or non-UTC review instant.
+    queue, queue_sha256 = _review_queue()
+    decisions = _review_decisions(queue_sha256, reviewed_at_utc=timestamp)
+    decisions["decisions"][0]["queue_row_id"] = queue["rows"][0]["queue_row_id"]
+
+    with pytest.raises(ValueError, match="reviewed_at_utc"):
+        validate_decisions(queue, decisions, queue_sha256=queue_sha256)
+
+
+@pytest.mark.parametrize("status", ["rejected", "corpus_missing", "ambiguous", "insufficient_evidence"])
+def test_validate_decisions_requires_notes_for_each_negative_status(status):
+    # Break caught: a negative outcome loses its human rationale.
+    queue, queue_sha256 = _review_queue()
+    decisions = _review_decisions(queue_sha256, status=status, notes="")
+    decisions["decisions"][0]["queue_row_id"] = queue["rows"][0]["queue_row_id"]
+
+    with pytest.raises(ValueError, match="notes"):
+        validate_decisions(queue, decisions, queue_sha256=queue_sha256)
+
+
+@pytest.mark.parametrize("confidence", ["medium", "low"])
+def test_validate_decisions_requires_notes_for_medium_and_low_confidence(confidence):
+    # Break caught: qualified review confidence lacks the mandatory audit rationale.
+    queue, queue_sha256 = _review_queue()
+    decisions = _review_decisions(queue_sha256, confidence=confidence, notes="")
+    decisions["decisions"][0]["queue_row_id"] = queue["rows"][0]["queue_row_id"]
+
+    with pytest.raises(ValueError, match="notes"):
+        validate_decisions(queue, decisions, queue_sha256=queue_sha256)
+
+
+@pytest.mark.parametrize(
+    ("mutate", "message"),
+    [
+        (lambda source: source.update(total_cases=99), "total_cases"),
+        (lambda source: source.update(total_evidence_items=99), "total_evidence_items"),
+        (lambda source: source["labels"].append({
+            "evidence_item_id": "extra-evidence", "case_id": "extra-case", "required": False,
+            "required_level": "document", "status": "rejected",
+        }), "case ID set"),
+        (lambda source: source["labels"].append(deepcopy(source["labels"][0])), "duplicate"),
+    ],
+)
+def test_promotion_preview_rejects_malformed_source_counts_and_identity_sets(mutate, message):
+    # Break caught: a preview can be generated from a malformed source sidecar.
+    queue, queue_sha256 = _review_queue()
+    decisions = _review_decisions(queue_sha256)
+    decisions["decisions"][0]["queue_row_id"] = queue["rows"][0]["queue_row_id"]
+    source = _source_sidecar()
+    mutate(source)
+
+    with pytest.raises(ValueError, match=message):
+        build_promotion_preview(
+            queue_payload=queue, queue_sha256=queue_sha256, decisions_payload=decisions,
+            source_sidecar_payload=source, source_sidecar_sha256="d" * 64,
+            dataset_case_ids=["review-case", "other-case"], provenance=_provenance(),
+        )
+
+
+def test_promotion_preview_rejects_malformed_source_hash_and_legacy_raw_notes_without_mutation():
+    # Break caught: a preview accepts an untraceable source hash or silently redacts a retained legacy raw note.
+    queue, queue_sha256 = _review_queue()
+    decisions = _review_decisions(queue_sha256)
+    decisions["decisions"][0]["queue_row_id"] = queue["rows"][0]["queue_row_id"]
+    source = _source_sidecar()
+
+    with pytest.raises(ValueError, match="source_sidecar_sha256"):
+        build_promotion_preview(
+            queue_payload=queue, queue_sha256=queue_sha256, decisions_payload=decisions,
+            source_sidecar_payload=source, source_sidecar_sha256="not-a-hash",
+            dataset_case_ids=["review-case", "other-case"], provenance=_provenance(),
+        )
+
+    source["labels"][1]["adjudication_notes"] = "legacy private note"
+    original = deepcopy(source)
+    with pytest.raises(ValueError, match="legacy raw adjudication_notes"):
+        build_promotion_preview(
+            queue_payload=queue, queue_sha256=queue_sha256, decisions_payload=decisions,
+            source_sidecar_payload=source, source_sidecar_sha256="d" * 64,
+            dataset_case_ids=["review-case", "other-case"], provenance=_provenance(),
+        )
+    assert source == original
+
+
+def test_promotion_preview_preserves_nonqueued_labels_and_round_trips_adjudication_provenance():
+    # Break caught: preview alters untouched labels or loses the auditable resolved-decision provenance fields.
+    queue, queue_sha256 = _review_queue()
+    decisions = _review_decisions(queue_sha256, reviewed_at_utc="2026-08-08T01:02:03+00:00")
+    decisions["decisions"][0]["queue_row_id"] = queue["rows"][0]["queue_row_id"]
+    source = _source_sidecar()
+    source["labels"][1]["future_compatible_field"] = {"preserve": ["exactly"]}
+    unchanged = deepcopy(source["labels"][1])
+
+    preview = build_promotion_preview(
+        queue_payload=queue, queue_sha256=queue_sha256, decisions_payload=decisions,
+        source_sidecar_payload=source, source_sidecar_sha256="d" * 64,
+        dataset_case_ids=["review-case", "other-case"], provenance=_provenance(),
+    )
+
+    label = GoldEvidence.model_validate(preview["proposed_sidecar"]["labels"][0])
+    assert preview["proposed_sidecar"]["labels"][1] == unchanged
+    assert label.adjudication_queue_sha256 == queue_sha256
+    assert label.adjudication_decision_sha256 == canonical_sha256(decisions["decisions"][0])
+    assert label.adjudication_candidate_id == "review-candidate"
+    assert label.adjudication_confidence == "high"
+    assert label.adjudication_reviewer_identity == "legal-reviewer-01"
+    assert label.adjudicated_at_utc == "2026-08-08T01:02:03Z"
+    assert label.adjudication_notes_sha256 == hashlib.sha256(
+        "Reviewed against the cited legal text.".encode("utf-8")
+    ).hexdigest()
+    assert label.adjudication_notes is None
+
+
+def test_validate_decisions_returns_and_preview_applies_two_rows_in_queue_order():
+    # Break caught: source updates or output order follow artifact order instead of the immutable queue order.
+    queue, _ = _review_queue()
+    second = deepcopy(queue["rows"][0])
+    second.update(queue_row_id="second-row", evidence_item_id="second-evidence")
+    second["candidates"][0].update(candidate_id="second-candidate", evidence_item_id="second-evidence")
+    queue["rows"].append(second)
+    queue_sha256 = canonical_sha256(queue)
+    first_decision = _review_decisions(queue_sha256)["decisions"][0]
+    first_decision["queue_row_id"] = queue["rows"][0]["queue_row_id"]
+    second_decision = deepcopy(first_decision)
+    second_decision.update(queue_row_id="second-row", evidence_item_id="second-evidence")
+    second_decision["decision"]["selected_candidate_id"] = "second-candidate"
+    decisions = {"schema_version": "1.0.0", "queue_sha256": queue_sha256, "decisions": [second_decision, first_decision]}
+    source = {
+        "schema_version": "2.0.0", "dataset_name": "test", "total_cases": 1,
+        "total_evidence_items": 2,
+        "labels": [
+            {"evidence_item_id": "review-evidence", "case_id": "review-case", "required": True, "required_level": "article", "status": "ambiguous"},
+            {"evidence_item_id": "second-evidence", "case_id": "review-case", "required": True, "required_level": "article", "status": "ambiguous"},
+        ],
+    }
+
+    validated = validate_decisions(queue, decisions, queue_sha256=queue_sha256)
+    preview = build_promotion_preview(
+        queue_payload=queue, queue_sha256=queue_sha256, decisions_payload=decisions,
+        source_sidecar_payload=source, source_sidecar_sha256="d" * 64,
+        dataset_case_ids=["review-case"], provenance=_provenance(),
+    )
+
+    assert [item.selected_candidate_id for item in validated] == ["review-candidate", "second-candidate"]
+    assert [item["evidence_item_id"] for item in preview["per_evidence_diff"]] == ["review-evidence", "second-evidence"]

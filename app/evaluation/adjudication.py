@@ -481,6 +481,9 @@ def _validate_source_sidecar(
     case_ids: list[str] = []
     for raw_label in labels:
         label = _require_mapping(raw_label, "source sidecar label")
+        legacy_notes = label.get("adjudication_notes")
+        if isinstance(legacy_notes, str) and legacy_notes.strip():
+            raise ValueError("source sidecar contains legacy raw adjudication_notes")
         evidence = GoldEvidence.model_validate(label)
         if evidence.evidence_item_id in labels_by_id:
             raise ValueError("source sidecar contains duplicate evidence_item_id")
@@ -534,7 +537,6 @@ def build_promotion_preview(
         label["adjudication_reviewer_identity"] = decision.reviewer_identity
         label["adjudicated_at_utc"] = decision.reviewed_at_utc
         label["adjudication_notes_sha256"] = _text_sha256(decision.notes) if decision.notes else None
-        label.pop("adjudication_notes", None)
         candidate = _validate_selected_candidate(row, decision)
         if candidate is not None:
             label.update({
@@ -550,10 +552,6 @@ def build_promotion_preview(
             "after_status": decision.status,
             "selected_candidate_id": decision.selected_candidate_id,
         })
-    # Legacy raw notes never survive into a promoted sidecar, including non-queued labels.
-    for label in source["labels"]:
-        label.pop("adjudication_notes", None)
-
     after_counts = _status_counts(source["labels"])
     selected_case_ids = queue_payload.get("selected_case_ids", [])
     if not isinstance(selected_case_ids, list) or len(selected_case_ids) != len(set(selected_case_ids)):
