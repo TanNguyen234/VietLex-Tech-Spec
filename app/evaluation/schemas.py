@@ -12,6 +12,9 @@ class EvidenceStatus(str, Enum):
     UNANSWERABLE = "unanswerable"
     NOT_FOUND_BY_LOCAL_DETERMINISTIC_AUDIT = "not_found_by_local_deterministic_audit"
     AMBIGUOUS = "ambiguous"
+    REJECTED = "rejected"
+    CORPUS_MISSING = "corpus_missing"
+    INSUFFICIENT_EVIDENCE = "insufficient_evidence"
 
 
 class RequiredLevel(str, Enum):
@@ -41,6 +44,15 @@ class GoldEvidence(BaseModel):
     anchor_match_method: Optional[str] = None
     identity_hint_sources: List[str] = Field(default_factory=list)
     is_metadata_search_complete: bool = False
+    adjudication_queue_sha256: Optional[str] = None
+    adjudication_decision_sha256: Optional[str] = None
+    adjudication_candidate_id: Optional[str] = None
+    adjudication_confidence: Optional[str] = None
+    adjudication_reviewer_identity: Optional[str] = None
+    adjudicated_at_utc: Optional[str] = None
+    adjudication_notes_sha256: Optional[str] = None
+    # Legacy input compatibility only. Promotion previews must not populate this.
+    adjudication_notes: Optional[str] = None
 
 
 class RetrievalStageCapacities(BaseModel):
