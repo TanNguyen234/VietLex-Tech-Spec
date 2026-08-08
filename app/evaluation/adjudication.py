@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from typing import Any, Literal, Mapping, Sequence
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -52,6 +53,9 @@ class AdjudicationQueueRow(BaseModel):
     reference_context_sha256: list[str] = Field(default_factory=list)
     reference_anchor_sha256: str | None = None
     parsed_citation_units: dict[str, str | None]
+    citation_parse_status: Literal["parsed", "none"]
+    source_evidence_status: str
+    source_adjudication_provenance: dict[str, str | None]
     candidates: list[AdjudicationCandidate] = Field(default_factory=list)
     decision: AdjudicationDecision = Field(default_factory=AdjudicationDecision)
 
@@ -127,6 +131,35 @@ def _text_sha256(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
+_SHA256_PATTERN = re.compile(r"[0-9a-f]{64}")
+
+
+def _require_sha256(value: str | None, field_name: str) -> str:
+    if not isinstance(value, str) or _SHA256_PATTERN.fullmatch(value) is None:
+        raise ValueError(f"{field_name} must be a full lowercase SHA-256 hash")
+    return value
+
+
+def _validate_candidate(candidate: AdjudicationCandidate) -> None:
+    if not isinstance(candidate.candidate_id, str) or not candidate.candidate_id.strip():
+        raise ValueError("candidate must have a stable nonblank candidate_id")
+    document_id = candidate.document_id
+    if isinstance(document_id, bool) or document_id is None:
+        raise ValueError("candidate must have a resolved positive document_id")
+    if isinstance(document_id, int):
+        valid_document_id = document_id > 0
+    elif isinstance(document_id, str):
+        valid_document_id = document_id.isdecimal() and int(document_id) > 0
+    else:
+        valid_document_id = False
+    if not valid_document_id:
+        raise ValueError("candidate must have a resolved positive document_id")
+    if not isinstance(candidate.document_number, str) or not candidate.document_number.strip():
+        raise ValueError("candidate must have a nonblank document_number")
+    if not isinstance(candidate.source_url, str) or not candidate.source_url.strip():
+        raise ValueError("candidate must have a nonblank source_url")
+
+
 def build_queue_payload(
     *,
     cases: Sequence[GoldenCase],
@@ -145,6 +178,7 @@ def build_queue_payload(
         raise ValueError("candidate_limit must be non-negative")
     if len(selected_case_ids) != len(set(selected_case_ids)):
         raise ValueError("selected_case_ids must be unique")
+    sidecar_sha256 = _require_sha256(sidecar.metadata.sidecar_sha256, "sidecar_sha256")
     case_by_id = {case.case_id: case for case in cases}
     if len(case_by_id) != len(cases):
         raise ValueError("case IDs must be unique")
@@ -158,6 +192,27 @@ def build_queue_payload(
         for evidence in labels:
             if evidence.case_id != case_id or not evidence.evidence_item_id:
                 raise ValueError(f"invalid evidence identity for case '{case_id}'")
+            if not case.reference_contexts:
+                raise ValueError(f"missing reference context for case '{case_id}'")
+            reference_answer_sha256 = _require_sha256(
+                _text_sha256(case.reference_answer), "reference_answer_sha256"
+            )
+            reference_context_sha256 = [
+                _require_sha256(_text_sha256(item), "reference_context_sha256")
+                for item in case.reference_contexts
+            ]
+            reference_anchor_sha256 = _require_sha256(
+                evidence.reference_anchor_hash or reference_context_sha256[0],
+                "reference_anchor_sha256",
+            )
+            candidates = list(candidates_by_evidence_id.get(evidence.evidence_item_id, ()))[:candidate_limit]
+            for candidate in candidates:
+                _validate_candidate(candidate)
+            citation_units = {
+                "document_number": evidence.document_number,
+                "article": evidence.article,
+                "clause": evidence.clause,
+            }
             rows.append(
                 AdjudicationQueueRow(
                     queue_row_id=canonical_sha256({"case_id": case_id, "evidence_item_id": evidence.evidence_item_id}),
@@ -165,18 +220,22 @@ def build_queue_payload(
                     evidence_item_id=evidence.evidence_item_id,
                     question=case.question,
                     question_type=case.question_type,
-                    reference_answer_sha256=_text_sha256(case.reference_answer),
-                    reference_context_sha256=[_text_sha256(item) for item in case.reference_contexts],
-                    reference_anchor_sha256=(
-                        evidence.reference_anchor_hash
-                        or (_text_sha256(case.reference_contexts[0]) if case.reference_contexts else None)
-                    ),
-                    parsed_citation_units={
-                        "document_number": evidence.document_number,
-                        "article": evidence.article,
-                        "clause": evidence.clause,
+                    reference_answer_sha256=reference_answer_sha256,
+                    reference_context_sha256=reference_context_sha256,
+                    reference_anchor_sha256=reference_anchor_sha256,
+                    parsed_citation_units=citation_units,
+                    citation_parse_status=("parsed" if any(citation_units.values()) else "none"),
+                    source_evidence_status=evidence.status.value,
+                    source_adjudication_provenance={
+                        "adjudication_queue_sha256": evidence.adjudication_queue_sha256,
+                        "adjudication_decision_sha256": evidence.adjudication_decision_sha256,
+                        "adjudication_candidate_id": evidence.adjudication_candidate_id,
+                        "adjudication_confidence": evidence.adjudication_confidence,
+                        "adjudication_reviewer_identity": evidence.adjudication_reviewer_identity,
+                        "adjudicated_at_utc": evidence.adjudicated_at_utc,
+                        "adjudication_notes": evidence.adjudication_notes,
                     },
-                    candidates=list(candidates_by_evidence_id.get(evidence.evidence_item_id, ()))[:candidate_limit],
+                    candidates=candidates,
                 ).model_dump(mode="json")
             )
 
@@ -184,7 +243,10 @@ def build_queue_payload(
         "schema_version": "1.0.0",
         "dataset_sha256": dataset_sha256,
         "corpus_revision": corpus_revision,
-        "provenance": provenance.model_dump(mode="json"),
+        "provenance": {
+            **provenance.model_dump(mode="json"),
+            "sidecar_sha256": sidecar_sha256,
+        },
         "command": list(command),
         "candidate_limit": candidate_limit,
         "selection_seed": selection_seed,

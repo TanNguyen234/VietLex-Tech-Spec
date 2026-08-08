@@ -85,7 +85,7 @@ def test_queue_payload_is_pending_only_and_preserves_hashes_citations_and_candid
         source_state_sha256="c" * 64,
     )
     candidate = AdjudicationCandidate(
-        candidate_id="candidate-1", document_id="doc-1",
+        candidate_id="candidate-1", document_id=1,
         document_number="72/2020/QH14", citation="Điều 3 Khoản 8",
         text="candidate text", source_url="https://example.test/doc-1",
     )
@@ -107,12 +107,14 @@ def test_queue_payload_is_pending_only_and_preserves_hashes_citations_and_candid
         "document_number": "72/2020/QH14", "article": "Điều 3", "clause": "Khoản 8"
     }
     assert row["candidates"][0]["candidate_id"] == "candidate-1"
+    assert row["citation_parse_status"] == "parsed"
     assert row["decision"] == {
         "status": "pending", "selected_candidate_id": None,
         "confidence": "unreviewed", "notes": "", "reviewer_identity": None,
         "reviewed_at_utc": None,
     }
     assert len(canonical_sha256(payload)) == 64
+    assert payload["provenance"]["sidecar_sha256"] == "a" * 64
 
 
 def test_empty_candidates_stay_pending_and_decision_template_cannot_verify():
@@ -142,3 +144,93 @@ def test_empty_candidates_stay_pending_and_decision_template_cannot_verify():
     assert template["queue_sha256"] == queue_sha256
     assert template["decisions"][0]["decision"]["status"] == "pending"
     assert "verified" not in str(template).casefold()
+
+
+def test_queue_rejects_missing_reference_binding_and_malformed_sidecar_hash():
+    # Break caught: a row is emitted without a full context/anchor hash or sidecar identity.
+    case = _case("case-3", "factoid")
+    case.reference_contexts = []
+    evidence = _label(case.case_id)
+    sidecar = GoldSidecar(
+        metadata=GoldSidecarMetadata(sidecar_sha256="not-a-sha"), labels=[evidence],
+        labels_by_case_id={case.case_id: [evidence]},
+    )
+    provenance = _provenance()
+
+    with pytest.raises(ValueError, match="sidecar_sha256"):
+        _queue(case, sidecar, provenance)
+
+    sidecar.metadata.sidecar_sha256 = "a" * 64
+    with pytest.raises(ValueError, match="reference context"):
+        _queue(case, sidecar, provenance)
+
+
+def test_queue_validates_candidates_and_marks_missing_citation_explicitly():
+    # Break caught: malformed discovered candidates pass through, or no citation is ambiguous.
+    case = _case("case-4", "factoid")
+    evidence = _label(case.case_id)
+    sidecar = GoldSidecar(
+        metadata=GoldSidecarMetadata(sidecar_sha256="a" * 64), labels=[evidence],
+        labels_by_case_id={case.case_id: [evidence]},
+    )
+    invalid = AdjudicationCandidate(candidate_id=" ", document_id=0, document_number=" ", source_url=" ")
+
+    with pytest.raises(ValueError, match="candidate"):
+        _queue(case, sidecar, _provenance(), {evidence.evidence_item_id: [invalid]})
+
+    no_citation = AdjudicationCandidate(
+        candidate_id="candidate-4", document_id=4, document_number="4/2020/QH14",
+        source_url="https://example.test/doc-4",
+    )
+    payload = _queue(case, sidecar, _provenance(), {evidence.evidence_item_id: [no_citation]})
+    assert payload["rows"][0]["citation_parse_status"] == "none"
+
+
+@pytest.mark.parametrize(
+    "status",
+    [EvidenceStatus.REJECTED, EvidenceStatus.CORPUS_MISSING, EvidenceStatus.INSUFFICIENT_EVIDENCE],
+)
+def test_queue_preserves_negative_source_evidence_and_adjudication_provenance(status):
+    # Break caught: queued review erases a prior negative evidence outcome or its audit trail.
+    case = _case(f"case-{status.value}", "multi-hop")
+    evidence = GoldEvidence(
+        evidence_item_id=f"evidence-{status.value}", case_id=case.case_id,
+        required=True, status=status, adjudication_queue_sha256="a" * 64,
+        adjudication_decision_sha256="b" * 64, adjudication_candidate_id="old-candidate",
+        adjudication_confidence="high", adjudication_reviewer_identity="reviewer",
+        adjudicated_at_utc="2026-08-08T00:00:00Z", adjudication_notes="retained",
+    )
+    sidecar = GoldSidecar(
+        metadata=GoldSidecarMetadata(sidecar_sha256="c" * 64), labels=[evidence],
+        labels_by_case_id={case.case_id: [evidence]},
+    )
+
+    payload = _queue(case, sidecar, _provenance())
+
+    row = payload["rows"][0]
+    assert row["source_evidence_status"] == status.value
+    assert row["source_adjudication_provenance"]["adjudication_candidate_id"] == "old-candidate"
+    assert row["decision"]["status"] == "pending"
+
+
+def _provenance() -> GitProvenance:
+    return GitProvenance(
+        status="ok", repository_root="repo", git_sha="b" * 40,
+        git_dirty=False, git_tracked_dirty=False, git_staged_dirty=False,
+        git_untracked_dirty=False, git_diff_sha256=None, git_diff_status="clean",
+        source_state_sha256="c" * 64,
+    )
+
+
+def _queue(
+    case: GoldenCase,
+    sidecar: GoldSidecar,
+    provenance: GitProvenance,
+    candidates_by_evidence_id: dict[str, list[AdjudicationCandidate]] | None = None,
+) -> dict:
+    return build_queue_payload(
+        cases=[case], sidecar=sidecar, candidates_by_evidence_id=candidates_by_evidence_id or {},
+        selected_case_ids=[case.case_id], dataset_sha256="d" * 64,
+        corpus_revision="pinned-revision", provenance=provenance,
+        command=["python"], candidate_limit=5, selection_seed="p1-v1",
+    )
