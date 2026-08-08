@@ -8,8 +8,10 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
+import app.evaluation.adjudication as adjudication_module
 from app.evaluation.adjudication import (
     AdjudicationCandidate,
+    artifact_sha256,
     build_promotion_summary,
     build_promotion_preview,
     build_decision_template,
@@ -19,10 +21,41 @@ from app.evaluation.adjudication import (
     validate_preview_approval,
     validate_decisions,
 )
-from app.evaluation.artifact_io import ArtifactCollisionError, write_immutable_json
+from app.evaluation.artifact_io import (
+    ArtifactCollisionError,
+    canonical_json_bytes,
+    write_immutable_json,
+)
 from app.evaluation.gold_sidecar import GoldSidecar, GoldSidecarMetadata, load_gold_sidecar
 from app.evaluation.provenance import GitProvenance
 from app.evaluation.schemas import EvidenceStatus, GoldEvidence, GoldenCase
+
+
+def test_artifact_sha256_hashes_exact_canonical_artifact_bytes():
+    # Break caught: an immutable artifact hash is computed from compact semantic JSON bytes.
+    payload = {"text": "Luật", "nested": {"value": 1}}
+    expected = hashlib.sha256(
+        b'{\n  "nested": {\n    "value": 1\n  },\n  "text": "Lu\xe1\xba\xadt"\n}\n'
+    ).hexdigest()
+
+    assert adjudication_module.artifact_sha256(payload) == expected
+    assert adjudication_module.artifact_sha256(payload) != canonical_sha256(payload)
+
+
+def test_candidate_identity_sha256_binds_corpus_identity_fields():
+    # Break caught: a candidate ID omits a corpus identity field or uses unstable JSON bytes.
+    expected = hashlib.sha256(
+        b'{"content_sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",'
+        b'"document_id":7,"document_number":"7/2026/ND-CP",'
+        b'"source_url":"https://example.test/doc-7"}'
+    ).hexdigest()
+
+    assert adjudication_module.candidate_identity_sha256(
+        7,
+        "7/2026/ND-CP",
+        "https://example.test/doc-7",
+        "a" * 64,
+    ) == expected
 
 
 class _FakeFts:
@@ -182,6 +215,31 @@ def test_candidate_discovery_keeps_multihop_evidence_anchors_and_locators_separa
     assert discovered[2].anchor_match_method == "none"
 
 
+def test_candidate_discovery_rejects_out_of_range_context_index():
+    # Break caught: discovery continues with an empty anchor for an invalid context binding.
+    case = _case("discovery-context-index", "factoid")
+    evidence = GoldEvidence(
+        evidence_item_id="bad-context",
+        case_id=case.case_id,
+        context_index=2,
+        required=True,
+        status=EvidenceStatus.AMBIGUOUS,
+    )
+    document = _stored_document(8, number="8/2026/ND-CP", content="content")
+
+    with pytest.raises(ValueError, match="context_index"):
+        from app.evaluation.adjudication_candidates import discover_adjudication_candidates
+
+        discover_adjudication_candidates(
+            cases_by_id={case.case_id: case},
+            labels_by_case_id={case.case_id: [evidence]},
+            selected_case_ids=[case.case_id],
+            content_store=_FakeContentStore({8: document}),
+            fts_index=_FakeFts([8]),
+            candidate_limit=1,
+        )
+
+
 @pytest.mark.parametrize("sha256", ["A" * 64, "a" * 63, "not-a-hash"])
 def test_candidate_discovery_rejects_noncanonical_content_hashes(sha256):
     # Break caught: a candidate is emitted for corpus content without a canonical verified hash.
@@ -330,6 +388,64 @@ def test_stratified_selection_is_deterministic_and_covers_factoid_and_multihop()
         select_stratified_case_ids(cases, labels_by_case, target_cases=29, seed="p1-v1")
 
 
+def test_stratified_selection_round_robins_compound_required_level_strata():
+    # Break caught: selection quotas only by question type and drops a sparse evidence level.
+    cases = [_case(f"document-{index:02d}", "factoid") for index in range(40)]
+    cases.extend([
+        _case("factoid-clause", "factoid"),
+        _case("multi-article", "multi-hop"),
+    ])
+    labels_by_case = {
+        case.case_id: [
+            GoldEvidence(
+                evidence_item_id=f"evidence-{case.case_id}",
+                case_id=case.case_id,
+                required=True,
+                required_level=(
+                    "clause" if case.case_id == "factoid-clause"
+                    else "article" if case.case_id == "multi-article"
+                    else "document"
+                ),
+                status=EvidenceStatus.AMBIGUOUS,
+            )
+        ]
+        for case in cases
+    }
+    labels_by_case["factoid-clause"].append(
+        GoldEvidence(
+            evidence_item_id="factoid-clause-document",
+            case_id="factoid-clause",
+            required=True,
+            required_level="document",
+            status=EvidenceStatus.AMBIGUOUS,
+        )
+    )
+
+    selected = select_stratified_case_ids(
+        cases, labels_by_case, target_cases=30, seed="compound-v1"
+    )
+
+    assert len(selected) == 30
+    assert "factoid-clause" in selected
+    assert "multi-article" in selected
+    assert selected == select_stratified_case_ids(
+        cases, labels_by_case, target_cases=30, seed="compound-v1"
+    )
+
+
+def test_stratified_selection_returns_all_eligible_cases_when_fewer_than_target():
+    # Break caught: a valid 30-case target fabricates replacements or raises on scarcity.
+    cases = [_case(f"scarce-{index:02d}", "factoid") for index in range(7)]
+    labels_by_case = {case.case_id: [_label(case.case_id)] for case in cases}
+
+    selected = select_stratified_case_ids(
+        cases, labels_by_case, target_cases=30, seed="scarce-v1"
+    )
+
+    assert set(selected) == {case.case_id for case in cases}
+    assert len(selected) == 7
+
+
 def test_queue_payload_is_pending_only_and_preserves_hashes_citations_and_candidates():
     # Break caught: discovery marks an item verified or loses reference/candidate provenance.
     case = _case("case-1", "factoid")
@@ -353,10 +469,12 @@ def test_queue_payload_is_pending_only_and_preserves_hashes_citations_and_candid
         git_untracked_dirty=False, git_diff_sha256=None, git_diff_status="clean",
         source_state_sha256="c" * 64,
     )
-    candidate = AdjudicationCandidate(
-        candidate_id="candidate-1", document_id=1,
-        document_number="72/2020/QH14", citation="Điều 3 Khoản 8",
-        text="candidate text", source_url="https://example.test/doc-1",
+    candidate = _candidate(
+        evidence.evidence_item_id,
+        document_id=1,
+        document_number="72/2020/QH14",
+        citation="Điều 3 Khoản 8",
+        text="candidate text",
     )
 
     payload = build_queue_payload(
@@ -375,7 +493,7 @@ def test_queue_payload_is_pending_only_and_preserves_hashes_citations_and_candid
     assert row["parsed_citation_units"] == {
         "document_number": "72/2020/QH14", "article": "Điều 3", "clause": "Khoản 8"
     }
-    assert row["candidates"][0]["candidate_id"] == "candidate-1"
+    assert row["candidates"][0]["candidate_id"] == candidate.candidate_id
     assert row["citation_parse_status"] == "parsed"
     assert row["decision"] == {
         "status": "pending", "selected_candidate_id": None,
@@ -384,6 +502,83 @@ def test_queue_payload_is_pending_only_and_preserves_hashes_citations_and_candid
     }
     assert len(canonical_sha256(payload)) == 64
     assert payload["provenance"]["sidecar_sha256"] == "a" * 64
+
+
+def test_queue_metadata_blocks_insufficient_selection_with_compound_diagnostics():
+    # Break caught: an undersized queue is labeled ready or hides its deterministic shortfall.
+    case = _case("blocked-case", "factoid")
+    evidence = _label(case.case_id)
+    sidecar = GoldSidecar(
+        metadata=GoldSidecarMetadata(sidecar_sha256="a" * 64),
+        labels=[evidence],
+        labels_by_case_id={case.case_id: [evidence]},
+    )
+
+    payload = _queue(case, sidecar, _provenance())
+
+    assert payload["target_case_count"] == 40
+    assert payload["selected_case_count"] == 1
+    assert payload["provider_calls"] == 0
+    assert payload["queue_status"] == "BLOCKED_INSUFFICIENT_ELIGIBLE_CASES"
+    assert payload["selection_diagnostics"] == {
+        "eligible_case_count": 1,
+        "selected_strata": {"factoid|article": 1},
+        "shortfall": 39,
+    }
+
+
+def test_queue_binds_exact_indexed_context_and_preserves_legacy_anchor_hash():
+    # Break caught: a 16-character legacy hash replaces the full hash of context_index=2.
+    first_context = "First reference context."
+    second_context = "Second reference context."
+    case = _case("indexed-context", "multi-hop")
+    case.reference_contexts = [first_context, second_context]
+    evidence = GoldEvidence(
+        evidence_item_id="indexed-evidence",
+        case_id=case.case_id,
+        context_index=2,
+        citation_index=3,
+        reference_anchor_hash="086708511bbf4d19",
+        required=True,
+        status=EvidenceStatus.AMBIGUOUS,
+    )
+    sidecar = GoldSidecar(
+        metadata=GoldSidecarMetadata(sidecar_sha256="a" * 64),
+        labels=[evidence],
+        labels_by_case_id={case.case_id: [evidence]},
+    )
+
+    row = _queue(case, sidecar, _provenance())["rows"][0]
+
+    assert row["context_index"] == 2
+    assert row["citation_index"] == 3
+    assert row["reference_anchor_sha256"] == hashlib.sha256(
+        second_context.encode("utf-8")
+    ).hexdigest()
+    assert row["reference_anchor_sha256"] != hashlib.sha256(
+        first_context.encode("utf-8")
+    ).hexdigest()
+    assert row["reference_anchor_legacy_hash"] == "086708511bbf4d19"
+
+
+def test_queue_rejects_out_of_range_reference_context_index():
+    # Break caught: an invalid positive context index silently binds the first context.
+    case = _case("bad-context-index", "factoid")
+    evidence = GoldEvidence(
+        evidence_item_id="bad-context-evidence",
+        case_id=case.case_id,
+        context_index=2,
+        required=True,
+        status=EvidenceStatus.AMBIGUOUS,
+    )
+    sidecar = GoldSidecar(
+        metadata=GoldSidecarMetadata(sidecar_sha256="a" * 64),
+        labels=[evidence],
+        labels_by_case_id={case.case_id: [evidence]},
+    )
+
+    with pytest.raises(ValueError, match="context_index"):
+        _queue(case, sidecar, _provenance())
 
 
 def test_empty_candidates_stay_pending_and_decision_template_cannot_verify():
@@ -408,7 +603,7 @@ def test_empty_candidates_stay_pending_and_decision_template_cannot_verify():
     )
 
     assert payload["rows"][0]["candidates"] == []
-    queue_sha256 = canonical_sha256(payload)
+    queue_sha256 = artifact_sha256(payload)
     template = build_decision_template(payload, queue_sha256)
     assert template["queue_sha256"] == queue_sha256
     assert template["decisions"][0]["decision"]["status"] == "pending"
@@ -445,12 +640,43 @@ def test_queue_validates_candidates_and_marks_missing_citation_explicitly():
     with pytest.raises(ValidationError):
         AdjudicationCandidate(candidate_id=" ", document_id=0, document_number=" ", source_url=" ")
 
-    no_citation = AdjudicationCandidate(
-        candidate_id="candidate-4", document_id=4, document_number="4/2020/QH14",
-        source_url="https://example.test/doc-4",
+    no_citation = _candidate(
+        evidence.evidence_item_id,
+        document_id=4,
+        document_number="4/2020/QH14",
     )
     payload = _queue(case, sidecar, _provenance(), {evidence.evidence_item_id: [no_citation]})
     assert payload["rows"][0]["citation_parse_status"] == "none"
+
+
+@pytest.mark.parametrize(
+    ("candidate_update", "message"),
+    [
+        ({"content_sha256": None}, "content_sha256"),
+        ({"content_sha256": "A" * 64}, "content_sha256"),
+        ({"candidate_id": "a" * 64}, "candidate_id"),
+        ({"evidence_item_id": "other-evidence"}, "evidence_item_id"),
+        ({"rank": 0}, "rank"),
+    ],
+)
+def test_queue_rejects_unbound_candidate_identity_fields(candidate_update, message):
+    # Break caught: a queue persists a candidate not bound to exact content and evidence.
+    case = _case("candidate-binding", "factoid")
+    evidence = _label(case.case_id)
+    sidecar = GoldSidecar(
+        metadata=GoldSidecarMetadata(sidecar_sha256="a" * 64),
+        labels=[evidence],
+        labels_by_case_id={case.case_id: [evidence]},
+    )
+    candidate = _candidate(evidence.evidence_item_id).model_copy(update=candidate_update)
+
+    with pytest.raises(ValueError, match=message):
+        _queue(
+            case,
+            sidecar,
+            _provenance(),
+            {evidence.evidence_item_id: [candidate]},
+        )
 
 
 @pytest.mark.parametrize(
@@ -521,9 +747,10 @@ def test_queue_accepts_and_normalizes_nonblank_string_document_id():
         metadata=GoldSidecarMetadata(sidecar_sha256="a" * 64), labels=[evidence],
         labels_by_case_id={case.case_id: [evidence]},
     )
-    candidate = AdjudicationCandidate(
-        candidate_id="candidate-string", document_id=" doc-1 ",
-        document_number="1/2020/QH14", source_url="https://example.test/doc-1",
+    candidate = _candidate(
+        evidence.evidence_item_id,
+        document_id=" doc-1 ",
+        document_number="1/2020/QH14",
     )
 
     payload = _queue(
@@ -556,6 +783,44 @@ def _provenance() -> GitProvenance:
     )
 
 
+def _candidate(
+    evidence_item_id: str,
+    *,
+    document_id: int | str = 7,
+    document_number: str = "7/2026/ND-CP",
+    source_url: str | None = None,
+    content_sha256: str = "e" * 64,
+    rank: int = 1,
+    **updates,
+) -> AdjudicationCandidate:
+    normalized_document_id = document_id.strip() if isinstance(document_id, str) else document_id
+    normalized_document_number = document_number.strip()
+    normalized_source_url = (
+        source_url or f"https://example.test/doc-{normalized_document_id}"
+    ).strip()
+    payload = {
+        "candidate_id": adjudication_module.candidate_identity_sha256(
+            normalized_document_id,
+            normalized_document_number,
+            normalized_source_url,
+            content_sha256,
+        ),
+        "evidence_item_id": evidence_item_id,
+        "document_id": document_id,
+        "document_number": document_number,
+        "source_url": normalized_source_url,
+        "content_sha256": content_sha256,
+        "rank": rank,
+        "article": "Article 2",
+        "clause": "1",
+        "anchor_match_method": "full_anchor_exact",
+        "structural_chunk_sha256": "f" * 64,
+        "required_level_supported": True,
+    }
+    payload.update(updates)
+    return AdjudicationCandidate(**payload)
+
+
 def _queue(
     case: GoldenCase,
     sidecar: GoldSidecar,
@@ -580,22 +845,19 @@ def _review_queue(*, required_level: str = "article") -> tuple[dict, str]:
         metadata=GoldSidecarMetadata(sidecar_sha256="a" * 64), labels=[evidence],
         labels_by_case_id={case.case_id: [evidence]},
     )
-    candidate = AdjudicationCandidate(
-        candidate_id="review-candidate", evidence_item_id=evidence.evidence_item_id,
-        document_id=7, document_number="7/2026/ND-CP",
-        source_url="https://example.test/doc-7", article="Article 2", clause="1",
-        anchor_match_method="full_anchor_exact", required_level_supported=True,
-    )
+    candidate = _candidate(evidence.evidence_item_id)
     queue = _queue(
         case, sidecar, _provenance(), {evidence.evidence_item_id: [candidate]}
     )
-    return queue, canonical_sha256(queue)
+    return queue, artifact_sha256(queue)
 
 
 def _review_decisions(queue_sha256: str, *, status: str = "verified", **updates) -> dict:
     decision = {
         "status": status,
-        "selected_candidate_id": "review-candidate" if status == "verified" else None,
+        "selected_candidate_id": (
+            _candidate("review-evidence").candidate_id if status == "verified" else None
+        ),
         "confidence": "high",
         "notes": "Reviewed against the cited legal text.",
         "reviewer_identity": "legal-reviewer-01",
@@ -668,6 +930,8 @@ def test_validate_decisions_fails_closed_for_unbound_or_incomplete_resolution(mu
         ({"anchor_match_method": "none"}, "document", "anchor"),
         ({"article": None}, "article", "Article"),
         ({"clause": None}, "clause", "Clause"),
+        ({"structural_chunk_sha256": None}, "article", "structural_chunk_sha256"),
+        ({"structural_chunk_sha256": "A" * 64}, "clause", "structural_chunk_sha256"),
         ({"required_level_supported": False}, "document", "required_level"),
         ({"evidence_item_id": "other-evidence"}, "document", "evidence"),
         ({"source_url": None}, "document", "source_url"),
@@ -677,11 +941,80 @@ def test_validate_decisions_requires_candidate_identity_anchor_and_structure(can
     # Break caught: a verified label is derived from a candidate that does not prove the requested evidence level.
     queue, queue_sha256 = _review_queue(required_level=required_level)
     queue["rows"][0]["candidates"][0].update(candidate_update)
-    queue_sha256 = canonical_sha256(queue)
+    queue_sha256 = artifact_sha256(queue)
     decisions = _review_decisions(queue_sha256)
     decisions["decisions"][0]["queue_row_id"] = queue["rows"][0]["queue_row_id"]
 
     with pytest.raises(ValueError, match=message):
+        validate_decisions(queue, decisions, queue_sha256=queue_sha256)
+
+
+@pytest.mark.parametrize(
+    ("mutate", "message"),
+    [
+        (lambda queue: queue.update(schema_version="2.0.0"), "queue schema_version"),
+        (lambda queue: queue.update(target_case_count=29), "target_case_count"),
+        (lambda queue: queue.update(selected_case_count=2), "selected_case_count"),
+        (lambda queue: queue.update(provider_calls=1), "provider_calls"),
+        (lambda queue: queue.update(selected_case_ids=["review-case", " "]), "nonblank"),
+        (lambda queue: queue.update(selected_case_ids=["review-case", "missing-case"], selected_case_count=2), "row case IDs"),
+        (lambda queue: queue["rows"][0].update(case_id="injected-case"), "row case IDs"),
+        (lambda queue: queue.update(queue_status="READY_FOR_REVIEW"), "queue_status"),
+    ],
+)
+def test_validate_decisions_rejects_selected_case_and_row_set_drift(mutate, message):
+    # Break caught: a queue adds/drops a selected case or injects an unselected row.
+    queue, _ = _review_queue()
+    mutate(queue)
+    queue_sha256 = artifact_sha256(queue)
+    decisions = _review_decisions(queue_sha256, status="rejected")
+    decisions["decisions"][0]["queue_row_id"] = queue["rows"][0]["queue_row_id"]
+
+    with pytest.raises(ValueError, match=message):
+        validate_decisions(queue, decisions, queue_sha256=queue_sha256)
+
+
+@pytest.mark.parametrize(
+    ("candidate_update", "message"),
+    [
+        ({"content_sha256": None}, "content_sha256"),
+        ({"content_sha256": "A" * 64}, "content_sha256"),
+        ({"candidate_id": "a" * 64}, "candidate_id"),
+        ({"evidence_item_id": "other-evidence"}, "evidence_item_id"),
+        ({"rank": 0}, "rank"),
+        ({"document_number": " 7/2026/ND-CP"}, "noncanonical"),
+    ],
+)
+def test_validate_decisions_rejects_noncanonical_or_forged_loaded_candidate(
+    candidate_update, message,
+):
+    # Break caught: negative review lets an unbound loaded candidate bypass queue validation.
+    queue, _ = _review_queue()
+    queue["rows"][0]["candidates"][0].update(candidate_update)
+    queue_sha256 = artifact_sha256(queue)
+    decisions = _review_decisions(queue_sha256, status="rejected")
+    decisions["decisions"][0]["queue_row_id"] = queue["rows"][0]["queue_row_id"]
+
+    with pytest.raises(ValueError, match=message):
+        validate_decisions(queue, decisions, queue_sha256=queue_sha256)
+
+
+def test_validate_decisions_rejects_document_id_whitespace_hidden_by_pydantic():
+    # Break caught: Pydantic strips a raw document ID before the noncanonical check sees it.
+    queue, _ = _review_queue()
+    candidate = queue["rows"][0]["candidates"][0]
+    candidate["document_id"] = " doc-7 "
+    candidate["candidate_id"] = adjudication_module.candidate_identity_sha256(
+        "doc-7",
+        candidate["document_number"],
+        candidate["source_url"],
+        candidate["content_sha256"],
+    )
+    queue_sha256 = artifact_sha256(queue)
+    decisions = _review_decisions(queue_sha256, status="rejected")
+    decisions["decisions"][0]["queue_row_id"] = queue["rows"][0]["queue_row_id"]
+
+    with pytest.raises(ValueError, match="noncanonical"):
         validate_decisions(queue, decisions, queue_sha256=queue_sha256)
 
 
@@ -696,6 +1029,7 @@ def test_promotion_preview_is_hashed_pure_and_redacts_notes_while_preserving_neg
 
     preview = build_promotion_preview(
         queue_payload=queue, queue_sha256=queue_sha256, decisions_payload=decisions,
+        decisions_sha256=artifact_sha256(decisions),
         source_sidecar_payload=source, source_sidecar_sha256="d" * 64,
         dataset_case_ids=["review-case", "other-case"], provenance=_provenance(),
     )
@@ -713,6 +1047,25 @@ def test_promotion_preview_is_hashed_pure_and_redacts_notes_while_preserving_neg
     assert "Private note" not in str(preview)
 
 
+def test_promotion_preview_rejects_mismatched_decisions_artifact_hash():
+    # Break caught: preview source hashes bind semantic decisions JSON instead of artifact bytes.
+    queue, queue_sha256 = _review_queue()
+    decisions = _review_decisions(queue_sha256, status="rejected")
+    decisions["decisions"][0]["queue_row_id"] = queue["rows"][0]["queue_row_id"]
+
+    with pytest.raises(ValueError, match="decisions artifact SHA-256"):
+        build_promotion_preview(
+            queue_payload=queue,
+            queue_sha256=queue_sha256,
+            decisions_payload=decisions,
+            decisions_sha256="0" * 64,
+            source_sidecar_payload=_source_sidecar(),
+            source_sidecar_sha256="d" * 64,
+            dataset_case_ids=["review-case", "other-case"],
+            provenance=_provenance(),
+        )
+
+
 def test_promotion_preview_copies_only_selected_candidate_and_rejects_bad_sidecar_identity_sets():
     # Break caught: preview imports document fields from outside the reviewed candidate or tolerates sidecar/dataset drift.
     queue, queue_sha256 = _review_queue()
@@ -722,13 +1075,14 @@ def test_promotion_preview_copies_only_selected_candidate_and_rejects_bad_sideca
 
     preview = build_promotion_preview(
         queue_payload=queue, queue_sha256=queue_sha256, decisions_payload=decisions,
+        decisions_sha256=artifact_sha256(decisions),
         source_sidecar_payload=source, source_sidecar_sha256="d" * 64,
         dataset_case_ids=["review-case", "other-case"], provenance=_provenance(),
     )
     label = preview["proposed_sidecar"]["labels"][0]
     GoldEvidence.model_validate(label)
     assert (label["document_id"], label["document_number"], label["article"], label["clause"]) == (7, "7/2026/ND-CP", "Article 2", "1")
-    assert label["adjudication_candidate_id"] == "review-candidate"
+    assert label["adjudication_candidate_id"] == _candidate("review-evidence").candidate_id
     assert label["adjudication_queue_sha256"] == queue_sha256
     assert label["adjudication_decision_sha256"] == canonical_sha256(decisions["decisions"][0])
 
@@ -736,6 +1090,7 @@ def test_promotion_preview_copies_only_selected_candidate_and_rejects_bad_sideca
     with pytest.raises(ValueError, match="duplicate"):
         build_promotion_preview(
             queue_payload=queue, queue_sha256=queue_sha256, decisions_payload=decisions,
+            decisions_sha256=artifact_sha256(decisions),
             source_sidecar_payload=source, source_sidecar_sha256="d" * 64,
             dataset_case_ids=["review-case", "other-case"], provenance=_provenance(),
         )
@@ -826,6 +1181,7 @@ def test_promotion_preview_rejects_malformed_source_counts_and_identity_sets(mut
     with pytest.raises(ValueError, match=message):
         build_promotion_preview(
             queue_payload=queue, queue_sha256=queue_sha256, decisions_payload=decisions,
+            decisions_sha256=artifact_sha256(decisions),
             source_sidecar_payload=source, source_sidecar_sha256="d" * 64,
             dataset_case_ids=["review-case", "other-case"], provenance=_provenance(),
         )
@@ -842,6 +1198,7 @@ def test_promotion_preview_rejects_malformed_source_hash_and_any_legacy_raw_note
     with pytest.raises(ValueError, match="source_sidecar_sha256"):
         build_promotion_preview(
             queue_payload=queue, queue_sha256=queue_sha256, decisions_payload=decisions,
+            decisions_sha256=artifact_sha256(decisions),
             source_sidecar_payload=source, source_sidecar_sha256="not-a-hash",
             dataset_case_ids=["review-case", "other-case"], provenance=_provenance(),
         )
@@ -851,6 +1208,7 @@ def test_promotion_preview_rejects_malformed_source_hash_and_any_legacy_raw_note
     with pytest.raises(ValueError, match="legacy raw adjudication_notes"):
         build_promotion_preview(
             queue_payload=queue, queue_sha256=queue_sha256, decisions_payload=decisions,
+            decisions_sha256=artifact_sha256(decisions),
             source_sidecar_payload=source, source_sidecar_sha256="d" * 64,
             dataset_case_ids=["review-case", "other-case"], provenance=_provenance(),
         )
@@ -868,6 +1226,7 @@ def test_promotion_preview_rejects_queue_evidence_missing_from_an_otherwise_vali
     with pytest.raises(ValueError, match="queue evidence"):
         build_promotion_preview(
             queue_payload=queue, queue_sha256=queue_sha256, decisions_payload=decisions,
+            decisions_sha256=artifact_sha256(decisions),
             source_sidecar_payload=source, source_sidecar_sha256="d" * 64,
             dataset_case_ids=["review-case", "other-case"], provenance=_provenance(),
         )
@@ -884,6 +1243,7 @@ def test_promotion_preview_preserves_nonqueued_labels_and_round_trips_adjudicati
 
     preview = build_promotion_preview(
         queue_payload=queue, queue_sha256=queue_sha256, decisions_payload=decisions,
+        decisions_sha256=artifact_sha256(decisions),
         source_sidecar_payload=source, source_sidecar_sha256="d" * 64,
         dataset_case_ids=["review-case", "other-case"], provenance=_provenance(),
     )
@@ -892,7 +1252,7 @@ def test_promotion_preview_preserves_nonqueued_labels_and_round_trips_adjudicati
     assert preview["proposed_sidecar"]["labels"][1] == unchanged
     assert label.adjudication_queue_sha256 == queue_sha256
     assert label.adjudication_decision_sha256 == canonical_sha256(decisions["decisions"][0])
-    assert label.adjudication_candidate_id == "review-candidate"
+    assert label.adjudication_candidate_id == _candidate("review-evidence").candidate_id
     assert label.adjudication_confidence == "high"
     assert label.adjudication_reviewer_identity == "legal-reviewer-01"
     assert label.adjudicated_at_utc == "2026-08-08T01:02:03Z"
@@ -907,14 +1267,14 @@ def test_validate_decisions_returns_and_preview_applies_two_rows_in_queue_order(
     queue, _ = _review_queue()
     second = deepcopy(queue["rows"][0])
     second.update(queue_row_id="second-row", evidence_item_id="second-evidence")
-    second["candidates"][0].update(candidate_id="second-candidate", evidence_item_id="second-evidence")
+    second["candidates"][0].update(evidence_item_id="second-evidence")
     queue["rows"].append(second)
-    queue_sha256 = canonical_sha256(queue)
+    queue_sha256 = artifact_sha256(queue)
     first_decision = _review_decisions(queue_sha256)["decisions"][0]
     first_decision["queue_row_id"] = queue["rows"][0]["queue_row_id"]
     second_decision = deepcopy(first_decision)
     second_decision.update(queue_row_id="second-row", evidence_item_id="second-evidence")
-    second_decision["decision"]["selected_candidate_id"] = "second-candidate"
+    second_decision["decision"]["selected_candidate_id"] = second["candidates"][0]["candidate_id"]
     decisions = {"schema_version": "1.0.0", "queue_sha256": queue_sha256, "decisions": [second_decision, first_decision]}
     source = {
         "schema_version": "2.0.0", "dataset_name": "test", "total_cases": 1,
@@ -928,11 +1288,15 @@ def test_validate_decisions_returns_and_preview_applies_two_rows_in_queue_order(
     validated = validate_decisions(queue, decisions, queue_sha256=queue_sha256)
     preview = build_promotion_preview(
         queue_payload=queue, queue_sha256=queue_sha256, decisions_payload=decisions,
+        decisions_sha256=artifact_sha256(decisions),
         source_sidecar_payload=source, source_sidecar_sha256="d" * 64,
         dataset_case_ids=["review-case"], provenance=_provenance(),
     )
 
-    assert [item.selected_candidate_id for item in validated] == ["review-candidate", "second-candidate"]
+    expected_candidate_id = _candidate("review-evidence").candidate_id
+    assert [item.selected_candidate_id for item in validated] == [
+        expected_candidate_id, expected_candidate_id,
+    ]
     assert [item["evidence_item_id"] for item in preview["per_evidence_diff"]] == ["review-evidence", "second-evidence"]
 
 
@@ -942,6 +1306,7 @@ def _verified_preview() -> dict:
     decisions["decisions"][0]["queue_row_id"] = queue["rows"][0]["queue_row_id"]
     return build_promotion_preview(
         queue_payload=queue, queue_sha256=queue_sha256, decisions_payload=decisions,
+        decisions_sha256=artifact_sha256(decisions),
         source_sidecar_payload=_source_sidecar(), source_sidecar_sha256="d" * 64,
         dataset_case_ids=["review-case", "other-case"], provenance=_provenance(),
     )
@@ -1081,13 +1446,15 @@ def test_validate_preview_approval_requires_valid_schema_and_exact_case_sections
         validate_preview_approval(preview, preview["preview_sha256"])
 
 
-def _write_cli_review_inputs(tmp_path: Path) -> tuple[Path, Path, dict[int, object]]:
-    """Create a hand-checkable exact 80-case set for the provider-free CLI."""
+def _write_cli_review_inputs(
+    tmp_path: Path, *, case_count: int = 80,
+) -> tuple[Path, Path, dict[int, object]]:
+    """Create a hand-checkable exact case set for the provider-free CLI."""
     dataset_rows = []
     labels = []
     documents: dict[int, object] = {}
-    for index in range(80):
-        question_type = "factoid" if index < 40 else "multi-hop"
+    for index in range(case_count):
+        question_type = "factoid" if index < case_count // 2 else "multi-hop"
         case_id = f"cli-{index:03d}"
         anchor = f"Evidence for {case_id}."
         document_id = index + 1
@@ -1117,8 +1484,8 @@ def _write_cli_review_inputs(tmp_path: Path) -> tuple[Path, Path, dict[int, obje
     dataset_path.write_text(json.dumps(dataset_rows), encoding="utf-8")
     sidecar_path.write_text(json.dumps({
         "schema_version": "2.0.0",
-        "total_cases": 80,
-        "total_evidence_items": 80,
+        "total_cases": case_count,
+        "total_evidence_items": case_count,
         "labels": labels,
     }), encoding="utf-8")
     return dataset_path, sidecar_path, documents
@@ -1166,7 +1533,7 @@ def _write_resolved_decisions(queue_path: Path, decisions_path: Path) -> None:
             "confidence": "high", "notes": "not supported", "reviewer_identity": "reviewer",
             "reviewed_at_utc": "2026-08-08T00:00:00Z",
         }
-    decisions_path.write_text(json.dumps(template), encoding="utf-8")
+    decisions_path.write_bytes(canonical_json_bytes(template))
 
 
 def _tree_bytes(root: Path) -> dict[str, bytes]:
@@ -1240,7 +1607,13 @@ def test_gold_adjudication_cli_queue_preview_and_promotion_are_immutable(
     assert len(queue["selected_case_ids"]) == 40
     assert {row["question_type"] for row in queue["rows"]} == {"factoid", "multi-hop"}
     assert {entry["decision"]["status"] for entry in template["decisions"]} == {"pending"}
-    assert template["queue_sha256"] == dependencies.canonical_sha256(queue)
+    assert template["queue_sha256"] == dependencies.artifact_sha256(queue)
+    assert template["queue_sha256"] == hashlib.sha256(
+        (queue_run / "queue.json").read_bytes()
+    ).hexdigest()
+    assert summary["artifact_hashes"]["decision_template_sha256"] == hashlib.sha256(
+        (queue_run / "decision_template.json").read_bytes()
+    ).hexdigest()
     assert summary["provider_calls"] == 0
     assert all(not Path(value).is_absolute() and "\\" not in value for value in summary["artifact_paths"].values())
 
@@ -1252,7 +1625,7 @@ def test_gold_adjudication_cli_queue_preview_and_promotion_are_immutable(
             "reviewed_at_utc": "2026-08-08T00:00:00Z",
         }
     decisions_path = tmp_path / "decisions.json"
-    decisions_path.write_text(json.dumps(template), encoding="utf-8")
+    decisions_path.write_bytes(canonical_json_bytes(template))
     preview_root = tmp_path / "preview-runs"
     assert cli.main([
         "preview", "--dataset", str(dataset_path), "--sidecar", str(sidecar_path),
@@ -1261,6 +1634,9 @@ def test_gold_adjudication_cli_queue_preview_and_promotion_are_immutable(
     ]) == 0
     preview_path = preview_root / "preview-1" / "preview.json"
     preview = json.loads(preview_path.read_text(encoding="utf-8"))
+    assert preview["source_hashes"]["decisions_sha256"] == hashlib.sha256(
+        decisions_path.read_bytes()
+    ).hexdigest()
     assert '"adjudication_notes":' not in json.dumps(preview["proposed_sidecar"])
 
     source_before = sidecar_path.read_bytes()
@@ -1279,6 +1655,43 @@ def test_gold_adjudication_cli_queue_preview_and_promotion_are_immutable(
     promotion_summary = json.loads((promotion_run / "promotion_summary.json").read_text(encoding="utf-8"))
     assert promotion_summary["status"] == "BLOCKED_INSUFFICIENT_VERIFIED_CASES"
     assert promotion_summary["negative_counts"]["rejected"] == 11
+
+
+def test_gold_adjudication_cli_persists_blocked_queue_without_replacements(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+):
+    # Break caught: fewer than 30 eligible cases aborts or fabricates a ready queue.
+    dataset_path, sidecar_path, documents = _write_cli_review_inputs(
+        tmp_path, case_count=12
+    )
+    content_store_path = tmp_path / "content.sqlite3"
+    fts_path = tmp_path / "fts.sqlite3"
+    content_store_path.touch()
+    fts_path.touch()
+    cli = _configure_cli_runtime(monkeypatch, tmp_path, documents)
+    queue_root = tmp_path / "blocked-queue-runs"
+
+    assert cli.main(_cli_queue_args(
+        dataset_path,
+        sidecar_path,
+        content_store_path,
+        fts_path,
+        queue_root,
+        "blocked-queue",
+    )) == 0
+
+    run_dir = queue_root / "blocked-queue"
+    assert sorted(path.name for path in run_dir.iterdir()) == [
+        "decision_template.json", "queue.json", "queue_summary.json",
+    ]
+    queue = json.loads((run_dir / "queue.json").read_text(encoding="utf-8"))
+    summary = json.loads((run_dir / "queue_summary.json").read_text(encoding="utf-8"))
+    assert queue["selected_case_count"] == 12
+    assert queue["target_case_count"] == 40
+    assert queue["queue_status"] == "BLOCKED_INSUFFICIENT_ELIGIBLE_CASES"
+    assert summary["queue_status"] == queue["queue_status"]
+    assert summary["selection_diagnostics"] == queue["selection_diagnostics"]
+    assert summary["provider_calls"] == 0
 
 
 def test_gold_adjudication_cli_rejects_external_outputs_and_missing_approval_before_writing(
@@ -1321,6 +1734,7 @@ def test_gold_adjudication_cli_rejects_legacy_raw_notes_before_queue_persistence
     [
         "missing-content-store", "missing-fts", "invalid-target", "invalid-candidate",
         "run-directory-collision", "stale-queue", "malformed-decisions",
+        "reserialized-queue", "reserialized-decisions",
         "blank-approval", "malformed-approval", "wrong-approval",
     ],
 )
@@ -1363,6 +1777,12 @@ def test_gold_adjudication_cli_fails_closed_without_writing_new_artifacts(
             queue_path.write_text(json.dumps(queue), encoding="utf-8")
         elif failure == "malformed-decisions":
             decisions_path.write_text("[]", encoding="utf-8")
+        elif failure == "reserialized-queue":
+            queue = json.loads(queue_path.read_text(encoding="utf-8"))
+            queue_path.write_text(json.dumps(queue), encoding="utf-8")
+        elif failure == "reserialized-decisions":
+            decisions = json.loads(decisions_path.read_text(encoding="utf-8"))
+            decisions_path.write_text(json.dumps(decisions), encoding="utf-8")
         approval = {
             "blank-approval": "",
             "malformed-approval": "not-a-sha",

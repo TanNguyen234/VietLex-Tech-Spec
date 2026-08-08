@@ -9,6 +9,7 @@ from typing import Annotated, Any, Literal, Mapping, Sequence
 
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, StringConstraints
 
+from app.evaluation.artifact_io import canonical_json_bytes
 from app.evaluation.gold_sidecar import GoldSidecar
 from app.evaluation.legal_citations import parse_legal_citations
 from app.evaluation.provenance import GitProvenance
@@ -71,9 +72,12 @@ class AdjudicationQueueRow(BaseModel):
     evidence_item_id: str
     question: str
     question_type: str
+    context_index: int
+    citation_index: int
     reference_answer_sha256: str
     reference_context_sha256: list[str] = Field(default_factory=list)
     reference_anchor_sha256: str | None = None
+    reference_anchor_legacy_hash: str | None = None
     parsed_citation_units: dict[str, str | None]
     citation_parse_status: Literal["parsed", "none"]
     source_evidence_status: str
@@ -95,6 +99,26 @@ def canonical_sha256(data: Any) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
+def artifact_sha256(data: Any) -> str:
+    """Hash the exact canonical bytes emitted for an immutable JSON artifact."""
+    return hashlib.sha256(canonical_json_bytes(data)).hexdigest()
+
+
+def candidate_identity_sha256(
+    document_id: int | str,
+    document_number: str,
+    source_url: str,
+    content_sha256: str,
+) -> str:
+    """Bind a candidate to its exact durable document identity and content."""
+    return canonical_sha256({
+        "document_id": document_id,
+        "document_number": document_number,
+        "source_url": source_url,
+        "content_sha256": content_sha256,
+    })
+
+
 def _json_default(value: Any) -> Any:
     if isinstance(value, BaseModel):
         return value.model_dump(mode="json")
@@ -110,44 +134,64 @@ def select_stratified_case_ids(
     target_cases: int = 40,
     seed: str = "vietlex-p1-v1",
 ) -> list[str]:
-    """Select answerable factoid and multi-hop cases reproducibly for review."""
+    """Round-robin answerable cases across question-type/evidence-level strata."""
     if not 30 <= target_cases <= 50:
         raise ValueError("target_cases must be between 30 and 50")
 
+    strata = _eligible_strata(cases, labels_by_case_id)
+    ranked = {
+        key: sorted(items, key=lambda case: _rank_key(seed, case.case_id))
+        for key, items in strata.items()
+    }
+    selected: list[str] = []
+    offsets = {key: 0 for key in ranked}
+    while len(selected) < target_cases:
+        added = False
+        for key in sorted(ranked):
+            offset = offsets[key]
+            if offset >= len(ranked[key]):
+                continue
+            selected.append(ranked[key][offset].case_id)
+            offsets[key] += 1
+            added = True
+            if len(selected) == target_cases:
+                break
+        if not added:
+            break
+    return selected
+
+
+_REQUIRED_LEVEL_ORDER = {"document": 0, "article": 1, "clause": 2}
+
+
+def _eligible_strata(
+    cases: Sequence[GoldenCase],
+    labels_by_case_id: Mapping[str, Sequence[GoldEvidence]],
+) -> dict[tuple[str, str], list[GoldenCase]]:
     case_ids = [case.case_id for case in cases]
     if len(case_ids) != len(set(case_ids)):
         raise ValueError("case IDs must be unique")
-
-    strata: dict[str, list[GoldenCase]] = {"factoid": [], "multi-hop": []}
+    strata: dict[tuple[str, str], list[GoldenCase]] = {}
     for case in cases:
-        if case.question_type not in strata or not case.answerable:
-            continue
         labels = labels_by_case_id.get(case.case_id)
-        if not labels:
+        if not labels or not case.answerable:
             continue
         if any(label.case_id != case.case_id or not label.evidence_item_id for label in labels):
             raise ValueError(f"invalid evidence identity for case '{case.case_id}'")
-        strata[case.question_type].append(case)
-
-    quotas = {"factoid": target_cases // 2, "multi-hop": target_cases // 2}
-    if target_cases % 2:
-        quotas["factoid"] += 1
-    for question_type, quota in quotas.items():
-        if len(strata[question_type]) < quota:
-            raise ValueError(f"insufficient eligible {question_type} cases for stratified selection")
-
-    selected: list[GoldenCase] = []
-    for question_type, quota in quotas.items():
-        ranked = sorted(
-            strata[question_type],
-            key=lambda case: _rank_key(seed, question_type, case.case_id),
+        required = [label for label in labels if label.required]
+        if not required:
+            continue
+        highest = max(
+            (label.required_level.value for label in required),
+            key=_REQUIRED_LEVEL_ORDER.__getitem__,
         )
-        selected.extend(ranked[:quota])
-    return [case.case_id for case in sorted(selected, key=lambda case: _rank_key(seed, "selected", case.case_id))]
+        strata.setdefault((case.question_type, highest), []).append(case)
+    return strata
 
 
-def _rank_key(seed: str, stratum: str, case_id: str) -> tuple[str, str]:
-    return (hashlib.sha256(f"{seed}:{stratum}:{case_id}".encode("utf-8")).hexdigest(), case_id)
+def _rank_key(seed: str, case_id: str) -> tuple[str, str]:
+    digest = hashlib.sha256(f"{seed}\0{case_id}".encode("utf-8")).hexdigest()
+    return (digest, case_id)
 
 
 def _text_sha256(value: str) -> str:
@@ -155,6 +199,7 @@ def _text_sha256(value: str) -> str:
 
 
 _SHA256_PATTERN = re.compile(r"[0-9a-f]{64}")
+_LEGACY_ANCHOR_HASH_PATTERN = re.compile(r"(?:[0-9a-f]{16}|[0-9a-f]{64})")
 
 
 def _require_sha256(value: str | None, field_name: str) -> str:
@@ -163,7 +208,28 @@ def _require_sha256(value: str | None, field_name: str) -> str:
     return value
 
 
-def _normalize_candidate(candidate: AdjudicationCandidate) -> AdjudicationCandidate:
+def _reference_context(case: GoldenCase, evidence: GoldEvidence) -> str:
+    if not case.reference_contexts:
+        raise ValueError(f"missing reference context for case '{case.case_id}'")
+    if evidence.context_index < 0:
+        raise ValueError("context_index must be zero or a positive 1-based index")
+    index = evidence.context_index - 1 if evidence.context_index > 0 else 0
+    if index >= len(case.reference_contexts):
+        raise ValueError("context_index is out of range for reference contexts")
+    return case.reference_contexts[index]
+
+
+def _legacy_anchor_hash(value: str | None) -> str | None:
+    if value is None or value == "":
+        return None
+    if not isinstance(value, str) or _LEGACY_ANCHOR_HASH_PATTERN.fullmatch(value) is None:
+        raise ValueError("reference_anchor_legacy_hash must be 16 or 64 lowercase hex characters")
+    return value
+
+
+def _normalize_candidate(
+    candidate: AdjudicationCandidate, expected_evidence_item_id: str
+) -> AdjudicationCandidate:
     if not isinstance(candidate.candidate_id, str) or not candidate.candidate_id.strip():
         raise ValueError("candidate must have a stable nonblank candidate_id")
     document_id = candidate.document_id
@@ -181,14 +247,32 @@ def _normalize_candidate(candidate: AdjudicationCandidate) -> AdjudicationCandid
         raise ValueError("candidate must have a nonblank document_number")
     if not isinstance(candidate.source_url, str) or not candidate.source_url.strip():
         raise ValueError("candidate must have a nonblank source_url")
-    return candidate.model_copy(
-        update={
-            "candidate_id": candidate.candidate_id.strip(),
-            "document_id": document_id.strip() if isinstance(document_id, str) else document_id,
-            "document_number": candidate.document_number.strip(),
-            "source_url": candidate.source_url.strip(),
-        }
+    content_sha256 = _require_sha256(candidate.content_sha256, "candidate content_sha256")
+    if isinstance(candidate.rank, bool) or not isinstance(candidate.rank, int) or candidate.rank <= 0:
+        raise ValueError("candidate rank must be a positive integer")
+    evidence_item_id = _require_nonblank(candidate.evidence_item_id, "candidate evidence_item_id")
+    if evidence_item_id != expected_evidence_item_id:
+        raise ValueError("candidate evidence_item_id does not match queue evidence")
+    normalized_document_id = document_id.strip() if isinstance(document_id, str) else document_id
+    normalized_document_number = candidate.document_number.strip()
+    normalized_source_url = candidate.source_url.strip()
+    candidate_id = candidate.candidate_id.strip()
+    expected_candidate_id = candidate_identity_sha256(
+        normalized_document_id,
+        normalized_document_number,
+        normalized_source_url,
+        content_sha256,
     )
+    if candidate_id != expected_candidate_id:
+        raise ValueError("candidate_id does not match the candidate identity fields")
+    return candidate.model_copy(update={
+        "candidate_id": candidate_id,
+        "evidence_item_id": evidence_item_id,
+        "document_id": normalized_document_id,
+        "document_number": normalized_document_number,
+        "source_url": normalized_source_url,
+        "content_sha256": content_sha256,
+    })
 
 
 def _normalize_citation_units(evidence: GoldEvidence) -> tuple[dict[str, str | None], Literal["parsed", "none"]]:
@@ -232,12 +316,17 @@ def build_queue_payload(
     command: Sequence[str],
     candidate_limit: int,
     selection_seed: str,
+    target_case_count: int = 40,
 ) -> dict[str, Any]:
     """Build a review queue without asserting that any candidate is verified."""
     if candidate_limit < 0:
         raise ValueError("candidate_limit must be non-negative")
+    if not 30 <= target_case_count <= 50:
+        raise ValueError("target_case_count must be between 30 and 50")
     if len(selected_case_ids) != len(set(selected_case_ids)):
         raise ValueError("selected_case_ids must be unique")
+    if len(selected_case_ids) > target_case_count:
+        raise ValueError("selected_case_ids cannot exceed target_case_count")
     sidecar_sha256 = _require_sha256(sidecar.metadata.sidecar_sha256, "sidecar_sha256")
     case_by_id = {case.case_id: case for case in cases}
     if len(case_by_id) != len(cases):
@@ -252,8 +341,6 @@ def build_queue_payload(
         for evidence in labels:
             if evidence.case_id != case_id or not evidence.evidence_item_id:
                 raise ValueError(f"invalid evidence identity for case '{case_id}'")
-            if not case.reference_contexts:
-                raise ValueError(f"missing reference context for case '{case_id}'")
             reference_answer_sha256 = _require_sha256(
                 _text_sha256(case.reference_answer), "reference_answer_sha256"
             )
@@ -262,11 +349,10 @@ def build_queue_payload(
                 for item in case.reference_contexts
             ]
             reference_anchor_sha256 = _require_sha256(
-                evidence.reference_anchor_hash or reference_context_sha256[0],
-                "reference_anchor_sha256",
+                _text_sha256(_reference_context(case, evidence)), "reference_anchor_sha256"
             )
             candidates = [
-                _normalize_candidate(candidate)
+                _normalize_candidate(candidate, evidence.evidence_item_id)
                 for candidate in list(candidates_by_evidence_id.get(evidence.evidence_item_id, ()))[:candidate_limit]
             ]
             citation_units, citation_parse_status = _normalize_citation_units(evidence)
@@ -277,9 +363,14 @@ def build_queue_payload(
                     evidence_item_id=evidence.evidence_item_id,
                     question=case.question,
                     question_type=case.question_type,
+                    context_index=evidence.context_index,
+                    citation_index=evidence.citation_index,
                     reference_answer_sha256=reference_answer_sha256,
                     reference_context_sha256=reference_context_sha256,
                     reference_anchor_sha256=reference_anchor_sha256,
+                    reference_anchor_legacy_hash=_legacy_anchor_hash(
+                        evidence.reference_anchor_hash
+                    ),
                     parsed_citation_units=citation_units,
                     citation_parse_status=citation_parse_status,
                     source_evidence_status=evidence.status.value,
@@ -297,6 +388,16 @@ def build_queue_payload(
                 ).model_dump(mode="json")
             )
 
+    eligible_strata = _eligible_strata(cases, sidecar.labels_by_case_id)
+    selected_set = set(selected_case_ids)
+    selected_strata = {
+        f"{question_type}|{required_level}": sum(
+            case.case_id in selected_set for case in stratum_cases
+        )
+        for (question_type, required_level), stratum_cases in sorted(eligible_strata.items())
+        if any(case.case_id in selected_set for case in stratum_cases)
+    }
+    selected_case_count = len(selected_case_ids)
     return {
         "schema_version": "1.0.0",
         "dataset_sha256": dataset_sha256,
@@ -308,6 +409,19 @@ def build_queue_payload(
         "command": list(command),
         "candidate_limit": candidate_limit,
         "selection_seed": selection_seed,
+        "target_case_count": target_case_count,
+        "selected_case_count": selected_case_count,
+        "provider_calls": 0,
+        "queue_status": (
+            "READY_FOR_REVIEW"
+            if 30 <= selected_case_count <= 50
+            else "BLOCKED_INSUFFICIENT_ELIGIBLE_CASES"
+        ),
+        "selection_diagnostics": {
+            "eligible_case_count": sum(len(items) for items in eligible_strata.values()),
+            "selected_strata": selected_strata,
+            "shortfall": max(target_case_count - selected_case_count, 0),
+        },
         "selected_case_ids": list(selected_case_ids),
         "rows": rows,
     }
@@ -315,8 +429,8 @@ def build_queue_payload(
 
 def build_decision_template(queue_payload: Mapping[str, Any], queue_sha256: str) -> dict[str, Any]:
     """Create a review template that is bound to the exact queue preview."""
-    if canonical_sha256(queue_payload) != queue_sha256:
-        raise ValueError("queue_sha256 does not match queue_payload")
+    if artifact_sha256(queue_payload) != queue_sha256:
+        raise ValueError("queue_sha256 artifact hash does not match queue_payload bytes")
     rows = queue_payload.get("rows")
     if not isinstance(rows, list):
         raise ValueError("queue_payload missing rows")
@@ -368,6 +482,39 @@ def _normalized_utc_timestamp(value: Any) -> str:
 
 
 def _validated_queue_rows(queue_payload: Mapping[str, Any]) -> list[AdjudicationQueueRow]:
+    if queue_payload.get("schema_version") != _DECISION_SCHEMA_VERSION:
+        raise ValueError("unsupported queue schema_version")
+    target_case_count = queue_payload.get("target_case_count")
+    if (
+        isinstance(target_case_count, bool)
+        or not isinstance(target_case_count, int)
+        or not 30 <= target_case_count <= 50
+    ):
+        raise ValueError("queue target_case_count must be between 30 and 50")
+    selected_case_count = queue_payload.get("selected_case_count")
+    if isinstance(selected_case_count, bool) or not isinstance(selected_case_count, int):
+        raise ValueError("queue selected_case_count must be an integer")
+    selected_case_ids = queue_payload.get("selected_case_ids")
+    if not isinstance(selected_case_ids, list):
+        raise ValueError("queue selected_case_ids must be a list")
+    if any(not isinstance(case_id, str) or not case_id.strip() for case_id in selected_case_ids):
+        raise ValueError("queue selected_case_ids must contain nonblank strings")
+    if len(selected_case_ids) != len(set(selected_case_ids)):
+        raise ValueError("queue selected_case_ids must be unique")
+    if selected_case_count != len(selected_case_ids):
+        raise ValueError("queue selected_case_count must equal selected_case_ids length")
+    if selected_case_count > target_case_count:
+        raise ValueError("queue selected_case_count cannot exceed target_case_count")
+    expected_status = (
+        "READY_FOR_REVIEW"
+        if 30 <= selected_case_count <= 50
+        else "BLOCKED_INSUFFICIENT_ELIGIBLE_CASES"
+    )
+    if queue_payload.get("queue_status") != expected_status:
+        raise ValueError("queue_status does not match selected_case_count")
+    if queue_payload.get("provider_calls") != 0:
+        raise ValueError("queue provider_calls must equal 0")
+
     rows = queue_payload.get("rows")
     if not isinstance(rows, list):
         raise ValueError("queue_payload missing rows")
@@ -378,6 +525,27 @@ def _validated_queue_rows(queue_payload: Mapping[str, Any]) -> list[Adjudication
         raise ValueError("queue_payload contains duplicate queue_row_id")
     if len(evidence_ids) != len(set(evidence_ids)):
         raise ValueError("queue_payload contains duplicate evidence_item_id")
+    row_case_ids = {row.case_id for row in parsed_rows}
+    if row_case_ids != set(selected_case_ids):
+        raise ValueError("queue selected case IDs and row case IDs must match exactly")
+    identity_fields = (
+        "candidate_id", "evidence_item_id", "document_id", "document_number",
+        "source_url", "content_sha256", "rank",
+    )
+    for raw_row, row in zip(rows, parsed_rows, strict=True):
+        raw_candidates = _require_mapping(raw_row, "queue row").get("candidates")
+        if not isinstance(raw_candidates, list) or len(raw_candidates) != len(row.candidates):
+            raise ValueError("loaded queue candidates must be a canonical list")
+        for raw_candidate, candidate in zip(raw_candidates, row.candidates, strict=True):
+            raw_candidate = _require_mapping(raw_candidate, "queue candidate")
+            if any(
+                raw_candidate.get(field_name) != getattr(candidate, field_name)
+                for field_name in identity_fields
+            ):
+                raise ValueError("loaded queue candidate identity fields must be noncanonical")
+            normalized = _normalize_candidate(candidate, row.evidence_item_id)
+            if normalized.model_dump(mode="json") != candidate.model_dump(mode="json"):
+                raise ValueError("loaded queue candidate identity fields must be noncanonical")
     return parsed_rows
 
 
@@ -390,7 +558,7 @@ def _validate_selected_candidate(
     matches = [item for item in row.candidates if item.candidate_id == selected_id]
     if len(matches) != 1:
         raise ValueError("selected candidate is unknown or duplicated for queue row")
-    candidate = _normalize_candidate(matches[0])
+    candidate = _normalize_candidate(matches[0], row.evidence_item_id)
     if candidate.evidence_item_id != row.evidence_item_id:
         raise ValueError("selected candidate evidence_item_id does not match queue evidence")
     if not _strip_or_none(candidate.anchor_match_method) or candidate.anchor_match_method == "none":
@@ -401,6 +569,11 @@ def _validate_selected_candidate(
         raise ValueError("Article evidence requires a matched Article")
     if row.required_level == "clause" and not _strip_or_none(candidate.clause):
         raise ValueError("Clause evidence requires a matched Article and Clause")
+    if row.required_level in {"article", "clause"}:
+        _require_sha256(
+            candidate.structural_chunk_sha256,
+            "verified candidate structural_chunk_sha256",
+        )
     return candidate
 
 
@@ -409,8 +582,8 @@ def validate_decisions(
 ) -> list[AdjudicationDecision]:
     """Validate a complete, human-authored decision artifact against its immutable queue."""
     queue_sha256 = _require_sha256(queue_sha256, "queue_sha256")
-    if canonical_sha256(queue_payload) != queue_sha256:
-        raise ValueError("queue_sha256 does not match queue_payload")
+    if artifact_sha256(queue_payload) != queue_sha256:
+        raise ValueError("queue_sha256 artifact hash does not match queue_payload bytes")
     rows = _validated_queue_rows(queue_payload)
     decisions_payload = _require_mapping(decisions_payload, "decisions_payload")
     if decisions_payload.get("schema_version") != _DECISION_SCHEMA_VERSION:
@@ -504,12 +677,16 @@ def _validate_source_sidecar(
 
 def build_promotion_preview(
     *, queue_payload: Mapping[str, Any], queue_sha256: str,
-    decisions_payload: Mapping[str, Any], source_sidecar_payload: Mapping[str, Any],
+    decisions_payload: Mapping[str, Any], decisions_sha256: str,
+    source_sidecar_payload: Mapping[str, Any],
     source_sidecar_sha256: str, dataset_case_ids: Sequence[str],
     provenance: GitProvenance,
 ) -> dict[str, Any]:
     """Build a deterministic, non-persistent proposed sidecar from resolved decisions."""
     source_sidecar_sha256 = _require_sha256(source_sidecar_sha256, "source_sidecar_sha256")
+    decisions_sha256 = _require_sha256(decisions_sha256, "decisions_sha256")
+    if artifact_sha256(decisions_payload) != decisions_sha256:
+        raise ValueError("decisions artifact SHA-256 does not match decisions_payload bytes")
     rows = _validated_queue_rows(queue_payload)
     decisions = validate_decisions(queue_payload, decisions_payload, queue_sha256=queue_sha256)
     source, labels_by_id = _validate_source_sidecar(source_sidecar_payload, dataset_case_ids)
@@ -567,7 +744,7 @@ def build_promotion_preview(
         "schema_version": _DECISION_SCHEMA_VERSION,
         "source_hashes": {
             "queue_sha256": queue_sha256,
-            "decisions_sha256": canonical_sha256(decisions_payload),
+            "decisions_sha256": decisions_sha256,
             "source_sidecar_sha256": source_sidecar_sha256,
         },
         "provenance": provenance.model_dump(mode="json"),

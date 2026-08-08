@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import re
 from typing import Mapping, Sequence
 
 from audit_golden_dataset import check_anchor_match, norm_text
-from app.evaluation.adjudication import AdjudicationCandidate
+from app.evaluation.adjudication import AdjudicationCandidate, candidate_identity_sha256
 from app.evaluation.legal_citations import parse_legal_citations
 from app.evaluation.schemas import GoldEvidence, GoldenCase, RequiredLevel
 from app.ingestion.content_store import ContentStore
@@ -90,7 +89,12 @@ def discover_adjudication_candidates(
                     diagnostics = {}
                 candidates.append(
                     AdjudicationCandidate(
-                        candidate_id=_candidate_id(document_id, metadata, document.content_sha256),
+                        candidate_id=candidate_identity_sha256(
+                            document_id,
+                            metadata.document_number,
+                            metadata.source_url,
+                            document.content_sha256,
+                        ),
                         evidence_item_id=evidence.evidence_item_id,
                         document_id=document_id,
                         document_number=metadata.document_number,
@@ -150,10 +154,12 @@ def _stable_bounded_ids(source_ids: Sequence[int], fts_ids: Sequence[object], li
 
 def _reference_anchor(case: GoldenCase, evidence: GoldEvidence) -> str:
     if not case.reference_contexts:
-        return ""
+        raise ValueError(f"missing reference context for case '{case.case_id}'")
+    if evidence.context_index < 0:
+        raise ValueError("context_index must be zero or a positive 1-based index")
     index = evidence.context_index - 1 if evidence.context_index > 0 else 0
     if index >= len(case.reference_contexts):
-        return ""
+        raise ValueError("context_index is out of range for reference contexts")
     return case.reference_contexts[index]
 
 
@@ -206,15 +212,6 @@ def _validate_document(document_id: int, metadata: object, document: object) -> 
         or _sha256(content) != content_sha256
     ):
         raise ValueError("invalid corpus document identity")
-
-
-def _candidate_id(document_id: int, metadata: object, content_sha256: str) -> str:
-    return _sha256(json.dumps({
-        "document_id": document_id,
-        "document_number": metadata.document_number,
-        "source_url": metadata.source_url,
-        "content_sha256": content_sha256,
-    }, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
 
 
 def _sha256(value: str) -> str:

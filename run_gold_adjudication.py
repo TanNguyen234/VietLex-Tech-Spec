@@ -29,6 +29,7 @@ class RuntimeDependencies:
     build_promotion_summary: Callable[..., Any]
     validate_preview_approval: Callable[..., Any]
     canonical_sha256: Callable[..., str]
+    artifact_sha256: Callable[..., str]
     write_immutable_json: Callable[..., Any]
     prepare_run_directory: Callable[..., Path]
     generate_unique_run_id: Callable[..., str]
@@ -49,6 +50,7 @@ def _runtime_dependencies() -> RuntimeDependencies:
         build_promotion_preview,
         build_promotion_summary,
         canonical_sha256,
+        artifact_sha256,
         select_stratified_case_ids,
         validate_preview_approval,
         build_queue_payload,
@@ -75,6 +77,7 @@ def _runtime_dependencies() -> RuntimeDependencies:
         build_promotion_summary=build_promotion_summary,
         validate_preview_approval=validate_preview_approval,
         canonical_sha256=canonical_sha256,
+        artifact_sha256=artifact_sha256,
         write_immutable_json=write_immutable_json,
         prepare_run_directory=prepare_run_directory,
         generate_unique_run_id=generate_unique_run_id,
@@ -195,18 +198,23 @@ def _load_sources(
 
 def _queue_hashes(
     queue_payload: Any,
+    queue_file_sha256: str,
     dataset_sha256: str,
     sidecar_sha256: str,
     dependencies: RuntimeDependencies,
 ) -> str:
     if not isinstance(queue_payload, dict):
         raise ValueError("queue must be a JSON object")
+    if dependencies.artifact_sha256(queue_payload) != queue_file_sha256:
+        raise ValueError(
+            "queue file SHA-256 does not match canonical immutable artifact bytes"
+        )
     if queue_payload.get("dataset_sha256") != dataset_sha256:
         raise ValueError("queue dataset SHA-256 does not match dataset")
     provenance = queue_payload.get("provenance")
     if not isinstance(provenance, dict) or provenance.get("sidecar_sha256") != sidecar_sha256:
         raise ValueError("queue sidecar SHA-256 does not match sidecar")
-    return dependencies.canonical_sha256(queue_payload)
+    return queue_file_sha256
 
 
 def _queue_provenance(queue_payload: dict[str, Any], dependencies: RuntimeDependencies) -> Any:
@@ -258,8 +266,9 @@ def _cmd_queue(args: argparse.Namespace) -> int:
         command=["run_gold_adjudication.py", "queue"],
         candidate_limit=args.candidate_limit,
         selection_seed="vietlex-p1-v1",
+        target_case_count=args.target_cases,
     )
-    queue_sha256 = dependencies.canonical_sha256(queue_payload)
+    queue_sha256 = dependencies.artifact_sha256(queue_payload)
     template = dependencies.build_decision_template(queue_payload, queue_sha256)
     run_id = args.run_id or dependencies.generate_unique_run_id("gold-adjudication-queue")
     planned_run = _planned_run_dir(output_root, run_id)
@@ -268,18 +277,19 @@ def _cmd_queue(args: argparse.Namespace) -> int:
         "decision_template": _relative_path(planned_run / "decision_template.json", root),
         "queue_summary": _relative_path(planned_run / "queue_summary.json", root),
     }
-    strata = {kind: sum(case.question_type == kind for case in cases if case.case_id in selected_case_ids) for kind in ("factoid", "multi-hop")}
     summary = {
         "command": ["run_gold_adjudication.py", "queue"],
         "run_id": run_id,
         "artifact_paths": paths,
         "artifact_hashes": {
             "queue_sha256": queue_sha256,
-            "decision_template_sha256": dependencies.canonical_sha256(template),
+            "decision_template_sha256": dependencies.artifact_sha256(template),
         },
-        "selected_case_count": len(selected_case_ids),
-        "selected_strata": strata,
-        "provider_calls": 0,
+        "target_case_count": queue_payload["target_case_count"],
+        "selected_case_count": queue_payload["selected_case_count"],
+        "queue_status": queue_payload["queue_status"],
+        "selection_diagnostics": queue_payload["selection_diagnostics"],
+        "provider_calls": queue_payload["provider_calls"],
         "dataset_sha256": dataset_sha256,
         "source_sidecar_sha256": sidecar.metadata.sidecar_sha256,
         "provenance": provenance.model_dump(mode="json"),
@@ -294,15 +304,24 @@ def _cmd_queue(args: argparse.Namespace) -> int:
 def _build_preview(args: argparse.Namespace, dependencies: RuntimeDependencies) -> tuple[dict[str, Any], dict[str, Any], str]:
     cases, sidecar, sidecar_payload, dataset_sha256, dataset_case_ids = _load_sources(args, dependencies)
     del cases
-    queue_payload, _ = _read_json(args.queue, "queue")
-    decisions_payload, _ = _read_json(args.decisions, "decisions")
+    queue_payload, queue_file_sha256 = _read_json(args.queue, "queue")
+    decisions_payload, decisions_file_sha256 = _read_json(args.decisions, "decisions")
     queue_sha256 = _queue_hashes(
-        queue_payload, dataset_sha256, sidecar.metadata.sidecar_sha256, dependencies
+        queue_payload,
+        queue_file_sha256,
+        dataset_sha256,
+        sidecar.metadata.sidecar_sha256,
+        dependencies,
     )
+    if dependencies.artifact_sha256(decisions_payload) != decisions_file_sha256:
+        raise ValueError(
+            "decisions file SHA-256 does not match canonical immutable artifact bytes"
+        )
     preview = dependencies.build_promotion_preview(
         queue_payload=queue_payload,
         queue_sha256=queue_sha256,
         decisions_payload=decisions_payload,
+        decisions_sha256=decisions_file_sha256,
         source_sidecar_payload=sidecar_payload,
         source_sidecar_sha256=sidecar.metadata.sidecar_sha256,
         dataset_case_ids=dataset_case_ids,
