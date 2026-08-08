@@ -1,12 +1,28 @@
 # VietLex Evaluation Current Status
 
-**Status:** P0 and lean workflow verified on merged local `main`; live baseline BLOCKED by zero verified gold
+**Status:** P1 provider-free adjudication tooling verified and merged; human queue generation paused; live baseline BLOCKED by zero verified gold
 
 - Historical 2026-08-03 retrieval runs remain invalid for decision-making.
 - Current sidecar: 420 cases, 483 evidence items, 0 verified evidence items.
 - Clean live retrieval baseline: **BLOCKED** until verified gold exists and P0 is committed/clean.
 - Ragas: optional audit only; disabled by default.
 - Production readiness: **NOT DEMONSTRATED**.
+
+## P1 adjudication tooling checkpoint
+
+Verified on 2026-08-08 from feature source SHA `2f08c5283c233ed108b5ab5de5010dbc5e7e598f`, merged locally as `70597c45c9e265bdb31c9d6756d2e2ff12204b79`.
+
+- Added immutable provider-free `queue`, `preview`, and explicitly approved `promote` workflows.
+- Pinned legacy 16-character anchor hashes are preserved separately; full anchor SHA-256 values bind the exact indexed reference context.
+- Queue and decision bindings use exact immutable artifact bytes. Candidate IDs bind document identity and content hashes.
+- Selection round-robins `(question_type, highest_required_level)` strata and persists an honest BLOCKED queue when fewer than 30 cases are eligible.
+- Mandatory post-fix suite: `191 passed`.
+- Stable full suite: `362 passed, 1 skipped in 45.67s`.
+- Ruff fatal checks, compileall, and `git diff --check`: passed.
+- CRG graph matched the final feature SHA; independent final review reported no remaining actionable finding and `Ready to merge: Yes`.
+- Real queue generation, human decisions, preview approval, evidence promotion, provider calls, corpus/index mutation, and P2: **NOT RUN**.
+
+Resume with the documented `run_gold_adjudication.py queue` command using the pinned dataset/content-store/FTS paths. Stop again before promotion unless the user explicitly approves the exact preview SHA-256.
 
 ## Evidence policy
 
@@ -41,6 +57,6 @@ Verified on 2026-08-08 from Git SHA `4e40be6ab1871e3b64ca6f560f317bed215e05e1` w
 - Selected-case-set SHA-256: `4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945`.
 - All canonical artifact paths are repository-relative POSIX paths.
 
-Remote data modified: **no**. P0 source commit and local `main` merge: **COMPLETED**. Live benchmark, live provider evaluation, ingestion, migration, deployment, and push: **NOT RUN**.
+Remote data modified: **no**. P0 source commit and local `main` merge: **COMPLETED**. Live benchmark, live provider evaluation, ingestion, migration, and deployment: **NOT RUN**.
 
 The merged-result full suite passed `219 passed, 1 skipped in 73.36s`. The clean provider-free preflight matches the source state above; P1 may build adjudication tooling, but human evidence promotion remains required.
