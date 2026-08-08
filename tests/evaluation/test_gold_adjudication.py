@@ -1041,3 +1041,36 @@ def test_build_promotion_summary_preserves_negative_diffs_and_sets_ready_only_in
     assert summary["status"] == "BLOCKED_INSUFFICIENT_VERIFIED_CASES"
     assert summary["negative_counts"]["rejected"] == 1
     assert summary["per_evidence_diff"][0]["after_status"] == "rejected"
+
+
+def test_validate_preview_approval_rejects_raw_notes_anywhere_in_proposed_sidecar():
+    # Break caught: raw review notes can be hidden at the sidecar root rather than in a label.
+    preview = _verified_preview()
+    preview["proposed_sidecar"]["adjudication_notes"] = "private root note"
+    preview["preview_sha256"] = canonical_sha256({
+        key: value for key, value in preview.items() if key != "preview_sha256"
+    })
+
+    with pytest.raises(ValueError, match="adjudication_notes"):
+        validate_preview_approval(preview, preview["preview_sha256"])
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda preview: preview.pop("schema_version"),
+        lambda preview: preview.update(schema_version=[]),
+        lambda preview: preview.pop("exact_case_set"),
+        lambda preview: preview.update(exact_case_set=[]),
+    ],
+)
+def test_validate_preview_approval_requires_valid_schema_and_exact_case_sections(mutate):
+    # Break caught: a hash-valid preview can omit identity-bearing preview-core sections.
+    preview = _verified_preview()
+    mutate(preview)
+    preview["preview_sha256"] = canonical_sha256({
+        key: value for key, value in preview.items() if key != "preview_sha256"
+    })
+
+    with pytest.raises(ValueError, match="schema_version|exact_case_set"):
+        validate_preview_approval(preview, preview["preview_sha256"])

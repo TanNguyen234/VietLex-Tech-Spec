@@ -643,16 +643,30 @@ def build_promotion_summary(preview_payload: Mapping[str, Any]) -> dict[str, Any
 def _validate_promotion_preview(preview_payload: Mapping[str, Any]) -> Mapping[str, Any]:
     preview = _require_mapping(preview_payload, "preview_payload")
     for field_name in (
-        "preview_sha256", "source_hashes", "provenance", "status_counts",
-        "per_evidence_diff", "verified_evidence_count",
-        "fully_verified_selected_case_count", "negative_counts", "proposed_sidecar",
+        "schema_version", "preview_sha256", "source_hashes", "provenance",
+        "exact_case_set", "status_counts", "per_evidence_diff",
+        "verified_evidence_count", "fully_verified_selected_case_count",
+        "negative_counts", "proposed_sidecar",
     ):
         if field_name not in preview:
             raise ValueError(f"preview is missing required {field_name}")
+    if preview["schema_version"] != _DECISION_SCHEMA_VERSION:
+        raise ValueError("unsupported preview schema_version")
     source_hashes = _require_mapping(preview["source_hashes"], "source_hashes")
     for field_name in ("queue_sha256", "decisions_sha256", "source_sidecar_sha256"):
         _require_sha256(source_hashes.get(field_name), f"source_hashes.{field_name}")
     _require_mapping(preview["provenance"], "provenance")
+    exact_case_set = _require_mapping(preview["exact_case_set"], "exact_case_set")
+    if exact_case_set.get("matches") is not True:
+        raise ValueError("exact_case_set.matches must be true")
+    dataset_case_ids = _validate_case_id_list(
+        exact_case_set.get("dataset_case_ids"), "exact_case_set.dataset_case_ids"
+    )
+    sidecar_case_ids = _validate_case_id_list(
+        exact_case_set.get("sidecar_case_ids"), "exact_case_set.sidecar_case_ids"
+    )
+    if dataset_case_ids != sidecar_case_ids:
+        raise ValueError("exact_case_set dataset and sidecar case IDs must match")
     status_counts = _require_mapping(preview["status_counts"], "status_counts")
     for field_name in ("before", "after"):
         _validate_count_mapping(status_counts.get(field_name), f"status_counts.{field_name}")
@@ -673,13 +687,13 @@ def _validate_promotion_preview(preview_payload: Mapping[str, Any]) -> Mapping[s
     if set(negative_counts) != _NEGATIVE_DECISION_STATUSES:
         raise ValueError("negative_counts must contain every negative decision status")
     proposed_sidecar = _require_mapping(preview["proposed_sidecar"], "proposed_sidecar")
+    if _contains_legacy_raw_notes(proposed_sidecar):
+        raise ValueError("proposed_sidecar contains legacy raw adjudication_notes")
     labels = proposed_sidecar.get("labels")
     if not isinstance(labels, list):
         raise ValueError("proposed_sidecar.labels must be a list")
     for label in labels:
-        label_mapping = _require_mapping(label, "proposed_sidecar label")
-        if "adjudication_notes" in label_mapping:
-            raise ValueError("proposed_sidecar contains legacy raw adjudication_notes")
+        _require_mapping(label, "proposed_sidecar label")
     return preview
 
 
@@ -695,3 +709,23 @@ def _require_nonnegative_int(value: Any, field_name: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
         raise ValueError(f"{field_name} must be a non-negative integer")
     return value
+
+
+def _validate_case_id_list(value: Any, field_name: str) -> list[str]:
+    if not isinstance(value, list):
+        raise ValueError(f"{field_name} must be a list")
+    if any(not isinstance(case_id, str) or not case_id.strip() for case_id in value):
+        raise ValueError(f"{field_name} must contain nonblank case IDs")
+    if len(value) != len(set(value)) or value != sorted(value):
+        raise ValueError(f"{field_name} must be sorted and unique")
+    return value
+
+
+def _contains_legacy_raw_notes(value: Any) -> bool:
+    if isinstance(value, Mapping):
+        return "adjudication_notes" in value or any(
+            _contains_legacy_raw_notes(item) for item in value.values()
+        )
+    if isinstance(value, list):
+        return any(_contains_legacy_raw_notes(item) for item in value)
+    return False
