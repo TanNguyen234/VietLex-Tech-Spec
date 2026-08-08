@@ -50,6 +50,8 @@ class GoldEvidence(BaseModel):
     adjudication_confidence: Optional[str] = None
     adjudication_reviewer_identity: Optional[str] = None
     adjudicated_at_utc: Optional[str] = None
+    adjudication_notes_sha256: Optional[str] = None
+    # Legacy input compatibility only. Promotion previews must not populate this.
     adjudication_notes: Optional[str] = None
 
 

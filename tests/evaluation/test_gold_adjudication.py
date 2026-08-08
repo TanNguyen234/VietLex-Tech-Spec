@@ -7,10 +7,12 @@ from pydantic import ValidationError
 
 from app.evaluation.adjudication import (
     AdjudicationCandidate,
+    build_promotion_preview,
     build_decision_template,
     build_queue_payload,
     canonical_sha256,
     select_stratified_case_ids,
+    validate_decisions,
 )
 from app.evaluation.gold_sidecar import GoldSidecar, GoldSidecarMetadata
 from app.evaluation.provenance import GitProvenance
@@ -556,3 +558,174 @@ def _queue(
         corpus_revision="pinned-revision", provenance=provenance,
         command=["python"], candidate_limit=5, selection_seed="p1-v1",
     )
+
+
+def _review_queue(*, required_level: str = "article") -> tuple[dict, str]:
+    case = _case("review-case", "factoid")
+    evidence = GoldEvidence(
+        evidence_item_id="review-evidence", case_id=case.case_id, required=True,
+        required_level=required_level, status=EvidenceStatus.AMBIGUOUS,
+    )
+    sidecar = GoldSidecar(
+        metadata=GoldSidecarMetadata(sidecar_sha256="a" * 64), labels=[evidence],
+        labels_by_case_id={case.case_id: [evidence]},
+    )
+    candidate = AdjudicationCandidate(
+        candidate_id="review-candidate", evidence_item_id=evidence.evidence_item_id,
+        document_id=7, document_number="7/2026/ND-CP",
+        source_url="https://example.test/doc-7", article="Article 2", clause="1",
+        anchor_match_method="full_anchor_exact", required_level_supported=True,
+    )
+    queue = _queue(
+        case, sidecar, _provenance(), {evidence.evidence_item_id: [candidate]}
+    )
+    return queue, canonical_sha256(queue)
+
+
+def _review_decisions(queue_sha256: str, *, status: str = "verified", **updates) -> dict:
+    decision = {
+        "status": status,
+        "selected_candidate_id": "review-candidate" if status == "verified" else None,
+        "confidence": "high",
+        "notes": "Reviewed against the cited legal text.",
+        "reviewer_identity": "legal-reviewer-01",
+        "reviewed_at_utc": "2026-08-08T01:02:03Z",
+    }
+    decision.update(updates)
+    return {
+        "schema_version": "1.0.0", "queue_sha256": queue_sha256,
+        "decisions": [{
+            "queue_row_id": "5d236ae10bc9abf4ef3e0ce259cc0c9b919db8dcf113abf172cc2b23ed1e959c",
+            "evidence_item_id": "review-evidence", "decision": decision,
+        }],
+    }
+
+
+def _source_sidecar() -> dict:
+    return {
+        "schema_version": "2.0.0", "dataset_name": "test", "total_cases": 2,
+        "total_evidence_items": 2,
+        "labels": [
+            {"evidence_item_id": "review-evidence", "case_id": "review-case", "required": True,
+             "required_level": "article", "status": "ambiguous"},
+            {"evidence_item_id": "other-evidence", "case_id": "other-case", "required": False,
+             "required_level": "document", "status": "rejected"},
+        ],
+    }
+
+
+def test_validate_decisions_normalizes_complete_resolved_decision_in_queue_order():
+    # Break caught: a decision artifact can be accepted without binding every resolved review to its queue row.
+    queue, queue_sha256 = _review_queue()
+    decisions = _review_decisions(queue_sha256)
+    decisions["decisions"][0]["queue_row_id"] = queue["rows"][0]["queue_row_id"]
+
+    validated = validate_decisions(queue, decisions, queue_sha256=queue_sha256)
+
+    assert [item.status for item in validated] == ["verified"]
+    assert validated[0].reviewer_identity == "legal-reviewer-01"
+    assert validated[0].reviewed_at_utc == "2026-08-08T01:02:03Z"
+
+
+@pytest.mark.parametrize(
+    ("mutate", "message"),
+    [
+        (lambda queue, decisions: decisions.update(queue_sha256="b" * 64), "queue_sha256"),
+        (lambda queue, decisions: decisions.update(schema_version="2.0.0"), "schema_version"),
+        (lambda queue, decisions: decisions["decisions"].append(dict(decisions["decisions"][0])), "duplicate"),
+        (lambda queue, decisions: decisions["decisions"][0]["decision"].update(status="pending"), "pending"),
+        (lambda queue, decisions: decisions["decisions"][0]["decision"].update(reviewer_identity=" "), "reviewer"),
+        (lambda queue, decisions: decisions["decisions"][0]["decision"].update(reviewed_at_utc="2026-08-08T01:02:03+01:00"), "UTC"),
+        (lambda queue, decisions: decisions["decisions"][0]["decision"].update(confidence="certain"), "confidence"),
+        (lambda queue, decisions: decisions["decisions"][0]["decision"].update(confidence="medium", notes=""), "notes"),
+        (lambda queue, decisions: decisions["decisions"][0]["decision"].update(selected_candidate_id="missing"), "candidate"),
+    ],
+)
+def test_validate_decisions_fails_closed_for_unbound_or_incomplete_resolution(mutate, message):
+    # Break caught: malformed human artifacts silently yield a partial promotion preview.
+    queue, queue_sha256 = _review_queue()
+    decisions = _review_decisions(queue_sha256)
+    decisions["decisions"][0]["queue_row_id"] = queue["rows"][0]["queue_row_id"]
+    mutate(queue, decisions)
+
+    with pytest.raises(ValueError, match=message):
+        validate_decisions(queue, decisions, queue_sha256=queue_sha256)
+
+
+@pytest.mark.parametrize(
+    ("candidate_update", "required_level", "message"),
+    [
+        ({"anchor_match_method": "none"}, "document", "anchor"),
+        ({"article": None}, "article", "Article"),
+        ({"clause": None}, "clause", "Clause"),
+        ({"required_level_supported": False}, "document", "required_level"),
+        ({"evidence_item_id": "other-evidence"}, "document", "evidence"),
+        ({"source_url": None}, "document", "source_url"),
+    ],
+)
+def test_validate_decisions_requires_candidate_identity_anchor_and_structure(candidate_update, required_level, message):
+    # Break caught: a verified label is derived from a candidate that does not prove the requested evidence level.
+    queue, queue_sha256 = _review_queue(required_level=required_level)
+    queue["rows"][0]["candidates"][0].update(candidate_update)
+    queue_sha256 = canonical_sha256(queue)
+    decisions = _review_decisions(queue_sha256)
+    decisions["decisions"][0]["queue_row_id"] = queue["rows"][0]["queue_row_id"]
+
+    with pytest.raises(ValueError, match=message):
+        validate_decisions(queue, decisions, queue_sha256=queue_sha256)
+
+
+def test_promotion_preview_is_hashed_pure_and_redacts_notes_while_preserving_negative_decisions():
+    # Break caught: preview leaks review notes, loses rejected outcomes, or mutates labels outside the review queue.
+    queue, queue_sha256 = _review_queue()
+    decisions = _review_decisions(
+        queue_sha256, status="rejected", notes="Private note: source was superseded."
+    )
+    decisions["decisions"][0]["queue_row_id"] = queue["rows"][0]["queue_row_id"]
+    source = _source_sidecar()
+
+    preview = build_promotion_preview(
+        queue_payload=queue, queue_sha256=queue_sha256, decisions_payload=decisions,
+        source_sidecar_payload=source, source_sidecar_sha256="d" * 64,
+        dataset_case_ids=["review-case", "other-case"], provenance=_provenance(),
+    )
+
+    proposed = preview["proposed_sidecar"]
+    changed, unchanged = proposed["labels"]
+    assert changed["status"] == "rejected"
+    assert changed["adjudication_notes_sha256"] == hashlib.sha256(
+        "Private note: source was superseded.".encode("utf-8")
+    ).hexdigest()
+    assert "adjudication_notes" not in changed
+    assert unchanged == source["labels"][1]
+    assert preview["negative_counts"] == {"rejected": 1, "corpus_missing": 0, "ambiguous": 0, "insufficient_evidence": 0}
+    assert preview["preview_sha256"] == canonical_sha256({key: value for key, value in preview.items() if key != "preview_sha256"})
+    assert "Private note" not in str(preview)
+
+
+def test_promotion_preview_copies_only_selected_candidate_and_rejects_bad_sidecar_identity_sets():
+    # Break caught: preview imports document fields from outside the reviewed candidate or tolerates sidecar/dataset drift.
+    queue, queue_sha256 = _review_queue()
+    decisions = _review_decisions(queue_sha256)
+    decisions["decisions"][0]["queue_row_id"] = queue["rows"][0]["queue_row_id"]
+    source = _source_sidecar()
+
+    preview = build_promotion_preview(
+        queue_payload=queue, queue_sha256=queue_sha256, decisions_payload=decisions,
+        source_sidecar_payload=source, source_sidecar_sha256="d" * 64,
+        dataset_case_ids=["review-case", "other-case"], provenance=_provenance(),
+    )
+    label = preview["proposed_sidecar"]["labels"][0]
+    GoldEvidence.model_validate(label)
+    assert (label["document_id"], label["document_number"], label["article"], label["clause"]) == (7, "7/2026/ND-CP", "Article 2", "1")
+    assert label["adjudication_candidate_id"] == "review-candidate"
+    assert label["adjudication_queue_sha256"] == queue_sha256
+    assert label["adjudication_decision_sha256"] == canonical_sha256(decisions["decisions"][0])
+
+    source["labels"].append(dict(source["labels"][0]))
+    with pytest.raises(ValueError, match="duplicate"):
+        build_promotion_preview(
+            queue_payload=queue, queue_sha256=queue_sha256, decisions_payload=decisions,
+            source_sidecar_payload=source, source_sidecar_sha256="d" * 64,
+            dataset_case_ids=["review-case", "other-case"], provenance=_provenance(),
+        )
