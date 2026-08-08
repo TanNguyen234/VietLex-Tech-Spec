@@ -159,6 +159,16 @@ def _safe_provenance(dependencies: RuntimeDependencies, root: Path) -> Any:
     return provenance.model_copy(update={"repository_root": "."})
 
 
+def _contains_raw_adjudication_notes(value: Any) -> bool:
+    if isinstance(value, dict):
+        return "adjudication_notes" in value or any(
+            _contains_raw_adjudication_notes(item) for item in value.values()
+        )
+    if isinstance(value, list):
+        return any(_contains_raw_adjudication_notes(item) for item in value)
+    return False
+
+
 def _load_sources(
     args: argparse.Namespace, dependencies: RuntimeDependencies,
 ) -> tuple[list[Any], Any, dict[str, Any], str, list[str]]:
@@ -172,6 +182,8 @@ def _load_sources(
     sidecar_payload, sidecar_sha256 = _read_json(args.sidecar, "sidecar")
     if not isinstance(sidecar_payload, dict):
         raise ValueError("sidecar must be a JSON object")
+    if _contains_raw_adjudication_notes(sidecar_payload):
+        raise ValueError("source sidecar contains legacy raw adjudication_notes")
     sidecar = dependencies.load_gold_sidecar(args.sidecar, dataset_case_ids=dataset_case_ids)
     if sidecar.metadata.sidecar_sha256 != sidecar_sha256:
         raise ValueError("sidecar SHA-256 changed while loading")

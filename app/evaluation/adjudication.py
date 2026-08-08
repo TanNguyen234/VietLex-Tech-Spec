@@ -291,7 +291,6 @@ def build_queue_payload(
                         "adjudication_reviewer_identity": evidence.adjudication_reviewer_identity,
                         "adjudicated_at_utc": evidence.adjudicated_at_utc,
                         "adjudication_notes_sha256": evidence.adjudication_notes_sha256,
-                        "adjudication_notes": evidence.adjudication_notes,
                     },
                     required_level=evidence.required_level.value,
                     candidates=candidates,

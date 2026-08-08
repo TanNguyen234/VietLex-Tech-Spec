@@ -465,7 +465,8 @@ def test_queue_preserves_negative_source_evidence_and_adjudication_provenance(st
         required=True, status=status, adjudication_queue_sha256="a" * 64,
         adjudication_decision_sha256="b" * 64, adjudication_candidate_id="old-candidate",
         adjudication_confidence="high", adjudication_reviewer_identity="reviewer",
-        adjudicated_at_utc="2026-08-08T00:00:00Z", adjudication_notes="retained",
+        adjudicated_at_utc="2026-08-08T00:00:00Z", adjudication_notes_sha256="d" * 64,
+        adjudication_notes="retained",
     )
     sidecar = GoldSidecar(
         metadata=GoldSidecarMetadata(sidecar_sha256="c" * 64), labels=[evidence],
@@ -477,6 +478,9 @@ def test_queue_preserves_negative_source_evidence_and_adjudication_provenance(st
     row = payload["rows"][0]
     assert row["source_evidence_status"] == status.value
     assert row["source_adjudication_provenance"]["adjudication_candidate_id"] == "old-candidate"
+    assert row["source_adjudication_provenance"]["adjudication_notes_sha256"] == "d" * 64
+    assert "adjudication_notes" not in row["source_adjudication_provenance"]
+    assert "retained" not in json.dumps(payload)
     assert row["decision"]["status"] == "pending"
 
 
@@ -1120,6 +1124,80 @@ def _write_cli_review_inputs(tmp_path: Path) -> tuple[Path, Path, dict[int, obje
     return dataset_path, sidecar_path, documents
 
 
+def _configure_cli_runtime(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, documents: dict[int, object],
+):
+    import run_gold_adjudication as cli
+
+    class FakeStore(_FakeContentStore):
+        def __init__(self, _path: Path) -> None:
+            super().__init__(documents)
+
+    class FakeFts(_FakeFts):
+        def __init__(self, *, store: object, path: Path, dataset_revision: str) -> None:
+            del store, path, dataset_revision
+            super().__init__([])
+
+    original = cli._runtime_dependencies()
+    dependencies = cli.RuntimeDependencies(
+        **{**original.__dict__, "ContentStore": FakeStore, "LegalFtsIndex": FakeFts}
+    )
+    monkeypatch.setattr(cli, "_runtime_dependencies", lambda: dependencies)
+    monkeypatch.setattr(cli, "repository_root", lambda: tmp_path)
+    return cli
+
+
+def _cli_queue_args(
+    dataset_path: Path, sidecar_path: Path, content_store_path: Path, fts_path: Path,
+    output_root: Path, run_id: str,
+) -> list[str]:
+    return [
+        "queue", "--dataset", str(dataset_path), "--sidecar", str(sidecar_path),
+        "--content-store", str(content_store_path), "--fts", str(fts_path),
+        "--output-root", str(output_root), "--run-id", run_id,
+    ]
+
+
+def _write_resolved_decisions(queue_path: Path, decisions_path: Path) -> None:
+    template = json.loads(queue_path.read_text(encoding="utf-8"))
+    for entry in template["decisions"]:
+        entry["decision"] = {
+            "status": "rejected", "selected_candidate_id": None,
+            "confidence": "high", "notes": "not supported", "reviewer_identity": "reviewer",
+            "reviewed_at_utc": "2026-08-08T00:00:00Z",
+        }
+    decisions_path.write_text(json.dumps(template), encoding="utf-8")
+
+
+def _tree_bytes(root: Path) -> dict[str, bytes]:
+    return {
+        path.relative_to(root).as_posix(): path.read_bytes()
+        for path in root.rglob("*") if path.is_file()
+    }
+
+
+def _prepare_cli_artifacts(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    dataset_path, sidecar_path, documents = _write_cli_review_inputs(tmp_path)
+    content_store_path = tmp_path / "content.sqlite3"
+    fts_path = tmp_path / "fts.sqlite3"
+    content_store_path.touch()
+    fts_path.touch()
+    cli = _configure_cli_runtime(monkeypatch, tmp_path, documents)
+    queue_root = tmp_path / "queue-runs"
+    assert cli.main(_cli_queue_args(
+        dataset_path, sidecar_path, content_store_path, fts_path, queue_root, "queue-base",
+    )) == 0
+    decisions_path = tmp_path / "decisions.json"
+    _write_resolved_decisions(queue_root / "queue-base" / "decision_template.json", decisions_path)
+    preview_root = tmp_path / "preview-runs"
+    assert cli.main([
+        "preview", "--dataset", str(dataset_path), "--sidecar", str(sidecar_path),
+        "--queue", str(queue_root / "queue-base" / "queue.json"), "--decisions", str(decisions_path),
+        "--output-root", str(preview_root), "--run-id", "preview-base",
+    ]) == 0
+    return cli, dataset_path, sidecar_path, content_store_path, fts_path, queue_root, decisions_path, preview_root
+
+
 def test_gold_adjudication_cli_is_import_safe_and_help_is_provider_free(monkeypatch):
     # Break caught: importing or rendering CLI help constructs a corpus or provider client.
     import run_gold_adjudication as cli
@@ -1137,29 +1215,14 @@ def test_gold_adjudication_cli_queue_preview_and_promotion_are_immutable(
 ):
     # Break caught: CLI skips exact bindings, emits mutable/non-auditable artifacts,
     # or promotes a source sidecar without an exact approved preview.
-    import run_gold_adjudication as cli
-
     dataset_path, sidecar_path, documents = _write_cli_review_inputs(tmp_path)
     content_store_path = tmp_path / "content.sqlite3"
     fts_path = tmp_path / "fts.sqlite3"
     content_store_path.touch()
     fts_path.touch()
 
-    class FakeStore(_FakeContentStore):
-        def __init__(self, _path: Path) -> None:
-            super().__init__(documents)
-
-    class FakeFts(_FakeFts):
-        def __init__(self, *, store: object, path: Path, dataset_revision: str) -> None:
-            del store, path, dataset_revision
-            super().__init__([])
-
-    original = cli._runtime_dependencies()
-    dependencies = cli.RuntimeDependencies(
-        **{**original.__dict__, "ContentStore": FakeStore, "LegalFtsIndex": FakeFts}
-    )
-    monkeypatch.setattr(cli, "_runtime_dependencies", lambda: dependencies)
-    monkeypatch.setattr(cli, "repository_root", lambda: tmp_path)
+    cli = _configure_cli_runtime(monkeypatch, tmp_path, documents)
+    dependencies = cli._runtime_dependencies()
 
     queue_root = tmp_path / "queue-runs"
     assert cli.main([
@@ -1229,3 +1292,97 @@ def test_gold_adjudication_cli_rejects_external_outputs_and_missing_approval_bef
         cli.main(["queue", "--output-root", str(tmp_path / "outside")])
     with pytest.raises(SystemExit):
         cli.build_parser().parse_args(["promote"])
+
+
+def test_gold_adjudication_cli_rejects_legacy_raw_notes_before_queue_persistence(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+):
+    # Break caught: legacy raw reviewer notes reach candidate discovery or queue.json.
+    dataset_path, sidecar_path, documents = _write_cli_review_inputs(tmp_path)
+    sidecar = json.loads(sidecar_path.read_text(encoding="utf-8"))
+    sidecar["labels"][0]["adjudication_notes"] = "private reviewer note"
+    sidecar_path.write_text(json.dumps(sidecar), encoding="utf-8")
+    content_store_path = tmp_path / "content.sqlite3"
+    fts_path = tmp_path / "fts.sqlite3"
+    content_store_path.touch()
+    fts_path.touch()
+    cli = _configure_cli_runtime(monkeypatch, tmp_path, documents)
+    output_root = tmp_path / "queue-runs"
+
+    with pytest.raises(ValueError, match="adjudication_notes"):
+        cli.main(_cli_queue_args(
+            dataset_path, sidecar_path, content_store_path, fts_path, output_root, "legacy-notes",
+        ))
+    assert not output_root.exists()
+
+
+@pytest.mark.parametrize(
+    "failure",
+    [
+        "missing-content-store", "missing-fts", "invalid-target", "invalid-candidate",
+        "run-directory-collision", "stale-queue", "malformed-decisions",
+        "blank-approval", "malformed-approval", "wrong-approval",
+    ],
+)
+def test_gold_adjudication_cli_fails_closed_without_writing_new_artifacts(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, failure: str,
+):
+    # Break caught: invalid queue/preview/promotion input can alter bytes or create a run directory.
+    (
+        cli, dataset_path, sidecar_path, content_store_path, fts_path, queue_root,
+        decisions_path, preview_root,
+    ) = _prepare_cli_artifacts(monkeypatch, tmp_path)
+    queue_path = queue_root / "queue-base" / "queue.json"
+    preview_path = preview_root / "preview-base" / "preview.json"
+    output_root = tmp_path / "failed-runs"
+
+    if failure == "missing-content-store":
+        arguments = _cli_queue_args(
+            dataset_path, sidecar_path, tmp_path / "missing.sqlite3", fts_path, output_root, "missing-store",
+        )
+    elif failure == "missing-fts":
+        arguments = _cli_queue_args(
+            dataset_path, sidecar_path, content_store_path, tmp_path / "missing-fts.sqlite3", output_root, "missing-fts",
+        )
+    elif failure == "invalid-target":
+        arguments = _cli_queue_args(
+            dataset_path, sidecar_path, content_store_path, fts_path, output_root, "invalid-target",
+        ) + ["--target-cases", "29"]
+    elif failure == "invalid-candidate":
+        arguments = _cli_queue_args(
+            dataset_path, sidecar_path, content_store_path, fts_path, output_root, "invalid-candidate",
+        ) + ["--candidate-limit", "0"]
+    elif failure == "run-directory-collision":
+        arguments = _cli_queue_args(
+            dataset_path, sidecar_path, content_store_path, fts_path, queue_root, "queue-base",
+        )
+    else:
+        if failure == "stale-queue":
+            queue = json.loads(queue_path.read_text(encoding="utf-8"))
+            queue["dataset_sha256"] = "0" * 64
+            queue_path.write_text(json.dumps(queue), encoding="utf-8")
+        elif failure == "malformed-decisions":
+            decisions_path.write_text("[]", encoding="utf-8")
+        approval = {
+            "blank-approval": "",
+            "malformed-approval": "not-a-sha",
+            "wrong-approval": "0" * 64,
+        }.get(failure)
+        if failure in {"blank-approval", "malformed-approval", "wrong-approval"}:
+            arguments = [
+                "promote", "--dataset", str(dataset_path), "--sidecar", str(sidecar_path),
+                "--queue", str(queue_path), "--decisions", str(decisions_path),
+                "--preview", str(preview_path), "--approve-preview-sha256", approval,
+                "--output-root", str(output_root), "--run-id", f"promotion-{failure}",
+            ]
+        else:
+            arguments = [
+                "preview", "--dataset", str(dataset_path), "--sidecar", str(sidecar_path),
+                "--queue", str(queue_path), "--decisions", str(decisions_path),
+                "--output-root", str(output_root), "--run-id", f"preview-{failure}",
+            ]
+    before = _tree_bytes(tmp_path)
+    with pytest.raises((FileNotFoundError, FileExistsError, ValueError)):
+        cli.main(arguments)
+    assert _tree_bytes(tmp_path) == before
+    assert not output_root.exists()
