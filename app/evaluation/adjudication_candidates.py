@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from typing import Mapping, Sequence
 
 from audit_golden_dataset import check_anchor_match, norm_text
@@ -55,54 +56,58 @@ def discover_adjudication_candidates(
         chunks_by_id: dict[int, list[EvidenceChunk]] = {}
         candidates: list[AdjudicationCandidate] = []
         source_set = set(source_ids)
-        for rank, document_id in enumerate(document_ids, start=1):
-            document = documents[document_id]
-            metadata = document.metadata
-            _validate_document(document_id, metadata, document)
-            matched = _first_evidence_anchor(case, labels, document.content)
-            method = (
-                "source_sidecar_document_id" if document_id in source_set else "fts"
-            )
-            article = clause = structural_citation = structural_chunk_sha256 = None
-            required_supported = False
-            anchor_method = "none"
-            diagnostics: dict[str, object] = {}
-            citation = metadata.document_number
-            if matched is not None:
-                evidence, anchor_method, diagnostics = matched
-                chunks = chunks_by_id.setdefault(
-                    document_id,
-                    chunk_document(metadata, document.content, max_tokens=220, overlap_tokens=24),
+        for evidence in labels:
+            for rank, document_id in enumerate(document_ids, start=1):
+                document = documents[document_id]
+                metadata = document.metadata
+                _validate_document(document_id, metadata, document)
+                matched, anchor_method, diagnostics = check_anchor_match(
+                    _reference_anchor(case, evidence), document.content
                 )
-                structural = _first_structural_anchor(case, evidence, chunks)
-                if structural is not None:
-                    article = structural.article
-                    clause = structural.clause
-                    structural_citation = structural.citation
-                    structural_chunk_sha256 = _sha256(structural.text)
-                    citation = structural.citation
-                required_supported = _supports_required_level(evidence, structural)
-            candidates.append(
-                AdjudicationCandidate(
-                    candidate_id=_candidate_id(document_id, metadata, document.content_sha256),
-                    document_id=document_id,
-                    document_number=metadata.document_number,
-                    title=metadata.title,
-                    source_url=metadata.source_url,
-                    citation=citation,
-                    article=article,
-                    clause=clause,
-                    text=None,
-                    discovery_method=method,
-                    rank=rank,
-                    content_sha256=document.content_sha256,
-                    anchor_match_method=anchor_method,
-                    anchor_diagnostics=diagnostics,
-                    structural_citation=structural_citation,
-                    structural_chunk_sha256=structural_chunk_sha256,
-                    required_level_supported=required_supported,
+                method = (
+                    "source_sidecar_document_id" if document_id in source_set else "fts"
                 )
-            )
+                article = clause = structural_citation = structural_chunk_sha256 = None
+                required_supported = False
+                citation = metadata.document_number
+                if matched:
+                    chunks = chunks_by_id.setdefault(
+                        document_id,
+                        chunk_document(metadata, document.content, max_tokens=220, overlap_tokens=24),
+                    )
+                    structural = _first_structural_anchor(case, evidence, chunks)
+                    if structural is not None:
+                        article = structural.article
+                        clause = structural.clause
+                        structural_citation = structural.citation
+                        structural_chunk_sha256 = _sha256(structural.text)
+                        citation = structural.citation
+                    required_supported = _supports_required_level(evidence, structural)
+                else:
+                    anchor_method = "none"
+                    diagnostics = {}
+                candidates.append(
+                    AdjudicationCandidate(
+                        candidate_id=_candidate_id(document_id, metadata, document.content_sha256),
+                        evidence_item_id=evidence.evidence_item_id,
+                        document_id=document_id,
+                        document_number=metadata.document_number,
+                        title=metadata.title,
+                        source_url=metadata.source_url,
+                        citation=citation,
+                        article=article,
+                        clause=clause,
+                        text=None,
+                        discovery_method=method,
+                        rank=rank,
+                        content_sha256=document.content_sha256,
+                        anchor_match_method=anchor_method,
+                        anchor_diagnostics=diagnostics,
+                        structural_citation=structural_citation,
+                        structural_chunk_sha256=structural_chunk_sha256,
+                        required_level_supported=required_supported,
+                    )
+                )
         result[case_id] = candidates
     return result
 
@@ -150,19 +155,6 @@ def _reference_anchor(case: GoldenCase, evidence: GoldEvidence) -> str:
     return case.reference_contexts[index]
 
 
-def _first_evidence_anchor(
-    case: GoldenCase, labels: Sequence[GoldEvidence], content: str
-) -> tuple[GoldEvidence, str, dict[str, object]] | None:
-    for evidence in labels:
-        anchor = _reference_anchor(case, evidence)
-        if not anchor:
-            continue
-        matched, method, diagnostics = check_anchor_match(anchor, content)
-        if matched:
-            return evidence, method, diagnostics
-    return None
-
-
 def _first_structural_anchor(
     case: GoldenCase, evidence: GoldEvidence, chunks: Sequence[EvidenceChunk]
 ) -> EvidenceChunk | None:
@@ -198,7 +190,14 @@ def _validate_document(document_id: int, metadata: object, document: object) -> 
     for name in ("document_number", "title", "source_url"):
         if not isinstance(getattr(metadata, name, None), str) or not getattr(metadata, name).strip():
             raise ValueError("invalid corpus document identity")
-    if not isinstance(getattr(document, "content_sha256", None), str) or len(document.content_sha256) != 64:
+    content_sha256 = getattr(document, "content_sha256", None)
+    content = getattr(document, "content", None)
+    if (
+        not isinstance(content_sha256, str)
+        or re.fullmatch(r"[0-9a-f]{64}", content_sha256) is None
+        or not isinstance(content, str)
+        or _sha256(content) != content_sha256
+    ):
         raise ValueError("invalid corpus document identity")
 
 

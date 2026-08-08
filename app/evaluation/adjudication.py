@@ -55,6 +55,7 @@ class AdjudicationCandidate(BaseModel):
     structural_citation: str | None = None
     structural_chunk_sha256: str | None = None
     required_level_supported: bool = False
+    evidence_item_id: str | None = None
 
 
 class AdjudicationQueueRow(BaseModel):

@@ -105,8 +105,8 @@ def test_candidate_discovery_is_bounded_per_case_and_preserves_anchor_provenance
     assert {"12/2026/ND-CP", "13/2026/ND-CP", "14/2026/ND-CP"} <= set(query.split())
     assert store.requests == [[2, 3, 4]]
     candidates = discovered[case.case_id]
-    assert [candidate.document_id for candidate in candidates] == [2, 3, 4]
-    assert [candidate.rank for candidate in candidates] == [1, 2, 3]
+    assert [candidate.document_id for candidate in candidates] == [2, 3, 4, 2, 3, 4]
+    assert [candidate.rank for candidate in candidates] == [1, 2, 3, 1, 2, 3]
     reordered = discover_adjudication_candidates(
         cases_by_id={case.case_id: case}, labels_by_case_id={case.case_id: labels},
         selected_case_ids=[case.case_id], content_store=store, fts_index=_FakeFts([4, 3, 2]),
@@ -125,6 +125,84 @@ def test_candidate_discovery_is_bounded_per_case_and_preserves_anchor_provenance
     assert candidates[0].required_level_supported is True
     assert candidates[1].anchor_match_method == "none"
     assert candidates[1].required_level_supported is False
+
+
+def test_candidate_discovery_keeps_multihop_evidence_anchors_and_locators_separate():
+    # Break caught: one evidence row's anchor or structural locator is reused for another row.
+    from app.evaluation.adjudication_candidates import discover_adjudication_candidates
+
+    first_anchor = "\u0110i\u1ec1u 2\n1. Noi dung chung cua bang chung thu nhat du dai de neo."
+    second_anchor = "\u0110i\u1ec1u 7\n2. Noi dung chung cua bang chung thu hai du dai de neo."
+    case = GoldenCase(
+        case_id="multihop-candidates", question="Cau hoi", question_type="multi-hop",
+        answerable=True, reference_answer="Tra loi", reference_contexts=[first_anchor, second_anchor],
+    )
+    labels = [
+        GoldEvidence(
+            evidence_item_id="first", case_id=case.case_id, context_index=1,
+            document_id=11, article="\u0110i\u1ec1u 2", clause="Kho\u1ea3n 1", required=True,
+            required_level="clause", status=EvidenceStatus.AMBIGUOUS,
+        ),
+        GoldEvidence(
+            evidence_item_id="second", case_id=case.case_id, context_index=2,
+            document_id=12, article="\u0110i\u1ec1u 7", required=True,
+            required_level="article", status=EvidenceStatus.AMBIGUOUS,
+        ),
+    ]
+    store = _FakeContentStore({
+        11: _stored_document(11, number="11/2026/ND-CP", content=first_anchor),
+        12: _stored_document(12, number="12/2026/ND-CP", content=second_anchor),
+    })
+    fts = _FakeFts([12, 11])
+
+    discovered = discover_adjudication_candidates(
+        cases_by_id={case.case_id: case}, labels_by_case_id={case.case_id: labels},
+        selected_case_ids=[case.case_id], content_store=store, fts_index=fts,
+        candidate_limit=2,
+    )[case.case_id]
+
+    assert len(fts.queries) == 1
+    assert store.requests == [[11, 12]]
+    assert [(item.evidence_item_id, item.document_id) for item in discovered] == [
+        ("first", 11), ("first", 12), ("second", 11), ("second", 12),
+    ]
+    first = discovered[0]
+    second = discovered[3]
+    assert (first.article, first.clause, first.required_level_supported) == ("\u0110i\u1ec1u 2", "1", True)
+    assert (second.article, second.clause, second.required_level_supported) == ("\u0110i\u1ec1u 7", "2", True)
+    assert discovered[1].anchor_match_method == "none"
+    assert discovered[2].anchor_match_method == "none"
+
+
+@pytest.mark.parametrize("sha256", ["A" * 64, "a" * 63, "not-a-hash"])
+def test_candidate_discovery_rejects_noncanonical_content_hashes(sha256):
+    # Break caught: a candidate is emitted for corpus content without a canonical verified hash.
+    from app.evaluation.adjudication_candidates import discover_adjudication_candidates
+
+    case = _case("hash-case", "factoid")
+    document = _stored_document(9, number="9/2026/ND-CP", content="content")
+    document.content_sha256 = sha256
+    with pytest.raises(ValueError, match="invalid corpus document identity"):
+        discover_adjudication_candidates(
+            cases_by_id={case.case_id: case}, labels_by_case_id={case.case_id: [_label(case.case_id)]},
+            selected_case_ids=[case.case_id], content_store=_FakeContentStore({9: document}),
+            fts_index=_FakeFts([9]), candidate_limit=1,
+        )
+
+
+def test_candidate_discovery_rejects_content_hash_mismatch():
+    # Break caught: an apparently canonical content hash is trusted without recomputing the body digest.
+    from app.evaluation.adjudication_candidates import discover_adjudication_candidates
+
+    case = _case("mismatch-case", "factoid")
+    document = _stored_document(10, number="10/2026/ND-CP", content="content")
+    document.content_sha256 = "a" * 64
+    with pytest.raises(ValueError, match="invalid corpus document identity"):
+        discover_adjudication_candidates(
+            cases_by_id={case.case_id: case}, labels_by_case_id={case.case_id: [_label(case.case_id)]},
+            selected_case_ids=[case.case_id], content_store=_FakeContentStore({10: document}),
+            fts_index=_FakeFts([10]), candidate_limit=1,
+        )
 
 
 @pytest.mark.parametrize(
