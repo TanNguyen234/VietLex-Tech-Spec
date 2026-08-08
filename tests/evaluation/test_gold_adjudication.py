@@ -213,6 +213,55 @@ def test_queue_preserves_negative_source_evidence_and_adjudication_provenance(st
     assert row["decision"]["status"] == "pending"
 
 
+def test_queue_normalizes_blank_citation_units_to_none_and_rejects_malformed_partial_units():
+    # Break caught: whitespace or an invalid locator becomes a false parsed citation.
+    case = _case("case-citation-normalization", "factoid")
+    blank_evidence = GoldEvidence(
+        evidence_item_id="blank-citation", case_id=case.case_id, required=True,
+        status=EvidenceStatus.AMBIGUOUS, document_number="  ", article="\t", clause="\n",
+    )
+    blank_sidecar = GoldSidecar(
+        metadata=GoldSidecarMetadata(sidecar_sha256="a" * 64), labels=[blank_evidence],
+        labels_by_case_id={case.case_id: [blank_evidence]},
+    )
+    blank_payload = _queue(case, blank_sidecar, _provenance())
+    blank_row = blank_payload["rows"][0]
+    assert blank_row["citation_parse_status"] == "none"
+    assert blank_row["parsed_citation_units"] == {
+        "document_number": None, "article": None, "clause": None,
+    }
+
+    malformed_evidence = blank_evidence.model_copy(
+        update={"evidence_item_id": "malformed-citation", "article": "not an article"}
+    )
+    malformed_sidecar = GoldSidecar(
+        metadata=GoldSidecarMetadata(sidecar_sha256="a" * 64), labels=[malformed_evidence],
+        labels_by_case_id={case.case_id: [malformed_evidence]},
+    )
+    with pytest.raises(ValueError, match="citation"):
+        _queue(case, malformed_sidecar, _provenance())
+
+
+def test_queue_accepts_and_normalizes_nonblank_string_document_id():
+    # Break caught: resolved opaque string document IDs are rejected despite being stable identities.
+    case = _case("case-string-document-id", "factoid")
+    evidence = _label(case.case_id)
+    sidecar = GoldSidecar(
+        metadata=GoldSidecarMetadata(sidecar_sha256="a" * 64), labels=[evidence],
+        labels_by_case_id={case.case_id: [evidence]},
+    )
+    candidate = AdjudicationCandidate(
+        candidate_id="candidate-string", document_id=" doc-1 ",
+        document_number="1/2020/QH14", source_url="https://example.test/doc-1",
+    )
+
+    payload = _queue(
+        case, sidecar, _provenance(), {evidence.evidence_item_id: [candidate]}
+    )
+
+    assert payload["rows"][0]["candidates"][0]["document_id"] == "doc-1"
+
+
 def _provenance() -> GitProvenance:
     return GitProvenance(
         status="ok", repository_root="repo", git_sha="b" * 40,

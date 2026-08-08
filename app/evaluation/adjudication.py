@@ -8,7 +8,9 @@ from typing import Any, Literal, Mapping, Sequence
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.evaluation.gold_sidecar import GoldSidecar
+from app.evaluation.legal_citations import parse_legal_citations
 from app.evaluation.provenance import GitProvenance
+from app.evaluation.retrieval_metrics import normalize_legal_identifier
 from app.evaluation.schemas import GoldEvidence, GoldenCase
 
 
@@ -140,7 +142,7 @@ def _require_sha256(value: str | None, field_name: str) -> str:
     return value
 
 
-def _validate_candidate(candidate: AdjudicationCandidate) -> None:
+def _normalize_candidate(candidate: AdjudicationCandidate) -> AdjudicationCandidate:
     if not isinstance(candidate.candidate_id, str) or not candidate.candidate_id.strip():
         raise ValueError("candidate must have a stable nonblank candidate_id")
     document_id = candidate.document_id
@@ -149,7 +151,7 @@ def _validate_candidate(candidate: AdjudicationCandidate) -> None:
     if isinstance(document_id, int):
         valid_document_id = document_id > 0
     elif isinstance(document_id, str):
-        valid_document_id = document_id.isdecimal() and int(document_id) > 0
+        valid_document_id = bool(document_id.strip())
     else:
         valid_document_id = False
     if not valid_document_id:
@@ -158,6 +160,43 @@ def _validate_candidate(candidate: AdjudicationCandidate) -> None:
         raise ValueError("candidate must have a nonblank document_number")
     if not isinstance(candidate.source_url, str) or not candidate.source_url.strip():
         raise ValueError("candidate must have a nonblank source_url")
+    return candidate.model_copy(
+        update={
+            "candidate_id": candidate.candidate_id.strip(),
+            "document_id": document_id.strip() if isinstance(document_id, str) else document_id,
+            "document_number": candidate.document_number.strip(),
+            "source_url": candidate.source_url.strip(),
+        }
+    )
+
+
+def _normalize_citation_units(evidence: GoldEvidence) -> tuple[dict[str, str | None], Literal["parsed", "none"]]:
+    supplied = {
+        "document_number": _strip_or_none(evidence.document_number),
+        "article": _strip_or_none(evidence.article),
+        "clause": _strip_or_none(evidence.clause),
+    }
+    if not any(supplied.values()):
+        return supplied, "none"
+    parsed = parse_legal_citations(" ".join(value for value in supplied.values() if value))
+    for item in parsed:
+        unit = {
+            "document_number": _strip_or_none(item.document_number),
+            "article": _strip_or_none(item.article),
+            "clause": _strip_or_none(item.clause),
+        }
+        if all(
+            value is None or normalize_legal_identifier(value) == normalize_legal_identifier(unit[key])
+            for key, value in supplied.items()
+        ):
+            return unit, "parsed"
+    raise ValueError("citation units must satisfy the legal-citation contract")
+
+
+def _strip_or_none(value: str | None) -> str | None:
+    if not isinstance(value, str):
+        return None
+    return value.strip() or None
 
 
 def build_queue_payload(
@@ -205,14 +244,11 @@ def build_queue_payload(
                 evidence.reference_anchor_hash or reference_context_sha256[0],
                 "reference_anchor_sha256",
             )
-            candidates = list(candidates_by_evidence_id.get(evidence.evidence_item_id, ()))[:candidate_limit]
-            for candidate in candidates:
-                _validate_candidate(candidate)
-            citation_units = {
-                "document_number": evidence.document_number,
-                "article": evidence.article,
-                "clause": evidence.clause,
-            }
+            candidates = [
+                _normalize_candidate(candidate)
+                for candidate in list(candidates_by_evidence_id.get(evidence.evidence_item_id, ()))[:candidate_limit]
+            ]
+            citation_units, citation_parse_status = _normalize_citation_units(evidence)
             rows.append(
                 AdjudicationQueueRow(
                     queue_row_id=canonical_sha256({"case_id": case_id, "evidence_item_id": evidence.evidence_item_id}),
@@ -224,7 +260,7 @@ def build_queue_payload(
                     reference_context_sha256=reference_context_sha256,
                     reference_anchor_sha256=reference_anchor_sha256,
                     parsed_citation_units=citation_units,
-                    citation_parse_status=("parsed" if any(citation_units.values()) else "none"),
+                    citation_parse_status=citation_parse_status,
                     source_evidence_status=evidence.status.value,
                     source_adjudication_provenance={
                         "adjudication_queue_sha256": evidence.adjudication_queue_sha256,
