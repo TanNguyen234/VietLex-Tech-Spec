@@ -78,6 +78,7 @@ def test_lean_skill_keeps_crg_updates_read_only_safe() -> None:
 def test_project_local_lean_skill_is_not_ignored() -> None:
     gitignore = GITIGNORE_PATH.read_text(encoding="utf-8")
 
+    assert ".worktrees/" in gitignore
     assert ".agents/*" in gitignore
     assert "!.agents/skills/" in gitignore
     assert ".agents/skills/*" in gitignore

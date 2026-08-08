@@ -25,6 +25,7 @@ env/
 *.swp
 
 # Local Agent Skills
+.worktrees/
 .agents/*
 !.agents/skills/
 .agents/skills/*
