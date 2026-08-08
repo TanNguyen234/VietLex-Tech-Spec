@@ -205,6 +205,53 @@ def test_candidate_discovery_rejects_content_hash_mismatch():
         )
 
 
+def test_candidate_discovery_rejects_boolean_metadata_document_id():
+    # Break caught: Python equality permits True == 1 and accepts a corrupted corpus identity.
+    from app.evaluation.adjudication_candidates import discover_adjudication_candidates
+
+    case = _case("boolean-metadata-id", "factoid")
+    document = _stored_document(1, number="1/2026/ND-CP", content="content")
+    document.metadata.document_id = True
+    with pytest.raises(ValueError, match="invalid corpus document identity"):
+        discover_adjudication_candidates(
+            cases_by_id={case.case_id: case}, labels_by_case_id={case.case_id: [_label(case.case_id)]},
+            selected_case_ids=[case.case_id], content_store=_FakeContentStore({1: document}),
+            fts_index=_FakeFts([1]), candidate_limit=1,
+        )
+
+
+def test_candidate_discovery_chunks_each_document_once_across_evidence_rows(monkeypatch):
+    # Break caught: cache lookup evaluates chunk_document again for every matching evidence row.
+    import app.evaluation.adjudication_candidates as candidates_module
+
+    anchor = "\u0110i\u1ec1u 2\n1. Bang chung chung du dai de neo van ban nay."
+    case = GoldenCase(
+        case_id="chunk-cache", question="Cau hoi", question_type="multi-hop",
+        answerable=True, reference_answer="Tra loi", reference_contexts=[anchor, anchor],
+    )
+    labels = [
+        GoldEvidence(evidence_item_id="one", case_id=case.case_id, context_index=1, required=True, status=EvidenceStatus.AMBIGUOUS),
+        GoldEvidence(evidence_item_id="two", case_id=case.case_id, context_index=2, required=True, status=EvidenceStatus.AMBIGUOUS),
+    ]
+    document = _stored_document(21, number="21/2026/ND-CP", content=anchor)
+    original = candidates_module.chunk_document
+    calls = 0
+
+    def counted_chunk_document(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(candidates_module, "chunk_document", counted_chunk_document)
+    candidates_module.discover_adjudication_candidates(
+        cases_by_id={case.case_id: case}, labels_by_case_id={case.case_id: labels},
+        selected_case_ids=[case.case_id], content_store=_FakeContentStore({21: document}),
+        fts_index=_FakeFts([21]), candidate_limit=1,
+    )
+
+    assert calls == 1
+
+
 @pytest.mark.parametrize(
     ("candidate_limit", "selected_case_ids", "labels", "documents", "message"),
     [

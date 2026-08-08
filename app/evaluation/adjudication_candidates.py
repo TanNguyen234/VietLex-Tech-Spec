@@ -71,10 +71,12 @@ def discover_adjudication_candidates(
                 required_supported = False
                 citation = metadata.document_number
                 if matched:
-                    chunks = chunks_by_id.setdefault(
-                        document_id,
-                        chunk_document(metadata, document.content, max_tokens=220, overlap_tokens=24),
-                    )
+                    chunks = chunks_by_id.get(document_id)
+                    if chunks is None:
+                        chunks = chunk_document(
+                            metadata, document.content, max_tokens=220, overlap_tokens=24
+                        )
+                        chunks_by_id[document_id] = chunks
                     structural = _first_structural_anchor(case, evidence, chunks)
                     if structural is not None:
                         article = structural.article
@@ -185,7 +187,12 @@ def _supports_required_level(evidence: GoldEvidence, chunk: EvidenceChunk | None
 
 
 def _validate_document(document_id: int, metadata: object, document: object) -> None:
-    if getattr(metadata, "document_id", None) != document_id:
+    metadata_document_id = getattr(metadata, "document_id", None)
+    if (
+        isinstance(metadata_document_id, bool)
+        or not isinstance(metadata_document_id, int)
+        or metadata_document_id != document_id
+    ):
         raise ValueError("invalid corpus document identity")
     for name in ("document_number", "title", "source_url"):
         if not isinstance(getattr(metadata, name, None), str) or not getattr(metadata, name).strip():
