@@ -1,7 +1,8 @@
 # VietLex Verified Gold Adjudication Design
 
-**Date:** 2026-08-08  
-**Phase:** P1 — Verified Gold Adjudication  
+**Date:** 2026-08-08
+
+**Phase:** P1 — Verified Gold Adjudication
 **Status:** Approved for automatic local implementation by the user's current-task authorization
 
 ## Problem
