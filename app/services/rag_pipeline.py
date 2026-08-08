@@ -32,6 +32,10 @@ class RetrievalPipelineError(RuntimeError):
         self.latency = latency or {}
 
 
+class QueryRewriteError(RuntimeError):
+    """Typed rewrite failure used by observable evaluation paths."""
+
+
 def build_bounded_context(
     context: List[str],
     *,
@@ -140,7 +144,11 @@ async def run_advanced_rag(
 
 
 @logfire.instrument("Rewrite legal search query")
-async def rewrite_query(query: str) -> str:
+async def rewrite_query(
+    query: str,
+    *,
+    raise_on_error: bool = False,
+) -> str:
     if len(query.split()) <= 10:
         return query
     prompt = (
@@ -175,13 +183,21 @@ async def rewrite_query(query: str) -> str:
             logfire.warning(
                 "Rejected malformed legal query rewrite; use original query."
             )
+            if raise_on_error:
+                raise QueryRewriteError("malformed rewrite rejected")
             return query
         return rewritten
+    except QueryRewriteError:
+        raise
     except Exception as error:
         logfire.warning(
             "Legal query rewrite failed; use original query: {error}",
             error=str(error),
         )
+        if raise_on_error:
+            raise QueryRewriteError(
+                f"{type(error).__name__}: {error}"
+            ) from error
         return query
 
 

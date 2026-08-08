@@ -3,7 +3,15 @@ from __future__ import annotations
 import re
 import unicodedata
 from collections import Counter
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
+
+
+ANSWER_QUALITY_SKIP_STATUSES = {
+    "input_guardrail_error",
+    "output_guardrail_error",
+    "retrieval_error",
+    "reranker_error",
+}
 
 
 def normalize_text_for_metrics(text: str) -> str:
@@ -229,6 +237,8 @@ def calculate_case_answer_metrics(
     expected_numbers: List[str] = None,
     expected_dates: List[str] = None,
     expected_entities: List[str] = None,
+    *,
+    status: str = "ok",
 ) -> Dict[str, Any]:
     """Calculate all deterministic answer metrics for a single response."""
     category, is_refusal = classify_response_refusal(pred_response, retrieved_contexts)
@@ -264,6 +274,10 @@ def calculate_case_answer_metrics(
         cite_prec, cite_rec, cite_cov, invalid_cite_rate = None, None, None, None
 
     return {
+        "applicable": status not in ANSWER_QUALITY_SKIP_STATUSES,
+        "skip_reason": (
+            status if status in ANSWER_QUALITY_SKIP_STATUSES else None
+        ),
         "refusal_category": category,
         "is_refusal": is_refusal,
         "exact_match": exact_match,
@@ -292,15 +306,38 @@ def aggregate_answer_metrics(case_results: List[Dict[str, Any]]) -> Dict[str, An
     if total == 0:
         return {}
 
-    answerable = [c for c in case_results if c.get("answerable", True)]
-    unanswerable = [c for c in case_results if not c.get("answerable", False)]
+    def applicable(case: Dict[str, Any]) -> bool:
+        metrics = case.get("metrics", {})
+        if "applicable" in metrics:
+            return bool(metrics["applicable"])
+        return case.get("status", "ok") not in ANSWER_QUALITY_SKIP_STATUSES
+
+    scored = [case for case in case_results if applicable(case)]
+    skipped = [case for case in case_results if not applicable(case)]
+    skip_reason_counts: Counter[str] = Counter(
+        case.get("metrics", {}).get("skip_reason")
+        or case.get("status")
+        or "unspecified_skip_reason"
+        for case in skipped
+    )
+    answerable = [c for c in scored if c.get("answerable", True)]
+    unanswerable = [c for c in scored if not c.get("answerable", False)]
 
     # Refusal stats
-    categories = Counter(c.get("refusal_category", "normal_answer") for c in case_results)
+    categories = Counter(
+        c.get("refusal_category", "normal_answer") for c in scored
+    )
     correct_unanswerable_refusals = sum(
         1 for c in unanswerable if c.get("refusal_category") in ("pure_refusal", "no_evidence")
     )
-    all_refusals = sum(1 for c in case_results if c.get("is_refusal"))
+    all_refusals = sum(
+        1
+        for c in scored
+        if c.get("metrics", {}).get(
+            "is_refusal",
+            c.get("is_refusal", False),
+        )
+    )
 
     refusal_precision = (correct_unanswerable_refusals / all_refusals) if all_refusals else None
     refusal_recall = (correct_unanswerable_refusals / len(unanswerable)) if unanswerable else None
@@ -313,15 +350,28 @@ def aggregate_answer_metrics(case_results: List[Dict[str, Any]]) -> Dict[str, An
     answer_similarity_pass_rate = (answerable_correct / len(answerable)) if answerable else None
 
     def avg_metric(key: str) -> Optional[float]:
-        vals = [c["metrics"][key] for c in case_results if "metrics" in c and key in c["metrics"] and c["metrics"][key] is not None]
+        vals = [
+            c["metrics"][key]
+            for c in scored
+            if "metrics" in c
+            and key in c["metrics"]
+            and c["metrics"][key] is not None
+        ]
         return round(sum(vals) / len(vals), 4) if vals else None
 
     return {
         "total_cases": total,
+        "scored_cases": len(scored),
+        "skipped_cases": len(skipped),
+        "skip_reason_counts": dict(skip_reason_counts),
         "answerable_count": len(answerable),
         "unanswerable_count": len(unanswerable),
         "refusal_categories_breakdown": dict(categories),
-        "mixed_claim_refusal_rate": round(categories["mixed_claim_refusal"] / total, 4),
+        "mixed_claim_refusal_rate": (
+            round(categories["mixed_claim_refusal"] / len(scored), 4)
+            if scored
+            else None
+        ),
         "refusal_precision": round(refusal_precision, 4) if refusal_precision is not None else None,
         "refusal_recall": round(refusal_recall, 4) if refusal_recall is not None else None,
         "unanswerable_accuracy": round(unanswerable_accuracy, 4) if unanswerable_accuracy is not None else None,
@@ -337,4 +387,3 @@ def aggregate_answer_metrics(case_results: List[Dict[str, Any]]) -> Dict[str, An
         "citation_recall": avg_metric("citation_recall"),
         "invalid_citation_rate": avg_metric("invalid_citation_rate"),
     }
-

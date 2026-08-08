@@ -1,0 +1,27 @@
+{
+  "method": "Two fresh read-only pressure agents per condition; identical scenarios; static pytest contract.",
+  "baseline": {
+    "critical_quality_failures": 0,
+    "observed_efficiency_gaps": [
+      "P1 protocol introduced an additional implementation worktree before local-main integration.",
+      "Neither protocol imposed an explicit graph-query cap or compact authority ledger."
+    ]
+  },
+  "with_skill": {
+    "critical_quality_failures": 0,
+    "observed_efficiency_gaps": [],
+    "improvements": [
+      "P1 reused the current feature branch and limited a clean worktree to safe local-main integration.",
+      "Both protocols used a one-line authority ledger, CRG minimal context, directed-query caps, source validation, and invalidated-gate-only reruns."
+    ]
+  },
+  "static_test": {
+    "command": "python -m pytest tests/skills/test_vietlex_lean_superpowers.py -q",
+    "red": "2 failed because SKILL.md was absent",
+    "green": "2 passed in 0.11s"
+  },
+  "limitations": [
+    "The agent harness did not expose comparable model token counters, so this evaluation proves protocol compression rather than a numeric token percentage.",
+    "No production code or remote provider was exercised by the pressure scenarios."
+  ]
+}

@@ -28,6 +28,7 @@ from app.services.clients import (
     get_remote_reranker,
 )
 from app.services.remote_reranker import RerankOutcome
+from app.evaluation.schemas import RetrievalStageTrace, StageCandidate
 
 
 @dataclass(frozen=True)
@@ -168,9 +169,6 @@ INTENT_PATTERNS = {
     "condition": ({"điều kiện", "đối tượng", "được phép", "tiêu chuẩn", "quy chuẩn"}, {"điều kiện", "đối tượng", "tiêu chuẩn", "quy chuẩn", "yêu cầu"}),
     "exception": ({"trừ trường hợp", "ngoại lệ", "không áp dụng", "loại trừ"}, {"trừ", "ngoại lệ", "không áp dụng", "loại trừ"}),
 }
-
-
-from app.evaluation.schemas import StageCandidate
 
 
 def _hit_to_stage_candidate(hit: Any, source: str) -> StageCandidate:
@@ -594,8 +592,6 @@ class LegalRetriever:
         *,
         profile: Any = None,
     ) -> RetrievalOutcome:
-        from app.evaluation.schemas import RetrievalStageTrace
-        
         # Extract profile limits or fall back to settings defaults
         retrieval_doc_limit = getattr(profile, "retrieval_document_limit", getattr(self._settings, "RETRIEVAL_DOCUMENT_LIMIT", 24))
         resolved_doc_limit = getattr(profile, "resolved_document_limit", getattr(self._settings, "RESOLVED_DOCUMENT_LIMIT", 16))

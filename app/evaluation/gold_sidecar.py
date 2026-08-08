@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set
 from pydantic import BaseModel, Field
 
 from app.evaluation.schemas import GoldEvidence

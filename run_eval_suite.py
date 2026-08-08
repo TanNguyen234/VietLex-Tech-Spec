@@ -9,6 +9,8 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+from app.evaluation.provider_catalog import JUDGE_PROVIDER_MODELS
+
 # Configure UTF-8 encoding for stdout to handle Vietnamese characters on Windows
 sys.stdout.reconfigure(encoding="utf-8")
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -17,7 +19,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 DEFAULT_DATASET_PATH = PROJECT_ROOT / "app/data/namsyntax_legal_qa_420.json"
 DEFAULT_CHECKPOINT_PATH = PROJECT_ROOT / "docs/eval_checkpoints.json"
 DEFAULT_REPORT_PATH = PROJECT_ROOT / "docs/system_evaluation_report.md"
-EVALUATION_VERSION = "golden-v3-ragas-0.4"
+EVALUATION_VERSION = "golden-v3-deterministic-1.0"
 ANSWER_ACCURACY_PASS_THRESHOLD = 0.5
 
 
@@ -168,14 +170,29 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--unanswerable", type=int, default=6)
     parser.add_argument("--concurrency", type=int, default=2)
     parser.add_argument("--judge-concurrency", type=int, default=4)
+    parser.add_argument(
+        "--judge",
+        choices=["none", "ragas"],
+        default="none",
+        help="Optional LLM judge mode (default: none)",
+    )
     parser.add_argument("--use-cache", action="store_true")
-    parser.add_argument("--skip-ragas", action="store_true")
+    parser.add_argument(
+        "--skip-ragas",
+        action="store_true",
+        help=argparse.SUPPRESS,
+    )
     parser.add_argument("--fresh", action="store_true")
     parser.add_argument(
         "--checkpoint", type=Path, default=DEFAULT_CHECKPOINT_PATH
     )
     parser.add_argument("--report", type=Path, default=DEFAULT_REPORT_PATH)
     return parser
+
+
+def judge_enabled(arguments: argparse.Namespace) -> bool:
+    """Return whether the legacy runner should make optional Ragas calls."""
+    return arguments.judge == "ragas" and not arguments.skip_ragas
 
 
 def evaluation_fingerprint(
@@ -634,50 +651,47 @@ async def evaluate_single_query(
     )
 
 def configured_judge_providers(settings) -> list[dict[str, str]]:
-    candidates = (
+    runtime_mapping = (
         (
             "GEMINI_API_KEY",
-            "Gemini",
-            "gemini-2.0-flash",
             "https://generativelanguage.googleapis.com/v1beta/openai/",
         ),
         (
             "NVIDIA_API_KEY",
-            "NVIDIA NIM",
-            "meta/llama-3.3-70b-instruct",
             "https://integrate.api.nvidia.com/v1",
         ),
         (
             "GROQ_API_KEY",
-            "Groq",
-            "llama-3.3-70b-versatile",
             "https://api.groq.com/openai/v1",
         ),
         (
             "OPENROUTER_API_KEY",
-            "OpenRouter",
-            "meta-llama/llama-3.3-70b-instruct",
             "https://openrouter.ai/api/v1",
         ),
     )
     providers: list[dict[str, str]] = []
-    for field, name, model, base_url in candidates:
+    for (field, base_url), provider_model in zip(
+        runtime_mapping,
+        JUDGE_PROVIDER_MODELS[:4],
+        strict=True,
+    ):
         api_key = getattr(settings, field, None)
         if api_key:
             providers.append(
                 {
-                    "name": name,
-                    "model": model,
+                    "name": provider_model.provider,
+                    "model": provider_model.model,
                     "api_key": api_key,
                     "base_url": base_url,
                 }
             )
     gateway_key = getattr(settings, "LITELLM_MASTER_KEY", None)
     if gateway_key:
+        gateway_model = JUDGE_PROVIDER_MODELS[4]
         providers.append(
             {
-                "name": "OmniGate",
-                "model": "legal-core-model",
+                "name": gateway_model.provider,
+                "model": gateway_model.model,
                 "api_key": gateway_key,
                 "base_url": settings.OMNIGATE_BASE_URL,
             }
@@ -1112,7 +1126,7 @@ async def run_suite(arguments=None) -> list[dict]:
         multihop_count=args.multihop,
         unanswerable_count=args.unanswerable,
     )
-    run_ragas = not args.skip_ragas
+    run_ragas = judge_enabled(args)
     fingerprint = evaluation_fingerprint(
         cases,
         run_ragas=run_ragas,

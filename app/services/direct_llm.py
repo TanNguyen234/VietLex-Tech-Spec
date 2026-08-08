@@ -3,6 +3,14 @@ import httpx
 import logfire
 from typing import Optional
 from app.config import get_settings
+from app.evaluation.provider_catalog import (
+    GEMINI_PRIMARY_MODEL,
+    GEMINI_SECONDARY_MODEL,
+    GROQ_PRIMARY_MODEL,
+    GROQ_SECONDARY_MODEL,
+    NVIDIA_PRIMARY_MODEL,
+    OPENROUTER_PRIMARY_MODEL,
+)
 
 settings = get_settings()
 
@@ -23,7 +31,7 @@ def get_direct_client() -> httpx.AsyncClient:
     return _http_client
 
 # 1. OpenRouter API
-async def call_openrouter_api(prompt: str, system_prompt: str = "", model: str = "meta-llama/llama-3.3-70b-instruct", *, max_output_tokens: int = 1024) -> Optional[str]:
+async def call_openrouter_api(prompt: str, system_prompt: str = "", model: str = OPENROUTER_PRIMARY_MODEL, *, max_output_tokens: int = 1024) -> Optional[str]:
     api_key = settings.OPENROUTER_API_KEY
     if not api_key:
         return None
@@ -62,7 +70,7 @@ async def call_openrouter_api(prompt: str, system_prompt: str = "", model: str =
     return None
 
 # 2. Gemini Direct API
-async def call_gemini_api(prompt: str, system_prompt: str = "", model: str = "gemini-2.0-flash", *, max_output_tokens: int = 1024) -> Optional[str]:
+async def call_gemini_api(prompt: str, system_prompt: str = "", model: str = GEMINI_PRIMARY_MODEL, *, max_output_tokens: int = 1024) -> Optional[str]:
     api_key = settings.GEMINI_API_KEY
     if not api_key:
         return None
@@ -100,7 +108,7 @@ async def call_gemini_api(prompt: str, system_prompt: str = "", model: str = "ge
     return None
 
 # 3. Nvidia NIM API
-async def call_nvidia_api(prompt: str, system_prompt: str = "", model: str = "meta/llama-3.3-70b-instruct", *, max_output_tokens: int = 1024) -> Optional[str]:
+async def call_nvidia_api(prompt: str, system_prompt: str = "", model: str = NVIDIA_PRIMARY_MODEL, *, max_output_tokens: int = 1024) -> Optional[str]:
     api_key = settings.NVIDIA_API_KEY
     if not api_key:
         return None
@@ -137,7 +145,7 @@ async def call_nvidia_api(prompt: str, system_prompt: str = "", model: str = "me
     return None
 
 # 4. Groq Direct API
-async def call_groq_api(prompt: str, system_prompt: str = "", model: str = "llama-3.3-70b-versatile", *, max_output_tokens: int = 1024) -> Optional[str]:
+async def call_groq_api(prompt: str, system_prompt: str = "", model: str = GROQ_PRIMARY_MODEL, *, max_output_tokens: int = 1024) -> Optional[str]:
     api_key = settings.GROQ_API_KEY
     if not api_key:
         return None
@@ -211,17 +219,17 @@ async def generate_llm_response(
 
     # Secondary fallback passes
     if settings.OPENROUTER_API_KEY:
-        res = await call_openrouter_api(prompt, system_prompt, model="meta-llama/llama-3.3-70b-instruct", max_output_tokens=max_output_tokens)
+        res = await call_openrouter_api(prompt, system_prompt, model=OPENROUTER_PRIMARY_MODEL, max_output_tokens=max_output_tokens)
         if res:
             return res
 
     if settings.GEMINI_API_KEY:
-        res = await call_gemini_api(prompt, system_prompt, model="gemini-1.5-flash", max_output_tokens=max_output_tokens)
+        res = await call_gemini_api(prompt, system_prompt, model=GEMINI_SECONDARY_MODEL, max_output_tokens=max_output_tokens)
         if res:
             return res
 
     if settings.GROQ_API_KEY:
-        res = await call_groq_api(prompt, system_prompt, model="llama3-8b-8192", max_output_tokens=max_output_tokens)
+        res = await call_groq_api(prompt, system_prompt, model=GROQ_SECONDARY_MODEL, max_output_tokens=max_output_tokens)
         if res:
             return res
 

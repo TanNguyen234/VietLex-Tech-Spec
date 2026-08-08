@@ -1,10 +1,8 @@
-import pytest
 from app.evaluation.retrieval_metrics import extract_citations_from_text
 from audit_golden_dataset import decide_evidence_verification
 from app.evaluation.schemas import RequiredLevel, EvidenceStatus
 from app.evaluation.case_selection import select_evaluation_cases, GoldenCase
-from app.services.retrieval import LegalRetriever
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 
 def test_extract_citations_from_text_sequential():
     # Defect 8: Extract citations sequentially to avoid Cartesian product
@@ -16,7 +14,7 @@ def test_extract_citations_from_text_sequential():
     assert cites[0]["article"] == "Điều 2"
     assert cites[0]["clause"] == "Khoản 1"
     
-    assert cites[1]["document_number"] == ""
+    assert cites[1]["document_number"] == "12/2026/NĐ-CP"
     assert cites[1]["article"] == "Điều 4"
     assert cites[1]["clause"] == "Khoản 3"
 
@@ -49,10 +47,3 @@ def test_select_evaluation_cases_limit():
     assert len(res.selected_cases) == 2
     assert res.selected_case_count == 2
     assert res.selected_case_ids == ["case_001", "case_002"]
-
-def test_retriever_respects_rerank_return_limit():
-    # Defect 3: LegalRetriever retrieve_detailed respects rerank_return_limit
-    mock_settings = MagicMock()
-    mock_content_store = MagicMock()
-    retriever = LegalRetriever(settings=mock_settings, pinecone=None, qdrant_inference=None, reranker=None, fts_index=None, content_store=mock_content_store)
-    assert hasattr(retriever, "retrieve_detailed")

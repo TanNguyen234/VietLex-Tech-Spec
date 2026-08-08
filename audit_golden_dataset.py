@@ -2,14 +2,23 @@ from __future__ import annotations
 
 import hashlib
 import json
-import re
 import sqlite3
 import sys
 import unicodedata
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from app.config import get_settings
+from app.evaluation.artifact_io import write_immutable_json
+from app.evaluation.legal_citations import (
+    LegalCitation,
+    parse_legal_citations,
+)
+from app.evaluation.provenance import collect_git_provenance
+from app.evaluation.run_manifest import (
+    generate_unique_run_id,
+    prepare_run_directory,
+)
 from app.evaluation.schemas import EvidenceStatus, RequiredLevel
 from app.ingestion.content_store import ContentStore
 from app.ingestion.legal_fts import LegalFtsIndex, normalize_document_number
@@ -23,52 +32,6 @@ def norm_text(text: str) -> str:
     return " ".join(normalized.casefold().split())
 
 
-def extract_legal_citations_from_text(text: str) -> List[Dict[str, str]]:
-    citations = []
-    doc_nums = [(m.start(), m.group().upper()) for m in re.finditer(r"\b\d{1,4}/\d{4}/[A-ZĐ0-9-]+\b", text, re.IGNORECASE)]
-    articles = [(m.start(), m.group()) for m in re.finditer(r"\bĐiều\s+\d+[A-Za-z]?\b", text, re.IGNORECASE)]
-    clauses = [(m.start(), m.group()) for m in re.finditer(r"\bKhoản\s+\d+\b", text, re.IGNORECASE)]
-
-    if not doc_nums and not articles and not clauses:
-        return citations
-
-    if not doc_nums:
-        citations.append({
-            "document_number": "",
-            "article": articles[0][1] if articles else "",
-            "clause": clauses[0][1] if clauses else ""
-        })
-        return citations
-
-    for doc_pos, doc_num in doc_nums:
-        assoc_art = ""
-        assoc_cl = ""
-        
-        best_art = None
-        for art_pos, art in articles:
-            if art_pos < doc_pos and (doc_pos - art_pos) < 100:
-                best_art = art
-        if best_art:
-            assoc_art = best_art
-            
-        best_cl = None
-        for cl_pos, cl in clauses:
-            if cl_pos < doc_pos and (doc_pos - cl_pos) < 150:
-                best_cl = cl
-        if best_cl:
-            assoc_cl = best_cl
-            
-        cit = {
-            "document_number": doc_num,
-            "article": assoc_art,
-            "clause": assoc_cl
-        }
-        if cit not in citations:
-            citations.append(cit)
-            
-    return citations
-
-
 def resolve_document_identity(
     conn: sqlite3.Connection,
     fts_index: LegalFtsIndex,
@@ -79,7 +42,6 @@ def resolve_document_identity(
     hint_sources: List[str] = []
     candidate_ids: List[int] = []
     identity_method = "none"
-    is_complete_search = True
 
     # 1. Exact document ID
     if doc_id_hint is not None:
@@ -120,7 +82,6 @@ def resolve_document_identity(
         candidate_ids = fts_index.search(doc_num_hint, limit=20)
         if candidate_ids:
             identity_method = "lexical_candidate_fallback"
-            is_complete_search = False
             return candidate_ids, identity_method, hint_sources, False
 
     return [], "not_applicable", hint_sources, True
@@ -162,19 +123,18 @@ def decide_evidence_verification(
     cl_hint: str,
     matched_chunk,
 ) -> tuple[EvidenceStatus, Optional[str], Optional[str]]:
+    if req_level == RequiredLevel.DOCUMENT:
+        return EvidenceStatus.VERIFIED, None, None
     if not matched_chunk:
         return EvidenceStatus.STRUCTURAL_ANCHOR_NOT_FOUND, None, None
 
     art_val = matched_chunk.article
     cl_val = matched_chunk.clause
 
-    doc_matched = True
     art_matched = bool(art_hint and art_val and norm_text(art_hint) == norm_text(art_val))
     cl_matched = bool(cl_hint and cl_val and norm_text(cl_hint) == norm_text(cl_val))
 
-    if req_level == RequiredLevel.DOCUMENT:
-        return EvidenceStatus.VERIFIED, art_val, cl_val
-    elif req_level == RequiredLevel.ARTICLE:
+    if req_level == RequiredLevel.ARTICLE:
         if art_matched:
             return EvidenceStatus.VERIFIED, art_val, cl_val
         if not art_hint:
@@ -194,7 +154,13 @@ def decide_evidence_verification(
     return EvidenceStatus.STRUCTURAL_ANCHOR_NOT_FOUND, art_val, cl_val
 
 
-def audit_golden_dataset() -> Dict[str, Any]:
+def audit_golden_dataset(
+    *,
+    output_root: Path = Path(
+        "docs/evaluation/gold_labels/audit_runs"
+    ),
+    run_id: str | None = None,
+) -> Dict[str, Any]:
     settings = get_settings()
     dataset_path = Path("app/data/namsyntax_legal_qa_420.json")
     if not dataset_path.exists():
@@ -300,9 +266,11 @@ def audit_golden_dataset() -> Dict[str, Any]:
                 norm_snip = norm_text(snippet)
                 anchor_hash = hashlib.sha256(norm_snip.encode("utf-8")).hexdigest()[:16]
 
-                extracted_cites = extract_legal_citations_from_text(q_text + " " + gt_ans + " " + snippet)
+                extracted_cites = parse_legal_citations(
+                    q_text + " " + gt_ans + " " + snippet
+                )
                 if not extracted_cites:
-                    extracted_cites = [{"document_number": "", "article": "", "clause": ""}]
+                    extracted_cites = [LegalCitation()]
 
                 for cit_idx, cite in enumerate(extracted_cites, start=1):
                     ev_id = f"{case_id}_ctx{ctx_idx:02d}_cit{cit_idx:02d}"
@@ -310,9 +278,9 @@ def audit_golden_dataset() -> Dict[str, Any]:
                         raise ValueError(f"Duplicate evidence_item_id: {ev_id}")
                     seen_evidence_ids.add(ev_id)
 
-                    doc_num_hint = cite.get("document_number", "")
-                    art_hint = cite.get("article", "")
-                    cl_hint = cite.get("clause", "")
+                    doc_num_hint = cite.document_number
+                    art_hint = cite.article
+                    cl_hint = cite.clause
 
                     if cl_hint:
                         req_level = RequiredLevel.CLAUSE
@@ -493,10 +461,6 @@ def audit_golden_dataset() -> Dict[str, Any]:
     assert len(labels_sidecar) == len(seen_evidence_ids), "Declared evidence count != unique evidence IDs"
     assert sum(evidence_status_counts.values()) == len(labels_sidecar), "Sum of evidence statuses != evidence count"
 
-    sidecar_dir = Path("docs/evaluation/gold_labels")
-    sidecar_dir.mkdir(parents=True, exist_ok=True)
-    sidecar_path = sidecar_dir / "namsyntax_legal_qa_420_labels_v2.json"
-
     sidecar_payload = {
         "schema_version": "2.0.0",
         "dataset_name": "namsyntax_legal_qa_420",
@@ -505,12 +469,7 @@ def audit_golden_dataset() -> Dict[str, Any]:
         "labels": labels_sidecar,
     }
 
-    with sidecar_path.open("w", encoding="utf-8") as f:
-        json.dump(sidecar_payload, f, ensure_ascii=False, indent=2)
-    print(f"Saved v2 sidecar labels to {sidecar_path}")
-
     # Summary JSON
-    summary_path = sidecar_dir / "namsyntax_legal_qa_420_audit_summary_v2.json"
     summary_payload = {
         "schema_version": "2.0.0",
         "total_cases": len(cases),
@@ -529,8 +488,36 @@ def audit_golden_dataset() -> Dict[str, Any]:
             "all_required_covered": multi_hop_all_covered,
         },
     }
-    with summary_path.open("w", encoding="utf-8") as f:
-        json.dump(summary_payload, f, ensure_ascii=False, indent=2)
+
+    provenance = collect_git_provenance()
+    if provenance.status != "ok":
+        raise RuntimeError(
+            provenance.error or "Git provenance unavailable"
+        )
+    repository_root = Path(provenance.repository_root)
+    effective_run_id = run_id or generate_unique_run_id(
+        prefix="gold-audit"
+    )
+    resolved_output_root = Path(output_root).resolve()
+    try:
+        resolved_output_root.relative_to(repository_root)
+    except ValueError as error:
+        raise ValueError(
+            "Audit output_root must remain inside the repository"
+        ) from error
+    run_dir = prepare_run_directory(
+        resolved_output_root,
+        effective_run_id,
+    )
+    sidecar_path = run_dir / "labels_v2.json"
+    summary_path = run_dir / "audit_summary_v2.json"
+    write_immutable_json(sidecar_path, sidecar_payload)
+    summary_payload["artifact_paths"] = {
+        "sidecar": sidecar_path.relative_to(repository_root).as_posix(),
+        "summary": summary_path.relative_to(repository_root).as_posix(),
+    }
+    write_immutable_json(summary_path, summary_payload)
+    print(f"Saved v2 sidecar labels to {sidecar_path}")
     print(f"Saved audit summary to {summary_path}")
 
     return summary_payload
