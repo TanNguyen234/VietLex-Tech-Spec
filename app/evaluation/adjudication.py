@@ -3,9 +3,9 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from typing import Any, Literal, Mapping, Sequence
+from typing import Annotated, Any, Literal, Mapping, Sequence
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, StringConstraints
 
 from app.evaluation.gold_sidecar import GoldSidecar
 from app.evaluation.legal_citations import parse_legal_citations
@@ -27,11 +27,18 @@ class AdjudicationDecision(BaseModel):
     reviewed_at_utc: str | None = None
 
 
+StrictPositiveDocumentId = Annotated[StrictInt, Field(gt=0)]
+StrictNonblankDocumentId = Annotated[
+    StrictStr,
+    StringConstraints(strip_whitespace=True, min_length=1),
+]
+
+
 class AdjudicationCandidate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     candidate_id: str
-    document_id: int | str | None = None
+    document_id: StrictPositiveDocumentId | StrictNonblankDocumentId | None = None
     document_number: str | None = None
     title: str | None = None
     source_url: str | None = None

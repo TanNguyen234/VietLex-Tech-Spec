@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 
 import pytest
+from pydantic import ValidationError
 
 from app.evaluation.adjudication import (
     AdjudicationCandidate,
@@ -173,10 +174,8 @@ def test_queue_validates_candidates_and_marks_missing_citation_explicitly():
         metadata=GoldSidecarMetadata(sidecar_sha256="a" * 64), labels=[evidence],
         labels_by_case_id={case.case_id: [evidence]},
     )
-    invalid = AdjudicationCandidate(candidate_id=" ", document_id=0, document_number=" ", source_url=" ")
-
-    with pytest.raises(ValueError, match="candidate"):
-        _queue(case, sidecar, _provenance(), {evidence.evidence_item_id: [invalid]})
+    with pytest.raises(ValidationError):
+        AdjudicationCandidate(candidate_id=" ", document_id=0, document_number=" ", source_url=" ")
 
     no_citation = AdjudicationCandidate(
         candidate_id="candidate-4", document_id=4, document_number="4/2020/QH14",
@@ -260,6 +259,20 @@ def test_queue_accepts_and_normalizes_nonblank_string_document_id():
     )
 
     assert payload["rows"][0]["candidates"][0]["document_id"] == "doc-1"
+
+
+@pytest.mark.parametrize("document_id", [True, False, 1.0, 0.0, "", "  "])
+def test_candidate_document_id_rejects_coerced_and_blank_values(document_id):
+    # Break caught: Pydantic coercion changes booleans/floats into valid integer identities.
+    with pytest.raises(ValidationError):
+        AdjudicationCandidate(candidate_id="candidate", document_id=document_id)
+
+
+@pytest.mark.parametrize("document_id", [1, "doc-1"])
+def test_candidate_document_id_accepts_strict_positive_int_or_nonblank_string(document_id):
+    # Break caught: strict identity validation rejects either supported identifier representation.
+    candidate = AdjudicationCandidate(candidate_id="candidate", document_id=document_id)
+    assert candidate.document_id == document_id
 
 
 def _provenance() -> GitProvenance:
