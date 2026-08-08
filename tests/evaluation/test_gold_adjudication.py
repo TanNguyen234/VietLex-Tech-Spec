@@ -822,8 +822,9 @@ def test_promotion_preview_rejects_malformed_source_counts_and_identity_sets(mut
         )
 
 
-def test_promotion_preview_rejects_malformed_source_hash_and_legacy_raw_notes_without_mutation():
-    # Break caught: a preview accepts an untraceable source hash or silently redacts a retained legacy raw note.
+@pytest.mark.parametrize("legacy_notes", [None, "", " \t\n", "legacy private note", 7])
+def test_promotion_preview_rejects_malformed_source_hash_and_any_legacy_raw_notes_key_without_mutation(legacy_notes):
+    # Break caught: a preview accepts an untraceable source hash or a legacy raw-notes key that could leak into output.
     queue, queue_sha256 = _review_queue()
     decisions = _review_decisions(queue_sha256)
     decisions["decisions"][0]["queue_row_id"] = queue["rows"][0]["queue_row_id"]
@@ -836,7 +837,7 @@ def test_promotion_preview_rejects_malformed_source_hash_and_legacy_raw_notes_wi
             dataset_case_ids=["review-case", "other-case"], provenance=_provenance(),
         )
 
-    source["labels"][1]["adjudication_notes"] = "legacy private note"
+    source["labels"][1]["adjudication_notes"] = legacy_notes
     original = deepcopy(source)
     with pytest.raises(ValueError, match="legacy raw adjudication_notes"):
         build_promotion_preview(
@@ -845,6 +846,22 @@ def test_promotion_preview_rejects_malformed_source_hash_and_legacy_raw_notes_wi
             dataset_case_ids=["review-case", "other-case"], provenance=_provenance(),
         )
     assert source == original
+
+
+def test_promotion_preview_rejects_queue_evidence_missing_from_an_otherwise_valid_source_sidecar():
+    # Break caught: matching source counts and cases hide that the reviewed evidence label itself is absent.
+    queue, queue_sha256 = _review_queue()
+    decisions = _review_decisions(queue_sha256)
+    decisions["decisions"][0]["queue_row_id"] = queue["rows"][0]["queue_row_id"]
+    source = _source_sidecar()
+    source["labels"][0]["evidence_item_id"] = "replacement-evidence"
+
+    with pytest.raises(ValueError, match="queue evidence"):
+        build_promotion_preview(
+            queue_payload=queue, queue_sha256=queue_sha256, decisions_payload=decisions,
+            source_sidecar_payload=source, source_sidecar_sha256="d" * 64,
+            dataset_case_ids=["review-case", "other-case"], provenance=_provenance(),
+        )
 
 
 def test_promotion_preview_preserves_nonqueued_labels_and_round_trips_adjudication_provenance():

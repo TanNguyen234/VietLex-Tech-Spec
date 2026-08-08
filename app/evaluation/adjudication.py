@@ -481,8 +481,7 @@ def _validate_source_sidecar(
     case_ids: list[str] = []
     for raw_label in labels:
         label = _require_mapping(raw_label, "source sidecar label")
-        legacy_notes = label.get("adjudication_notes")
-        if isinstance(legacy_notes, str) and legacy_notes.strip():
+        if "adjudication_notes" in label:
             raise ValueError("source sidecar contains legacy raw adjudication_notes")
         evidence = GoldEvidence.model_validate(label)
         if evidence.evidence_item_id in labels_by_id:
