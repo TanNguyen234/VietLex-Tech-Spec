@@ -88,8 +88,15 @@ def resolve_document_identity(
 
 
 def check_anchor_match(snippet: str, content: str) -> Tuple[bool, str, Dict[str, Any]]:
-    norm_snip = norm_text(snippet)
-    norm_content = norm_text(content)
+    return check_normalized_anchor_match(norm_text(snippet), norm_text(content))
+
+
+def check_normalized_anchor_match(
+    normalized_snippet: str,
+    normalized_content: str,
+) -> Tuple[bool, str, Dict[str, Any]]:
+    norm_snip = normalized_snippet
+    norm_content = normalized_content
 
     if norm_snip in norm_content:
         return True, "full_anchor_exact", {"full_anchor_matched": True}

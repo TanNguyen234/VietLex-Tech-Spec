@@ -6,13 +6,35 @@ import hashlib
 import re
 from typing import Mapping, Sequence
 
-from audit_golden_dataset import check_anchor_match, norm_text
+from audit_golden_dataset import (
+    check_anchor_match,
+    check_normalized_anchor_match,
+    norm_text,
+)
 from app.evaluation.adjudication import AdjudicationCandidate, candidate_identity_sha256
 from app.evaluation.legal_citations import parse_legal_citations
 from app.evaluation.schemas import GoldEvidence, GoldenCase, RequiredLevel
 from app.ingestion.content_store import ContentStore
 from app.ingestion.legal_fts import LegalFtsIndex
 from app.ingestion.legal_text import EvidenceChunk, chunk_document
+
+
+_ANCHOR_SCAN_BATCH_SIZE = 256
+_ANCHOR_SCAN_TIERS = (
+    ("primary_normative", ("Hiến pháp", "Luật", "Pháp lệnh")),
+    (
+        "secondary_normative",
+        (
+            "Nghị định",
+            "Nghị quyết",
+            "Thông tư",
+            "Thông tư liên tịch",
+            "Văn bản hợp nhất",
+            "Quy định",
+            "Quy chế",
+        ),
+    ),
+)
 
 
 def discover_adjudication_candidates(
@@ -30,6 +52,13 @@ def discover_adjudication_candidates(
     if len(selected_case_ids) != len(set(selected_case_ids)):
         raise ValueError("selected_case_ids must be unique")
 
+    anchor_scan_ids, anchor_scan_tiers = _discover_anchor_scan_ids(
+        cases_by_id=cases_by_id,
+        labels_by_case_id=labels_by_case_id,
+        selected_case_ids=selected_case_ids,
+        content_store=content_store,
+        candidate_limit=candidate_limit,
+    )
     result: dict[str, list[AdjudicationCandidate]] = {}
     for case_id in selected_case_ids:
         case = cases_by_id.get(case_id)
@@ -44,9 +73,27 @@ def discover_adjudication_candidates(
         source_ids = _source_document_ids(labels, case_id)
         query = _case_query(case)
         fts_ids = fts_index.search(query, limit=candidate_limit)
-        document_ids = _stable_bounded_ids(source_ids, fts_ids, candidate_limit)
-        documents = content_store.get_many(document_ids)
-        missing_ids = [document_id for document_id in document_ids if document_id not in documents]
+        document_ids_by_evidence: dict[str, list[int]] = {}
+        case_document_ids: list[int] = []
+        seen_case_ids: set[int] = set()
+        for evidence in labels:
+            scan_ids = anchor_scan_ids.get(evidence.evidence_item_id, ())
+            document_ids = _stable_bounded_ids(
+                source_ids,
+                [*scan_ids, *fts_ids],
+                candidate_limit,
+            )
+            document_ids_by_evidence[evidence.evidence_item_id] = document_ids
+            for document_id in document_ids:
+                if document_id not in seen_case_ids:
+                    seen_case_ids.add(document_id)
+                    case_document_ids.append(document_id)
+        documents = content_store.get_many(case_document_ids)
+        missing_ids = [
+            document_id
+            for document_id in case_document_ids
+            if document_id not in documents
+        ]
         if missing_ids:
             raise ValueError(
                 f"missing retrieved documents for selected case '{case_id}': {missing_ids}"
@@ -56,6 +103,8 @@ def discover_adjudication_candidates(
         candidates: list[AdjudicationCandidate] = []
         source_set = set(source_ids)
         for evidence in labels:
+            document_ids = document_ids_by_evidence[evidence.evidence_item_id]
+            scan_set = set(anchor_scan_ids.get(evidence.evidence_item_id, ()))
             for rank, document_id in enumerate(document_ids, start=1):
                 document = documents[document_id]
                 metadata = document.metadata
@@ -66,10 +115,20 @@ def discover_adjudication_candidates(
                 method = (
                     "source_sidecar_document_id" if document_id in source_set else "fts"
                 )
+                if document_id in scan_set and document_id not in source_set:
+                    method = "normative_anchor_scan"
                 article = clause = structural_citation = structural_chunk_sha256 = None
                 required_supported = False
                 citation = metadata.document_number
                 if matched:
+                    if method == "normative_anchor_scan":
+                        diagnostics = {
+                            **diagnostics,
+                            "anchor_scan_tier": anchor_scan_tiers[
+                                evidence.evidence_item_id
+                            ],
+                            "corpus_search_complete": False,
+                        }
                     chunks = chunks_by_id.get(document_id)
                     if chunks is None:
                         chunks = chunk_document(
@@ -116,6 +175,108 @@ def discover_adjudication_candidates(
                 )
         result[case_id] = candidates
     return result
+
+
+def _discover_anchor_scan_ids(
+    *,
+    cases_by_id: Mapping[str, GoldenCase],
+    labels_by_case_id: Mapping[str, Sequence[GoldEvidence]],
+    selected_case_ids: Sequence[str],
+    content_store: ContentStore,
+    candidate_limit: int,
+) -> tuple[dict[str, list[int]], dict[str, str]]:
+    iterator = getattr(content_store, "iter_document_ids_by_legal_types", None)
+    if not callable(iterator):
+        return {}, {}
+
+    normalized_anchors: dict[str, str] = {}
+    for case_id in selected_case_ids:
+        case = cases_by_id.get(case_id)
+        if case is None:
+            raise ValueError(f"unknown selected case '{case_id}'")
+        labels = labels_by_case_id.get(case_id)
+        if not labels:
+            raise ValueError(f"missing labels for selected case '{case_id}'")
+        if any(label.case_id != case_id for label in labels):
+            raise ValueError(f"invalid evidence identity for selected case '{case_id}'")
+        for evidence in labels:
+            if evidence.document_id is not None or (
+                isinstance(evidence.document_number, str)
+                and evidence.document_number.strip()
+            ):
+                continue
+            if evidence.evidence_item_id in normalized_anchors:
+                raise ValueError("evidence_item_id must be unique")
+            normalized_anchor = norm_text(_reference_anchor(case, evidence))
+            if not normalized_anchor:
+                raise ValueError("reference anchor must be nonblank")
+            normalized_anchors[evidence.evidence_item_id] = normalized_anchor
+
+    matches = {evidence_id: [] for evidence_id in normalized_anchors}
+    tiers_by_evidence: dict[str, str] = {}
+    unresolved = set(normalized_anchors)
+    for tier_name, legal_types in _ANCHOR_SCAN_TIERS:
+        if not unresolved:
+            break
+        active = set(unresolved)
+        after_id = -1
+        while True:
+            document_ids = iterator(
+                legal_types,
+                after_id=after_id,
+                limit=_ANCHOR_SCAN_BATCH_SIZE,
+            )
+            if not document_ids:
+                break
+            if (
+                document_ids != sorted(set(document_ids))
+                or any(
+                    isinstance(document_id, bool)
+                    or not isinstance(document_id, int)
+                    or document_id <= after_id
+                    for document_id in document_ids
+                )
+            ):
+                raise ValueError("invalid corpus document identity")
+            documents = content_store.get_many(document_ids)
+            missing_ids = [
+                document_id
+                for document_id in document_ids
+                if document_id not in documents
+            ]
+            if missing_ids:
+                raise ValueError(f"missing scanned documents: {missing_ids}")
+            for document_id in document_ids:
+                document = documents[document_id]
+                _validate_document(document_id, document.metadata, document)
+                normalized_content = norm_text(document.content)
+                for evidence_id in active:
+                    if len(matches[evidence_id]) >= candidate_limit:
+                        continue
+                    matched, _, _ = check_normalized_anchor_match(
+                        normalized_anchors[evidence_id],
+                        normalized_content,
+                    )
+                    if matched:
+                        matches[evidence_id].append(document_id)
+            after_id = document_ids[-1]
+            if all(len(matches[evidence_id]) >= candidate_limit for evidence_id in active):
+                break
+        matched_in_tier = {
+            evidence_id for evidence_id in active if matches[evidence_id]
+        }
+        for evidence_id in matched_in_tier:
+            tiers_by_evidence[evidence_id] = tier_name
+        unresolved.difference_update(matched_in_tier)
+
+    return (
+        {
+            evidence_id: document_ids
+            for evidence_id, document_ids in matches.items()
+            if document_ids
+        },
+        tiers_by_evidence,
+    )
 
 
 def _source_document_ids(labels: Sequence[GoldEvidence], case_id: str) -> list[int]:

@@ -99,7 +99,35 @@ class _FakeContentStore:
         }
 
 
-def _stored_document(document_id: int, *, number: str, content: str):
+class _ScanningFakeContentStore(_FakeContentStore):
+    def __init__(self, documents: dict[int, object]) -> None:
+        super().__init__(documents)
+        self.scan_requests: list[tuple[tuple[str, ...], int, int]] = []
+
+    def iter_document_ids_by_legal_types(
+        self,
+        legal_types: list[str] | tuple[str, ...],
+        *,
+        after_id: int,
+        limit: int,
+    ) -> list[int]:
+        requested = tuple(legal_types)
+        self.scan_requests.append((requested, after_id, limit))
+        return [
+            document_id
+            for document_id, document in sorted(self.documents.items())
+            if document_id > after_id
+            and document.metadata.legal_type in requested
+        ][:limit]
+
+
+def _stored_document(
+    document_id: int,
+    *,
+    number: str,
+    content: str,
+    legal_type: str = "Quyết định",
+):
     from types import SimpleNamespace
 
     return SimpleNamespace(
@@ -108,10 +136,143 @@ def _stored_document(document_id: int, *, number: str, content: str):
             document_number=number,
             title=f"Title {document_id}",
             source_url=f"https://example.test/doc-{document_id}",
+            legal_type=legal_type,
         ),
         content=content,
         content_sha256=hashlib.sha256(content.encode("utf-8")).hexdigest(),
     )
+
+
+def test_normalized_anchor_match_preserves_exact_match_contract():
+    # Break caught: the scan-optimized matcher diverges from the shared exact
+    # anchor contract used by the audit and adjudication paths.
+    from audit_golden_dataset import check_normalized_anchor_match
+
+    assert check_normalized_anchor_match(
+        "điều 2 nội dung nguồn",
+        "mở đầu điều 2 nội dung nguồn kết thúc",
+    ) == (
+        True,
+        "full_anchor_exact",
+        {"full_anchor_matched": True},
+    )
+
+
+def test_candidate_discovery_scans_normative_anchors_before_fts_noise():
+    # Break caught: a raw golden anchor cannot surface its source law when the
+    # source title and document number are absent from the golden row.
+    from app.evaluation.adjudication_candidates import discover_adjudication_candidates
+
+    anchor = (
+        "Điều 2\n"
+        "1. Nội dung nguồn pháp luật đủ dài để xác minh chính xác."
+    )
+    case = GoldenCase(
+        case_id="anchor-scan",
+        question="Nội dung được quy định thế nào?",
+        question_type="factoid",
+        answerable=True,
+        reference_answer="Trả lời",
+        reference_contexts=[anchor],
+    )
+    evidence = GoldEvidence(
+        evidence_item_id="anchor-evidence",
+        case_id=case.case_id,
+        article="Điều 2",
+        required=True,
+        required_level="article",
+        status=EvidenceStatus.NO_CITATION_EXTRACTED,
+    )
+    store = _ScanningFakeContentStore({
+        2: _stored_document(
+            2,
+            number="2/QĐ",
+            content="Không có anchor.",
+        ),
+        9: _stored_document(
+            9,
+            number="9/2026/QH15",
+            content=anchor,
+            legal_type="Luật",
+        ),
+    })
+
+    candidates = discover_adjudication_candidates(
+        cases_by_id={case.case_id: case},
+        labels_by_case_id={case.case_id: [evidence]},
+        selected_case_ids=[case.case_id],
+        content_store=store,
+        fts_index=_FakeFts([2]),
+        candidate_limit=2,
+    )[case.case_id]
+
+    assert [item.document_id for item in candidates] == [9, 2]
+    assert candidates[0].discovery_method == "normative_anchor_scan"
+    assert candidates[0].required_level_supported is True
+    assert candidates[0].anchor_diagnostics["anchor_scan_tier"] == (
+        "primary_normative"
+    )
+    assert candidates[0].anchor_diagnostics["corpus_search_complete"] is False
+    assert {
+        request[0] for request in store.scan_requests
+    } == {("Hiến pháp", "Luật", "Pháp lệnh")}
+
+
+def test_candidate_discovery_falls_back_to_secondary_normative_tier():
+    # Break caught: an anchor absent from primary sources never reaches the
+    # bounded secondary normative tier.
+    from app.evaluation.adjudication_candidates import discover_adjudication_candidates
+
+    anchor = "Điều 3\n1. Nội dung nghị định dùng làm nguồn tham chiếu."
+    case = GoldenCase(
+        case_id="secondary-anchor-scan",
+        question="Nguồn quy định thế nào?",
+        question_type="factoid",
+        answerable=True,
+        reference_answer="Trả lời",
+        reference_contexts=[anchor],
+    )
+    evidence = GoldEvidence(
+        evidence_item_id="secondary-anchor-evidence",
+        case_id=case.case_id,
+        required=True,
+        required_level="document",
+        status=EvidenceStatus.NO_CITATION_EXTRACTED,
+    )
+    store = _ScanningFakeContentStore({
+        3: _stored_document(
+            3,
+            number="3/2026/NĐ-CP",
+            content=anchor,
+            legal_type="Nghị định",
+        ),
+    })
+
+    candidate = discover_adjudication_candidates(
+        cases_by_id={case.case_id: case},
+        labels_by_case_id={case.case_id: [evidence]},
+        selected_case_ids=[case.case_id],
+        content_store=store,
+        fts_index=_FakeFts([]),
+        candidate_limit=1,
+    )[case.case_id][0]
+
+    assert candidate.document_id == 3
+    assert candidate.anchor_diagnostics["anchor_scan_tier"] == (
+        "secondary_normative"
+    )
+    assert {request[0] for request in store.scan_requests} == {
+        ("Hiến pháp", "Luật", "Pháp lệnh"),
+        (
+            "Nghị định",
+            "Nghị quyết",
+            "Thông tư",
+            "Thông tư liên tịch",
+            "Văn bản hợp nhất",
+            "Quy định",
+            "Quy chế",
+        ),
+    }
 
 
 def test_candidate_discovery_is_bounded_per_case_and_preserves_anchor_provenance():

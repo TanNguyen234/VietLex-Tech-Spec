@@ -10,7 +10,7 @@ from concurrent.futures import ProcessPoolExecutor
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Sequence
 
 import pyarrow.parquet as parquet
 import zstandard
@@ -817,6 +817,29 @@ class ContentStore:
                 "SELECT document_id FROM metadata "
                 "WHERE document_id > ? ORDER BY document_id LIMIT ?",
                 (after_id, limit),
+            ).fetchall()
+        return [int(row[0]) for row in rows]
+
+    def iter_document_ids_by_legal_types(
+        self,
+        legal_types: Sequence[str],
+        *,
+        after_id: int,
+        limit: int,
+    ) -> list[int]:
+        values = sorted({value.strip() for value in legal_types if value.strip()})
+        if limit <= 0 or not values:
+            return []
+        placeholders = ",".join("?" for _ in values)
+        with sqlite3.connect(
+            f"file:{self.path}?mode=ro",
+            uri=True,
+        ) as connection:
+            rows = connection.execute(
+                "SELECT document_id FROM metadata WHERE document_id > ? "
+                f"AND legal_type IN ({placeholders}) "
+                "ORDER BY document_id LIMIT ?",
+                (after_id, *values, limit),
             ).fetchall()
         return [int(row[0]) for row in rows]
 

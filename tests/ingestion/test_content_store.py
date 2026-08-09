@@ -76,6 +76,51 @@ def test_store_joins_by_id_and_round_trips_compressed_content(
     assert report.compressed_bytes < report.uncompressed_bytes
 
 
+def test_store_iterates_document_ids_by_legal_type_read_only(
+    tmp_path: Path,
+) -> None:
+    # Break caught: adjudication cannot scan ordered normative documents
+    # without rebuilding or mutating the title-only FTS index.
+    content_store = _content_store_module()
+    snapshot = tmp_path / "snapshot"
+    _write_metadata(snapshot, [1, 2, 3, 4])
+    _write_content(
+        snapshot,
+        [1, 2, 3, 4],
+        [f"Nội dung {item}" for item in range(1, 5)],
+    )
+    database = tmp_path / "filtered.sqlite3"
+    content_store.build_content_store(
+        snapshot,
+        database,
+        expected_count=4,
+        workers=1,
+    )
+    with sqlite3.connect(database) as connection:
+        connection.executemany(
+            "UPDATE metadata SET legal_type = ? WHERE document_id = ?",
+            [
+                ("Luật", 1),
+                ("Nghị định", 2),
+                ("Luật", 3),
+                ("Quyết định", 4),
+            ],
+        )
+
+    store = content_store.ContentStore(database)
+
+    assert store.iter_document_ids_by_legal_types(
+        ["Luật", "Nghị định"],
+        after_id=1,
+        limit=2,
+    ) == [2, 3]
+    assert store.iter_document_ids_by_legal_types(
+        ["Luật"],
+        after_id=1,
+        limit=1,
+    ) == [3]
+
+
 def test_store_rejects_missing_join_before_success_marker(
     tmp_path: Path,
 ) -> None:
