@@ -54,4 +54,3 @@
 2. Run focused tests, the five-file evaluation suite, fatal Ruff, compileall, diff check, then full `pytest -q` once the review is clean.
 3. Update `CURRENT_STATUS.md` with actual commands/results only. Mark live provider calls and remote-data mutation separately; retrieval calls are read-only and no corpus/index mutation is permitted.
 4. Create a local P2 checkpoint commit. Do not push, merge remote, ingest, migrate, or delete data in this plan.
-

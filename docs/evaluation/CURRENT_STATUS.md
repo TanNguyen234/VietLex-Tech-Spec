@@ -55,4 +55,3 @@ Configured provider identifiers are provenance; they do not prove which fallback
 - P2 immutable preflight and live run artifacts: **NOT RUN yet**.
 
 Execution plan: `docs/superpowers/plans/2026-08-09-vietlex-p2-retrieval-baseline.md`.
-
