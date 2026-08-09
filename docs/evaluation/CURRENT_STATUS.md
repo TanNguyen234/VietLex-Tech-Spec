@@ -1,6 +1,6 @@
 # VietLex Evaluation Current Status
 
-**Status:** P1 provider-free adjudication tooling verified and merged; human queue generation paused; live baseline BLOCKED by zero verified gold
+**Status:** P1 real provider-free adjudication queue READY_FOR_REVIEW; human decisions pending; live baseline BLOCKED by zero verified gold
 
 - Historical 2026-08-03 retrieval runs remain invalid for decision-making.
 - Current sidecar: 420 cases, 483 evidence items, 0 verified evidence items.
@@ -20,9 +20,33 @@ Verified on 2026-08-08 from feature source SHA `2f08c5283c233ed108b5ab5de5010dbc
 - Stable full suite: `362 passed, 1 skipped in 45.67s`.
 - Ruff fatal checks, compileall, and `git diff --check`: passed.
 - CRG graph matched the final feature SHA; independent final review reported no remaining actionable finding and `Ready to merge: Yes`.
-- Real queue generation, human decisions, preview approval, evidence promotion, provider calls, corpus/index mutation, and P2: **NOT RUN**.
+- Real queue generation: **COMPLETED provider-free** on 2026-08-09; details are pinned below.
+- Human decisions, promotion preview, preview approval, evidence promotion, provider calls, corpus/index mutation, and P2: **NOT RUN**.
 
-Resume with the documented `run_gold_adjudication.py queue` command using the pinned dataset/content-store/FTS paths. Stop again before promotion unless the user explicitly approves the exact preview SHA-256.
+Resume with human review of the immutable decision template. Do not run promotion unless the user explicitly approves the exact future preview SHA-256.
+
+## P1 real adjudication queue
+
+- Artifact: `docs/evaluation/adjudication/queues/gold-adjudication-queue-20260809T123505Z-4df0170/`.
+- Queue status: `READY_FOR_REVIEW`; selected cases: 40/40 from 245 eligible cases; selection shortfall: 0.
+- Selected strata: `factoid|article=7`, `factoid|clause=7`, `factoid|document=7`, `multi-hop|article=7`, `multi-hop|clause=6`, `multi-hop|document=6`.
+- Review rows: 52; candidates: 624 (12 per row); zero-candidate rows: 0.
+- Decision template: 52/52 decisions remain `pending`; no raw `adjudication_notes` key is persisted.
+- Dataset SHA-256: `84c93a522c1bc8eac7179aa808f70b59466fe9a55a4a9f98ddae07797c9662c7`.
+- Source sidecar SHA-256: `c63932ac4101a37ab189d665ea181c4672faac8e9de035d0d83797384d5aa18a`.
+- Queue SHA-256: `680a144c928f7b32cf3268e3d2e0002a4c98c4172a12f78508d5013e5e3e32e0`.
+- Decision-template SHA-256: `69c5af91844f4c38c81a014c1ad4777da6ff6137ba3c37b0fa64019ee7c38c3b`.
+- Queue-summary SHA-256: `2fce1a0612acbf8bddb5011465404269ab07dcc841d779b5895af5f0beaa1015`.
+- Source Git SHA: `4df0170a503937da280910b9fea9309ffa8ed638` with `git_dirty=false`; source-state SHA-256: `62c63fb7fc9461ccc09ac123b79ef8e5c7613fe9b08d4e1c2911ab85a51ee1d4`.
+- Local content store and FTS were opened read-only and each reported 518,255 records. Provider calls: 0. Remote data modified: no.
+
+Exact generation command:
+
+```powershell
+python -u run_gold_adjudication.py queue --dataset D:\Download\ProfessionalLegalRAG\app\data\namsyntax_legal_qa_420.json --sidecar D:\Download\ProfessionalLegalRAG\.worktrees\lean-superpowers-v2-p1\docs\evaluation\gold_labels\namsyntax_legal_qa_420_labels_v2.json --content-store D:\Download\ProfessionalLegalRAG\data\huggingface\content_store.sqlite3 --fts D:\Download\ProfessionalLegalRAG\data\huggingface\legal_fts.sqlite3 --output-root D:\Download\ProfessionalLegalRAG\.worktrees\lean-superpowers-v2-p1\docs\evaluation\adjudication\queues --run-id gold-adjudication-queue-20260809T123505Z-4df0170 --target-cases 40 --candidate-limit 12
+```
+
+Generation exited 0 in 49.2 seconds. Independent reload validation reconstructed the decision template exactly, validated queue row/candidate identities, matched all canonical file hashes, confirmed portable artifact paths, and ended with `VALIDATION=PASS`.
 
 ## Evidence policy
 
@@ -43,7 +67,7 @@ Verified on 2026-08-08 from Git SHA `4e40be6ab1871e3b64ca6f560f317bed215e05e1` w
 - CI contract search confirmed Python 3.10, fatal Ruff checks, and provider-free `pytest -q` remain configured.
 - Historical-run checksum preservation — `1 passed in 7.80s`; no existing path under `docs/evaluation/runs/` changed.
 - CRG incremental review, independent code review, and focused re-review found no remaining Critical or Important issue.
-- Lean-skill pressure tests preserved all critical quality/authority gates while removing an unnecessary implementation worktree and adding explicit query/rerun caps.
+- Lean Superpowers v2 sets automatic worktree creation OFF, routes repository work through CRG with source validation, and delays broad/full verification until final review is clean. Five no-guidance controls scored 10/30 protocol controls versus 28/30 with the skill; no numeric token-reduction percentage is claimed because token counters were unavailable.
 
 ## Provider-free clean P0 preflight
 

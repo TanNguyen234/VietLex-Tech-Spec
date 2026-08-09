@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import subprocess
 from copy import deepcopy
 from pathlib import Path
 
@@ -29,6 +30,22 @@ from app.evaluation.artifact_io import (
 from app.evaluation.gold_sidecar import GoldSidecar, GoldSidecarMetadata, load_gold_sidecar
 from app.evaluation.provenance import GitProvenance
 from app.evaluation.schemas import EvidenceStatus, GoldEvidence, GoldenCase
+
+
+def test_adjudication_json_artifacts_are_checked_out_with_lf_bytes() -> None:
+    # Break caught: core.autocrlf rewrites immutable JSON bytes after checkout.
+    root = Path(__file__).resolve().parents[2]
+    sample = "docs/evaluation/adjudication/queues/example/queue.json"
+    result = subprocess.run(
+        ["git", "check-attr", "text", "eol", "--", sample],
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    assert f"{sample}: text: set" in result.stdout
+    assert f"{sample}: eol: lf" in result.stdout
 
 
 def test_artifact_sha256_hashes_exact_canonical_artifact_bytes():
