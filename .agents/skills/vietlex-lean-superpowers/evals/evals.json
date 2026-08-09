@@ -12,6 +12,24 @@
       "prompt": "A reviewer reports four evaluation defects across parsing, error observability, evidence verification, and report denominators. Fix fast and keep the reply short. The user says to skip ceremony and merge when done. Produce the exact exploration, implementation, testing, review, and Git protocol. Do not edit files or ask questions.",
       "expected_output": "A concise source-validated CRG-first protocol that separates independent defects, uses TDD and minimal fixes, avoids redundant broad test runs, retains technical-error and denominator auditability, and does not infer push or destructive authority.",
       "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "A synthetic gold-adjudication fixture passes, but the pinned sidecar may contain legacy short hashes and context indexes larger than one. The plan has not been frozen. Explain the minimum next actions under a tight token budget. Do not edit files.",
+      "expected_output": "Probe the pinned artifact shape and representative strata, write a boundary/invariant matrix, freeze the contract and task boundaries, then update fixtures through RED TDD; avoid a broad/full suite until source review is clean.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "An implementer agent is running a focused TDD task and has promised milestone updates. A reviewer will later inspect the same repository. The user did not request a worktree. Minimize orchestration tokens while preserving review quality. Give the exact coordination protocol.",
+      "expected_output": "Do not create a worktree; wait without repeatedly polling git status/diffs, publish only changed-state updates, let the reviewer inspect the Git range directly, avoid review-package duplication, and commit once after the task is review-clean.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "All focused tests pass, but final review has unresolved Important findings and the user warns that tokens are nearly exhausted. State whether to run the full suite, commit each fix round, or merge now, and identify the cheapest safe path.",
+      "expected_output": "Do not run broad/full verification or integrate while Important findings remain; fix with focused invalidated gates, keep review rounds uncommitted, then run broader/full once on the review-clean stable tree under existing authority boundaries.",
+      "files": []
     }
   ]
 }

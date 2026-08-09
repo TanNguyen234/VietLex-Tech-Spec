@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
@@ -7,6 +8,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SKILL_PATH = REPO_ROOT / ".agents" / "skills" / "vietlex-lean-superpowers" / "SKILL.md"
 GITIGNORE_PATH = REPO_ROOT / ".gitignore"
+EVALS_PATH = SKILL_PATH.parent / "evals" / "evals.json"
 
 
 def _skill_text() -> str:
@@ -24,7 +26,7 @@ def test_lean_skill_is_small_and_triggered_by_token_efficient_vietlex_work() -> 
     assert "name: vietlex-lean-superpowers" in frontmatter
     assert re.search(r"^description: Use when ", frontmatter, re.MULTILINE)
     assert "reduce token" in frontmatter.lower()
-    assert len(re.findall(r"\b\w+[\w'-]*\b", body)) <= 320
+    assert len(re.findall(r"\b\w+[\w'-]*\b", body)) <= 380
 
 
 def test_lean_skill_preserves_quality_and_authority_boundaries() -> None:
@@ -84,3 +86,83 @@ def test_project_local_lean_skill_is_not_ignored() -> None:
     assert ".agents/skills/*" in gitignore
     assert "!.agents/skills/vietlex-lean-superpowers/" in gitignore
     assert "!.agents/skills/vietlex-lean-superpowers/**" in gitignore
+
+
+def test_lean_skill_probes_reality_before_freezing_the_plan() -> None:
+    text = _skill_text().lower()
+
+    assert "reality probe" in text
+    assert "plan freeze" in text
+    assert "pinned artifact" in text
+    assert "boundary/invariant" in text
+    assert text.index("reality probe") < text.index("plan freeze")
+    assert text.index("plan freeze") < text.index("test-driven-development")
+
+
+def test_lean_skill_delays_expensive_verification_until_review_is_clean() -> None:
+    text = _skill_text().lower()
+
+    assert "final review" in text
+    assert "review-clean" in text
+    assert "broader/full once" in text
+    assert "unresolved important finding" in text
+    assert text.index("final review") < text.index("broader/full once")
+
+
+def test_lean_skill_limits_agent_polling_and_review_artifacts() -> None:
+    text = _skill_text().lower()
+
+    assert "do not inspect shared diff/status while an agent runs" in text
+    assert "one changed-state update" in text
+    assert "reviewer inspects the git range directly" in text
+    assert "review package only when repo access is unavailable" in text
+
+
+def test_lean_skill_uses_risk_based_agents_and_commit_budget() -> None:
+    text = _skill_text().lower()
+
+    assert "bounded work: terra" in text
+    assert "high-risk/final review: sol" in text
+    assert "one review-clean commit per task" in text
+    assert "do not commit each review round" in text
+
+
+def test_lean_skill_integrates_official_crg_entry_and_review_tools() -> None:
+    text = _skill_text().lower()
+
+    assert "codex-research-automation:crg-code-review" in text
+    assert "mcp__crg__get_minimal_context_tool" in text
+    assert "mcp__crg__detect_changes_tool" in text
+    assert "mcp__crg__query_graph_tool" in text
+    assert text.index("mcp__crg__get_minimal_context_tool") < text.index(
+        "mcp__crg__detect_changes_tool"
+    )
+    assert "for changed-code review call `mcp__crg__detect_changes_tool`" in text
+    assert "read-only fallback: use `rg`/source; do not update the graph" in text
+
+
+def test_lean_skill_keeps_automatic_worktree_creation_off() -> None:
+    text = _skill_text().lower()
+
+    assert "superpowers:using-git-worktrees` default: **off**" in text
+    assert "do not create a worktree unless the user/task explicitly requests one" in text
+    assert "reuse an existing worktree" in text
+
+
+def test_lean_skill_distinguishes_feature_review_from_target_integration() -> None:
+    text = _skill_text().lower()
+
+    assert "combined feature diff" in text
+    assert "target-branch integration" in text
+    assert text.index("combined feature diff") < text.index("target-branch integration")
+
+
+def test_reality_probe_eval_freezes_contract_before_fixture_updates() -> None:
+    payload = json.loads(EVALS_PATH.read_text(encoding="utf-8"))
+    expected = next(item for item in payload["evals"] if item["id"] == 3)[
+        "expected_output"
+    ].lower()
+
+    assert "freeze the contract" in expected
+    assert "then update fixtures through red tdd" in expected
+    assert expected.index("freeze the contract") < expected.index("update fixtures")

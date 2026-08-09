@@ -1,0 +1,78 @@
+{
+  "method": "Conversation-backed RED baseline, static TDD contract, CRG smoke test, three targeted pressure tests, and a five-repetition no-guidance versus with-skill control benchmark.",
+  "self_reflection": {
+    "quality_preserved": [
+      "Authority boundaries prevented provider calls, corpus mutation, and unapproved evidence promotion.",
+      "Focused TDD and independent review found and fixed substantive adjudication defects.",
+      "Final reporting distinguished executed tests from provider and operational work that was NOT RUN."
+    ],
+    "token_cost_drivers": [
+      "The plan froze around synthetic fixtures before probing pinned sidecar shapes and edge strata.",
+      "Broad/full verification started before final review was clean, so later findings invalidated expensive evidence.",
+      "Repeated agent polling, shared diff/status inspection, and duplicated review packages added orchestration churn.",
+      "Committing intermediate review rounds and using high-cost review effort for every bounded task increased overhead."
+    ],
+    "v2_controls": [
+      "Reality Probe and boundary/invariant matrix precede Plan Freeze.",
+      "Focused invalidated gates run until final review is review-clean; broader/full runs once afterward.",
+      "Reviewers inspect the Git range directly; one review-clean commit is preferred per task.",
+      "Agent polling is replaced by milestone waits and changed-state-only updates.",
+      "CRG uses the official minimal-context entrypoint and directed tools with source validation.",
+      "Automatic using-git-worktrees invocation is OFF unless the user/task explicitly requests a worktree."
+    ]
+  },
+  "static_tdd": {
+    "baseline": "5 passed",
+    "red_v2": "4 failed, 5 passed",
+    "red_crg_worktree_policy": "2 failed, 9 passed",
+    "red_review_contract": "4 failed, 9 passed",
+    "green": "13 passed",
+    "validator": "Skill is valid!"
+  },
+  "crg_smoke_test": {
+    "entrypoint": "mcp__crg__get_minimal_context_tool",
+    "initial_state": "0 nodes, 0 edges",
+    "raw_artifact": "crg-smoke-2026-08-09.json",
+    "build_response_snapshot": "3 files re-parsed, 15 nodes and 117 edges updated, 0 errors",
+    "current_stats_snapshot": "1 file, 15 nodes, 103 edges",
+    "provider_or_embedding_calls": 0
+  },
+  "targeted_pressure_tests": [
+    {
+      "scenario": "Pinned-artifact reality probe",
+      "model": "gpt-5.6-terra medium",
+      "verdict": "PASS"
+    },
+    {
+      "scenario": "Agent coordination without requested worktree",
+      "model": "gpt-5.6-terra medium",
+      "verdict": "PASS"
+    },
+    {
+      "scenario": "Unresolved Important findings under token pressure",
+      "model": "gpt-5.6-terra medium",
+      "verdict": "PASS"
+    }
+  ],
+  "controlled_pressure_benchmark": {
+    "artifact": "pressure-2026-08-09.md",
+    "model": "gpt-5.6-terra medium",
+    "repetitions_per_condition": 5,
+    "excluded_over_limit_samples": 1,
+    "replacement_samples": 1,
+    "control_score": "10/30 (33%)",
+    "with_skill_score": "28/30 (93%)",
+    "raw_responses_preserved": true,
+    "claim": "Improved protocol-control coverage; no numeric token reduction claimed."
+  },
+  "codex_install": {
+    "path": "C:/Users/VI TINH THANH AN/.agents/skills/vietlex-lean-superpowers/SKILL.md",
+    "sha256": "2ED2984FB34A1F132DE7764D1B3A49AB40B1115E88FDBB27FF3BF3C70FC7D993",
+    "matches_repository_source": true
+  },
+  "limitations": [
+    "The harness exposes no comparable token counters, so no numeric token-saving percentage is claimed.",
+    "Pressure tests were protocol-only; no provider, corpus, index, or evidence-promotion action ran.",
+    "The existing worktree was created before the user changed the default-worktree policy; no later worktree was created."
+  ]
+}

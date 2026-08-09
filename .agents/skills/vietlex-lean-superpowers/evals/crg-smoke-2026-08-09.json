@@ -1,0 +1,55 @@
+{
+  "repository": "D:/Download/ProfessionalLegalRAG/.worktrees/lean-superpowers-v2-p1",
+  "branch": "codex/lean-superpowers-v2-p1",
+  "head_sha": "9a7d9b0878184cb7149bdeb50e4321b9363bf424",
+  "provider_or_embedding_calls": 0,
+  "snapshots": [
+    {
+      "operation": "mcp__crg__get_minimal_context_tool",
+      "order": 1,
+      "raw": {
+        "status": "ok",
+        "summary": "0 nodes, 0 edges across 0 files. Risk: low (0.00).",
+        "risk": "low"
+      }
+    },
+    {
+      "operation": "mcp__crg__build_or_update_graph_tool",
+      "order": 2,
+      "postprocess": "minimal",
+      "raw": {
+        "status": "ok",
+        "updated_at": "2026-08-09T19:23:01",
+        "summary": "Incremental update: 3 files re-parsed, 15 nodes and 117 edges updated.",
+        "files_updated": 3,
+        "total_nodes": 15,
+        "total_edges": 117,
+        "errors": []
+      }
+    },
+    {
+      "operation": "mcp__crg__list_graph_stats_tool",
+      "order": 3,
+      "raw": {
+        "status": "ok",
+        "last_updated": "2026-08-09T19:23:01",
+        "files_count": 1,
+        "total_nodes": 15,
+        "total_edges": 103,
+        "nodes_by_kind": {
+          "File": 1,
+          "Function": 1,
+          "Test": 13
+        },
+        "edges_by_kind": {
+          "CALLS": 45,
+          "CONTAINS": 14,
+          "IMPORTS_FROM": 3,
+          "TESTED_BY": 41
+        },
+        "embeddings_count": 0
+      }
+    }
+  ],
+  "interpretation": "Build responses report the incremental update batch; aggregate list stats report the current graph. They are separate CRG snapshots and are not interchangeable counts."
+}
