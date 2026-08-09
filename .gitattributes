@@ -1,1 +1,6 @@
 docs/evaluation/adjudication/**/*.json text eol=lf
+docs/evaluation/preflight/**/*.json binary
+docs/evaluation/runs/**/*.json binary
+docs/evaluation/runs/**/*.md binary
+docs/evaluation/comparisons/**/*.json binary
+docs/evaluation/comparisons/**/*.md binary

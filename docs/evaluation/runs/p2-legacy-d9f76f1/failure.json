@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "run_id": "p2-legacy-d9f76f1",
+  "status": "aborted_before_run_artifacts",
+  "profile": "legacy",
+  "intended_case_count": 40,
+  "git_sha": "d9f76f160597cf6bb309f13010e095092ea23c99",
+  "source_state_sha256": "6daefd839c80506b40744c6e6a2d928762c01adff77677a0fb38262bf783d1fb",
+  "command": "python -u run_retrieval_eval.py --dataset app/data/namsyntax_legal_qa_420_curated_v1.json --sidecar docs/evaluation/adjudication/promotions/gold-adjudication-promotion-curated-v4_20260809_151015_227377/labels_v2.json --profile legacy --rewrite off --reranker current --concurrency 1 --verified-only --gold-policy all-required-verified --require-clean-git --run-id p2-legacy-d9f76f1",
+  "observed_error_type": "AttributeError",
+  "observed_error": "'EvidenceChunk' object has no attribute 'score'",
+  "observed_source_location": "run_retrieval_eval.py:357",
+  "completed_case_count": 0,
+  "provider_calls": "not_counted; the first live retrieval case reached the runtime retriever before the adapter failed",
+  "manifest_written": false,
+  "results_written": false,
+  "report_written": false,
+  "corpus_or_durable_index_mutated": false
+}

@@ -31,8 +31,8 @@
 ## Task 3: Run official provider-free all-profile preflight
 
 1. From the clean checkpoint, execute `run_retrieval_eval.py --preflight-all-profiles --verified-only --gold-policy all-required-verified --require-clean-git` with the pinned dataset and promoted sidecar.
-2. Require: exit 0, `READY`, provider calls 0, 40 identical selected case IDs for all three profiles, identical dataset/sidecar/source-state hashes, clean Git provenance.
-3. Reload every emitted JSON and recompute hashes. Commit the immutable preflight evidence so the live benchmark again starts clean.
+2. Require: exit 0, batch `OK`, provider calls 0, 40 identical selected case IDs for all three profiles, identical dataset/sidecar/source-state hashes, clean Git provenance.
+3. Reload every emitted JSON and recompute hashes. Exclude only the exact immutable preflight output locally until all live profiles finish so preflight and live runs retain the same source SHA; commit the evidence afterward.
 
 ## Task 4: Execute the three live retrieval profiles on one source state
 
@@ -54,3 +54,11 @@
 2. Run focused tests, the five-file evaluation suite, fatal Ruff, compileall, diff check, then full `pytest -q` once the review is clean.
 3. Update `CURRENT_STATUS.md` with actual commands/results only. Mark live provider calls and remote-data mutation separately; retrieval calls are read-only and no corpus/index mutation is permitted.
 4. Create a local P2 checkpoint commit. Do not push, merge remote, ingest, migrate, or delete data in this plan.
+
+## Execution outcome
+
+- First live attempt `p2-legacy-d9f76f1` exposed a real runtime contract bug before any case completed: the evaluation adapter read a nonexistent `EvidenceChunk.score`. The failed run was preserved and the adapter was fixed by TDD in commit `aa3208c850d8b8f8782bab98ca925228202dfff8`.
+- The official post-fix preflight completed with batch `OK`, 40 selected cases, zero provider calls, clean Git SHA `aa3208c850d8b8f8782bab98ca925228202dfff8`, and source-state SHA-256 `4c4a9c600ee59271052b746944bf5273ad6e64ae36b2332c45afa624a6b8b91d`.
+- Live runs `p2-legacy-aa3208c`, `p2-separated-no-intent-aa3208c`, and `p2-separated-intent-aa3208c` completed 40/40 cases each with no typed retrieval or reranker errors.
+- All three profiles scored zero for every defined retrieval-quality metric. All 53 verified evidence items were first lost at source retrieval, before local selection or reranking, so P2 has no winning profile.
+- The immutable comparison is under `docs/evaluation/comparisons/p2-aa3208c/`; its decision is `NO_WINNER_ZERO_RECALL`.

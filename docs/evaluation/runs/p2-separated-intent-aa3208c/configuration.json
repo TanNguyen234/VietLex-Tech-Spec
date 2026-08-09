@@ -1,0 +1,46 @@
+{
+  "profile_name": "separated_intent",
+  "profile": {
+    "name": "separated_intent",
+    "retrieval_document_limit": 24,
+    "resolved_document_limit": 16,
+    "local_chunks_per_document": 4,
+    "rerank_input_limit": 24,
+    "rerank_return_limit": 3,
+    "final_evidence_limit": 3,
+    "final_context_token_limit": 720,
+    "intent_scoring_enabled": true,
+    "rewrite_mode": "off",
+    "reranker_mode": "current"
+  },
+  "eval_mode": "retrieval-only",
+  "judge_mode": "none",
+  "guardrail_mode": "off",
+  "rewrite_mode": "off",
+  "reranker_provider": "current",
+  "gold_policy": "all-required-verified",
+  "selected_case_count": 40,
+  "selected_case_ids_sha256": "02b147618710247b69406c62c37ee1733412cf99c803a3b818cfc0040e78cfd6",
+  "configured_provider_models": {
+    "dense": {
+      "provider": "qdrant-cloud-staging",
+      "model": "intfloat/multilingual-e5-small"
+    },
+    "reranker_primary": {
+      "provider": "qdrant",
+      "model": "answerdotai/answerai-colbert-small-v1"
+    },
+    "reranker_fallback": {
+      "provider": "pinecone",
+      "model": "bge-reranker-v2-m3"
+    },
+    "generation": {
+      "mode": "not_applicable",
+      "candidates": []
+    },
+    "judge": {
+      "mode": "none",
+      "candidates": []
+    }
+  }
+}
