@@ -1,6 +1,6 @@
 # VietLex Evaluation Current Status
 
-**Status:** P1 real provider-free adjudication queue READY_FOR_REVIEW; human decisions pending; live baseline BLOCKED by zero verified gold
+**Status:** P1 anchor-backed provider-free adjudication queue READY_FOR_REVIEW; human decisions pending; live baseline BLOCKED by zero verified gold
 
 - Historical 2026-08-03 retrieval runs remain invalid for decision-making.
 - Current sidecar: 420 cases, 483 evidence items, 0 verified evidence items.
@@ -23,30 +23,41 @@ Verified on 2026-08-08 from feature source SHA `2f08c5283c233ed108b5ab5de5010dbc
 - Real queue generation: **COMPLETED provider-free** on 2026-08-09; details are pinned below.
 - Human decisions, promotion preview, preview approval, evidence promotion, provider calls, corpus/index mutation, and P2: **NOT RUN**.
 
+Anchor-candidate discovery was verified on 2026-08-09 and committed as `7b8347a2bf1e956110446292c0c62959b4acd5c1`.
+
+- Source-document fallback scans the local content store read-only by bounded normative legal-type tiers and reuses the deterministic normalized-anchor matcher.
+- Source-sidecar IDs remain first, anchor matches rank before title/document-number FTS noise, and scan absence is explicitly not treated as proof that a source is missing from the corpus.
+- Focused suite: `158 passed in 59.92s`; broader relevant suite: `233 passed in 70.43s`; full suite: `375 passed, 1 skipped in 80.65s`.
+- Ruff fatal checks, compileall, `git diff --check`, and compact CRG review passed; CRG risk score was low (`0.40`).
+
 Resume with human review of the immutable decision template. Do not run promotion unless the user explicitly approves the exact future preview SHA-256.
 
-## P1 real adjudication queue
+## P1 current anchor-backed adjudication queue
 
-- Artifact: `docs/evaluation/adjudication/queues/gold-adjudication-queue-20260809T123505Z-4df0170/`.
+- Artifact: `docs/evaluation/adjudication/queues/gold-adjudication-queue_20260809_140617_989731_00000000/`.
 - Queue status: `READY_FOR_REVIEW`; selected cases: 40/40 from 245 eligible cases; selection shortfall: 0.
 - Selected strata: `factoid|article=7`, `factoid|clause=7`, `factoid|document=7`, `multi-hop|article=7`, `multi-hop|clause=6`, `multi-hop|document=6`.
 - Review rows: 52; candidates: 624 (12 per row); zero-candidate rows: 0.
-- Decision template: 52/52 decisions remain `pending`; no raw `adjudication_notes` key is persisted.
+- Anchor scan candidates: 71. The exact source laws `72/2020/QH14` and `59/2020/QH14` are surfaced for all 52 evidence rows (24 and 28 rows respectively).
+- Structural gate: 38 supported candidates across 32/52 evidence rows; 20 rows remain unsupported because the supplied Article/Clause requirement conflicts with the matched source structure. Only 22/40 cases currently have supported candidates for every queued evidence row.
+- Decision template: 52/52 decisions remain `pending`; selected candidates: 0; reviewer identities: 0; no raw `adjudication_notes` key is persisted.
 - Dataset SHA-256: `84c93a522c1bc8eac7179aa808f70b59466fe9a55a4a9f98ddae07797c9662c7`.
 - Source sidecar SHA-256: `c63932ac4101a37ab189d665ea181c4672faac8e9de035d0d83797384d5aa18a`.
-- Queue SHA-256: `680a144c928f7b32cf3268e3d2e0002a4c98c4172a12f78508d5013e5e3e32e0`.
-- Decision-template SHA-256: `69c5af91844f4c38c81a014c1ad4777da6ff6137ba3c37b0fa64019ee7c38c3b`.
-- Queue-summary SHA-256: `2fce1a0612acbf8bddb5011465404269ab07dcc841d779b5895af5f0beaa1015`.
-- Source Git SHA: `4df0170a503937da280910b9fea9309ffa8ed638` with `git_dirty=false`; source-state SHA-256: `62c63fb7fc9461ccc09ac123b79ef8e5c7613fe9b08d4e1c2911ab85a51ee1d4`.
-- Local content store and FTS were opened read-only and each reported 518,255 records. Provider calls: 0. Remote data modified: no.
+- Queue SHA-256: `a2fab7aa14813d5f621db31aa3b09213621ad1469d169614558613c27bae9db8`.
+- Decision-template SHA-256: `3ac328220e5843fc450f001fcd8970f6711560439351429130130d1936a727af`.
+- Queue-summary SHA-256: `41a700e5ac87e9da6492eb84fd990d56059a0375b93ddb1f93540545b54f52e9`.
+- Source Git SHA: `7b8347a2bf1e956110446292c0c62959b4acd5c1` with `git_dirty=true` only because two pre-existing preflight artifact directories were untracked; tracked and staged state were clean. Git diff SHA-256: `5b4523cbbaca0523daf8681093e7a9772ae7eed42437547ae176dc82c5e29121`; source-state SHA-256: `1b8c338a34bbc74345ded3c48ff0257ea1dc79ffe0b4ad032680fa02f8cfbb3b`.
+- The local content store and FTS were opened read-only. Provider calls: 0. Remote data modified: no.
 
 Exact generation command:
 
 ```powershell
-python -u run_gold_adjudication.py queue --dataset D:\Download\ProfessionalLegalRAG\app\data\namsyntax_legal_qa_420.json --sidecar D:\Download\ProfessionalLegalRAG\.worktrees\lean-superpowers-v2-p1\docs\evaluation\gold_labels\namsyntax_legal_qa_420_labels_v2.json --content-store D:\Download\ProfessionalLegalRAG\data\huggingface\content_store.sqlite3 --fts D:\Download\ProfessionalLegalRAG\data\huggingface\legal_fts.sqlite3 --output-root D:\Download\ProfessionalLegalRAG\.worktrees\lean-superpowers-v2-p1\docs\evaluation\adjudication\queues --run-id gold-adjudication-queue-20260809T123505Z-4df0170 --target-cases 40 --candidate-limit 12
+python -u run_gold_adjudication.py queue --dataset D:\Download\ProfessionalLegalRAG\app\data\namsyntax_legal_qa_420.json --sidecar D:\Download\ProfessionalLegalRAG\docs\evaluation\gold_labels\namsyntax_legal_qa_420_labels_v2.json --content-store D:\Download\ProfessionalLegalRAG\data\huggingface\content_store.sqlite3 --fts D:\Download\ProfessionalLegalRAG\data\huggingface\legal_fts.sqlite3 --output-root D:\Download\ProfessionalLegalRAG\docs\evaluation\adjudication\queues --target-cases 40 --candidate-limit 12
 ```
 
-Generation exited 0 in 49.2 seconds. Independent reload validation reconstructed the decision template exactly, validated queue row/candidate identities, matched all canonical file hashes, confirmed portable artifact paths, and ended with `VALIDATION=PASS`.
+Generation exited 0 in 124.5 seconds. JSON reload and canonical SHA-256 validation confirmed all counts and artifact hashes above. The prior FTS-only queue remains immutable: queue SHA-256 `680a144c928f7b32cf3268e3d2e0002a4c98c4172a12f78508d5013e5e3e32e0`, decision-template SHA-256 `69c5af91844f4c38c81a014c1ad4777da6ff6137ba3c37b0fa64019ee7c38c3b`.
+
+Human adjudication is still required. No candidate was automatically accepted, no preview was created, and no evidence was promoted. P2 remains blocked until at least 30 cases satisfy the verified-gold gate.
 
 ## Evidence policy
 

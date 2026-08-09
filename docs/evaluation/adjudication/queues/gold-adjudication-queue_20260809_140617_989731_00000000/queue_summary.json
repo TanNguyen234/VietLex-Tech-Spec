@@ -1,0 +1,48 @@
+{
+  "artifact_hashes": {
+    "decision_template_sha256": "3ac328220e5843fc450f001fcd8970f6711560439351429130130d1936a727af",
+    "queue_sha256": "a2fab7aa14813d5f621db31aa3b09213621ad1469d169614558613c27bae9db8"
+  },
+  "artifact_paths": {
+    "decision_template": "docs/evaluation/adjudication/queues/gold-adjudication-queue_20260809_140617_989731_00000000/decision_template.json",
+    "queue": "docs/evaluation/adjudication/queues/gold-adjudication-queue_20260809_140617_989731_00000000/queue.json",
+    "queue_summary": "docs/evaluation/adjudication/queues/gold-adjudication-queue_20260809_140617_989731_00000000/queue_summary.json"
+  },
+  "command": [
+    "run_gold_adjudication.py",
+    "queue"
+  ],
+  "dataset_sha256": "84c93a522c1bc8eac7179aa808f70b59466fe9a55a4a9f98ddae07797c9662c7",
+  "provenance": {
+    "error": null,
+    "git_diff_reason": null,
+    "git_diff_sha256": "5b4523cbbaca0523daf8681093e7a9772ae7eed42437547ae176dc82c5e29121",
+    "git_diff_status": "ok",
+    "git_dirty": true,
+    "git_sha": "7b8347a2bf1e956110446292c0c62959b4acd5c1",
+    "git_staged_dirty": false,
+    "git_tracked_dirty": false,
+    "git_untracked_dirty": true,
+    "repository_root": ".",
+    "source_state_sha256": "1b8c338a34bbc74345ded3c48ff0257ea1dc79ffe0b4ad032680fa02f8cfbb3b",
+    "status": "ok"
+  },
+  "provider_calls": 0,
+  "queue_status": "READY_FOR_REVIEW",
+  "run_id": "gold-adjudication-queue_20260809_140617_989731_00000000",
+  "selected_case_count": 40,
+  "selection_diagnostics": {
+    "eligible_case_count": 245,
+    "selected_strata": {
+      "factoid|article": 7,
+      "factoid|clause": 7,
+      "factoid|document": 7,
+      "multi-hop|article": 7,
+      "multi-hop|clause": 6,
+      "multi-hop|document": 6
+    },
+    "shortfall": 0
+  },
+  "source_sidecar_sha256": "c63932ac4101a37ab189d665ea181c4672faac8e9de035d0d83797384d5aa18a",
+  "target_case_count": 40
+}
