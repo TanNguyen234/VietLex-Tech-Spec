@@ -82,6 +82,115 @@ def profiles(*, rewrite_mode: str = "off"):
     ]
 
 
+def _write_validation_inputs(tmp_path: Path) -> tuple[Path, Path]:
+    dataset_path = tmp_path / "dataset.json"
+    sidecar_path = tmp_path / "promoted-sidecar.json"
+    dataset_path.write_text(
+        json.dumps(
+            [
+                {
+                    "question": "Quy định áp dụng là gì?",
+                    "question_type": "factoid",
+                    "ground_truth_answer": "Có căn cứ pháp luật.",
+                    "ground_truth_context": ["Điều 1 văn bản 1/2026/QH15."],
+                }
+            ],
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    sidecar_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "2.0.0",
+                "dataset_name": "promoted-test",
+                "total_cases": 1,
+                "total_evidence_items": 1,
+                "labels": [
+                    {
+                        "evidence_item_id": "case_001_ctx01_cit01",
+                        "case_id": "case_001",
+                        "required": True,
+                        "required_level": "document",
+                        "status": "verified",
+                        "document_id": 1,
+                    }
+                ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    return dataset_path, sidecar_path
+
+
+def test_custom_sidecar_validation_does_not_require_unrelated_audit_summary(
+    tmp_path: Path,
+) -> None:
+    # Break caught: a custom promoted sidecar is compared with the legacy
+    # default audit summary and rejected before the live evaluation starts.
+    dataset_path, sidecar_path = _write_validation_inputs(tmp_path)
+
+    all_cases, selection, sidecar, audit_summary = (
+        run_retrieval_eval.perform_pre_execution_validation(
+            dataset_path=dataset_path,
+            sidecar_path=sidecar_path,
+            summary_path=None,
+            gold_policy="all-required-verified",
+            verified_only=True,
+            require_clean_git=False,
+        )
+    )
+
+    assert len(all_cases) == 1
+    assert selection.selected_case_ids == ["case_001"]
+    assert sidecar.metadata.total_evidence_items == 1
+    assert audit_summary == {}
+
+
+def test_explicit_audit_summary_option_remains_fail_closed(
+    tmp_path: Path,
+) -> None:
+    # Break caught: selecting a custom sidecar silently ignores an explicitly
+    # requested, mismatched audit summary.
+    dataset_path, sidecar_path = _write_validation_inputs(tmp_path)
+    summary_path = tmp_path / "audit-summary.json"
+    summary_path.write_text(
+        json.dumps({"total_evidence_items": 2}),
+        encoding="utf-8",
+    )
+    arguments = run_retrieval_eval.build_parser().parse_args(
+        ["--audit-summary", str(summary_path)]
+    )
+
+    assert arguments.audit_summary == summary_path
+    with pytest.raises(ValueError, match="Counter mismatch"):
+        run_retrieval_eval.perform_pre_execution_validation(
+            dataset_path=dataset_path,
+            sidecar_path=sidecar_path,
+            summary_path=arguments.audit_summary,
+            gold_policy="all-required-verified",
+            verified_only=True,
+            require_clean_git=False,
+        )
+
+
+def test_explicit_missing_audit_summary_is_rejected(tmp_path: Path) -> None:
+    # Break caught: a misspelled explicit audit-summary path is silently
+    # ignored, creating a false impression that its counters were checked.
+    dataset_path, sidecar_path = _write_validation_inputs(tmp_path)
+
+    with pytest.raises(FileNotFoundError, match="Audit summary file not found"):
+        run_retrieval_eval.perform_pre_execution_validation(
+            dataset_path=dataset_path,
+            sidecar_path=sidecar_path,
+            summary_path=tmp_path / "missing-summary.json",
+            gold_policy="all-required-verified",
+            verified_only=True,
+            require_clean_git=False,
+        )
+
+
 def batch_payload(
     tmp_path: Path,
     *,

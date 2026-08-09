@@ -61,6 +61,15 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--dataset", type=Path, default=DEFAULT_DATASET_PATH)
     parser.add_argument("--sidecar", type=Path, default=DEFAULT_SIDECAR_PATH)
     parser.add_argument(
+        "--audit-summary",
+        type=Path,
+        default=None,
+        help=(
+            "Optional machine-readable audit summary matching --sidecar. "
+            "The legacy default summary is used only with the default sidecar."
+        ),
+    )
+    parser.add_argument(
         "--profile",
         choices=["legacy", "separated_no_intent", "separated_intent"],
         default="separated_intent",
@@ -123,7 +132,7 @@ def build_parser() -> argparse.ArgumentParser:
 def perform_pre_execution_validation(
     dataset_path: Path,
     sidecar_path: Path,
-    summary_path: Path,
+    summary_path: Optional[Path],
     gold_policy: str,
     verified_only: bool,
     require_clean_git: bool,
@@ -152,7 +161,11 @@ def perform_pre_execution_validation(
 
     # 3. Load machine-readable audit summary if available
     audit_summary: Dict[str, Any] = {}
-    if summary_path.exists():
+    if summary_path is not None:
+        if not summary_path.exists():
+            raise FileNotFoundError(
+                f"Audit summary file not found: {summary_path}"
+            )
         try:
             audit_summary = json.loads(summary_path.read_text(encoding="utf-8"))
             if audit_summary.get("total_evidence_items") != sidecar.metadata.total_evidence_items:
@@ -400,7 +413,15 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
     settings = get_settings()
     dataset_path = Path(args.dataset).resolve()
     sidecar_path = Path(args.sidecar).resolve()
-    summary_path = DEFAULT_SUMMARY_PATH
+    summary_path = (
+        Path(args.audit_summary).resolve()
+        if args.audit_summary is not None
+        else (
+            DEFAULT_SUMMARY_PATH.resolve()
+            if sidecar_path == DEFAULT_SIDECAR_PATH.resolve()
+            else None
+        )
+    )
 
     dataset_sha256 = calculate_dataset_sha256(dataset_path)
 

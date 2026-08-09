@@ -1,0 +1,398 @@
+{
+  "schema_version": "1.0.0",
+  "revision": "namsyntax_legal_qa_420_curated_v1",
+  "created_at_utc": "2026-08-09T14:50:42.588410Z",
+  "approval_basis": "User replied OK after reviewing the 52-row evidence verification report; promotion remains unapproved.",
+  "source": {
+    "dataset_path": "app/data/namsyntax_legal_qa_420.json",
+    "dataset_sha256": "84c93a522c1bc8eac7179aa808f70b59466fe9a55a4a9f98ddae07797c9662c7",
+    "sidecar_path": "docs/evaluation/gold_labels/namsyntax_legal_qa_420_labels_v2.json",
+    "sidecar_sha256": "c63932ac4101a37ab189d665ea181c4672faac8e9de035d0d83797384d5aa18a",
+    "dataset_cases": 420,
+    "sidecar_evidence_items": 483
+  },
+  "output": {
+    "dataset_path": "app/data/namsyntax_legal_qa_420_curated_v1.json",
+    "dataset_sha256": "d6e125030e8dda700667ba00f25162fac76472a9bfa2d087f54e2b5bc73a1fee",
+    "sidecar_path": "docs/evaluation/gold_labels/namsyntax_legal_qa_420_labels_v3.json",
+    "sidecar_sha256": "0a9aa5b5ae0d70875200b45ee581b8dc2fad8c90458cb39b6bd869c55c295c46",
+    "dataset_cases": 420,
+    "sidecar_evidence_items": 484
+  },
+  "pinned_corpus_documents": [
+    {
+      "document_id": 427301,
+      "document_number": "59/2020/QH14",
+      "content_sha256": "02cf6f092e723120a9ff5e89c6d95e3829f9523a8a9b5631fac810cd262a62ca"
+    },
+    {
+      "document_id": 431147,
+      "document_number": "72/2020/QH14",
+      "content_sha256": "43892b604cf41d640d811aaa58656dd3cfdf684ecd0f7cefed993ec2c211549d"
+    }
+  ],
+  "transformations": {
+    "locator_corrections": 16,
+    "localized_existing_contexts": 4,
+    "split_new_contexts": 1,
+    "added_evidence_ids": [
+      "case_263_ctx02_cit01"
+    ],
+    "label_changes": [
+      {
+        "evidence_item_id": "case_355_ctx01_cit01",
+        "before": {
+          "document_number": null,
+          "article": "Điều 115",
+          "clause": "khoản 2",
+          "reference_anchor_hash": "dce2f8202e1fe140"
+        },
+        "after": {
+          "document_number": "59/2020/QH14",
+          "article": "Điều 151",
+          "clause": "Khoản 1",
+          "reference_anchor_hash": "dce2f8202e1fe140"
+        }
+      },
+      {
+        "evidence_item_id": "case_043_ctx01_cit01",
+        "before": {
+          "document_number": null,
+          "article": "Điều 39",
+          "clause": null,
+          "reference_anchor_hash": "d6da6e4047fe4c52"
+        },
+        "after": {
+          "document_number": "72/2020/QH14",
+          "article": "Điều 41",
+          "clause": "Khoản 1",
+          "reference_anchor_hash": "d6da6e4047fe4c52"
+        }
+      },
+      {
+        "evidence_item_id": "case_061_ctx01_cit01",
+        "before": {
+          "document_number": null,
+          "article": "Điều 51",
+          "clause": "khoản 1",
+          "reference_anchor_hash": "bb6523fe6e92b594"
+        },
+        "after": {
+          "document_number": "72/2020/QH14",
+          "article": "Điều 52",
+          "clause": "Khoản 2",
+          "reference_anchor_hash": "bb6523fe6e92b594"
+        }
+      },
+      {
+        "evidence_item_id": "case_371_ctx02_cit01",
+        "before": {
+          "document_number": null,
+          "article": null,
+          "clause": "khoản 2",
+          "reference_anchor_hash": "7918359580ed4d88"
+        },
+        "after": {
+          "document_number": "59/2020/QH14",
+          "article": "Điều 164",
+          "clause": "Khoản 3",
+          "reference_anchor_hash": "7918359580ed4d88"
+        }
+      },
+      {
+        "evidence_item_id": "case_379_ctx01_cit01",
+        "before": {
+          "document_number": null,
+          "article": "Điều 115",
+          "clause": "khoản 2",
+          "reference_anchor_hash": "2bad788058e07624"
+        },
+        "after": {
+          "document_number": "59/2020/QH14",
+          "article": "Điều 170",
+          "clause": "Khoản 6",
+          "reference_anchor_hash": "2bad788058e07624"
+        }
+      },
+      {
+        "evidence_item_id": "case_036_ctx02_cit01",
+        "before": {
+          "document_number": null,
+          "article": null,
+          "clause": "khoản 9",
+          "reference_anchor_hash": "dc69463e5542bff0"
+        },
+        "after": {
+          "document_number": "72/2020/QH14",
+          "article": "Điều 34",
+          "clause": "Khoản 6",
+          "reference_anchor_hash": "dc69463e5542bff0"
+        }
+      },
+      {
+        "evidence_item_id": "case_065_ctx01_cit01",
+        "before": {
+          "document_number": null,
+          "article": null,
+          "clause": "khoản 1",
+          "reference_anchor_hash": "90bdcabf46ef64ca"
+        },
+        "after": {
+          "document_number": "72/2020/QH14",
+          "article": "Điều 54",
+          "clause": "Khoản 2",
+          "reference_anchor_hash": "90bdcabf46ef64ca"
+        }
+      },
+      {
+        "evidence_item_id": "case_375_ctx01_cit01",
+        "before": {
+          "document_number": null,
+          "article": null,
+          "clause": "khoản 1",
+          "reference_anchor_hash": "fbc37f4d4d95f601"
+        },
+        "after": {
+          "document_number": "59/2020/QH14",
+          "article": "Điều 167",
+          "clause": "Khoản 2",
+          "reference_anchor_hash": "fbc37f4d4d95f601"
+        }
+      },
+      {
+        "evidence_item_id": "case_253_ctx01_cit01",
+        "before": {
+          "document_number": null,
+          "article": "Điều 52",
+          "clause": "khoản 4",
+          "reference_anchor_hash": "1110522fafaac6dc"
+        },
+        "after": {
+          "document_number": "59/2020/QH14",
+          "article": "Điều 52",
+          "clause": "Khoản 1",
+          "reference_anchor_hash": "1110522fafaac6dc"
+        }
+      },
+      {
+        "evidence_item_id": "case_261_ctx01_cit01",
+        "before": {
+          "document_number": null,
+          "article": null,
+          "clause": "khoản 1",
+          "reference_anchor_hash": "189e97805860f66b"
+        },
+        "after": {
+          "document_number": "59/2020/QH14",
+          "article": "Điều 57",
+          "clause": "Khoản 6",
+          "reference_anchor_hash": "189e97805860f66b"
+        }
+      },
+      {
+        "evidence_item_id": "case_374_ctx01_cit01",
+        "before": {
+          "document_number": null,
+          "article": "Điều 165",
+          "clause": null,
+          "reference_anchor_hash": "7fba2889894d1751"
+        },
+        "after": {
+          "document_number": "59/2020/QH14",
+          "article": "Điều 166",
+          "clause": "Khoản 1",
+          "reference_anchor_hash": "7fba2889894d1751"
+        }
+      },
+      {
+        "evidence_item_id": "case_227_ctx01_cit01",
+        "before": {
+          "document_number": null,
+          "article": null,
+          "clause": "khoản 1",
+          "reference_anchor_hash": "c64d34b9f51b894f"
+        },
+        "after": {
+          "document_number": "59/2020/QH14",
+          "article": "Điều 18",
+          "clause": "Khoản 3",
+          "reference_anchor_hash": "c64d34b9f51b894f"
+        }
+      },
+      {
+        "evidence_item_id": "case_135_ctx01_cit01",
+        "before": {
+          "document_number": null,
+          "article": "Điều 109",
+          "clause": null,
+          "reference_anchor_hash": "4a42b53e5d381fb6"
+        },
+        "after": {
+          "document_number": "72/2020/QH14",
+          "article": "Điều 107",
+          "clause": "Khoản 1",
+          "reference_anchor_hash": "4a42b53e5d381fb6"
+        }
+      },
+      {
+        "evidence_item_id": "case_361_ctx01_cit01",
+        "before": {
+          "document_number": null,
+          "article": "Điều 88",
+          "clause": "khoản 1",
+          "reference_anchor_hash": "a2ad3968aea0a0c7"
+        },
+        "after": {
+          "document_number": "59/2020/QH14",
+          "article": "Điều 156",
+          "clause": "Khoản 2",
+          "reference_anchor_hash": "a2ad3968aea0a0c7"
+        }
+      },
+      {
+        "evidence_item_id": "case_285_ctx01_cit01",
+        "before": {
+          "document_number": null,
+          "article": "Điều 202",
+          "clause": null,
+          "reference_anchor_hash": "4396e8db2f7420d1"
+        },
+        "after": {
+          "document_number": "59/2020/QH14",
+          "article": "Điều 87",
+          "clause": "Khoản 2",
+          "reference_anchor_hash": "4396e8db2f7420d1"
+        }
+      },
+      {
+        "evidence_item_id": "case_285_ctx02_cit01",
+        "before": {
+          "document_number": null,
+          "article": "Điều 202",
+          "clause": null,
+          "reference_anchor_hash": "d2db106075c8173e"
+        },
+        "after": {
+          "document_number": "59/2020/QH14",
+          "article": "Điều 87",
+          "clause": "Khoản 2",
+          "reference_anchor_hash": "d2db106075c8173e"
+        }
+      },
+      {
+        "evidence_item_id": "case_397_ctx01_cit01",
+        "before": {
+          "document_number": null,
+          "article": null,
+          "clause": "khoản 3",
+          "reference_anchor_hash": "8b72ecc902ed3ad6"
+        },
+        "after": {
+          "document_number": "59/2020/QH14",
+          "article": "Điều 196",
+          "clause": "Khoản 5",
+          "reference_anchor_hash": "6ba38de63e1b41a8"
+        }
+      },
+      {
+        "evidence_item_id": "case_397_ctx02_cit01",
+        "before": {
+          "document_number": null,
+          "article": "Điều 197",
+          "clause": "khoản 3",
+          "reference_anchor_hash": "8ea4686f08e140a2"
+        },
+        "after": {
+          "document_number": "59/2020/QH14",
+          "article": "Điều 197",
+          "clause": "Khoản 1",
+          "reference_anchor_hash": "630bbe91ecbea216"
+        }
+      },
+      {
+        "evidence_item_id": "case_263_ctx01_cit01",
+        "before": {
+          "document_number": null,
+          "article": "Điều 59",
+          "clause": null,
+          "reference_anchor_hash": "665242c29d5051d9"
+        },
+        "after": {
+          "document_number": "59/2020/QH14",
+          "article": "Điều 58",
+          "clause": "Khoản 4",
+          "reference_anchor_hash": "46ebe77cb7ac395c"
+        }
+      },
+      {
+        "evidence_item_id": "case_075_ctx02_cit01",
+        "before": {
+          "document_number": null,
+          "article": "Điều 62",
+          "clause": null,
+          "reference_anchor_hash": "81ed506424fe5766"
+        },
+        "after": {
+          "document_number": "72/2020/QH14",
+          "article": "Điều 61",
+          "clause": "Khoản 7",
+          "reference_anchor_hash": "6fdf923c79a02113"
+        }
+      }
+    ],
+    "localized_contexts": [
+      {
+        "case_id": "case_075",
+        "context_index": 2,
+        "document_number": "72/2020/QH14",
+        "article": 61,
+        "clause": 7,
+        "context_sha256": "51b8e3d6cd4c6fbece78131a09365e9660feb8961314b0803b70af2ce67048ea",
+        "normalized_anchor_hash": "6fdf923c79a02113"
+      },
+      {
+        "case_id": "case_263",
+        "context_index": 1,
+        "document_number": "59/2020/QH14",
+        "article": 58,
+        "clause": 4,
+        "context_sha256": "a55ead04764d5dd7b0142c7b845e698666615cb053f68046f9db5e0007eafa24",
+        "normalized_anchor_hash": "46ebe77cb7ac395c"
+      },
+      {
+        "case_id": "case_263",
+        "context_index": 2,
+        "document_number": "59/2020/QH14",
+        "article": 59,
+        "clause": 2,
+        "context_sha256": "5aa00c902d2822d891584b52bf733692ddd2818f50ecc582d61fd5244561f607",
+        "normalized_anchor_hash": "422f7757ed541cac"
+      },
+      {
+        "case_id": "case_397",
+        "context_index": 1,
+        "document_number": "59/2020/QH14",
+        "article": 196,
+        "clause": 5,
+        "context_sha256": "6344f471f68e76f6930406e7c5e706da54c65c7b1df8292161b63aef3a1b7be1",
+        "normalized_anchor_hash": "6ba38de63e1b41a8"
+      },
+      {
+        "case_id": "case_397",
+        "context_index": 2,
+        "document_number": "59/2020/QH14",
+        "article": 197,
+        "clause": 1,
+        "context_sha256": "3bbeed0c550c8c38fbb047fe49bf02444d4bc29af7a6aa3eb37a1cccceb5056e",
+        "normalized_anchor_hash": "630bbe91ecbea216"
+      }
+    ]
+  },
+  "boundaries": {
+    "provider_calls": 0,
+    "corpus_mutated": false,
+    "indexes_mutated": false,
+    "promotion_performed": false,
+    "source_files_overwritten": false
+  }
+}

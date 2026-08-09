@@ -1,0 +1,146 @@
+{
+  "schema_version": "1.0.0",
+  "revision": "namsyntax_legal_qa_420_curated_v1_sidecar_v4",
+  "created_at_utc": "2026-08-09T14:58:27.728032Z",
+  "approval_basis": "User-approved evidence report verified the exact pinned source law for these 21 corrected/localized rows; promotion remains unapproved.",
+  "source": {
+    "dataset_path": "app/data/namsyntax_legal_qa_420_curated_v1.json",
+    "dataset_sha256": "d6e125030e8dda700667ba00f25162fac76472a9bfa2d087f54e2b5bc73a1fee",
+    "sidecar_path": "docs/evaluation/gold_labels/namsyntax_legal_qa_420_labels_v3.json",
+    "sidecar_sha256": "0a9aa5b5ae0d70875200b45ee581b8dc2fad8c90458cb39b6bd869c55c295c46",
+    "curation_manifest_path": "docs/evaluation/gold_labels/namsyntax_legal_qa_420_curation_v3_manifest.json",
+    "curation_manifest_sha256": "25db4603e2b1e2fdd0c310999adeb45ebd5df7542bb6c7e6485d8203117d52ff"
+  },
+  "output": {
+    "sidecar_path": "docs/evaluation/gold_labels/namsyntax_legal_qa_420_labels_v4.json",
+    "sidecar_sha256": "7629cec30a5afcd31d1517d142341a053ebe665691093c2742288f0a61433d5c",
+    "total_cases": 420,
+    "total_evidence_items": 484
+  },
+  "transformations": {
+    "document_identity_bindings": [
+      {
+        "evidence_item_id": "case_036_ctx02_cit01",
+        "document_number": "72/2020/QH14",
+        "document_id": 431147
+      },
+      {
+        "evidence_item_id": "case_043_ctx01_cit01",
+        "document_number": "72/2020/QH14",
+        "document_id": 431147
+      },
+      {
+        "evidence_item_id": "case_061_ctx01_cit01",
+        "document_number": "72/2020/QH14",
+        "document_id": 431147
+      },
+      {
+        "evidence_item_id": "case_065_ctx01_cit01",
+        "document_number": "72/2020/QH14",
+        "document_id": 431147
+      },
+      {
+        "evidence_item_id": "case_075_ctx02_cit01",
+        "document_number": "72/2020/QH14",
+        "document_id": 431147
+      },
+      {
+        "evidence_item_id": "case_135_ctx01_cit01",
+        "document_number": "72/2020/QH14",
+        "document_id": 431147
+      },
+      {
+        "evidence_item_id": "case_227_ctx01_cit01",
+        "document_number": "59/2020/QH14",
+        "document_id": 427301
+      },
+      {
+        "evidence_item_id": "case_253_ctx01_cit01",
+        "document_number": "59/2020/QH14",
+        "document_id": 427301
+      },
+      {
+        "evidence_item_id": "case_261_ctx01_cit01",
+        "document_number": "59/2020/QH14",
+        "document_id": 427301
+      },
+      {
+        "evidence_item_id": "case_263_ctx01_cit01",
+        "document_number": "59/2020/QH14",
+        "document_id": 427301
+      },
+      {
+        "evidence_item_id": "case_263_ctx02_cit01",
+        "document_number": "59/2020/QH14",
+        "document_id": 427301
+      },
+      {
+        "evidence_item_id": "case_285_ctx01_cit01",
+        "document_number": "59/2020/QH14",
+        "document_id": 427301
+      },
+      {
+        "evidence_item_id": "case_285_ctx02_cit01",
+        "document_number": "59/2020/QH14",
+        "document_id": 427301
+      },
+      {
+        "evidence_item_id": "case_355_ctx01_cit01",
+        "document_number": "59/2020/QH14",
+        "document_id": 427301
+      },
+      {
+        "evidence_item_id": "case_361_ctx01_cit01",
+        "document_number": "59/2020/QH14",
+        "document_id": 427301
+      },
+      {
+        "evidence_item_id": "case_371_ctx02_cit01",
+        "document_number": "59/2020/QH14",
+        "document_id": 427301
+      },
+      {
+        "evidence_item_id": "case_374_ctx01_cit01",
+        "document_number": "59/2020/QH14",
+        "document_id": 427301
+      },
+      {
+        "evidence_item_id": "case_375_ctx01_cit01",
+        "document_number": "59/2020/QH14",
+        "document_id": 427301
+      },
+      {
+        "evidence_item_id": "case_379_ctx01_cit01",
+        "document_number": "59/2020/QH14",
+        "document_id": 427301
+      },
+      {
+        "evidence_item_id": "case_397_ctx01_cit01",
+        "document_number": "59/2020/QH14",
+        "document_id": 427301
+      },
+      {
+        "evidence_item_id": "case_397_ctx02_cit01",
+        "document_number": "59/2020/QH14",
+        "document_id": 427301
+      }
+    ]
+  },
+  "pinned_identity": {
+    "427301": {
+      "document_number": "59/2020/QH14",
+      "content_sha256": "02cf6f092e723120a9ff5e89c6d95e3829f9523a8a9b5631fac810cd262a62ca"
+    },
+    "431147": {
+      "document_number": "72/2020/QH14",
+      "content_sha256": "43892b604cf41d640d811aaa58656dd3cfdf684ecd0f7cefed993ec2c211549d"
+    }
+  },
+  "boundaries": {
+    "provider_calls": 0,
+    "corpus_mutated": false,
+    "indexes_mutated": false,
+    "promotion_performed": false,
+    "source_files_overwritten": false
+  }
+}

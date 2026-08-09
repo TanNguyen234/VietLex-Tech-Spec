@@ -1,0 +1,418 @@
+{
+  "fully_verified_selected_case_count": 40,
+  "negative_counts": {
+    "ambiguous": 0,
+    "corpus_missing": 0,
+    "insufficient_evidence": 0,
+    "rejected": 0
+  },
+  "per_evidence_diff": [
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_177",
+      "evidence_item_id": "case_177_ctx01_cit01",
+      "selected_candidate_id": "94f7747e02b00f35a061e1b7dbf241cf9a1587d199788c608977e05bbec724de"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_355",
+      "evidence_item_id": "case_355_ctx01_cit01",
+      "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_101",
+      "evidence_item_id": "case_101_ctx01_cit01",
+      "selected_candidate_id": "94f7747e02b00f35a061e1b7dbf241cf9a1587d199788c608977e05bbec724de"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_043",
+      "evidence_item_id": "case_043_ctx01_cit01",
+      "selected_candidate_id": "94f7747e02b00f35a061e1b7dbf241cf9a1587d199788c608977e05bbec724de"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_043",
+      "evidence_item_id": "case_043_ctx02_cit01",
+      "selected_candidate_id": "94f7747e02b00f35a061e1b7dbf241cf9a1587d199788c608977e05bbec724de"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_397",
+      "evidence_item_id": "case_397_ctx01_cit01",
+      "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_397",
+      "evidence_item_id": "case_397_ctx02_cit01",
+      "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_329",
+      "evidence_item_id": "case_329_ctx01_cit01",
+      "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_329",
+      "evidence_item_id": "case_329_ctx02_cit01",
+      "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_323",
+      "evidence_item_id": "case_323_ctx01_cit01",
+      "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_061",
+      "evidence_item_id": "case_061_ctx01_cit01",
+      "selected_candidate_id": "94f7747e02b00f35a061e1b7dbf241cf9a1587d199788c608977e05bbec724de"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_127",
+      "evidence_item_id": "case_127_ctx01_cit01",
+      "selected_candidate_id": "94f7747e02b00f35a061e1b7dbf241cf9a1587d199788c608977e05bbec724de"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_263",
+      "evidence_item_id": "case_263_ctx01_cit01",
+      "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_263",
+      "evidence_item_id": "case_263_ctx02_cit01",
+      "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_371",
+      "evidence_item_id": "case_371_ctx01_cit01",
+      "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_371",
+      "evidence_item_id": "case_371_ctx02_cit01",
+      "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_204",
+      "evidence_item_id": "case_204_ctx01_cit01",
+      "selected_candidate_id": "94f7747e02b00f35a061e1b7dbf241cf9a1587d199788c608977e05bbec724de"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_331",
+      "evidence_item_id": "case_331_ctx01_cit01",
+      "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_379",
+      "evidence_item_id": "case_379_ctx01_cit01",
+      "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_031",
+      "evidence_item_id": "case_031_ctx01_cit01",
+      "selected_candidate_id": "94f7747e02b00f35a061e1b7dbf241cf9a1587d199788c608977e05bbec724de"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_243",
+      "evidence_item_id": "case_243_ctx01_cit01",
+      "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_243",
+      "evidence_item_id": "case_243_ctx02_cit01",
+      "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_036",
+      "evidence_item_id": "case_036_ctx01_cit01",
+      "selected_candidate_id": "94f7747e02b00f35a061e1b7dbf241cf9a1587d199788c608977e05bbec724de"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_036",
+      "evidence_item_id": "case_036_ctx02_cit01",
+      "selected_candidate_id": "94f7747e02b00f35a061e1b7dbf241cf9a1587d199788c608977e05bbec724de"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_165",
+      "evidence_item_id": "case_165_ctx01_cit01",
+      "selected_candidate_id": "94f7747e02b00f35a061e1b7dbf241cf9a1587d199788c608977e05bbec724de"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_019",
+      "evidence_item_id": "case_019_ctx01_cit01",
+      "selected_candidate_id": "94f7747e02b00f35a061e1b7dbf241cf9a1587d199788c608977e05bbec724de"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_171",
+      "evidence_item_id": "case_171_ctx01_cit01",
+      "selected_candidate_id": "94f7747e02b00f35a061e1b7dbf241cf9a1587d199788c608977e05bbec724de"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_309",
+      "evidence_item_id": "case_309_ctx01_cit01",
+      "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_021",
+      "evidence_item_id": "case_021_ctx01_cit01",
+      "selected_candidate_id": "94f7747e02b00f35a061e1b7dbf241cf9a1587d199788c608977e05bbec724de"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_021",
+      "evidence_item_id": "case_021_ctx02_cit01",
+      "selected_candidate_id": "94f7747e02b00f35a061e1b7dbf241cf9a1587d199788c608977e05bbec724de"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_065",
+      "evidence_item_id": "case_065_ctx01_cit01",
+      "selected_candidate_id": "94f7747e02b00f35a061e1b7dbf241cf9a1587d199788c608977e05bbec724de"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_257",
+      "evidence_item_id": "case_257_ctx01_cit01",
+      "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_257",
+      "evidence_item_id": "case_257_ctx02_cit01",
+      "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_017",
+      "evidence_item_id": "case_017_ctx01_cit01",
+      "selected_candidate_id": "94f7747e02b00f35a061e1b7dbf241cf9a1587d199788c608977e05bbec724de"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_375",
+      "evidence_item_id": "case_375_ctx01_cit01",
+      "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_121",
+      "evidence_item_id": "case_121_ctx01_cit01",
+      "selected_candidate_id": "94f7747e02b00f35a061e1b7dbf241cf9a1587d199788c608977e05bbec724de"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_075",
+      "evidence_item_id": "case_075_ctx01_cit01",
+      "selected_candidate_id": "94f7747e02b00f35a061e1b7dbf241cf9a1587d199788c608977e05bbec724de"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_075",
+      "evidence_item_id": "case_075_ctx02_cit01",
+      "selected_candidate_id": "94f7747e02b00f35a061e1b7dbf241cf9a1587d199788c608977e05bbec724de"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_253",
+      "evidence_item_id": "case_253_ctx01_cit01",
+      "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_253",
+      "evidence_item_id": "case_253_ctx02_cit01",
+      "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_039",
+      "evidence_item_id": "case_039_ctx01_cit01",
+      "selected_candidate_id": "94f7747e02b00f35a061e1b7dbf241cf9a1587d199788c608977e05bbec724de"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_133",
+      "evidence_item_id": "case_133_ctx01_cit01",
+      "selected_candidate_id": "94f7747e02b00f35a061e1b7dbf241cf9a1587d199788c608977e05bbec724de"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_261",
+      "evidence_item_id": "case_261_ctx01_cit01",
+      "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_187",
+      "evidence_item_id": "case_187_ctx01_cit01",
+      "selected_candidate_id": "94f7747e02b00f35a061e1b7dbf241cf9a1587d199788c608977e05bbec724de"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_374",
+      "evidence_item_id": "case_374_ctx01_cit01",
+      "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_227",
+      "evidence_item_id": "case_227_ctx01_cit01",
+      "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_411",
+      "evidence_item_id": "case_411_ctx01_cit01",
+      "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_411",
+      "evidence_item_id": "case_411_ctx02_cit01",
+      "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_135",
+      "evidence_item_id": "case_135_ctx01_cit01",
+      "selected_candidate_id": "94f7747e02b00f35a061e1b7dbf241cf9a1587d199788c608977e05bbec724de"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_361",
+      "evidence_item_id": "case_361_ctx01_cit01",
+      "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_339",
+      "evidence_item_id": "case_339_ctx01_cit01",
+      "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_285",
+      "evidence_item_id": "case_285_ctx01_cit01",
+      "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0"
+    },
+    {
+      "after_status": "verified",
+      "before_status": "no_citation_extracted",
+      "case_id": "case_285",
+      "evidence_item_id": "case_285_ctx02_cit01",
+      "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0"
+    }
+  ],
+  "preview_sha256": "89138b35c77998c03d797d92c6e9d9a31070abc02bf4becb1a0fb26dbea5387c",
+  "proposed_sidecar_sha256": "a04cc60c535ded71ea33f3b9b3b6105342b205f5e9f52e6636424ce8388a5089",
+  "provenance": {
+    "error": null,
+    "git_diff_reason": null,
+    "git_diff_sha256": "a4af40caa73123d2f06f28dfc2164e23e5b08f0b3829f60cede15dbe56780924",
+    "git_diff_status": "ok",
+    "git_dirty": true,
+    "git_sha": "b134ffbe2967caa8bede3fd50b0fe2d56b4a5839",
+    "git_staged_dirty": false,
+    "git_tracked_dirty": false,
+    "git_untracked_dirty": true,
+    "repository_root": ".",
+    "source_state_sha256": "d5b097d9ff7df398855b9accaa9212b2d7d3b65ab28833f428f36a34371c7a90",
+    "status": "ok"
+  },
+  "source_hashes": {
+    "decisions_sha256": "35959b6a89852b717458be5c3694e8899768df7b8f50731535c023fb25741b0b",
+    "queue_sha256": "aac86e7921c319da7a82262a04df7df60745e7778aae262940c81791de606435",
+    "source_sidecar_sha256": "7629cec30a5afcd31d1517d142341a053ebe665691093c2742288f0a61433d5c"
+  },
+  "status": "READY_FOR_P2",
+  "status_counts": {
+    "after": {
+      "no_citation_extracted": 254,
+      "not_found_by_local_deterministic_audit": 2,
+      "unanswerable": 175,
+      "verified": 53
+    },
+    "before": {
+      "no_citation_extracted": 307,
+      "not_found_by_local_deterministic_audit": 2,
+      "unanswerable": 175
+    }
+  },
+  "verified_evidence_count": 53
+}

@@ -1,0 +1,9 @@
+{
+  "schema_version": "1.0.0",
+  "status": "SUPERSEDED",
+  "reason": "The first curated sidecar supplied verified document numbers without the corresponding pinned document IDs, so the intended source documents were omitted from the bounded candidate set for corrected/localized rows.",
+  "successor_queue_path": "docs/evaluation/adjudication/queues/gold-adjudication-queue-curated-v4_20260809_145859_140115/queue.json",
+  "successor_queue_sha256": "aac86e7921c319da7a82262a04df7df60745e7778aae262940c81791de606435",
+  "provider_calls": 0,
+  "promotion_performed": false
+}
