@@ -76,7 +76,7 @@ If the pilot passes, the first full candidate scope adds:
 - `Thông tư`;
 - `Thông tư liên tịch`.
 
-The resulting deterministic scope contains 25,937 documents, 45,624,399 calibrated sparse tokens, and 0.979 GiB of raw content. A flat 420-token estimate is 108,630 records. The raw 1024-dimensional vector payload is approximately 0.414 GiB before index and metadata overhead.
+The resulting deterministic scope contains 25,937 documents and 0.979 GiB of raw content. The content store reports 45,624,399 sparse-preparation tokens, but `build_sparse_text()` truncates each document to at most 2,048 terms. Dividing that value by the chunk limit gives only a lower bound of 108,630 records, not a storage estimate. A real local smoke produced 1,748 structural records from the two gold laws alone, demonstrating that record counts are highly skewed. The pilot planner must enumerate the actual structural chunks before any quota or full-ingestion decision.
 
 `Nghị quyết`, local `Quyết định`, `Công văn`, plans, notices, and other administrative material are excluded from the first expansion. They require a separate evaluation set and capacity decision; silently mixing selected local authorities would make scope hard to audit.
 
@@ -172,6 +172,7 @@ No code path deletes v1 as part of ingestion or cutover. Deleting `vietlex-legal
 - The current 40-case verified set covers only two laws and cannot prove coverage of decrees or circulars.
 - The Pinecone document-schema/FTS API is in public preview and does not support backups.
 - Starter storage is capped across all indexes, so full v1 and full v2 may not coexist. The pilot must measure actual bytes per record before any deletion decision.
+- Content-store sparse token counts are truncated preprocessing statistics and cannot be used to project structural record count. Full expansion capacity remains unknown until a provider-free structural enumeration completes.
 - Corpus reduction improves capacity and focus but intentionally reduces document-type coverage. The application must expose the active corpus scope in runtime diagnostics and user-visible provenance.
 
 ## External references checked

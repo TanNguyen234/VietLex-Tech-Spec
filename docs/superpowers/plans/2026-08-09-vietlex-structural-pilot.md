@@ -129,7 +129,7 @@ def build_structural_records(
     return records
 ```
 
-The manifest must contain document/record counts, per-type counts, raw content bytes, selected document IDs SHA-256, ordered record IDs SHA-256, chunk-token parameters, and zero provider calls. It must not contain document bodies.
+The manifest must contain actual enumerated document/record counts, per-type counts, raw content bytes, selected document IDs SHA-256, ordered record IDs SHA-256, chunk-token parameters, and zero provider calls. It must not contain document bodies. Do not derive record count from `contents.sparse_token_count`; that field is capped by the 2,048-term sparse preprocessing contract.
 
 - [ ] **Step 4: Add fail-closed tests**
 
@@ -252,7 +252,7 @@ Run: `python -m pytest tests/ingestion/test_structural_pilot.py tests/evaluation
 
 - [ ] **Step 3: Implement immutable planning output**
 
-`plan` writes a unique directory under `docs/evaluation/index-pilots/<run-id>/` with `manifest.json`, `scope.json`, and `report.md`. It uses exclusive directory creation, canonical JSON, artifact SHA-256, and Git provenance. If the tree is dirty, it records the diff hash and cannot authorize a remote phase.
+`plan` streams the selected documents in bounded batches, enumerates every real structural chunk, and writes a unique directory under `docs/evaluation/index-pilots/<run-id>/` with `manifest.json`, `scope.json`, and `report.md`. It uses exclusive directory creation, canonical JSON, artifact SHA-256, and Git provenance. It must not retain the full corpus record list in memory merely to count records. If the tree is dirty, it records the diff hash and cannot authorize a remote phase.
 
 - [ ] **Step 4: Implement exact remote gate**
 
