@@ -354,7 +354,6 @@ async def evaluate_single_retrieval_case(
             clause=e.clause,
             text=e.text,
             token_count=e.token_count,
-            score=e.score,
         )
         for e in outcome.evidence
     ]

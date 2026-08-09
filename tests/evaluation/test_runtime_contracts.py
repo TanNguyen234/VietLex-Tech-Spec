@@ -11,6 +11,7 @@ from app.evaluation.schemas import (
     RetrievalCaseResult,
     RetrievalStageTrace,
 )
+from app.ingestion.legal_text import EvidenceChunk
 from app.services.retrieval import LegalRetriever, RetrievalOutcome
 from run_answer_eval import run_stage_a_online, run_stage_b_offline
 from run_retrieval_eval import (
@@ -167,6 +168,46 @@ async def test_retrieval_adapter_calls_real_contract_once() -> None:
         "rerank_return_limit": 3,
         "final_evidence_limit": 3,
     }
+
+
+@pytest.mark.asyncio
+async def test_retrieval_adapter_accepts_real_unscored_evidence_chunks() -> None:
+    # Break caught: the evaluation adapter reads an undeclared `.score`
+    # attribute from the production EvidenceChunk runtime contract.
+    profile = get_evaluation_profile("legacy")
+    evidence = EvidenceChunk(
+        document_id=431147,
+        document_number="72/2020/QH14",
+        title="Luật Bảo vệ môi trường",
+        source_url="https://example.invalid/431147",
+        heading_path="Điều 1",
+        article="Điều 1",
+        clause=None,
+        citation="Điều 1 Luật 72/2020/QH14",
+        text="Nội dung chứng cứ.",
+        token_count=4,
+    )
+    retriever = create_autospec(LegalRetriever, instance=True, spec_set=True)
+    retriever.retrieve_detailed.return_value = RetrievalOutcome(
+        evidence=[evidence],
+        latency={"t_total": 0.1},
+        status="ok",
+        diagnostics={"stage_trace": RetrievalStageTrace()},
+    )
+
+    with patch(
+        "app.services.retrieval.get_legal_retriever",
+        autospec=True,
+        return_value=retriever,
+    ):
+        result = await evaluate_single_retrieval_case(
+            make_case(), make_settings(), profile
+        )
+
+    assert result.status == "ok"
+    assert len(result.retrieved_evidence) == 1
+    assert result.retrieved_evidence[0].document_id == 431147
+    assert result.retrieved_evidence[0].score is None
 
 
 @pytest.mark.asyncio
