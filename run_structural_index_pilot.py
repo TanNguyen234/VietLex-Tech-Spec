@@ -8,11 +8,20 @@ import sys
 from pathlib import Path
 
 from app.config import get_settings
+from app.evaluation.provenance import collect_git_provenance
 from app.ingestion.content_store import ContentStore
 from app.ingestion.structural_pilot import (
     CapacityEnvelope,
+    RemoteWriteAuthorization,
     StructuralPilotError,
     build_structural_pilot_plan,
+    create_structural_collection,
+    load_bound_plan,
+    validate_remote_write_authorization,
+)
+from app.ingestion.structural_qdrant import (
+    StructuralQdrantContract,
+    create_structural_qdrant_client,
 )
 
 
@@ -62,10 +71,56 @@ def build_parser() -> argparse.ArgumentParser:
     plan.add_argument("--vcpu", type=_positive_float)
     plan.add_argument("--existing-disk-bytes", type=_nonnegative_int)
     plan.add_argument("--shards", type=_positive_int)
+    create = subparsers.add_parser(
+        "create",
+        help="create the authorized empty pilot collection",
+    )
+    create.add_argument("--plan", type=Path, required=True)
+    create.add_argument("--plan-sha256", required=True)
+    create.add_argument("--source-state-sha256", required=True)
+    create.add_argument(
+        "--collection",
+        choices=["vietlex-legal-rag-v2-pilot"],
+        required=True,
+    )
+    create.add_argument(
+        "--allow-remote-write",
+        action="store_true",
+        required=True,
+    )
     return parser
 
 
 def run(arguments: argparse.Namespace) -> int:
+    if arguments.command_name == "create":
+        plan = load_bound_plan(arguments.plan)
+        authorization = RemoteWriteAuthorization(
+            allow_remote_write=arguments.allow_remote_write,
+            collection_name=arguments.collection,
+            plan_sha256=arguments.plan_sha256,
+            source_state_sha256=arguments.source_state_sha256,
+        )
+        provenance = collect_git_provenance()
+        validate_remote_write_authorization(plan, authorization, provenance)
+        settings = get_settings()
+        configured_contract = StructuralQdrantContract.from_settings(settings)
+        if configured_contract != plan.contract:
+            raise StructuralPilotError(
+                "configured structural contract does not match the bound plan"
+            )
+        client = create_structural_qdrant_client(settings)
+        plan_path = Path(arguments.plan)
+        artifact_dir = plan_path if plan_path.is_dir() else plan_path.parent
+        receipt = create_structural_collection(
+            client,
+            plan,
+            authorization,
+            provenance,
+            receipt_path=artifact_dir / "create-receipt.json",
+        )
+        print(receipt.model_dump_json())
+        return 0
+
     settings = get_settings()
     store = ContentStore(settings.CONTENT_STORE_PATH)
     capacity = (

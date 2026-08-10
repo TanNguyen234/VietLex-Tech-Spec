@@ -33,6 +33,27 @@ def test_structural_pilot_entrypoint_defaults_are_provider_free() -> None:
     assert plan.shards is None
 
 
+def test_structural_create_entrypoint_requires_exact_authorization() -> None:
+    arguments = run_structural_index_pilot.build_parser().parse_args(
+        [
+            "create",
+            "--plan",
+            "plan.json",
+            "--plan-sha256",
+            "a" * 64,
+            "--source-state-sha256",
+            "b" * 64,
+            "--collection",
+            "vietlex-legal-rag-v2-pilot",
+            "--allow-remote-write",
+        ]
+    )
+
+    assert arguments.command_name == "create"
+    assert arguments.allow_remote_write is True
+    assert arguments.collection == "vietlex-legal-rag-v2-pilot"
+
+
 def test_answer_entrypoint_disables_llm_judge_by_default() -> None:
     arguments = run_answer_eval.build_parser().parse_args([])
 

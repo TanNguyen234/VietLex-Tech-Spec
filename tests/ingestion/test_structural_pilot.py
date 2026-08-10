@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
+from qdrant_client import models
 
 import run_structural_index_pilot
 from app.config import Settings
@@ -18,6 +19,7 @@ from app.ingestion.structural_pilot import (
     StructuralPilotError,
     audit_structural_corpus,
     build_structural_pilot_plan,
+    create_structural_collection,
     estimate_capacity,
     load_bound_plan,
     validate_remote_write_authorization,
@@ -383,6 +385,322 @@ def test_authorization_schema_rejects_unsafe_targets(
     payload.update(values)
     with pytest.raises(ValidationError):
         RemoteWriteAuthorization(**payload)
+
+
+class RecordingQdrantClient:
+    def __init__(
+        self,
+        *,
+        exists: bool = False,
+        points_count: int = 0,
+        mutate_readback: str | None = None,
+        fail_stage: str | None = None,
+    ) -> None:
+        self.exists = exists
+        self.points_count = points_count
+        self.mutate_readback = mutate_readback
+        self.fail_stage = fail_stage
+        self.create_calls: list[dict[str, object]] = []
+        self.payload_index_calls: list[dict[str, object]] = []
+        self.delete_calls: list[object] = []
+        self.exists_calls: list[str] = []
+
+    def collection_exists(self, collection_name: str) -> bool:
+        self.exists_calls.append(collection_name)
+        if self.fail_stage == "exists":
+            raise RuntimeError("secret endpoint detail")
+        return self.exists
+
+    def create_collection(self, **kwargs) -> bool:
+        self.create_calls.append(kwargs)
+        if self.fail_stage == "create":
+            raise RuntimeError("secret endpoint detail")
+        return self.fail_stage != "create_ack"
+
+    def create_payload_index(self, **kwargs):
+        self.payload_index_calls.append(kwargs)
+        if self.fail_stage == "payload_index":
+            raise RuntimeError("secret endpoint detail")
+        return type(
+            "UpdateResult",
+            (),
+            {"status": models.UpdateStatus.COMPLETED},
+        )()
+
+    def get_collection(self, collection_name: str):
+        if self.fail_stage == "readback":
+            raise RuntimeError("secret endpoint detail")
+        call = self.create_calls[0]
+        vectors = dict(call["vectors_config"])
+        sparse_vectors = dict(call["sparse_vectors_config"])
+        hnsw_config = call["hnsw_config"]
+        payload_schema = {
+            item["field_name"]: type(
+                "PayloadInfo",
+                (),
+                {"data_type": item["field_schema"]},
+            )()
+            for item in self.payload_index_calls
+        }
+        if self.mutate_readback == "vector_size":
+            vectors["dense"] = models.VectorParams(
+                size=384,
+                distance=models.Distance.COSINE,
+                on_disk=True,
+            )
+        elif self.mutate_readback == "sparse_on_disk":
+            sparse_vectors["bm25"] = models.SparseVectorParams(
+                index=models.SparseIndexParams(on_disk=False),
+                modifier=models.Modifier.IDF,
+            )
+        elif self.mutate_readback == "hnsw_m":
+            hnsw_config = models.HnswConfigDiff(m=16, on_disk=True)
+        elif self.mutate_readback == "payload_schema":
+            payload_schema.pop("document_id")
+        return type(
+            "CollectionInfo",
+            (),
+            {
+                "points_count": self.points_count,
+                "payload_schema": payload_schema,
+                "config": type(
+                    "CollectionConfig",
+                    (),
+                    {
+                        "params": type(
+                            "CollectionParams",
+                            (),
+                            {
+                                "vectors": vectors,
+                                "sparse_vectors": sparse_vectors,
+                                "shard_number": call["shard_number"],
+                                "on_disk_payload": call["on_disk_payload"],
+                            },
+                        )(),
+                        "hnsw_config": hnsw_config,
+                    },
+                )(),
+            },
+        )()
+
+    def delete_collection(self, *args, **kwargs) -> None:
+        self.delete_calls.append((args, kwargs))
+
+
+def _bound_plan(tmp_path: Path, *, capacity=None):
+    return build_structural_pilot_plan(
+        store=FakeStore(),
+        settings=_settings(),
+        output_root=tmp_path,
+        capacity=capacity if capacity is not None else _capacity(),
+        provenance=_provenance(),
+        run_id="pilot-create",
+    )
+
+
+def _authorization(plan) -> RemoteWriteAuthorization:
+    return RemoteWriteAuthorization(
+        allow_remote_write=True,
+        collection_name="vietlex-legal-rag-v2-pilot",
+        plan_sha256=plan.plan_sha256,
+        source_state_sha256=plan.source_state_sha256,
+    )
+
+
+def test_create_uses_exact_empty_collection_schema(tmp_path: Path) -> None:
+    plan = _bound_plan(tmp_path)
+    client = RecordingQdrantClient()
+    receipt_path = tmp_path / plan.run_id / "create-receipt.json"
+
+    receipt = create_structural_collection(
+        client,
+        plan,
+        _authorization(plan),
+        _provenance(),
+        receipt_path=receipt_path,
+    )
+
+    assert len(client.create_calls) == 1
+    call = client.create_calls[0]
+    assert call["collection_name"] == "vietlex-legal-rag-v2-pilot"
+    assert call["vectors_config"]["dense"] == models.VectorParams(
+        size=1024,
+        distance=models.Distance.COSINE,
+        on_disk=True,
+    )
+    assert call["sparse_vectors_config"]["bm25"] == (
+        models.SparseVectorParams(
+            index=models.SparseIndexParams(on_disk=True),
+            modifier=models.Modifier.IDF,
+        )
+    )
+    assert call["hnsw_config"] == models.HnswConfigDiff(m=0, on_disk=True)
+    assert call["shard_number"] == 1
+    assert call["on_disk_payload"] is True
+    assert {item["field_name"] for item in client.payload_index_calls} == {
+        "dataset_revision",
+        "legal_type",
+        "document_id",
+    }
+    assert receipt.points_count == 0
+    assert receipt.provider_calls == 6
+    assert receipt.inference_calls == 0
+    assert receipt.payload_indexes == (
+        "dataset_revision",
+        "document_id",
+        "legal_type",
+    )
+    assert receipt_path.is_file()
+    assert "secret" not in receipt_path.read_text(encoding="utf-8").casefold()
+
+
+def test_create_never_recreates_existing_target(tmp_path: Path) -> None:
+    plan = _bound_plan(tmp_path)
+    client = RecordingQdrantClient(exists=True)
+
+    with pytest.raises(StructuralPilotError, match="already exists"):
+        create_structural_collection(
+            client,
+            plan,
+            _authorization(plan),
+            _provenance(),
+        )
+
+    assert client.create_calls == []
+    assert client.payload_index_calls == []
+    assert client.exists_calls == ["vietlex-legal-rag-v2-pilot"]
+
+
+def test_create_rejects_blocked_capacity_before_any_provider_call(
+    tmp_path: Path,
+) -> None:
+    plan = _bound_plan(tmp_path, capacity=CapacityEnvelope())
+    client = RecordingQdrantClient()
+
+    with pytest.raises(StructuralPilotError, match="BLOCKED_CAPACITY"):
+        create_structural_collection(
+            client,
+            plan,
+            _authorization(plan),
+            _provenance(),
+        )
+
+    assert client.exists_calls == []
+    assert client.create_calls == []
+    assert client.delete_calls == []
+
+
+@pytest.mark.parametrize(
+    ("client_kwargs", "message"),
+    [
+        ({"fail_stage": "exists"}, "collection existence check"),
+        ({"fail_stage": "create"}, "collection creation"),
+        ({"fail_stage": "create_ack"}, "acknowledge"),
+        ({"fail_stage": "payload_index"}, "payload index"),
+        ({"fail_stage": "readback"}, "readback"),
+        ({"points_count": 1}, "empty"),
+        ({"mutate_readback": "vector_size"}, "dense vector"),
+        ({"mutate_readback": "sparse_on_disk"}, "sparse vector"),
+        ({"mutate_readback": "hnsw_m"}, "HNSW"),
+        ({"mutate_readback": "payload_schema"}, "payload indexes"),
+    ],
+)
+def test_create_fails_closed_without_cleanup(
+    tmp_path: Path,
+    client_kwargs: dict[str, object],
+    message: str,
+) -> None:
+    plan = _bound_plan(tmp_path)
+    client = RecordingQdrantClient(**client_kwargs)
+
+    with pytest.raises(StructuralPilotError, match=message) as caught:
+        create_structural_collection(
+            client,
+            plan,
+            _authorization(plan),
+            _provenance(),
+        )
+
+    assert "secret endpoint detail" not in str(caught.value)
+    assert client.delete_calls == []
+
+
+def test_create_rejects_authorization_before_any_provider_call(
+    tmp_path: Path,
+) -> None:
+    plan = _bound_plan(tmp_path)
+    client = RecordingQdrantClient()
+    authorization = _authorization(plan).model_copy(
+        update={"source_state_sha256": "0" * 64}
+    )
+
+    with pytest.raises(StructuralPilotError, match="source state"):
+        create_structural_collection(
+            client,
+            plan,
+            authorization,
+            _provenance(),
+        )
+
+    assert client.create_calls == []
+    assert client.payload_index_calls == []
+    assert client.exists_calls == []
+
+
+def test_create_rejects_receipt_collision_before_provider_call(
+    tmp_path: Path,
+) -> None:
+    plan = _bound_plan(tmp_path)
+    receipt_path = tmp_path / plan.run_id / "create-receipt.json"
+    receipt_path.write_text("owned", encoding="utf-8")
+    client = RecordingQdrantClient()
+
+    with pytest.raises(StructuralPilotError, match="already exists"):
+        create_structural_collection(
+            client,
+            plan,
+            _authorization(plan),
+            _provenance(),
+            receipt_path=receipt_path,
+        )
+
+    assert client.create_calls == []
+
+
+def test_create_cli_validates_binding_before_constructing_client(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    plan = _bound_plan(tmp_path)
+    plan_path = tmp_path / plan.run_id / "plan.json"
+    monkeypatch.setattr(
+        run_structural_index_pilot,
+        "create_structural_qdrant_client",
+        lambda *_args, **_kwargs: pytest.fail("provider client constructed"),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        run_structural_index_pilot,
+        "collect_git_provenance",
+        _provenance,
+    )
+    arguments = run_structural_index_pilot.build_parser().parse_args(
+        [
+            "create",
+            "--plan",
+            str(plan_path),
+            "--plan-sha256",
+            "0" * 64,
+            "--source-state-sha256",
+            plan.source_state_sha256,
+            "--collection",
+            "vietlex-legal-rag-v2-pilot",
+            "--allow-remote-write",
+        ]
+    )
+
+    with pytest.raises(StructuralPilotError, match="plan authorization"):
+        run_structural_index_pilot.run(arguments)
 
 
 @pytest.mark.parametrize(

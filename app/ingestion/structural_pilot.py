@@ -20,6 +20,7 @@ from pydantic import (
     field_serializer,
     model_validator,
 )
+from qdrant_client import QdrantClient, models
 
 from app.config import Settings
 from app.evaluation.artifact_io import canonical_json_bytes, write_immutable_json
@@ -188,6 +189,43 @@ class RemoteWriteAuthorization(BaseModel):
     collection_name: Literal["vietlex-legal-rag-v2-pilot"]
     plan_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     source_state_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
+class CollectionSchemaReceipt(BaseModel):
+    """Exact public schema observed after collection creation."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    dense_vector_name: Literal["dense"]
+    dense_size: Literal[1024]
+    dense_distance: Literal["Cosine"]
+    dense_on_disk: Literal[True]
+    sparse_vector_name: Literal["bm25"]
+    sparse_modifier: Literal["idf"]
+    sparse_on_disk: Literal[True]
+    hnsw_m: Literal[0]
+    hnsw_on_disk: Literal[True]
+    shard_number: int = Field(gt=0)
+    on_disk_payload: Literal[True]
+
+
+class CollectionCreationReceipt(BaseModel):
+    """Immutable, credential-free evidence for the create phase."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: Literal["1.0.0"] = "1.0.0"
+    status: Literal["CREATED"] = "CREATED"
+    collection_name: Literal["vietlex-legal-rag-v2-pilot"]
+    started_at_utc: datetime
+    verified_at_utc: datetime
+    source_state_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    plan_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    schema_readback: CollectionSchemaReceipt
+    payload_indexes: tuple[str, ...]
+    points_count: Literal[0]
+    provider_calls: Literal[6]
+    inference_calls: Literal[0]
 
 
 def audit_structural_corpus(
@@ -423,6 +461,182 @@ def validate_remote_write_authorization(
         raise StructuralPilotError("collection authorization mismatch")
     if plan.capacity.status != "PASS_CAPACITY":
         raise StructuralPilotError("BLOCKED_CAPACITY")
+
+
+def create_structural_collection(
+    client: QdrantClient,
+    plan: StructuralPilotPlan,
+    authorization: RemoteWriteAuthorization,
+    provenance: GitProvenance,
+    *,
+    receipt_path: Path | None = None,
+) -> CollectionCreationReceipt:
+    """Create the one exact empty pilot collection; never delete or recreate."""
+    validate_remote_write_authorization(plan, authorization, provenance)
+    if receipt_path is not None and Path(receipt_path).exists():
+        raise StructuralPilotError("create receipt already exists")
+
+    contract = plan.contract
+    try:
+        exists = client.collection_exists(contract.collection_name)
+    except Exception as error:
+        raise StructuralPilotError(
+            "Qdrant collection existence check failed "
+            f"({type(error).__name__})"
+        ) from error
+    if exists:
+        raise StructuralPilotError("Qdrant pilot collection already exists")
+
+    started_at = datetime.now(timezone.utc)
+    try:
+        created = client.create_collection(
+            collection_name=contract.collection_name,
+            vectors_config={
+                contract.dense_vector_name: models.VectorParams(
+                    size=contract.dense_size,
+                    distance=models.Distance.COSINE,
+                    on_disk=True,
+                )
+            },
+            sparse_vectors_config={
+                contract.sparse_vector_name: models.SparseVectorParams(
+                    index=models.SparseIndexParams(on_disk=True),
+                    modifier=models.Modifier.IDF,
+                )
+            },
+            shard_number=plan.capacity.shard_count,
+            on_disk_payload=True,
+            hnsw_config=models.HnswConfigDiff(m=0, on_disk=True),
+            timeout=int(contract.timeout_seconds),
+        )
+    except Exception as error:
+        raise StructuralPilotError(
+            f"Qdrant collection creation failed ({type(error).__name__})"
+        ) from error
+    if created is not True:
+        raise StructuralPilotError(
+            "Qdrant did not acknowledge collection creation"
+        )
+
+    index_contract = (
+        ("dataset_revision", models.PayloadSchemaType.KEYWORD),
+        ("legal_type", models.PayloadSchemaType.KEYWORD),
+        ("document_id", models.PayloadSchemaType.INTEGER),
+    )
+    for field_name, field_schema in index_contract:
+        try:
+            result = client.create_payload_index(
+                collection_name=contract.collection_name,
+                field_name=field_name,
+                field_schema=field_schema,
+                wait=True,
+                timeout=int(contract.timeout_seconds),
+            )
+        except Exception as error:
+            raise StructuralPilotError(
+                f"Qdrant payload index creation failed ({type(error).__name__})"
+            ) from error
+        if getattr(result, "status", None) not in {
+            models.UpdateStatus.ACKNOWLEDGED,
+            models.UpdateStatus.COMPLETED,
+        }:
+            raise StructuralPilotError(
+                "Qdrant did not acknowledge payload index creation"
+            )
+
+    try:
+        readback = client.get_collection(contract.collection_name)
+    except Exception as error:
+        raise StructuralPilotError(
+            f"Qdrant collection readback failed ({type(error).__name__})"
+        ) from error
+    schema_receipt = _validate_collection_readback(
+        readback,
+        contract=contract,
+        shard_number=plan.capacity.shard_count,
+    )
+    receipt = CollectionCreationReceipt(
+        collection_name=contract.collection_name,
+        started_at_utc=started_at,
+        verified_at_utc=datetime.now(timezone.utc),
+        source_state_sha256=plan.source_state_sha256,
+        plan_sha256=plan.plan_sha256,
+        schema_readback=schema_receipt,
+        payload_indexes=tuple(sorted(field for field, _schema in index_contract)),
+        points_count=0,
+        provider_calls=6,
+        inference_calls=0,
+    )
+    if receipt_path is not None:
+        write_immutable_json(
+            receipt_path,
+            receipt.model_dump(mode="json"),
+        )
+    return receipt
+
+
+def _validate_collection_readback(
+    readback: object,
+    *,
+    contract: StructuralQdrantContract,
+    shard_number: int | None,
+) -> CollectionSchemaReceipt:
+    if shard_number is None:
+        raise StructuralPilotError("collection shard count is unavailable")
+    try:
+        params = readback.config.params
+        vectors = params.vectors
+        dense = vectors[contract.dense_vector_name]
+        sparse_vectors = params.sparse_vectors
+        sparse = sparse_vectors[contract.sparse_vector_name]
+        hnsw = readback.config.hnsw_config
+        payload_schema = readback.payload_schema
+    except (AttributeError, KeyError, TypeError) as error:
+        raise StructuralPilotError("Qdrant collection readback is incomplete") from error
+    if set(vectors) != {contract.dense_vector_name} or (
+        dense.size != contract.dense_size
+        or dense.distance != models.Distance.COSINE
+        or dense.on_disk is not True
+    ):
+        raise StructuralPilotError("Qdrant dense vector readback mismatch")
+    if set(sparse_vectors) != {contract.sparse_vector_name} or (
+        sparse.modifier != models.Modifier.IDF
+        or sparse.index is None
+        or sparse.index.on_disk is not True
+    ):
+        raise StructuralPilotError("Qdrant sparse vector readback mismatch")
+    if hnsw.m != 0 or hnsw.on_disk is not True:
+        raise StructuralPilotError("Qdrant HNSW readback mismatch")
+    if (
+        params.shard_number != shard_number
+        or params.on_disk_payload is not True
+    ):
+        raise StructuralPilotError("Qdrant collection storage readback mismatch")
+    expected_payload = {
+        "dataset_revision": models.PayloadSchemaType.KEYWORD,
+        "legal_type": models.PayloadSchemaType.KEYWORD,
+        "document_id": models.PayloadSchemaType.INTEGER,
+    }
+    if set(payload_schema) != set(expected_payload) or any(
+        payload_schema[field].data_type != schema
+        for field, schema in expected_payload.items()
+    ):
+        raise StructuralPilotError("Qdrant payload indexes readback mismatch")
+    if readback.points_count != 0:
+        raise StructuralPilotError("Qdrant collection is not empty after creation")
+    return CollectionSchemaReceipt(
+        dense_vector_name=contract.dense_vector_name,
+        dense_size=dense.size,
+        dense_distance=dense.distance.value,
+        dense_on_disk=dense.on_disk,
+        sparse_vector_name=contract.sparse_vector_name,
+        sparse_modifier=sparse.modifier.value,
+        sparse_on_disk=sparse.index.on_disk,
+        hnsw_m=hnsw.m,
+        hnsw_on_disk=hnsw.on_disk,
+        shard_number=params.shard_number,
+        on_disk_payload=params.on_disk_payload,
+    )
 
 
 def _plan_sha256(plan: StructuralPilotPlan) -> str:
