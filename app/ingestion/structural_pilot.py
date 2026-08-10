@@ -580,6 +580,7 @@ def _validate_collection_readback(
     *,
     contract: StructuralQdrantContract,
     shard_number: int | None,
+    expected_points_count: int | None = 0,
 ) -> CollectionSchemaReceipt:
     if shard_number is None:
         raise StructuralPilotError("collection shard count is unavailable")
@@ -622,8 +623,15 @@ def _validate_collection_readback(
         for field, schema in expected_payload.items()
     ):
         raise StructuralPilotError("Qdrant payload indexes readback mismatch")
-    if readback.points_count != 0:
-        raise StructuralPilotError("Qdrant collection is not empty after creation")
+    if (
+        expected_points_count is not None
+        and readback.points_count != expected_points_count
+    ):
+        raise StructuralPilotError(
+            "Qdrant collection is not empty after creation"
+            if expected_points_count == 0
+            else "Qdrant collection point count readback mismatch"
+        )
     return CollectionSchemaReceipt(
         dense_vector_name=contract.dense_vector_name,
         dense_size=dense.size,
