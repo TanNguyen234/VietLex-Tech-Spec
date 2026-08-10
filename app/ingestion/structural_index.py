@@ -1,4 +1,4 @@
-"""Pure structural-record preparation for the Pinecone v2 pilot."""
+"""Provider-free structural-record preparation for the Qdrant v2 pilot."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import hashlib
 import json
 import re
 from collections import Counter
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
 from typing import Literal
 from uuid import NAMESPACE_URL, uuid5
 
@@ -38,7 +38,7 @@ class StructuralRecord(BaseModel):
     title: str = Field(min_length=1)
     source_url: str = Field(min_length=1)
     legal_type: str = Field(min_length=1)
-    issuing_authority: str = Field(min_length=1)
+    issuing_authority: str | None = Field(min_length=1)
     issuance_date: str | None
     article: str | None
     clause: str | None
@@ -56,7 +56,7 @@ class StructuralCorpusManifest(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    schema_version: Literal["1.0.0"] = "1.0.0"
+    schema_version: Literal["2.0.0"] = "2.0.0"
     dataset_repository: str = Field(min_length=1)
     dataset_revision: str = Field(min_length=1)
     legal_types: tuple[str, ...]
@@ -65,10 +65,97 @@ class StructuralCorpusManifest(BaseModel):
     per_legal_type_counts: dict[str, int]
     selected_document_ids_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     ordered_record_ids_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
-    raw_content_bytes: int = Field(gt=0)
+    body_bytes: int = Field(gt=0)
+    approximate_token_count: int = Field(gt=0)
     chunk_max_tokens: int = Field(gt=0)
     chunk_overlap_tokens: int = Field(ge=0)
     provider_calls: Literal[0] = 0
+
+
+class StructuralManifestBuilder:
+    """Accumulate a body-free manifest without retaining record bodies."""
+
+    def __init__(
+        self,
+        *,
+        selected_document_ids: Sequence[int],
+        repository: str,
+        revision: str,
+        max_tokens: int = 420,
+        overlap_tokens: int = 48,
+    ) -> None:
+        self._document_ids = _validated_document_ids(selected_document_ids)
+        self._document_id_set = set(self._document_ids)
+        self._repository = _nonblank(repository, "repository")
+        self._revision = _nonblank(revision, "revision")
+        _validate_chunk_limits(max_tokens, overlap_tokens)
+        self._max_tokens = max_tokens
+        self._overlap_tokens = overlap_tokens
+        self._seen_record_ids: set[str] = set()
+        self._document_legal_types: dict[int, str] = {}
+        self._ordered_record_ids_hash = hashlib.sha256(b"[")
+        self._record_count = 0
+        self._body_bytes = 0
+        self._approximate_token_count = 0
+
+    def add(self, record: StructuralRecord) -> None:
+        if record.record_id in self._seen_record_ids:
+            raise StructuralIndexError("structural record IDs must be unique")
+        if record.document_id not in self._document_id_set:
+            raise StructuralIndexError(
+                "record document IDs do not match the selected document set"
+            )
+        if record.dataset_revision != self._revision:
+            raise StructuralIndexError("record dataset revision mismatch")
+        if record.legal_type not in PRIMARY_LEGAL_TYPES:
+            raise StructuralIndexError("record legal type is outside structural scope")
+        existing = self._document_legal_types.setdefault(
+            record.document_id,
+            record.legal_type,
+        )
+        if existing != record.legal_type:
+            raise StructuralIndexError("document legal type is inconsistent")
+        if record.token_count > self._max_tokens:
+            raise StructuralIndexError("structural record exceeds the token contract")
+
+        if self._record_count:
+            self._ordered_record_ids_hash.update(b",")
+        self._ordered_record_ids_hash.update(
+            json.dumps(
+                record.record_id,
+                ensure_ascii=False,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        )
+        self._seen_record_ids.add(record.record_id)
+        self._record_count += 1
+        self._body_bytes += len(record.body.encode("utf-8"))
+        self._approximate_token_count += record.token_count
+
+    def build(self) -> StructuralCorpusManifest:
+        if not self._record_count:
+            raise StructuralIndexError("structural records must not be empty")
+        if set(self._document_legal_types) != self._document_id_set:
+            raise StructuralIndexError(
+                "record document IDs do not match the selected document set"
+            )
+        ordered_hash = self._ordered_record_ids_hash.copy()
+        ordered_hash.update(b"]")
+        per_type = Counter(self._document_legal_types.values())
+        return StructuralCorpusManifest(
+            dataset_repository=self._repository,
+            dataset_revision=self._revision,
+            legal_types=PRIMARY_LEGAL_TYPES,
+            document_count=len(self._document_ids),
+            record_count=self._record_count,
+            per_legal_type_counts=dict(sorted(per_type.items())),
+            selected_document_ids_sha256=_canonical_sha256(self._document_ids),
+            ordered_record_ids_sha256=ordered_hash.hexdigest(),
+            body_bytes=self._body_bytes,
+            approximate_token_count=self._approximate_token_count,
+            chunk_max_tokens=self._max_tokens,
+            chunk_overlap_tokens=self._overlap_tokens,
+        )
 
 
 def select_structural_document_ids(
@@ -112,12 +199,34 @@ def build_structural_records(
     overlap_tokens: int = 48,
 ) -> list[StructuralRecord]:
     """Read, validate, and structurally chunk an ordered document set."""
+    return list(
+        iter_structural_records(
+            store,
+            document_ids,
+            repository=repository,
+            revision=revision,
+            max_tokens=max_tokens,
+            overlap_tokens=overlap_tokens,
+        )
+    )
+
+
+def iter_structural_records(
+    store: ContentStore,
+    document_ids: Sequence[int],
+    *,
+    repository: str,
+    revision: str,
+    max_tokens: int = 420,
+    overlap_tokens: int = 48,
+) -> Iterator[StructuralRecord]:
+    """Yield validated structural records from bounded document reads."""
     ordered_ids = _validated_document_ids(document_ids)
     repository = _nonblank(repository, "repository")
     revision = _nonblank(revision, "revision")
     _validate_chunk_limits(max_tokens, overlap_tokens)
 
-    records: list[StructuralRecord] = []
+    seen_record_ids: set[str] = set()
     for offset in range(0, len(ordered_ids), _DOCUMENT_READ_BATCH_SIZE):
         batch_ids = ordered_ids[offset : offset + _DOCUMENT_READ_BATCH_SIZE]
         documents = store.get_many(batch_ids)
@@ -145,20 +254,17 @@ def build_structural_records(
                 raise StructuralIndexError(
                     f"document {document_id} produced no structural chunks"
                 )
-            records.extend(
-                _records_for_document(
-                    document,
-                    chunks,
-                    repository=repository,
-                    revision=revision,
-                    max_tokens=max_tokens,
-                )
-            )
-
-    record_ids = [record.record_id for record in records]
-    if len(record_ids) != len(set(record_ids)):
-        raise StructuralIndexError("structural record ID collision")
-    return records
+            for record in _records_for_document(
+                document,
+                chunks,
+                repository=repository,
+                revision=revision,
+                max_tokens=max_tokens,
+            ):
+                if record.record_id in seen_record_ids:
+                    raise StructuralIndexError("structural record ID collision")
+                seen_record_ids.add(record.record_id)
+                yield record
 
 
 def build_structural_manifest(
@@ -167,61 +273,20 @@ def build_structural_manifest(
     selected_document_ids: Sequence[int],
     repository: str,
     revision: str,
-    raw_content_bytes: int,
     max_tokens: int = 420,
     overlap_tokens: int = 48,
 ) -> StructuralCorpusManifest:
     """Bind the ordered corpus and records without persisting legal text."""
-    ordered_ids = _validated_document_ids(selected_document_ids)
-    repository = _nonblank(repository, "repository")
-    revision = _nonblank(revision, "revision")
-    _validate_chunk_limits(max_tokens, overlap_tokens)
-    if (
-        isinstance(raw_content_bytes, bool)
-        or not isinstance(raw_content_bytes, int)
-        or raw_content_bytes <= 0
-    ):
-        raise StructuralIndexError("raw_content_bytes must be positive")
-
-    normalized_records = list(records)
-    if not normalized_records:
-        raise StructuralIndexError("structural records must not be empty")
-    record_ids = [record.record_id for record in normalized_records]
-    if len(record_ids) != len(set(record_ids)):
-        raise StructuralIndexError("structural record IDs must be unique")
-    record_document_ids = {record.document_id for record in normalized_records}
-    if record_document_ids != set(ordered_ids):
-        raise StructuralIndexError(
-            "record document IDs do not match the selected document set"
-        )
-    if any(record.dataset_revision != revision for record in normalized_records):
-        raise StructuralIndexError("record dataset revision mismatch")
-
-    document_legal_types: dict[int, str] = {}
-    for record in normalized_records:
-        if record.legal_type not in PRIMARY_LEGAL_TYPES:
-            raise StructuralIndexError("record legal type is outside structural scope")
-        existing = document_legal_types.setdefault(
-            record.document_id,
-            record.legal_type,
-        )
-        if existing != record.legal_type:
-            raise StructuralIndexError("document legal type is inconsistent")
-    per_type = Counter(document_legal_types.values())
-
-    return StructuralCorpusManifest(
-        dataset_repository=repository,
-        dataset_revision=revision,
-        legal_types=PRIMARY_LEGAL_TYPES,
-        document_count=len(ordered_ids),
-        record_count=len(normalized_records),
-        per_legal_type_counts=dict(sorted(per_type.items())),
-        selected_document_ids_sha256=_canonical_sha256(ordered_ids),
-        ordered_record_ids_sha256=_canonical_sha256(record_ids),
-        raw_content_bytes=raw_content_bytes,
-        chunk_max_tokens=max_tokens,
-        chunk_overlap_tokens=overlap_tokens,
+    builder = StructuralManifestBuilder(
+        selected_document_ids=selected_document_ids,
+        repository=repository,
+        revision=revision,
+        max_tokens=max_tokens,
+        overlap_tokens=overlap_tokens,
     )
+    for record in records:
+        builder.add(record)
+    return builder.build()
 
 
 def _records_for_document(
@@ -257,10 +322,7 @@ def _records_for_document(
                 title=_nonblank(metadata.title, "title"),
                 source_url=_nonblank(metadata.source_url, "source_url"),
                 legal_type=_nonblank(metadata.legal_type, "legal_type"),
-                issuing_authority=_nonblank(
-                    metadata.issuing_authority,
-                    "issuing_authority",
-                ),
+                issuing_authority=_nullable_nonblank(metadata.issuing_authority),
                 issuance_date=metadata.issuance_date,
                 article=chunk.article,
                 clause=chunk.clause,
@@ -326,6 +388,13 @@ def _nonblank(value: str, field_name: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise StructuralIndexError(f"{field_name} must be nonblank")
     return value.strip()
+
+
+def _nullable_nonblank(value: str | None) -> str | None:
+    if value is None:
+        return None
+    normalized = value.strip()
+    return normalized or None
 
 
 def _text_sha256(value: str) -> str:

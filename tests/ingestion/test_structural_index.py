@@ -5,6 +5,7 @@ from types import SimpleNamespace
 from uuid import UUID
 
 import pytest
+from pydantic import ValidationError
 
 import app.ingestion.structural_index as structural_index
 from app.ingestion.content_store import StoredDocument
@@ -23,6 +24,7 @@ def _document(
     *,
     legal_type: str = "Luật",
     content: str | None = None,
+    issuing_authority: str = "Quốc hội",
 ) -> StoredDocument:
     text = content or (
         "Điều 1. Phạm vi điều chỉnh\n"
@@ -39,7 +41,7 @@ def _document(
             source_url=f"https://example.invalid/{document_id}",
             legal_type=legal_type,
             legal_sectors="Lĩnh vực khác",
-            issuing_authority="Quốc hội",
+            issuing_authority=issuing_authority,
             issuance_date="01/01/2026",
         ),
         content=text,
@@ -126,6 +128,61 @@ def test_structural_records_are_stable_hashed_and_body_bounded() -> None:
     assert all(row.embedding is None for row in first)
 
 
+def test_structural_records_preserve_missing_issuing_authority_as_null() -> None:
+    store = FakeStore({72_273: _document(72_273, issuing_authority="")})
+
+    rows = build_structural_records(
+        store,
+        [72_273],
+        repository="owner/legal-corpus",
+        revision="revision-1",
+    )
+
+    assert rows
+    assert {row.issuing_authority for row in rows} == {None}
+
+
+def test_structural_record_rejects_blank_normalized_issuing_authority() -> None:
+    row = build_structural_records(
+        FakeStore({1: _document(1)}),
+        [1],
+        repository="owner/legal-corpus",
+        revision="revision-1",
+    )[0]
+
+    with pytest.raises(ValidationError, match="issuing_authority"):
+        type(row).model_validate(
+            {**row.model_dump(), "issuing_authority": ""}
+        )
+
+
+def test_structural_record_stream_reads_bounded_document_batches(
+    monkeypatch,
+) -> None:
+    documents = {document_id: _document(document_id) for document_id in range(1, 258)}
+    store = FakeStore(documents)
+    requested: list[list[int]] = []
+    original_get_many = store.get_many
+
+    def recording_get_many(document_ids: list[int]) -> dict[int, StoredDocument]:
+        requested.append(list(document_ids))
+        return original_get_many(document_ids)
+
+    store.get_many = recording_get_many
+
+    rows = list(
+        structural_index.iter_structural_records(
+            store,
+            sorted(documents),
+            repository="owner/legal-corpus",
+            revision="revision-1",
+        )
+    )
+
+    assert rows
+    assert [len(batch) for batch in requested] == [128, 128, 1]
+
+
 def test_manifest_binds_scope_records_and_document_level_counts() -> None:
     documents = {
         2: _document(2, legal_type="Hiến pháp"),
@@ -144,21 +201,57 @@ def test_manifest_binds_scope_records_and_document_level_counts() -> None:
         selected_document_ids=[2, 3],
         repository="owner/legal-corpus",
         revision="revision-1",
-        raw_content_bytes=sum(
-            len(document.content.encode("utf-8"))
-            for document in documents.values()
-        ),
         max_tokens=420,
         overlap_tokens=48,
     )
 
+    assert manifest.schema_version == "2.0.0"
     assert manifest.document_count == 2
     assert manifest.record_count == len(records)
     assert manifest.per_legal_type_counts == {"Hiến pháp": 1, "Luật": 1}
+    assert manifest.body_bytes == sum(
+        len(record.body.encode("utf-8")) for record in records
+    )
+    assert manifest.approximate_token_count == sum(
+        record.token_count for record in records
+    )
     assert manifest.provider_calls == 0
     assert len(manifest.selected_document_ids_sha256) == 64
     assert len(manifest.ordered_record_ids_sha256) == 64
     assert "Văn bản này quy định" not in manifest.model_dump_json()
+
+
+def test_streaming_manifest_matches_sequence_wrapper() -> None:
+    store = FakeStore({1: _document(1), 2: _document(2)})
+    rows = build_structural_records(
+        store,
+        [1, 2],
+        repository="owner/legal-corpus",
+        revision="revision-1",
+    )
+    builder = structural_index.StructuralManifestBuilder(
+        selected_document_ids=[1, 2],
+        repository="owner/legal-corpus",
+        revision="revision-1",
+        max_tokens=420,
+        overlap_tokens=48,
+    )
+
+    for row in rows:
+        builder.add(row)
+
+    streamed = builder.build()
+    wrapped = build_structural_manifest(
+        rows,
+        selected_document_ids=[1, 2],
+        repository="owner/legal-corpus",
+        revision="revision-1",
+        max_tokens=420,
+        overlap_tokens=48,
+    )
+    assert streamed == wrapped
+    assert streamed.body_bytes == sum(len(row.body.encode("utf-8")) for row in rows)
+    assert streamed.approximate_token_count == sum(row.token_count for row in rows)
 
 
 @pytest.mark.parametrize(
@@ -237,7 +330,6 @@ def test_manifest_rejects_missing_selected_document() -> None:
             selected_document_ids=[10, 11],
             repository="owner/legal-corpus",
             revision="revision-1",
-            raw_content_bytes=1,
         )
 
 
