@@ -537,6 +537,13 @@ def test_probe_pass_requires_matched_denominator_and_provider_usage(
     assert report.provider_usage["Qwen/Qwen3-Embedding-0.6B"] > 0
     assert report.provider_usage["qdrant/bm25"] > 0
     assert report.provider_usage["llama-text-embed-v2"] > 0
+    assert set(report.upsert_provider_usage) == {
+        "Qwen/Qwen3-Embedding-0.6B",
+        "qdrant/bm25",
+    }
+    assert set(report.query_provider_usage) == {
+        "Qwen/Qwen3-Embedding-0.6B"
+    }
     assert report.dataset_sha256 == "d" * 64
     assert report.sidecar_sha256 == "e" * 64
     assert report.synthetic_records == 0

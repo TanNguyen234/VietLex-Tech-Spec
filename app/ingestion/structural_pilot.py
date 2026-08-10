@@ -6,7 +6,8 @@ import hashlib
 import json
 import math
 import os
-from collections.abc import Mapping
+import time
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from datetime import datetime, timezone
 from pathlib import Path
 from types import MappingProxyType
@@ -30,6 +31,7 @@ from app.ingestion.content_store import ContentStore
 from app.ingestion.structural_index import (
     StructuralCorpusManifest,
     StructuralManifestBuilder,
+    StructuralRecord,
     iter_structural_records,
     select_structural_document_ids,
 )
@@ -226,6 +228,149 @@ class CollectionCreationReceipt(BaseModel):
     points_count: Literal[0]
     provider_calls: Literal[6]
     inference_calls: Literal[0]
+
+
+class FinalizedCollectionSchemaReceipt(BaseModel):
+    """Exact structural collection schema after HNSW activation."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    dense_vector_name: Literal["dense"]
+    dense_size: Literal[1024]
+    dense_distance: Literal["Cosine"]
+    dense_on_disk: Literal[True]
+    sparse_vector_name: Literal["bm25"]
+    sparse_modifier: Literal["idf"]
+    sparse_on_disk: Literal[True]
+    hnsw_m: Literal[16]
+    hnsw_on_disk: Literal[True]
+    shard_number: int = Field(gt=0)
+    on_disk_payload: Literal[True]
+
+
+class CollectionFinalizeReceipt(BaseModel):
+    """Immutable result of bounded HNSW finalization."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: Literal["1.0.0"] = "1.0.0"
+    status: Literal["PASS_FINALIZE", "BLOCKED_TECHNICAL"]
+    collection_name: Literal["vietlex-legal-rag-v2-pilot"]
+    created_at_utc: datetime
+    source_state_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    plan_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    creation_receipt_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    probe_report_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    upload_report_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    points_count: _NonnegativeInt
+    indexed_vectors_count: _NonnegativeInt | None = None
+    collection_status: str = Field(min_length=1)
+    optimizer_status: str = Field(min_length=1)
+    schema_readback: FinalizedCollectionSchemaReceipt | None
+    provider_usage: dict[str, StrictInt]
+    provider_calls: _NonnegativeInt
+    technical_errors: dict[str, str]
+    remote_cleanup_calls: Literal[0] = 0
+
+    @model_validator(mode="after")
+    def validate_finalize_result(self) -> Self:
+        if self.created_at_utc.utcoffset() is None:
+            raise ValueError("finalize timestamp must be timezone-aware")
+        if set(self.provider_usage) != {
+            "Qwen/Qwen3-Embedding-0.6B",
+            "qdrant/bm25",
+        } or any(
+            isinstance(value, bool)
+            or not isinstance(value, int)
+            or value <= 0
+            for value in self.provider_usage.values()
+        ):
+            raise ValueError("finalize provider usage is incomplete")
+        if self.status == "PASS_FINALIZE":
+            if self.technical_errors or self.schema_readback is None:
+                raise ValueError("successful finalize evidence is incomplete")
+            if self.collection_status != "green" or self.optimizer_status != "ok":
+                raise ValueError("successful finalize health is incomplete")
+        elif not self.technical_errors:
+            raise ValueError("blocked finalize requires typed errors")
+        return self
+
+
+class CollectionVerificationReceipt(BaseModel):
+    """Immutable exact sample and schema verification evidence."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: Literal["1.0.0"] = "1.0.0"
+    status: Literal["PASS_VERIFY", "BLOCKED_TECHNICAL"]
+    collection_name: Literal["vietlex-legal-rag-v2-pilot"]
+    created_at_utc: datetime
+    source_state_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    plan_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    creation_receipt_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    probe_report_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    upload_report_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    finalize_receipt_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    dataset_revision: str = Field(min_length=1)
+    ordered_record_ids_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    points_count: _NonnegativeInt
+    sample_record_ids: tuple[str, ...]
+    sample_record_hashes: dict[str, str]
+    sample_payload_sha256: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+    )
+    retrieved_sample_count: _NonnegativeInt
+    dense_vectors_validated: _NonnegativeInt
+    sparse_vectors_validated: _NonnegativeInt
+    schema_readback: FinalizedCollectionSchemaReceipt | None
+    provider_usage: dict[str, StrictInt]
+    provider_calls: _NonnegativeInt
+    technical_errors: dict[str, str]
+    remote_cleanup_calls: Literal[0] = 0
+
+    @model_validator(mode="after")
+    def validate_verification_result(self) -> Self:
+        if self.created_at_utc.utcoffset() is None:
+            raise ValueError("verification timestamp must be timezone-aware")
+        if (
+            len(self.sample_record_ids) != len(set(self.sample_record_ids))
+            or set(self.sample_record_hashes) != set(self.sample_record_ids)
+            or any(
+                not isinstance(value, str)
+                or len(value) != 64
+                or any(
+                    character not in "0123456789abcdef"
+                    for character in value
+                )
+                for value in self.sample_record_hashes.values()
+            )
+        ):
+            raise ValueError("verification sample identity mismatch")
+        if set(self.provider_usage) != {
+            "Qwen/Qwen3-Embedding-0.6B",
+            "qdrant/bm25",
+        } or any(
+            isinstance(value, bool)
+            or not isinstance(value, int)
+            or value <= 0
+            for value in self.provider_usage.values()
+        ):
+            raise ValueError("verification provider usage is incomplete")
+        if self.status == "PASS_VERIFY":
+            expected = len(self.sample_record_ids)
+            if (
+                self.technical_errors
+                or self.schema_readback is None
+                or self.sample_payload_sha256 is None
+                or self.retrieved_sample_count != expected
+                or self.dense_vectors_validated != expected
+                or self.sparse_vectors_validated != expected
+            ):
+                raise ValueError("successful verification evidence is incomplete")
+        elif not self.technical_errors:
+            raise ValueError("blocked verification requires typed errors")
+        return self
 
 
 def audit_structural_corpus(
@@ -645,6 +790,638 @@ def _validate_collection_readback(
         shard_number=params.shard_number,
         on_disk_payload=params.on_disk_payload,
     )
+
+
+def _validate_finalized_collection_readback(
+    readback: object,
+    *,
+    contract: StructuralQdrantContract,
+    shard_number: int | None,
+    expected_points_count: int,
+) -> FinalizedCollectionSchemaReceipt:
+    """Validate the exact post-finalize schema and count."""
+    if shard_number is None:
+        raise StructuralPilotError("collection shard count is unavailable")
+    try:
+        params = readback.config.params
+        vectors = params.vectors
+        dense = vectors[contract.dense_vector_name]
+        sparse_vectors = params.sparse_vectors
+        sparse = sparse_vectors[contract.sparse_vector_name]
+        hnsw = readback.config.hnsw_config
+        payload_schema = readback.payload_schema
+    except (AttributeError, KeyError, TypeError) as error:
+        raise StructuralPilotError(
+            "Qdrant finalized collection readback is incomplete"
+        ) from error
+    if set(vectors) != {contract.dense_vector_name} or (
+        dense.size != contract.dense_size
+        or dense.distance != models.Distance.COSINE
+        or dense.on_disk is not True
+    ):
+        raise StructuralPilotError("Qdrant dense vector readback mismatch")
+    if set(sparse_vectors) != {contract.sparse_vector_name} or (
+        sparse.modifier != models.Modifier.IDF
+        or sparse.index is None
+        or sparse.index.on_disk is not True
+    ):
+        raise StructuralPilotError("Qdrant sparse vector readback mismatch")
+    if hnsw.m != 16 or hnsw.on_disk is not True:
+        raise StructuralPilotError("Qdrant finalized HNSW readback mismatch")
+    if (
+        params.shard_number != shard_number
+        or params.on_disk_payload is not True
+    ):
+        raise StructuralPilotError("Qdrant collection storage readback mismatch")
+    expected_payload = {
+        "dataset_revision": models.PayloadSchemaType.KEYWORD,
+        "legal_type": models.PayloadSchemaType.KEYWORD,
+        "document_id": models.PayloadSchemaType.INTEGER,
+    }
+    if set(payload_schema) != set(expected_payload) or any(
+        payload_schema[field].data_type != schema
+        for field, schema in expected_payload.items()
+    ):
+        raise StructuralPilotError("Qdrant payload indexes readback mismatch")
+    if readback.points_count != expected_points_count:
+        raise StructuralPilotError(
+            "Qdrant collection point count readback mismatch"
+        )
+    return FinalizedCollectionSchemaReceipt(
+        dense_vector_name=contract.dense_vector_name,
+        dense_size=dense.size,
+        dense_distance=dense.distance.value,
+        dense_on_disk=dense.on_disk,
+        sparse_vector_name=contract.sparse_vector_name,
+        sparse_modifier=sparse.modifier.value,
+        sparse_on_disk=sparse.index.on_disk,
+        hnsw_m=hnsw.m,
+        hnsw_on_disk=hnsw.on_disk,
+        shard_number=params.shard_number,
+        on_disk_payload=params.on_disk_payload,
+    )
+
+
+def finalize_structural_collection(
+    client: QdrantClient,
+    plan: StructuralPilotPlan,
+    authorization: RemoteWriteAuthorization,
+    provenance: GitProvenance,
+    *,
+    creation_receipt: CollectionCreationReceipt,
+    creation_receipt_sha256: str,
+    probe_report: object,
+    probe_report_sha256: str,
+    upload_report: object,
+    upload_report_sha256: str,
+    receipt_path: Path | None = None,
+    max_polls: int = 60,
+    poll_interval_seconds: float = 5.0,
+    sleep: Callable[[float], None] = time.sleep,
+) -> CollectionFinalizeReceipt:
+    """Activate HNSW only after the exact upload chain is complete."""
+    _ensure_new_artifact(receipt_path, "finalize receipt")
+    validate_remote_write_authorization(plan, authorization, provenance)
+    _validate_pre_finalize_chain(
+        plan,
+        creation_receipt=creation_receipt,
+        creation_receipt_sha256=creation_receipt_sha256,
+        probe_report=probe_report,
+        probe_report_sha256=probe_report_sha256,
+        upload_report=upload_report,
+        upload_report_sha256=upload_report_sha256,
+    )
+    if (
+        isinstance(max_polls, bool)
+        or not isinstance(max_polls, int)
+        or max_polls <= 0
+        or not math.isfinite(poll_interval_seconds)
+        or poll_interval_seconds < 0
+    ):
+        raise StructuralPilotError("finalize polling limits are invalid")
+
+    contract = plan.contract
+    provider_calls = 0
+    readback: object | None = None
+    schema: FinalizedCollectionSchemaReceipt | None = None
+    technical_errors: dict[str, str] = {}
+    try:
+        provider_calls += 1
+        readback = client.get_collection(contract.collection_name)
+        try:
+            hnsw_m = readback.config.hnsw_config.m
+        except AttributeError as error:
+            raise StructuralPilotError(
+                "Qdrant collection readback is incomplete"
+            ) from error
+        if hnsw_m == 0:
+            _validate_collection_readback(
+                readback,
+                contract=contract,
+                shard_number=plan.capacity.shard_count,
+                expected_points_count=plan.manifest.record_count,
+            )
+            provider_calls += 1
+            updated = client.update_collection(
+                collection_name=contract.collection_name,
+                hnsw_config=models.HnswConfigDiff(m=16, on_disk=True),
+                timeout=int(contract.timeout_seconds),
+            )
+            if updated is not True:
+                raise StructuralPilotError(
+                    "Qdrant did not acknowledge HNSW finalize"
+                )
+        elif hnsw_m != 16:
+            raise StructuralPilotError(
+                "Qdrant collection has an unauthorized HNSW state"
+            )
+
+        last_validation_error: StructuralPilotError | None = None
+        for poll_index in range(max_polls):
+            provider_calls += 1
+            readback = client.get_collection(contract.collection_name)
+            try:
+                schema = _validate_finalized_collection_readback(
+                    readback,
+                    contract=contract,
+                    shard_number=plan.capacity.shard_count,
+                    expected_points_count=plan.manifest.record_count,
+                )
+                last_validation_error = None
+            except StructuralPilotError as error:
+                last_validation_error = error
+                schema = None
+            status = _enum_text(getattr(readback, "status", None))
+            optimizer = _enum_text(
+                getattr(readback, "optimizer_status", None)
+            )
+            indexed = getattr(readback, "indexed_vectors_count", None)
+            indexed_ready = indexed is None or (
+                isinstance(indexed, int)
+                and not isinstance(indexed, bool)
+                and indexed >= plan.manifest.record_count
+            )
+            if (
+                schema is not None
+                and status == "green"
+                and optimizer == "ok"
+                and indexed_ready
+            ):
+                break
+            if poll_index + 1 < max_polls:
+                sleep(poll_interval_seconds)
+        else:
+            message = (
+                str(last_validation_error)
+                if last_validation_error is not None
+                else "Qdrant finalize health poll timed out"
+            )
+            technical_errors["finalize"] = message
+    except Exception as error:
+        technical_errors["finalize"] = _safe_structural_error(error)
+
+    collection_status = _enum_text(
+        getattr(readback, "status", None)
+    ) or "unavailable"
+    optimizer_status = _enum_text(
+        getattr(readback, "optimizer_status", None)
+    ) or "unavailable"
+    raw_points_count = getattr(readback, "points_count", 0)
+    points_count = (
+        raw_points_count
+        if isinstance(raw_points_count, int)
+        and not isinstance(raw_points_count, bool)
+        and raw_points_count >= 0
+        else 0
+    )
+    raw_indexed = getattr(readback, "indexed_vectors_count", None)
+    indexed_vectors_count = (
+        raw_indexed
+        if isinstance(raw_indexed, int)
+        and not isinstance(raw_indexed, bool)
+        and raw_indexed >= 0
+        else None
+    )
+    if schema is None and not technical_errors:
+        technical_errors["finalize"] = "finalized schema was not observed"
+    receipt = CollectionFinalizeReceipt(
+        status=(
+            "BLOCKED_TECHNICAL"
+            if technical_errors
+            else "PASS_FINALIZE"
+        ),
+        collection_name=contract.collection_name,
+        created_at_utc=datetime.now(timezone.utc),
+        source_state_sha256=plan.source_state_sha256,
+        plan_sha256=plan.plan_sha256,
+        creation_receipt_sha256=creation_receipt_sha256,
+        probe_report_sha256=probe_report_sha256,
+        upload_report_sha256=upload_report_sha256,
+        points_count=points_count,
+        indexed_vectors_count=indexed_vectors_count,
+        collection_status=collection_status,
+        optimizer_status=optimizer_status,
+        schema_readback=schema,
+        provider_usage=dict(getattr(upload_report, "provider_usage")),
+        provider_calls=provider_calls,
+        technical_errors=technical_errors,
+    )
+    if receipt_path is not None:
+        write_immutable_json(receipt_path, receipt.model_dump(mode="json"))
+    return receipt
+
+
+def verify_structural_collection(
+    client: QdrantClient,
+    plan: StructuralPilotPlan,
+    authorization: RemoteWriteAuthorization,
+    provenance: GitProvenance,
+    records: Iterable[StructuralRecord],
+    *,
+    creation_receipt: CollectionCreationReceipt,
+    creation_receipt_sha256: str,
+    probe_report: object,
+    probe_report_sha256: str,
+    upload_report: object,
+    upload_report_sha256: str,
+    finalize_receipt: CollectionFinalizeReceipt,
+    finalize_receipt_sha256: str,
+    receipt_path: Path | None = None,
+    derived_sample_count: int = 16,
+) -> CollectionVerificationReceipt:
+    """Verify schema, exact count/hash chain, and deterministic real points."""
+    _ensure_new_artifact(receipt_path, "verification receipt")
+    validate_remote_write_authorization(plan, authorization, provenance)
+    _validate_pre_finalize_chain(
+        plan,
+        creation_receipt=creation_receipt,
+        creation_receipt_sha256=creation_receipt_sha256,
+        probe_report=probe_report,
+        probe_report_sha256=probe_report_sha256,
+        upload_report=upload_report,
+        upload_report_sha256=upload_report_sha256,
+    )
+    _require_sha256(finalize_receipt_sha256, "finalize receipt")
+    if (
+        finalize_receipt.status != "PASS_FINALIZE"
+        or finalize_receipt.collection_name != plan.contract.collection_name
+        or finalize_receipt.source_state_sha256 != plan.source_state_sha256
+        or finalize_receipt.plan_sha256 != plan.plan_sha256
+        or finalize_receipt.creation_receipt_sha256
+        != creation_receipt_sha256
+        or finalize_receipt.probe_report_sha256 != probe_report_sha256
+        or finalize_receipt.upload_report_sha256 != upload_report_sha256
+    ):
+        raise StructuralPilotError("finalize receipt binding mismatch")
+    if (
+        isinstance(derived_sample_count, bool)
+        or not isinstance(derived_sample_count, int)
+        or derived_sample_count <= 0
+    ):
+        raise StructuralPilotError("verification sample count is invalid")
+
+    try:
+        sample_indices = _verification_sample_indices(
+            plan.plan_sha256,
+            plan.manifest.record_count,
+            derived_sample_count,
+        )
+        expected_by_index: dict[int, StructuralRecord] = {}
+        ordered_hash = hashlib.sha256(b"[")
+        observed_count = 0
+        for index, record in enumerate(records):
+            if observed_count:
+                ordered_hash.update(b",")
+            ordered_hash.update(
+                json.dumps(
+                    record.record_id,
+                    ensure_ascii=False,
+                    separators=(",", ":"),
+                ).encode("utf-8")
+            )
+            if index in sample_indices:
+                expected_by_index[index] = record
+            observed_count += 1
+        ordered_hash.update(b"]")
+        if observed_count != plan.manifest.record_count:
+            raise StructuralPilotError("verification record count mismatch")
+        if ordered_hash.hexdigest() != plan.manifest.ordered_record_ids_sha256:
+            raise StructuralPilotError(
+                "verification ordered record hash mismatch"
+            )
+        if set(expected_by_index) != sample_indices:
+            raise StructuralPilotError(
+                "verification sample could not be resolved"
+            )
+        expected_records = tuple(
+            expected_by_index[index] for index in sorted(expected_by_index)
+        )
+        sample_ids = tuple(record.record_id for record in expected_records)
+        sample_hashes = {
+            record.record_id: record.chunk_sha256
+            for record in expected_records
+        }
+    except Exception as error:
+        receipt = CollectionVerificationReceipt(
+            status="BLOCKED_TECHNICAL",
+            collection_name=plan.contract.collection_name,
+            created_at_utc=datetime.now(timezone.utc),
+            source_state_sha256=plan.source_state_sha256,
+            plan_sha256=plan.plan_sha256,
+            creation_receipt_sha256=creation_receipt_sha256,
+            probe_report_sha256=probe_report_sha256,
+            upload_report_sha256=upload_report_sha256,
+            finalize_receipt_sha256=finalize_receipt_sha256,
+            dataset_revision=plan.manifest.dataset_revision,
+            ordered_record_ids_sha256=(
+                plan.manifest.ordered_record_ids_sha256
+            ),
+            points_count=0,
+            sample_record_ids=(),
+            sample_record_hashes={},
+            sample_payload_sha256=None,
+            retrieved_sample_count=0,
+            dense_vectors_validated=0,
+            sparse_vectors_validated=0,
+            schema_readback=None,
+            provider_usage=dict(getattr(upload_report, "provider_usage")),
+            provider_calls=0,
+            technical_errors={
+                "local_source": _safe_structural_error(error)
+            },
+        )
+        if receipt_path is not None:
+            write_immutable_json(
+                receipt_path,
+                receipt.model_dump(mode="json"),
+            )
+        return receipt
+
+    provider_calls = 0
+    technical_errors: dict[str, str] = {}
+    schema: FinalizedCollectionSchemaReceipt | None = None
+    retrieved_count = 0
+    dense_validated = 0
+    sparse_validated = 0
+    sample_payload_sha256: str | None = None
+    points_count = 0
+    try:
+        provider_calls += 1
+        readback = client.get_collection(plan.contract.collection_name)
+        raw_points_count = getattr(readback, "points_count", 0)
+        points_count = (
+            raw_points_count
+            if isinstance(raw_points_count, int)
+            and not isinstance(raw_points_count, bool)
+            and raw_points_count >= 0
+            else 0
+        )
+        schema = _validate_finalized_collection_readback(
+            readback,
+            contract=plan.contract,
+            shard_number=plan.capacity.shard_count,
+            expected_points_count=plan.manifest.record_count,
+        )
+        if (
+            _enum_text(getattr(readback, "status", None)) != "green"
+            or _enum_text(getattr(readback, "optimizer_status", None)) != "ok"
+        ):
+            raise StructuralPilotError(
+                "Qdrant verification collection health mismatch"
+            )
+        indexed = getattr(readback, "indexed_vectors_count", None)
+        if indexed is not None and (
+            isinstance(indexed, bool)
+            or not isinstance(indexed, int)
+            or indexed < plan.manifest.record_count
+        ):
+            raise StructuralPilotError(
+                "Qdrant verification indexed vector count mismatch"
+            )
+        provider_calls += 1
+        retrieved = client.retrieve(
+            collection_name=plan.contract.collection_name,
+            ids=list(sample_ids),
+            with_payload=True,
+            with_vectors=True,
+            timeout=int(plan.contract.timeout_seconds),
+        )
+        observed = {str(point.id): point for point in retrieved}
+        if len(observed) != len(retrieved) or set(observed) != set(sample_ids):
+            raise StructuralPilotError(
+                "Qdrant verification sample identity mismatch"
+            )
+        for record in expected_records:
+            point = observed[record.record_id]
+            if getattr(point, "payload", None) != point_payload(record):
+                raise StructuralPilotError(
+                    "Qdrant verification sample payload mismatch"
+                )
+            vector = getattr(point, "vector", None)
+            if not isinstance(vector, Mapping):
+                raise StructuralPilotError(
+                    "Qdrant verification sample vector is missing"
+                )
+            _validate_dense_sample_vector(
+                vector.get(plan.contract.dense_vector_name),
+                plan.contract.dense_size,
+            )
+            dense_validated += 1
+            _validate_sparse_sample_vector(
+                vector.get(plan.contract.sparse_vector_name)
+            )
+            sparse_validated += 1
+        retrieved_count = len(observed)
+        sample_payload_sha256 = _canonical_model_sha256(
+            [
+                {
+                    "record_id": record.record_id,
+                    "payload": point_payload(record),
+                }
+                for record in expected_records
+            ]
+        )
+    except Exception as error:
+        technical_errors["verify"] = _safe_structural_error(error)
+
+    receipt = CollectionVerificationReceipt(
+        status="BLOCKED_TECHNICAL" if technical_errors else "PASS_VERIFY",
+        collection_name=plan.contract.collection_name,
+        created_at_utc=datetime.now(timezone.utc),
+        source_state_sha256=plan.source_state_sha256,
+        plan_sha256=plan.plan_sha256,
+        creation_receipt_sha256=creation_receipt_sha256,
+        probe_report_sha256=probe_report_sha256,
+        upload_report_sha256=upload_report_sha256,
+        finalize_receipt_sha256=finalize_receipt_sha256,
+        dataset_revision=plan.manifest.dataset_revision,
+        ordered_record_ids_sha256=plan.manifest.ordered_record_ids_sha256,
+        points_count=points_count,
+        sample_record_ids=sample_ids,
+        sample_record_hashes=sample_hashes,
+        sample_payload_sha256=sample_payload_sha256,
+        retrieved_sample_count=retrieved_count,
+        dense_vectors_validated=dense_validated,
+        sparse_vectors_validated=sparse_validated,
+        schema_readback=schema,
+        provider_usage=dict(getattr(upload_report, "provider_usage")),
+        provider_calls=provider_calls,
+        technical_errors=technical_errors,
+    )
+    if receipt_path is not None:
+        write_immutable_json(receipt_path, receipt.model_dump(mode="json"))
+    return receipt
+
+
+def _validate_pre_finalize_chain(
+    plan: StructuralPilotPlan,
+    *,
+    creation_receipt: CollectionCreationReceipt,
+    creation_receipt_sha256: str,
+    probe_report: object,
+    probe_report_sha256: str,
+    upload_report: object,
+    upload_report_sha256: str,
+) -> None:
+    for label, digest in (
+        ("creation receipt", creation_receipt_sha256),
+        ("probe report", probe_report_sha256),
+        ("upload report", upload_report_sha256),
+    ):
+        _require_sha256(digest, label)
+    if (
+        creation_receipt.status != "CREATED"
+        or creation_receipt.collection_name != plan.contract.collection_name
+        or creation_receipt.source_state_sha256 != plan.source_state_sha256
+        or creation_receipt.plan_sha256 != plan.plan_sha256
+    ):
+        raise StructuralPilotError("creation receipt binding mismatch")
+    expected_probe = {
+        "acceptance": "PASS_MODEL_PROBE",
+        "collection_name": plan.contract.collection_name,
+        "source_state_sha256": plan.source_state_sha256,
+        "plan_sha256": plan.plan_sha256,
+        "creation_receipt_sha256": creation_receipt_sha256,
+        "dataset_revision": plan.manifest.dataset_revision,
+        "candidate_dense_model": plan.contract.dense_model,
+        "candidate_sparse_model": plan.contract.sparse_model,
+    }
+    if any(
+        getattr(probe_report, field_name, None) != expected_value
+        for field_name, expected_value in expected_probe.items()
+    ):
+        raise StructuralPilotError("model probe binding mismatch")
+    expected_upload = {
+        "status": "UPLOAD_COMPLETE",
+        "collection_name": plan.contract.collection_name,
+        "source_state_sha256": plan.source_state_sha256,
+        "plan_sha256": plan.plan_sha256,
+        "creation_receipt_sha256": creation_receipt_sha256,
+        "probe_report_sha256": probe_report_sha256,
+        "dataset_revision": plan.manifest.dataset_revision,
+        "ordered_record_ids_sha256": plan.manifest.ordered_record_ids_sha256,
+        "manifest_record_count": plan.manifest.record_count,
+        "committed_total": plan.manifest.record_count,
+        "remaining_count": 0,
+    }
+    if any(
+        getattr(upload_report, field_name, None) != expected_value
+        for field_name, expected_value in expected_upload.items()
+    ):
+        raise StructuralPilotError("upload report binding mismatch")
+    usage = getattr(upload_report, "provider_usage", None)
+    if not isinstance(usage, Mapping) or set(usage) != {
+        plan.contract.dense_model,
+        plan.contract.sparse_model,
+    } or any(
+        isinstance(value, bool)
+        or not isinstance(value, int)
+        or value <= 0
+        for value in usage.values()
+    ):
+        raise StructuralPilotError("upload provider usage mismatch")
+
+
+def _verification_sample_indices(
+    plan_sha256: str,
+    record_count: int,
+    derived_count: int,
+) -> set[int]:
+    indices = {0, record_count - 1}
+    for index in range(derived_count):
+        digest = hashlib.sha256(
+            f"{plan_sha256}{index}".encode("utf-8")
+        ).digest()
+        indices.add(int.from_bytes(digest, "big") % record_count)
+    return indices
+
+
+def _validate_dense_sample_vector(vector: object, size: int) -> None:
+    if (
+        not isinstance(vector, Sequence)
+        or isinstance(vector, (str, bytes))
+        or len(vector) != size
+        or any(
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not math.isfinite(value)
+            for value in vector
+        )
+    ):
+        raise StructuralPilotError(
+            "Qdrant verification dense vector mismatch"
+        )
+
+
+def _validate_sparse_sample_vector(vector: object) -> None:
+    indices = getattr(vector, "indices", None)
+    values = getattr(vector, "values", None)
+    if isinstance(vector, Mapping):
+        indices = vector.get("indices")
+        values = vector.get("values")
+    if (
+        not isinstance(indices, Sequence)
+        or isinstance(indices, (str, bytes))
+        or not indices
+        or not isinstance(values, Sequence)
+        or isinstance(values, (str, bytes))
+        or len(indices) != len(values)
+        or any(
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not math.isfinite(value)
+            for value in values
+        )
+    ):
+        raise StructuralPilotError(
+            "Qdrant verification sparse vector mismatch"
+        )
+
+
+def _enum_text(value: object) -> str:
+    if getattr(value, "error", None) is not None:
+        return "error"
+    return str(getattr(value, "value", value) or "").strip().casefold()
+
+
+def _require_sha256(value: str, label: str) -> None:
+    if (
+        not isinstance(value, str)
+        or len(value) != 64
+        or any(character not in "0123456789abcdef" for character in value)
+    ):
+        raise StructuralPilotError(f"{label} SHA-256 is malformed")
+
+
+def _ensure_new_artifact(path: Path | None, label: str) -> None:
+    if path is not None and Path(path).exists():
+        raise StructuralPilotError(f"{label} already exists")
+
+
+def _safe_structural_error(error: Exception) -> str:
+    if isinstance(error, StructuralPilotError):
+        return str(error)
+    return type(error).__name__
 
 
 def _plan_sha256(plan: StructuralPilotPlan) -> str:

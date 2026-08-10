@@ -81,6 +81,96 @@ def test_structural_probe_entrypoint_requires_bound_live_scope() -> None:
     assert arguments.reference_probe is None
 
 
+@pytest.mark.parametrize(
+    ("command_name", "upstream_flags"),
+    [
+        (
+            "upload",
+            [
+                "--create-receipt",
+                "create.json",
+                "--create-receipt-sha256",
+                "c" * 64,
+                "--probe-report",
+                "probe.json",
+                "--probe-report-sha256",
+                "d" * 64,
+                "--checkpoint",
+                "state.sqlite3",
+            ],
+        ),
+        (
+            "finalize",
+            [
+                "--create-receipt",
+                "create.json",
+                "--create-receipt-sha256",
+                "c" * 64,
+                "--probe-report",
+                "probe.json",
+                "--probe-report-sha256",
+                "d" * 64,
+                "--upload-report",
+                "upload.json",
+                "--upload-report-sha256",
+                "e" * 64,
+            ],
+        ),
+        (
+            "verify",
+            [
+                "--create-receipt",
+                "create.json",
+                "--create-receipt-sha256",
+                "c" * 64,
+                "--probe-report",
+                "probe.json",
+                "--probe-report-sha256",
+                "d" * 64,
+                "--upload-report",
+                "upload.json",
+                "--upload-report-sha256",
+                "e" * 64,
+                "--finalize-receipt",
+                "finalize.json",
+                "--finalize-receipt-sha256",
+                "f" * 64,
+            ],
+        ),
+    ],
+)
+def test_structural_remote_phases_require_exact_artifact_chain(
+    command_name: str,
+    upstream_flags: list[str],
+) -> None:
+    arguments = run_structural_index_pilot.build_parser().parse_args(
+        [
+            command_name,
+            "--plan",
+            "plan.json",
+            *upstream_flags,
+            "--plan-sha256",
+            "a" * 64,
+            "--source-state-sha256",
+            "b" * 64,
+            "--collection",
+            "vietlex-legal-rag-v2-pilot",
+            "--allow-remote-write",
+        ]
+    )
+
+    assert arguments.command_name == command_name
+    assert arguments.allow_remote_write is True
+
+
+@pytest.mark.parametrize("command_name", ["upload", "finalize", "verify"])
+def test_structural_remote_phase_rejects_missing_bindings(
+    command_name: str,
+) -> None:
+    with pytest.raises(SystemExit):
+        run_structural_index_pilot.build_parser().parse_args([command_name])
+
+
 def test_answer_entrypoint_disables_llm_judge_by_default() -> None:
     arguments = run_answer_eval.build_parser().parse_args([])
 

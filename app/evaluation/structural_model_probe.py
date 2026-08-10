@@ -244,6 +244,8 @@ class StructuralModelProbeReport(BaseModel):
     per_query_first_relevant_rank: dict[str, int | None]
     reference: PineconeReferenceResult | None
     provider_usage: dict[str, int]
+    upsert_provider_usage: dict[str, int]
+    query_provider_usage: dict[str, int]
     upsert_batch_sizes: tuple[int, ...]
     upserted_record_count: int = Field(ge=0)
     retrieved_vector_count: int = Field(ge=0)
@@ -292,9 +294,45 @@ class StructuralModelProbeReport(BaseModel):
                 "llama-text-embed-v2",
             }
             if set(self.provider_usage) != expected_usage or any(
-                value <= 0 for value in self.provider_usage.values()
+                isinstance(value, bool)
+                or not isinstance(value, int)
+                or value <= 0
+                for value in self.provider_usage.values()
             ):
                 raise ValueError("valid execution provider usage is incomplete")
+            if set(self.upsert_provider_usage) != {
+                self.candidate_dense_model,
+                self.candidate_sparse_model,
+            } or any(
+                isinstance(value, bool)
+                or not isinstance(value, int)
+                or value <= 0
+                for value in self.upsert_provider_usage.values()
+            ):
+                raise ValueError("valid execution upsert usage is incomplete")
+            if set(self.query_provider_usage) != {
+                self.candidate_dense_model
+            } or any(
+                isinstance(value, bool)
+                or not isinstance(value, int)
+                or value <= 0
+                for value in self.query_provider_usage.values()
+            ):
+                raise ValueError("valid execution query usage is incomplete")
+            expected_candidate_usage = {
+                self.candidate_dense_model: (
+                    self.upsert_provider_usage[self.candidate_dense_model]
+                    + self.query_provider_usage[self.candidate_dense_model]
+                ),
+                self.candidate_sparse_model: self.upsert_provider_usage[
+                    self.candidate_sparse_model
+                ],
+            }
+            if any(
+                self.provider_usage[model_name] != tokens
+                for model_name, tokens in expected_candidate_usage.items()
+            ):
+                raise ValueError("valid execution staged usage is inconsistent")
             if set(self.per_query_first_relevant_rank) != set(self.case_ids):
                 raise ValueError("valid execution per-query ranks are incomplete")
             if self.metrics != _metrics_from_ranks(
@@ -551,6 +589,8 @@ def run_structural_model_probe(
     ranks: dict[str, int | None] = {}
     reference: PineconeReferenceResult | None = None
     usage: dict[str, int] = {}
+    upsert_usage: dict[str, int] = {}
+    query_usage: dict[str, int] = {}
     batch_sizes: list[int] = []
     upserted_count = 0
     vector_count = 0
@@ -598,6 +638,7 @@ def run_structural_model_probe(
                     stage="upsert",
                 )
                 _merge_usage(usage, receipt.model_tokens)
+                _merge_usage(upsert_usage, receipt.model_tokens)
                 batch_sizes.append(len(points))
                 upserted_count += len(points)
 
@@ -612,7 +653,12 @@ def run_structural_model_probe(
             vector_validation = "passed"
 
             stage = "candidate_queries"
-            ranks = _qdrant_first_relevant_ranks(transport, selection, usage)
+            ranks = _qdrant_first_relevant_ranks(
+                transport,
+                selection,
+                query_usage,
+            )
+            _merge_usage(usage, query_usage)
             metrics = _metrics_from_ranks(ranks)
             _validate_comparable_denominator(metrics, reference.metrics)
             acceptance = (
@@ -669,6 +715,8 @@ def run_structural_model_probe(
         per_query_first_relevant_rank=ranks,
         reference=reference,
         provider_usage=usage,
+        upsert_provider_usage=upsert_usage,
+        query_provider_usage=query_usage,
         upsert_batch_sizes=tuple(batch_sizes),
         upserted_record_count=upserted_count,
         retrieved_vector_count=vector_count,
