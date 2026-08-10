@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field
 from typing import Optional
 from functools import lru_cache
 from pathlib import Path
@@ -16,7 +17,8 @@ class Settings(BaseSettings):
     PORT: int = 8000
     FRONTEND_URL: str = "http://localhost:8000"
     
-    # Qdrant Cloud is inference-only; large-vector storage lives in Pinecone.
+    # Qdrant staging remains the v1 inference path; the structural durable
+    # pilot is opt-in and does not change the Pinecone v1 production default.
     QDRANT_URL: str = "http://localhost:6333"
     QDRANT_API_KEY: Optional[str] = None
     QDRANT_INFERENCE_COLLECTION_NAME: str = "vietlex-embedding-staging"
@@ -31,6 +33,43 @@ class Settings(BaseSettings):
     QDRANT_RERANK_STALE_SECONDS: int = 120
     QDRANT_RERANK_CLEANUP_INTERVAL_SECONDS: int = 30
     QDRANT_RERANK_MAX_STAGING_POINTS: int = 256
+
+    # Opt-in Qdrant structural pilot.
+    STRUCTURAL_BACKEND_ENABLED: bool = False
+    STRUCTURAL_COLLECTION_NAME: str = "vietlex-legal-rag-v2-pilot"
+    STRUCTURAL_DENSE_VECTOR_NAME: str = "dense"
+    STRUCTURAL_SPARSE_VECTOR_NAME: str = "bm25"
+    STRUCTURAL_DENSE_MODEL: str = "Qwen/Qwen3-Embedding-0.6B"
+    STRUCTURAL_DENSE_MODEL_OPTIONS: dict[str, object] = Field(
+        default_factory=dict
+    )
+    STRUCTURAL_SPARSE_MODEL: str = "qdrant/bm25"
+    STRUCTURAL_SPARSE_MODEL_OPTIONS: dict[str, object] = Field(
+        default_factory=dict
+    )
+    STRUCTURAL_VECTOR_SIZE: int = 1024
+    STRUCTURAL_QUERY_INSTRUCTION_VERSION: str = (
+        "vietlex-vn-legal-retrieval-v1"
+    )
+    STRUCTURAL_QUERY_INSTRUCTION: str = (
+        "Given a Vietnamese legal question, retrieve relevant statutory "
+        "provisions and preserve exact legal references."
+    )
+    STRUCTURAL_CHUNK_MAX_TOKENS: int = 420
+    STRUCTURAL_CHUNK_OVERLAP_TOKENS: int = 48
+    STRUCTURAL_DENSE_TOP_K: int = 48
+    STRUCTURAL_BM25_TOP_K: int = 48
+    STRUCTURAL_FUSED_LIMIT: int = 64
+    STRUCTURAL_RRF_K: int = 60
+    STRUCTURAL_PER_DOCUMENT_LIMIT: int = 4
+    STRUCTURAL_QDRANT_TIMEOUT_SECONDS: float = 120.0
+    STRUCTURAL_QDRANT_MAX_RETRIES: int = 5
+    STRUCTURAL_QDRANT_RETRY_BASE_SECONDS: float = 1.0
+    STRUCTURAL_QDRANT_RETRY_MAX_SECONDS: float = 30.0
+    STRUCTURAL_UPLOAD_BATCH_MIN: int = 64
+    STRUCTURAL_UPLOAD_BATCH_MAX: int = 256
+    STRUCTURAL_UPLOAD_MAX_WORKERS: int = 4
+    STRUCTURAL_UPLOAD_PREFER_GRPC: bool = True
 
     # Pinecone vector storage. PIPECONE_API is retained because the existing
     # deployment secret uses that spelling; PINECONE_API_KEY is also accepted.

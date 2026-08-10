@@ -60,3 +60,24 @@ def test_secret_defaults_never_contain_credentials() -> None:
 
     for secret_name in secret_names:
         assert Settings.model_fields[secret_name].default is None
+
+
+def test_qdrant_structural_pilot_defaults_are_exact_and_opt_in() -> None:
+    settings = Settings(_env_file=None)
+
+    assert settings.STRUCTURAL_BACKEND_ENABLED is False
+    assert settings.STRUCTURAL_COLLECTION_NAME == "vietlex-legal-rag-v2-pilot"
+    assert settings.STRUCTURAL_DENSE_VECTOR_NAME == "dense"
+    assert settings.STRUCTURAL_SPARSE_VECTOR_NAME == "bm25"
+    assert settings.STRUCTURAL_DENSE_MODEL == "Qwen/Qwen3-Embedding-0.6B"
+    assert settings.STRUCTURAL_DENSE_MODEL_OPTIONS == {}
+    assert settings.STRUCTURAL_SPARSE_MODEL == "qdrant/bm25"
+    assert settings.STRUCTURAL_SPARSE_MODEL_OPTIONS == {}
+    assert settings.STRUCTURAL_VECTOR_SIZE == 1024
+    assert settings.STRUCTURAL_QUERY_INSTRUCTION_VERSION == (
+        "vietlex-vn-legal-retrieval-v1"
+    )
+    assert settings.STRUCTURAL_CHUNK_MAX_TOKENS == 420
+    assert settings.STRUCTURAL_CHUNK_OVERLAP_TOKENS == 48
+    assert settings.STRUCTURAL_UPLOAD_BATCH_MIN == 64
+    assert settings.STRUCTURAL_UPLOAD_BATCH_MAX == 256
