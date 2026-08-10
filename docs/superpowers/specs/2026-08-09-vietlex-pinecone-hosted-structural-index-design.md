@@ -4,7 +4,7 @@
 
 **Phase:** P3 — evidence-driven retrieval repair
 
-**Status:** Approved for automatic local implementation by the user's current-task authorization. Remote pilot creation, full ingestion, and deletion remain separate operational gates.
+**Status:** Superseded on 2026-08-10 by `2026-08-10-vietlex-qdrant-structural-pilot-design.md`. The completed Task 1 corpus work remains valid subject to the nullable-provenance correction in the replacement design. Do not implement the Pinecone-only Tasks 2-6 from this document.
 
 ## Problem and evidence
 
