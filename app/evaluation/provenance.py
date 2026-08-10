@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 
 SOURCE_EXCLUDED_PREFIXES = (
+    "docs/evaluation/index-pilots/",
     "docs/evaluation/preflight/",
     "docs/evaluation/runs/",
 )
@@ -173,6 +174,7 @@ def collect_git_provenance(
             "HEAD",
             "--",
             ".",
+            ":!docs/evaluation/index-pilots",
             ":!docs/evaluation/preflight",
             ":!docs/evaluation/runs",
             ":!docs/evaluation/CURRENT_STATUS.md",

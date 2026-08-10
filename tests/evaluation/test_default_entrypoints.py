@@ -6,6 +6,7 @@ import pytest
 import run_answer_eval
 import run_eval_suite
 import run_retrieval_eval
+import run_structural_index_pilot
 from app.evaluation.schemas import (
     GoldenCase,
     RetrievalCaseResult,
@@ -17,6 +18,19 @@ def test_retrieval_entrypoint_has_no_judge_mode() -> None:
     arguments = run_retrieval_eval.build_parser().parse_args([])
 
     assert not hasattr(arguments, "judge")
+
+
+def test_structural_pilot_entrypoint_defaults_are_provider_free() -> None:
+    audit = run_structural_index_pilot.build_parser().parse_args(["audit"])
+    plan = run_structural_index_pilot.build_parser().parse_args(["plan"])
+
+    assert audit.command_name == "audit"
+    assert plan.command_name == "plan"
+    assert plan.disk_bytes is None
+    assert plan.ram_bytes is None
+    assert plan.vcpu is None
+    assert plan.existing_disk_bytes is None
+    assert plan.shards is None
 
 
 def test_answer_entrypoint_disables_llm_judge_by_default() -> None:

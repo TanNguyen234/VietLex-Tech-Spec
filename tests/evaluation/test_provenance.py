@@ -74,6 +74,23 @@ def test_generated_artifact_is_dirty_but_not_source_state(
     assert dirty.source_state_sha256 == clean.source_state_sha256
 
 
+def test_index_pilot_artifact_is_dirty_but_not_source_state(
+    tmp_path: Path,
+) -> None:
+    repo = initialized_repo(tmp_path)
+    clean = collect_git_provenance(repo)
+    artifact = repo / "docs/evaluation/index-pilots/run-001/plan.json"
+    artifact.parent.mkdir(parents=True)
+    artifact.write_text('{"status": "planned"}\n', encoding="utf-8")
+
+    dirty = collect_git_provenance(repo)
+
+    assert dirty.git_dirty is True
+    assert dirty.git_untracked_dirty is True
+    assert dirty.git_diff_sha256 != clean.git_diff_sha256
+    assert dirty.source_state_sha256 == clean.source_state_sha256
+
+
 def test_status_ledger_is_dirty_but_not_self_referential_source_state(
     tmp_path: Path,
 ) -> None:
