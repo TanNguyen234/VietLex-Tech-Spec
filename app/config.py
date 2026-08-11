@@ -48,6 +48,7 @@ class Settings(BaseSettings):
         default_factory=dict
     )
     STRUCTURAL_VECTOR_SIZE: int = 1024
+    STRUCTURAL_DOCUMENT_TEXT_VERSION: str = "vietlex-structural-document-v2"
     STRUCTURAL_QUERY_INSTRUCTION_VERSION: str = (
         "vietlex-vn-legal-retrieval-v1"
     )

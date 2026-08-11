@@ -30,6 +30,7 @@ from app.ingestion.structural_qdrant import (
     dense_query_document,
     point_from_record,
     point_payload,
+    structural_inference_text_sha256,
 )
 
 
@@ -209,7 +210,7 @@ class PineconeReferenceResult(BaseModel):
 class StructuralModelProbeReport(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    schema_version: Literal["1.0.0"] = "1.0.0"
+    schema_version: Literal["2.0.0"] = "2.0.0"
     created_at_utc: datetime
     acceptance: Literal[
         "PASS_MODEL_PROBE",
@@ -232,6 +233,7 @@ class StructuralModelProbeReport(BaseModel):
     case_ids: tuple[str, ...]
     record_ids: tuple[str, ...]
     probe_record_hashes: dict[str, str]
+    probe_inference_text_hashes: dict[str, str]
     case_ids_sha256: str = Field(pattern=_SHA256_PATTERN)
     record_ids_sha256: str = Field(pattern=_SHA256_PATTERN)
     text_sha256: str = Field(pattern=_SHA256_PATTERN)
@@ -274,6 +276,13 @@ class StructuralModelProbeReport(BaseModel):
             not _is_sha256(value) for value in self.probe_record_hashes.values()
         ):
             raise ValueError("report probe record hashes are inconsistent")
+        if set(self.probe_inference_text_hashes) != set(self.record_ids) or any(
+            not _is_sha256(value)
+            for value in self.probe_inference_text_hashes.values()
+        ):
+            raise ValueError(
+                "report probe inference text hashes are inconsistent"
+            )
         if any(size <= 0 or size > _PROBE_BATCH_SIZE for size in self.upsert_batch_sizes):
             raise ValueError("report upsert batch size is invalid")
         if sum(self.upsert_batch_sizes) != self.upserted_record_count:
@@ -701,6 +710,10 @@ def run_structural_model_probe(
         record_ids=selection.record_ids,
         probe_record_hashes={
             record.record_id: record.chunk_sha256
+            for record in selection.records
+        },
+        probe_inference_text_hashes={
+            record.record_id: structural_inference_text_sha256(record)
             for record in selection.records
         },
         case_ids_sha256=selection.case_ids_sha256,

@@ -32,6 +32,7 @@ from app.ingestion.structural_qdrant import (
     StructuralQdrantContract,
     StructuralQdrantError,
     point_from_record,
+    structural_inference_text_sha256,
 )
 
 
@@ -426,6 +427,7 @@ def upload_one_batch(
         AcknowledgedRecord(
             record_id=record.record_id,
             chunk_sha256=record.chunk_sha256,
+            inference_text_sha256=structural_inference_text_sha256(record),
         )
         for record in normalized
     )

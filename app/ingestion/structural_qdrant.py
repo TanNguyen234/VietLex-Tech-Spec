@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from collections.abc import Mapping, Sequence
 from types import MappingProxyType
 from typing import Any, Literal, Self
@@ -85,6 +86,7 @@ class StructuralQdrantContract(BaseModel):
     sparse_model: str
     sparse_model_options: Mapping[str, object]
     dense_size: int
+    document_text_version: str
     query_instruction_version: str
     query_instruction: str
     chunk_max_tokens: int
@@ -114,6 +116,7 @@ class StructuralQdrantContract(BaseModel):
             sparse_model=settings.STRUCTURAL_SPARSE_MODEL,
             sparse_model_options=dict(settings.STRUCTURAL_SPARSE_MODEL_OPTIONS),
             dense_size=settings.STRUCTURAL_VECTOR_SIZE,
+            document_text_version=settings.STRUCTURAL_DOCUMENT_TEXT_VERSION,
             query_instruction_version=(
                 settings.STRUCTURAL_QUERY_INSTRUCTION_VERSION
             ),
@@ -150,6 +153,7 @@ class StructuralQdrantContract(BaseModel):
             "dense_model": "Qwen/Qwen3-Embedding-0.6B",
             "sparse_model": "qdrant/bm25",
             "dense_size": 1024,
+            "document_text_version": "vietlex-structural-document-v2",
             "query_instruction_version": "vietlex-vn-legal-retrieval-v1",
             "query_instruction": (
                 "Given a Vietnamese legal question, retrieve relevant "
@@ -165,6 +169,7 @@ class StructuralQdrantContract(BaseModel):
             "dense_model": "dense model",
             "sparse_model": "sparse model",
             "dense_size": "dense size must be 1024",
+            "document_text_version": "document text version",
             "query_instruction_version": "instruction version",
             "query_instruction": "query instruction",
             "chunk_max_tokens": "chunk maximum",
@@ -245,6 +250,30 @@ def _thaw_mapping(value: Mapping[str, object]) -> dict[str, object]:
     return {key: _thaw_value(item) for key, item in value.items()}
 
 
+def build_structural_inference_text(record: StructuralRecord) -> str:
+    """Build the exact versioned text sent to dense and BM25 inference."""
+    structure = record.heading_path.strip() or record.citation.strip()
+    fields = (
+        ("Tiêu đề", record.title),
+        ("Số văn bản", record.document_number),
+        ("Loại văn bản", record.legal_type),
+        ("Cấu trúc", structure),
+        ("Trích dẫn", record.citation),
+    )
+    header = "\n".join(
+        f"{name}: {' '.join(value.split())}"
+        for name, value in fields
+        if value.strip()
+    )
+    return f"{header}\nNội dung:\n{record.body}"
+
+
+def structural_inference_text_sha256(record: StructuralRecord) -> str:
+    return hashlib.sha256(
+        build_structural_inference_text(record).encode("utf-8")
+    ).hexdigest()
+
+
 def point_payload(record: StructuralRecord) -> dict[str, object]:
     """Return the exact body and provenance payload stored in Qdrant."""
     return {
@@ -264,6 +293,7 @@ def point_payload(record: StructuralRecord) -> dict[str, object]:
         "dataset_revision": record.dataset_revision,
         "content_sha256": record.content_sha256,
         "chunk_sha256": record.chunk_sha256,
+        "inference_text_sha256": structural_inference_text_sha256(record),
     }
 
 
@@ -272,16 +302,17 @@ def point_from_record(
     contract: StructuralQdrantContract,
 ) -> models.PointStruct:
     """Create one server-side dense and BM25 inference point."""
+    inference_text = build_structural_inference_text(record)
     return models.PointStruct(
         id=record.record_id,
         vector={
             contract.dense_vector_name: models.Document(
-                text=record.body,
+                text=inference_text,
                 model=contract.dense_model,
                 options=_thaw_mapping(contract.dense_model_options),
             ),
             contract.sparse_vector_name: models.Document(
-                text=record.body,
+                text=inference_text,
                 model=contract.sparse_model,
                 options=_thaw_mapping(contract.sparse_model_options),
             ),

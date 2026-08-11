@@ -12,6 +12,7 @@ from typing import Annotated, TYPE_CHECKING, Literal
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, model_validator
 
 from app.ingestion.structural_index import StructuralRecord
+from app.ingestion.structural_qdrant import structural_inference_text_sha256
 
 if TYPE_CHECKING:
     from app.evaluation.structural_model_probe import StructuralModelProbeReport
@@ -28,7 +29,7 @@ class StructuralCheckpointError(RuntimeError):
 class CheckpointBinding(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    schema_version: Literal["1.0.0"] = "1.0.0"
+    schema_version: Literal["2.0.0"] = "2.0.0"
     collection_name: Literal["vietlex-legal-rag-v2-pilot"]
     source_state_sha256: str = Field(pattern=_SHA256_PATTERN)
     plan_sha256: str = Field(pattern=_SHA256_PATTERN)
@@ -39,6 +40,7 @@ class CheckpointBinding(BaseModel):
     manifest_record_count: _PositiveInt
     dense_model: Literal["Qwen/Qwen3-Embedding-0.6B"]
     sparse_model: Literal["qdrant/bm25"]
+    document_text_version: Literal["vietlex-structural-document-v2"]
 
 
 class AcknowledgedRecord(BaseModel):
@@ -46,6 +48,7 @@ class AcknowledgedRecord(BaseModel):
 
     record_id: str = Field(min_length=1)
     chunk_sha256: str = Field(pattern=_SHA256_PATTERN)
+    inference_text_sha256: str = Field(pattern=_SHA256_PATTERN)
 
 
 class BatchReceipt(BaseModel):
@@ -83,6 +86,7 @@ def batch_identity_sha256(records: Sequence[AcknowledgedRecord]) -> str:
         {
             "record_id": record.record_id,
             "chunk_sha256": record.chunk_sha256,
+            "inference_text_sha256": record.inference_text_sha256,
         }
         for record in records
     ]
@@ -134,6 +138,7 @@ class StructuralCheckpointStore:
                 CREATE TABLE IF NOT EXISTS committed_records (
                     record_id TEXT PRIMARY KEY,
                     chunk_sha256 TEXT NOT NULL,
+                    inference_text_sha256 TEXT NOT NULL,
                     batch_sha256 TEXT NOT NULL,
                     committed_at_utc TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                     dense_tokens INTEGER NOT NULL,
@@ -164,6 +169,17 @@ class StructuralCheckpointStore:
             ).fetchall()
         return {str(record_id): str(chunk_hash) for record_id, chunk_hash in rows}
 
+    def _committed_record_identities(self) -> dict[str, tuple[str, str]]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                "SELECT record_id, chunk_sha256, inference_text_sha256 "
+                "FROM committed_records ORDER BY record_id"
+            ).fetchall()
+        return {
+            str(record_id): (str(chunk_hash), str(inference_hash))
+            for record_id, chunk_hash, inference_hash in rows
+        }
+
     def committed_count(self) -> int:
         with self._connect() as connection:
             row = connection.execute(
@@ -182,12 +198,15 @@ class StructuralCheckpointStore:
         records: Iterable[StructuralRecord],
     ) -> Iterable[StructuralRecord]:
         """Yield only unacknowledged records without retaining their bodies."""
-        committed = self.committed_record_hashes()
+        committed = self._committed_record_identities()
         for record in records:
-            existing_hash = committed.get(record.record_id)
-            if existing_hash is None:
+            existing_identity = committed.get(record.record_id)
+            if existing_identity is None:
                 yield record
-            elif existing_hash != record.chunk_sha256:
+            elif existing_identity != (
+                record.chunk_sha256,
+                structural_inference_text_sha256(record),
+            ):
                 raise StructuralCheckpointError(
                     "checkpoint record hash mismatch"
                 )
@@ -204,26 +223,32 @@ class StructuralCheckpointStore:
                 "WHERE batch_sha256 = ?",
                 (receipt.batch_sha256,),
             ).fetchone()
-            existing_rows: dict[str, tuple[str, str]] = {}
+            existing_rows: dict[str, tuple[str, str, str]] = {}
             record_ids = tuple(record.record_id for record in receipt.records)
             for start in range(0, len(record_ids), 500):
                 chunk = record_ids[start : start + 500]
                 rows = connection.execute(
-                    "SELECT record_id, chunk_sha256, batch_sha256 "
+                    "SELECT record_id, chunk_sha256, inference_text_sha256, "
+                    "batch_sha256 "
                     "FROM committed_records WHERE record_id IN "
                     f"({','.join('?' for _ in chunk)})",
                     chunk,
                 ).fetchall()
                 existing_rows.update(
                     {
-                        str(record_id): (str(chunk_hash), str(batch_hash))
-                        for record_id, chunk_hash, batch_hash in rows
+                        str(record_id): (
+                            str(chunk_hash),
+                            str(inference_hash),
+                            str(batch_hash),
+                        )
+                        for record_id, chunk_hash, inference_hash, batch_hash in rows
                     }
                 )
             for record in receipt.records:
                 existing = existing_rows.get(record.record_id)
                 if existing is not None and existing != (
                     record.chunk_sha256,
+                    record.inference_text_sha256,
                     receipt.batch_sha256,
                 ):
                     raise StructuralCheckpointError(
@@ -254,11 +279,13 @@ class StructuralCheckpointStore:
             for index, record in enumerate(receipt.records):
                 connection.execute(
                     "INSERT INTO committed_records("
-                    "record_id, chunk_sha256, batch_sha256, dense_tokens, "
-                    "sparse_tokens) VALUES (?, ?, ?, ?, ?)",
+                    "record_id, chunk_sha256, inference_text_sha256, "
+                    "batch_sha256, dense_tokens, sparse_tokens) "
+                    "VALUES (?, ?, ?, ?, ?, ?)",
                     (
                         record.record_id,
                         record.chunk_sha256,
+                        record.inference_text_sha256,
                         receipt.batch_sha256,
                         dense_tokens if index == 0 else 0,
                         sparse_tokens if index == 0 else 0,
@@ -307,16 +334,23 @@ class StructuralCheckpointStore:
             raise StructuralCheckpointError("probe receipt binding mismatch")
         record_ids = tuple(getattr(report, "record_ids", ()))
         record_hashes = getattr(report, "probe_record_hashes", {})
+        inference_hashes = getattr(
+            report,
+            "probe_inference_text_hashes",
+            {},
+        )
         if (
             not record_ids
             or record_ids != tuple(sorted(set(record_ids)))
             or set(record_hashes) != set(record_ids)
+            or set(inference_hashes) != set(record_ids)
         ):
             raise StructuralCheckpointError("probe record identity mismatch")
         acknowledged = tuple(
             AcknowledgedRecord(
                 record_id=record_id,
                 chunk_sha256=record_hashes[record_id],
+                inference_text_sha256=inference_hashes[record_id],
             )
             for record_id in record_ids
         )

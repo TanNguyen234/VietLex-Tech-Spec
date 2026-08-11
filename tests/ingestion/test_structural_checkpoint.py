@@ -17,6 +17,19 @@ from app.ingestion.structural_checkpoint import (
 from app.ingestion.structural_index import StructuralRecord
 
 
+def _inference_hash(record: StructuralRecord) -> str:
+    structure = record.heading_path or record.citation
+    text = (
+        f"Tiêu đề: {record.title}\n"
+        f"Số văn bản: {record.document_number}\n"
+        f"Loại văn bản: {record.legal_type}\n"
+        f"Cấu trúc: {structure}\n"
+        f"Trích dẫn: {record.citation}\n"
+        f"Nội dung:\n{record.body}"
+    )
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
 def _record(record_id: str, body: str | None = None) -> StructuralRecord:
     text = body or f"Điều 1. {record_id}"
     return StructuralRecord(
@@ -52,6 +65,7 @@ def _binding(**updates: object) -> CheckpointBinding:
         "manifest_record_count": 134_334,
         "dense_model": "Qwen/Qwen3-Embedding-0.6B",
         "sparse_model": "qdrant/bm25",
+        "document_text_version": "vietlex-structural-document-v2",
     }
     values.update(updates)
     return CheckpointBinding(**values)
@@ -62,6 +76,7 @@ def _receipt(records: list[StructuralRecord]) -> BatchReceipt:
         AcknowledgedRecord(
             record_id=record.record_id,
             chunk_sha256=record.chunk_sha256,
+            inference_text_sha256=_inference_hash(record),
         )
         for record in records
     )
@@ -120,6 +135,18 @@ def test_checkpoint_rejects_binding_drift(
 def test_checkpoint_rejects_same_id_with_changed_hash(tmp_path: Path) -> None:
     first = _record("00000000-0000-0000-0000-000000000001")
     changed = _record(first.record_id, body="Điều 1. changed")
+    store = StructuralCheckpointStore(tmp_path / "state.sqlite3", _binding())
+    store.commit_receipt(_receipt([first]))
+
+    with pytest.raises(StructuralCheckpointError, match="hash mismatch"):
+        store.pending([changed])
+
+
+def test_checkpoint_rejects_same_body_with_changed_inference_text(
+    tmp_path: Path,
+) -> None:
+    first = _record("00000000-0000-0000-0000-000000000001")
+    changed = first.model_copy(update={"title": "Luật có tiêu đề mới"})
     store = StructuralCheckpointStore(tmp_path / "state.sqlite3", _binding())
     store.commit_receipt(_receipt([first]))
 
@@ -186,6 +213,9 @@ def test_probe_receipt_seeds_only_exact_acknowledged_ids(tmp_path: Path) -> None
         candidate_sparse_model=binding.sparse_model,
         record_ids=(record.record_id,),
         probe_record_hashes={record.record_id: record.chunk_sha256},
+        probe_inference_text_hashes={
+            record.record_id: _inference_hash(record)
+        },
         provider_usage={
             binding.dense_model: 10,
             binding.sparse_model: 11,

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import importlib
 from types import SimpleNamespace
 
@@ -55,6 +56,7 @@ def test_structural_contract_defaults_are_exact_and_frozen() -> None:
     assert contract.dense_model == "Qwen/Qwen3-Embedding-0.6B"
     assert contract.sparse_model == "qdrant/bm25"
     assert contract.dense_size == 1024
+    assert contract.document_text_version == "vietlex-structural-document-v2"
     assert contract.dense_model_options == {}
     assert contract.sparse_model_options == {}
     with pytest.raises(Exception):
@@ -71,6 +73,7 @@ def test_structural_contract_defaults_are_exact_and_frozen() -> None:
         ({"STRUCTURAL_VECTOR_SIZE": 384}, "1024"),
         ({"STRUCTURAL_QUERY_INSTRUCTION": " "}, "instruction"),
         ({"STRUCTURAL_QUERY_INSTRUCTION": "different instruction"}, "instruction"),
+        ({"STRUCTURAL_DOCUMENT_TEXT_VERSION": "v1"}, "document text"),
         ({"STRUCTURAL_UPLOAD_BATCH_MIN": 257}, "batch"),
     ],
 )
@@ -96,19 +99,42 @@ def test_point_uses_cloud_documents_and_preserves_null_provenance() -> None:
 
     point = structural_qdrant.point_from_record(record, contract)
 
+    expected_text = (
+        f"Tiêu đề: {record.title}\n"
+        f"Số văn bản: {record.document_number}\n"
+        f"Loại văn bản: {record.legal_type}\n"
+        f"Cấu trúc: {record.heading_path}\n"
+        f"Trích dẫn: {record.citation}\n"
+        f"Nội dung:\n{record.body}"
+    )
     assert point.vector["dense"] == models.Document(
-        text=record.body,
+        text=expected_text,
         model="Qwen/Qwen3-Embedding-0.6B",
         options={},
     )
     assert point.vector["bm25"] == models.Document(
-        text=record.body,
+        text=expected_text,
         model="qdrant/bm25",
         options={},
     )
     assert point.payload["issuing_authority"] is None
     assert point.payload["chunk_sha256"] == "b" * 64
+    assert point.payload["inference_text_sha256"] == hashlib.sha256(
+        expected_text.encode("utf-8")
+    ).hexdigest()
     assert "embedding" not in point.payload
+
+
+def test_structural_inference_text_falls_back_to_citation_for_blank_heading() -> None:
+    structural_qdrant = importlib.import_module(
+        "app.ingestion.structural_qdrant"
+    )
+    record = _record().model_copy(update={"heading_path": ""})
+
+    text = structural_qdrant.build_structural_inference_text(record)
+
+    assert f"Cấu trúc: {record.citation}\n" in text
+    assert text.endswith(f"Nội dung:\n{record.body}")
 
 
 def test_dense_query_is_instructed_but_sparse_query_is_raw() -> None:

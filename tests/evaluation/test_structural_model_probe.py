@@ -547,6 +547,13 @@ def test_probe_pass_requires_matched_denominator_and_provider_usage(
     assert report.dataset_sha256 == "d" * 64
     assert report.sidecar_sha256 == "e" * 64
     assert report.synthetic_records == 0
+    assert set(report.probe_inference_text_hashes) == set(
+        probe.selection.record_ids
+    )
+    assert all(
+        len(value) == 64
+        for value in report.probe_inference_text_hashes.values()
+    )
     assert report.coverage.value == 1.0
     assert probe.output_path.is_file()
     assert [str(point.id) for point in transport.upsert_batches[0]] == list(

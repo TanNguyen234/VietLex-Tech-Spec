@@ -356,6 +356,7 @@ def _run_upload(arguments: argparse.Namespace) -> int:
             manifest_record_count=plan.manifest.record_count,
             dense_model=plan.contract.dense_model,
             sparse_model=plan.contract.sparse_model,
+            document_text_version=plan.contract.document_text_version,
         ),
     )
     checkpoint.import_probe_receipt(

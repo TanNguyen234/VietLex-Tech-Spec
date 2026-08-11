@@ -68,6 +68,7 @@ def _binding() -> CheckpointBinding:
         manifest_record_count=134_334,
         dense_model="Qwen/Qwen3-Embedding-0.6B",
         sparse_model="qdrant/bm25",
+        document_text_version="vietlex-structural-document-v2",
     )
 
 
