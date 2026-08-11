@@ -1,6 +1,10 @@
 # VietLex Evaluation Current Status
 
-**Status (2026-08-11):** P2 retrieval baseline `COMPLETED`; isolated Qdrant E5-small structural model probe completed `FAIL_QUALITY`; bulk upload/finalize/verify/benchmark `NOT RUN`; production readiness **NOT DEMONSTRATED**.
+**Status (2026-08-12):** P2 retrieval baseline `COMPLETED`; the isolated Qdrant E5-small/BM25 structural collection is fully uploaded and verified; the first technically valid 40-case benchmark completed `FAIL_QUALITY`; production readiness **NOT DEMONSTRATED**.
+
+The current decision artifact is `docs/evaluation/runs/structural-e5-384-hybrid-parser-fix-20260812/`. It executed all 40 promoted `all-required-verified` cases with zero skipped cases, zero technical errors, complete provider-usage observation, and no provenance drift. Fused Document Recall@24 is `1.0`, Article Recall@24 is `0.90`, Clause Recall@24 is `0.8571`, all-required coverage is `0.725`, and the no-candidate/retrieval/reranker error rates are all `0`. The exact `FAIL_QUALITY` result is therefore usable evidence, not a blocked run. The reranker reduced identical-input evidence survival: document `1.0 -> 0.9057`, article `0.90 -> 0.8333`, and clause `0.8571 -> 0.7857`. Production cutover remains unauthorized.
+
+The benchmark binds immutable index source-state SHA-256 `fcd573edd55f8da6f9d8fb4f2d97faf13525740bdf9242e69fd3faaa3969f963` separately from clean evaluator source-state SHA-256 `d4f0ae5824a933890f64391f9530e651fa151e7050afe4e6c88d94881d05af84` at Git `5951e23a2b8db62ec51e727e01ca8a695291b3ce`. This separation is explicit because the index payload was already correct and verified; only the strict runtime payload consumer required the persisted `inference_text_sha256` field. No reindex was needed for that fix.
 
 The latest clean-source remote probe is retained at `docs/evaluation/index-pilots/structural-recall-hardening-e5-384-usage-v2-20260811/`. It used Git `61024ecc9853c1694a523f41e8bab43a88fc7504`, source-state SHA-256 `7f4751fa768589b7f9041a57a1116ba077ce6afa8d544c1d7ec45610bc1a6eab`, plan SHA-256 `7686b8ac0f4b84f0cbd5d36608ec035abf58623984824c18b98775f75512e14e`, and 2,573 real structural probe records. There were no technical errors. Gold Document Recall@1/@3/@10 and MRR were all `1.0`; gold structural Recall@1 was `0.875`, Recall@3 `0.95`, Recall@10 `0.975`, and MRR `0.9104167`. The failed gate was the independent 64-document canary: Document Recall@1 `0.578125`, @3 `0.71875`, and @10 `0.8125`, below the declared `0.90` floor. The run therefore proves strong retrieval on the verified 40-case slice, not whole-scope recall near 1.0. The interrupted shell timeout raced with final artifact persistence; after the valid artifact was observed, all 2,573 exact probe IDs were deleted and the isolated collection was rechecked empty/green. Bulk upload remains correctly blocked.
 
@@ -83,9 +87,9 @@ Configured provider identifiers are provenance only. The current `RetrievalCaseR
 
 The verified subset is 40 curated cases from the 420-case evaluation dataset, not 40 cases independently sampled from all 518,255 corpus documents. The 53 promoted evidence items point to two pinned corpus documents, so the result diagnoses retrieval for this verified legal slice, not whole-corpus accuracy.
 
-## Qdrant structural v2 local handoff
+## Qdrant structural v2 pilot handoff
 
-The opt-in implementation is complete locally through deterministic benchmark code. Pinecone v1 remains the production backend and `get_legal_retriever()` is unchanged. A live Qdrant pilot attempt has now created the isolated structural collection, but it remains empty and is not wired into production. No Pinecone data, local corpus/index, production route, generation, Ragas, guardrail, or deployment state was changed.
+The isolated collection `vietlex-legal-rag-v2-pilot-384` is green and contains the verified 134,334 structural records. Pinecone v1 remains the production backend and `get_legal_retriever()` is unchanged. The Qdrant path is still opt-in and is not wired into production. No Pinecone data, local corpus/index, production route, generation, Ragas, guardrail, or deployment state was changed.
 
 The first immutable remote attempt is retained at `docs/evaluation/index-pilots/structural-recall-hardening-plan-post-tls-20260811/`. Its capacity plan passed with 3,409,536 observed existing bytes against 4 GiB disk and projected 1,304,087,609 pilot bytes. Internal plan SHA-256 is `99d056589ed5e5f2ceaa40cdf27f95f15809e5920836b991c84a288fe2087371`; plan file SHA-256 is `cfc1dc78048c57a60dfa1048f9ce09b760e4d283060be711e0770b80991f4020`. Create receipt SHA-256 is `cd686bef17dd5978d2409f0d31d33bae8e14f1e9e6b38fd85ce2c4897f9df1c1` and proves the exact 1024d/BM25/on-disk schema with zero points.
 

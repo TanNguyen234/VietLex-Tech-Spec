@@ -28,3 +28,18 @@ Sparse, HNSW, WAL, and safety values are conservative estimates; post-finalize p
 - Production Pinecone and production routing: unchanged
 
 The first benchmark was blocked because the opt-in structural backend flag was disabled. The enabled retry executed all 40 cases but was also `BLOCKED_TECHNICAL`: both dense and BM25 payload consumers rejected the intentionally persisted `inference_text_sha256` field as extra. These blocked artifacts are not retrieval-quality results and are retained under `docs/evaluation/runs/`.
+
+## First technically valid benchmark
+
+The strict payload consumer was corrected without changing or reindexing the verified collection. Run `structural-e5-384-hybrid-parser-fix-20260812` binds the immutable index source separately from evaluator Git `5951e23a2b8db62ec51e727e01ca8a695291b3ce` and completed all 40 cases with no technical errors or provenance drift.
+
+- Acceptance: `FAIL_QUALITY`
+- Fused Document Recall@24: `1.0`
+- Fused Article Recall@24: `0.90`
+- Fused Clause Recall@24: `0.8571`
+- Multi-hop all-required coverage: `0.725`
+- No-candidate, retrieval-error, and reranker-error rates: `0`
+- Reranker document/article/clause survival deltas: `-0.0943`, `-0.0667`, `-0.0714`
+- Production cutover authorized: `false`
+
+The next quality iteration must improve structural candidate survival and A/B the reranker on identical inputs. The valid document-recall result does not justify production cutover while article, clause, and all-required gates fail.
