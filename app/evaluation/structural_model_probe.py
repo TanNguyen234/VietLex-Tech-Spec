@@ -391,10 +391,7 @@ class StructuralModelProbeReport(BaseModel):
                 or self.retrieved_vector_count != len(self.record_ids)
             ):
                 raise ValueError("valid execution record counts are incomplete")
-            expected_usage = {
-                "intfloat/multilingual-e5-small",
-                "qdrant/bm25",
-            }
+            expected_usage = {"intfloat/multilingual-e5-small"}
             if self.reference is not None:
                 expected_usage.add("llama-text-embed-v2")
             if set(self.provider_usage) != expected_usage or any(
@@ -405,8 +402,7 @@ class StructuralModelProbeReport(BaseModel):
             ):
                 raise ValueError("valid execution provider usage is incomplete")
             if set(self.upsert_provider_usage) != {
-                self.candidate_dense_model,
-                self.candidate_sparse_model,
+                self.candidate_dense_model
             } or any(
                 isinstance(value, bool)
                 or not isinstance(value, int)
@@ -428,9 +424,6 @@ class StructuralModelProbeReport(BaseModel):
                     self.upsert_provider_usage[self.candidate_dense_model]
                     + self.query_provider_usage[self.candidate_dense_model]
                 ),
-                self.candidate_sparse_model: self.upsert_provider_usage[
-                    self.candidate_sparse_model
-                ],
             }
             if any(
                 self.provider_usage[model_name] != tokens
@@ -865,10 +858,7 @@ def run_structural_model_probe(
                 receipt = transport.upsert_with_usage(points)
                 _validate_qdrant_usage(
                     receipt,
-                    expected={
-                        transport.contract.dense_model,
-                        transport.contract.sparse_model,
-                    },
+                    expected={transport.contract.dense_model},
                     stage="upsert",
                 )
                 _merge_usage(usage, receipt.model_tokens)

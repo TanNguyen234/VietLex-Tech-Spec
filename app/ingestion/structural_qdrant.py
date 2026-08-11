@@ -53,7 +53,7 @@ class InferenceUsageReceipt(BaseModel):
 
     @model_validator(mode="after")
     def freeze_model_tokens(self) -> Self:
-        if not self.model_tokens or any(
+        if any(
             not isinstance(model, str)
             or not model
             or isinstance(tokens, bool)
@@ -75,6 +75,14 @@ class InferenceUsageReceipt(BaseModel):
         value: Mapping[str, int],
     ) -> dict[str, int]:
         return dict(value)
+
+
+_UNMETERED_INFERENCE_MODELS = frozenset({"qdrant/bm25"})
+
+
+def metered_inference_models(model_names: set[str]) -> set[str]:
+    """Return provider models expected to emit token-usage evidence."""
+    return model_names - _UNMETERED_INFERENCE_MODELS
 
 
 class StructuralQdrantContract(BaseModel):
@@ -416,9 +424,14 @@ def _validated_usage_receipt(
             transient=False,
         )
 
+    expected_metered_models = metered_inference_models(expected_models)
     inference = getattr(getattr(response, "usage", None), "inference", None)
     raw_models = getattr(inference, "models", None)
-    if not isinstance(raw_models, dict) or not raw_models:
+    if raw_models is None and not expected_metered_models:
+        raw_models = {}
+    if not isinstance(raw_models, dict) or (
+        not raw_models and expected_metered_models
+    ):
         raise StructuralProviderError(
             stage=stage,
             category="missing_inference_usage",
@@ -442,7 +455,7 @@ def _validated_usage_receipt(
                 transient=False,
             )
         model_tokens[model_name] = tokens
-    if set(model_tokens) != expected_models:
+    if set(model_tokens) != expected_metered_models:
         raise StructuralProviderError(
             stage=stage,
             category="model_usage_mismatch",

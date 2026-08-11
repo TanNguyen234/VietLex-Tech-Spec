@@ -214,7 +214,7 @@ class StructuralCheckpointStore:
     def commit_receipt(self, receipt: BatchReceipt) -> int:
         self._validate_receipt(receipt)
         dense_tokens = receipt.usage[self.binding.dense_model]
-        sparse_tokens = receipt.usage[self.binding.sparse_model]
+        sparse_tokens = 0
         connection = self._connect()
         try:
             connection.execute("BEGIN IMMEDIATE")
@@ -305,10 +305,7 @@ class StructuralCheckpointStore:
                 "SELECT COALESCE(SUM(dense_tokens), 0), "
                 "COALESCE(SUM(sparse_tokens), 0) FROM committed_batches"
             ).fetchone()
-        return {
-            self.binding.dense_model: int(row[0]),
-            self.binding.sparse_model: int(row[1]),
-        }
+        return {self.binding.dense_model: int(row[0])}
 
     def import_probe_receipt(
         self,
@@ -360,10 +357,6 @@ class StructuralCheckpointStore:
                 self.binding.dense_model,
                 0,
             ),
-            self.binding.sparse_model: provider_usage.get(
-                self.binding.sparse_model,
-                0,
-            ),
         }
         attempts = len(getattr(report, "upsert_batch_sizes", ()))
         if attempts <= 0:
@@ -387,10 +380,9 @@ class StructuralCheckpointStore:
     def _validate_receipt(self, receipt: BatchReceipt) -> None:
         if receipt.batch_sha256 != batch_identity_sha256(receipt.records):
             raise StructuralCheckpointError("batch SHA-256 mismatch")
-        if set(receipt.usage) != {
-            self.binding.dense_model,
-            self.binding.sparse_model,
-        } or any(value <= 0 for value in receipt.usage.values()):
+        if set(receipt.usage) != {self.binding.dense_model} or any(
+            value <= 0 for value in receipt.usage.values()
+        ):
             raise StructuralCheckpointError("batch model usage mismatch")
 
 

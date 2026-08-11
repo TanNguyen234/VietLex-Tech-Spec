@@ -28,6 +28,7 @@ from app.ingestion.structural_checkpoint import (
 from app.ingestion.structural_index import StructuralRecord
 from app.ingestion.structural_qdrant import (
     InferenceUsageReceipt,
+    metered_inference_models,
     StructuralProviderError,
     StructuralQdrantContract,
     StructuralQdrantError,
@@ -234,7 +235,9 @@ def _grpc_usage_receipt(
                 transient=False,
             )
         usage[model_name] = tokens
-    if set(usage) != {contract.dense_model, contract.sparse_model}:
+    if set(usage) != metered_inference_models(
+        {contract.dense_model, contract.sparse_model}
+    ):
         raise StructuralProviderError(
             stage="upsert",
             category="model_usage_mismatch",
@@ -390,8 +393,7 @@ class StructuralUploadReport(BaseModel):
         ):
             raise ValueError("upload report batch evidence mismatch")
         if set(self.provider_usage) != {
-            "intfloat/multilingual-e5-small",
-            "qdrant/bm25",
+            "intfloat/multilingual-e5-small"
         } or any(
             isinstance(value, bool)
             or not isinstance(value, int)

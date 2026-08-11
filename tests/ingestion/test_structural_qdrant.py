@@ -247,10 +247,7 @@ def test_raw_upsert_transport_preserves_exact_inference_usage() -> None:
     )
     contract = _contract()
     response = _usage_response(
-        models_to_tokens={
-            contract.dense_model: 41,
-            contract.sparse_model: 41,
-        }
+        models_to_tokens={contract.dense_model: 41}
     )
     client = _fake_client(upsert_response=response)
     transport = structural_qdrant.StructuralQdrantTransport(client, contract)
@@ -263,7 +260,6 @@ def test_raw_upsert_transport_preserves_exact_inference_usage() -> None:
     assert receipt.elapsed_seconds == 0.125
     assert receipt.model_tokens == {
         "intfloat/multilingual-e5-small": 41,
-        "qdrant/bm25": 41,
     }
     call = client.http.points_api.calls[0]
     assert call["collection_name"] == "vietlex-legal-rag-v2-pilot-384"
@@ -306,6 +302,32 @@ def test_raw_query_transport_retains_filter_points_and_dense_usage() -> None:
     request = client.http.search_api.calls[0]["query_request"]
     assert request.filter == query_filter
     assert request.using == "dense"
+
+
+def test_raw_sparse_query_accepts_unmetered_bm25_usage() -> None:
+    structural_qdrant = importlib.import_module(
+        "app.ingestion.structural_qdrant"
+    )
+    contract = _contract()
+    response = SimpleNamespace(
+        status="ok",
+        time=0.01,
+        result=SimpleNamespace(points=[]),
+        usage=None,
+    )
+    transport = structural_qdrant.StructuralQdrantTransport(
+        _fake_client(upsert_response=None, query_response=response),
+        contract,
+    )
+
+    points, receipt = transport.query_with_usage(
+        document=structural_qdrant.sparse_query_document("Điều 1", contract),
+        using="bm25",
+        limit=3,
+    )
+
+    assert points == []
+    assert receipt.model_tokens == {}
 
 
 @pytest.mark.parametrize(
@@ -358,6 +380,21 @@ def test_inference_usage_receipt_tokens_are_deeply_frozen() -> None:
 
     with pytest.raises(TypeError):
         receipt.model_tokens["qdrant/bm25"] = 2
+
+
+def test_inference_usage_receipt_allows_empty_unmetered_usage() -> None:
+    structural_qdrant = importlib.import_module(
+        "app.ingestion.structural_qdrant"
+    )
+
+    receipt = structural_qdrant.InferenceUsageReceipt(
+        status="completed",
+        elapsed_seconds=0.1,
+        model_tokens={},
+    )
+
+    assert receipt.model_tokens == {}
+    assert receipt.model_dump(mode="json")["model_tokens"] == {}
 
 
 def test_structural_client_uses_cloud_inference_and_system_trust(

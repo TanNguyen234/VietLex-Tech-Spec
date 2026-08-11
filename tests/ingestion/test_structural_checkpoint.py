@@ -85,7 +85,6 @@ def _receipt(records: list[StructuralRecord]) -> BatchReceipt:
         records=acknowledged,
         usage={
             "intfloat/multilingual-e5-small": 10,
-            "qdrant/bm25": 11,
         },
         attempts=1,
         elapsed_seconds=0.1,
@@ -179,7 +178,6 @@ def test_duplicate_acknowledgement_is_idempotent_not_duplicated(
     assert store.committed_count() == 1
     assert store.usage_totals() == {
         "intfloat/multilingual-e5-small": 10,
-        "qdrant/bm25": 11,
     }
 
 
@@ -218,12 +216,10 @@ def test_probe_receipt_seeds_only_exact_acknowledged_ids(tmp_path: Path) -> None
         },
         provider_usage={
             binding.dense_model: 10,
-            binding.sparse_model: 11,
             "llama-text-embed-v2": 12,
         },
         upsert_provider_usage={
             binding.dense_model: 10,
-            binding.sparse_model: 11,
         },
         upsert_batch_sizes=(1,),
         elapsed_seconds=0.1,

@@ -284,8 +284,7 @@ class CollectionFinalizeReceipt(BaseModel):
         if self.created_at_utc.utcoffset() is None:
             raise ValueError("finalize timestamp must be timezone-aware")
         if set(self.provider_usage) != {
-            "intfloat/multilingual-e5-small",
-            "qdrant/bm25",
+            "intfloat/multilingual-e5-small"
         } or any(
             isinstance(value, bool)
             or not isinstance(value, int)
@@ -355,8 +354,7 @@ class CollectionVerificationReceipt(BaseModel):
         ):
             raise ValueError("verification sample identity mismatch")
         if set(self.provider_usage) != {
-            "intfloat/multilingual-e5-small",
-            "qdrant/bm25",
+            "intfloat/multilingual-e5-small"
         } or any(
             isinstance(value, bool)
             or not isinstance(value, int)
@@ -1366,8 +1364,7 @@ def _validate_pre_finalize_chain(
         raise StructuralPilotError("upload report binding mismatch")
     usage = getattr(upload_report, "provider_usage", None)
     if not isinstance(usage, Mapping) or set(usage) != {
-        plan.contract.dense_model,
-        plan.contract.sparse_model,
+        plan.contract.dense_model
     } or any(
         isinstance(value, bool)
         or not isinstance(value, int)

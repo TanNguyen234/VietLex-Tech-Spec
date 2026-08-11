@@ -950,7 +950,6 @@ def _completed_chain(tmp_path: Path, *, healthy: bool = True):
         remaining_count=0,
         provider_usage={
             plan.contract.dense_model: 100,
-            plan.contract.sparse_model: 101,
         },
     )
     return (

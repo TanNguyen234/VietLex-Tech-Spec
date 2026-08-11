@@ -554,10 +554,9 @@ class FakeTransport:
         self.client.points.update({str(point.id): point for point in batch})
         usage = {
             self.contract.dense_model: 100,
-            self.contract.sparse_model: 100,
         }
         if self.usage_problem == "missing":
-            usage.pop(self.contract.sparse_model)
+            usage.pop(self.contract.dense_model)
         elif self.usage_problem == "wrong":
             usage = {"wrong-model": 100}
         return InferenceUsageReceipt(
@@ -617,11 +616,9 @@ def test_probe_pass_requires_matched_denominator_and_provider_usage(
     assert report.reference is not None
     assert report.reference.case_ids_sha256 == report.case_ids_sha256
     assert report.provider_usage["intfloat/multilingual-e5-small"] > 0
-    assert report.provider_usage["qdrant/bm25"] > 0
     assert report.provider_usage["llama-text-embed-v2"] > 0
     assert set(report.upsert_provider_usage) == {
         "intfloat/multilingual-e5-small",
-        "qdrant/bm25",
     }
     assert set(report.query_provider_usage) == {
         "intfloat/multilingual-e5-small"
@@ -666,7 +663,6 @@ def test_probe_passes_without_constructing_a_pinecone_reference(
     assert report.reference is None
     assert set(report.provider_usage) == {
         "intfloat/multilingual-e5-small",
-        "qdrant/bm25",
     }
 
 

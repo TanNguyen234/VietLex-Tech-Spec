@@ -194,7 +194,6 @@ class FakeTransport:
             elapsed_seconds=0.1,
             model_tokens={
                 self.contract.dense_model: len(points) * 10,
-                self.contract.sparse_model: len(points) * 11,
             },
         )
 
@@ -228,7 +227,6 @@ def test_upload_streams_batches_checkpoints_only_acknowledged_records(
     assert report.remaining_count == 134_204
     assert report.provider_usage == {
         contract.dense_model: 1300,
-        contract.sparse_model: 1430,
     }
     assert report.records_per_second > 0
 
@@ -313,12 +311,10 @@ def test_resume_skips_matching_ids_without_embedding_again(tmp_path: Path) -> No
     assert report.committed_this_run == 1
 
 
-def _grpc_response(contract, *, include_sparse: bool = True):
+def _grpc_response(contract):
     usage = {
         contract.dense_model: SimpleNamespace(tokens=10),
     }
-    if include_sparse:
-        usage[contract.sparse_model] = SimpleNamespace(tokens=11)
     return SimpleNamespace(
         result=SimpleNamespace(status=2),
         time=0.1,
@@ -347,7 +343,6 @@ def test_grpc_transport_preserves_exact_inference_usage() -> None:
 
     assert receipt.model_tokens == {
         contract.dense_model: 10,
-        contract.sparse_model: 11,
     }
 
 
@@ -361,7 +356,6 @@ def test_grpc_transport_uses_generated_request_and_protobuf_usage() -> None:
             inference=grpc.InferenceUsage(
                 models={
                     contract.dense_model: grpc.ModelUsage(tokens=10),
-                    contract.sparse_model: grpc.ModelUsage(tokens=11),
                 }
             )
         ),
@@ -387,7 +381,6 @@ def test_grpc_transport_uses_generated_request_and_protobuf_usage() -> None:
     assert timeout == contract.timeout_seconds
     assert receipt.model_tokens == {
         contract.dense_model: 10,
-        contract.sparse_model: 11,
     }
 
 
