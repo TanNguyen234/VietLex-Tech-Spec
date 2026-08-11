@@ -10,7 +10,11 @@ from typing import Any, Literal, Self
 from pydantic import BaseModel, ConfigDict, Field, field_serializer, model_validator
 from qdrant_client import QdrantClient, models
 
-from app.config import Settings, system_ssl_context
+from app.config import (
+    Settings,
+    system_grpc_root_certificates,
+    system_ssl_context,
+)
 from app.ingestion.structural_index import StructuralRecord
 
 
@@ -571,6 +575,12 @@ class StructuralQdrantTransport:
 
 def create_structural_qdrant_client(settings: Settings) -> QdrantClient:
     """Create the remote-only client without making a provider call."""
+    client_arguments: dict[str, Any] = {}
+    grpc_roots = system_grpc_root_certificates()
+    if grpc_roots is not None:
+        client_arguments["grpc_options"] = {
+            "root_certificates": grpc_roots,
+        }
     return QdrantClient(
         url=settings.QDRANT_URL,
         api_key=settings.QDRANT_API_KEY,
@@ -579,4 +589,5 @@ def create_structural_qdrant_client(settings: Settings) -> QdrantClient:
         timeout=settings.STRUCTURAL_QDRANT_TIMEOUT_SECONDS,
         verify=system_ssl_context(),
         check_compatibility=False,
+        **client_arguments,
     )

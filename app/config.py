@@ -178,6 +178,21 @@ def system_ssl_context() -> ssl.SSLContext:
     return truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
 
 
+def system_grpc_root_certificates() -> bytes | None:
+    """Return Windows trust roots in the PEM form expected by gRPC."""
+    enumerate_certificates = getattr(ssl, "enum_certificates", None)
+    if enumerate_certificates is None:
+        return None
+    pem_certificates: dict[str, None] = {}
+    for store_name in ("ROOT", "CA"):
+        for certificate, encoding, _trust in enumerate_certificates(store_name):
+            if encoding == "x509_asn":
+                pem_certificates[ssl.DER_cert_to_PEM_cert(certificate)] = None
+    if not pem_certificates:
+        return None
+    return "".join(pem_certificates).encode("ascii")
+
+
 def install_system_trust_store() -> None:
     """Make third-party SDKs use the verified Windows trust store."""
     global _SYSTEM_TRUST_INSTALLED

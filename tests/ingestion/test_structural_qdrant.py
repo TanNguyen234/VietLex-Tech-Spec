@@ -41,6 +41,35 @@ def _record(*, issuing_authority: str | None = None) -> StructuralRecord:
     )
 
 
+def test_system_grpc_roots_use_and_deduplicate_windows_stores(
+    monkeypatch,
+) -> None:
+    config = importlib.import_module("app.config")
+
+    monkeypatch.setattr(
+        config.ssl,
+        "enum_certificates",
+        lambda store: {
+            "ROOT": [(b"root", "x509_asn", None)],
+            "CA": [
+                (b"root", "x509_asn", None),
+                (b"ca", "x509_asn", None),
+                (b"ignored", "pkcs_7_asn", None),
+            ],
+        }[store],
+    )
+    monkeypatch.setattr(
+        config.ssl,
+        "DER_cert_to_PEM_cert",
+        lambda certificate: {
+            b"root": "ROOT-PEM\n",
+            b"ca": "CA-PEM\n",
+        }[certificate],
+    )
+
+    assert config.system_grpc_root_certificates() == b"ROOT-PEM\nCA-PEM\n"
+
+
 def test_structural_contract_defaults_are_exact_and_frozen() -> None:
     structural_qdrant = importlib.import_module(
         "app.ingestion.structural_qdrant"
@@ -340,6 +369,7 @@ def test_structural_client_uses_cloud_inference_and_system_trust(
     captured: dict[str, object] = {}
     sentinel_client = object()
     sentinel_context = object()
+    sentinel_grpc_roots = b"windows-root-certificates"
 
     def fake_qdrant_client(**kwargs):
         captured.update(kwargs)
@@ -350,6 +380,11 @@ def test_structural_client_uses_cloud_inference_and_system_trust(
         structural_qdrant,
         "system_ssl_context",
         lambda: sentinel_context,
+    )
+    monkeypatch.setattr(
+        structural_qdrant,
+        "system_grpc_root_certificates",
+        lambda: sentinel_grpc_roots,
     )
 
     client = structural_qdrant.create_structural_qdrant_client(
@@ -368,5 +403,6 @@ def test_structural_client_uses_cloud_inference_and_system_trust(
         "prefer_grpc": True,
         "timeout": 120.0,
         "verify": sentinel_context,
+        "grpc_options": {"root_certificates": sentinel_grpc_roots},
         "check_compatibility": False,
     }
