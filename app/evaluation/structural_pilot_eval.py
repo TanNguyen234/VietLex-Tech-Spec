@@ -317,13 +317,20 @@ def decide_pilot_acceptance(
     ):
         return "BLOCKED_TECHNICAL"
     fused_document = float(values.get("fused_document_recall_at_24", 0.0))
-    p2_document = float(values.get("p2_source_document_recall_at_24", 0.0))
     fused_article = float(values.get("fused_article_recall_at_24", 0.0))
     fused_clause = float(values.get("fused_clause_recall_at_24", 0.0))
+    all_required = float(values.get("all_required_coverage", 0.0))
+    no_candidate_rate = float(values.get("no_candidate_rate", 0.0))
+    retrieval_error_rate = float(values.get("retrieval_error_rate", 0.0))
+    reranker_error_rate = float(values.get("reranker_error_rate", 0.0))
     if (
-        fused_document - p2_document >= 0.25
-        and fused_article > 0.0
-        and fused_clause > 0.0
+        fused_document == 1.0
+        and fused_article >= 0.95
+        and fused_clause >= 0.90
+        and all_required >= 0.95
+        and no_candidate_rate == 0.0
+        and retrieval_error_rate == 0.0
+        and reranker_error_rate == 0.0
     ):
         return "PASS_PILOT"
     return "FAIL_QUALITY"
@@ -370,6 +377,74 @@ def _fused_recall_at_24(
         "denominator": denominator,
         "value": round(numerator / denominator, 4) if denominator else None,
     }
+
+
+def _stage_recall(
+    rows: Sequence[_ExecutedCase],
+    *,
+    stage: Literal["reranker_input", "reranker_output"],
+    level: Literal["document", "article", "clause"],
+) -> dict[str, int | float | None]:
+    numerator = 0
+    denominator = 0
+    for row in rows:
+        required = [
+            item
+            for item in row.case.gold_evidence
+            if item.required and item.status == EvidenceStatus.VERIFIED
+        ]
+        if level == "article":
+            required = [
+                item
+                for item in required
+                if item.required_level in {RequiredLevel.ARTICLE, RequiredLevel.CLAUSE}
+            ]
+        elif level == "clause":
+            required = [
+                item
+                for item in required
+                if item.required_level == RequiredLevel.CLAUSE
+            ]
+        candidates = getattr(row.trace, stage)
+        denominator += len(required)
+        for item in required:
+            matched = any(
+                {
+                    "document": result[0],
+                    "article": result[1],
+                    "clause": result[2],
+                }[level]
+                for candidate in candidates
+                for result in [match_gold_to_stage_candidate(item, candidate)]
+            )
+            numerator += int(matched)
+    return {
+        "numerator": numerator,
+        "denominator": denominator,
+        "value": round(numerator / denominator, 4) if denominator else None,
+    }
+
+
+def _reranker_contribution(
+    rows: Sequence[_ExecutedCase],
+) -> dict[str, dict[str, Any]]:
+    contribution: dict[str, dict[str, Any]] = {}
+    for level in ("document", "article", "clause"):
+        before = _stage_recall(rows, stage="reranker_input", level=level)
+        after = _stage_recall(rows, stage="reranker_output", level=level)
+        before_value = before["value"]
+        after_value = after["value"]
+        delta = (
+            round(float(after_value) - float(before_value), 4)
+            if before_value is not None and after_value is not None
+            else None
+        )
+        contribution[level] = {
+            "input": before,
+            "output": after,
+            "delta": delta,
+        }
+    return contribution
 
 
 def _latency_summary(rows: Sequence[_ExecutedCase]) -> dict[str, Any]:
@@ -606,6 +681,16 @@ async def run_structural_pilot_evaluation(
         "p2_source_document_recall_at_24": p2_source_document_recall_at_24,
         "fused_article_recall_at_24": fused_article["value"] or 0.0,
         "fused_clause_recall_at_24": fused_clause["value"] or 0.0,
+        "all_required_coverage": (
+            aggregate["multi_hop_all_required"]["macro"] or 0.0
+        ),
+        "no_candidate_rate": aggregate["no_candidate_rate"]["macro"] or 0.0,
+        "retrieval_error_rate": (
+            aggregate["retrieval_technical_error_rate"]["macro"] or 0.0
+        ),
+        "reranker_error_rate": (
+            aggregate["reranker_technical_error_rate"]["macro"] or 0.0
+        ),
     }
     acceptance = decide_pilot_acceptance(acceptance_values)
     skipped_reason_counts = Counter(skipped.values())
@@ -661,6 +746,7 @@ async def run_structural_pilot_evaluation(
             provider_usage_observation_complete
         ),
         "metric_stage_aliases": _METRIC_STAGE_ALIASES,
+        "reranker_contribution": _reranker_contribution(executed),
     }
     timestamp = datetime.now(timezone.utc).isoformat()
     manifest = {

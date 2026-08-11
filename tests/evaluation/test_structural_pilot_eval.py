@@ -231,6 +231,11 @@ async def test_raw_trace_keeps_honest_structural_lane_names(tmp_path: Path) -> N
     assert report["provider_usage"]["Qwen/Qwen3-Embedding-0.6B"] == 6
     assert report["provider_usage_observation_complete"] is True
     assert report["acceptance"] == "PASS_PILOT"
+    assert report["reranker_contribution"]["document"] == {
+        "input": {"numerator": 2, "denominator": 2, "value": 1.0},
+        "output": {"numerator": 2, "denominator": 2, "value": 1.0},
+        "delta": 0.0,
+    }
     assert retriever.calls == 2
     manifest = json.loads((run.run_dir / "manifest.json").read_text("utf-8"))
     assert manifest["case_statuses"] == {
@@ -257,12 +262,35 @@ def test_metric_adapter_is_explicit_and_raw_model_forbids_aliases() -> None:
         ({"provenance_drift": True}, "BLOCKED_TECHNICAL"),
         (
             {
-                "fused_document_recall_at_24": 0.5,
+                "fused_document_recall_at_24": 1.0,
                 "p2_source_document_recall_at_24": 0.0,
-                "fused_article_recall_at_24": 0.4,
-                "fused_clause_recall_at_24": 0.3,
+                "fused_article_recall_at_24": 0.95,
+                "fused_clause_recall_at_24": 0.90,
+                "all_required_coverage": 0.95,
+                "no_candidate_rate": 0.0,
+                "retrieval_error_rate": 0.0,
+                "reranker_error_rate": 0.0,
             },
             "PASS_PILOT",
+        ),
+        (
+            {
+                "fused_document_recall_at_24": 0.99,
+                "fused_article_recall_at_24": 0.95,
+                "fused_clause_recall_at_24": 0.90,
+                "all_required_coverage": 0.95,
+            },
+            "FAIL_QUALITY",
+        ),
+        (
+            {
+                "fused_document_recall_at_24": 1.0,
+                "fused_article_recall_at_24": 0.95,
+                "fused_clause_recall_at_24": 0.90,
+                "all_required_coverage": 0.95,
+                "no_candidate_rate": 0.01,
+            },
+            "FAIL_QUALITY",
         ),
         ({"fused_document_recall_at_24": 0.0}, "FAIL_QUALITY"),
     ],

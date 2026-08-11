@@ -27,5 +27,8 @@ The current priority is to establish a verified, measurable, reproducible, and d
 
 - A guarded v2 pilot is code-prepared for the 827 primary-legislation documents in the pinned 518,255-document corpus. Its immutable structural contract contains 134,334 article/clause records at 420/48 chunking.
 - The pilot uses Qdrant Cloud Inference only: `Qwen/Qwen3-Embedding-0.6B` dense vectors at 1024 dimensions plus corpus-level `qdrant/bm25`. There is no local embedding fallback.
+- Dense and BM25 document inputs use version `vietlex-structural-document-v2`: title, document number, legal type, structural path, citation, and unchanged evidence body. Payload/readback/checkpoints bind the exact inference-text SHA-256.
+- The bounded model probe contains all 1,748 verified relevant rows plus one deterministic real row from each of the other 825 documents and 64 corpus title canaries. Golden labels never select corpus membership.
+- The default probe performs no Pinecone inference. An immutable reference artifact is optional and cannot relax the absolute Qdrant gates.
 - `audit` and `plan` are provider-free. `create`, `probe-model`, `upload`, `finalize`, `verify`, and `benchmark` are separate fail-closed remote phases and are not evidence of success until their immutable artifacts exist.
 - The structural retriever and benchmark are opt-in. Pinecone `vietlex-legal-rag-v1` remains the production retrieval path; no cutover is authorized by local code completion.

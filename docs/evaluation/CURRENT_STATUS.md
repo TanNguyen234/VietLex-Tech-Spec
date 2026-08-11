@@ -2,6 +2,10 @@
 
 **Status (2026-08-11):** P2 retrieval baseline `COMPLETED`; Qdrant structural v2 code-prepared and locally audited; remote pilot phases `NOT RUN`; production readiness **NOT DEMONSTRATED**.
 
+The P3 structural contract has since been hardened locally for recall-oriented reindexing. Corpus membership remains the independent 827-document primary-law scope, not the two documents referenced by golden labels. Inference text is now `vietlex-structural-document-v2`; the model probe uses 1,748 relevant rows, 825 real corpus negatives, and 64 canaries, with no synthetic rows. Default probe execution no longer calls Pinecone inference. These source changes invalidate the earlier plan/source hashes for remote execution; new provider-free audit/plan artifacts must be generated before any user-run `create` command.
+
+New quality gates are exact: probe gold Document Recall@10 `1.0`, probe structural Recall@10 `>=0.95`, canary Document Recall@10 `>=0.90`; final fused Document Recall@24 `1.0`, applicable Article Recall@24 `>=0.95`, applicable Clause Recall@24 `>=0.90`, all-required coverage `>=0.95`, and zero no-candidate/retrieval/reranker error rates. These are acceptance targets, not measured results. Current measured retrieval remains the P2 zero-recall baseline until the user runs the new remote reindex and benchmark phases.
+
 - Production readiness: **NOT DEMONSTRATED**.
 - Historical 2026-08-03 retrieval runs remain invalid for decisions.
 - Deterministic evaluation is primary; Ragas remains opt-in and is disabled for P2.
