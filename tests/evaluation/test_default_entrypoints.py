@@ -92,6 +92,8 @@ def test_structural_benchmark_requires_exact_remote_authorization() -> None:
             "7" * 64,
             "--source-state-sha256",
             "8" * 64,
+            "--evaluation-source-state-sha256",
+            "8" * 64,
             "--collection",
             "vietlex-legal-rag-v2-pilot-384",
             "--run-id",
@@ -107,6 +109,8 @@ def test_structural_benchmark_requires_exact_remote_authorization() -> None:
         "docs/evaluation/comparisons/p2-aa3208c/comparison.json"
     )
     assert arguments.allow_remote_benchmark is True
+    assert arguments.evaluation_source_state_sha256 == "8" * 64
+    assert arguments.allow_separate_evaluation_source is False
 
 
 @pytest.mark.asyncio
@@ -294,6 +298,8 @@ async def test_structural_benchmark_persists_remote_initialization_failure(
         p2_baseline=tmp_path / "baseline.json",
         p2_baseline_sha256=digest,
         source_state_sha256=digest,
+        evaluation_source_state_sha256=digest,
+        allow_separate_evaluation_source=False,
         collection="vietlex-legal-rag-v2-pilot-384",
         output_root=tmp_path,
         run_id="remote-init-blocked",

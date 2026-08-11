@@ -73,6 +73,7 @@ class StructuralCandidate(BaseModel):
     dataset_revision: str = Field(min_length=1)
     content_sha256: str = Field(pattern=_SHA256_PATTERN)
     chunk_sha256: str = Field(pattern=_SHA256_PATTERN)
+    inference_text_sha256: str = Field(pattern=_SHA256_PATTERN)
     dense_rank: _PositiveInt | None = None
     dense_score: float | None = Field(default=None, allow_inf_nan=False)
     bm25_rank: _PositiveInt | None = None

@@ -59,6 +59,7 @@ def _candidate(
         dataset_revision="revision-1",
         content_sha256=SHA,
         chunk_sha256=hashlib.sha256(body.encode("utf-8")).hexdigest(),
+        inference_text_sha256="f" * 64,
         fused_score=0.5,
     )
 
@@ -153,6 +154,7 @@ def _binding() -> StructuralEvaluationBinding:
         gold_policy="all-required-verified",
         selected_case_ids_sha256="d" * 64,
         source_state_sha256="e" * 64,
+        evaluation_source_state_sha256="e" * 64,
         collection_name="vietlex-legal-rag-v2-pilot-384",
         plan_sha256="1" * 64,
         creation_receipt_sha256="2" * 64,
@@ -315,6 +317,40 @@ async def test_source_drift_blocks_before_retriever_call(tmp_path: Path) -> None
     assert retriever.calls == 0
     report = json.loads((run.run_dir / "report.json").read_text("utf-8"))
     assert report["provenance_drift"] is True
+
+
+@pytest.mark.asyncio
+async def test_separate_evaluation_source_is_recorded_and_executed(
+    tmp_path: Path,
+) -> None:
+    retriever = FakeRetriever()
+    binding = _binding().model_copy(
+        update={"evaluation_source_state_sha256": "9" * 64}
+    )
+
+    run = await run_structural_pilot_evaluation(
+        [_case("case-1", 1, level=RequiredLevel.ARTICLE)],
+        retriever,
+        tmp_path,
+        run_id="separate-evaluation-source",
+        binding=binding,
+        p2_source_document_recall_at_24=0.0,
+        provenance=_provenance("9" * 64),
+    )
+
+    assert run.acceptance == "FAIL_QUALITY"
+    assert retriever.calls == 1
+    report = json.loads((run.run_dir / "report.json").read_text("utf-8"))
+    configuration = json.loads(
+        (run.run_dir / "configuration.json").read_text("utf-8")
+    )
+    manifest = json.loads((run.run_dir / "manifest.json").read_text("utf-8"))
+    assert report["provenance_drift"] is False
+    assert report["separate_evaluation_source"] is True
+    assert configuration["index_source_state_sha256"] == "e" * 64
+    assert configuration["evaluation_source_state_sha256"] == "9" * 64
+    assert manifest["source_state_sha256"] == "e" * 64
+    assert manifest["evaluation_source_state_sha256"] == "9" * 64
 
 
 @pytest.mark.asyncio

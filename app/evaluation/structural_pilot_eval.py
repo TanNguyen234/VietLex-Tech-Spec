@@ -83,6 +83,7 @@ class StructuralEvaluationBinding(BaseModel):
     gold_policy: Literal["all-required-verified"]
     selected_case_ids_sha256: str = Field(pattern=_SHA256_PATTERN)
     source_state_sha256: str = Field(pattern=_SHA256_PATTERN)
+    evaluation_source_state_sha256: str = Field(pattern=_SHA256_PATTERN)
     collection_name: Literal["vietlex-legal-rag-v2-pilot-384"]
     plan_sha256: str = Field(pattern=_SHA256_PATTERN)
     creation_receipt_sha256: str = Field(pattern=_SHA256_PATTERN)
@@ -518,6 +519,10 @@ def _configuration(binding: StructuralEvaluationBinding) -> dict[str, Any]:
         "rewrite_mode": "off",
         "metric_version": "3.0.0",
         "metric_stage_aliases": _METRIC_STAGE_ALIASES,
+        "index_source_state_sha256": binding.source_state_sha256,
+        "evaluation_source_state_sha256": (
+            binding.evaluation_source_state_sha256
+        ),
         "collection_name": binding.collection_name,
         "dense_vector": {
             "name": binding.dense_vector_name,
@@ -572,7 +577,8 @@ async def run_structural_pilot_evaluation(
     git = provenance or collect_git_provenance()
     provenance_drift = (
         git.status != "ok"
-        or git.source_state_sha256 != binding.source_state_sha256
+        or git.source_state_sha256
+        != binding.evaluation_source_state_sha256
     )
     run_dir = prepare_run_directory(Path(output_root), run_id)
     executed: list[_ExecutedCase] = []
@@ -720,6 +726,10 @@ async def run_structural_pilot_evaluation(
         "scope_errors": list(scope_errors),
         "technical_preflight_errors": list(technical_preflight_errors),
         "provenance_drift": provenance_drift,
+        "separate_evaluation_source": (
+            binding.source_state_sha256
+            != binding.evaluation_source_state_sha256
+        ),
         "coverage": {
             "selected_case_count": len(cases) + len(skipped),
             "scored_case_count": len(executed),

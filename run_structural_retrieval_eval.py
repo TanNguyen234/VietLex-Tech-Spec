@@ -153,6 +153,16 @@ def build_parser() -> argparse.ArgumentParser:
     benchmark.add_argument("--p2-baseline-sha256", required=True)
     benchmark.add_argument("--source-state-sha256", required=True)
     benchmark.add_argument(
+        "--evaluation-source-state-sha256",
+        required=True,
+        help="exact source-state SHA-256 of the evaluator/runtime code",
+    )
+    benchmark.add_argument(
+        "--allow-separate-evaluation-source",
+        action="store_true",
+        help="allow evaluator fixes newer than the immutable index source",
+    )
+    benchmark.add_argument(
         "--collection",
         choices=["vietlex-legal-rag-v2-pilot-384"],
         required=True,
@@ -310,6 +320,9 @@ async def _run_benchmark(arguments: argparse.Namespace) -> int:
         gold_policy="all-required-verified",
         selected_case_ids_sha256=selected.selected_case_ids_sha256,
         source_state_sha256=plan.source_state_sha256,
+        evaluation_source_state_sha256=(
+            arguments.evaluation_source_state_sha256
+        ),
         collection_name=plan.contract.collection_name,
         plan_sha256=plan.plan_sha256,
         creation_receipt_sha256=arguments.create_receipt_sha256,
@@ -345,6 +358,12 @@ async def _run_benchmark(arguments: argparse.Namespace) -> int:
         binding,
     )
     provenance = collect_git_provenance()
+    _require(
+        binding.evaluation_source_state_sha256 == binding.source_state_sha256
+        or getattr(arguments, "allow_separate_evaluation_source", False)
+        is True,
+        "separate evaluation source authorization is required",
+    )
     command = "python run_structural_retrieval_eval.py " + " ".join(sys.argv[1:])
 
     async def persist_blocked(
@@ -494,7 +513,7 @@ async def _run_benchmark(arguments: argparse.Namespace) -> int:
     if (
         latest_provenance.status != "ok"
         or latest_provenance.source_state_sha256
-        != binding.source_state_sha256
+        != binding.evaluation_source_state_sha256
     ):
         return await persist_blocked(
             scope.selection.cases,

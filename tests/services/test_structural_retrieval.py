@@ -61,6 +61,7 @@ def _payload(
         "dataset_revision": revision,
         "content_sha256": "a" * 64,
         "chunk_sha256": hashlib.sha256(text.encode()).hexdigest(),
+        "inference_text_sha256": "f" * 64,
     }
 
 
@@ -304,6 +305,7 @@ async def test_structural_chunks_are_returned_without_document_rechunk(
     outcome = await retriever.retrieve("trách nhiệm môi trường")
 
     assert outcome.evidence[0].text == outcome.trace.final_hits[0].body
+    assert outcome.trace.final_hits[0].inference_text_sha256 == "f" * 64
 
 
 @pytest.mark.asyncio
