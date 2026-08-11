@@ -540,13 +540,16 @@ class FakeTransport:
         vector_problem: str | None = None,
         fail_query: bool = False,
         rank_problem: bool = False,
+        canary_dense_rank_problem: bool = False,
     ) -> None:
         self.contract = probe.plan.contract
         self.client = FakeProbeClient(vector_problem=vector_problem)
         self.usage_problem = usage_problem
         self.fail_query = fail_query
         self.rank_problem = rank_problem
+        self.canary_dense_rank_problem = canary_dense_rank_problem
         self.upsert_batches: list[list[object]] = []
+        self.query_lanes: list[str] = []
 
     def upsert_with_usage(self, points):
         batch = list(points)
@@ -566,6 +569,7 @@ class FakeTransport:
         )
 
     def query_with_usage(self, *, document, using, limit, **kwargs):
+        self.query_lanes.append(using)
         if self.fail_query:
             raise RuntimeError("secret provider detail")
         if "case-" in document.text:
@@ -580,7 +584,14 @@ class FakeTransport:
                 str(point.id),
             ),
         )
-        if self.rank_problem and desired_document == 1:
+        if (
+            self.rank_problem
+            or (
+                self.canary_dense_rank_problem
+                and using == self.contract.dense_vector_name
+                and "case-" not in document.text
+            )
+        ) and desired_document == 1:
             ordered = [
                 point
                 for point in ordered
@@ -590,10 +601,15 @@ class FakeTransport:
             SimpleNamespace(id=point.id, payload=point.payload, score=1.0)
             for point in ordered[:limit]
         ]
+        usage = (
+            {self.contract.dense_model: 10}
+            if using == self.contract.dense_vector_name
+            else {}
+        )
         return hits, InferenceUsageReceipt(
             status="completed",
             elapsed_seconds=0.01,
-            model_tokens={self.contract.dense_model: 10},
+            model_tokens=usage,
         )
 
 
@@ -664,6 +680,29 @@ def test_probe_passes_without_constructing_a_pinecone_reference(
     assert set(report.provider_usage) == {
         "intfloat/multilingual-e5-small",
     }
+
+
+def test_probe_fuses_bm25_for_canary_when_dense_lane_misses(
+    tmp_path: Path,
+) -> None:
+    probe = _probe_input(tmp_path)
+    transport = FakeTransport(probe, canary_dense_rank_problem=True)
+
+    report = run_structural_model_probe(transport, probe)
+
+    assert report.acceptance == "PASS_MODEL_PROBE"
+    assert report.gold_ranking_mode == "dense_v1"
+    assert report.canary_ranking_mode == "dense_bm25_rrf_v1"
+    assert report.canary_dense_top_k == 24
+    assert report.canary_bm25_top_k == 24
+    assert report.canary_fused_limit == 10
+    assert report.canary_rrf_k == 60
+    assert transport.query_lanes.count(
+        probe.plan.contract.dense_vector_name
+    ) == len(probe.selection.cases) + len(probe.selection.canary_queries)
+    assert transport.query_lanes.count(
+        probe.plan.contract.sparse_vector_name
+    ) == len(probe.selection.canary_queries)
 
 
 def test_probe_reports_canary_metrics_on_a_separate_denominator(

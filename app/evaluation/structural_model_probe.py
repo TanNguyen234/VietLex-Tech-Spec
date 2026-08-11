@@ -32,6 +32,7 @@ from app.ingestion.structural_qdrant import (
     point_from_record,
     point_payload,
     build_structural_inference_text,
+    sparse_query_document,
     structural_inference_text_sha256,
 )
 
@@ -43,6 +44,9 @@ _PROBE_BATCH_SIZE = 64
 _REFERENCE_BATCH_SIZE = 96
 _PROBE_SAMPLING_VERSION = "primary-scope-hard-negatives-v1"
 _CANARY_LIMIT = 64
+_PROBE_LANE_LIMIT = 24
+_PROBE_FUSED_LIMIT = 10
+_PROBE_RRF_K = 60
 
 
 class StructuralModelProbeError(RuntimeError):
@@ -310,6 +314,12 @@ class StructuralModelProbeReport(BaseModel):
     per_query_first_structural_rank: dict[str, int | None]
     canary_metrics: dict[str, ProbeMetric]
     per_canary_first_relevant_rank: dict[str, int | None]
+    gold_ranking_mode: Literal["dense_v1"] = "dense_v1"
+    canary_ranking_mode: Literal["dense_bm25_rrf_v1"] = "dense_bm25_rrf_v1"
+    canary_dense_top_k: Literal[24] = 24
+    canary_bm25_top_k: Literal[24] = 24
+    canary_fused_limit: Literal[10] = 10
+    canary_rrf_k: Literal[60] = 60
     reference: PineconeReferenceResult | None
     provider_usage: dict[str, int]
     upsert_provider_usage: dict[str, int]
@@ -1275,17 +1285,12 @@ def _qdrant_canary_ranks(
 ) -> dict[str, int | None]:
     result: dict[str, int | None] = {}
     for canary in canaries:
-        hits, receipt = transport.query_with_usage(
-            document=dense_query_document(canary.query, transport.contract),
-            using=transport.contract.dense_vector_name,
-            limit=10,
-        )
-        _validate_qdrant_usage(
-            receipt,
-            expected={transport.contract.dense_model},
+        hits = _qdrant_hybrid_hits(
+            transport,
+            query=canary.query,
+            usage=usage,
             stage="canary query",
         )
-        _merge_usage(usage, receipt.model_tokens)
         first_rank: int | None = None
         for rank, hit in enumerate(hits, start=1):
             candidate = _candidate_from_payload(getattr(hit, "payload", None))
@@ -1294,6 +1299,69 @@ def _qdrant_canary_ranks(
                 break
         result[canary.query_id] = first_rank
     return result
+
+
+def _qdrant_hybrid_hits(
+    transport: StructuralQdrantTransport,
+    *,
+    query: str,
+    usage: dict[str, int],
+    stage: str,
+) -> list[Any]:
+    lanes = (
+        (
+            dense_query_document(query, transport.contract),
+            transport.contract.dense_vector_name,
+            {transport.contract.dense_model},
+        ),
+        (
+            sparse_query_document(query, transport.contract),
+            transport.contract.sparse_vector_name,
+            set(),
+        ),
+    )
+    ranked_lanes: list[list[Any]] = []
+    for document, vector_name, expected_usage in lanes:
+        hits, receipt = transport.query_with_usage(
+            document=document,
+            using=vector_name,
+            limit=_PROBE_LANE_LIMIT,
+        )
+        _validate_qdrant_usage(
+            receipt,
+            expected=expected_usage,
+            stage=f"{stage}:{vector_name}",
+        )
+        _merge_usage(usage, receipt.model_tokens)
+        ranked_lanes.append(hits)
+
+    fused: dict[str, tuple[Any, float]] = {}
+    for hits in ranked_lanes:
+        for rank, hit in enumerate(hits, start=1):
+            record_id = str(getattr(hit, "id", ""))
+            if not record_id:
+                raise StructuralModelProbeError(
+                    f"Qdrant {stage} hit identity is missing"
+                )
+            score = 1.0 / (_PROBE_RRF_K + rank)
+            existing = fused.get(record_id)
+            if existing is None:
+                fused[record_id] = (hit, score)
+                continue
+            if getattr(existing[0], "payload", None) != getattr(
+                hit, "payload", None
+            ):
+                raise StructuralModelProbeError(
+                    f"Qdrant {stage} lane payload mismatch"
+                )
+            fused[record_id] = (existing[0], existing[1] + score)
+    return [
+        item[0]
+        for _, item in sorted(
+            fused.items(),
+            key=lambda row: (-row[1][1], row[0]),
+        )[:_PROBE_FUSED_LIMIT]
+    ]
 
 
 def _cosine_first_relevant_ranks(
