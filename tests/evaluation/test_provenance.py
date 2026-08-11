@@ -149,6 +149,25 @@ def test_staged_and_untracked_source_changes_affect_source_state(
     assert dirty.source_state_sha256 != clean.source_state_sha256
 
 
+def test_source_state_is_content_stable_across_git_index_transitions(
+    tmp_path: Path,
+) -> None:
+    repo = initialized_repo(tmp_path)
+    baseline = collect_git_provenance(repo)
+    source = repo / "new_source.py"
+    source.write_text("VALUE = 2\n", encoding="utf-8")
+
+    untracked = collect_git_provenance(repo)
+    git(repo, "add", "new_source.py")
+    staged = collect_git_provenance(repo)
+    git(repo, "commit", "-m", "add equivalent source")
+    committed = collect_git_provenance(repo)
+
+    assert untracked.source_state_sha256 != baseline.source_state_sha256
+    assert untracked.source_state_sha256 == staged.source_state_sha256
+    assert staged.source_state_sha256 == committed.source_state_sha256
+
+
 def test_non_git_directory_is_typed_unavailable(tmp_path: Path) -> None:
     provenance = collect_git_provenance(tmp_path)
 

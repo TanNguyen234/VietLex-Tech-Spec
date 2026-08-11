@@ -83,15 +83,18 @@ The opt-in implementation is complete locally through deterministic benchmark co
 
 Provider-free local evidence:
 
-- Audit directory: `docs/evaluation/index-pilots/structural-local-audit-20260811-task8-verified/`.
+The earlier `*-task8-verified` directories are retained as immutable historical evidence and are superseded by the content-canonical provenance-v2 runs below.
+
+- Audit directory: `docs/evaluation/index-pilots/structural-local-audit-20260811-provenance-v2/`.
 - Audit manifest SHA-256: `8b991baa8cb889cd4acf37cfcd09bb7304190b66758b9a2e717eee8cdb2686f8`.
-- Audit `plan.json` file SHA-256: `98a8dc8cb365d627290b1ae8494a89e8ef3fcd1e8d2d1047d089dedcbb85a70e`.
-- Audit internal plan SHA-256: `6e1e27262247716fa7b6c41cf259d58f5a2dd583b97335fe2b2aa9bc3cfe9bcd`.
+- Audit `plan.json` file SHA-256: `94b5a64a29d451773f3dc6911dc2eca728e6f219393255235eeb99b515655b05`.
+- Audit internal plan SHA-256: `9b45270b70ac3c94a841624a3e58f16d91e0e9ee74bc0778e3a6d64587a57446`.
 - Audit result: 827 documents, 134,334 structural records, provider calls 0.
-- Capacity directory: `docs/evaluation/index-pilots/structural-local-plan-blocked-20260811-task8-verified/`.
-- Capacity `plan.json` file SHA-256: `c72cac88d520226f1b17a1150cb97c27a7c894f6e0ee254848ab2ff816fd91b7`.
-- Internal plan SHA-256: `8b0a4c12020185d7d7cef8ae03df9f46da82683a7af6b0d3594b0ac893cd3c34`.
-- Bound source-state SHA-256: `00603fcde63f7931e6a779eba4c204ef3a1c13ac96167e9f8e51da2abfebe0cc`; the artifact honestly records `source_git_dirty=true` at Git SHA `fc294a33f4e465abcba7e447168242b1ae25641c`.
+- Capacity directory: `docs/evaluation/index-pilots/structural-local-plan-blocked-20260811-provenance-v2/`.
+- Capacity `plan.json` file SHA-256: `3d4566f86b8805ba200b2154277d337e6eb38b6e0a1aac32db6e4b6f4ecd5c45`.
+- Internal plan SHA-256: `e2a960604f349b7583e2aea5a58b91a578be0a6c76122f01585381318da9280c`.
+- Bound source-state SHA-256: `71e4d8d5a711954c7828924ce6605f7bb8335a3d2289053de770288a5409e8b7`; the artifact honestly records `source_git_dirty=true` at Git SHA `5b07a3829741e196502d4698018c12c2ce674648`.
+- Source-state semantics are content-canonical: the same repository-visible source paths and bytes now retain the same hash across untracked, staged, and committed states. Git SHA, dirty flags, and diff SHA remain separate provenance.
 - Capacity inputs: 4 GiB disk, 1 GiB RAM, 0.5 vCPU, one shard; `existing_disk_bytes` deliberately absent.
 - Capacity result: `BLOCKED_CAPACITY`, with the sole missing input `existing_disk_bytes`; provider calls 0. This plan cannot authorize `create`.
 
@@ -100,9 +103,9 @@ Remote phase status: `create NOT RUN`; `probe-model NOT RUN`; `upload NOT RUN`; 
 After obtaining current Qdrant disk usage, regenerate a clean `PASS_CAPACITY` plan. The exact binding values currently demonstrated by the local blocked plan are:
 
 ```powershell
-$PLAN = "docs/evaluation/index-pilots/structural-local-plan-blocked-20260811-task8-verified/plan.json"
-$PLAN_SHA = "8b0a4c12020185d7d7cef8ae03df9f46da82683a7af6b0d3594b0ac893cd3c34"
-$SOURCE_SHA = "00603fcde63f7931e6a779eba4c204ef3a1c13ac96167e9f8e51da2abfebe0cc"
+$PLAN = "docs/evaluation/index-pilots/structural-local-plan-blocked-20260811-provenance-v2/plan.json"
+$PLAN_SHA = "e2a960604f349b7583e2aea5a58b91a578be0a6c76122f01585381318da9280c"
+$SOURCE_SHA = "71e4d8d5a711954c7828924ce6605f7bb8335a3d2289053de770288a5409e8b7"
 $COLLECTION = "vietlex-legal-rag-v2-pilot"
 $DATASET = "app/data/namsyntax_legal_qa_420_curated_v1.json"
 $SIDECAR = "docs/evaluation/adjudication/promotions/gold-adjudication-promotion-curated-v4_20260809_151015_227377/labels_v2.json"
@@ -123,6 +126,8 @@ python run_structural_retrieval_eval.py benchmark --dataset $DATASET --sidecar $
 
 ## Execution and verification evidence
 
+- Provenance-v2 regression: RED reproduced the untracked/staged hash mismatch; GREEN passed, affected suite `83 passed`, and final full suite `556 passed, 1 skipped`.
+- Source-state checkpoint before artifacts and after both immutable artifacts: identical `71e4d8d5a711954c7828924ce6605f7bb8335a3d2289053de770288a5409e8b7`.
 - Task 8 affected structural/evaluation suite: `172 passed in 21.07s` before the final Windows-console portability regression; that regression was reproduced RED and passed GREEN independently.
 - Task 8 final full suite on stable source: `555 passed, 1 skipped in 103.52s`; the skip is the existing opt-in live integration test.
 - Task 8 fatal Ruff checks over all changed code/tests, compileall, both CLI help commands, and `git diff --check`: passed. Repository-wide fatal Ruff found 38 pre-existing F401 findings in `scripts/test_cloudrun_rag_integration.py` and `tests/test_evaluation_framework.py`; no Task 8 file failed.

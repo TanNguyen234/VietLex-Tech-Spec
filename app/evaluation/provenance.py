@@ -108,6 +108,31 @@ def _hash_untracked(root: Path, paths: list[str]) -> bytes:
     return "\n".join(lines).encode("utf-8")
 
 
+def _hash_repository_sources(root: Path) -> bytes:
+    raw_paths = _run_git(
+        root,
+        "ls-files",
+        "-z",
+        "--cached",
+        "--others",
+        "--exclude-standard",
+    )
+    paths = [
+        value.decode("utf-8", errors="replace")
+        for value in raw_paths.split(b"\0")
+        if value
+    ]
+    lines: list[str] = []
+    for relative in sorted(paths):
+        normalized = normalize_git_path(relative)
+        path = root / relative
+        if is_source_excluded(normalized) or not path.is_file():
+            continue
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        lines.append(f"{normalized}:{digest}")
+    return "\n".join(lines).encode("utf-8")
+
+
 def collect_git_provenance(
     repo_root: Path | None = None,
 ) -> GitProvenance:
@@ -132,7 +157,6 @@ def collect_git_provenance(
         staged_dirty = False
         untracked_paths: list[str] = []
         safe_untracked_paths: list[str] = []
-        source_untracked_paths: list[str] = []
         sensitive_dirty = False
 
         for entry in entries:
@@ -145,8 +169,6 @@ def collect_git_provenance(
                 untracked_paths.append(path)
                 if not is_sensitive_path(path):
                     safe_untracked_paths.append(path)
-                if not is_source_excluded(path):
-                    source_untracked_paths.append(path)
                 continue
             staged_dirty = staged_dirty or code[0] not in {" ", "?"}
             tracked_dirty = tracked_dirty or code[1] not in {" ", "?"}
@@ -167,26 +189,7 @@ def collect_git_provenance(
                 _hash_untracked(root, safe_untracked_paths),
             ]
         )
-        source_diff = _run_git(
-            root,
-            "diff",
-            "--binary",
-            "HEAD",
-            "--",
-            ".",
-            ":!docs/evaluation/index-pilots",
-            ":!docs/evaluation/preflight",
-            ":!docs/evaluation/runs",
-            ":!docs/evaluation/CURRENT_STATUS.md",
-            *GIT_SENSITIVE_EXCLUDES,
-        )
-        source_payload = b"\n".join(
-            [
-                sha.encode(),
-                source_diff,
-                _hash_untracked(root, source_untracked_paths),
-            ]
-        )
+        source_payload = _hash_repository_sources(root)
         git_dirty = bool(entries)
         return GitProvenance(
             status="ok",
