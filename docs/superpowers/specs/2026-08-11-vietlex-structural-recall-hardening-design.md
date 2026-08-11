@@ -1,6 +1,6 @@
 # VietLex Structural Recall Hardening Design
 
-**Status:** Approved by the user's 2026-08-11 direction to reduce corpus scope when needed and prioritize recall close to 1.0.  
+**Status:** Approved by the user's 2026-08-11 direction to reduce corpus scope when needed and prioritize recall close to 1.0.
 **Scope:** P3 Qdrant structural pilot only. No production cutover and no remote execution by Codex.
 
 ## 1. Evidence and problem statement
