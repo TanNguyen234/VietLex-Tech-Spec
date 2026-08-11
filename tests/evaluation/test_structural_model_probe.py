@@ -129,6 +129,51 @@ def test_probe_selection_uses_only_verified_required_in_scope_records() -> None:
     }
 
 
+def test_probe_selection_includes_one_real_negative_per_non_gold_document() -> None:
+    records = [
+        _record("00000000-0000-0000-0000-000000000001", 1),
+        _record("00000000-0000-0000-0000-000000000002", 2),
+        _record("00000000-0000-0000-0000-000000000003", 3),
+        _record(
+            "00000000-0000-0000-0000-000000000004",
+            3,
+            article="Điều 2",
+        ),
+        _record("00000000-0000-0000-0000-000000000005", 4),
+    ]
+
+    selection = select_model_probe_records(
+        [_case("case-001", 1), _case("case-002", 2)],
+        records,
+    )
+
+    assert {record.document_id for record in selection.records} == {1, 2, 3, 4}
+    assert set(selection.relevant_record_ids) == {
+        records[0].record_id,
+        records[1].record_id,
+    }
+    assert len(selection.hard_negative_record_ids) == 2
+    assert set(selection.hard_negative_record_ids).issubset(selection.record_ids)
+    assert selection.synthetic_records == 0
+
+
+def test_probe_distractor_and_canary_selection_is_iteration_order_stable() -> None:
+    records = [
+        _record(f"00000000-0000-0000-0000-{index:012d}", index)
+        for index in range(1, 70)
+    ]
+    cases = [_case("case-001", 1)]
+
+    forward = select_model_probe_records(cases, records)
+    reverse = select_model_probe_records(cases, reversed(records))
+
+    assert forward.record_ids == reverse.record_ids
+    assert forward.hard_negative_record_ids == reverse.hard_negative_record_ids
+    assert forward.canary_queries == reverse.canary_queries
+    assert len(forward.canary_queries) == 64
+    assert all(canary.document_id != 1 for canary in forward.canary_queries)
+
+
 def test_probe_selection_reports_verified_structure_not_resolved() -> None:
     selection = select_model_probe_records(
         [_case("case-001", 1, article="Điều 99")],
@@ -494,8 +539,11 @@ class FakeTransport:
     def query_with_usage(self, *, document, using, limit, **kwargs):
         if self.fail_query:
             raise RuntimeError("secret provider detail")
-        case_id = document.text.rsplit("case-", 1)[-1]
-        desired_document = 1 if case_id.startswith("001") else 2
+        if "case-" in document.text:
+            case_id = document.text.rsplit("case-", 1)[-1]
+            desired_document = 1 if case_id.startswith("001") else 2
+        else:
+            desired_document = int(document.text.rsplit("Luật ", 1)[-1])
         ordered = sorted(
             self.client.points.values(),
             key=lambda point: (
@@ -547,6 +595,14 @@ def test_probe_pass_requires_matched_denominator_and_provider_usage(
     assert report.dataset_sha256 == "d" * 64
     assert report.sidecar_sha256 == "e" * 64
     assert report.synthetic_records == 0
+    assert report.sampling_version == "primary-scope-hard-negatives-v1"
+    assert report.relevant_record_ids == probe.selection.relevant_record_ids
+    assert (
+        report.hard_negative_record_ids
+        == probe.selection.hard_negative_record_ids
+    )
+    assert report.canary_queries == probe.selection.canary_queries
+    assert report.canary_skips == probe.selection.canary_skips
     assert set(report.probe_inference_text_hashes) == set(
         probe.selection.record_ids
     )
@@ -560,6 +616,33 @@ def test_probe_pass_requires_matched_denominator_and_provider_usage(
         probe.selection.record_ids
     )
     assert transport.client.delete_calls == []
+
+
+def test_probe_reports_canary_metrics_on_a_separate_denominator(
+    tmp_path: Path,
+) -> None:
+    records = [
+        _record(f"00000000-0000-0000-0000-{index:012d}", index)
+        for index in range(1, 70)
+    ]
+    selection = select_model_probe_records(
+        [_case("case-001", 1)],
+        records,
+    )
+    probe = _probe_input(tmp_path).with_selection(selection)
+
+    report = run_structural_model_probe(
+        FakeTransport(probe),
+        FakeReference(),
+        probe,
+    )
+
+    assert report.metrics["recall_at_3"].denominator == 1
+    assert report.canary_metrics["document_recall_at_10"].denominator == 64
+    assert report.canary_metrics["document_recall_at_10"].value == 1.0
+    assert set(report.per_canary_first_relevant_rank) == {
+        canary.query_id for canary in selection.canary_queries
+    }
 
 
 def test_probe_valid_execution_below_floor_is_fail_quality(tmp_path: Path) -> None:

@@ -5,9 +5,10 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import re
 import time
 from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Literal
@@ -39,6 +40,8 @@ _REFERENCE_MODEL = "llama-text-embed-v2"
 _REFERENCE_DIMENSION = 1024
 _PROBE_BATCH_SIZE = 64
 _REFERENCE_BATCH_SIZE = 96
+_PROBE_SAMPLING_VERSION = "primary-scope-hard-negatives-v1"
+_CANARY_LIMIT = 64
 
 
 class StructuralModelProbeError(RuntimeError):
@@ -73,6 +76,15 @@ class ProbeMetric(BaseModel):
         return self
 
 
+class StructuralCanary(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    query_id: str = Field(min_length=1)
+    query: str = Field(min_length=1)
+    document_id: int = Field(gt=0)
+    legal_type: str = Field(min_length=1)
+
+
 @dataclass(frozen=True)
 class StructuralProbeSelection:
     """In-memory real records and cases; reports retain identities only."""
@@ -80,6 +92,11 @@ class StructuralProbeSelection:
     cases: tuple[GoldenCase, ...]
     records: tuple[StructuralRecord, ...]
     skipped_cases: Mapping[str, str]
+    relevant_record_ids: tuple[str, ...] = ()
+    hard_negative_record_ids: tuple[str, ...] = ()
+    canary_queries: tuple[StructuralCanary, ...] = ()
+    canary_skips: Mapping[str, str] = field(default_factory=dict)
+    sampling_version: str = _PROBE_SAMPLING_VERSION
     synthetic_records: Literal[0] = 0
 
     def __post_init__(self) -> None:
@@ -95,6 +112,24 @@ class StructuralProbeSelection:
             )
         if not isinstance(self.skipped_cases, Mapping):
             raise StructuralModelProbeError("skipped cases must be a mapping")
+        relevant = set(self.relevant_record_ids)
+        negatives = set(self.hard_negative_record_ids)
+        if (
+            relevant & negatives
+            or relevant | negatives != set(record_ids)
+            or self.relevant_record_ids != tuple(sorted(relevant))
+            or self.hard_negative_record_ids != tuple(sorted(negatives))
+        ):
+            raise StructuralModelProbeError(
+                "probe relevant/negative record partition is invalid"
+            )
+        canary_ids = [canary.query_id for canary in self.canary_queries]
+        if canary_ids != sorted(set(canary_ids)):
+            raise StructuralModelProbeError(
+                "probe canary IDs must be unique and sorted"
+            )
+        if self.sampling_version != _PROBE_SAMPLING_VERSION:
+            raise StructuralModelProbeError("probe sampling version mismatch")
 
     @classmethod
     def from_resolved(
@@ -103,13 +138,32 @@ class StructuralProbeSelection:
         cases: Sequence[GoldenCase],
         records: Sequence[StructuralRecord],
         skipped_cases: Mapping[str, str],
+        relevant_record_ids: Sequence[str] | None = None,
+        hard_negative_record_ids: Sequence[str] | None = None,
+        canary_queries: Sequence[StructuralCanary] = (),
+        canary_skips: Mapping[str, str] | None = None,
     ) -> StructuralProbeSelection:
+        ordered_records = tuple(
+            sorted(records, key=lambda record: record.record_id)
+        )
+        relevant = tuple(
+            sorted(
+                relevant_record_ids
+                if relevant_record_ids is not None
+                else (record.record_id for record in ordered_records)
+            )
+        )
+        negatives = tuple(sorted(hard_negative_record_ids or ()))
         return cls(
             cases=tuple(sorted(cases, key=lambda case: case.case_id)),
-            records=tuple(
-                sorted(records, key=lambda record: record.record_id)
-            ),
+            records=ordered_records,
             skipped_cases=dict(sorted(skipped_cases.items())),
+            relevant_record_ids=relevant,
+            hard_negative_record_ids=negatives,
+            canary_queries=tuple(
+                sorted(canary_queries, key=lambda canary: canary.query_id)
+            ),
+            canary_skips=dict(sorted((canary_skips or {}).items())),
         )
 
     @property
@@ -134,9 +188,9 @@ class StructuralProbeSelection:
             [
                 {
                     "record_id": record.record_id,
-                    "body_sha256": hashlib.sha256(
-                        record.body.encode("utf-8")
-                    ).hexdigest(),
+                    "inference_text_sha256": (
+                        structural_inference_text_sha256(record)
+                    ),
                 }
                 for record in self.records
             ]
@@ -232,6 +286,11 @@ class StructuralModelProbeReport(BaseModel):
     query_instruction_version: Literal["vietlex-vn-legal-retrieval-v1"]
     case_ids: tuple[str, ...]
     record_ids: tuple[str, ...]
+    sampling_version: Literal["primary-scope-hard-negatives-v1"]
+    relevant_record_ids: tuple[str, ...]
+    hard_negative_record_ids: tuple[str, ...]
+    canary_queries: tuple[StructuralCanary, ...]
+    canary_skips: dict[str, str]
     probe_record_hashes: dict[str, str]
     probe_inference_text_hashes: dict[str, str]
     case_ids_sha256: str = Field(pattern=_SHA256_PATTERN)
@@ -244,6 +303,8 @@ class StructuralModelProbeReport(BaseModel):
     coverage: ProbeMetric
     metrics: dict[str, ProbeMetric]
     per_query_first_relevant_rank: dict[str, int | None]
+    canary_metrics: dict[str, ProbeMetric]
+    per_canary_first_relevant_rank: dict[str, int | None]
     reference: PineconeReferenceResult | None
     provider_usage: dict[str, int]
     upsert_provider_usage: dict[str, int]
@@ -262,6 +323,24 @@ class StructuralModelProbeReport(BaseModel):
             raise ValueError("report case IDs are not unique and sorted")
         if self.record_ids != tuple(sorted(set(self.record_ids))):
             raise ValueError("report record IDs are not unique and sorted")
+        relevant = set(self.relevant_record_ids)
+        negatives = set(self.hard_negative_record_ids)
+        if (
+            relevant & negatives
+            or relevant | negatives != set(self.record_ids)
+            or self.relevant_record_ids != tuple(sorted(relevant))
+            or self.hard_negative_record_ids != tuple(sorted(negatives))
+        ):
+            raise ValueError("report probe record partition is inconsistent")
+        canary_ids = tuple(canary.query_id for canary in self.canary_queries)
+        if canary_ids != tuple(sorted(set(canary_ids))):
+            raise ValueError("report canary identities are inconsistent")
+        if set(self.per_canary_first_relevant_rank) != set(canary_ids):
+            raise ValueError("report canary ranks are inconsistent")
+        if self.canary_metrics != _canary_metrics_from_ranks(
+            self.per_canary_first_relevant_rank
+        ):
+            raise ValueError("report canary metrics do not match ranks")
         if set(self.case_ids) & set(self.skipped_cases):
             raise ValueError("included and skipped cases overlap")
         if self.selected_case_count != len(self.case_ids) or (
@@ -404,8 +483,14 @@ def select_model_probe_records(
     matched_records: dict[str, dict[str, StructuralRecord]] = {
         case.case_id: {} for case in selected
     }
+    representatives: dict[int, StructuralRecord] = {}
     for record in records:
         seen_document_ids.add(record.document_id)
+        current = representatives.get(record.document_id)
+        if current is None or _probe_record_sampling_key(record) < (
+            _probe_record_sampling_key(current)
+        ):
+            representatives[record.document_id] = record
         labels = labels_by_document.get(record.document_id, ())
         if not labels:
             continue
@@ -438,11 +523,106 @@ def select_model_probe_records(
         included_cases.append(case)
         selected_records.update(matched_records[case.case_id])
 
+    relevant_record_ids = tuple(sorted(selected_records))
+    hard_negative_records = tuple(
+        record
+        for document_id, record in sorted(representatives.items())
+        if document_id not in labels_by_document
+    )
+    selected_records.update(
+        (record.record_id, record) for record in hard_negative_records
+    )
+    canaries, canary_skips = _select_structural_canaries(
+        hard_negative_records,
+    )
+
     return StructuralProbeSelection.from_resolved(
         cases=included_cases,
         records=tuple(selected_records.values()),
         skipped_cases=skipped,
+        relevant_record_ids=relevant_record_ids,
+        hard_negative_record_ids=tuple(
+            record.record_id for record in hard_negative_records
+        ),
+        canary_queries=canaries,
+        canary_skips=canary_skips,
     )
+
+
+def _probe_record_sampling_key(record: StructuralRecord) -> str:
+    return hashlib.sha256(
+        f"{_PROBE_SAMPLING_VERSION}:{record.record_id}".encode("utf-8")
+    ).hexdigest()
+
+
+def _select_structural_canaries(
+    records: Sequence[StructuralRecord],
+) -> tuple[tuple[StructuralCanary, ...], dict[str, str]]:
+    by_type: dict[str, list[StructuralRecord]] = {}
+    for record in records:
+        by_type.setdefault(record.legal_type, []).append(record)
+
+    strata: dict[tuple[str, int], list[StructuralRecord]] = {}
+    for legal_type, type_records in sorted(by_type.items()):
+        ordered = sorted(type_records, key=lambda record: record.document_id)
+        count = len(ordered)
+        for index, record in enumerate(ordered):
+            quantile = min(3, index * 4 // count)
+            strata.setdefault((legal_type, quantile), []).append(record)
+    for rows in strata.values():
+        rows.sort(
+            key=lambda record: hashlib.sha256(
+                (
+                    f"{_PROBE_SAMPLING_VERSION}:canary:"
+                    f"{record.document_id}:{record.title}"
+                ).encode("utf-8")
+            ).hexdigest()
+        )
+
+    selected: list[StructuralRecord] = []
+    keys = sorted(strata)
+    while keys and len(selected) < _CANARY_LIMIT:
+        remaining: list[tuple[str, int]] = []
+        for key in keys:
+            rows = strata[key]
+            if rows and len(selected) < _CANARY_LIMIT:
+                selected.append(rows.pop(0))
+            if rows:
+                remaining.append(key)
+        keys = remaining
+
+    canaries: list[StructuralCanary] = []
+    skips: dict[str, str] = {}
+    seen_queries: set[str] = set()
+    for record in selected:
+        query = re.sub(
+            re.escape(record.document_number),
+            " ",
+            record.title,
+            flags=re.IGNORECASE,
+        )
+        query = " ".join(query.split())
+        skip_id = f"document-{record.document_id}"
+        if not query:
+            skips[skip_id] = "blank_title_after_reference_removal"
+            continue
+        identity = query.casefold()
+        if identity in seen_queries:
+            skips[skip_id] = "duplicate_title_query"
+            continue
+        seen_queries.add(identity)
+        query_id = "canary-" + hashlib.sha256(
+            f"{record.document_id}:{query}".encode("utf-8")
+        ).hexdigest()[:16]
+        canaries.append(
+            StructuralCanary(
+                query_id=query_id,
+                query=query,
+                document_id=record.document_id,
+                legal_type=record.legal_type,
+            )
+        )
+    return tuple(sorted(canaries, key=lambda row: row.query_id)), skips
 
 
 def load_verified_probe_scope(
@@ -596,6 +776,10 @@ def run_structural_model_probe(
     selection = probe.selection
     metrics = _zero_metrics(len(selection.cases))
     ranks: dict[str, int | None] = {}
+    canary_ranks: dict[str, int | None] = {
+        canary.query_id: None for canary in selection.canary_queries
+    }
+    canary_metrics = _canary_metrics_from_ranks(canary_ranks)
     reference: PineconeReferenceResult | None = None
     usage: dict[str, int] = {}
     upsert_usage: dict[str, int] = {}
@@ -667,8 +851,14 @@ def run_structural_model_probe(
                 selection,
                 query_usage,
             )
+            canary_ranks = _qdrant_canary_ranks(
+                transport,
+                selection.canary_queries,
+                query_usage,
+            )
             _merge_usage(usage, query_usage)
             metrics = _metrics_from_ranks(ranks)
+            canary_metrics = _canary_metrics_from_ranks(canary_ranks)
             _validate_comparable_denominator(metrics, reference.metrics)
             acceptance = (
                 "PASS_MODEL_PROBE"
@@ -708,6 +898,11 @@ def run_structural_model_probe(
         ),
         case_ids=selection.case_ids,
         record_ids=selection.record_ids,
+        sampling_version=selection.sampling_version,
+        relevant_record_ids=selection.relevant_record_ids,
+        hard_negative_record_ids=selection.hard_negative_record_ids,
+        canary_queries=selection.canary_queries,
+        canary_skips=dict(selection.canary_skips),
         probe_record_hashes={
             record.record_id: record.chunk_sha256
             for record in selection.records
@@ -726,6 +921,8 @@ def run_structural_model_probe(
         coverage=_coverage_metric(selection),
         metrics=metrics,
         per_query_first_relevant_rank=ranks,
+        canary_metrics=canary_metrics,
+        per_canary_first_relevant_rank=canary_ranks,
         reference=reference,
         provider_usage=usage,
         upsert_provider_usage=upsert_usage,
@@ -1006,6 +1203,34 @@ def _qdrant_first_relevant_ranks(
     return result
 
 
+def _qdrant_canary_ranks(
+    transport: StructuralQdrantTransport,
+    canaries: Sequence[StructuralCanary],
+    usage: dict[str, int],
+) -> dict[str, int | None]:
+    result: dict[str, int | None] = {}
+    for canary in canaries:
+        hits, receipt = transport.query_with_usage(
+            document=dense_query_document(canary.query, transport.contract),
+            using=transport.contract.dense_vector_name,
+            limit=10,
+        )
+        _validate_qdrant_usage(
+            receipt,
+            expected={transport.contract.dense_model},
+            stage="canary query",
+        )
+        _merge_usage(usage, receipt.model_tokens)
+        first_rank: int | None = None
+        for rank, hit in enumerate(hits, start=1):
+            candidate = _candidate_from_payload(getattr(hit, "payload", None))
+            if candidate.document_id == canary.document_id:
+                first_rank = rank
+                break
+        result[canary.query_id] = first_rank
+    return result
+
+
 def _cosine_first_relevant_ranks(
     selection: StructuralProbeSelection,
     *,
@@ -1077,6 +1302,29 @@ def _zero_metrics(denominator: int) -> dict[str, ProbeMetric]:
             value=0 if denominator else None,
         )
         for name in ("recall_at_1", "recall_at_3", "mrr")
+    }
+
+
+def _canary_metrics_from_ranks(
+    ranks: Mapping[str, int | None],
+) -> dict[str, ProbeMetric]:
+    denominator = len(ranks)
+    values = {
+        "document_recall_at_1": sum(rank == 1 for rank in ranks.values()),
+        "document_recall_at_3": sum(
+            rank is not None and rank <= 3 for rank in ranks.values()
+        ),
+        "document_recall_at_10": sum(
+            rank is not None and rank <= 10 for rank in ranks.values()
+        ),
+    }
+    return {
+        name: ProbeMetric(
+            numerator=numerator,
+            denominator=denominator,
+            value=(numerator / denominator if denominator else None),
+        )
+        for name, numerator in values.items()
     }
 
 
