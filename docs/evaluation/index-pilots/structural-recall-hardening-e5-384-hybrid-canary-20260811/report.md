@@ -43,3 +43,5 @@ The strict payload consumer was corrected without changing or reindexing the ver
 - Production cutover authorized: `false`
 
 The next quality iteration must improve structural candidate survival and A/B the reranker on identical inputs. The valid document-recall result does not justify production cutover while article, clause, and all-required gates fail.
+
+The first P3 one-variable experiment increased only the per-document candidate cap from `4` to `8`. Run `structural-e5-384-cap8-20260812` improved fused all-required coverage from `36/40` to `38/40` and fused required-evidence survival from `49/53` to `51/53`, with no technical errors. The configured reranker reduced this to `33/40` at reranker output and final all-required coverage remained `0.725`. The cap is accepted as a candidate-stage improvement; reranker A/B remains required before any cutover decision.
