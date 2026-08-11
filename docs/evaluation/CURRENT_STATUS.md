@@ -83,7 +83,11 @@ The verified subset is 40 curated cases from the 420-case evaluation dataset, no
 
 ## Qdrant structural v2 local handoff
 
-The opt-in implementation is complete locally through deterministic benchmark code. Pinecone v1 remains the production backend and `get_legal_retriever()` is unchanged. No Qdrant or Pinecone data was created, uploaded, finalized, verified, benchmarked, deleted, or switched during this work.
+The opt-in implementation is complete locally through deterministic benchmark code. Pinecone v1 remains the production backend and `get_legal_retriever()` is unchanged. A live Qdrant pilot attempt has now created the isolated structural collection, but it remains empty and is not wired into production. No Pinecone data, local corpus/index, production route, generation, Ragas, guardrail, or deployment state was changed.
+
+The first immutable remote attempt is retained at `docs/evaluation/index-pilots/structural-recall-hardening-plan-post-tls-20260811/`. Its capacity plan passed with 3,409,536 observed existing bytes against 4 GiB disk and projected 1,304,087,609 pilot bytes. Internal plan SHA-256 is `99d056589ed5e5f2ceaa40cdf27f95f15809e5920836b991c84a288fe2087371`; plan file SHA-256 is `cfc1dc78048c57a60dfa1048f9ce09b760e4d283060be711e0770b80991f4020`. Create receipt SHA-256 is `cd686bef17dd5978d2409f0d31d33bae8e14f1e9e6b38fd85ce2c4897f9df1c1` and proves the exact 1024d/BM25/on-disk schema with zero points.
+
+The Qwen model probe stopped `BLOCKED_TECHNICAL` before any point was committed because the live free-tier service reported `Qwen/Qwen3-Embedding-0.6B` unsupported; probe file SHA-256 is `7a329c029781e76eff7de10aff408553c04b4ee8d966cd174a47609c5ffd8843`. Bounded read-only probes then established: `intfloat/multilingual-e5-large` is not allowed on free tier, `intfloat/multilingual-e5-base` is unsupported, and `mixedbread-ai/mxbai-embed-large-v1` is accepted with 1024d. Source now selects the latter, but it is not accepted for Vietnamese legal retrieval until a new immutable model probe passes all recall gates.
 
 Provider-free local evidence:
 
@@ -102,7 +106,7 @@ The earlier `*-task8-verified` and `*-provenance-v2` directories are retained as
 - Capacity inputs: 4 GiB disk, 1 GiB RAM, 0.5 vCPU, one shard; `existing_disk_bytes` deliberately absent.
 - Conservative projected storage: 1,304,087,609 bytes. Capacity result: `BLOCKED_CAPACITY`, with the sole missing input `existing_disk_bytes`; provider calls 0. This plan cannot authorize `create`.
 
-Remote phase status: `create NOT RUN`; `probe-model NOT RUN`; `upload NOT RUN`; `finalize NOT RUN`; `verify NOT RUN`; `benchmark NOT RUN`. Generation, Ragas, and guardrails are disabled by the benchmark contract.
+Remote phase status for the retained first attempt: `create CREATED (0 points)`; `probe-model BLOCKED_TECHNICAL`; `upload NOT RUN`; `finalize NOT RUN`; `verify NOT RUN`; `benchmark NOT RUN`. Generation, Ragas, and guardrails were disabled by the contract.
 
 After obtaining current Qdrant disk usage, regenerate a clean `PASS_CAPACITY` plan. The exact binding values currently demonstrated by the local blocked plan are:
 
