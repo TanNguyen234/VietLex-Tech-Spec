@@ -20,6 +20,7 @@ from app.evaluation.structural_model_probe import (
     StructuralProbeSelection,
     load_verified_probe_scope,
     run_structural_model_probe,
+    decide_model_probe_acceptance,
     select_model_probe_records,
 )
 from app.ingestion.content_store import StoredDocument
@@ -248,7 +249,10 @@ def test_scope_loader_binds_exact_dataset_and_sidecar_bytes(
 
 class _Store:
     def __init__(self) -> None:
-        self.documents = {1: self._document(1), 2: self._document(2)}
+        self.documents = {
+            document_id: self._document(document_id)
+            for document_id in range(1, 5)
+        }
 
     @staticmethod
     def _document(document_id: int) -> StoredDocument:
@@ -273,7 +277,9 @@ class _Store:
     def iter_document_ids_by_legal_types(
         self, legal_types, *, after_id: int, limit: int
     ) -> list[int]:
-        return [value for value in (1, 2) if value > after_id][:limit]
+        return [
+            value for value in range(1, 5) if value > after_id
+        ][:limit]
 
     def get_many(self, ids: list[int]) -> dict[int, StoredDocument]:
         return {value: self.documents[value] for value in ids}
@@ -323,7 +329,7 @@ def _probe_input(tmp_path: Path) -> StructuralModelProbeInput:
     )
     records = build_structural_records(
         store,
-        [1, 2],
+        [1, 2, 3, 4],
         repository=settings.DATASET_REPOSITORY,
         revision=settings.DATASET_REVISION,
     )
@@ -375,6 +381,29 @@ def _metric(value: float, denominator: int) -> ProbeMetric:
 def test_probe_metric_rejects_inconsistent_or_fabricated_ratio() -> None:
     with pytest.raises(ValidationError, match="inconsistent"):
         ProbeMetric(numerator=1, denominator=2, value=1.0)
+
+
+@pytest.mark.parametrize(
+    ("document_recall", "structural_recall", "canary_recall", "expected"),
+    [
+        (1.0, 0.95, 0.90, "PASS_MODEL_PROBE"),
+        (0.99, 0.95, 0.90, "FAIL_QUALITY"),
+        (1.0, 0.949, 0.90, "FAIL_QUALITY"),
+        (1.0, 0.95, 0.899, "FAIL_QUALITY"),
+    ],
+)
+def test_model_probe_acceptance_uses_absolute_quality_gates(
+    document_recall: float,
+    structural_recall: float,
+    canary_recall: float,
+    expected: str,
+) -> None:
+    assert decide_model_probe_acceptance(
+        gold_document_recall_at_10=document_recall,
+        gold_structural_recall_at_10=structural_recall,
+        canary_document_recall_at_10=canary_recall,
+        technical_error_count=0,
+    ) == expected
 
 
 class FakeReference:
@@ -552,7 +581,11 @@ class FakeTransport:
             ),
         )
         if self.rank_problem and desired_document == 1:
-            ordered.reverse()
+            ordered = [
+                point
+                for point in ordered
+                if point.payload["document_id"] != desired_document
+            ]
         hits = [
             SimpleNamespace(id=point.id, payload=point.payload, score=1.0)
             for point in ordered[:limit]
@@ -572,8 +605,8 @@ def test_probe_pass_requires_matched_denominator_and_provider_usage(
 
     report = run_structural_model_probe(
         transport,
-        FakeReference(),
         probe,
+        FakeReference(),
     )
 
     assert report.acceptance == "PASS_MODEL_PROBE"
@@ -618,6 +651,24 @@ def test_probe_pass_requires_matched_denominator_and_provider_usage(
     assert transport.client.delete_calls == []
 
 
+def test_probe_passes_without_constructing_a_pinecone_reference(
+    tmp_path: Path,
+) -> None:
+    probe = _probe_input(tmp_path)
+
+    report = run_structural_model_probe(
+        FakeTransport(probe),
+        probe,
+    )
+
+    assert report.acceptance == "PASS_MODEL_PROBE"
+    assert report.reference is None
+    assert set(report.provider_usage) == {
+        "Qwen/Qwen3-Embedding-0.6B",
+        "qdrant/bm25",
+    }
+
+
 def test_probe_reports_canary_metrics_on_a_separate_denominator(
     tmp_path: Path,
 ) -> None:
@@ -633,8 +684,8 @@ def test_probe_reports_canary_metrics_on_a_separate_denominator(
 
     report = run_structural_model_probe(
         FakeTransport(probe),
-        FakeReference(),
         probe,
+        FakeReference(),
     )
 
     assert report.metrics["recall_at_3"].denominator == 1
@@ -650,8 +701,8 @@ def test_probe_valid_execution_below_floor_is_fail_quality(tmp_path: Path) -> No
 
     report = run_structural_model_probe(
         FakeTransport(probe, rank_problem=True),
-        FakeReference(),
         probe,
+        FakeReference(),
     )
 
     assert report.acceptance == "FAIL_QUALITY"
@@ -673,8 +724,8 @@ def test_empty_verified_scope_is_blocked_with_zero_denominator(
 
     report = run_structural_model_probe(
         FakeTransport(probe),
-        FakeReference(),
         probe,
+        FakeReference(),
     )
 
     assert report.acceptance == "BLOCKED_SCOPE"
@@ -712,7 +763,7 @@ def test_probe_failures_are_typed_immutable_and_never_cleanup(
         fail_query=fail_query,
     )
 
-    report = run_structural_model_probe(transport, reference, probe)
+    report = run_structural_model_probe(transport, probe, reference)
 
     assert report.acceptance == "BLOCKED_TECHNICAL"
     assert report.technical_errors
@@ -736,8 +787,8 @@ def test_reference_denominator_mismatch_blocks_before_qdrant_write(
 
     report = run_structural_model_probe(
         transport,
-        FakeReference(metrics=one_case_metrics),
         probe,
+        FakeReference(metrics=one_case_metrics),
     )
 
     assert report.acceptance == "BLOCKED_TECHNICAL"
@@ -770,9 +821,9 @@ def test_probe_batches_real_ids_at_sixty_four_without_synthetic_rows(
     probe = probe.with_selection(selection)
     transport = FakeTransport(probe)
 
-    report = run_structural_model_probe(transport, FakeReference(), probe)
+    report = run_structural_model_probe(transport, probe, FakeReference())
 
-    assert report.acceptance == "PASS_MODEL_PROBE"
+    assert report.acceptance == "BLOCKED_SCOPE"
     assert [len(batch) for batch in transport.upsert_batches] == [64, 1]
     assert report.synthetic_records == 0
 

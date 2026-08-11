@@ -97,6 +97,23 @@ def _validated_remote_context(arguments: argparse.Namespace):
     return plan, authorization, provenance, settings
 
 
+def _load_optional_reference_embedder(
+    arguments: argparse.Namespace,
+    probe: object,
+) -> object | None:
+    """Load only an explicitly supplied immutable reference artifact."""
+    if arguments.reference_probe is None:
+        return None
+    from app.evaluation.structural_model_probe import (
+        StaticReferenceEmbedder,
+        load_matching_reference_probe,
+    )
+
+    return StaticReferenceEmbedder(
+        load_matching_reference_probe(arguments.reference_probe, probe)
+    )
+
+
 def _positive_int(value: str) -> int:
     parsed = int(value)
     if parsed <= 0:
@@ -532,14 +549,8 @@ def run(arguments: argparse.Namespace) -> int:
         return _run_verify(arguments)
 
     if arguments.command_name == "probe-model":
-        from pinecone import Pinecone
-
-        from app.config import install_system_trust_store
         from app.evaluation.structural_model_probe import (
-            PineconeReferenceEmbedder,
-            StaticReferenceEmbedder,
             StructuralModelProbeInput,
-            load_matching_reference_probe,
             load_verified_probe_scope,
             run_structural_model_probe,
         )
@@ -633,28 +644,15 @@ def run(arguments: argparse.Namespace) -> int:
             sidecar_sha256=scope.sidecar_sha256,
             output_path=output_path,
         )
-        if arguments.reference_probe is not None:
-            reference = StaticReferenceEmbedder(
-                load_matching_reference_probe(
-                    arguments.reference_probe,
-                    probe,
-                )
-            )
-        else:
-            if not settings.pinecone_api_key:
-                raise StructuralPilotError(
-                    "Pinecone inference credentials or --reference-probe are required"
-                )
-            install_system_trust_store()
-            pinecone = Pinecone(
-                api_key=settings.pinecone_api_key,
-                timeout=settings.PINECONE_RERANK_TIMEOUT_SECONDS,
-            )
-            reference = PineconeReferenceEmbedder(pinecone.inference)
+        reference = _load_optional_reference_embedder(arguments, probe)
 
         qdrant = create_structural_qdrant_client(settings)
         transport = StructuralQdrantTransport(qdrant, plan.contract)
-        report = run_structural_model_probe(transport, reference, probe)
+        report = run_structural_model_probe(
+            transport,
+            probe,
+            reference,
+        )
         print(report.model_dump_json())
         return {
             "PASS_MODEL_PROBE": 0,

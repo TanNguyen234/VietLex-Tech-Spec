@@ -387,6 +387,13 @@ def test_structural_probe_entrypoint_requires_bound_live_scope() -> None:
     )
     assert arguments.sidecar == Path("promoted-labels.json")
     assert arguments.reference_probe is None
+    assert (
+        run_structural_index_pilot._load_optional_reference_embedder(
+            arguments,
+            object(),
+        )
+        is None
+    )
 
 
 @pytest.mark.parametrize(

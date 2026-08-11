@@ -31,6 +31,7 @@ from app.ingestion.structural_qdrant import (
     dense_query_document,
     point_from_record,
     point_payload,
+    build_structural_inference_text,
     structural_inference_text_sha256,
 )
 
@@ -303,6 +304,10 @@ class StructuralModelProbeReport(BaseModel):
     coverage: ProbeMetric
     metrics: dict[str, ProbeMetric]
     per_query_first_relevant_rank: dict[str, int | None]
+    gold_document_metrics: dict[str, ProbeMetric]
+    gold_structural_metrics: dict[str, ProbeMetric]
+    per_query_first_document_rank: dict[str, int | None]
+    per_query_first_structural_rank: dict[str, int | None]
     canary_metrics: dict[str, ProbeMetric]
     per_canary_first_relevant_rank: dict[str, int | None]
     reference: PineconeReferenceResult | None
@@ -341,6 +346,16 @@ class StructuralModelProbeReport(BaseModel):
             self.per_canary_first_relevant_rank
         ):
             raise ValueError("report canary metrics do not match ranks")
+        if set(self.per_query_first_document_rank) != set(self.case_ids) or set(
+            self.per_query_first_structural_rank
+        ) != set(self.case_ids):
+            raise ValueError("report absolute gold ranks are incomplete")
+        if self.gold_document_metrics != _rank_metrics_at_10(
+            self.per_query_first_document_rank
+        ) or self.gold_structural_metrics != _rank_metrics_at_10(
+            self.per_query_first_structural_rank
+        ):
+            raise ValueError("report absolute gold metrics do not match ranks")
         if set(self.case_ids) & set(self.skipped_cases):
             raise ValueError("included and skipped cases overlap")
         if self.selected_case_count != len(self.case_ids) or (
@@ -369,8 +384,8 @@ class StructuralModelProbeReport(BaseModel):
         if self.acceptance in {"PASS_MODEL_PROBE", "FAIL_QUALITY"}:
             if self.technical_errors:
                 raise ValueError("valid execution cannot contain technical errors")
-            if self.reference is None or self.vector_validation != "passed":
-                raise ValueError("valid execution requires reference and vectors")
+            if self.vector_validation != "passed":
+                raise ValueError("valid execution requires vector readback")
             if (
                 self.upserted_record_count != len(self.record_ids)
                 or self.retrieved_vector_count != len(self.record_ids)
@@ -379,8 +394,9 @@ class StructuralModelProbeReport(BaseModel):
             expected_usage = {
                 "Qwen/Qwen3-Embedding-0.6B",
                 "qdrant/bm25",
-                "llama-text-embed-v2",
             }
+            if self.reference is not None:
+                expected_usage.add("llama-text-embed-v2")
             if set(self.provider_usage) != expected_usage or any(
                 isinstance(value, bool)
                 or not isinstance(value, int)
@@ -427,21 +443,35 @@ class StructuralModelProbeReport(BaseModel):
                 self.per_query_first_relevant_rank
             ):
                 raise ValueError("valid execution metrics do not match ranks")
-            reference_binding = {
-                "dataset_sha256": self.dataset_sha256,
-                "sidecar_sha256": self.sidecar_sha256,
-                "source_state_sha256": self.source_state_sha256,
-                "case_ids_sha256": self.case_ids_sha256,
-                "record_ids_sha256": self.record_ids_sha256,
-                "text_sha256": self.text_sha256,
-            }
-            if any(
-                getattr(self.reference, name) != value
-                for name, value in reference_binding.items()
-            ):
-                raise ValueError("valid execution reference binding mismatch")
-            passed = _passes_quality(self.metrics, self.reference.metrics)
-            if (self.acceptance == "PASS_MODEL_PROBE") != passed:
+            if self.reference is not None:
+                reference_binding = {
+                    "dataset_sha256": self.dataset_sha256,
+                    "sidecar_sha256": self.sidecar_sha256,
+                    "source_state_sha256": self.source_state_sha256,
+                    "case_ids_sha256": self.case_ids_sha256,
+                    "record_ids_sha256": self.record_ids_sha256,
+                    "text_sha256": self.text_sha256,
+                }
+                if any(
+                    getattr(self.reference, name) != value
+                    for name, value in reference_binding.items()
+                ):
+                    raise ValueError(
+                        "valid execution reference binding mismatch"
+                    )
+            expected_acceptance = decide_model_probe_acceptance(
+                gold_document_recall_at_10=(
+                    self.gold_document_metrics["recall_at_10"].value
+                ),
+                gold_structural_recall_at_10=(
+                    self.gold_structural_metrics["recall_at_10"].value
+                ),
+                canary_document_recall_at_10=(
+                    self.canary_metrics["document_recall_at_10"].value
+                ),
+                technical_error_count=0,
+            )
+            if self.acceptance != expected_acceptance:
                 raise ValueError("probe acceptance does not match quality gates")
         if self.acceptance == "BLOCKED_TECHNICAL" and not self.technical_errors:
             raise ValueError("blocked technical report requires an error")
@@ -680,7 +710,7 @@ class PineconeReferenceEmbedder:
         if not selection.cases or not selection.records:
             raise StructuralModelProbeError("reference scope is empty")
         passage_vectors, passage_tokens, passage_calls = self._embed(
-            [record.body for record in selection.records],
+            [build_structural_inference_text(record) for record in selection.records],
             input_type="passage",
         )
         query_vectors, query_tokens, query_calls = self._embed(
@@ -766,8 +796,8 @@ class PineconeReferenceEmbedder:
 
 def run_structural_model_probe(
     transport: StructuralQdrantTransport,
-    reference_embedder: object,
     probe: StructuralModelProbeInput,
+    reference_embedder: object | None = None,
 ) -> StructuralModelProbeReport:
     """Run a bounded real probe and always preserve a typed final artifact."""
     started = time.perf_counter()
@@ -776,6 +806,12 @@ def run_structural_model_probe(
     selection = probe.selection
     metrics = _zero_metrics(len(selection.cases))
     ranks: dict[str, int | None] = {}
+    document_ranks: dict[str, int | None] = {
+        case.case_id: None for case in selection.cases
+    }
+    structural_ranks: dict[str, int | None] = dict(document_ranks)
+    gold_document_metrics = _rank_metrics_at_10(document_ranks)
+    gold_structural_metrics = _rank_metrics_at_10(structural_ranks)
     canary_ranks: dict[str, int | None] = {
         canary.query_id: None for canary in selection.canary_queries
     }
@@ -805,10 +841,11 @@ def run_structural_model_probe(
                 "scope": "no_verified_in_scope_structural_probe_cases"
             }
         else:
-            stage = "reference"
-            reference = reference_embedder.evaluate(probe)
-            _validate_reference_binding(reference, probe)
-            _merge_usage(usage, reference.provider_usage)
+            if reference_embedder is not None:
+                stage = "reference"
+                reference = reference_embedder.evaluate(probe)
+                _validate_reference_binding(reference, probe)
+                _merge_usage(usage, reference.provider_usage)
 
             stage = "upsert"
             _validate_live_probe_schema(
@@ -846,11 +883,12 @@ def run_structural_model_probe(
             vector_validation = "passed"
 
             stage = "candidate_queries"
-            ranks = _qdrant_first_relevant_ranks(
+            document_ranks, structural_ranks = _qdrant_gold_ranks(
                 transport,
                 selection,
                 query_usage,
             )
+            ranks = structural_ranks
             canary_ranks = _qdrant_canary_ranks(
                 transport,
                 selection.canary_queries,
@@ -858,12 +896,22 @@ def run_structural_model_probe(
             )
             _merge_usage(usage, query_usage)
             metrics = _metrics_from_ranks(ranks)
+            gold_document_metrics = _rank_metrics_at_10(document_ranks)
+            gold_structural_metrics = _rank_metrics_at_10(structural_ranks)
             canary_metrics = _canary_metrics_from_ranks(canary_ranks)
-            _validate_comparable_denominator(metrics, reference.metrics)
-            acceptance = (
-                "PASS_MODEL_PROBE"
-                if _passes_quality(metrics, reference.metrics)
-                else "FAIL_QUALITY"
+            if reference is not None:
+                _validate_comparable_denominator(metrics, reference.metrics)
+            acceptance = decide_model_probe_acceptance(
+                gold_document_recall_at_10=(
+                    gold_document_metrics["recall_at_10"].value
+                ),
+                gold_structural_recall_at_10=(
+                    gold_structural_metrics["recall_at_10"].value
+                ),
+                canary_document_recall_at_10=(
+                    canary_metrics["document_recall_at_10"].value
+                ),
+                technical_error_count=0,
             )
     except Exception as error:
         acceptance = "BLOCKED_TECHNICAL"
@@ -921,6 +969,10 @@ def run_structural_model_probe(
         coverage=_coverage_metric(selection),
         metrics=metrics,
         per_query_first_relevant_rank=ranks,
+        gold_document_metrics=gold_document_metrics,
+        gold_structural_metrics=gold_structural_metrics,
+        per_query_first_document_rank=document_ranks,
+        per_query_first_structural_rank=structural_ranks,
         canary_metrics=canary_metrics,
         per_canary_first_relevant_rank=canary_ranks,
         reference=reference,
@@ -1174,17 +1226,18 @@ def _validate_live_probe_schema(
             )
 
 
-def _qdrant_first_relevant_ranks(
+def _qdrant_gold_ranks(
     transport: StructuralQdrantTransport,
     selection: StructuralProbeSelection,
     usage: dict[str, int],
-) -> dict[str, int | None]:
-    result: dict[str, int | None] = {}
+) -> tuple[dict[str, int | None], dict[str, int | None]]:
+    document_result: dict[str, int | None] = {}
+    structural_result: dict[str, int | None] = {}
     for case in selection.cases:
         hits, receipt = transport.query_with_usage(
             document=dense_query_document(case.question, transport.contract),
             using=transport.contract.dense_vector_name,
-            limit=3,
+            limit=10,
         )
         _validate_qdrant_usage(
             receipt,
@@ -1193,14 +1246,31 @@ def _qdrant_first_relevant_ranks(
         )
         _merge_usage(usage, receipt.model_tokens)
         required = _required_verified(case)
-        first_rank: int | None = None
+        required_document_ids = {
+            document_id
+            for document_id in (
+                _positive_document_id(label.document_id) for label in required
+            )
+            if document_id is not None
+        }
+        first_document_rank: int | None = None
+        first_structural_rank: int | None = None
         for rank, hit in enumerate(hits, start=1):
             candidate = _candidate_from_payload(getattr(hit, "payload", None))
-            if any(matches_required_level(label, candidate) for label in required):
-                first_rank = rank
+            if (
+                first_document_rank is None
+                and candidate.document_id in required_document_ids
+            ):
+                first_document_rank = rank
+            if first_structural_rank is None and any(
+                matches_required_level(label, candidate) for label in required
+            ):
+                first_structural_rank = rank
+            if first_document_rank is not None and first_structural_rank is not None:
                 break
-        result[case.case_id] = first_rank
-    return result
+        document_result[case.case_id] = first_document_rank
+        structural_result[case.case_id] = first_structural_rank
+    return document_result, structural_result
 
 
 def _qdrant_canary_ranks(
@@ -1326,6 +1396,63 @@ def _canary_metrics_from_ranks(
         )
         for name, numerator in values.items()
     }
+
+
+def _rank_metrics_at_10(
+    ranks: Mapping[str, int | None],
+) -> dict[str, ProbeMetric]:
+    denominator = len(ranks)
+    reciprocal = sum(
+        0.0 if rank is None else 1.0 / rank for rank in ranks.values()
+    )
+    numerators: dict[str, float] = {
+        "recall_at_1": sum(rank == 1 for rank in ranks.values()),
+        "recall_at_3": sum(
+            rank is not None and rank <= 3 for rank in ranks.values()
+        ),
+        "recall_at_10": sum(
+            rank is not None and rank <= 10 for rank in ranks.values()
+        ),
+        "mrr": reciprocal,
+    }
+    return {
+        name: ProbeMetric(
+            numerator=numerator,
+            denominator=denominator,
+            value=(numerator / denominator if denominator else None),
+        )
+        for name, numerator in numerators.items()
+    }
+
+
+def decide_model_probe_acceptance(
+    *,
+    gold_document_recall_at_10: float | None,
+    gold_structural_recall_at_10: float | None,
+    canary_document_recall_at_10: float | None,
+    technical_error_count: int,
+) -> Literal[
+    "PASS_MODEL_PROBE",
+    "FAIL_QUALITY",
+    "BLOCKED_TECHNICAL",
+    "BLOCKED_SCOPE",
+]:
+    if technical_error_count:
+        return "BLOCKED_TECHNICAL"
+    values = (
+        gold_document_recall_at_10,
+        gold_structural_recall_at_10,
+        canary_document_recall_at_10,
+    )
+    if any(value is None for value in values):
+        return "BLOCKED_SCOPE"
+    if (
+        gold_document_recall_at_10 == 1.0
+        and gold_structural_recall_at_10 >= 0.95
+        and canary_document_recall_at_10 >= 0.90
+    ):
+        return "PASS_MODEL_PROBE"
+    return "FAIL_QUALITY"
 
 
 def _coverage_metric(selection: StructuralProbeSelection) -> ProbeMetric:
