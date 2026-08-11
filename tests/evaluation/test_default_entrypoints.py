@@ -94,6 +94,8 @@ def test_structural_benchmark_requires_exact_remote_authorization() -> None:
             "8" * 64,
             "--evaluation-source-state-sha256",
             "8" * 64,
+            "--per-document-limit",
+            "8",
             "--collection",
             "vietlex-legal-rag-v2-pilot-384",
             "--run-id",
@@ -111,6 +113,7 @@ def test_structural_benchmark_requires_exact_remote_authorization() -> None:
     assert arguments.allow_remote_benchmark is True
     assert arguments.evaluation_source_state_sha256 == "8" * 64
     assert arguments.allow_separate_evaluation_source is False
+    assert arguments.per_document_limit == 8
 
 
 @pytest.mark.asyncio
@@ -300,6 +303,7 @@ async def test_structural_benchmark_persists_remote_initialization_failure(
         source_state_sha256=digest,
         evaluation_source_state_sha256=digest,
         allow_separate_evaluation_source=False,
+        per_document_limit=None,
         collection="vietlex-legal-rag-v2-pilot-384",
         output_root=tmp_path,
         run_id="remote-init-blocked",

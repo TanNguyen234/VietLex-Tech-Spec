@@ -800,15 +800,18 @@ def build_structural_retriever(
     client: QdrantClient,
     fts_index: Any,
     reranker: Any,
+    contract: StructuralQdrantContract | None = None,
 ) -> StructuralRetriever:
     """Construct the explicit opt-in backend; never alter the v1 factory."""
     if not settings.STRUCTURAL_BACKEND_ENABLED:
         raise StructuralRetrievalError("structural backend is disabled")
-    contract = StructuralQdrantContract.from_settings(settings)
+    resolved_contract = contract or StructuralQdrantContract.from_settings(
+        settings
+    )
     return StructuralRetriever(
         settings=settings,
-        contract=contract,
-        transport=StructuralQdrantTransport(client, contract),
+        contract=resolved_contract,
+        transport=StructuralQdrantTransport(client, resolved_contract),
         fts_index=fts_index,
         reranker=reranker,
     )

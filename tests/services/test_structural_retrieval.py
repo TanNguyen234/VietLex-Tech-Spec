@@ -545,3 +545,21 @@ def test_factory_is_opt_in_and_does_not_modify_default_retriever() -> None:
         reranker=FakeReranker(),
     )
     assert isinstance(enabled, StructuralRetriever)
+
+
+def test_factory_accepts_explicit_benchmark_runtime_contract() -> None:
+    settings = _settings()
+    baseline = StructuralQdrantContract.from_settings(settings)
+    runtime = StructuralQdrantContract.model_validate(
+        {**baseline.model_dump(mode="python"), "per_document_limit": 8}
+    )
+
+    retriever = build_structural_retriever(
+        settings,
+        client=SimpleNamespace(),
+        fts_index=FakeFts(),
+        reranker=FakeReranker(),
+        contract=runtime,
+    )
+
+    assert retriever.contract.per_document_limit == 8

@@ -163,6 +163,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="allow evaluator fixes newer than the immutable index source",
     )
     benchmark.add_argument(
+        "--per-document-limit",
+        type=int,
+        default=None,
+        help="benchmark-only candidate cap; omitted means the verified plan value",
+    )
+    benchmark.add_argument(
         "--collection",
         choices=["vietlex-legal-rag-v2-pilot-384"],
         required=True,
@@ -309,6 +315,14 @@ async def _run_benchmark(arguments: argparse.Namespace) -> int:
         "remote benchmark authorization is required",
     )
     plan, probe = _validate_chain(arguments)
+    runtime_contract = plan.contract
+    if arguments.per_document_limit is not None:
+        runtime_contract = StructuralQdrantContract.model_validate(
+            {
+                **plan.contract.model_dump(mode="python"),
+                "per_document_limit": arguments.per_document_limit,
+            }
+        )
     dataset_bytes, sidecar, selected = _load_dataset_selection(
         arguments.dataset,
         arguments.sidecar,
@@ -331,20 +345,20 @@ async def _run_benchmark(arguments: argparse.Namespace) -> int:
         finalize_receipt_sha256=arguments.finalize_receipt_sha256,
         verify_receipt_sha256=arguments.verify_receipt_sha256,
         p2_baseline_sha256=arguments.p2_baseline_sha256,
-        dense_vector_name=plan.contract.dense_vector_name,
-        sparse_vector_name=plan.contract.sparse_vector_name,
-        dense_model=plan.contract.dense_model,
-        dense_model_options=dict(plan.contract.dense_model_options),
-        sparse_model=plan.contract.sparse_model,
-        sparse_model_options=dict(plan.contract.sparse_model_options),
-        dense_size=plan.contract.dense_size,
-        query_instruction_version=plan.contract.query_instruction_version,
-        query_instruction=plan.contract.query_instruction,
-        dense_top_k=plan.contract.dense_top_k,
-        bm25_top_k=plan.contract.bm25_top_k,
-        fused_limit=plan.contract.fused_limit,
-        rrf_k=plan.contract.rrf_k,
-        per_document_limit=plan.contract.per_document_limit,
+        dense_vector_name=runtime_contract.dense_vector_name,
+        sparse_vector_name=runtime_contract.sparse_vector_name,
+        dense_model=runtime_contract.dense_model,
+        dense_model_options=dict(runtime_contract.dense_model_options),
+        sparse_model=runtime_contract.sparse_model,
+        sparse_model_options=dict(runtime_contract.sparse_model_options),
+        dense_size=runtime_contract.dense_size,
+        query_instruction_version=runtime_contract.query_instruction_version,
+        query_instruction=runtime_contract.query_instruction,
+        dense_top_k=runtime_contract.dense_top_k,
+        bm25_top_k=runtime_contract.bm25_top_k,
+        fused_limit=runtime_contract.fused_limit,
+        rrf_k=runtime_contract.rrf_k,
+        per_document_limit=runtime_contract.per_document_limit,
     )
     _require(
         probe.dataset_sha256 == binding.dataset_sha256
@@ -528,6 +542,7 @@ async def _run_benchmark(arguments: argparse.Namespace) -> int:
             client=client,
             fts_index=fts,
             reranker=get_remote_reranker(),
+            contract=runtime_contract,
         )
     except Exception as error:
         initialization_errors = [
