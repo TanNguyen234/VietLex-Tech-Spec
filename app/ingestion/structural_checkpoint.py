@@ -38,7 +38,7 @@ class CheckpointBinding(BaseModel):
     dataset_revision: str = Field(min_length=1)
     ordered_record_ids_sha256: str = Field(pattern=_SHA256_PATTERN)
     manifest_record_count: _PositiveInt
-    dense_model: Literal["Qwen/Qwen3-Embedding-0.6B"]
+    dense_model: Literal["mixedbread-ai/mxbai-embed-large-v1"]
     sparse_model: Literal["qdrant/bm25"]
     document_text_version: Literal["vietlex-structural-document-v2"]
 

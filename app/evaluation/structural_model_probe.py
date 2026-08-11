@@ -280,7 +280,7 @@ class StructuralModelProbeReport(BaseModel):
     source_state_sha256: str = Field(pattern=_SHA256_PATTERN)
     plan_sha256: str = Field(pattern=_SHA256_PATTERN)
     creation_receipt_sha256: str = Field(pattern=_SHA256_PATTERN)
-    candidate_dense_model: Literal["Qwen/Qwen3-Embedding-0.6B"]
+    candidate_dense_model: Literal["mixedbread-ai/mxbai-embed-large-v1"]
     candidate_sparse_model: Literal["qdrant/bm25"]
     candidate_dense_model_options: dict[str, object]
     candidate_sparse_model_options: dict[str, object]
@@ -392,7 +392,7 @@ class StructuralModelProbeReport(BaseModel):
             ):
                 raise ValueError("valid execution record counts are incomplete")
             expected_usage = {
-                "Qwen/Qwen3-Embedding-0.6B",
+                "mixedbread-ai/mxbai-embed-large-v1",
                 "qdrant/bm25",
             }
             if self.reference is not None:
@@ -1027,7 +1027,7 @@ def _validate_probe_bindings(
 ) -> None:
     receipt = probe.creation_receipt
     plan = probe.plan
-    if receipt.status != "CREATED":
+    if receipt.status not in {"CREATED", "ADOPTED_EMPTY"}:
         raise StructuralModelProbeError("creation receipt is not successful")
     if (
         receipt.collection_name != plan.contract.collection_name

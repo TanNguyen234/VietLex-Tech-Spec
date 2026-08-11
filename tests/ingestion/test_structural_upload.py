@@ -66,7 +66,7 @@ def _binding() -> CheckpointBinding:
         dataset_revision="revision-1",
         ordered_record_ids_sha256="e" * 64,
         manifest_record_count=134_334,
-        dense_model="Qwen/Qwen3-Embedding-0.6B",
+        dense_model="mixedbread-ai/mxbai-embed-large-v1",
         sparse_model="qdrant/bm25",
         document_text_version="vietlex-structural-document-v2",
     )

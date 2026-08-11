@@ -46,6 +46,18 @@ def test_structural_manifest_console_json_is_windows_safe() -> None:
     assert json.loads(rendered) == payload
 
 
+def test_structural_artifact_console_output_is_windows_safe(capsys) -> None:
+    class Artifact:
+        @staticmethod
+        def model_dump(*, mode: str):
+            assert mode == "json"
+            return {"legal_type": "Pháp lệnh"}
+
+    run_structural_index_pilot._print_console_model(Artifact())
+
+    assert capsys.readouterr().out.isascii()
+
+
 def test_structural_benchmark_requires_exact_remote_authorization() -> None:
     arguments = run_structural_retrieval_eval.build_parser().parse_args(
         [
@@ -128,7 +140,7 @@ async def test_structural_benchmark_persists_remote_initialization_failure(
         collection_name="vietlex-legal-rag-v2-pilot",
         dense_vector_name="dense",
         sparse_vector_name="bm25",
-        dense_model="Qwen/Qwen3-Embedding-0.6B",
+        dense_model="mixedbread-ai/mxbai-embed-large-v1",
         dense_model_options={},
         sparse_model="qdrant/bm25",
         sparse_model_options={},
@@ -302,7 +314,7 @@ def test_structural_benchmark_rejects_probe_contract_drift() -> None:
     plan = SimpleNamespace(
         manifest=SimpleNamespace(dataset_revision="revision-1"),
         contract=SimpleNamespace(
-            dense_model="Qwen/Qwen3-Embedding-0.6B",
+            dense_model="mixedbread-ai/mxbai-embed-large-v1",
             sparse_model="qdrant/bm25",
             dense_model_options={"truncate": False},
             sparse_model_options={"language": "vi"},
@@ -311,7 +323,7 @@ def test_structural_benchmark_rejects_probe_contract_drift() -> None:
     )
     probe = SimpleNamespace(
         dataset_revision="revision-1",
-        candidate_dense_model="Qwen/Qwen3-Embedding-0.6B",
+        candidate_dense_model="mixedbread-ai/mxbai-embed-large-v1",
         candidate_sparse_model="qdrant/bm25",
         candidate_dense_model_options={"truncate": True},
         candidate_sparse_model_options={"language": "vi"},

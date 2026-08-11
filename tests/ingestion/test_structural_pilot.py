@@ -447,7 +447,28 @@ class RecordingQdrantClient:
         self.get_calls.append(collection_name)
         if self.fail_stage == "readback":
             raise RuntimeError("secret endpoint detail")
-        call = self.create_calls[0]
+        call = (
+            self.create_calls[0]
+            if self.create_calls
+            else {
+                "vectors_config": {
+                    "dense": models.VectorParams(
+                        size=1024,
+                        distance=models.Distance.COSINE,
+                        on_disk=True,
+                    )
+                },
+                "sparse_vectors_config": {
+                    "bm25": models.SparseVectorParams(
+                        index=models.SparseIndexParams(on_disk=True),
+                        modifier=models.Modifier.IDF,
+                    )
+                },
+                "hnsw_config": models.HnswConfigDiff(m=0, on_disk=True),
+                "shard_number": 1,
+                "on_disk_payload": True,
+            }
+        )
         vectors = dict(call["vectors_config"])
         sparse_vectors = dict(call["sparse_vectors_config"])
         hnsw_config = (
@@ -455,13 +476,27 @@ class RecordingQdrantClient:
             if self.finalized
             else call["hnsw_config"]
         )
+        index_items = self.payload_index_calls or [
+            {
+                "field_name": "dataset_revision",
+                "field_schema": models.PayloadSchemaType.KEYWORD,
+            },
+            {
+                "field_name": "legal_type",
+                "field_schema": models.PayloadSchemaType.KEYWORD,
+            },
+            {
+                "field_name": "document_id",
+                "field_schema": models.PayloadSchemaType.INTEGER,
+            },
+        ]
         payload_schema = {
             item["field_name"]: type(
                 "PayloadInfo",
                 (),
                 {"data_type": item["field_schema"]},
             )()
-            for item in self.payload_index_calls
+            for item in index_items
         }
         if self.mutate_readback == "vector_size":
             vectors["dense"] = models.VectorParams(
@@ -621,18 +656,20 @@ def test_create_uses_exact_empty_collection_schema(tmp_path: Path) -> None:
     assert "secret" not in receipt_path.read_text(encoding="utf-8").casefold()
 
 
-def test_create_never_recreates_existing_target(tmp_path: Path) -> None:
+def test_create_adopts_only_an_exact_empty_existing_target(tmp_path: Path) -> None:
     plan = _bound_plan(tmp_path)
     client = RecordingQdrantClient(exists=True)
 
-    with pytest.raises(StructuralPilotError, match="already exists"):
-        create_structural_collection(
-            client,
-            plan,
-            _authorization(plan),
-            _provenance(),
-        )
+    receipt = create_structural_collection(
+        client,
+        plan,
+        _authorization(plan),
+        _provenance(),
+    )
 
+    assert receipt.status == "ADOPTED_EMPTY"
+    assert receipt.points_count == 0
+    assert receipt.provider_calls == 2
     assert client.create_calls == []
     assert client.payload_index_calls == []
     assert client.exists_calls == ["vietlex-legal-rag-v2-pilot"]

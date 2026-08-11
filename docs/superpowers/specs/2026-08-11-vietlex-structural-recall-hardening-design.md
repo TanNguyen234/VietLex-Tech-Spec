@@ -90,10 +90,13 @@ eligible for the default workflow. There is no local embedding fallback and no
 mandatory Pinecone inference comparison. An existing immutable reference artifact
 may be audited separately, but the default model probe performs no Pinecone calls.
 
-The selected dense model remains `Qwen/Qwen3-Embedding-0.6B`, native 1024d. Qwen
-documents Matryoshka dimension support, but dimension reduction is not assumed:
-the collection schema and vector readback must match the exact configured output.
-Any mismatch blocks before bulk upload.
+The first selected model, `Qwen/Qwen3-Embedding-0.6B`, was rejected by the live
+free-tier service as unsupported. `intfloat/multilingual-e5-large` was rejected
+as not allowed on the free tier, while its base variant was unsupported. The
+verified free-tier candidate is therefore
+`mixedbread-ai/mxbai-embed-large-v1`, with exact 1024d readback. It remains only
+a candidate until the Vietnamese legal model probe passes every absolute recall
+gate; supported dimension alone is not quality evidence.
 
 Qdrant documents a free cluster as 1 GB RAM, 0.5 vCPU, and 4 GB disk, approximately
 capable of one million 768d vectors. This is only sizing guidance. The existing
@@ -106,7 +109,9 @@ Remote phases remain explicit and artifact-bound:
 
 `audit -> plan -> create -> probe-model -> upload -> finalize -> verify -> benchmark`
 
-- Create uses a new pilot collection and never deletes or overwrites v1.
+- Create uses a new pilot collection and never deletes or overwrites v1. A later
+  immutable plan may adopt that collection only if complete readback proves it
+  is empty and schema-exact; adoption emits `ADOPTED_EMPTY` evidence.
 - Upload starts with HNSW `m=0`, on-disk vectors/payload, and one shard.
 - Streaming batches use adaptive batch size and bounded concurrency.
 - Checkpoint identity is record ID plus body hash plus inference-text hash.
@@ -118,7 +123,8 @@ Remote phases remain explicit and artifact-bound:
   inference-text hashes, dense shape/finite values, and nonempty sparse vectors.
 - No phase silently deletes, recreates, or cleans a remote collection.
 
-Codex prepares and verifies this code locally. The user runs the remote phases.
+Remote phases execute only under explicit authority and stop at the first failed
+capacity, model, provenance, or quality gate.
 
 ## 7. Retrieval and evaluation
 

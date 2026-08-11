@@ -154,7 +154,7 @@ class StructuralQdrantContract(BaseModel):
             "collection_name": "vietlex-legal-rag-v2-pilot",
             "dense_vector_name": "dense",
             "sparse_vector_name": "bm25",
-            "dense_model": "Qwen/Qwen3-Embedding-0.6B",
+            "dense_model": "mixedbread-ai/mxbai-embed-large-v1",
             "sparse_model": "qdrant/bm25",
             "dense_size": 1024,
             "document_text_version": "vietlex-structural-document-v2",

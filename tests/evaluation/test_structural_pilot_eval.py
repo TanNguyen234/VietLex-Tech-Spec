@@ -136,12 +136,12 @@ class FakeRetriever:
                 reranker_output=[candidate],
                 final_hits=[candidate],
                 provider_usage_by_lane={
-                    "dense": {"Qwen/Qwen3-Embedding-0.6B": 3}
+                    "dense": {"mixedbread-ai/mxbai-embed-large-v1": 3}
                 },
             ),
             latency={"dense": 0.01, "total": 0.02},
             technical_errors={},
-            provider_usage={"Qwen/Qwen3-Embedding-0.6B": 3},
+            provider_usage={"mixedbread-ai/mxbai-embed-large-v1": 3},
         )
 
 
@@ -228,7 +228,7 @@ async def test_raw_trace_keeps_honest_structural_lane_names(tmp_path: Path) -> N
     }
     assert report["technical_errors"]["total"] == 0
     assert report["technical_errors"]["dense"] == 0
-    assert report["provider_usage"]["Qwen/Qwen3-Embedding-0.6B"] == 6
+    assert report["provider_usage"]["mixedbread-ai/mxbai-embed-large-v1"] == 6
     assert report["provider_usage_observation_complete"] is True
     assert report["acceptance"] == "PASS_PILOT"
     assert report["reranker_contribution"]["document"] == {

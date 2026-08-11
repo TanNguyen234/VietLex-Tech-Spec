@@ -93,8 +93,8 @@ class StructuralEvaluationBinding(BaseModel):
     p2_baseline_sha256: str = Field(pattern=_SHA256_PATTERN)
     dense_vector_name: Literal["dense"] = "dense"
     sparse_vector_name: Literal["bm25"] = "bm25"
-    dense_model: Literal["Qwen/Qwen3-Embedding-0.6B"] = (
-        "Qwen/Qwen3-Embedding-0.6B"
+    dense_model: Literal["mixedbread-ai/mxbai-embed-large-v1"] = (
+        "mixedbread-ai/mxbai-embed-large-v1"
     )
     dense_model_options: dict[str, object] = Field(default_factory=dict)
     sparse_model: Literal["qdrant/bm25"] = "qdrant/bm25"

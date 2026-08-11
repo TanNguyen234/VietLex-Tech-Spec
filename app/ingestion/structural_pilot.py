@@ -217,7 +217,7 @@ class CollectionCreationReceipt(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     schema_version: Literal["1.0.0"] = "1.0.0"
-    status: Literal["CREATED"] = "CREATED"
+    status: Literal["CREATED", "ADOPTED_EMPTY"] = "CREATED"
     collection_name: Literal["vietlex-legal-rag-v2-pilot"]
     started_at_utc: datetime
     verified_at_utc: datetime
@@ -226,8 +226,15 @@ class CollectionCreationReceipt(BaseModel):
     schema_readback: CollectionSchemaReceipt
     payload_indexes: tuple[str, ...]
     points_count: Literal[0]
-    provider_calls: Literal[6]
+    provider_calls: Literal[2, 6]
     inference_calls: Literal[0]
+
+    @model_validator(mode="after")
+    def validate_operation_count(self) -> Self:
+        expected_calls = 6 if self.status == "CREATED" else 2
+        if self.provider_calls != expected_calls:
+            raise ValueError("creation status/provider call count mismatch")
+        return self
 
 
 class FinalizedCollectionSchemaReceipt(BaseModel):
@@ -277,7 +284,7 @@ class CollectionFinalizeReceipt(BaseModel):
         if self.created_at_utc.utcoffset() is None:
             raise ValueError("finalize timestamp must be timezone-aware")
         if set(self.provider_usage) != {
-            "Qwen/Qwen3-Embedding-0.6B",
+            "mixedbread-ai/mxbai-embed-large-v1",
             "qdrant/bm25",
         } or any(
             isinstance(value, bool)
@@ -348,7 +355,7 @@ class CollectionVerificationReceipt(BaseModel):
         ):
             raise ValueError("verification sample identity mismatch")
         if set(self.provider_usage) != {
-            "Qwen/Qwen3-Embedding-0.6B",
+            "mixedbread-ai/mxbai-embed-large-v1",
             "qdrant/bm25",
         } or any(
             isinstance(value, bool)
@@ -629,10 +636,43 @@ def create_structural_collection(
             "Qdrant collection existence check failed "
             f"({type(error).__name__})"
         ) from error
-    if exists:
-        raise StructuralPilotError("Qdrant pilot collection already exists")
-
     started_at = datetime.now(timezone.utc)
+    index_contract = (
+        ("dataset_revision", models.PayloadSchemaType.KEYWORD),
+        ("legal_type", models.PayloadSchemaType.KEYWORD),
+        ("document_id", models.PayloadSchemaType.INTEGER),
+    )
+    if exists:
+        try:
+            readback = client.get_collection(contract.collection_name)
+        except Exception as error:
+            raise StructuralPilotError(
+                f"Qdrant collection readback failed ({type(error).__name__})"
+            ) from error
+        schema_receipt = _validate_collection_readback(
+            readback,
+            contract=contract,
+            shard_number=plan.capacity.shard_count,
+        )
+        receipt = CollectionCreationReceipt(
+            status="ADOPTED_EMPTY",
+            collection_name=contract.collection_name,
+            started_at_utc=started_at,
+            verified_at_utc=datetime.now(timezone.utc),
+            source_state_sha256=plan.source_state_sha256,
+            plan_sha256=plan.plan_sha256,
+            schema_readback=schema_receipt,
+            payload_indexes=tuple(
+                sorted(field for field, _schema in index_contract)
+            ),
+            points_count=0,
+            provider_calls=2,
+            inference_calls=0,
+        )
+        if receipt_path is not None:
+            write_immutable_json(receipt_path, receipt.model_dump(mode="json"))
+        return receipt
+
     try:
         created = client.create_collection(
             collection_name=contract.collection_name,
@@ -663,11 +703,6 @@ def create_structural_collection(
             "Qdrant did not acknowledge collection creation"
         )
 
-    index_contract = (
-        ("dataset_revision", models.PayloadSchemaType.KEYWORD),
-        ("legal_type", models.PayloadSchemaType.KEYWORD),
-        ("document_id", models.PayloadSchemaType.INTEGER),
-    )
     for field_name, field_schema in index_contract:
         try:
             result = client.create_payload_index(
@@ -1290,7 +1325,7 @@ def _validate_pre_finalize_chain(
     ):
         _require_sha256(digest, label)
     if (
-        creation_receipt.status != "CREATED"
+        creation_receipt.status not in {"CREATED", "ADOPTED_EMPTY"}
         or creation_receipt.collection_name != plan.contract.collection_name
         or creation_receipt.source_state_sha256 != plan.source_state_sha256
         or creation_receipt.plan_sha256 != plan.plan_sha256

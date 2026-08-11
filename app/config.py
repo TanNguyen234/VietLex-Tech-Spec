@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     STRUCTURAL_COLLECTION_NAME: str = "vietlex-legal-rag-v2-pilot"
     STRUCTURAL_DENSE_VECTOR_NAME: str = "dense"
     STRUCTURAL_SPARSE_VECTOR_NAME: str = "bm25"
-    STRUCTURAL_DENSE_MODEL: str = "Qwen/Qwen3-Embedding-0.6B"
+    STRUCTURAL_DENSE_MODEL: str = "mixedbread-ai/mxbai-embed-large-v1"
     STRUCTURAL_DENSE_MODEL_OPTIONS: dict[str, object] = Field(
         default_factory=dict
     )

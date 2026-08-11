@@ -390,7 +390,7 @@ class StructuralUploadReport(BaseModel):
         ):
             raise ValueError("upload report batch evidence mismatch")
         if set(self.provider_usage) != {
-            "Qwen/Qwen3-Embedding-0.6B",
+            "mixedbread-ai/mxbai-embed-large-v1",
             "qdrant/bm25",
         } or any(
             isinstance(value, bool)

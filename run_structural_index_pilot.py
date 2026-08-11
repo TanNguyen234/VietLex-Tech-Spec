@@ -43,6 +43,10 @@ def _console_json(value: object) -> str:
     return json.dumps(value, ensure_ascii=True, sort_keys=True)
 
 
+def _print_console_model(model: BaseModel) -> None:
+    print(_console_json(model.model_dump(mode="json")))
+
+
 def _load_exact_artifact(
     path: Path,
     expected_sha256: str,
@@ -271,7 +275,7 @@ def _validate_creation_probe_chain(
     probe_report,
 ) -> None:
     if (
-        creation_receipt.status != "CREATED"
+        creation_receipt.status not in {"CREATED", "ADOPTED_EMPTY"}
         or creation_receipt.collection_name != plan.contract.collection_name
         or creation_receipt.source_state_sha256 != plan.source_state_sha256
         or creation_receipt.plan_sha256 != plan.plan_sha256
@@ -432,7 +436,7 @@ def _run_upload(arguments: argparse.Namespace) -> int:
         preflight_usage=dict(preflight_receipt.model_tokens),
         report_path=output,
     )
-    print(report.model_dump_json())
+    _print_console_model(report)
     return 0 if report.completed else 3
 
 
@@ -480,7 +484,7 @@ def _run_finalize(arguments: argparse.Namespace) -> int:
         max_polls=arguments.max_polls,
         poll_interval_seconds=arguments.poll_interval_seconds,
     )
-    print(receipt.model_dump_json())
+    _print_console_model(receipt)
     return 0 if receipt.status == "PASS_FINALIZE" else 2
 
 
@@ -536,7 +540,7 @@ def _run_verify(arguments: argparse.Namespace) -> int:
         finalize_receipt_sha256=arguments.finalize_receipt_sha256,
         receipt_path=output,
     )
-    print(receipt.model_dump_json())
+    _print_console_model(receipt)
     return 0 if receipt.status == "PASS_VERIFY" else 2
 
 
@@ -653,7 +657,7 @@ def run(arguments: argparse.Namespace) -> int:
             probe,
             reference,
         )
-        print(report.model_dump_json())
+        _print_console_model(report)
         return {
             "PASS_MODEL_PROBE": 0,
             "FAIL_QUALITY": 4,
@@ -687,7 +691,7 @@ def run(arguments: argparse.Namespace) -> int:
             provenance,
             receipt_path=artifact_dir / "create-receipt.json",
         )
-        print(receipt.model_dump_json())
+        _print_console_model(receipt)
         return 0
 
     settings = get_settings()

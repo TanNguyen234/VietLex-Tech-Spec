@@ -336,6 +336,7 @@ def _probe_input(tmp_path: Path) -> StructuralModelProbeInput:
     cases = [_case("case-001", 1), _case("case-002", 2)]
     selection = select_model_probe_records(cases, iter(records))
     receipt = CollectionCreationReceipt(
+        status="ADOPTED_EMPTY",
         collection_name="vietlex-legal-rag-v2-pilot",
         started_at_utc="2026-08-10T00:00:00Z",
         verified_at_utc="2026-08-10T00:00:01Z",
@@ -356,7 +357,7 @@ def _probe_input(tmp_path: Path) -> StructuralModelProbeInput:
         ),
         payload_indexes=("dataset_revision", "document_id", "legal_type"),
         points_count=0,
-        provider_calls=6,
+        provider_calls=2,
         inference_calls=0,
     )
     return StructuralModelProbeInput(
@@ -615,15 +616,15 @@ def test_probe_pass_requires_matched_denominator_and_provider_usage(
     assert report.metrics["mrr"].value == 1.0
     assert report.reference is not None
     assert report.reference.case_ids_sha256 == report.case_ids_sha256
-    assert report.provider_usage["Qwen/Qwen3-Embedding-0.6B"] > 0
+    assert report.provider_usage["mixedbread-ai/mxbai-embed-large-v1"] > 0
     assert report.provider_usage["qdrant/bm25"] > 0
     assert report.provider_usage["llama-text-embed-v2"] > 0
     assert set(report.upsert_provider_usage) == {
-        "Qwen/Qwen3-Embedding-0.6B",
+        "mixedbread-ai/mxbai-embed-large-v1",
         "qdrant/bm25",
     }
     assert set(report.query_provider_usage) == {
-        "Qwen/Qwen3-Embedding-0.6B"
+        "mixedbread-ai/mxbai-embed-large-v1"
     }
     assert report.dataset_sha256 == "d" * 64
     assert report.sidecar_sha256 == "e" * 64
@@ -664,7 +665,7 @@ def test_probe_passes_without_constructing_a_pinecone_reference(
     assert report.acceptance == "PASS_MODEL_PROBE"
     assert report.reference is None
     assert set(report.provider_usage) == {
-        "Qwen/Qwen3-Embedding-0.6B",
+        "mixedbread-ai/mxbai-embed-large-v1",
         "qdrant/bm25",
     }
 

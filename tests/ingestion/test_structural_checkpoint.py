@@ -63,7 +63,7 @@ def _binding(**updates: object) -> CheckpointBinding:
         "dataset_revision": "revision-1",
         "ordered_record_ids_sha256": "e" * 64,
         "manifest_record_count": 134_334,
-        "dense_model": "Qwen/Qwen3-Embedding-0.6B",
+        "dense_model": "mixedbread-ai/mxbai-embed-large-v1",
         "sparse_model": "qdrant/bm25",
         "document_text_version": "vietlex-structural-document-v2",
     }
@@ -84,7 +84,7 @@ def _receipt(records: list[StructuralRecord]) -> BatchReceipt:
         batch_sha256=batch_identity_sha256(acknowledged),
         records=acknowledged,
         usage={
-            "Qwen/Qwen3-Embedding-0.6B": 10,
+            "mixedbread-ai/mxbai-embed-large-v1": 10,
             "qdrant/bm25": 11,
         },
         attempts=1,
@@ -178,7 +178,7 @@ def test_duplicate_acknowledgement_is_idempotent_not_duplicated(
     assert store.commit_receipt(receipt) == 0
     assert store.committed_count() == 1
     assert store.usage_totals() == {
-        "Qwen/Qwen3-Embedding-0.6B": 10,
+        "mixedbread-ai/mxbai-embed-large-v1": 10,
         "qdrant/bm25": 11,
     }
 

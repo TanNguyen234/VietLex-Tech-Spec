@@ -69,7 +69,9 @@ def test_qdrant_structural_pilot_defaults_are_exact_and_opt_in() -> None:
     assert settings.STRUCTURAL_COLLECTION_NAME == "vietlex-legal-rag-v2-pilot"
     assert settings.STRUCTURAL_DENSE_VECTOR_NAME == "dense"
     assert settings.STRUCTURAL_SPARSE_VECTOR_NAME == "bm25"
-    assert settings.STRUCTURAL_DENSE_MODEL == "Qwen/Qwen3-Embedding-0.6B"
+    assert settings.STRUCTURAL_DENSE_MODEL == (
+        "mixedbread-ai/mxbai-embed-large-v1"
+    )
     assert (
         settings.STRUCTURAL_DOCUMENT_TEXT_VERSION
         == "vietlex-structural-document-v2"

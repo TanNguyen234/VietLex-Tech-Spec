@@ -332,7 +332,7 @@ async def test_dense_instruction_bm25_raw_and_exact_filter_are_distinct() -> Non
     assert fts.calls == [("Điều 16 Nghị định 17/2026/NĐ-CP", 64)]
     assert outcome.trace.exact_document_ids == [17, 18]
     assert outcome.provider_usage == {
-        "Qwen/Qwen3-Embedding-0.6B": 10,
+        "mixedbread-ai/mxbai-embed-large-v1": 10,
         "qdrant/bm25": 22,
     }
 
@@ -441,11 +441,11 @@ async def test_exact_lane_error_and_provider_usage_remain_separate() -> None:
     assert outcome.status == "partial_technical_error"
     assert outcome.technical_errors["exact_remote"].category == "timeout"
     assert outcome.provider_usage == {
-        "Qwen/Qwen3-Embedding-0.6B": 10,
+        "mixedbread-ai/mxbai-embed-large-v1": 10,
         "qdrant/bm25": 11,
     }
     assert outcome.trace.provider_usage_by_lane == {
-        "dense": {"Qwen/Qwen3-Embedding-0.6B": 10},
+        "dense": {"mixedbread-ai/mxbai-embed-large-v1": 10},
         "bm25": {"qdrant/bm25": 11},
     }
 
