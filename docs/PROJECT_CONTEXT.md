@@ -22,3 +22,10 @@ The current priority is to establish a verified, measurable, reproducible, and d
 - Ragas LLM judge calls are optional and disabled by default.
 - Stage-level candidate survival must be tracked continuously across all 8 retrieval pipeline stages.
 - Benchmark runs from uncommitted git trees must be recorded with `git_dirty=true` and a git diff SHA-256 hash.
+
+## Opt-in Qdrant structural pilot
+
+- A guarded v2 pilot is code-prepared for the 827 primary-legislation documents in the pinned 518,255-document corpus. Its immutable structural contract contains 134,334 article/clause records at 420/48 chunking.
+- The pilot uses Qdrant Cloud Inference only: `Qwen/Qwen3-Embedding-0.6B` dense vectors at 1024 dimensions plus corpus-level `qdrant/bm25`. There is no local embedding fallback.
+- `audit` and `plan` are provider-free. `create`, `probe-model`, `upload`, `finalize`, `verify`, and `benchmark` are separate fail-closed remote phases and are not evidence of success until their immutable artifacts exist.
+- The structural retriever and benchmark are opt-in. Pinecone `vietlex-legal-rag-v1` remains the production retrieval path; no cutover is authorized by local code completion.

@@ -1,3 +1,5 @@
+import hashlib
+import json
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -7,6 +9,8 @@ import run_answer_eval
 import run_eval_suite
 import run_retrieval_eval
 import run_structural_index_pilot
+import run_structural_retrieval_eval
+from app.evaluation.structural_pilot_eval import StructuralEvaluationError
 from app.evaluation.schemas import (
     GoldenCase,
     RetrievalCaseResult,
@@ -31,6 +35,307 @@ def test_structural_pilot_entrypoint_defaults_are_provider_free() -> None:
     assert plan.vcpu is None
     assert plan.existing_disk_bytes is None
     assert plan.shards is None
+
+
+def test_structural_manifest_console_json_is_windows_safe() -> None:
+    payload = {"legal_type": "Hiến pháp"}
+
+    rendered = run_structural_index_pilot._console_json(payload)
+
+    assert rendered.isascii()
+    assert json.loads(rendered) == payload
+
+
+def test_structural_benchmark_requires_exact_remote_authorization() -> None:
+    arguments = run_structural_retrieval_eval.build_parser().parse_args(
+        [
+            "benchmark",
+            "--sidecar",
+            "labels.json",
+            "--plan",
+            "plan.json",
+            "--plan-sha256",
+            "1" * 64,
+            "--create-receipt",
+            "create.json",
+            "--create-receipt-sha256",
+            "2" * 64,
+            "--probe-report",
+            "probe.json",
+            "--probe-report-sha256",
+            "3" * 64,
+            "--upload-report",
+            "upload.json",
+            "--upload-report-sha256",
+            "4" * 64,
+            "--finalize-receipt",
+            "finalize.json",
+            "--finalize-receipt-sha256",
+            "5" * 64,
+            "--verify-receipt",
+            "verify.json",
+            "--verify-receipt-sha256",
+            "6" * 64,
+            "--p2-baseline-sha256",
+            "7" * 64,
+            "--source-state-sha256",
+            "8" * 64,
+            "--collection",
+            "vietlex-legal-rag-v2-pilot",
+            "--run-id",
+            "structural-benchmark",
+            "--allow-remote-benchmark",
+        ]
+    )
+
+    assert arguments.dataset == Path(
+        "app/data/namsyntax_legal_qa_420_curated_v1.json"
+    )
+    assert arguments.p2_baseline == Path(
+        "docs/evaluation/comparisons/p2-aa3208c/comparison.json"
+    )
+    assert arguments.allow_remote_benchmark is True
+
+
+@pytest.mark.asyncio
+async def test_structural_benchmark_rejects_programmatic_missing_authorization(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def forbidden_chain(_arguments):
+        raise AssertionError("artifact chain was evaluated before authorization")
+
+    monkeypatch.setattr(
+        run_structural_retrieval_eval,
+        "_validate_chain",
+        forbidden_chain,
+    )
+    with pytest.raises(StructuralEvaluationError, match="authorization"):
+        await run_structural_retrieval_eval._run_benchmark(
+            SimpleNamespace(allow_remote_benchmark=False)
+        )
+
+
+@pytest.mark.asyncio
+async def test_structural_benchmark_persists_remote_initialization_failure(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    digest = "a" * 64
+    dataset_bytes = b"[]"
+    dataset_sha256 = hashlib.sha256(dataset_bytes).hexdigest()
+    manifest = SimpleNamespace(dataset_revision="revision-1")
+    contract = SimpleNamespace(
+        collection_name="vietlex-legal-rag-v2-pilot",
+        dense_vector_name="dense",
+        sparse_vector_name="bm25",
+        dense_model="Qwen/Qwen3-Embedding-0.6B",
+        dense_model_options={},
+        sparse_model="qdrant/bm25",
+        sparse_model_options={},
+        dense_size=1024,
+        query_instruction_version="vietlex-vn-legal-retrieval-v1",
+        query_instruction="query instruction",
+        dense_top_k=24,
+        bm25_top_k=24,
+        fused_limit=24,
+        rrf_k=60,
+        per_document_limit=3,
+        chunk_max_tokens=220,
+        chunk_overlap_tokens=24,
+    )
+    plan = SimpleNamespace(
+        manifest=manifest,
+        contract=contract,
+        source_state_sha256=digest,
+        plan_sha256=digest,
+    )
+    probe = SimpleNamespace(
+        dataset_sha256=dataset_sha256,
+        sidecar_sha256=digest,
+    )
+    selected = SimpleNamespace(
+        selected_case_ids_sha256=digest,
+        selected_cases=(SimpleNamespace(case_id="case-1"),),
+        selected_case_ids=("case-1",),
+    )
+    scope_selection = SimpleNamespace(
+        cases=selected.selected_cases,
+        skipped_cases={},
+        case_ids=("case-1",),
+        case_ids_sha256=digest,
+    )
+    provenance = SimpleNamespace(
+        status="ok",
+        source_state_sha256=digest,
+    )
+    settings = SimpleNamespace(
+        STRUCTURAL_BACKEND_ENABLED=True,
+        CONTENT_STORE_PATH=tmp_path / "content.db",
+        DATASET_REPOSITORY="repo",
+        DATASET_REVISION="revision-1",
+        LEGAL_FTS_PATH=tmp_path / "fts.db",
+    )
+    recorded: dict[str, object] = {}
+
+    class FakeRun:
+        acceptance = "BLOCKED_TECHNICAL"
+
+        @staticmethod
+        def model_dump_json() -> str:
+            return "{}"
+
+    class FakeBuilder:
+        def __init__(self, **_kwargs) -> None:
+            pass
+
+        def add(self, _record) -> None:
+            pass
+
+        def build(self):
+            return manifest
+
+    async def capture_blocked(_cases, _retriever, _root, **kwargs):
+        recorded.update(kwargs)
+        return FakeRun()
+
+    async def close_no_clients() -> None:
+        return None
+
+    monkeypatch.setattr(
+        run_structural_retrieval_eval, "_validate_chain", lambda _args: (plan, probe)
+    )
+    monkeypatch.setattr(
+        run_structural_retrieval_eval,
+        "_load_dataset_selection",
+        lambda *_args: (
+            dataset_bytes,
+            SimpleNamespace(metadata=SimpleNamespace(sidecar_sha256=digest)),
+            selected,
+        ),
+    )
+    monkeypatch.setattr(run_structural_retrieval_eval, "sha256_path", lambda _p: digest)
+    monkeypatch.setattr(
+        run_structural_retrieval_eval,
+        "validate_p2_baseline",
+        lambda *_args: SimpleNamespace(
+            source_document_recall_at_24=0.1,
+            scope_errors=(),
+        ),
+    )
+    monkeypatch.setattr(
+        run_structural_retrieval_eval, "load_json_object", lambda _p: {}
+    )
+    monkeypatch.setattr(
+        run_structural_retrieval_eval, "collect_git_provenance", lambda: provenance
+    )
+    monkeypatch.setattr(run_structural_retrieval_eval, "get_settings", lambda: settings)
+    monkeypatch.setattr(
+        run_structural_retrieval_eval.StructuralQdrantContract,
+        "from_settings",
+        lambda _settings: contract,
+    )
+    monkeypatch.setattr(run_structural_retrieval_eval, "ContentStore", lambda _p: object())
+    monkeypatch.setattr(
+        run_structural_retrieval_eval,
+        "select_structural_document_ids",
+        lambda _store: (1,),
+    )
+    monkeypatch.setattr(
+        run_structural_retrieval_eval, "StructuralManifestBuilder", FakeBuilder
+    )
+    monkeypatch.setattr(
+        run_structural_retrieval_eval, "iter_structural_records", lambda *_a, **_k: ()
+    )
+    monkeypatch.setattr(
+        run_structural_retrieval_eval,
+        "load_verified_probe_scope",
+        lambda *_args: SimpleNamespace(selection=scope_selection),
+    )
+    monkeypatch.setattr(
+        run_structural_retrieval_eval, "_validate_probe_scope", lambda *_args: None
+    )
+    monkeypatch.setattr(
+        run_structural_retrieval_eval,
+        "LegalFtsIndex",
+        lambda **_kwargs: SimpleNamespace(is_ready=lambda: True),
+    )
+    monkeypatch.setattr(
+        run_structural_retrieval_eval,
+        "create_structural_qdrant_client",
+        lambda _settings: (_ for _ in ()).throw(RuntimeError("secret detail")),
+    )
+    monkeypatch.setattr(
+        run_structural_retrieval_eval,
+        "run_structural_pilot_evaluation",
+        capture_blocked,
+    )
+    monkeypatch.setattr(
+        run_structural_retrieval_eval,
+        "close_clients",
+        close_no_clients,
+    )
+
+    arguments = SimpleNamespace(
+        allow_remote_benchmark=True,
+        dataset=tmp_path / "dataset.json",
+        sidecar=tmp_path / "sidecar.json",
+        p2_baseline=tmp_path / "baseline.json",
+        p2_baseline_sha256=digest,
+        source_state_sha256=digest,
+        collection="vietlex-legal-rag-v2-pilot",
+        output_root=tmp_path,
+        run_id="remote-init-blocked",
+        create_receipt_sha256=digest,
+        probe_report_sha256=digest,
+        upload_report_sha256=digest,
+        finalize_receipt_sha256=digest,
+        verify_receipt_sha256=digest,
+    )
+
+    assert await run_structural_retrieval_eval._run_benchmark(arguments) == 2
+    assert recorded["technical_preflight_errors"] == [
+        "remote_initialization:RuntimeError"
+    ]
+
+
+def test_structural_benchmark_rejects_probe_contract_drift() -> None:
+    plan = SimpleNamespace(
+        manifest=SimpleNamespace(dataset_revision="revision-1"),
+        contract=SimpleNamespace(
+            dense_model="Qwen/Qwen3-Embedding-0.6B",
+            sparse_model="qdrant/bm25",
+            dense_model_options={"truncate": False},
+            sparse_model_options={"language": "vi"},
+            query_instruction_version="vietlex-vn-legal-retrieval-v1",
+        ),
+    )
+    probe = SimpleNamespace(
+        dataset_revision="revision-1",
+        candidate_dense_model="Qwen/Qwen3-Embedding-0.6B",
+        candidate_sparse_model="qdrant/bm25",
+        candidate_dense_model_options={"truncate": True},
+        candidate_sparse_model_options={"language": "vi"},
+        query_instruction_version="vietlex-vn-legal-retrieval-v1",
+    )
+
+    with pytest.raises(StructuralEvaluationError, match="model contract"):
+        run_structural_retrieval_eval._validate_probe_contract(plan, probe)
+
+
+def test_structural_benchmark_rejects_probe_scope_drift() -> None:
+    selection = SimpleNamespace(
+        case_ids=("case-1",),
+        case_ids_sha256="a" * 64,
+        skipped_cases={"case-2": "outside_primary_legislation_scope"},
+    )
+    probe = SimpleNamespace(
+        case_ids=("case-1",),
+        case_ids_sha256="b" * 64,
+        skipped_cases={"case-2": "outside_primary_legislation_scope"},
+    )
+
+    with pytest.raises(StructuralEvaluationError, match="scope binding"):
+        run_structural_retrieval_eval._validate_probe_scope(selection, probe)
 
 
 def test_structural_create_entrypoint_requires_exact_authorization() -> None:
@@ -77,6 +382,9 @@ def test_structural_probe_entrypoint_requires_bound_live_scope() -> None:
     )
 
     assert arguments.command_name == "probe-model"
+    assert arguments.dataset == Path(
+        "app/data/namsyntax_legal_qa_420_curated_v1.json"
+    )
     assert arguments.sidecar == Path("promoted-labels.json")
     assert arguments.reference_probe is None
 

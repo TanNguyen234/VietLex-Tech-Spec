@@ -4,7 +4,7 @@
 
 **Phase:** P3 — evidence-driven retrieval repair
 
-**Status:** Architecture approved by the user on 2026-08-10; written specification pending final review.
+**Status:** Approved; local implementation plan complete. Remote execution and quality acceptance remain pending.
 
 **Supersedes:** `2026-08-09-vietlex-pinecone-hosted-structural-index-design.md` and the unexecuted Pinecone-only Tasks 2-6 in `2026-08-09-vietlex-structural-pilot.md`.
 

@@ -38,6 +38,11 @@ from app.ingestion.structural_qdrant import (
 _ArtifactModel = TypeVar("_ArtifactModel", bound=BaseModel)
 
 
+def _console_json(value: object) -> str:
+    """Render CLI JSON safely on legacy Windows consoles."""
+    return json.dumps(value, ensure_ascii=True, sort_keys=True)
+
+
 def _load_exact_artifact(
     path: Path,
     expected_sha256: str,
@@ -188,7 +193,9 @@ def build_parser() -> argparse.ArgumentParser:
     probe.add_argument(
         "--dataset",
         type=Path,
-        default=Path("app/data/namsyntax_legal_qa_420.json"),
+        default=Path(
+            "app/data/namsyntax_legal_qa_420_curated_v1.json"
+        ),
     )
     probe.add_argument("--sidecar", type=Path, required=True)
     probe.add_argument("--reference-probe", type=Path)
@@ -706,11 +713,7 @@ def run(arguments: argparse.Namespace) -> int:
         command="python run_structural_index_pilot.py " + " ".join(sys.argv[1:]),
     )
     print(
-        json.dumps(
-            plan.manifest.model_dump(mode="json"),
-            ensure_ascii=False,
-            sort_keys=True,
-        )
+        _console_json(plan.manifest.model_dump(mode="json"))
     )
     if arguments.command_name == "plan" and plan.capacity.status != "PASS_CAPACITY":
         print(

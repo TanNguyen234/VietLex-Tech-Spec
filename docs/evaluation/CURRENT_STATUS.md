@@ -1,6 +1,6 @@
 # VietLex Evaluation Current Status
 
-**Status (2026-08-09):** P2 retrieval baseline `COMPLETED`; quality result `NO_WINNER_ZERO_RECALL`; production readiness **NOT DEMONSTRATED**.
+**Status (2026-08-11):** P2 retrieval baseline `COMPLETED`; Qdrant structural v2 code-prepared and locally audited; remote pilot phases `NOT RUN`; production readiness **NOT DEMONSTRATED**.
 
 - Production readiness: **NOT DEMONSTRATED**.
 - Historical 2026-08-03 retrieval runs remain invalid for decisions.
@@ -77,8 +77,56 @@ Configured provider identifiers are provenance only. The current `RetrievalCaseR
 
 The verified subset is 40 curated cases from the 420-case evaluation dataset, not 40 cases independently sampled from all 518,255 corpus documents. The 53 promoted evidence items point to two pinned corpus documents, so the result diagnoses retrieval for this verified legal slice, not whole-corpus accuracy.
 
+## Qdrant structural v2 local handoff
+
+The opt-in implementation is complete locally through deterministic benchmark code. Pinecone v1 remains the production backend and `get_legal_retriever()` is unchanged. No Qdrant or Pinecone data was created, uploaded, finalized, verified, benchmarked, deleted, or switched during this work.
+
+Provider-free local evidence:
+
+- Audit directory: `docs/evaluation/index-pilots/structural-local-audit-20260811-task8-verified/`.
+- Audit manifest SHA-256: `8b991baa8cb889cd4acf37cfcd09bb7304190b66758b9a2e717eee8cdb2686f8`.
+- Audit `plan.json` file SHA-256: `98a8dc8cb365d627290b1ae8494a89e8ef3fcd1e8d2d1047d089dedcbb85a70e`.
+- Audit internal plan SHA-256: `6e1e27262247716fa7b6c41cf259d58f5a2dd583b97335fe2b2aa9bc3cfe9bcd`.
+- Audit result: 827 documents, 134,334 structural records, provider calls 0.
+- Capacity directory: `docs/evaluation/index-pilots/structural-local-plan-blocked-20260811-task8-verified/`.
+- Capacity `plan.json` file SHA-256: `c72cac88d520226f1b17a1150cb97c27a7c894f6e0ee254848ab2ff816fd91b7`.
+- Internal plan SHA-256: `8b0a4c12020185d7d7cef8ae03df9f46da82683a7af6b0d3594b0ac893cd3c34`.
+- Bound source-state SHA-256: `00603fcde63f7931e6a779eba4c204ef3a1c13ac96167e9f8e51da2abfebe0cc`; the artifact honestly records `source_git_dirty=true` at Git SHA `fc294a33f4e465abcba7e447168242b1ae25641c`.
+- Capacity inputs: 4 GiB disk, 1 GiB RAM, 0.5 vCPU, one shard; `existing_disk_bytes` deliberately absent.
+- Capacity result: `BLOCKED_CAPACITY`, with the sole missing input `existing_disk_bytes`; provider calls 0. This plan cannot authorize `create`.
+
+Remote phase status: `create NOT RUN`; `probe-model NOT RUN`; `upload NOT RUN`; `finalize NOT RUN`; `verify NOT RUN`; `benchmark NOT RUN`. Generation, Ragas, and guardrails are disabled by the benchmark contract.
+
+After obtaining current Qdrant disk usage, regenerate a clean `PASS_CAPACITY` plan. The exact binding values currently demonstrated by the local blocked plan are:
+
+```powershell
+$PLAN = "docs/evaluation/index-pilots/structural-local-plan-blocked-20260811-task8-verified/plan.json"
+$PLAN_SHA = "8b0a4c12020185d7d7cef8ae03df9f46da82683a7af6b0d3594b0ac893cd3c34"
+$SOURCE_SHA = "00603fcde63f7931e6a779eba4c204ef3a1c13ac96167e9f8e51da2abfebe0cc"
+$COLLECTION = "vietlex-legal-rag-v2-pilot"
+$DATASET = "app/data/namsyntax_legal_qa_420_curated_v1.json"
+$SIDECAR = "docs/evaluation/adjudication/promotions/gold-adjudication-promotion-curated-v4_20260809_151015_227377/labels_v2.json"
+$P2 = "docs/evaluation/comparisons/p2-aa3208c/comparison.json"
+$P2_SHA = "e6b45624c25095e2110de61f92b92fe2b0b93d1eaca4b6960feaaa4745495a7a"
+```
+
+Do not run `create` with the blocked plan above. Once a regenerated plan records `PASS_CAPACITY`, replace `$PLAN`, `$PLAN_SHA`, and `$SOURCE_SHA` with that artifact's exact values, then run the phase commands in order. Each downstream `<..._SHA256>` must be the real SHA-256 of the immediately preceding immutable artifact; placeholders are intentionally not fabricated.
+
+```powershell
+python run_structural_index_pilot.py create --plan $PLAN --plan-sha256 $PLAN_SHA --source-state-sha256 $SOURCE_SHA --collection $COLLECTION --allow-remote-write
+python run_structural_index_pilot.py probe-model --plan $PLAN --create-receipt <CREATE_RECEIPT> --create-receipt-sha256 <CREATE_SHA256> --dataset $DATASET --sidecar $SIDECAR --plan-sha256 $PLAN_SHA --source-state-sha256 $SOURCE_SHA --collection $COLLECTION --allow-remote-write
+python run_structural_index_pilot.py upload --plan $PLAN --create-receipt <CREATE_RECEIPT> --create-receipt-sha256 <CREATE_SHA256> --probe-report <PROBE_REPORT> --probe-report-sha256 <PROBE_SHA256> --checkpoint <CHECKPOINT> --plan-sha256 $PLAN_SHA --source-state-sha256 $SOURCE_SHA --collection $COLLECTION --allow-remote-write
+python run_structural_index_pilot.py finalize --plan $PLAN --create-receipt <CREATE_RECEIPT> --create-receipt-sha256 <CREATE_SHA256> --probe-report <PROBE_REPORT> --probe-report-sha256 <PROBE_SHA256> --upload-report <UPLOAD_REPORT> --upload-report-sha256 <UPLOAD_SHA256> --plan-sha256 $PLAN_SHA --source-state-sha256 $SOURCE_SHA --collection $COLLECTION --allow-remote-write
+python run_structural_index_pilot.py verify --plan $PLAN --create-receipt <CREATE_RECEIPT> --create-receipt-sha256 <CREATE_SHA256> --probe-report <PROBE_REPORT> --probe-report-sha256 <PROBE_SHA256> --upload-report <UPLOAD_REPORT> --upload-report-sha256 <UPLOAD_SHA256> --finalize-receipt <FINALIZE_RECEIPT> --finalize-receipt-sha256 <FINALIZE_SHA256> --plan-sha256 $PLAN_SHA --source-state-sha256 $SOURCE_SHA --collection $COLLECTION --allow-remote-write
+python run_structural_retrieval_eval.py benchmark --dataset $DATASET --sidecar $SIDECAR --plan $PLAN --plan-sha256 $PLAN_SHA --create-receipt <CREATE_RECEIPT> --create-receipt-sha256 <CREATE_SHA256> --probe-report <PROBE_REPORT> --probe-report-sha256 <PROBE_SHA256> --upload-report <UPLOAD_REPORT> --upload-report-sha256 <UPLOAD_SHA256> --finalize-receipt <FINALIZE_RECEIPT> --finalize-receipt-sha256 <FINALIZE_SHA256> --verify-receipt <VERIFY_RECEIPT> --verify-receipt-sha256 <VERIFY_SHA256> --p2-baseline $P2 --p2-baseline-sha256 $P2_SHA --source-state-sha256 $SOURCE_SHA --collection $COLLECTION --run-id <UNIQUE_RUN_ID> --allow-remote-benchmark
+```
+
 ## Execution and verification evidence
 
+- Task 8 affected structural/evaluation suite: `172 passed in 21.07s` before the final Windows-console portability regression; that regression was reproduced RED and passed GREEN independently.
+- Task 8 final full suite on stable source: `555 passed, 1 skipped in 103.52s`; the skip is the existing opt-in live integration test.
+- Task 8 fatal Ruff checks over all changed code/tests, compileall, both CLI help commands, and `git diff --check`: passed. Repository-wide fatal Ruff found 38 pre-existing F401 findings in `scripts/test_cloudrun_rag_integration.py` and `tests/test_evaluation_framework.py`; no Task 8 file failed.
+- Task 8 provider-free audit and blocked-capacity commands read the local content store only. Qdrant/Pinecone clients, generation, Ragas, and guardrails were not constructed; `provider_calls=0` in both artifacts.
 - Promotion artifact reload and hash validation: passed.
 - Relevant post-promotion suite: `195 passed in 23.70s`.
 - Full post-promotion suite: `375 passed, 1 skipped in 59.93s`.

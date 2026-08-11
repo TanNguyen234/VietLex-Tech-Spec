@@ -42,3 +42,27 @@ Local SQLite Content Store (Compressed Zstandard Full Text)
 
 - Configuration declarations in `app/config.py` do not prove runtime usage until verified by code execution.
 - Evaluation runs from dirty working trees are marked with `git_dirty=true` and `git_diff_sha256`.
+
+## Opt-in structural v2 path (not production)
+
+The codebase also contains an explicitly gated Qdrant structural pilot. It does not alter `get_legal_retriever()` or the Pinecone v1 topology above.
+
+```text
+Pinned local primary-legislation scope (827 documents)
+        |
+        v
+134,334 immutable structural records (420 max tokens / 48 overlap)
+        |
+        +--> Qdrant Cloud Inference dense: Qwen3-Embedding-0.6B, 1024d
+        +--> Qdrant corpus-level sparse: qdrant/bm25 with IDF
+        |
+        v
+Opt-in collection vietlex-legal-rag-v2-pilot
+        |
+        +--> concurrent dense / BM25 / exact-reference lanes
+        +--> deterministic RRF and per-document cap
+        +--> existing remote reranker chain
+        +--> direct structural evidence (no second local re-chunk)
+```
+
+Remote execution is ordered and artifact-bound: `create -> probe-model -> upload -> finalize -> verify -> benchmark`. The benchmark requires an exact `PASS_VERIFY` receipt and exact P2 comparison provenance before any remote client is constructed. Its raw trace uses only `dense_hits`, `bm25_hits`, `exact_hits`, `fused_hits`, `reranker_input`, `reranker_output`, and `final_hits`; legacy metric-v3 names exist only in a declared offline adapter.
