@@ -87,29 +87,29 @@ The opt-in implementation is complete locally through deterministic benchmark co
 
 Provider-free local evidence:
 
-The earlier `*-task8-verified` directories are retained as immutable historical evidence and are superseded by the content-canonical provenance-v2 runs below.
+The earlier `*-task8-verified` and `*-provenance-v2` directories are retained as immutable history but are superseded for remote authorization by the recall-hardening artifacts below.
 
-- Audit directory: `docs/evaluation/index-pilots/structural-local-audit-20260811-provenance-v2/`.
+- Audit directory: `docs/evaluation/index-pilots/structural-recall-hardening-audit-20260811/`.
 - Audit manifest SHA-256: `8b991baa8cb889cd4acf37cfcd09bb7304190b66758b9a2e717eee8cdb2686f8`.
-- Audit `plan.json` file SHA-256: `94b5a64a29d451773f3dc6911dc2eca728e6f219393255235eeb99b515655b05`.
-- Audit internal plan SHA-256: `9b45270b70ac3c94a841624a3e58f16d91e0e9ee74bc0778e3a6d64587a57446`.
+- Audit `plan.json` file SHA-256: `af514dfb5253afc146a299815c7bd93f5bbfcf5860d23d4f630e904614396196`.
+- Audit internal plan SHA-256: `4637bddf820b2f4ce496e886becee1de879d279f46c2a6f32c4bc31a3706e16d`.
 - Audit result: 827 documents, 134,334 structural records, provider calls 0.
-- Capacity directory: `docs/evaluation/index-pilots/structural-local-plan-blocked-20260811-provenance-v2/`.
-- Capacity `plan.json` file SHA-256: `3d4566f86b8805ba200b2154277d337e6eb38b6e0a1aac32db6e4b6f4ecd5c45`.
-- Internal plan SHA-256: `e2a960604f349b7583e2aea5a58b91a578be0a6c76122f01585381318da9280c`.
-- Bound source-state SHA-256: `71e4d8d5a711954c7828924ce6605f7bb8335a3d2289053de770288a5409e8b7`; the artifact honestly records `source_git_dirty=true` at Git SHA `5b07a3829741e196502d4698018c12c2ce674648`.
+- Capacity directory: `docs/evaluation/index-pilots/structural-recall-hardening-plan-blocked-20260811/`.
+- Capacity `plan.json` file SHA-256: `ba328ebe50c983314e1479f14de422f10f638d52b7449ebda05b995f9f9eeaea`.
+- Internal plan SHA-256: `1c6c9e9b338e8e0c9397218ef1772eec1e220286c30ad51ec97fe2639cd827b7`.
+- Bound source-state SHA-256: `18adf38b44083d3b0aa2ae7edd9239cd769fa3f99c5a71ac241e6d8212cae31a`; Git SHA `37e17d0fc9e8b7b6ba9f10ff5095017db0411073`. The capacity artifact honestly records `source_git_dirty=true` because the preceding immutable audit directory was untracked; the content-canonical source hash remained identical.
 - Source-state semantics are content-canonical: the same repository-visible source paths and bytes now retain the same hash across untracked, staged, and committed states. Git SHA, dirty flags, and diff SHA remain separate provenance.
 - Capacity inputs: 4 GiB disk, 1 GiB RAM, 0.5 vCPU, one shard; `existing_disk_bytes` deliberately absent.
-- Capacity result: `BLOCKED_CAPACITY`, with the sole missing input `existing_disk_bytes`; provider calls 0. This plan cannot authorize `create`.
+- Conservative projected storage: 1,304,087,609 bytes. Capacity result: `BLOCKED_CAPACITY`, with the sole missing input `existing_disk_bytes`; provider calls 0. This plan cannot authorize `create`.
 
 Remote phase status: `create NOT RUN`; `probe-model NOT RUN`; `upload NOT RUN`; `finalize NOT RUN`; `verify NOT RUN`; `benchmark NOT RUN`. Generation, Ragas, and guardrails are disabled by the benchmark contract.
 
 After obtaining current Qdrant disk usage, regenerate a clean `PASS_CAPACITY` plan. The exact binding values currently demonstrated by the local blocked plan are:
 
 ```powershell
-$PLAN = "docs/evaluation/index-pilots/structural-local-plan-blocked-20260811-provenance-v2/plan.json"
-$PLAN_SHA = "e2a960604f349b7583e2aea5a58b91a578be0a6c76122f01585381318da9280c"
-$SOURCE_SHA = "71e4d8d5a711954c7828924ce6605f7bb8335a3d2289053de770288a5409e8b7"
+$PLAN = "docs/evaluation/index-pilots/structural-recall-hardening-plan-blocked-20260811/plan.json"
+$PLAN_SHA = "1c6c9e9b338e8e0c9397218ef1772eec1e220286c30ad51ec97fe2639cd827b7"
+$SOURCE_SHA = "18adf38b44083d3b0aa2ae7edd9239cd769fa3f99c5a71ac241e6d8212cae31a"
 $COLLECTION = "vietlex-legal-rag-v2-pilot"
 $DATASET = "app/data/namsyntax_legal_qa_420_curated_v1.json"
 $SIDECAR = "docs/evaluation/adjudication/promotions/gold-adjudication-promotion-curated-v4_20260809_151015_227377/labels_v2.json"
@@ -130,6 +130,11 @@ python run_structural_retrieval_eval.py benchmark --dataset $DATASET --sidecar $
 
 ## Execution and verification evidence
 
+- Recall-hardening TDD: Task 1 core RED `17 failed, 16 passed`, then GREEN; Task 2 relevant-only RED `2 failed`, then the real local scope resolved 40 cases, 1,748 relevant rows, 825 hard negatives, and 64 canaries with no skips; Task 3 missing Qdrant-only interface RED then GREEN; Task 4 weak acceptance/reranker-report RED `3 failed`, then GREEN.
+- Final recall-hardening affected matrix: `186 passed in 17.80s`.
+- Final full suite at clean Git SHA `37e17d0fc9e8b7b6ba9f10ff5095017db0411073`: `569 passed, 1 skipped in 99.05s`; the skip remains the opt-in live integration test.
+- Targeted Ruff, compileall, both CLI help commands, and `git diff --check`: exit 0. CRG source graph matched HEAD, risk `0.55` (medium), no affected production flow detected; `app/services/retrieval.py`, `get_legal_retriever()`, and API routes were unchanged.
+- New audit and blocked-capacity plan read only the pinned local store and each recorded `provider_calls=0`. No Qdrant/Pinecone client, embedding, reranker, generation, Ragas, or guardrail call was executed.
 - Provenance-v2 regression: RED reproduced the untracked/staged hash mismatch; GREEN passed, affected suite `83 passed`, and final full suite `556 passed, 1 skipped`.
 - Source-state checkpoint before artifacts and after both immutable artifacts: identical `71e4d8d5a711954c7828924ce6605f7bb8335a3d2289053de770288a5409e8b7`.
 - Task 8 affected structural/evaluation suite: `172 passed in 21.07s` before the final Windows-console portability regression; that regression was reproduced RED and passed GREEN independently.
