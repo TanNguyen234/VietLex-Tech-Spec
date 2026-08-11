@@ -1,0 +1,61 @@
+{
+  "method": "Conversation-backed RED evidence, static contract TDD, provider-free config audit, CRG changed-file review, and direct review of graph-uncovered files.",
+  "conversation_red_evidence": [
+    {
+      "failure": "A repository full-suite result and immutable pilot artifacts became stale after evaluator manifest and exception-path edits.",
+      "control": "Error-path gate, stable-tree verification, and Artifacts Last."
+    },
+    {
+      "failure": "CRG reported HEAD matched its graph and zero test gaps while new evaluator/test files remained untracked and outside graph proof.",
+      "control": "Use git status as a coverage ledger and directly review untracked, stale, or uncovered files."
+    },
+    {
+      "failure": "A local Codex CLI helper returned Access denied while file and app fallbacks remained usable.",
+      "control": "Probe a preferred tool once, then use the bounded fallback until the environment changes."
+    },
+    {
+      "failure": "Repeated per-step reflection and status polling consumed context without changing decisions.",
+      "control": "Reflect only at milestones, novel failures, and final handoff."
+    }
+  ],
+  "static_tdd": {
+    "red": "4 failed, 13 passed",
+    "green": "17 passed",
+    "combined_verifier": "18 passed in 8.12s",
+    "skill_validator": "Skill is valid!",
+    "skill_body_words": 380
+  },
+  "crg_review": {
+    "graph_snapshot": "1453 nodes, 14171 edges across 87 files; HEAD matched build SHA 4128fa0f8b3e877a2261fef6edbb6fa751bc77f4",
+    "changed_file_review": "8 explicit files, risk 0.50, 3 graph-mapped functions, 0 reported test gaps",
+    "direct_review_required": true,
+    "provider_or_embedding_calls": 0
+  },
+  "codex_optimization": {
+    "global_defaults": "gpt-5.6-terra medium, workspace-write, service tier default",
+    "project_defaults": "gpt-5.6-sol medium, workspace-write, automatic approval review",
+    "project_skills": "28 total, 21 disabled, 7 active",
+    "project_plugins": "2 enabled, 10 disabled",
+    "crg": "optional globally and in project; 6 enabled tools; duplicate review/impact tools removed",
+    "paid_provider_env_entries_removed": 3,
+    "paid_provider_calls": 0
+  },
+  "environment_repair": {
+    "finding": "Project venv lacked pytest-asyncio despite requirements.txt declaring it.",
+    "initial_install": "FAILED: TLS certificate verification",
+    "root_cause_test": "pip --use-feature=truststore --dry-run succeeded with Windows trust roots",
+    "repair": "Installed pytest-asyncio 1.4.0 into the project venv using truststore",
+    "post_repair": "18 passed with no PytestConfigWarning"
+  },
+  "sha256": {
+    "skill": "26CE4E267623A5CEAFD4C71CB22B0DCA9EE3073CA0E887EF3386C5E28D302C32",
+    "project_config": "E9EE692C7F6DB921619DC0DDF7DED8509295CD2FE62307577E85D95581C5AE0C",
+    "global_config": "8FB7F6A91F93A3CCEDFFCA7A56266B97773B9287670E5182381F9A05B8598CA5"
+  },
+  "limitations": [
+    "No fresh subagent pressure run was launched because the active session policy did not authorize delegation; the natural conversation failures are the RED baseline.",
+    "The full repository suite is intentionally deferred until the already-dirty Task 8 source is review-clean, avoiding a second stale full-suite run.",
+    "Codex configuration and skill catalog changes require a new task or app restart to become the active session catalog.",
+    "No live provider, corpus, index, ingestion, migration, evidence promotion, push, or paid service ran."
+  ]
+}

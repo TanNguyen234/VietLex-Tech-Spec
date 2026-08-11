@@ -166,3 +166,37 @@ def test_reality_probe_eval_freezes_contract_before_fixture_updates() -> None:
     assert "freeze the contract" in expected
     assert "then update fixtures through red tdd" in expected
     assert expected.index("freeze the contract") < expected.index("update fixtures")
+
+
+def test_lean_skill_closes_crg_untracked_and_stale_coverage_gaps() -> None:
+    text = _skill_text().lower()
+
+    assert "git status --short" in text
+    assert "untracked" in text
+    assert "crg coverage" in text
+    assert "direct source review" in text
+
+
+def test_lean_skill_reviews_error_paths_before_stable_verification() -> None:
+    text = _skill_text().lower()
+
+    assert "error-path gate" in text
+    assert "unexpected failures" in text
+    assert text.index("error-path gate") < text.index("full suite")
+
+
+def test_lean_skill_makes_durable_artifacts_last_and_invalidatable() -> None:
+    text = _skill_text().lower()
+
+    assert "artifacts last" in text
+    assert "source/config" in text
+    assert "regenerate" in text
+    assert text.index("full suite") < text.index("artifacts last")
+
+
+def test_lean_skill_bounds_tool_probes_and_self_reflection() -> None:
+    text = _skill_text().lower()
+
+    assert "probe a preferred tool once" in text
+    assert "milestone-only reflection" in text
+    assert "novel failure" in text

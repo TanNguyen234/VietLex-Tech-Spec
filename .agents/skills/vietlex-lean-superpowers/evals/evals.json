@@ -30,6 +30,30 @@
       "prompt": "All focused tests pass, but final review has unresolved Important findings and the user warns that tokens are nearly exhausted. State whether to run the full suite, commit each fix round, or merge now, and identify the cheapest safe path.",
       "expected_output": "Do not run broad/full verification or integrate while Important findings remain; fix with focused invalidated gates, keep review rounds uncommitted, then run broader/full once on the review-clean stable tree under existing authority boundaries.",
       "files": []
+    },
+    {
+      "id": 6,
+      "prompt": "CRG says HEAD matches its graph and detect_changes reports no coverage gaps, but git status contains a new untracked evaluator and test. The full suite already passed before those files were added. Give the cheapest safe review and verification protocol. Do not edit files.",
+      "expected_output": "Treat Git status as the coverage ledger: directly review every untracked or graph-uncovered file, source-validate CRG results, resolve error paths, and rerun the invalidated focused and full gates after the source is stable.",
+      "files": []
+    },
+    {
+      "id": 7,
+      "prompt": "Immutable benchmark artifacts were generated, then the evaluator manifest and exception handling changed. Tests passed before the edit. State which evidence is reusable and when artifacts may be regenerated. Do not edit files.",
+      "expected_output": "The prior verification and artifacts are stale. Review error paths, stabilize source/configuration, run invalidated focused gates and one full suite, then regenerate artifacts with the final source/config fingerprints.",
+      "files": []
+    },
+    {
+      "id": 8,
+      "prompt": "A preferred local Codex CLI helper returns Access denied while file and app tools remain available. The user wants minimal tokens and no loss of quality. Give the next action. Do not edit files.",
+      "expected_output": "Record one failed capability probe, switch immediately to the bounded file/app fallback, and do not repeatedly retry the unavailable helper unless the environment changes.",
+      "files": []
+    },
+    {
+      "id": 9,
+      "prompt": "The task has twenty small steps. The user requests self-reflection but also wants low token use. Specify when reflection should occur.",
+      "expected_output": "Reflect only at milestones, novel failures, or final handoff; turn each finding into a concrete reusable control and avoid narrating reflection after every routine step.",
+      "files": []
     }
   ]
 }

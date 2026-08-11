@@ -1,0 +1,4 @@
+prefix_rule(pattern=[".\\.venv\\Scripts\\python.exe", "-m", "ruff", "check"], decision="allow")
+prefix_rule(pattern=[".\\.venv\\Scripts\\python.exe", "-B", "-m", "pytest"], decision="allow")
+prefix_rule(pattern=["git", "-c", "safe.directory=D:/Download/ProfessionalLegalRAG", "add"], decision="allow")
+prefix_rule(pattern=["git", "-c", "safe.directory=D:/Download/ProfessionalLegalRAG", "commit"], decision="allow")
