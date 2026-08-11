@@ -1,0 +1,30 @@
+{
+  "collection_name": "vietlex-legal-rag-v2-pilot-384",
+  "inference_calls": 0,
+  "payload_indexes": [
+    "dataset_revision",
+    "document_id",
+    "legal_type"
+  ],
+  "plan_sha256": "4792c97bfbbc317cfcfcffaa2a5a0aa5c1271c4766aedc182f7b8b0841b318e5",
+  "points_count": 0,
+  "provider_calls": 2,
+  "schema_readback": {
+    "dense_distance": "Cosine",
+    "dense_on_disk": true,
+    "dense_size": 384,
+    "dense_vector_name": "dense",
+    "hnsw_m": 0,
+    "hnsw_on_disk": true,
+    "on_disk_payload": true,
+    "shard_number": 1,
+    "sparse_modifier": "idf",
+    "sparse_on_disk": true,
+    "sparse_vector_name": "bm25"
+  },
+  "schema_version": "1.0.0",
+  "source_state_sha256": "fcd573edd55f8da6f9d8fb4f2d97faf13525740bdf9242e69fd3faaa3969f963",
+  "started_at_utc": "2026-08-11T14:16:21.907851Z",
+  "status": "ADOPTED_EMPTY",
+  "verified_at_utc": "2026-08-11T14:16:23.012893Z"
+}

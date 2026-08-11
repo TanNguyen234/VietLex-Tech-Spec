@@ -1,0 +1,10 @@
+{
+  "cases": [],
+  "run_id": "structural-e5-384-hybrid-20260811",
+  "schema_version": "1.0.0",
+  "scope_errors": [],
+  "skipped_cases": {},
+  "technical_preflight_errors": [
+    "structural_backend_disabled"
+  ]
+}

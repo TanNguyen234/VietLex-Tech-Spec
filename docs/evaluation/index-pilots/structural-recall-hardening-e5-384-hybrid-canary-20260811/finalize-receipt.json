@@ -1,0 +1,34 @@
+{
+  "collection_name": "vietlex-legal-rag-v2-pilot-384",
+  "collection_status": "green",
+  "created_at_utc": "2026-08-11T16:51:31.840946Z",
+  "creation_receipt_sha256": "f84d46e7ea70d0f9567fb51201c0d71f8427944ea8167a82bb320b29920e1831",
+  "indexed_vectors_count": 264459,
+  "optimizer_status": "ok",
+  "plan_sha256": "4792c97bfbbc317cfcfcffaa2a5a0aa5c1271c4766aedc182f7b8b0841b318e5",
+  "points_count": 134334,
+  "probe_report_sha256": "e7c20408b08f448d34d3caef7e3c5fae564e730801f1ee8cb2ab89adc1c94b69",
+  "provider_calls": 47,
+  "provider_usage": {
+    "intfloat/multilingual-e5-small": 38037431
+  },
+  "remote_cleanup_calls": 0,
+  "schema_readback": {
+    "dense_distance": "Cosine",
+    "dense_on_disk": true,
+    "dense_size": 384,
+    "dense_vector_name": "dense",
+    "hnsw_m": 16,
+    "hnsw_on_disk": true,
+    "on_disk_payload": true,
+    "shard_number": 1,
+    "sparse_modifier": "idf",
+    "sparse_on_disk": true,
+    "sparse_vector_name": "bm25"
+  },
+  "schema_version": "1.0.0",
+  "source_state_sha256": "fcd573edd55f8da6f9d8fb4f2d97faf13525740bdf9242e69fd3faaa3969f963",
+  "status": "PASS_FINALIZE",
+  "technical_errors": {},
+  "upload_report_sha256": "f960afb0e368aa45ae2e01d22cedc3967bf4f8be6dbd1f3a727923df44647ddb"
+}

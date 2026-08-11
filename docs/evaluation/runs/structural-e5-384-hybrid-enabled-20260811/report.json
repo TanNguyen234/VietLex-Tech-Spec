@@ -1,0 +1,2445 @@
+{
+  "acceptance": "BLOCKED_TECHNICAL",
+  "coverage": {
+    "scored_case_count": 40,
+    "selected_case_count": 40,
+    "skip_reasons": {},
+    "skipped_case_count": 0,
+    "skipped_cases": [],
+    "value": 1.0
+  },
+  "latency": {
+    "bm25": {
+      "count": 40,
+      "max_seconds": 4.103455,
+      "mean_seconds": 1.709814,
+      "total_seconds": 68.392565
+    },
+    "dense": {
+      "count": 40,
+      "max_seconds": 5.420024,
+      "mean_seconds": 2.016331,
+      "total_seconds": 80.653253
+    },
+    "exact": {
+      "count": 40,
+      "max_seconds": 0.0,
+      "mean_seconds": 0.0,
+      "total_seconds": 0.0
+    },
+    "total": {
+      "count": 40,
+      "max_seconds": 5.421574,
+      "mean_seconds": 2.341062,
+      "total_seconds": 93.642496
+    }
+  },
+  "metric_stage_aliases": {
+    "final_evidence_chunks": "final_hits",
+    "fts_hits": "bm25_hits",
+    "locally_selected_chunks": "reranker_input",
+    "merged_document_candidates": "fused_hits",
+    "pinecone_hits": "dense_hits",
+    "reranker_input_chunks": "reranker_input",
+    "reranker_output_chunks": "reranker_output",
+    "resolved_document_candidates": "fused_hits",
+    "structural_chunks_generated": "fused_hits"
+  },
+  "metrics": {
+    "fused_article_recall_at_24": {
+      "denominator": 30,
+      "numerator": 0,
+      "value": 0.0
+    },
+    "fused_clause_recall_at_24": {
+      "denominator": 14,
+      "numerator": 0,
+      "value": 0.0
+    },
+    "fused_document_recall_at_24": {
+      "denominator": 53,
+      "numerator": 0,
+      "value": 0.0
+    },
+    "metric_v3": {
+      "article_recall": {
+        "1": {
+          "denominator": 0.0,
+          "macro": null,
+          "micro": null,
+          "numerator": 0.0,
+          "reason": "no_applicable_values",
+          "scored_cases": 0,
+          "skip_reasons": {
+            "retrieval_error": 40
+          },
+          "skipped_cases": 40
+        },
+        "3": {
+          "denominator": 0.0,
+          "macro": null,
+          "micro": null,
+          "numerator": 0.0,
+          "reason": "no_applicable_values",
+          "scored_cases": 0,
+          "skip_reasons": {
+            "retrieval_error": 40
+          },
+          "skipped_cases": 40
+        },
+        "6": {
+          "denominator": 0.0,
+          "macro": null,
+          "micro": null,
+          "numerator": 0.0,
+          "reason": "no_applicable_values",
+          "scored_cases": 0,
+          "skip_reasons": {
+            "retrieval_error": 40
+          },
+          "skipped_cases": 40
+        }
+      },
+      "clause_recall": {
+        "1": {
+          "denominator": 0.0,
+          "macro": null,
+          "micro": null,
+          "numerator": 0.0,
+          "reason": "no_applicable_values",
+          "scored_cases": 0,
+          "skip_reasons": {
+            "retrieval_error": 40
+          },
+          "skipped_cases": 40
+        },
+        "3": {
+          "denominator": 0.0,
+          "macro": null,
+          "micro": null,
+          "numerator": 0.0,
+          "reason": "no_applicable_values",
+          "scored_cases": 0,
+          "skip_reasons": {
+            "retrieval_error": 40
+          },
+          "skipped_cases": 40
+        },
+        "6": {
+          "denominator": 0.0,
+          "macro": null,
+          "micro": null,
+          "numerator": 0.0,
+          "reason": "no_applicable_values",
+          "scored_cases": 0,
+          "skip_reasons": {
+            "retrieval_error": 40
+          },
+          "skipped_cases": 40
+        }
+      },
+      "coverage": {
+        "denominator": 40.0,
+        "macro": 0.0,
+        "micro": 0.0,
+        "numerator": 0.0,
+        "reason": null,
+        "scored_cases": 40,
+        "skip_reasons": {
+          "retrieval_error": 40
+        },
+        "skipped_cases": 0
+      },
+      "document_recall": {
+        "1": {
+          "denominator": 0.0,
+          "macro": null,
+          "micro": null,
+          "numerator": 0.0,
+          "reason": "no_applicable_values",
+          "scored_cases": 0,
+          "skip_reasons": {
+            "retrieval_error": 40
+          },
+          "skipped_cases": 40
+        },
+        "10": {
+          "denominator": 0.0,
+          "macro": null,
+          "micro": null,
+          "numerator": 0.0,
+          "reason": "no_applicable_values",
+          "scored_cases": 0,
+          "skip_reasons": {
+            "retrieval_error": 40
+          },
+          "skipped_cases": 40
+        },
+        "24": {
+          "denominator": 0.0,
+          "macro": null,
+          "micro": null,
+          "numerator": 0.0,
+          "reason": "no_applicable_values",
+          "scored_cases": 0,
+          "skip_reasons": {
+            "retrieval_error": 40
+          },
+          "skipped_cases": 40
+        },
+        "3": {
+          "denominator": 0.0,
+          "macro": null,
+          "micro": null,
+          "numerator": 0.0,
+          "reason": "no_applicable_values",
+          "scored_cases": 0,
+          "skip_reasons": {
+            "retrieval_error": 40
+          },
+          "skipped_cases": 40
+        },
+        "5": {
+          "denominator": 0.0,
+          "macro": null,
+          "micro": null,
+          "numerator": 0.0,
+          "reason": "no_applicable_values",
+          "scored_cases": 0,
+          "skip_reasons": {
+            "retrieval_error": 40
+          },
+          "skipped_cases": 40
+        }
+      },
+      "exact_reference_hit": {
+        "denominator": 0.0,
+        "macro": null,
+        "micro": null,
+        "numerator": 0.0,
+        "reason": "no_applicable_values",
+        "scored_cases": 0,
+        "skip_reasons": {
+          "retrieval_error": 40
+        },
+        "skipped_cases": 40
+      },
+      "metric_version": "3.0.0",
+      "mrr": {
+        "article": {
+          "denominator": 0.0,
+          "macro": null,
+          "micro": null,
+          "numerator": 0.0,
+          "reason": "no_applicable_values",
+          "scored_cases": 0,
+          "skip_reasons": {
+            "retrieval_error": 40
+          },
+          "skipped_cases": 40
+        },
+        "clause": {
+          "denominator": 0.0,
+          "macro": null,
+          "micro": null,
+          "numerator": 0.0,
+          "reason": "no_applicable_values",
+          "scored_cases": 0,
+          "skip_reasons": {
+            "retrieval_error": 40
+          },
+          "skipped_cases": 40
+        },
+        "document": {
+          "denominator": 0.0,
+          "macro": null,
+          "micro": null,
+          "numerator": 0.0,
+          "reason": "no_applicable_values",
+          "scored_cases": 0,
+          "skip_reasons": {
+            "retrieval_error": 40
+          },
+          "skipped_cases": 40
+        }
+      },
+      "multi_hop_all_required": {
+        "denominator": 0.0,
+        "macro": null,
+        "micro": null,
+        "numerator": 0.0,
+        "reason": "no_applicable_values",
+        "scored_cases": 0,
+        "skip_reasons": {
+          "retrieval_error": 40
+        },
+        "skipped_cases": 40
+      },
+      "multi_hop_partial": {
+        "denominator": 0.0,
+        "macro": null,
+        "micro": null,
+        "numerator": 0.0,
+        "reason": "no_applicable_values",
+        "scored_cases": 0,
+        "skip_reasons": {
+          "retrieval_error": 40
+        },
+        "skipped_cases": 40
+      },
+      "ndcg_at_10": {
+        "denominator": 0.0,
+        "macro": null,
+        "micro": null,
+        "numerator": 0.0,
+        "reason": "no_applicable_values",
+        "scored_cases": 0,
+        "skip_reasons": {
+          "retrieval_error": 40
+        },
+        "skipped_cases": 40
+      },
+      "no_candidate_rate": {
+        "denominator": 40.0,
+        "macro": 0.0,
+        "micro": 0.0,
+        "numerator": 0.0,
+        "reason": null,
+        "scored_cases": 40,
+        "skip_reasons": {},
+        "skipped_cases": 0
+      },
+      "reranker_technical_error_rate": {
+        "denominator": 40,
+        "macro": 0.0,
+        "micro": 0.0,
+        "numerator": 0,
+        "reason": null,
+        "scored_cases": 40,
+        "skip_reasons": {},
+        "skipped_cases": 0
+      },
+      "retrieval_technical_error_rate": {
+        "denominator": 40,
+        "macro": 1.0,
+        "micro": 1.0,
+        "numerator": 40,
+        "reason": null,
+        "scored_cases": 40,
+        "skip_reasons": {},
+        "skipped_cases": 0
+      },
+      "scored_cases": 0,
+      "skip_reason_counts": {
+        "retrieval_error": 40
+      },
+      "skipped_cases": 40,
+      "stages": {
+        "final_evidence_metrics": {
+          "applicable_gold_counts": {
+            "article": 0,
+            "clause": 0,
+            "document": 0
+          },
+          "candidates": {
+            "count": 40,
+            "max": 0.0,
+            "mean": 0.0,
+            "min": 0.0,
+            "p50": 0.0,
+            "p95": 0.0
+          },
+          "configured_capacity": 3,
+          "first_loss_evidence_count": 0,
+          "matched_gold_counts": {
+            "article": 0,
+            "clause": 0,
+            "document": 0
+          },
+          "mrr": {
+            "article": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "retrieval_error": 40
+              },
+              "skipped_cases": 40
+            },
+            "clause": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "retrieval_error": 40
+              },
+              "skipped_cases": 40
+            },
+            "document": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "retrieval_error": 40
+              },
+              "skipped_cases": 40
+            }
+          },
+          "null_reason_counts": {
+            "retrieval_error": 560
+          },
+          "recall": {
+            "article": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "clause": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "document": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "10": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "24": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "5": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              }
+            }
+          },
+          "scored_case_count": 0
+        },
+        "fts_document_metrics": {
+          "applicable_gold_counts": {
+            "article": 0,
+            "clause": 0,
+            "document": 0
+          },
+          "candidates": {
+            "count": 40,
+            "max": 0.0,
+            "mean": 0.0,
+            "min": 0.0,
+            "p50": 0.0,
+            "p95": 0.0
+          },
+          "configured_capacity": 24,
+          "first_loss_evidence_count": 0,
+          "matched_gold_counts": {
+            "article": 0,
+            "clause": 0,
+            "document": 0
+          },
+          "mrr": {
+            "article": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "retrieval_error": 40
+              },
+              "skipped_cases": 40
+            },
+            "clause": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "retrieval_error": 40
+              },
+              "skipped_cases": 40
+            },
+            "document": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "retrieval_error": 40
+              },
+              "skipped_cases": 40
+            }
+          },
+          "null_reason_counts": {
+            "retrieval_error": 560
+          },
+          "recall": {
+            "article": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "clause": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "document": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "10": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "24": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "5": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              }
+            }
+          },
+          "scored_case_count": 0
+        },
+        "local_selection_metrics": {
+          "applicable_gold_counts": {
+            "article": 0,
+            "clause": 0,
+            "document": 0
+          },
+          "candidates": {
+            "count": 40,
+            "max": 0.0,
+            "mean": 0.0,
+            "min": 0.0,
+            "p50": 0.0,
+            "p95": 0.0
+          },
+          "configured_capacity": 4,
+          "first_loss_evidence_count": 0,
+          "matched_gold_counts": {
+            "article": 0,
+            "clause": 0,
+            "document": 0
+          },
+          "mrr": {
+            "article": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "retrieval_error": 40
+              },
+              "skipped_cases": 40
+            },
+            "clause": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "retrieval_error": 40
+              },
+              "skipped_cases": 40
+            },
+            "document": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "retrieval_error": 40
+              },
+              "skipped_cases": 40
+            }
+          },
+          "null_reason_counts": {
+            "retrieval_error": 560
+          },
+          "recall": {
+            "article": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "clause": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "document": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "10": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "24": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "5": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              }
+            }
+          },
+          "scored_case_count": 0
+        },
+        "merged_document_metrics": {
+          "applicable_gold_counts": {
+            "article": 0,
+            "clause": 0,
+            "document": 0
+          },
+          "candidates": {
+            "count": 40,
+            "max": 0.0,
+            "mean": 0.0,
+            "min": 0.0,
+            "p50": 0.0,
+            "p95": 0.0
+          },
+          "configured_capacity": 24,
+          "first_loss_evidence_count": 0,
+          "matched_gold_counts": {
+            "article": 0,
+            "clause": 0,
+            "document": 0
+          },
+          "mrr": {
+            "article": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "retrieval_error": 40
+              },
+              "skipped_cases": 40
+            },
+            "clause": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "retrieval_error": 40
+              },
+              "skipped_cases": 40
+            },
+            "document": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "retrieval_error": 40
+              },
+              "skipped_cases": 40
+            }
+          },
+          "null_reason_counts": {
+            "retrieval_error": 560
+          },
+          "recall": {
+            "article": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "clause": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "document": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "10": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "24": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "5": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              }
+            }
+          },
+          "scored_case_count": 0
+        },
+        "pinecone_document_metrics": {
+          "applicable_gold_counts": {
+            "article": 0,
+            "clause": 0,
+            "document": 0
+          },
+          "candidates": {
+            "count": 40,
+            "max": 0.0,
+            "mean": 0.0,
+            "min": 0.0,
+            "p50": 0.0,
+            "p95": 0.0
+          },
+          "configured_capacity": 24,
+          "first_loss_evidence_count": 0,
+          "matched_gold_counts": {
+            "article": 0,
+            "clause": 0,
+            "document": 0
+          },
+          "mrr": {
+            "article": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "retrieval_error": 40
+              },
+              "skipped_cases": 40
+            },
+            "clause": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "retrieval_error": 40
+              },
+              "skipped_cases": 40
+            },
+            "document": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "retrieval_error": 40
+              },
+              "skipped_cases": 40
+            }
+          },
+          "null_reason_counts": {
+            "retrieval_error": 560
+          },
+          "recall": {
+            "article": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "clause": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "document": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "10": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "24": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "5": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              }
+            }
+          },
+          "scored_case_count": 0
+        },
+        "reranker_input_metrics": {
+          "applicable_gold_counts": {
+            "article": 0,
+            "clause": 0,
+            "document": 0
+          },
+          "candidates": {
+            "count": 40,
+            "max": 0.0,
+            "mean": 0.0,
+            "min": 0.0,
+            "p50": 0.0,
+            "p95": 0.0
+          },
+          "configured_capacity": 24,
+          "first_loss_evidence_count": 0,
+          "matched_gold_counts": {
+            "article": 0,
+            "clause": 0,
+            "document": 0
+          },
+          "mrr": {
+            "article": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "retrieval_error": 40
+              },
+              "skipped_cases": 40
+            },
+            "clause": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "retrieval_error": 40
+              },
+              "skipped_cases": 40
+            },
+            "document": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "retrieval_error": 40
+              },
+              "skipped_cases": 40
+            }
+          },
+          "null_reason_counts": {
+            "retrieval_error": 560
+          },
+          "recall": {
+            "article": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "clause": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "document": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "10": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "24": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "5": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              }
+            }
+          },
+          "scored_case_count": 0
+        },
+        "reranker_output_metrics": {
+          "applicable_gold_counts": {
+            "article": 0,
+            "clause": 0,
+            "document": 0
+          },
+          "candidates": {
+            "count": 40,
+            "max": 0.0,
+            "mean": 0.0,
+            "min": 0.0,
+            "p50": 0.0,
+            "p95": 0.0
+          },
+          "configured_capacity": 12,
+          "first_loss_evidence_count": 0,
+          "matched_gold_counts": {
+            "article": 0,
+            "clause": 0,
+            "document": 0
+          },
+          "mrr": {
+            "article": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "retrieval_error": 40
+              },
+              "skipped_cases": 40
+            },
+            "clause": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "retrieval_error": 40
+              },
+              "skipped_cases": 40
+            },
+            "document": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "retrieval_error": 40
+              },
+              "skipped_cases": 40
+            }
+          },
+          "null_reason_counts": {
+            "retrieval_error": 560
+          },
+          "recall": {
+            "article": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "clause": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "document": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "10": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "24": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "5": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              }
+            }
+          },
+          "scored_case_count": 0
+        },
+        "resolved_document_metrics": {
+          "applicable_gold_counts": {
+            "article": 0,
+            "clause": 0,
+            "document": 0
+          },
+          "candidates": {
+            "count": 40,
+            "max": 0.0,
+            "mean": 0.0,
+            "min": 0.0,
+            "p50": 0.0,
+            "p95": 0.0
+          },
+          "configured_capacity": 16,
+          "first_loss_evidence_count": 0,
+          "matched_gold_counts": {
+            "article": 0,
+            "clause": 0,
+            "document": 0
+          },
+          "mrr": {
+            "article": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "retrieval_error": 40
+              },
+              "skipped_cases": 40
+            },
+            "clause": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "retrieval_error": 40
+              },
+              "skipped_cases": 40
+            },
+            "document": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "retrieval_error": 40
+              },
+              "skipped_cases": 40
+            }
+          },
+          "null_reason_counts": {
+            "retrieval_error": 560
+          },
+          "recall": {
+            "article": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "clause": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "document": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "10": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "24": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "5": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              }
+            }
+          },
+          "scored_case_count": 0
+        },
+        "source_retrieval_metrics": {
+          "applicable_gold_counts": {
+            "article": 0,
+            "clause": 0,
+            "document": 0
+          },
+          "candidates": {
+            "count": 40,
+            "max": 0.0,
+            "mean": 0.0,
+            "min": 0.0,
+            "p50": 0.0,
+            "p95": 0.0
+          },
+          "configured_capacity": 24,
+          "first_loss_evidence_count": 0,
+          "matched_gold_counts": {
+            "article": 0,
+            "clause": 0,
+            "document": 0
+          },
+          "mrr": {
+            "article": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "retrieval_error": 40
+              },
+              "skipped_cases": 40
+            },
+            "clause": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "retrieval_error": 40
+              },
+              "skipped_cases": 40
+            },
+            "document": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "retrieval_error": 40
+              },
+              "skipped_cases": 40
+            }
+          },
+          "null_reason_counts": {
+            "retrieval_error": 560
+          },
+          "recall": {
+            "article": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "clause": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "document": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "10": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "24": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "5": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              }
+            }
+          },
+          "scored_case_count": 0
+        },
+        "structural_chunk_metrics": {
+          "applicable_gold_counts": {
+            "article": 0,
+            "clause": 0,
+            "document": 0
+          },
+          "candidates": {
+            "count": 40,
+            "max": 0.0,
+            "mean": 0.0,
+            "min": 0.0,
+            "p50": 0.0,
+            "p95": 0.0
+          },
+          "configured_capacity": 64,
+          "first_loss_evidence_count": 0,
+          "matched_gold_counts": {
+            "article": 0,
+            "clause": 0,
+            "document": 0
+          },
+          "mrr": {
+            "article": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "retrieval_error": 40
+              },
+              "skipped_cases": 40
+            },
+            "clause": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "retrieval_error": 40
+              },
+              "skipped_cases": 40
+            },
+            "document": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "retrieval_error": 40
+              },
+              "skipped_cases": 40
+            }
+          },
+          "null_reason_counts": {
+            "retrieval_error": 560
+          },
+          "recall": {
+            "article": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "clause": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "document": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "10": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "24": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              },
+              "5": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "retrieval_error": 40
+                },
+                "skipped_cases": 40
+              }
+            }
+          },
+          "scored_case_count": 0
+        }
+      },
+      "total_cases": 40
+    },
+    "p2_source_document_recall_at_24": 0.0
+  },
+  "production_cutover_authorized": false,
+  "provenance_drift": false,
+  "provider_usage": {
+    "intfloat/multilingual-e5-small": 2690
+  },
+  "provider_usage_observation_complete": false,
+  "reranker_contribution": {
+    "article": {
+      "delta": 0.0,
+      "input": {
+        "denominator": 30,
+        "numerator": 0,
+        "value": 0.0
+      },
+      "output": {
+        "denominator": 30,
+        "numerator": 0,
+        "value": 0.0
+      }
+    },
+    "clause": {
+      "delta": 0.0,
+      "input": {
+        "denominator": 14,
+        "numerator": 0,
+        "value": 0.0
+      },
+      "output": {
+        "denominator": 14,
+        "numerator": 0,
+        "value": 0.0
+      }
+    },
+    "document": {
+      "delta": 0.0,
+      "input": {
+        "denominator": 53,
+        "numerator": 0,
+        "value": 0.0
+      },
+      "output": {
+        "denominator": 53,
+        "numerator": 0,
+        "value": 0.0
+      }
+    }
+  },
+  "schema_version": "1.0.0",
+  "scope_errors": [],
+  "technical_errors": {
+    "bm25": 40,
+    "dense": 40,
+    "exact_fts": 0,
+    "exact_remote": 0,
+    "fusion": 0,
+    "preflight": 0,
+    "reranker": 0,
+    "reranker_primary": 0,
+    "retrieval": 0,
+    "total": 80
+  },
+  "technical_preflight_errors": []
+}

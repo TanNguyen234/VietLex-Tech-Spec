@@ -1,0 +1,195 @@
+{
+  "acceptance": "BLOCKED_TECHNICAL",
+  "coverage": {
+    "scored_case_count": 0,
+    "selected_case_count": 40,
+    "skip_reasons": {},
+    "skipped_case_count": 0,
+    "skipped_cases": [],
+    "value": 0.0
+  },
+  "latency": {},
+  "metric_stage_aliases": {
+    "final_evidence_chunks": "final_hits",
+    "fts_hits": "bm25_hits",
+    "locally_selected_chunks": "reranker_input",
+    "merged_document_candidates": "fused_hits",
+    "pinecone_hits": "dense_hits",
+    "reranker_input_chunks": "reranker_input",
+    "reranker_output_chunks": "reranker_output",
+    "resolved_document_candidates": "fused_hits",
+    "structural_chunks_generated": "fused_hits"
+  },
+  "metrics": {
+    "fused_article_recall_at_24": {
+      "denominator": 0,
+      "numerator": 0,
+      "value": null
+    },
+    "fused_clause_recall_at_24": {
+      "denominator": 0,
+      "numerator": 0,
+      "value": null
+    },
+    "fused_document_recall_at_24": {
+      "denominator": 0,
+      "numerator": 0,
+      "value": null
+    },
+    "metric_v3": {
+      "article_recall": {},
+      "clause_recall": {},
+      "coverage": {
+        "denominator": 0.0,
+        "macro": null,
+        "micro": null,
+        "numerator": 0.0,
+        "reason": "no_cases",
+        "scored_cases": 0,
+        "skip_reasons": {},
+        "skipped_cases": 0
+      },
+      "document_recall": {},
+      "exact_reference_hit": {
+        "denominator": 0.0,
+        "macro": null,
+        "micro": null,
+        "numerator": 0.0,
+        "reason": "no_cases",
+        "scored_cases": 0,
+        "skip_reasons": {},
+        "skipped_cases": 0
+      },
+      "metric_version": "3.0.0",
+      "mrr": {},
+      "multi_hop_all_required": {
+        "denominator": 0.0,
+        "macro": null,
+        "micro": null,
+        "numerator": 0.0,
+        "reason": "no_cases",
+        "scored_cases": 0,
+        "skip_reasons": {},
+        "skipped_cases": 0
+      },
+      "multi_hop_partial": {
+        "denominator": 0.0,
+        "macro": null,
+        "micro": null,
+        "numerator": 0.0,
+        "reason": "no_cases",
+        "scored_cases": 0,
+        "skip_reasons": {},
+        "skipped_cases": 0
+      },
+      "ndcg_at_10": {
+        "denominator": 0.0,
+        "macro": null,
+        "micro": null,
+        "numerator": 0.0,
+        "reason": "no_cases",
+        "scored_cases": 0,
+        "skip_reasons": {},
+        "skipped_cases": 0
+      },
+      "no_candidate_rate": {
+        "denominator": 0.0,
+        "macro": null,
+        "micro": null,
+        "numerator": 0.0,
+        "reason": "no_cases",
+        "scored_cases": 0,
+        "skip_reasons": {},
+        "skipped_cases": 0
+      },
+      "reranker_technical_error_rate": {
+        "denominator": 0,
+        "macro": null,
+        "micro": null,
+        "numerator": 0,
+        "reason": "no_cases",
+        "scored_cases": 0,
+        "skip_reasons": {},
+        "skipped_cases": 0
+      },
+      "retrieval_technical_error_rate": {
+        "denominator": 0,
+        "macro": null,
+        "micro": null,
+        "numerator": 0,
+        "reason": "no_cases",
+        "scored_cases": 0,
+        "skip_reasons": {},
+        "skipped_cases": 0
+      },
+      "scored_cases": 0,
+      "skip_reason_counts": {},
+      "skipped_cases": 0,
+      "stages": {},
+      "total_cases": 0
+    },
+    "p2_source_document_recall_at_24": 0.0
+  },
+  "production_cutover_authorized": false,
+  "provenance_drift": false,
+  "provider_usage": {},
+  "provider_usage_observation_complete": true,
+  "reranker_contribution": {
+    "article": {
+      "delta": null,
+      "input": {
+        "denominator": 0,
+        "numerator": 0,
+        "value": null
+      },
+      "output": {
+        "denominator": 0,
+        "numerator": 0,
+        "value": null
+      }
+    },
+    "clause": {
+      "delta": null,
+      "input": {
+        "denominator": 0,
+        "numerator": 0,
+        "value": null
+      },
+      "output": {
+        "denominator": 0,
+        "numerator": 0,
+        "value": null
+      }
+    },
+    "document": {
+      "delta": null,
+      "input": {
+        "denominator": 0,
+        "numerator": 0,
+        "value": null
+      },
+      "output": {
+        "denominator": 0,
+        "numerator": 0,
+        "value": null
+      }
+    }
+  },
+  "schema_version": "1.0.0",
+  "scope_errors": [],
+  "technical_errors": {
+    "bm25": 0,
+    "dense": 0,
+    "exact_fts": 0,
+    "exact_remote": 0,
+    "fusion": 0,
+    "preflight": 1,
+    "reranker": 0,
+    "reranker_primary": 0,
+    "retrieval": 0,
+    "total": 1
+  },
+  "technical_preflight_errors": [
+    "structural_backend_disabled"
+  ]
+}
