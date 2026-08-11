@@ -30,7 +30,7 @@ class CheckpointBinding(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     schema_version: Literal["2.0.0"] = "2.0.0"
-    collection_name: Literal["vietlex-legal-rag-v2-pilot"]
+    collection_name: Literal["vietlex-legal-rag-v2-pilot-384"]
     source_state_sha256: str = Field(pattern=_SHA256_PATTERN)
     plan_sha256: str = Field(pattern=_SHA256_PATTERN)
     creation_receipt_sha256: str = Field(pattern=_SHA256_PATTERN)
@@ -38,7 +38,7 @@ class CheckpointBinding(BaseModel):
     dataset_revision: str = Field(min_length=1)
     ordered_record_ids_sha256: str = Field(pattern=_SHA256_PATTERN)
     manifest_record_count: _PositiveInt
-    dense_model: Literal["mixedbread-ai/mxbai-embed-large-v1"]
+    dense_model: Literal["intfloat/multilingual-e5-small"]
     sparse_model: Literal["qdrant/bm25"]
     document_text_version: Literal["vietlex-structural-document-v2"]
 

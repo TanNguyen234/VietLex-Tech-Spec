@@ -314,7 +314,7 @@ def test_authorization_rejects_mismatched_binding(
     )
     values: dict[str, object] = {
         "allow_remote_write": True,
-        "collection_name": "vietlex-legal-rag-v2-pilot",
+        "collection_name": "vietlex-legal-rag-v2-pilot-384",
         "plan_sha256": plan.plan_sha256,
         "source_state_sha256": plan.source_state_sha256,
     }
@@ -338,7 +338,7 @@ def test_authorization_accepts_artifact_only_dirty_provenance(
     )
     authorization = RemoteWriteAuthorization(
         allow_remote_write=True,
-        collection_name="vietlex-legal-rag-v2-pilot",
+        collection_name="vietlex-legal-rag-v2-pilot-384",
         plan_sha256=plan.plan_sha256,
         source_state_sha256=plan.source_state_sha256,
     )
@@ -361,7 +361,7 @@ def test_blocked_plan_cannot_authorize_remote_write(tmp_path: Path) -> None:
     )
     authorization = RemoteWriteAuthorization(
         allow_remote_write=True,
-        collection_name="vietlex-legal-rag-v2-pilot",
+        collection_name="vietlex-legal-rag-v2-pilot-384",
         plan_sha256=plan.plan_sha256,
         source_state_sha256=plan.source_state_sha256,
     )
@@ -387,7 +387,7 @@ def test_authorization_schema_rejects_unsafe_targets(
 ) -> None:
     payload: dict[str, object] = {
         "allow_remote_write": True,
-        "collection_name": "vietlex-legal-rag-v2-pilot",
+        "collection_name": "vietlex-legal-rag-v2-pilot-384",
         "plan_sha256": "a" * 64,
         "source_state_sha256": "b" * 64,
     }
@@ -453,7 +453,7 @@ class RecordingQdrantClient:
             else {
                 "vectors_config": {
                     "dense": models.VectorParams(
-                        size=1024,
+                        size=384,
                         distance=models.Distance.COSINE,
                         on_disk=True,
                     )
@@ -500,7 +500,7 @@ class RecordingQdrantClient:
         }
         if self.mutate_readback == "vector_size":
             vectors["dense"] = models.VectorParams(
-                size=384,
+                size=1024,
                 distance=models.Distance.COSINE,
                 on_disk=True,
             )
@@ -567,9 +567,9 @@ class RecordingQdrantClient:
             payload = point_payload(record)
             if self.mutate_readback == "sample_payload":
                 payload = {**payload, "dataset_revision": "wrong"}
-            dense = [0.1] * 1024
+            dense = [0.1] * 384
             if self.mutate_readback == "sample_dense":
-                dense = [0.1] * 384
+                dense = [0.1] * 1024
             result.append(
                 SimpleNamespace(
                     id=record_id,
@@ -603,7 +603,7 @@ def _bound_plan(tmp_path: Path, *, capacity=None):
 def _authorization(plan) -> RemoteWriteAuthorization:
     return RemoteWriteAuthorization(
         allow_remote_write=True,
-        collection_name="vietlex-legal-rag-v2-pilot",
+        collection_name="vietlex-legal-rag-v2-pilot-384",
         plan_sha256=plan.plan_sha256,
         source_state_sha256=plan.source_state_sha256,
     )
@@ -624,9 +624,9 @@ def test_create_uses_exact_empty_collection_schema(tmp_path: Path) -> None:
 
     assert len(client.create_calls) == 1
     call = client.create_calls[0]
-    assert call["collection_name"] == "vietlex-legal-rag-v2-pilot"
+    assert call["collection_name"] == "vietlex-legal-rag-v2-pilot-384"
     assert call["vectors_config"]["dense"] == models.VectorParams(
-        size=1024,
+        size=384,
         distance=models.Distance.COSINE,
         on_disk=True,
     )
@@ -672,7 +672,7 @@ def test_create_adopts_only_an_exact_empty_existing_target(tmp_path: Path) -> No
     assert receipt.provider_calls == 2
     assert client.create_calls == []
     assert client.payload_index_calls == []
-    assert client.exists_calls == ["vietlex-legal-rag-v2-pilot"]
+    assert client.exists_calls == ["vietlex-legal-rag-v2-pilot-384"]
 
 
 def test_create_rejects_blocked_capacity_before_any_provider_call(
@@ -798,7 +798,7 @@ def test_create_cli_validates_binding_before_constructing_client(
             "--source-state-sha256",
             plan.source_state_sha256,
             "--collection",
-            "vietlex-legal-rag-v2-pilot",
+            "vietlex-legal-rag-v2-pilot-384",
             "--allow-remote-write",
         ]
     )

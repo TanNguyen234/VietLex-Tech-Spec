@@ -136,12 +136,12 @@ class FakeRetriever:
                 reranker_output=[candidate],
                 final_hits=[candidate],
                 provider_usage_by_lane={
-                    "dense": {"mixedbread-ai/mxbai-embed-large-v1": 3}
+                    "dense": {"intfloat/multilingual-e5-small": 3}
                 },
             ),
             latency={"dense": 0.01, "total": 0.02},
             technical_errors={},
-            provider_usage={"mixedbread-ai/mxbai-embed-large-v1": 3},
+            provider_usage={"intfloat/multilingual-e5-small": 3},
         )
 
 
@@ -153,7 +153,7 @@ def _binding() -> StructuralEvaluationBinding:
         gold_policy="all-required-verified",
         selected_case_ids_sha256="d" * 64,
         source_state_sha256="e" * 64,
-        collection_name="vietlex-legal-rag-v2-pilot",
+        collection_name="vietlex-legal-rag-v2-pilot-384",
         plan_sha256="1" * 64,
         creation_receipt_sha256="2" * 64,
         probe_report_sha256="3" * 64,
@@ -228,7 +228,7 @@ async def test_raw_trace_keeps_honest_structural_lane_names(tmp_path: Path) -> N
     }
     assert report["technical_errors"]["total"] == 0
     assert report["technical_errors"]["dense"] == 0
-    assert report["provider_usage"]["mixedbread-ai/mxbai-embed-large-v1"] == 6
+    assert report["provider_usage"]["intfloat/multilingual-e5-small"] == 6
     assert report["provider_usage_observation_complete"] is True
     assert report["acceptance"] == "PASS_PILOT"
     assert report["reranker_contribution"]["document"] == {

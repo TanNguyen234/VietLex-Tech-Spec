@@ -154,7 +154,7 @@ def build_parser() -> argparse.ArgumentParser:
     benchmark.add_argument("--source-state-sha256", required=True)
     benchmark.add_argument(
         "--collection",
-        choices=["vietlex-legal-rag-v2-pilot"],
+        choices=["vietlex-legal-rag-v2-pilot-384"],
         required=True,
     )
     benchmark.add_argument(

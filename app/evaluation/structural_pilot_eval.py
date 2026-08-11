@@ -83,7 +83,7 @@ class StructuralEvaluationBinding(BaseModel):
     gold_policy: Literal["all-required-verified"]
     selected_case_ids_sha256: str = Field(pattern=_SHA256_PATTERN)
     source_state_sha256: str = Field(pattern=_SHA256_PATTERN)
-    collection_name: Literal["vietlex-legal-rag-v2-pilot"]
+    collection_name: Literal["vietlex-legal-rag-v2-pilot-384"]
     plan_sha256: str = Field(pattern=_SHA256_PATTERN)
     creation_receipt_sha256: str = Field(pattern=_SHA256_PATTERN)
     probe_report_sha256: str = Field(pattern=_SHA256_PATTERN)
@@ -93,13 +93,13 @@ class StructuralEvaluationBinding(BaseModel):
     p2_baseline_sha256: str = Field(pattern=_SHA256_PATTERN)
     dense_vector_name: Literal["dense"] = "dense"
     sparse_vector_name: Literal["bm25"] = "bm25"
-    dense_model: Literal["mixedbread-ai/mxbai-embed-large-v1"] = (
-        "mixedbread-ai/mxbai-embed-large-v1"
+    dense_model: Literal["intfloat/multilingual-e5-small"] = (
+        "intfloat/multilingual-e5-small"
     )
     dense_model_options: dict[str, object] = Field(default_factory=dict)
     sparse_model: Literal["qdrant/bm25"] = "qdrant/bm25"
     sparse_model_options: dict[str, object] = Field(default_factory=dict)
-    dense_size: Literal[1024] = 1024
+    dense_size: Literal[384] = 384
     query_instruction_version: Literal["vietlex-vn-legal-retrieval-v1"] = (
         "vietlex-vn-legal-retrieval-v1"
     )

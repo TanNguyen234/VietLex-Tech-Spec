@@ -90,13 +90,14 @@ eligible for the default workflow. There is no local embedding fallback and no
 mandatory Pinecone inference comparison. An existing immutable reference artifact
 may be audited separately, but the default model probe performs no Pinecone calls.
 
-The first selected model, `Qwen/Qwen3-Embedding-0.6B`, was rejected by the live
-free-tier service as unsupported. `intfloat/multilingual-e5-large` was rejected
-as not allowed on the free tier, while its base variant was unsupported. The
-verified free-tier candidate is therefore
-`mixedbread-ai/mxbai-embed-large-v1`, with exact 1024d readback. It remains only
-a candidate until the Vietnamese legal model probe passes every absolute recall
-gate; supported dimension alone is not quality evidence.
+Live raw-upsert probes established that Qwen is unsupported and the tested
+512/768/1024d candidates are either unsupported or not allowed on the free tier.
+The verified free multilingual candidate is
+`intfloat/multilingual-e5-small` at 384d. It is stored in the separate
+`vietlex-legal-rag-v2-pilot-384` collection; the empty 1024d attempt is never
+reused with an incompatible schema. The model remains only a candidate until the
+Vietnamese legal probe passes every absolute recall gate; dimension and provider
+acceptance alone are not quality evidence.
 
 Qdrant documents a free cluster as 1 GB RAM, 0.5 vCPU, and 4 GB disk, approximately
 capable of one million 768d vectors. This is only sizing guidance. The existing

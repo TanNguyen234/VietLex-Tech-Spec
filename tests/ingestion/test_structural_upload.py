@@ -58,7 +58,7 @@ def _contract() -> StructuralQdrantContract:
 
 def _binding() -> CheckpointBinding:
     return CheckpointBinding(
-        collection_name="vietlex-legal-rag-v2-pilot",
+        collection_name="vietlex-legal-rag-v2-pilot-384",
         source_state_sha256="a" * 64,
         plan_sha256="b" * 64,
         creation_receipt_sha256="c" * 64,
@@ -66,7 +66,7 @@ def _binding() -> CheckpointBinding:
         dataset_revision="revision-1",
         ordered_record_ids_sha256="e" * 64,
         manifest_record_count=134_334,
-        dense_model="mixedbread-ai/mxbai-embed-large-v1",
+        dense_model="intfloat/multilingual-e5-small",
         sparse_model="qdrant/bm25",
         document_text_version="vietlex-structural-document-v2",
     )

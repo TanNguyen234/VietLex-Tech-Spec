@@ -79,12 +79,12 @@ def test_structural_contract_defaults_are_exact_and_frozen() -> None:
         Settings(_env_file=None)
     )
 
-    assert contract.collection_name == "vietlex-legal-rag-v2-pilot"
+    assert contract.collection_name == "vietlex-legal-rag-v2-pilot-384"
     assert contract.dense_vector_name == "dense"
     assert contract.sparse_vector_name == "bm25"
-    assert contract.dense_model == "mixedbread-ai/mxbai-embed-large-v1"
+    assert contract.dense_model == "intfloat/multilingual-e5-small"
     assert contract.sparse_model == "qdrant/bm25"
-    assert contract.dense_size == 1024
+    assert contract.dense_size == 384
     assert contract.document_text_version == "vietlex-structural-document-v2"
     assert contract.dense_model_options == {}
     assert contract.sparse_model_options == {}
@@ -99,7 +99,7 @@ def test_structural_contract_defaults_are_exact_and_frozen() -> None:
     [
         ({"STRUCTURAL_COLLECTION_NAME": "vietlex-legal-rag-v1"}, "collection"),
         ({"STRUCTURAL_DENSE_MODEL": "local-model"}, "dense model"),
-        ({"STRUCTURAL_VECTOR_SIZE": 384}, "1024"),
+        ({"STRUCTURAL_VECTOR_SIZE": 1024}, "384"),
         ({"STRUCTURAL_QUERY_INSTRUCTION": " "}, "instruction"),
         ({"STRUCTURAL_QUERY_INSTRUCTION": "different instruction"}, "instruction"),
         ({"STRUCTURAL_DOCUMENT_TEXT_VERSION": "v1"}, "document text"),
@@ -138,7 +138,7 @@ def test_point_uses_cloud_documents_and_preserves_null_provenance() -> None:
     )
     assert point.vector["dense"] == models.Document(
         text=expected_text,
-        model="mixedbread-ai/mxbai-embed-large-v1",
+        model="intfloat/multilingual-e5-small",
         options={},
     )
     assert point.vector["bm25"] == models.Document(
@@ -181,7 +181,7 @@ def test_dense_query_is_instructed_but_sparse_query_is_raw() -> None:
             "statutory provisions and preserve exact legal references.\n"
             "Query:Điều 16"
         ),
-        model="mixedbread-ai/mxbai-embed-large-v1",
+        model="intfloat/multilingual-e5-small",
         options={},
     )
     assert sparse == models.Document(
@@ -262,11 +262,11 @@ def test_raw_upsert_transport_preserves_exact_inference_usage() -> None:
     assert receipt.status == "completed"
     assert receipt.elapsed_seconds == 0.125
     assert receipt.model_tokens == {
-        "mixedbread-ai/mxbai-embed-large-v1": 41,
+        "intfloat/multilingual-e5-small": 41,
         "qdrant/bm25": 41,
     }
     call = client.http.points_api.calls[0]
-    assert call["collection_name"] == "vietlex-legal-rag-v2-pilot"
+    assert call["collection_name"] == "vietlex-legal-rag-v2-pilot-384"
     assert call["wait"] is True
     assert isinstance(call["point_insert_operations"], models.PointsList)
 

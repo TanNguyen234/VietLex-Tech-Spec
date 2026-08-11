@@ -273,14 +273,14 @@ class StructuralModelProbeReport(BaseModel):
         "BLOCKED_TECHNICAL",
         "BLOCKED_SCOPE",
     ]
-    collection_name: Literal["vietlex-legal-rag-v2-pilot"]
+    collection_name: Literal["vietlex-legal-rag-v2-pilot-384"]
     dataset_revision: str = Field(min_length=1)
     dataset_sha256: str = Field(pattern=_SHA256_PATTERN)
     sidecar_sha256: str = Field(pattern=_SHA256_PATTERN)
     source_state_sha256: str = Field(pattern=_SHA256_PATTERN)
     plan_sha256: str = Field(pattern=_SHA256_PATTERN)
     creation_receipt_sha256: str = Field(pattern=_SHA256_PATTERN)
-    candidate_dense_model: Literal["mixedbread-ai/mxbai-embed-large-v1"]
+    candidate_dense_model: Literal["intfloat/multilingual-e5-small"]
     candidate_sparse_model: Literal["qdrant/bm25"]
     candidate_dense_model_options: dict[str, object]
     candidate_sparse_model_options: dict[str, object]
@@ -392,7 +392,7 @@ class StructuralModelProbeReport(BaseModel):
             ):
                 raise ValueError("valid execution record counts are incomplete")
             expected_usage = {
-                "mixedbread-ai/mxbai-embed-large-v1",
+                "intfloat/multilingual-e5-small",
                 "qdrant/bm25",
             }
             if self.reference is not None:
@@ -777,7 +777,11 @@ class PineconeReferenceEmbedder:
                 )
             batch_vectors = [getattr(item, "values", None) for item in data]
             for vector in batch_vectors:
-                _validate_dense_vector(vector, stage="Pinecone reference")
+                _validate_dense_vector(
+                    vector,
+                    expected_dimension=_REFERENCE_DIMENSION,
+                    stage="Pinecone reference",
+                )
             usage = getattr(response, "usage", None)
             total_tokens = getattr(usage, "total_tokens", None)
             if (
@@ -1148,6 +1152,7 @@ def _validate_probe_vectors(
                 )
             _validate_dense_vector(
                 vectors.get(transport.contract.dense_vector_name),
+                expected_dimension=transport.contract.dense_size,
                 stage="Qdrant probe",
             )
             sparse = vectors.get(transport.contract.sparse_vector_name)
@@ -1534,10 +1539,15 @@ def _required_verified(case: GoldenCase) -> tuple[GoldEvidence, ...]:
     )
 
 
-def _validate_dense_vector(vector: object, *, stage: str) -> None:
+def _validate_dense_vector(
+    vector: object,
+    *,
+    expected_dimension: int,
+    stage: str,
+) -> None:
     if (
         not isinstance(vector, list)
-        or len(vector) != _REFERENCE_DIMENSION
+        or len(vector) != expected_dimension
         or any(
             isinstance(value, bool)
             or not isinstance(value, (int, float))
@@ -1546,7 +1556,8 @@ def _validate_dense_vector(vector: object, *, stage: str) -> None:
         )
     ):
         raise StructuralModelProbeError(
-            f"{stage} dense vector is not finite 1024-dimensional float data"
+            f"{stage} dense vector is not finite "
+            f"{expected_dimension}-dimensional float data"
         )
 
 

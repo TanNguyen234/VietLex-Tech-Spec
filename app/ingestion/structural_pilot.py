@@ -59,7 +59,7 @@ _CAPACITY_COMPONENTS = (
     "wal_segments",
     "safety_headroom",
 )
-_PILOT_COLLECTION = "vietlex-legal-rag-v2-pilot"
+_PILOT_COLLECTION = "vietlex-legal-rag-v2-pilot-384"
 
 
 class StructuralPilotError(RuntimeError):
@@ -94,7 +94,7 @@ class StructuralCapacityEstimate(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     estimation_method: Literal["explicit_conservative_v1"]
-    dense_dimension: Literal[1024]
+    dense_dimension: Literal[384]
     hnsw_m: int = Field(gt=0)
     sparse_body_multiplier: Literal[2]
     hnsw_bidirectional_edge_multiplier: Literal[2]
@@ -188,7 +188,7 @@ class RemoteWriteAuthorization(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     allow_remote_write: Literal[True]
-    collection_name: Literal["vietlex-legal-rag-v2-pilot"]
+    collection_name: Literal["vietlex-legal-rag-v2-pilot-384"]
     plan_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     source_state_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
 
@@ -199,7 +199,7 @@ class CollectionSchemaReceipt(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     dense_vector_name: Literal["dense"]
-    dense_size: Literal[1024]
+    dense_size: Literal[384]
     dense_distance: Literal["Cosine"]
     dense_on_disk: Literal[True]
     sparse_vector_name: Literal["bm25"]
@@ -218,7 +218,7 @@ class CollectionCreationReceipt(BaseModel):
 
     schema_version: Literal["1.0.0"] = "1.0.0"
     status: Literal["CREATED", "ADOPTED_EMPTY"] = "CREATED"
-    collection_name: Literal["vietlex-legal-rag-v2-pilot"]
+    collection_name: Literal["vietlex-legal-rag-v2-pilot-384"]
     started_at_utc: datetime
     verified_at_utc: datetime
     source_state_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -243,7 +243,7 @@ class FinalizedCollectionSchemaReceipt(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     dense_vector_name: Literal["dense"]
-    dense_size: Literal[1024]
+    dense_size: Literal[384]
     dense_distance: Literal["Cosine"]
     dense_on_disk: Literal[True]
     sparse_vector_name: Literal["bm25"]
@@ -262,7 +262,7 @@ class CollectionFinalizeReceipt(BaseModel):
 
     schema_version: Literal["1.0.0"] = "1.0.0"
     status: Literal["PASS_FINALIZE", "BLOCKED_TECHNICAL"]
-    collection_name: Literal["vietlex-legal-rag-v2-pilot"]
+    collection_name: Literal["vietlex-legal-rag-v2-pilot-384"]
     created_at_utc: datetime
     source_state_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     plan_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -284,7 +284,7 @@ class CollectionFinalizeReceipt(BaseModel):
         if self.created_at_utc.utcoffset() is None:
             raise ValueError("finalize timestamp must be timezone-aware")
         if set(self.provider_usage) != {
-            "mixedbread-ai/mxbai-embed-large-v1",
+            "intfloat/multilingual-e5-small",
             "qdrant/bm25",
         } or any(
             isinstance(value, bool)
@@ -310,7 +310,7 @@ class CollectionVerificationReceipt(BaseModel):
 
     schema_version: Literal["1.0.0"] = "1.0.0"
     status: Literal["PASS_VERIFY", "BLOCKED_TECHNICAL"]
-    collection_name: Literal["vietlex-legal-rag-v2-pilot"]
+    collection_name: Literal["vietlex-legal-rag-v2-pilot-384"]
     created_at_utc: datetime
     source_state_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     plan_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -355,7 +355,7 @@ class CollectionVerificationReceipt(BaseModel):
         ):
             raise ValueError("verification sample identity mismatch")
         if set(self.provider_usage) != {
-            "mixedbread-ai/mxbai-embed-large-v1",
+            "intfloat/multilingual-e5-small",
             "qdrant/bm25",
         } or any(
             isinstance(value, bool)
@@ -441,7 +441,7 @@ def estimate_capacity(
     if isinstance(hnsw_m, bool) or not isinstance(hnsw_m, int) or hnsw_m <= 0:
         raise StructuralPilotError("hnsw_m must be positive")
 
-    dense = manifest.record_count * 1024 * 4
+    dense = manifest.record_count * 384 * 4
     body = manifest.body_bytes
     sparse_budget = body * 2
     hnsw_edges = manifest.record_count * hnsw_m * 2 * 4
@@ -473,7 +473,7 @@ def estimate_capacity(
     passed = not missing and available is not None and projected <= available
     return StructuralCapacityEstimate(
         estimation_method="explicit_conservative_v1",
-        dense_dimension=1024,
+        dense_dimension=384,
         hnsw_m=hnsw_m,
         sparse_body_multiplier=2,
         hnsw_bidirectional_edge_multiplier=2,

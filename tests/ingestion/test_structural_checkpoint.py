@@ -55,7 +55,7 @@ def _record(record_id: str, body: str | None = None) -> StructuralRecord:
 
 def _binding(**updates: object) -> CheckpointBinding:
     values: dict[str, object] = {
-        "collection_name": "vietlex-legal-rag-v2-pilot",
+        "collection_name": "vietlex-legal-rag-v2-pilot-384",
         "source_state_sha256": "a" * 64,
         "plan_sha256": "b" * 64,
         "creation_receipt_sha256": "c" * 64,
@@ -63,7 +63,7 @@ def _binding(**updates: object) -> CheckpointBinding:
         "dataset_revision": "revision-1",
         "ordered_record_ids_sha256": "e" * 64,
         "manifest_record_count": 134_334,
-        "dense_model": "mixedbread-ai/mxbai-embed-large-v1",
+        "dense_model": "intfloat/multilingual-e5-small",
         "sparse_model": "qdrant/bm25",
         "document_text_version": "vietlex-structural-document-v2",
     }
@@ -84,7 +84,7 @@ def _receipt(records: list[StructuralRecord]) -> BatchReceipt:
         batch_sha256=batch_identity_sha256(acknowledged),
         records=acknowledged,
         usage={
-            "mixedbread-ai/mxbai-embed-large-v1": 10,
+            "intfloat/multilingual-e5-small": 10,
             "qdrant/bm25": 11,
         },
         attempts=1,
@@ -178,7 +178,7 @@ def test_duplicate_acknowledgement_is_idempotent_not_duplicated(
     assert store.commit_receipt(receipt) == 0
     assert store.committed_count() == 1
     assert store.usage_totals() == {
-        "mixedbread-ai/mxbai-embed-large-v1": 10,
+        "intfloat/multilingual-e5-small": 10,
         "qdrant/bm25": 11,
     }
 

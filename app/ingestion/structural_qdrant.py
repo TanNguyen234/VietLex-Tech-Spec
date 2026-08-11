@@ -151,12 +151,12 @@ class StructuralQdrantContract(BaseModel):
     @model_validator(mode="after")
     def validate_exact_contract(self) -> Self:
         exact_values = {
-            "collection_name": "vietlex-legal-rag-v2-pilot",
+            "collection_name": "vietlex-legal-rag-v2-pilot-384",
             "dense_vector_name": "dense",
             "sparse_vector_name": "bm25",
-            "dense_model": "mixedbread-ai/mxbai-embed-large-v1",
+            "dense_model": "intfloat/multilingual-e5-small",
             "sparse_model": "qdrant/bm25",
-            "dense_size": 1024,
+            "dense_size": 384,
             "document_text_version": "vietlex-structural-document-v2",
             "query_instruction_version": "vietlex-vn-legal-retrieval-v1",
             "query_instruction": (
@@ -172,7 +172,7 @@ class StructuralQdrantContract(BaseModel):
             "sparse_vector_name": "sparse vector",
             "dense_model": "dense model",
             "sparse_model": "sparse model",
-            "dense_size": "dense size must be 1024",
+            "dense_size": "dense size must be 384",
             "document_text_version": "document text version",
             "query_instruction_version": "instruction version",
             "query_instruction": "query instruction",

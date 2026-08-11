@@ -337,14 +337,14 @@ def _probe_input(tmp_path: Path) -> StructuralModelProbeInput:
     selection = select_model_probe_records(cases, iter(records))
     receipt = CollectionCreationReceipt(
         status="ADOPTED_EMPTY",
-        collection_name="vietlex-legal-rag-v2-pilot",
+        collection_name="vietlex-legal-rag-v2-pilot-384",
         started_at_utc="2026-08-10T00:00:00Z",
         verified_at_utc="2026-08-10T00:00:01Z",
         source_state_sha256=plan.source_state_sha256,
         plan_sha256=plan.plan_sha256,
         schema_readback=CollectionSchemaReceipt(
             dense_vector_name="dense",
-            dense_size=1024,
+            dense_size=384,
             dense_distance="Cosine",
             dense_on_disk=True,
             sparse_vector_name="bm25",
@@ -479,9 +479,9 @@ class FakeProbeClient:
                     vectors={
                         "dense": models.VectorParams(
                             size=(
-                                384
+                                1024
                                 if self.vector_problem == "schema"
-                                else 1024
+                                else 384
                             ),
                             distance=models.Distance.COSINE,
                             on_disk=True,
@@ -504,7 +504,7 @@ class FakeProbeClient:
         rows = []
         for point_id in ids:
             point = self.points[str(point_id)]
-            dense = [0.0] * 1024
+            dense = [0.0] * 384
             dense[0] = 1.0
             sparse_indices = [1]
             sparse_values = [1.0]
@@ -616,15 +616,15 @@ def test_probe_pass_requires_matched_denominator_and_provider_usage(
     assert report.metrics["mrr"].value == 1.0
     assert report.reference is not None
     assert report.reference.case_ids_sha256 == report.case_ids_sha256
-    assert report.provider_usage["mixedbread-ai/mxbai-embed-large-v1"] > 0
+    assert report.provider_usage["intfloat/multilingual-e5-small"] > 0
     assert report.provider_usage["qdrant/bm25"] > 0
     assert report.provider_usage["llama-text-embed-v2"] > 0
     assert set(report.upsert_provider_usage) == {
-        "mixedbread-ai/mxbai-embed-large-v1",
+        "intfloat/multilingual-e5-small",
         "qdrant/bm25",
     }
     assert set(report.query_provider_usage) == {
-        "mixedbread-ai/mxbai-embed-large-v1"
+        "intfloat/multilingual-e5-small"
     }
     assert report.dataset_sha256 == "d" * 64
     assert report.sidecar_sha256 == "e" * 64
@@ -665,7 +665,7 @@ def test_probe_passes_without_constructing_a_pinecone_reference(
     assert report.acceptance == "PASS_MODEL_PROBE"
     assert report.reference is None
     assert set(report.provider_usage) == {
-        "mixedbread-ai/mxbai-embed-large-v1",
+        "intfloat/multilingual-e5-small",
         "qdrant/bm25",
     }
 

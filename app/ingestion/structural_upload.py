@@ -345,7 +345,7 @@ class StructuralUploadReport(BaseModel):
 
     schema_version: Literal["1.0.0"] = "1.0.0"
     status: Literal["UPLOAD_COMPLETE", "UPLOAD_INCOMPLETE"]
-    collection_name: Literal["vietlex-legal-rag-v2-pilot"]
+    collection_name: Literal["vietlex-legal-rag-v2-pilot-384"]
     created_at_utc: datetime
     source_state_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     plan_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -390,7 +390,7 @@ class StructuralUploadReport(BaseModel):
         ):
             raise ValueError("upload report batch evidence mismatch")
         if set(self.provider_usage) != {
-            "mixedbread-ai/mxbai-embed-large-v1",
+            "intfloat/multilingual-e5-small",
             "qdrant/bm25",
         } or any(
             isinstance(value, bool)

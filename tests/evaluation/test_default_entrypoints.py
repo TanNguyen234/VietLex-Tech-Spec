@@ -93,7 +93,7 @@ def test_structural_benchmark_requires_exact_remote_authorization() -> None:
             "--source-state-sha256",
             "8" * 64,
             "--collection",
-            "vietlex-legal-rag-v2-pilot",
+            "vietlex-legal-rag-v2-pilot-384",
             "--run-id",
             "structural-benchmark",
             "--allow-remote-benchmark",
@@ -137,14 +137,14 @@ async def test_structural_benchmark_persists_remote_initialization_failure(
     dataset_sha256 = hashlib.sha256(dataset_bytes).hexdigest()
     manifest = SimpleNamespace(dataset_revision="revision-1")
     contract = SimpleNamespace(
-        collection_name="vietlex-legal-rag-v2-pilot",
+        collection_name="vietlex-legal-rag-v2-pilot-384",
         dense_vector_name="dense",
         sparse_vector_name="bm25",
-        dense_model="mixedbread-ai/mxbai-embed-large-v1",
+        dense_model="intfloat/multilingual-e5-small",
         dense_model_options={},
         sparse_model="qdrant/bm25",
         sparse_model_options={},
-        dense_size=1024,
+        dense_size=384,
         query_instruction_version="vietlex-vn-legal-retrieval-v1",
         query_instruction="query instruction",
         dense_top_k=24,
@@ -294,7 +294,7 @@ async def test_structural_benchmark_persists_remote_initialization_failure(
         p2_baseline=tmp_path / "baseline.json",
         p2_baseline_sha256=digest,
         source_state_sha256=digest,
-        collection="vietlex-legal-rag-v2-pilot",
+        collection="vietlex-legal-rag-v2-pilot-384",
         output_root=tmp_path,
         run_id="remote-init-blocked",
         create_receipt_sha256=digest,
@@ -314,7 +314,7 @@ def test_structural_benchmark_rejects_probe_contract_drift() -> None:
     plan = SimpleNamespace(
         manifest=SimpleNamespace(dataset_revision="revision-1"),
         contract=SimpleNamespace(
-            dense_model="mixedbread-ai/mxbai-embed-large-v1",
+            dense_model="intfloat/multilingual-e5-small",
             sparse_model="qdrant/bm25",
             dense_model_options={"truncate": False},
             sparse_model_options={"language": "vi"},
@@ -323,7 +323,7 @@ def test_structural_benchmark_rejects_probe_contract_drift() -> None:
     )
     probe = SimpleNamespace(
         dataset_revision="revision-1",
-        candidate_dense_model="mixedbread-ai/mxbai-embed-large-v1",
+        candidate_dense_model="intfloat/multilingual-e5-small",
         candidate_sparse_model="qdrant/bm25",
         candidate_dense_model_options={"truncate": True},
         candidate_sparse_model_options={"language": "vi"},
@@ -361,14 +361,14 @@ def test_structural_create_entrypoint_requires_exact_authorization() -> None:
             "--source-state-sha256",
             "b" * 64,
             "--collection",
-            "vietlex-legal-rag-v2-pilot",
+            "vietlex-legal-rag-v2-pilot-384",
             "--allow-remote-write",
         ]
     )
 
     assert arguments.command_name == "create"
     assert arguments.allow_remote_write is True
-    assert arguments.collection == "vietlex-legal-rag-v2-pilot"
+    assert arguments.collection == "vietlex-legal-rag-v2-pilot-384"
 
 
 def test_structural_probe_entrypoint_requires_bound_live_scope() -> None:
@@ -388,7 +388,7 @@ def test_structural_probe_entrypoint_requires_bound_live_scope() -> None:
             "--source-state-sha256",
             "b" * 64,
             "--collection",
-            "vietlex-legal-rag-v2-pilot",
+            "vietlex-legal-rag-v2-pilot-384",
             "--allow-remote-write",
         ]
     )
@@ -481,7 +481,7 @@ def test_structural_remote_phases_require_exact_artifact_chain(
             "--source-state-sha256",
             "b" * 64,
             "--collection",
-            "vietlex-legal-rag-v2-pilot",
+            "vietlex-legal-rag-v2-pilot-384",
             "--allow-remote-write",
         ]
     )

@@ -36,10 +36,10 @@ class Settings(BaseSettings):
 
     # Opt-in Qdrant structural pilot.
     STRUCTURAL_BACKEND_ENABLED: bool = False
-    STRUCTURAL_COLLECTION_NAME: str = "vietlex-legal-rag-v2-pilot"
+    STRUCTURAL_COLLECTION_NAME: str = "vietlex-legal-rag-v2-pilot-384"
     STRUCTURAL_DENSE_VECTOR_NAME: str = "dense"
     STRUCTURAL_SPARSE_VECTOR_NAME: str = "bm25"
-    STRUCTURAL_DENSE_MODEL: str = "mixedbread-ai/mxbai-embed-large-v1"
+    STRUCTURAL_DENSE_MODEL: str = "intfloat/multilingual-e5-small"
     STRUCTURAL_DENSE_MODEL_OPTIONS: dict[str, object] = Field(
         default_factory=dict
     )
@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     STRUCTURAL_SPARSE_MODEL_OPTIONS: dict[str, object] = Field(
         default_factory=dict
     )
-    STRUCTURAL_VECTOR_SIZE: int = 1024
+    STRUCTURAL_VECTOR_SIZE: int = 384
     STRUCTURAL_DOCUMENT_TEXT_VERSION: str = "vietlex-structural-document-v2"
     STRUCTURAL_QUERY_INSTRUCTION_VERSION: str = (
         "vietlex-vn-legal-retrieval-v1"

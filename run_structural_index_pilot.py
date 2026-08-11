@@ -152,7 +152,7 @@ def _add_remote_binding_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--source-state-sha256", required=True)
     parser.add_argument(
         "--collection",
-        choices=["vietlex-legal-rag-v2-pilot"],
+        choices=["vietlex-legal-rag-v2-pilot-384"],
         required=True,
     )
     parser.add_argument(
@@ -225,7 +225,7 @@ def build_parser() -> argparse.ArgumentParser:
     probe.add_argument("--source-state-sha256", required=True)
     probe.add_argument(
         "--collection",
-        choices=["vietlex-legal-rag-v2-pilot"],
+        choices=["vietlex-legal-rag-v2-pilot-384"],
         required=True,
     )
     probe.add_argument(
