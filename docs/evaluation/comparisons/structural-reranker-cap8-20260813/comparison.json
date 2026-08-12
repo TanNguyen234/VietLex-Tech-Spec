@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0.0",
+  "comparison_id": "structural-reranker-cap8-20260813",
+  "decision": "SELECT_PINECONE_FOR_NEXT_EXPERIMENT",
+  "production_cutover_authorized": false,
+  "invariants": {
+    "evaluation_source_state_sha256": "1f975ea46044a80ac81006822472a2abec1105d380aeba391d1116aa3582c9a8",
+    "index_source_state_sha256": "fcd573edd55f8da6f9d8fb4f2d97faf13525740bdf9242e69fd3faaa3969f963",
+    "collection": "vietlex-legal-rag-v2-pilot-384",
+    "per_document_limit": 8,
+    "reranker_input_format": "body_v1",
+    "case_count": 40,
+    "identical_case_ids": true,
+    "identical_reranker_input_sha256_count": 40,
+    "reranker_input_mismatch_count": 0
+  },
+  "runs": {
+    "qdrant": {
+      "run_id": "structural-e5-384-cap8-qdrant-v2-20260813",
+      "observed_provider": "qdrant",
+      "observed_model": "answerdotai/answerai-colbert-small-v1",
+      "observed_case_count": 40,
+      "technical_error_count": 0,
+      "all_required_coverage": 0.725,
+      "reranker_output_document_recall": 0.9057,
+      "reranker_output_article_recall": 0.8667,
+      "reranker_output_clause_recall": 0.7857,
+      "mean_total_latency_seconds": 4.09918,
+      "manifest_sha256": "6a75a656ec513d000c82a8a7acadca1f50fbfac07f024d288b54ec0e73f9adb5",
+      "raw_results_sha256": "ce131679e66c90c8b5d1d11475e4cdc09978f97bfa01f1e3bc6d991ee0e1a509",
+      "report_sha256": "0ffc0ce4d6dd170bc659c3f98e7e15a7f4184d2e19391e389f9351b2a4a554c0"
+    },
+    "pinecone": {
+      "run_id": "structural-e5-384-cap8-pinecone-v2-20260813",
+      "observed_provider": "pinecone",
+      "observed_model": "bge-reranker-v2-m3",
+      "observed_case_count": 40,
+      "technical_error_count": 0,
+      "all_required_coverage": 0.85,
+      "reranker_output_document_recall": 1.0,
+      "reranker_output_article_recall": 0.9333,
+      "reranker_output_clause_recall": 0.8571,
+      "mean_total_latency_seconds": 1.712522,
+      "manifest_sha256": "5ef16b1e5e2e2165b26643a1f2b43554fc947fee6c8d2574bf6766e8e861a0f8",
+      "raw_results_sha256": "3eea2a22f6426816ce0c7d917cab15838b24ec2f8a39bfd6bd5c115284d85d27",
+      "report_sha256": "2f9d44c8e12bf617385a119307338e7b81647d18d0a03599b84621b325e1cf81"
+    }
+  },
+  "delta_pinecone_minus_qdrant": {
+    "all_required_coverage": 0.125,
+    "reranker_output_document_recall": 0.0943,
+    "reranker_output_article_recall": 0.0666,
+    "reranker_output_clause_recall": 0.0714,
+    "mean_total_latency_seconds": -2.386658
+  },
+  "limitations": [
+    "Both complete runs remain FAIL_QUALITY because input Article Recall is 0.9333, Clause Recall is 0.8571, and final all-required coverage is below 0.95.",
+    "This comparison authorizes Pinecone BGE only as the reranker for the next isolated P3 experiment; it does not authorize production cutover."
+  ]
+}

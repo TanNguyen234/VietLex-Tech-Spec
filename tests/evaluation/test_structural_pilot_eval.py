@@ -139,6 +139,10 @@ class FakeRetriever:
                 provider_usage_by_lane={
                     "dense": {"intfloat/multilingual-e5-small": 3}
                 },
+                reranker_input_format="body_v1",
+                reranker_input_sha256="f" * 64,
+                reranker_provider="qdrant",
+                reranker_model="answerdotai/answerai-colbert-small-v1",
             ),
             latency={"dense": 0.01, "total": 0.02},
             technical_errors={},
@@ -217,6 +221,10 @@ async def test_raw_trace_keeps_honest_structural_lane_names(tmp_path: Path) -> N
     }
     assert "pinecone_hits" not in trace
     assert "fts_hits" not in trace
+    assert trace["reranker_input_format"] == "body_v1"
+    assert len(trace["reranker_input_sha256"]) == 64
+    assert trace["reranker_provider"] == "qdrant"
+    assert trace["reranker_model"] == "answerdotai/answerai-colbert-small-v1"
     report = json.loads((run.run_dir / "report.json").read_text("utf-8"))
     assert report["metrics"]["fused_document_recall_at_24"] == {
         "numerator": 2,
@@ -232,6 +240,13 @@ async def test_raw_trace_keeps_honest_structural_lane_names(tmp_path: Path) -> N
     assert report["technical_errors"]["dense"] == 0
     assert report["provider_usage"]["intfloat/multilingual-e5-small"] == 6
     assert report["provider_usage_observation_complete"] is True
+    assert report["observed_rerankers"] == [
+        {
+            "case_count": 2,
+            "model": "answerdotai/answerai-colbert-small-v1",
+            "provider": "qdrant",
+        }
+    ]
     assert report["acceptance"] == "PASS_PILOT"
     assert report["reranker_contribution"]["document"] == {
         "input": {"numerator": 2, "denominator": 2, "value": 1.0},
@@ -245,6 +260,7 @@ async def test_raw_trace_keeps_honest_structural_lane_names(tmp_path: Path) -> N
         "case-2": "ok",
         "case-outside": "skipped:outside_primary_legislation_scope",
     }
+    assert manifest["observed_rerankers"] == report["observed_rerankers"]
 
 
 def test_metric_adapter_is_explicit_and_raw_model_forbids_aliases() -> None:

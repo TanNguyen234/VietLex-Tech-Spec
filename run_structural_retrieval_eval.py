@@ -169,6 +169,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="benchmark-only candidate cap; omitted means the verified plan value",
     )
     benchmark.add_argument(
+        "--reranker-mode",
+        choices=["current", "pinecone-only", "qdrant-only"],
+        default="current",
+    )
+    benchmark.add_argument(
         "--collection",
         choices=["vietlex-legal-rag-v2-pilot-384"],
         required=True,
@@ -359,6 +364,7 @@ async def _run_benchmark(arguments: argparse.Namespace) -> int:
         fused_limit=runtime_contract.fused_limit,
         rrf_k=runtime_contract.rrf_k,
         per_document_limit=runtime_contract.per_document_limit,
+        reranker_mode=arguments.reranker_mode,
     )
     _require(
         probe.dataset_sha256 == binding.dataset_sha256
@@ -543,6 +549,7 @@ async def _run_benchmark(arguments: argparse.Namespace) -> int:
             fts_index=fts,
             reranker=get_remote_reranker(),
             contract=runtime_contract,
+            reranker_mode=arguments.reranker_mode,
         )
     except Exception as error:
         initialization_errors = [

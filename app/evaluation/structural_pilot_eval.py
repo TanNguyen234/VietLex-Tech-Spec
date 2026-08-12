@@ -110,6 +110,9 @@ class StructuralEvaluationBinding(BaseModel):
     fused_limit: int = Field(gt=0)
     rrf_k: int = Field(gt=0)
     per_document_limit: int = Field(gt=0)
+    reranker_mode: Literal["current", "pinecone-only", "qdrant-only"] = (
+        "current"
+    )
 
 
 class StructuralEvaluationTrace(BaseModel):
@@ -125,6 +128,14 @@ class StructuralEvaluationTrace(BaseModel):
     reranker_input: list[StageCandidate] = Field(default_factory=list)
     reranker_output: list[StageCandidate] = Field(default_factory=list)
     final_hits: list[StageCandidate] = Field(default_factory=list)
+    reranker_input_format: Literal["body_v1"] | None = None
+    reranker_input_sha256: str | None = Field(
+        default=None,
+        pattern=_SHA256_PATTERN,
+    )
+    reranker_provider: str | None = None
+    reranker_model: str | None = None
+    reranker_fallback_reason: str | None = None
 
 
 class P2BaselineValidation(BaseModel):
@@ -222,6 +233,11 @@ def structural_evaluation_trace(
             _stage_candidate(row, source="final", score=row.reranker_score)
             for row in trace.final_hits
         ],
+        reranker_input_format=trace.reranker_input_format,
+        reranker_input_sha256=trace.reranker_input_sha256,
+        reranker_provider=trace.reranker_provider,
+        reranker_model=trace.reranker_model,
+        reranker_fallback_reason=trace.reranker_fallback_reason,
     )
 
 
@@ -510,6 +526,19 @@ def _provider_usage(rows: Sequence[_ExecutedCase]) -> dict[str, int]:
     return dict(sorted(usage.items()))
 
 
+def _observed_rerankers(rows: Sequence[_ExecutedCase]) -> list[dict[str, object]]:
+    observed: Counter[tuple[str, str]] = Counter()
+    for row in rows:
+        provider = row.trace.reranker_provider
+        model = row.trace.reranker_model
+        if provider and model:
+            observed[(provider, model)] += 1
+    return [
+        {"provider": provider, "model": model, "case_count": count}
+        for (provider, model), count in sorted(observed.items())
+    ]
+
+
 def _configuration(binding: StructuralEvaluationBinding) -> dict[str, Any]:
     return {
         "eval_mode": "retrieval-only",
@@ -544,6 +573,7 @@ def _configuration(binding: StructuralEvaluationBinding) -> dict[str, Any]:
         "fused_limit": binding.fused_limit,
         "rrf_k": binding.rrf_k,
         "per_document_limit": binding.per_document_limit,
+        "reranker_mode": binding.reranker_mode,
         "comparison_limit": 24,
     }
 
@@ -755,6 +785,7 @@ async def run_structural_pilot_evaluation(
         "provider_usage_observation_complete": (
             provider_usage_observation_complete
         ),
+        "observed_rerankers": _observed_rerankers(executed),
         "metric_stage_aliases": _METRIC_STAGE_ALIASES,
         "reranker_contribution": _reranker_contribution(executed),
     }
@@ -775,6 +806,7 @@ async def run_structural_pilot_evaluation(
         "provider_usage_observation_complete": (
             provider_usage_observation_complete
         ),
+        "observed_rerankers": _observed_rerankers(executed),
         "case_statuses": case_statuses,
         "acceptance": acceptance,
     }

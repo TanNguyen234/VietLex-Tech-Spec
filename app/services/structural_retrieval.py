@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import json
 import math
 import time
 from collections import Counter
@@ -41,6 +42,7 @@ from app.services.remote_reranker import (
 _PositiveInt = Annotated[StrictInt, Field(gt=0)]
 _NonnegativeInt = Annotated[StrictInt, Field(ge=0)]
 _SHA256_PATTERN = r"^[0-9a-f]{64}$"
+_RerankerMode = Literal["current", "pinecone-only", "qdrant-only"]
 
 
 class StructuralRetrievalError(RuntimeError):
@@ -141,6 +143,11 @@ class StructuralRetrievalTrace(BaseModel):
     reranker_attempts: _PositiveInt | None = None
     reranker_input_count: _NonnegativeInt | None = None
     reranker_output_count: _NonnegativeInt | None = None
+    reranker_input_format: Literal["body_v1"] | None = None
+    reranker_input_sha256: str | None = Field(
+        default=None,
+        pattern=_SHA256_PATTERN,
+    )
 
 
 class StructuralRetrievalOutcome(BaseModel):
@@ -406,9 +413,12 @@ class StructuralRetriever:
         transport: _QueryTransport,
         fts_index: Any,
         reranker: Any,
+        reranker_mode: _RerankerMode = "current",
     ) -> None:
         if transport.contract != contract:
             raise StructuralRetrievalError("transport contract mismatch")
+        if reranker_mode not in {"current", "pinecone-only", "qdrant-only"}:
+            raise StructuralRetrievalError("structural reranker mode is invalid")
         runtime_limits = (
             settings.RERANK_INPUT_LIMIT,
             settings.RERANK_RETURN_LIMIT,
@@ -430,6 +440,7 @@ class StructuralRetriever:
         self.transport = transport
         self.fts_index = fts_index
         self.reranker = reranker
+        self.reranker_mode = reranker_mode
 
     async def _query_lane(
         self,
@@ -646,10 +657,21 @@ class StructuralRetriever:
             )
 
         reranker_started = time.perf_counter()
+        reranker_documents = [candidate.body for candidate in reranker_input]
+        trace.reranker_input_format = "body_v1"
+        trace.reranker_input_sha256 = hashlib.sha256(
+            json.dumps(
+                {"query": normalized, "documents": reranker_documents},
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
         try:
             rerank = await self.reranker.rerank(
                 normalized,
-                [candidate.body for candidate in reranker_input],
+                reranker_documents,
+                mode=self.reranker_mode,
                 rerank_return_limit=self.settings.RERANK_RETURN_LIMIT,
             )
             reranked = self._validated_rerank(rerank, reranker_input)
@@ -801,6 +823,7 @@ def build_structural_retriever(
     fts_index: Any,
     reranker: Any,
     contract: StructuralQdrantContract | None = None,
+    reranker_mode: _RerankerMode = "current",
 ) -> StructuralRetriever:
     """Construct the explicit opt-in backend; never alter the v1 factory."""
     if not settings.STRUCTURAL_BACKEND_ENABLED:
@@ -814,4 +837,5 @@ def build_structural_retriever(
         transport=StructuralQdrantTransport(client, resolved_contract),
         fts_index=fts_index,
         reranker=reranker,
+        reranker_mode=reranker_mode,
     )

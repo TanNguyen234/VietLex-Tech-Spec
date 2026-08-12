@@ -1,0 +1,2341 @@
+{
+  "acceptance": "FAIL_QUALITY",
+  "coverage": {
+    "scored_case_count": 40,
+    "selected_case_count": 40,
+    "skip_reasons": {},
+    "skipped_case_count": 0,
+    "skipped_cases": [],
+    "value": 1.0
+  },
+  "latency": {
+    "bm25": {
+      "count": 40,
+      "max_seconds": 1.912155,
+      "mean_seconds": 0.582443,
+      "total_seconds": 23.297704
+    },
+    "dense": {
+      "count": 40,
+      "max_seconds": 3.542876,
+      "mean_seconds": 0.865304,
+      "total_seconds": 34.612173
+    },
+    "exact": {
+      "count": 40,
+      "max_seconds": 0.0,
+      "mean_seconds": 0.0,
+      "total_seconds": 0.0
+    },
+    "reranker": {
+      "count": 40,
+      "max_seconds": 2.846907,
+      "mean_seconds": 0.812085,
+      "total_seconds": 32.483384
+    },
+    "reranker_provider": {
+      "count": 40,
+      "max_seconds": 2.846037,
+      "mean_seconds": 0.810772,
+      "total_seconds": 32.430884
+    },
+    "total": {
+      "count": 40,
+      "max_seconds": 4.625337,
+      "mean_seconds": 1.712522,
+      "total_seconds": 68.500882
+    }
+  },
+  "metric_stage_aliases": {
+    "final_evidence_chunks": "final_hits",
+    "fts_hits": "bm25_hits",
+    "locally_selected_chunks": "reranker_input",
+    "merged_document_candidates": "fused_hits",
+    "pinecone_hits": "dense_hits",
+    "reranker_input_chunks": "reranker_input",
+    "reranker_output_chunks": "reranker_output",
+    "resolved_document_candidates": "fused_hits",
+    "structural_chunks_generated": "fused_hits"
+  },
+  "metrics": {
+    "fused_article_recall_at_24": {
+      "denominator": 30,
+      "numerator": 28,
+      "value": 0.9333
+    },
+    "fused_clause_recall_at_24": {
+      "denominator": 14,
+      "numerator": 12,
+      "value": 0.8571
+    },
+    "fused_document_recall_at_24": {
+      "denominator": 53,
+      "numerator": 53,
+      "value": 1.0
+    },
+    "metric_v3": {
+      "article_recall": {
+        "1": {
+          "denominator": 30.0,
+          "macro": 0.5741,
+          "micro": 0.5667,
+          "numerator": 17.0,
+          "reason": null,
+          "scored_cases": 27,
+          "skip_reasons": {
+            "no_applicable_gold": 13
+          },
+          "skipped_cases": 13
+        },
+        "3": {
+          "denominator": 30.0,
+          "macro": 0.8704,
+          "micro": 0.8333,
+          "numerator": 25.0,
+          "reason": null,
+          "scored_cases": 27,
+          "skip_reasons": {
+            "no_applicable_gold": 13
+          },
+          "skipped_cases": 13
+        },
+        "6": {
+          "denominator": 0.0,
+          "macro": null,
+          "micro": null,
+          "numerator": 0.0,
+          "reason": "no_applicable_values",
+          "scored_cases": 0,
+          "skip_reasons": {
+            "k_exceeds_configured_capacity": 40
+          },
+          "skipped_cases": 40
+        }
+      },
+      "clause_recall": {
+        "1": {
+          "denominator": 14.0,
+          "macro": 0.6923,
+          "micro": 0.6429,
+          "numerator": 9.0,
+          "reason": null,
+          "scored_cases": 13,
+          "skip_reasons": {
+            "no_applicable_gold": 27
+          },
+          "skipped_cases": 27
+        },
+        "3": {
+          "denominator": 14.0,
+          "macro": 0.8462,
+          "micro": 0.7857,
+          "numerator": 11.0,
+          "reason": null,
+          "scored_cases": 13,
+          "skip_reasons": {
+            "no_applicable_gold": 27
+          },
+          "skipped_cases": 27
+        },
+        "6": {
+          "denominator": 0.0,
+          "macro": null,
+          "micro": null,
+          "numerator": 0.0,
+          "reason": "no_applicable_values",
+          "scored_cases": 0,
+          "skip_reasons": {
+            "k_exceeds_configured_capacity": 40
+          },
+          "skipped_cases": 40
+        }
+      },
+      "coverage": {
+        "denominator": 40.0,
+        "macro": 1.0,
+        "micro": 1.0,
+        "numerator": 40.0,
+        "reason": null,
+        "scored_cases": 40,
+        "skip_reasons": {},
+        "skipped_cases": 0
+      },
+      "document_recall": {
+        "1": {
+          "denominator": 53.0,
+          "macro": 0.475,
+          "micro": 0.434,
+          "numerator": 23.0,
+          "reason": null,
+          "scored_cases": 40,
+          "skip_reasons": {},
+          "skipped_cases": 0
+        },
+        "10": {
+          "denominator": 53.0,
+          "macro": 0.95,
+          "micro": 0.9623,
+          "numerator": 51.0,
+          "reason": null,
+          "scored_cases": 40,
+          "skip_reasons": {},
+          "skipped_cases": 0
+        },
+        "24": {
+          "denominator": 53.0,
+          "macro": 1.0,
+          "micro": 1.0,
+          "numerator": 53.0,
+          "reason": null,
+          "scored_cases": 40,
+          "skip_reasons": {},
+          "skipped_cases": 0
+        },
+        "3": {
+          "denominator": 53.0,
+          "macro": 0.925,
+          "micro": 0.9434,
+          "numerator": 50.0,
+          "reason": null,
+          "scored_cases": 40,
+          "skip_reasons": {},
+          "skipped_cases": 0
+        },
+        "5": {
+          "denominator": 53.0,
+          "macro": 0.925,
+          "micro": 0.9434,
+          "numerator": 50.0,
+          "reason": null,
+          "scored_cases": 40,
+          "skip_reasons": {},
+          "skipped_cases": 0
+        }
+      },
+      "exact_reference_hit": {
+        "denominator": 40.0,
+        "macro": 0.9,
+        "micro": 0.9,
+        "numerator": 36.0,
+        "reason": null,
+        "scored_cases": 40,
+        "skip_reasons": {},
+        "skipped_cases": 0
+      },
+      "metric_version": "3.0.0",
+      "mrr": {
+        "article": {
+          "denominator": 27.0,
+          "macro": 0.7407,
+          "micro": 0.7407,
+          "numerator": 20.0,
+          "reason": null,
+          "scored_cases": 27,
+          "skip_reasons": {
+            "no_applicable_gold": 13
+          },
+          "skipped_cases": 13
+        },
+        "clause": {
+          "denominator": 13.0,
+          "macro": 0.7692,
+          "micro": 0.7692,
+          "numerator": 10.0,
+          "reason": null,
+          "scored_cases": 13,
+          "skip_reasons": {
+            "no_applicable_gold": 27
+          },
+          "skipped_cases": 27
+        },
+        "document": {
+          "denominator": 40.0,
+          "macro": 0.6904,
+          "micro": 0.6904,
+          "numerator": 27.614379,
+          "reason": null,
+          "scored_cases": 40,
+          "skip_reasons": {},
+          "skipped_cases": 0
+        }
+      },
+      "multi_hop_all_required": {
+        "denominator": 40.0,
+        "macro": 0.85,
+        "micro": 0.85,
+        "numerator": 34.0,
+        "reason": null,
+        "scored_cases": 40,
+        "skip_reasons": {},
+        "skipped_cases": 0
+      },
+      "multi_hop_partial": {
+        "denominator": 53.0,
+        "macro": 0.875,
+        "micro": 0.8679,
+        "numerator": 46.0,
+        "reason": null,
+        "scored_cases": 40,
+        "skip_reasons": {},
+        "skipped_cases": 0
+      },
+      "ndcg_at_10": {
+        "denominator": 48.20209,
+        "macro": 0.7647,
+        "micro": 0.7352,
+        "numerator": 35.44023,
+        "reason": null,
+        "scored_cases": 40,
+        "skip_reasons": {},
+        "skipped_cases": 0
+      },
+      "no_candidate_rate": {
+        "denominator": 40.0,
+        "macro": 0.0,
+        "micro": 0.0,
+        "numerator": 0.0,
+        "reason": null,
+        "scored_cases": 40,
+        "skip_reasons": {},
+        "skipped_cases": 0
+      },
+      "reranker_technical_error_rate": {
+        "denominator": 40,
+        "macro": 0.0,
+        "micro": 0.0,
+        "numerator": 0,
+        "reason": null,
+        "scored_cases": 40,
+        "skip_reasons": {},
+        "skipped_cases": 0
+      },
+      "retrieval_technical_error_rate": {
+        "denominator": 40,
+        "macro": 0.0,
+        "micro": 0.0,
+        "numerator": 0,
+        "reason": null,
+        "scored_cases": 40,
+        "skip_reasons": {},
+        "skipped_cases": 0
+      },
+      "scored_cases": 40,
+      "skip_reason_counts": {},
+      "skipped_cases": 0,
+      "stages": {
+        "final_evidence_metrics": {
+          "applicable_gold_counts": {
+            "article": 30,
+            "clause": 14,
+            "document": 53
+          },
+          "candidates": {
+            "count": 40,
+            "max": 3.0,
+            "mean": 2.95,
+            "min": 2.0,
+            "p50": 3.0,
+            "p95": 3.0
+          },
+          "configured_capacity": 3,
+          "first_loss_evidence_count": 4,
+          "matched_gold_counts": {
+            "article": 25,
+            "clause": 11,
+            "document": 49
+          },
+          "mrr": {
+            "article": {
+              "denominator": 27.0,
+              "macro": 0.7407,
+              "micro": 0.7407,
+              "numerator": 20.0,
+              "reason": null,
+              "scored_cases": 27,
+              "skip_reasons": {
+                "no_applicable_gold": 13
+              },
+              "skipped_cases": 13
+            },
+            "clause": {
+              "denominator": 13.0,
+              "macro": 0.7692,
+              "micro": 0.7692,
+              "numerator": 10.0,
+              "reason": null,
+              "scored_cases": 13,
+              "skip_reasons": {
+                "no_applicable_gold": 27
+              },
+              "skipped_cases": 27
+            },
+            "document": {
+              "denominator": 40.0,
+              "macro": 0.825,
+              "micro": 0.825,
+              "numerator": 33.0,
+              "reason": null,
+              "scored_cases": 40,
+              "skip_reasons": {},
+              "skipped_cases": 0
+            }
+          },
+          "null_reason_counts": {
+            "k_exceeds_configured_capacity": 200,
+            "no_applicable_gold": 120
+          },
+          "recall": {
+            "article": {
+              "1": {
+                "denominator": 30.0,
+                "macro": 0.5741,
+                "micro": 0.5667,
+                "numerator": 17.0,
+                "reason": null,
+                "scored_cases": 27,
+                "skip_reasons": {
+                  "no_applicable_gold": 13
+                },
+                "skipped_cases": 13
+              },
+              "3": {
+                "denominator": 30.0,
+                "macro": 0.8704,
+                "micro": 0.8333,
+                "numerator": 25.0,
+                "reason": null,
+                "scored_cases": 27,
+                "skip_reasons": {
+                  "no_applicable_gold": 13
+                },
+                "skipped_cases": 13
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "k_exceeds_configured_capacity": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "clause": {
+              "1": {
+                "denominator": 14.0,
+                "macro": 0.6923,
+                "micro": 0.6429,
+                "numerator": 9.0,
+                "reason": null,
+                "scored_cases": 13,
+                "skip_reasons": {
+                  "no_applicable_gold": 27
+                },
+                "skipped_cases": 27
+              },
+              "3": {
+                "denominator": 14.0,
+                "macro": 0.8462,
+                "micro": 0.7857,
+                "numerator": 11.0,
+                "reason": null,
+                "scored_cases": 13,
+                "skip_reasons": {
+                  "no_applicable_gold": 27
+                },
+                "skipped_cases": 27
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "k_exceeds_configured_capacity": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "document": {
+              "1": {
+                "denominator": 53.0,
+                "macro": 0.725,
+                "micro": 0.6792,
+                "numerator": 36.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "10": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "k_exceeds_configured_capacity": 40
+                },
+                "skipped_cases": 40
+              },
+              "24": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "k_exceeds_configured_capacity": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 53.0,
+                "macro": 0.925,
+                "micro": 0.9245,
+                "numerator": 49.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "5": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "k_exceeds_configured_capacity": 40
+                },
+                "skipped_cases": 40
+              }
+            }
+          },
+          "scored_case_count": 40
+        },
+        "fts_document_metrics": {
+          "applicable_gold_counts": {
+            "article": 0,
+            "clause": 0,
+            "document": 53
+          },
+          "candidates": {
+            "count": 40,
+            "max": 48.0,
+            "mean": 48.0,
+            "min": 48.0,
+            "p50": 48.0,
+            "p95": 48.0
+          },
+          "configured_capacity": 24,
+          "first_loss_evidence_count": 0,
+          "matched_gold_counts": {
+            "article": 0,
+            "clause": 0,
+            "document": 53
+          },
+          "mrr": {
+            "article": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40
+              },
+              "skipped_cases": 40
+            },
+            "clause": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40
+              },
+              "skipped_cases": 40
+            },
+            "document": {
+              "denominator": 40.0,
+              "macro": 0.8034,
+              "micro": 0.8034,
+              "numerator": 32.134523,
+              "reason": null,
+              "scored_cases": 40,
+              "skip_reasons": {},
+              "skipped_cases": 0
+            }
+          },
+          "null_reason_counts": {
+            "stage_does_not_expose_structural_locators": 320
+          },
+          "recall": {
+            "article": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "stage_does_not_expose_structural_locators": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "stage_does_not_expose_structural_locators": 40
+                },
+                "skipped_cases": 40
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "stage_does_not_expose_structural_locators": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "clause": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "stage_does_not_expose_structural_locators": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "stage_does_not_expose_structural_locators": 40
+                },
+                "skipped_cases": 40
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "stage_does_not_expose_structural_locators": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "document": {
+              "1": {
+                "denominator": 53.0,
+                "macro": 0.7,
+                "micro": 0.6604,
+                "numerator": 35.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "10": {
+                "denominator": 53.0,
+                "macro": 1.0,
+                "micro": 1.0,
+                "numerator": 53.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "24": {
+                "denominator": 53.0,
+                "macro": 1.0,
+                "micro": 1.0,
+                "numerator": 53.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "3": {
+                "denominator": 53.0,
+                "macro": 0.9,
+                "micro": 0.8868,
+                "numerator": 47.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "5": {
+                "denominator": 53.0,
+                "macro": 0.925,
+                "micro": 0.9057,
+                "numerator": 48.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              }
+            }
+          },
+          "scored_case_count": 40
+        },
+        "local_selection_metrics": {
+          "applicable_gold_counts": {
+            "article": 30,
+            "clause": 14,
+            "document": 53
+          },
+          "candidates": {
+            "count": 40,
+            "max": 24.0,
+            "mean": 24.0,
+            "min": 24.0,
+            "p50": 24.0,
+            "p95": 24.0
+          },
+          "configured_capacity": 4,
+          "first_loss_evidence_count": 1,
+          "matched_gold_counts": {
+            "article": 28,
+            "clause": 12,
+            "document": 53
+          },
+          "mrr": {
+            "article": {
+              "denominator": 27.0,
+              "macro": 0.8049,
+              "micro": 0.8049,
+              "numerator": 21.733333,
+              "reason": null,
+              "scored_cases": 27,
+              "skip_reasons": {
+                "no_applicable_gold": 13
+              },
+              "skipped_cases": 13
+            },
+            "clause": {
+              "denominator": 13.0,
+              "macro": 0.7885,
+              "micro": 0.7885,
+              "numerator": 10.25,
+              "reason": null,
+              "scored_cases": 13,
+              "skip_reasons": {
+                "no_applicable_gold": 27
+              },
+              "skipped_cases": 27
+            },
+            "document": {
+              "denominator": 40.0,
+              "macro": 0.8196,
+              "micro": 0.8196,
+              "numerator": 32.783333,
+              "reason": null,
+              "scored_cases": 40,
+              "skip_reasons": {},
+              "skipped_cases": 0
+            }
+          },
+          "null_reason_counts": {
+            "k_exceeds_configured_capacity": 200,
+            "no_applicable_gold": 120
+          },
+          "recall": {
+            "article": {
+              "1": {
+                "denominator": 30.0,
+                "macro": 0.7222,
+                "micro": 0.7,
+                "numerator": 21.0,
+                "reason": null,
+                "scored_cases": 27,
+                "skip_reasons": {
+                  "no_applicable_gold": 13
+                },
+                "skipped_cases": 13
+              },
+              "3": {
+                "denominator": 30.0,
+                "macro": 0.8333,
+                "micro": 0.8,
+                "numerator": 24.0,
+                "reason": null,
+                "scored_cases": 27,
+                "skip_reasons": {
+                  "no_applicable_gold": 13
+                },
+                "skipped_cases": 13
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "k_exceeds_configured_capacity": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "clause": {
+              "1": {
+                "denominator": 14.0,
+                "macro": 0.6538,
+                "micro": 0.6429,
+                "numerator": 9.0,
+                "reason": null,
+                "scored_cases": 13,
+                "skip_reasons": {
+                  "no_applicable_gold": 27
+                },
+                "skipped_cases": 27
+              },
+              "3": {
+                "denominator": 14.0,
+                "macro": 0.8077,
+                "micro": 0.7857,
+                "numerator": 11.0,
+                "reason": null,
+                "scored_cases": 13,
+                "skip_reasons": {
+                  "no_applicable_gold": 27
+                },
+                "skipped_cases": 27
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "k_exceeds_configured_capacity": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "document": {
+              "1": {
+                "denominator": 53.0,
+                "macro": 0.725,
+                "micro": 0.6604,
+                "numerator": 35.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "10": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "k_exceeds_configured_capacity": 40
+                },
+                "skipped_cases": 40
+              },
+              "24": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "k_exceeds_configured_capacity": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 53.0,
+                "macro": 0.9,
+                "micro": 0.8868,
+                "numerator": 47.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "5": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "k_exceeds_configured_capacity": 40
+                },
+                "skipped_cases": 40
+              }
+            }
+          },
+          "scored_case_count": 40
+        },
+        "merged_document_metrics": {
+          "applicable_gold_counts": {
+            "article": 0,
+            "clause": 0,
+            "document": 53
+          },
+          "candidates": {
+            "count": 40,
+            "max": 64.0,
+            "mean": 52.725,
+            "min": 33.0,
+            "p50": 52.5,
+            "p95": 64.0
+          },
+          "configured_capacity": 24,
+          "first_loss_evidence_count": 0,
+          "matched_gold_counts": {
+            "article": 0,
+            "clause": 0,
+            "document": 53
+          },
+          "mrr": {
+            "article": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40
+              },
+              "skipped_cases": 40
+            },
+            "clause": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40
+              },
+              "skipped_cases": 40
+            },
+            "document": {
+              "denominator": 40.0,
+              "macro": 0.8196,
+              "micro": 0.8196,
+              "numerator": 32.783333,
+              "reason": null,
+              "scored_cases": 40,
+              "skip_reasons": {},
+              "skipped_cases": 0
+            }
+          },
+          "null_reason_counts": {
+            "stage_does_not_expose_structural_locators": 320
+          },
+          "recall": {
+            "article": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "stage_does_not_expose_structural_locators": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "stage_does_not_expose_structural_locators": 40
+                },
+                "skipped_cases": 40
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "stage_does_not_expose_structural_locators": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "clause": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "stage_does_not_expose_structural_locators": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "stage_does_not_expose_structural_locators": 40
+                },
+                "skipped_cases": 40
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "stage_does_not_expose_structural_locators": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "document": {
+              "1": {
+                "denominator": 53.0,
+                "macro": 0.725,
+                "micro": 0.6604,
+                "numerator": 35.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "10": {
+                "denominator": 53.0,
+                "macro": 0.975,
+                "micro": 0.9811,
+                "numerator": 52.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "24": {
+                "denominator": 53.0,
+                "macro": 1.0,
+                "micro": 1.0,
+                "numerator": 53.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "3": {
+                "denominator": 53.0,
+                "macro": 0.9,
+                "micro": 0.8868,
+                "numerator": 47.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "5": {
+                "denominator": 53.0,
+                "macro": 0.95,
+                "micro": 0.9434,
+                "numerator": 50.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              }
+            }
+          },
+          "scored_case_count": 40
+        },
+        "pinecone_document_metrics": {
+          "applicable_gold_counts": {
+            "article": 0,
+            "clause": 0,
+            "document": 53
+          },
+          "candidates": {
+            "count": 40,
+            "max": 48.0,
+            "mean": 48.0,
+            "min": 48.0,
+            "p50": 48.0,
+            "p95": 48.0
+          },
+          "configured_capacity": 24,
+          "first_loss_evidence_count": 0,
+          "matched_gold_counts": {
+            "article": 0,
+            "clause": 0,
+            "document": 52
+          },
+          "mrr": {
+            "article": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40
+              },
+              "skipped_cases": 40
+            },
+            "clause": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40
+              },
+              "skipped_cases": 40
+            },
+            "document": {
+              "denominator": 40.0,
+              "macro": 0.6708,
+              "micro": 0.6708,
+              "numerator": 26.831942,
+              "reason": null,
+              "scored_cases": 40,
+              "skip_reasons": {},
+              "skipped_cases": 0
+            }
+          },
+          "null_reason_counts": {
+            "stage_does_not_expose_structural_locators": 320
+          },
+          "recall": {
+            "article": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "stage_does_not_expose_structural_locators": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "stage_does_not_expose_structural_locators": 40
+                },
+                "skipped_cases": 40
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "stage_does_not_expose_structural_locators": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "clause": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "stage_does_not_expose_structural_locators": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "stage_does_not_expose_structural_locators": 40
+                },
+                "skipped_cases": 40
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "stage_does_not_expose_structural_locators": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "document": {
+              "1": {
+                "denominator": 53.0,
+                "macro": 0.475,
+                "micro": 0.434,
+                "numerator": 23.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "10": {
+                "denominator": 53.0,
+                "macro": 0.95,
+                "micro": 0.9623,
+                "numerator": 51.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "24": {
+                "denominator": 53.0,
+                "macro": 0.95,
+                "micro": 0.9623,
+                "numerator": 51.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "3": {
+                "denominator": 53.0,
+                "macro": 0.9,
+                "micro": 0.9245,
+                "numerator": 49.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "5": {
+                "denominator": 53.0,
+                "macro": 0.925,
+                "micro": 0.9434,
+                "numerator": 50.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              }
+            }
+          },
+          "scored_case_count": 40
+        },
+        "reranker_input_metrics": {
+          "applicable_gold_counts": {
+            "article": 30,
+            "clause": 14,
+            "document": 53
+          },
+          "candidates": {
+            "count": 40,
+            "max": 24.0,
+            "mean": 24.0,
+            "min": 24.0,
+            "p50": 24.0,
+            "p95": 24.0
+          },
+          "configured_capacity": 24,
+          "first_loss_evidence_count": 0,
+          "matched_gold_counts": {
+            "article": 28,
+            "clause": 12,
+            "document": 53
+          },
+          "mrr": {
+            "article": {
+              "denominator": 27.0,
+              "macro": 0.8049,
+              "micro": 0.8049,
+              "numerator": 21.733333,
+              "reason": null,
+              "scored_cases": 27,
+              "skip_reasons": {
+                "no_applicable_gold": 13
+              },
+              "skipped_cases": 13
+            },
+            "clause": {
+              "denominator": 13.0,
+              "macro": 0.7885,
+              "micro": 0.7885,
+              "numerator": 10.25,
+              "reason": null,
+              "scored_cases": 13,
+              "skip_reasons": {
+                "no_applicable_gold": 27
+              },
+              "skipped_cases": 27
+            },
+            "document": {
+              "denominator": 40.0,
+              "macro": 0.8196,
+              "micro": 0.8196,
+              "numerator": 32.783333,
+              "reason": null,
+              "scored_cases": 40,
+              "skip_reasons": {},
+              "skipped_cases": 0
+            }
+          },
+          "null_reason_counts": {
+            "no_applicable_gold": 160
+          },
+          "recall": {
+            "article": {
+              "1": {
+                "denominator": 30.0,
+                "macro": 0.7222,
+                "micro": 0.7,
+                "numerator": 21.0,
+                "reason": null,
+                "scored_cases": 27,
+                "skip_reasons": {
+                  "no_applicable_gold": 13
+                },
+                "skipped_cases": 13
+              },
+              "3": {
+                "denominator": 30.0,
+                "macro": 0.8333,
+                "micro": 0.8,
+                "numerator": 24.0,
+                "reason": null,
+                "scored_cases": 27,
+                "skip_reasons": {
+                  "no_applicable_gold": 13
+                },
+                "skipped_cases": 13
+              },
+              "6": {
+                "denominator": 30.0,
+                "macro": 0.9074,
+                "micro": 0.9,
+                "numerator": 27.0,
+                "reason": null,
+                "scored_cases": 27,
+                "skip_reasons": {
+                  "no_applicable_gold": 13
+                },
+                "skipped_cases": 13
+              }
+            },
+            "clause": {
+              "1": {
+                "denominator": 14.0,
+                "macro": 0.6538,
+                "micro": 0.6429,
+                "numerator": 9.0,
+                "reason": null,
+                "scored_cases": 13,
+                "skip_reasons": {
+                  "no_applicable_gold": 27
+                },
+                "skipped_cases": 27
+              },
+              "3": {
+                "denominator": 14.0,
+                "macro": 0.8077,
+                "micro": 0.7857,
+                "numerator": 11.0,
+                "reason": null,
+                "scored_cases": 13,
+                "skip_reasons": {
+                  "no_applicable_gold": 27
+                },
+                "skipped_cases": 27
+              },
+              "6": {
+                "denominator": 14.0,
+                "macro": 0.8846,
+                "micro": 0.8571,
+                "numerator": 12.0,
+                "reason": null,
+                "scored_cases": 13,
+                "skip_reasons": {
+                  "no_applicable_gold": 27
+                },
+                "skipped_cases": 27
+              }
+            },
+            "document": {
+              "1": {
+                "denominator": 53.0,
+                "macro": 0.725,
+                "micro": 0.6604,
+                "numerator": 35.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "10": {
+                "denominator": 53.0,
+                "macro": 0.975,
+                "micro": 0.9811,
+                "numerator": 52.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "24": {
+                "denominator": 53.0,
+                "macro": 1.0,
+                "micro": 1.0,
+                "numerator": 53.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "3": {
+                "denominator": 53.0,
+                "macro": 0.9,
+                "micro": 0.8868,
+                "numerator": 47.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "5": {
+                "denominator": 53.0,
+                "macro": 0.95,
+                "micro": 0.9434,
+                "numerator": 50.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              }
+            }
+          },
+          "scored_case_count": 40
+        },
+        "reranker_output_metrics": {
+          "applicable_gold_counts": {
+            "article": 30,
+            "clause": 14,
+            "document": 53
+          },
+          "candidates": {
+            "count": 40,
+            "max": 6.0,
+            "mean": 6.0,
+            "min": 6.0,
+            "p50": 6.0,
+            "p95": 6.0
+          },
+          "configured_capacity": 12,
+          "first_loss_evidence_count": 0,
+          "matched_gold_counts": {
+            "article": 28,
+            "clause": 12,
+            "document": 53
+          },
+          "mrr": {
+            "article": {
+              "denominator": 27.0,
+              "macro": 0.75,
+              "micro": 0.75,
+              "numerator": 20.25,
+              "reason": null,
+              "scored_cases": 27,
+              "skip_reasons": {
+                "no_applicable_gold": 13
+              },
+              "skipped_cases": 13
+            },
+            "clause": {
+              "denominator": 13.0,
+              "macro": 0.7885,
+              "micro": 0.7885,
+              "numerator": 10.25,
+              "reason": null,
+              "scored_cases": 13,
+              "skip_reasons": {
+                "no_applicable_gold": 27
+              },
+              "skipped_cases": 27
+            },
+            "document": {
+              "denominator": 40.0,
+              "macro": 0.85,
+              "micro": 0.85,
+              "numerator": 34.0,
+              "reason": null,
+              "scored_cases": 40,
+              "skip_reasons": {},
+              "skipped_cases": 0
+            }
+          },
+          "null_reason_counts": {
+            "k_exceeds_configured_capacity": 40,
+            "no_applicable_gold": 160
+          },
+          "recall": {
+            "article": {
+              "1": {
+                "denominator": 30.0,
+                "macro": 0.5741,
+                "micro": 0.5667,
+                "numerator": 17.0,
+                "reason": null,
+                "scored_cases": 27,
+                "skip_reasons": {
+                  "no_applicable_gold": 13
+                },
+                "skipped_cases": 13
+              },
+              "3": {
+                "denominator": 30.0,
+                "macro": 0.8704,
+                "micro": 0.8333,
+                "numerator": 25.0,
+                "reason": null,
+                "scored_cases": 27,
+                "skip_reasons": {
+                  "no_applicable_gold": 13
+                },
+                "skipped_cases": 13
+              },
+              "6": {
+                "denominator": 30.0,
+                "macro": 0.9259,
+                "micro": 0.9333,
+                "numerator": 28.0,
+                "reason": null,
+                "scored_cases": 27,
+                "skip_reasons": {
+                  "no_applicable_gold": 13
+                },
+                "skipped_cases": 13
+              }
+            },
+            "clause": {
+              "1": {
+                "denominator": 14.0,
+                "macro": 0.6923,
+                "micro": 0.6429,
+                "numerator": 9.0,
+                "reason": null,
+                "scored_cases": 13,
+                "skip_reasons": {
+                  "no_applicable_gold": 27
+                },
+                "skipped_cases": 27
+              },
+              "3": {
+                "denominator": 14.0,
+                "macro": 0.8462,
+                "micro": 0.7857,
+                "numerator": 11.0,
+                "reason": null,
+                "scored_cases": 13,
+                "skip_reasons": {
+                  "no_applicable_gold": 27
+                },
+                "skipped_cases": 27
+              },
+              "6": {
+                "denominator": 14.0,
+                "macro": 0.8846,
+                "micro": 0.8571,
+                "numerator": 12.0,
+                "reason": null,
+                "scored_cases": 13,
+                "skip_reasons": {
+                  "no_applicable_gold": 27
+                },
+                "skipped_cases": 27
+              }
+            },
+            "document": {
+              "1": {
+                "denominator": 53.0,
+                "macro": 0.725,
+                "micro": 0.6792,
+                "numerator": 36.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "10": {
+                "denominator": 53.0,
+                "macro": 1.0,
+                "micro": 1.0,
+                "numerator": 53.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "24": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "k_exceeds_configured_capacity": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 53.0,
+                "macro": 0.95,
+                "micro": 0.9434,
+                "numerator": 50.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "5": {
+                "denominator": 53.0,
+                "macro": 1.0,
+                "micro": 1.0,
+                "numerator": 53.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              }
+            }
+          },
+          "scored_case_count": 40
+        },
+        "resolved_document_metrics": {
+          "applicable_gold_counts": {
+            "article": 0,
+            "clause": 0,
+            "document": 53
+          },
+          "candidates": {
+            "count": 40,
+            "max": 64.0,
+            "mean": 52.725,
+            "min": 33.0,
+            "p50": 52.5,
+            "p95": 64.0
+          },
+          "configured_capacity": 16,
+          "first_loss_evidence_count": 0,
+          "matched_gold_counts": {
+            "article": 0,
+            "clause": 0,
+            "document": 53
+          },
+          "mrr": {
+            "article": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40
+              },
+              "skipped_cases": 40
+            },
+            "clause": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40
+              },
+              "skipped_cases": 40
+            },
+            "document": {
+              "denominator": 40.0,
+              "macro": 0.8196,
+              "micro": 0.8196,
+              "numerator": 32.783333,
+              "reason": null,
+              "scored_cases": 40,
+              "skip_reasons": {},
+              "skipped_cases": 0
+            }
+          },
+          "null_reason_counts": {
+            "k_exceeds_configured_capacity": 40,
+            "stage_does_not_expose_structural_locators": 320
+          },
+          "recall": {
+            "article": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "stage_does_not_expose_structural_locators": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "stage_does_not_expose_structural_locators": 40
+                },
+                "skipped_cases": 40
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "stage_does_not_expose_structural_locators": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "clause": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "stage_does_not_expose_structural_locators": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "stage_does_not_expose_structural_locators": 40
+                },
+                "skipped_cases": 40
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "stage_does_not_expose_structural_locators": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "document": {
+              "1": {
+                "denominator": 53.0,
+                "macro": 0.725,
+                "micro": 0.6604,
+                "numerator": 35.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "10": {
+                "denominator": 53.0,
+                "macro": 0.975,
+                "micro": 0.9811,
+                "numerator": 52.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "24": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "k_exceeds_configured_capacity": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 53.0,
+                "macro": 0.9,
+                "micro": 0.8868,
+                "numerator": 47.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "5": {
+                "denominator": 53.0,
+                "macro": 0.95,
+                "micro": 0.9434,
+                "numerator": 50.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              }
+            }
+          },
+          "scored_case_count": 40
+        },
+        "source_retrieval_metrics": {
+          "applicable_gold_counts": {
+            "article": 0,
+            "clause": 0,
+            "document": 53
+          },
+          "candidates": {
+            "count": 40,
+            "max": 41.0,
+            "mean": 18.775,
+            "min": 7.0,
+            "p50": 16.5,
+            "p95": 33.1
+          },
+          "configured_capacity": 24,
+          "first_loss_evidence_count": 0,
+          "matched_gold_counts": {
+            "article": 0,
+            "clause": 0,
+            "document": 53
+          },
+          "mrr": {
+            "article": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40
+              },
+              "skipped_cases": 40
+            },
+            "clause": {
+              "denominator": 0.0,
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "reason": "no_applicable_values",
+              "scored_cases": 0,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40
+              },
+              "skipped_cases": 40
+            },
+            "document": {
+              "denominator": 40.0,
+              "macro": 0.6904,
+              "micro": 0.6904,
+              "numerator": 27.614379,
+              "reason": null,
+              "scored_cases": 40,
+              "skip_reasons": {},
+              "skipped_cases": 0
+            }
+          },
+          "null_reason_counts": {
+            "stage_does_not_expose_structural_locators": 320
+          },
+          "recall": {
+            "article": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "stage_does_not_expose_structural_locators": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "stage_does_not_expose_structural_locators": 40
+                },
+                "skipped_cases": 40
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "stage_does_not_expose_structural_locators": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "clause": {
+              "1": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "stage_does_not_expose_structural_locators": 40
+                },
+                "skipped_cases": 40
+              },
+              "3": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "stage_does_not_expose_structural_locators": 40
+                },
+                "skipped_cases": 40
+              },
+              "6": {
+                "denominator": 0.0,
+                "macro": null,
+                "micro": null,
+                "numerator": 0.0,
+                "reason": "no_applicable_values",
+                "scored_cases": 0,
+                "skip_reasons": {
+                  "stage_does_not_expose_structural_locators": 40
+                },
+                "skipped_cases": 40
+              }
+            },
+            "document": {
+              "1": {
+                "denominator": 53.0,
+                "macro": 0.475,
+                "micro": 0.434,
+                "numerator": 23.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "10": {
+                "denominator": 53.0,
+                "macro": 0.95,
+                "micro": 0.9623,
+                "numerator": 51.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "24": {
+                "denominator": 53.0,
+                "macro": 1.0,
+                "micro": 1.0,
+                "numerator": 53.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "3": {
+                "denominator": 53.0,
+                "macro": 0.925,
+                "micro": 0.9434,
+                "numerator": 50.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "5": {
+                "denominator": 53.0,
+                "macro": 0.925,
+                "micro": 0.9434,
+                "numerator": 50.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              }
+            }
+          },
+          "scored_case_count": 40
+        },
+        "structural_chunk_metrics": {
+          "applicable_gold_counts": {
+            "article": 30,
+            "clause": 14,
+            "document": 53
+          },
+          "candidates": {
+            "count": 40,
+            "max": 64.0,
+            "mean": 52.725,
+            "min": 33.0,
+            "p50": 52.5,
+            "p95": 64.0
+          },
+          "configured_capacity": 64,
+          "first_loss_evidence_count": 2,
+          "matched_gold_counts": {
+            "article": 28,
+            "clause": 13,
+            "document": 53
+          },
+          "mrr": {
+            "article": {
+              "denominator": 27.0,
+              "macro": 0.8049,
+              "micro": 0.8049,
+              "numerator": 21.733333,
+              "reason": null,
+              "scored_cases": 27,
+              "skip_reasons": {
+                "no_applicable_gold": 13
+              },
+              "skipped_cases": 13
+            },
+            "clause": {
+              "denominator": 13.0,
+              "macro": 0.7885,
+              "micro": 0.7885,
+              "numerator": 10.25,
+              "reason": null,
+              "scored_cases": 13,
+              "skip_reasons": {
+                "no_applicable_gold": 27
+              },
+              "skipped_cases": 27
+            },
+            "document": {
+              "denominator": 40.0,
+              "macro": 0.8196,
+              "micro": 0.8196,
+              "numerator": 32.783333,
+              "reason": null,
+              "scored_cases": 40,
+              "skip_reasons": {},
+              "skipped_cases": 0
+            }
+          },
+          "null_reason_counts": {
+            "no_applicable_gold": 160
+          },
+          "recall": {
+            "article": {
+              "1": {
+                "denominator": 30.0,
+                "macro": 0.7222,
+                "micro": 0.7,
+                "numerator": 21.0,
+                "reason": null,
+                "scored_cases": 27,
+                "skip_reasons": {
+                  "no_applicable_gold": 13
+                },
+                "skipped_cases": 13
+              },
+              "3": {
+                "denominator": 30.0,
+                "macro": 0.8333,
+                "micro": 0.8,
+                "numerator": 24.0,
+                "reason": null,
+                "scored_cases": 27,
+                "skip_reasons": {
+                  "no_applicable_gold": 13
+                },
+                "skipped_cases": 13
+              },
+              "6": {
+                "denominator": 30.0,
+                "macro": 0.9074,
+                "micro": 0.9,
+                "numerator": 27.0,
+                "reason": null,
+                "scored_cases": 27,
+                "skip_reasons": {
+                  "no_applicable_gold": 13
+                },
+                "skipped_cases": 13
+              }
+            },
+            "clause": {
+              "1": {
+                "denominator": 14.0,
+                "macro": 0.6538,
+                "micro": 0.6429,
+                "numerator": 9.0,
+                "reason": null,
+                "scored_cases": 13,
+                "skip_reasons": {
+                  "no_applicable_gold": 27
+                },
+                "skipped_cases": 27
+              },
+              "3": {
+                "denominator": 14.0,
+                "macro": 0.8077,
+                "micro": 0.7857,
+                "numerator": 11.0,
+                "reason": null,
+                "scored_cases": 13,
+                "skip_reasons": {
+                  "no_applicable_gold": 27
+                },
+                "skipped_cases": 27
+              },
+              "6": {
+                "denominator": 14.0,
+                "macro": 0.8846,
+                "micro": 0.8571,
+                "numerator": 12.0,
+                "reason": null,
+                "scored_cases": 13,
+                "skip_reasons": {
+                  "no_applicable_gold": 27
+                },
+                "skipped_cases": 27
+              }
+            },
+            "document": {
+              "1": {
+                "denominator": 53.0,
+                "macro": 0.725,
+                "micro": 0.6604,
+                "numerator": 35.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "10": {
+                "denominator": 53.0,
+                "macro": 0.975,
+                "micro": 0.9811,
+                "numerator": 52.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "24": {
+                "denominator": 53.0,
+                "macro": 1.0,
+                "micro": 1.0,
+                "numerator": 53.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "3": {
+                "denominator": 53.0,
+                "macro": 0.9,
+                "micro": 0.8868,
+                "numerator": 47.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              },
+              "5": {
+                "denominator": 53.0,
+                "macro": 0.95,
+                "micro": 0.9434,
+                "numerator": 50.0,
+                "reason": null,
+                "scored_cases": 40,
+                "skip_reasons": {},
+                "skipped_cases": 0
+              }
+            }
+          },
+          "scored_case_count": 40
+        }
+      },
+      "total_cases": 40
+    },
+    "p2_source_document_recall_at_24": 0.0
+  },
+  "observed_rerankers": [
+    {
+      "case_count": 40,
+      "model": "bge-reranker-v2-m3",
+      "provider": "pinecone"
+    }
+  ],
+  "production_cutover_authorized": false,
+  "provenance_drift": false,
+  "provider_usage": {
+    "intfloat/multilingual-e5-small": 2690
+  },
+  "provider_usage_observation_complete": true,
+  "reranker_contribution": {
+    "article": {
+      "delta": 0.0,
+      "input": {
+        "denominator": 30,
+        "numerator": 28,
+        "value": 0.9333
+      },
+      "output": {
+        "denominator": 30,
+        "numerator": 28,
+        "value": 0.9333
+      }
+    },
+    "clause": {
+      "delta": 0.0,
+      "input": {
+        "denominator": 14,
+        "numerator": 12,
+        "value": 0.8571
+      },
+      "output": {
+        "denominator": 14,
+        "numerator": 12,
+        "value": 0.8571
+      }
+    },
+    "document": {
+      "delta": 0.0,
+      "input": {
+        "denominator": 53,
+        "numerator": 53,
+        "value": 1.0
+      },
+      "output": {
+        "denominator": 53,
+        "numerator": 53,
+        "value": 1.0
+      }
+    }
+  },
+  "schema_version": "1.0.0",
+  "scope_errors": [],
+  "separate_evaluation_source": true,
+  "technical_errors": {
+    "bm25": 0,
+    "dense": 0,
+    "exact_fts": 0,
+    "exact_remote": 0,
+    "fusion": 0,
+    "preflight": 0,
+    "reranker": 0,
+    "reranker_primary": 0,
+    "retrieval": 0,
+    "total": 0
+  },
+  "technical_preflight_errors": []
+}

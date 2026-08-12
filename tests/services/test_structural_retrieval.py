@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from types import SimpleNamespace
 
 import pytest
@@ -202,7 +203,7 @@ class FakeReranker:
         self.error = error
         self.provider = provider
         self.fallback_reason = fallback_reason
-        self.calls: list[tuple[str, list[str], int | None]] = []
+        self.calls: list[tuple[str, list[str], int | None, str]] = []
 
     async def rerank(
         self,
@@ -210,9 +211,10 @@ class FakeReranker:
         documents: list[str],
         *,
         rerank_return_limit: int | None = None,
+        mode: str = "current",
         **_kwargs,
     ) -> RerankOutcome:
-        self.calls.append((query, documents, rerank_return_limit))
+        self.calls.append((query, documents, rerank_return_limit, mode))
         if self.error is not None:
             raise self.error
         limit = min(len(documents), rerank_return_limit or len(documents))
@@ -246,6 +248,7 @@ def _retriever(
     fts: FakeFts | None = None,
     reranker: FakeReranker | None = None,
     settings: Settings | None = None,
+    reranker_mode: str = "current",
 ) -> tuple[StructuralRetriever, FakeTransport, FakeFts, FakeReranker]:
     resolved_settings = settings or _settings()
     contract = StructuralQdrantContract.from_settings(resolved_settings)
@@ -267,6 +270,7 @@ def _retriever(
             transport=transport,
             fts_index=resolved_fts,
             reranker=resolved_reranker,
+            reranker_mode=reranker_mode,  # type: ignore[arg-type]
         ),
         transport,
         resolved_fts,
@@ -421,6 +425,8 @@ async def test_dedupe_fused_cap_per_document_and_rerank_limits() -> None:
     assert max(counts.values()) <= 4
     assert len(outcome.trace.reranker_input) == 24
     assert reranker.calls[0][2] == 6
+    assert reranker.calls[0][3] == "current"
+    assert outcome.trace.reranker_input_sha256 is not None
     assert len(outcome.trace.reranker_output) == 6
     assert len(outcome.evidence) == 3
 
@@ -563,3 +569,39 @@ def test_factory_accepts_explicit_benchmark_runtime_contract() -> None:
     )
 
     assert retriever.contract.per_document_limit == 8
+
+
+@pytest.mark.asyncio
+async def test_explicit_reranker_mode_preserves_hashed_body_inputs() -> None:
+    retriever, _transport, _fts, reranker = _retriever(
+        reranker_mode="pinecone-only"
+    )
+
+    outcome = await retriever.retrieve("môi trường")
+
+    assert reranker.calls[0][3] == "pinecone-only"
+    assert reranker.calls[0][1] == [
+        candidate.body for candidate in outcome.trace.reranker_input
+    ]
+    assert outcome.trace.reranker_input_format == "body_v1"
+    assert outcome.trace.reranker_input_sha256 == hashlib.sha256(
+        json.dumps(
+            {"query": "môi trường", "documents": reranker.calls[0][1]},
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+
+
+def test_invalid_programmatic_reranker_mode_is_rejected() -> None:
+    retriever, transport, fts, reranker = _retriever()
+    with pytest.raises(StructuralRetrievalError, match="reranker mode"):
+        StructuralRetriever(
+            settings=retriever.settings,
+            contract=retriever.contract,
+            transport=transport,
+            fts_index=fts,
+            reranker=reranker,
+            reranker_mode="invalid",  # type: ignore[arg-type]
+        )
