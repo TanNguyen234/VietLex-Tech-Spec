@@ -295,7 +295,7 @@ class PineconeStructuralCheckpoint:
                 ).fetchone()
                 if existing is None:
                     connection.execute(
-                        "INSERT INTO committed_records(" 
+                        "INSERT INTO committed_records("
                         "record_id, chunk_sha256, inference_text_sha256) "
                         "VALUES (?, ?, ?)",
                         (record.record_id, *identity),
