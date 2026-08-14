@@ -176,6 +176,49 @@ def _binding() -> StructuralEvaluationBinding:
     )
 
 
+@pytest.mark.asyncio
+async def test_pinecone_binding_records_dense_only_backend_honestly(
+    tmp_path: Path,
+) -> None:
+    binding = _binding().model_copy(
+        update={
+            "retrieval_backend": "pinecone-integrated",
+            "collection_name": "llama-text-embed-v2-index/national-primary-v2",
+            "creation_receipt_sha256": None,
+            "probe_report_sha256": None,
+            "finalize_receipt_sha256": None,
+            "dense_vector_name": "integrated_dense",
+            "sparse_vector_name": None,
+            "dense_model": "llama-text-embed-v2",
+            "sparse_model": None,
+            "dense_size": 1024,
+            "query_instruction_version": "pinecone-integrated-query-v1",
+            "query_instruction": None,
+            "bm25_top_k": None,
+            "reranker_mode": "pinecone-only",
+        }
+    )
+
+    run = await run_structural_pilot_evaluation(
+        [_case("case-1", 1, level=RequiredLevel.ARTICLE)],
+        FakeRetriever(),
+        tmp_path,
+        run_id="pinecone-binding",
+        binding=binding,
+        p2_source_document_recall_at_24=0.0,
+        provenance=_provenance(),
+    )
+    configuration = json.loads(
+        (run.run_dir / "configuration.json").read_text("utf-8")
+    )
+    manifest = json.loads((run.run_dir / "manifest.json").read_text("utf-8"))
+
+    assert configuration["retrieval_backend"] == "pinecone-integrated"
+    assert configuration["sparse_vector"] is None
+    assert configuration["dense_vector"]["dimension"] == 1024
+    assert manifest["creation_receipt_sha256"] is None
+
+
 def _provenance(source_sha: str = "e" * 64) -> GitProvenance:
     return GitProvenance(
         status="ok",

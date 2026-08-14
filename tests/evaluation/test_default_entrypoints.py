@@ -8,6 +8,8 @@ import pytest
 import run_answer_eval
 import run_eval_suite
 import run_retrieval_eval
+import run_pinecone_structural_eval
+import run_pinecone_structural_pilot
 import run_structural_index_pilot
 import run_structural_retrieval_eval
 from app.evaluation.structural_pilot_eval import StructuralEvaluationError
@@ -35,6 +37,42 @@ def test_structural_pilot_entrypoint_defaults_are_provider_free() -> None:
     assert plan.vcpu is None
     assert plan.existing_disk_bytes is None
     assert plan.shards is None
+
+
+def test_pinecone_structural_entrypoints_require_explicit_remote_flags() -> None:
+    audit = run_pinecone_structural_pilot.build_parser().parse_args(
+        ["audit", "--output", "plan.json"]
+    )
+    benchmark = run_pinecone_structural_eval.build_parser().parse_args(
+        [
+            "--sidecar",
+            "labels.json",
+            "--plan",
+            "plan.json",
+            "--plan-sha256",
+            "1" * 64,
+            "--upload-report",
+            "upload.json",
+            "--upload-report-sha256",
+            "2" * 64,
+            "--verify-report",
+            "verify.json",
+            "--verify-report-sha256",
+            "3" * 64,
+            "--p2-baseline-sha256",
+            "4" * 64,
+            "--run-id",
+            "pinecone-structural",
+            "--allow-remote-benchmark",
+        ]
+    )
+
+    assert audit.command == "audit"
+    assert not hasattr(audit, "allow_remote_write")
+    assert benchmark.allow_remote_benchmark is True
+    assert benchmark.dataset == Path(
+        "app/data/namsyntax_legal_qa_420_curated_v1.json"
+    )
 
 
 def test_structural_manifest_console_json_is_windows_safe() -> None:

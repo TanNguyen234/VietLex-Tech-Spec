@@ -77,6 +77,7 @@ class StructuralEvaluationBinding(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
+    retrieval_backend: Literal["qdrant", "pinecone-integrated"] = "qdrant"
     dataset_revision: str = Field(min_length=1)
     dataset_sha256: str = Field(pattern=_SHA256_PATTERN)
     sidecar_sha256: str = Field(pattern=_SHA256_PATTERN)
@@ -86,29 +87,38 @@ class StructuralEvaluationBinding(BaseModel):
     evaluation_source_state_sha256: str = Field(pattern=_SHA256_PATTERN)
     collection_name: str = Field(min_length=1)
     plan_sha256: str = Field(pattern=_SHA256_PATTERN)
-    creation_receipt_sha256: str = Field(pattern=_SHA256_PATTERN)
-    probe_report_sha256: str = Field(pattern=_SHA256_PATTERN)
+    creation_receipt_sha256: str | None = Field(
+        default=None,
+        pattern=_SHA256_PATTERN,
+    )
+    probe_report_sha256: str | None = Field(
+        default=None,
+        pattern=_SHA256_PATTERN,
+    )
     upload_report_sha256: str = Field(pattern=_SHA256_PATTERN)
-    finalize_receipt_sha256: str = Field(pattern=_SHA256_PATTERN)
+    finalize_receipt_sha256: str | None = Field(
+        default=None,
+        pattern=_SHA256_PATTERN,
+    )
     verify_receipt_sha256: str = Field(pattern=_SHA256_PATTERN)
     p2_baseline_sha256: str = Field(pattern=_SHA256_PATTERN)
     dense_vector_name: Literal["dense"] = "dense"
-    sparse_vector_name: Literal["bm25"] = "bm25"
+    sparse_vector_name: str | None = "bm25"
     dense_model: str = Field(
         default="intfloat/multilingual-e5-small",
         min_length=1,
     )
     dense_model_options: dict[str, object] = Field(default_factory=dict)
-    sparse_model: str = Field(default="qdrant/bm25", min_length=1)
+    sparse_model: str | None = Field(default="qdrant/bm25", min_length=1)
     sparse_model_options: dict[str, object] = Field(default_factory=dict)
     dense_size: int = Field(default=384, gt=0)
     query_instruction_version: str = Field(
         default="vietlex-vn-legal-retrieval-v1",
         min_length=1,
     )
-    query_instruction: str = Field(min_length=1)
+    query_instruction: str | None = Field(default=None, min_length=1)
     dense_top_k: int = Field(gt=0)
-    bm25_top_k: int = Field(gt=0)
+    bm25_top_k: int | None = Field(default=None, gt=0)
     fused_limit: int = Field(gt=0)
     rrf_k: int = Field(gt=0)
     per_document_limit: int = Field(gt=0)
@@ -564,12 +574,17 @@ def _configuration(binding: StructuralEvaluationBinding) -> dict[str, Any]:
             "model": binding.dense_model,
             "model_options": binding.dense_model_options,
         },
-        "sparse_vector": {
-            "name": binding.sparse_vector_name,
-            "modifier": "idf",
-            "model": binding.sparse_model,
-            "model_options": binding.sparse_model_options,
-        },
+        "retrieval_backend": binding.retrieval_backend,
+        "sparse_vector": (
+            {
+                "name": binding.sparse_vector_name,
+                "modifier": "idf",
+                "model": binding.sparse_model,
+                "model_options": binding.sparse_model_options,
+            }
+            if binding.sparse_vector_name and binding.sparse_model
+            else None
+        ),
         "query_instruction_version": binding.query_instruction_version,
         "query_instruction": binding.query_instruction,
         "dense_top_k": binding.dense_top_k,
