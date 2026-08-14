@@ -63,6 +63,8 @@ class Settings(BaseSettings):
     STRUCTURAL_FUSED_LIMIT: int = 64
     STRUCTURAL_RRF_K: int = 60
     STRUCTURAL_PER_DOCUMENT_LIMIT: int = 4
+    STRUCTURAL_NEIGHBOR_EXPANSION_ENABLED: bool = False
+    STRUCTURAL_NEIGHBOR_READ_LIMIT: int = 64
     STRUCTURAL_QDRANT_TIMEOUT_SECONDS: float = 120.0
     STRUCTURAL_QDRANT_MAX_RETRIES: int = 5
     STRUCTURAL_QDRANT_RETRY_BASE_SECONDS: float = 1.0
@@ -72,9 +74,10 @@ class Settings(BaseSettings):
     STRUCTURAL_UPLOAD_MAX_WORKERS: int = 4
     STRUCTURAL_UPLOAD_PREFER_GRPC: bool = True
 
-    # Pinecone vector storage. PIPECONE_API is retained because the existing
-    # deployment secret uses that spelling; PINECONE_API_KEY is also accepted.
+    # Pinecone vector storage. PIPECONE_API is retained for legacy deployments;
+    # PINECONE_API and PINECONE_API_KEY are both accepted compatibility names.
     PIPECONE_API: Optional[str] = None
+    PINECONE_API: Optional[str] = None
     PINECONE_API_KEY: Optional[str] = None
     PINECONE_INDEX_NAME: str = "vietlex-legal-rag-v1"
     PINECONE_NAMESPACE: str = "legal-documents-v1"
@@ -164,7 +167,7 @@ class Settings(BaseSettings):
 
     @property
     def pinecone_api_key(self) -> Optional[str]:
-        return self.PINECONE_API_KEY or self.PIPECONE_API
+        return self.PINECONE_API_KEY or self.PINECONE_API or self.PIPECONE_API
 
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")

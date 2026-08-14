@@ -43,6 +43,8 @@ def _payload(
     document_id: int = 1,
     body: str | None = None,
     revision: str = "revision-1",
+    article: str = "Điều 1",
+    clause: str | None = None,
 ) -> dict[str, object]:
     text = body or f"Điều 1. Nội dung {record_id}"
     return {
@@ -54,10 +56,10 @@ def _payload(
         "legal_type": "Luật",
         "issuing_authority": "Quốc hội",
         "issuance_date": "01/01/2026",
-        "article": "Điều 1",
-        "clause": None,
-        "heading_path": "Điều 1",
-        "citation": f"{document_id}/2026/QH15, Điều 1",
+        "article": article,
+        "clause": clause,
+        "heading_path": ", ".join(value for value in (article, clause) if value),
+        "citation": f"{document_id}/2026/QH15, {article}",
         "token_count": max(1, len(text.split())),
         "dataset_revision": revision,
         "content_sha256": "a" * 64,
@@ -136,6 +138,8 @@ class FakeTransport:
         dense_error: Exception | None = None,
         bm25_error: Exception | None = None,
         exact_error: Exception | None = None,
+        neighbors=None,
+        neighbor_error: Exception | None = None,
     ) -> None:
         self.contract = contract
         self.results = {
@@ -149,6 +153,8 @@ class FakeTransport:
             "exact": exact_error,
         }
         self.calls: list[dict[str, object]] = []
+        self.neighbors = neighbors if neighbors is not None else []
+        self.neighbor_error = neighbor_error
 
     def query_with_usage(self, **kwargs):
         lane = (
@@ -172,6 +178,14 @@ class FakeTransport:
             elapsed_seconds=0.01,
             model_tokens={model: 10 if lane == "dense" else 11},
         )
+
+    def read_by_filter(self, *, query_filter, limit):
+        self.calls.append(
+            {"lane": "structural_neighbors", "query_filter": query_filter, "limit": limit}
+        )
+        if self.neighbor_error is not None:
+            raise self.neighbor_error
+        return self.neighbors
 
 
 class FakeFts:
@@ -249,6 +263,8 @@ def _retriever(
     reranker: FakeReranker | None = None,
     settings: Settings | None = None,
     reranker_mode: str = "current",
+    neighbors=None,
+    neighbor_error: Exception | None = None,
 ) -> tuple[StructuralRetriever, FakeTransport, FakeFts, FakeReranker]:
     resolved_settings = settings or _settings()
     contract = StructuralQdrantContract.from_settings(resolved_settings)
@@ -260,6 +276,8 @@ def _retriever(
         dense_error=dense_error,
         bm25_error=bm25_error,
         exact_error=exact_error,
+        neighbors=neighbors,
+        neighbor_error=neighbor_error,
     )
     resolved_fts = fts or FakeFts()
     resolved_reranker = reranker or FakeReranker()
@@ -276,6 +294,83 @@ def _retriever(
         resolved_fts,
         resolved_reranker,
     )
+
+
+@pytest.mark.asyncio
+async def test_structural_neighbor_expansion_adds_adjacent_article_and_sibling_clause() -> None:
+    seed = _point("seed", 0.9)
+    seed.payload.update(_payload("seed", article="Điều 123"))
+    sibling = _point("sibling", 0.0)
+    sibling.payload.update(_payload("sibling", article="Điều 123", clause="Khoản 2"))
+    adjacent = _point("adjacent", 0.0)
+    adjacent.payload.update(_payload("adjacent", article="Điều 124"))
+    settings = _settings(
+        STRUCTURAL_NEIGHBOR_EXPANSION_ENABLED=True,
+        STRUCTURAL_NEIGHBOR_READ_LIMIT=8,
+    )
+    retriever, transport, _fts, _reranker = _retriever(
+        dense=[seed],
+        bm25=[],
+        exact=[],
+        neighbors=[sibling, adjacent],
+        settings=settings,
+    )
+
+    outcome = await retriever.retrieve("Điều 124")
+
+    assert outcome.status == "ok"
+    assert {row.record_id for row in outcome.trace.reranker_input} >= {
+        "seed", "sibling", "adjacent"
+    }
+    neighbor_call = next(
+        call for call in transport.calls
+        if call["lane"] == "structural_neighbors"
+    )
+    assert neighbor_call["limit"] == 8
+    serialized_filter = neighbor_call["query_filter"].model_dump()
+    articles = {
+        value
+        for branch in serialized_filter["should"]
+        for condition in branch["must"]
+        if condition.get("key") == "article"
+        for value in condition["match"]["any"]
+    }
+    assert {"Điều 122", "Điều 123", "Điều 124"} <= articles
+    assert 2 not in {
+        condition["match"]["value"]
+        for branch in serialized_filter["should"]
+        for condition in branch["must"]
+        if condition.get("key") == "document_id"
+    }
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("neighbors", "neighbor_error", "category"),
+    [
+        ([object()] * 9, None, "read_overflow"),
+        ([_point("bad", 0.0, revision="wrong")], None, "malformed_payload"),
+        (None, TimeoutError("private"), "timeout"),
+    ],
+)
+async def test_structural_neighbor_failures_are_typed_and_fail_closed(
+    neighbors, neighbor_error, category
+) -> None:
+    retriever, _transport, _fts, reranker = _retriever(
+        settings=_settings(
+            STRUCTURAL_NEIGHBOR_EXPANSION_ENABLED=True,
+            STRUCTURAL_NEIGHBOR_READ_LIMIT=8,
+        ),
+        neighbors=neighbors,
+        neighbor_error=neighbor_error,
+    )
+
+    outcome = await retriever.retrieve("Điều 2")
+
+    assert outcome.status == "retrieval_error"
+    assert outcome.evidence == []
+    assert outcome.technical_errors["structural_neighbors"].category == category
+    assert reranker.calls == []
 
 
 @pytest.mark.asyncio

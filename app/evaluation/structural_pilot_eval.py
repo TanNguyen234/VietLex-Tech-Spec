@@ -110,6 +110,8 @@ class StructuralEvaluationBinding(BaseModel):
     fused_limit: int = Field(gt=0)
     rrf_k: int = Field(gt=0)
     per_document_limit: int = Field(gt=0)
+    neighbor_expansion_enabled: bool = False
+    neighbor_read_limit: int = Field(default=64, gt=0)
     reranker_mode: Literal["current", "pinecone-only", "qdrant-only"] = (
         "current"
     )
@@ -573,6 +575,8 @@ def _configuration(binding: StructuralEvaluationBinding) -> dict[str, Any]:
         "fused_limit": binding.fused_limit,
         "rrf_k": binding.rrf_k,
         "per_document_limit": binding.per_document_limit,
+        "neighbor_expansion_enabled": binding.neighbor_expansion_enabled,
+        "neighbor_read_limit": binding.neighbor_read_limit,
         "reranker_mode": binding.reranker_mode,
         "comparison_limit": 24,
     }

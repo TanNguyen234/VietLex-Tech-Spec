@@ -54,12 +54,19 @@ def test_secret_defaults_never_contain_credentials() -> None:
         "QDRANT_API_KEY",
         "PIPECONE_API",
         "PINECONE_API_KEY",
+        "PINECONE_API",
         "LITELLM_MASTER_KEY",
         "MONGO_URL",
     )
 
     for secret_name in secret_names:
         assert Settings.model_fields[secret_name].default is None
+
+
+def test_pinecone_api_compatibility_name_is_resolved() -> None:
+    settings = Settings(_env_file=None, PINECONE_API="compat-key")
+
+    assert settings.pinecone_api_key == "compat-key"
 
 
 def test_qdrant_structural_pilot_defaults_are_exact_and_opt_in() -> None:

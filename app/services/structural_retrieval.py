@@ -6,6 +6,7 @@ import asyncio
 import hashlib
 import json
 import math
+import re
 import time
 from collections import Counter
 from collections.abc import Mapping, Sequence
@@ -50,6 +51,10 @@ class StructuralRetrievalError(RuntimeError):
 
 
 class _MalformedPayloadError(StructuralRetrievalError):
+    pass
+
+
+class _NeighborReadOverflowError(StructuralRetrievalError):
     pass
 
 
@@ -218,6 +223,13 @@ class _QueryTransport(Protocol):
         with_vectors: bool = False,
     ) -> tuple[list[models.ScoredPoint], InferenceUsageReceipt]: ...
 
+    def read_by_filter(
+        self,
+        *,
+        query_filter: models.Filter,
+        limit: int,
+    ) -> Sequence[object]: ...
+
 
 @dataclass
 class _LaneResult:
@@ -369,6 +381,117 @@ def _source_hits(
     return hits
 
 
+_ARTICLE_NUMBER = re.compile(r"^Điều\s+(\d+)\b", re.IGNORECASE)
+
+
+def _neighbor_filter(
+    candidates: Sequence[StructuralCandidate],
+) -> tuple[models.Filter | None, dict[int, set[str]]]:
+    allowed: dict[int, set[str]] = {}
+    for candidate in candidates:
+        if candidate.article is None:
+            continue
+        articles = allowed.setdefault(candidate.document_id, set())
+        articles.add(candidate.article)
+        match = _ARTICLE_NUMBER.match(candidate.article.strip())
+        if match is not None:
+            number = int(match.group(1))
+            if number > 1:
+                articles.add(f"Điều {number - 1}")
+            articles.add(f"Điều {number + 1}")
+    if not allowed:
+        return None, allowed
+    should = [
+        models.Filter(
+            must=[
+                models.FieldCondition(
+                    key="document_id",
+                    match=models.MatchValue(value=document_id),
+                ),
+                models.FieldCondition(
+                    key="article",
+                    match=models.MatchAny(any=sorted(articles)),
+                ),
+            ]
+        )
+        for document_id, articles in sorted(allowed.items())
+    ]
+    return models.Filter(should=should), allowed
+
+
+def _neighbor_candidates(
+    points: Sequence[object],
+    *,
+    dataset_revision: str,
+    allowed: Mapping[int, set[str]],
+    limit: int,
+) -> list[StructuralCandidate]:
+    if len(points) > limit:
+        raise _NeighborReadOverflowError("structural neighbor read overflow")
+    result: list[StructuralCandidate] = []
+    seen: set[str] = set()
+    try:
+        for point in points:
+            raw_id = getattr(point, "id", None)
+            payload = getattr(point, "payload", None)
+            record_id = str(raw_id).strip() if raw_id is not None else ""
+            if not record_id or not isinstance(payload, Mapping):
+                raise _MalformedPayloadError("malformed structural neighbor")
+            candidate = StructuralCandidate.model_validate(
+                {"record_id": record_id, **dict(payload)}
+            )
+            if (
+                candidate.dataset_revision != dataset_revision
+                or candidate.article not in allowed.get(candidate.document_id, set())
+            ):
+                raise _MalformedPayloadError(
+                    "structural neighbor scope or revision mismatch"
+                )
+            if record_id not in seen:
+                seen.add(record_id)
+                result.append(candidate)
+    except (ValidationError, ValueError, TypeError) as error:
+        if isinstance(error, _MalformedPayloadError):
+            raise
+        raise _MalformedPayloadError(
+            "structural neighbor payload validation failed"
+        ) from error
+    return result
+
+
+def _interleave_neighbors(
+    fused: Sequence[StructuralCandidate],
+    neighbors: Sequence[StructuralCandidate],
+) -> list[StructuralCandidate]:
+    by_locator: dict[tuple[int, str], list[StructuralCandidate]] = {}
+    for candidate in neighbors:
+        if candidate.article is not None:
+            by_locator.setdefault(
+                (candidate.document_id, candidate.article), []
+            ).append(candidate)
+    result: list[StructuralCandidate] = []
+    seen: set[str] = set()
+    for seed in fused:
+        if seed.record_id not in seen:
+            seen.add(seed.record_id)
+            result.append(seed)
+        if seed.article is None:
+            continue
+        articles = {seed.article}
+        match = _ARTICLE_NUMBER.match(seed.article.strip())
+        if match is not None:
+            number = int(match.group(1))
+            if number > 1:
+                articles.add(f"Điều {number - 1}")
+            articles.add(f"Điều {number + 1}")
+        for article in sorted(articles):
+            for candidate in by_locator.get((seed.document_id, article), []):
+                if candidate.record_id not in seen:
+                    seen.add(candidate.record_id)
+                    result.append(candidate)
+    return result
+
+
 def _bounded_fused_candidates(
     candidates: Sequence[StructuralCandidate],
     *,
@@ -414,17 +537,34 @@ class StructuralRetriever:
         fts_index: Any,
         reranker: Any,
         reranker_mode: _RerankerMode = "current",
+        neighbor_expansion_enabled: bool | None = None,
+        neighbor_read_limit: int | None = None,
     ) -> None:
         if transport.contract != contract:
             raise StructuralRetrievalError("transport contract mismatch")
         if reranker_mode not in {"current", "pinecone-only", "qdrant-only"}:
             raise StructuralRetrievalError("structural reranker mode is invalid")
+        resolved_neighbor_enabled = (
+            settings.STRUCTURAL_NEIGHBOR_EXPANSION_ENABLED
+            if neighbor_expansion_enabled is None
+            else neighbor_expansion_enabled
+        )
+        resolved_neighbor_limit = (
+            settings.STRUCTURAL_NEIGHBOR_READ_LIMIT
+            if neighbor_read_limit is None
+            else neighbor_read_limit
+        )
+        if not isinstance(resolved_neighbor_enabled, bool):
+            raise StructuralRetrievalError(
+                "structural neighbor expansion flag is invalid"
+            )
         runtime_limits = (
             settings.RERANK_INPUT_LIMIT,
             settings.RERANK_RETURN_LIMIT,
             settings.FINAL_EVIDENCE_LIMIT,
             settings.LLM_CONTEXT_MAX_TOKENS,
             settings.LLM_CONTEXT_PER_DOCUMENT_LIMIT,
+            resolved_neighbor_limit,
         )
         if any(
             isinstance(value, bool)
@@ -441,6 +581,28 @@ class StructuralRetriever:
         self.fts_index = fts_index
         self.reranker = reranker
         self.reranker_mode = reranker_mode
+        self.neighbor_expansion_enabled = resolved_neighbor_enabled
+        self.neighbor_read_limit = resolved_neighbor_limit
+
+    async def _expand_structural_neighbors(
+        self,
+        fused: Sequence[StructuralCandidate],
+    ) -> list[StructuralCandidate]:
+        query_filter, allowed = _neighbor_filter(fused)
+        if query_filter is None:
+            return list(fused)
+        points = await asyncio.to_thread(
+            self.transport.read_by_filter,
+            query_filter=query_filter,
+            limit=self.neighbor_read_limit,
+        )
+        neighbors = _neighbor_candidates(
+            points,
+            dataset_revision=self.settings.DATASET_REVISION,
+            allowed=allowed,
+            limit=self.neighbor_read_limit,
+        )
+        return _interleave_neighbors(fused, neighbors)
 
     async def _query_lane(
         self,
@@ -633,6 +795,34 @@ class StructuralRetriever:
                 technical_errors=technical_errors,
                 provider_usage=dict(provider_usage),
             )
+        if self.neighbor_expansion_enabled:
+            neighbor_started = time.perf_counter()
+            try:
+                fused = await self._expand_structural_neighbors(fused)
+            except Exception as error:
+                category = None
+                if isinstance(error, _MalformedPayloadError):
+                    category = "malformed_payload"
+                elif isinstance(error, _NeighborReadOverflowError):
+                    category = "read_overflow"
+                technical_errors["structural_neighbors"] = _technical_error(
+                    "structural_neighbors", error, category=category
+                )
+                latency["structural_neighbors"] = (
+                    time.perf_counter() - neighbor_started
+                )
+                latency["total"] = time.perf_counter() - total_started
+                return StructuralRetrievalOutcome(
+                    status="retrieval_error",
+                    evidence=[],
+                    trace=trace,
+                    latency=latency,
+                    technical_errors=technical_errors,
+                    provider_usage=dict(provider_usage),
+                )
+            latency["structural_neighbors"] = (
+                time.perf_counter() - neighbor_started
+            )
         fused = _bounded_fused_candidates(
             fused,
             limit=self.contract.fused_limit,
@@ -824,6 +1014,8 @@ def build_structural_retriever(
     reranker: Any,
     contract: StructuralQdrantContract | None = None,
     reranker_mode: _RerankerMode = "current",
+    neighbor_expansion_enabled: bool | None = None,
+    neighbor_read_limit: int | None = None,
 ) -> StructuralRetriever:
     """Construct the explicit opt-in backend; never alter the v1 factory."""
     if not settings.STRUCTURAL_BACKEND_ENABLED:
@@ -838,4 +1030,6 @@ def build_structural_retriever(
         fts_index=fts_index,
         reranker=reranker,
         reranker_mode=reranker_mode,
+        neighbor_expansion_enabled=neighbor_expansion_enabled,
+        neighbor_read_limit=neighbor_read_limit,
     )

@@ -98,6 +98,9 @@ def test_structural_benchmark_requires_exact_remote_authorization() -> None:
             "8",
             "--reranker-mode",
             "pinecone-only",
+            "--neighbor-expansion",
+            "--neighbor-read-limit",
+            "48",
             "--collection",
             "vietlex-legal-rag-v2-pilot-384",
             "--run-id",
@@ -117,6 +120,8 @@ def test_structural_benchmark_requires_exact_remote_authorization() -> None:
     assert arguments.allow_separate_evaluation_source is False
     assert arguments.per_document_limit == 8
     assert arguments.reranker_mode == "pinecone-only"
+    assert arguments.neighbor_expansion is True
+    assert arguments.neighbor_read_limit == 48
 
 
 @pytest.mark.asyncio

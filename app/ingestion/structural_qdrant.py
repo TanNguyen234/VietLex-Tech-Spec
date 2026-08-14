@@ -585,6 +585,49 @@ class StructuralQdrantTransport:
                 transient=_is_transient_provider_error(error),
             ) from error
 
+    def read_by_filter(
+        self,
+        *,
+        query_filter: models.Filter,
+        limit: int,
+    ) -> list[models.Record]:
+        """Read bounded payload-only structural neighbors without inference."""
+        if isinstance(limit, bool) or not isinstance(limit, int) or limit <= 0:
+            raise StructuralQdrantError("neighbor read limit must be positive")
+        try:
+            points, next_offset = self.client.scroll(
+                collection_name=self.contract.collection_name,
+                scroll_filter=query_filter,
+                limit=limit,
+                with_payload=True,
+                with_vectors=False,
+                timeout=int(self.contract.timeout_seconds),
+            )
+            if not isinstance(points, list):
+                raise StructuralProviderError(
+                    stage="read:neighbors",
+                    category="invalid_response",
+                    message="Qdrant neighbor read result is missing",
+                    transient=False,
+                )
+            if next_offset is not None:
+                raise StructuralProviderError(
+                    stage="read:neighbors",
+                    category="read_overflow",
+                    message="Qdrant neighbor read exceeded its bound",
+                    transient=False,
+                )
+            return points
+        except StructuralProviderError:
+            raise
+        except Exception as error:
+            raise StructuralProviderError(
+                stage="read:neighbors",
+                category=type(error).__name__,
+                message=f"Qdrant neighbor read failed: {type(error).__name__}",
+                transient=_is_transient_provider_error(error),
+            ) from error
+
 
 def create_structural_qdrant_client(settings: Settings) -> QdrantClient:
     """Create the remote-only client without making a provider call."""

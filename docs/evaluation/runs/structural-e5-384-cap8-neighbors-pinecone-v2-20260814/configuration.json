@@ -1,0 +1,46 @@
+{
+  "bm25_top_k": 48,
+  "collection_name": "vietlex-legal-rag-v2-pilot-384",
+  "comparison_limit": 24,
+  "dense_top_k": 48,
+  "dense_vector": {
+    "dimension": 384,
+    "distance": "cosine",
+    "model": "intfloat/multilingual-e5-small",
+    "model_options": {},
+    "name": "dense"
+  },
+  "eval_mode": "retrieval-only",
+  "evaluation_source_state_sha256": "b3ed8dfcfd5af9e16669cddbdc46064cb6715235a84ec364739deed1fd2aa6d8",
+  "fused_limit": 64,
+  "generation_mode": "off",
+  "guardrail_mode": "off",
+  "index_source_state_sha256": "fcd573edd55f8da6f9d8fb4f2d97faf13525740bdf9242e69fd3faaa3969f963",
+  "judge_mode": "none",
+  "metric_stage_aliases": {
+    "final_evidence_chunks": "final_hits",
+    "fts_hits": "bm25_hits",
+    "locally_selected_chunks": "reranker_input",
+    "merged_document_candidates": "fused_hits",
+    "pinecone_hits": "dense_hits",
+    "reranker_input_chunks": "reranker_input",
+    "reranker_output_chunks": "reranker_output",
+    "resolved_document_candidates": "fused_hits",
+    "structural_chunks_generated": "fused_hits"
+  },
+  "metric_version": "3.0.0",
+  "neighbor_expansion_enabled": true,
+  "neighbor_read_limit": 64,
+  "per_document_limit": 8,
+  "query_instruction": "Given a Vietnamese legal question, retrieve relevant statutory provisions and preserve exact legal references.",
+  "query_instruction_version": "vietlex-vn-legal-retrieval-v1",
+  "reranker_mode": "pinecone-only",
+  "rewrite_mode": "off",
+  "rrf_k": 60,
+  "sparse_vector": {
+    "model": "qdrant/bm25",
+    "model_options": {},
+    "modifier": "idf",
+    "name": "bm25"
+  }
+}

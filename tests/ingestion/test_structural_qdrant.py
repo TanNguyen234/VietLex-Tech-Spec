@@ -304,6 +304,59 @@ def test_raw_query_transport_retains_filter_points_and_dense_usage() -> None:
     assert request.using == "dense"
 
 
+def test_structural_neighbor_transport_is_payload_only_and_bounded() -> None:
+    structural_qdrant = importlib.import_module(
+        "app.ingestion.structural_qdrant"
+    )
+    calls: list[dict[str, object]] = []
+
+    def scroll(**kwargs):
+        calls.append(kwargs)
+        return [models.Record(id=1, payload={})], None
+
+    transport = structural_qdrant.StructuralQdrantTransport(
+        SimpleNamespace(scroll=scroll), _contract()
+    )
+    query_filter = models.Filter(
+        must=[
+            models.FieldCondition(
+                key="document_id", match=models.MatchValue(value=1)
+            )
+        ]
+    )
+
+    points = transport.read_by_filter(query_filter=query_filter, limit=8)
+
+    assert [point.id for point in points] == [1]
+    assert calls == [
+        {
+            "collection_name": "vietlex-legal-rag-v2-pilot-384",
+            "scroll_filter": query_filter,
+            "limit": 8,
+            "with_payload": True,
+            "with_vectors": False,
+            "timeout": 120,
+        }
+    ]
+
+
+def test_structural_neighbor_transport_rejects_pagination_overflow() -> None:
+    structural_qdrant = importlib.import_module(
+        "app.ingestion.structural_qdrant"
+    )
+    transport = structural_qdrant.StructuralQdrantTransport(
+        SimpleNamespace(scroll=lambda **_kwargs: ([], "next")), _contract()
+    )
+
+    with pytest.raises(
+        structural_qdrant.StructuralProviderError,
+        match="exceeded its bound",
+    ) as captured:
+        transport.read_by_filter(query_filter=models.Filter(), limit=8)
+
+    assert captured.value.category == "read_overflow"
+
+
 def test_raw_sparse_query_accepts_unmetered_bm25_usage() -> None:
     structural_qdrant = importlib.import_module(
         "app.ingestion.structural_qdrant"

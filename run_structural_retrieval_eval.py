@@ -174,6 +174,17 @@ def build_parser() -> argparse.ArgumentParser:
         default="current",
     )
     benchmark.add_argument(
+        "--neighbor-expansion",
+        action="store_true",
+        help="benchmark bounded same-document legal-structure neighbors",
+    )
+    benchmark.add_argument(
+        "--neighbor-read-limit",
+        type=int,
+        default=64,
+        help="maximum payload-only neighbor records read per query",
+    )
+    benchmark.add_argument(
         "--collection",
         choices=["vietlex-legal-rag-v2-pilot-384"],
         required=True,
@@ -364,6 +375,10 @@ async def _run_benchmark(arguments: argparse.Namespace) -> int:
         fused_limit=runtime_contract.fused_limit,
         rrf_k=runtime_contract.rrf_k,
         per_document_limit=runtime_contract.per_document_limit,
+        neighbor_expansion_enabled=getattr(
+            arguments, "neighbor_expansion", False
+        ),
+        neighbor_read_limit=getattr(arguments, "neighbor_read_limit", 64),
         reranker_mode=arguments.reranker_mode,
     )
     _require(
@@ -550,6 +565,10 @@ async def _run_benchmark(arguments: argparse.Namespace) -> int:
             reranker=get_remote_reranker(),
             contract=runtime_contract,
             reranker_mode=arguments.reranker_mode,
+            neighbor_expansion_enabled=getattr(
+                arguments, "neighbor_expansion", False
+            ),
+            neighbor_read_limit=getattr(arguments, "neighbor_read_limit", 64),
         )
     except Exception as error:
         initialization_errors = [
