@@ -89,6 +89,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--upload-report-sha256", required=True)
     parser.add_argument("--verify-report", type=Path, required=True)
     parser.add_argument("--verify-report-sha256", required=True)
+    parser.add_argument("--canary-report", type=Path, required=True)
+    parser.add_argument("--canary-report-sha256", required=True)
     parser.add_argument(
         "--p2-baseline",
         type=Path,
@@ -112,6 +114,10 @@ async def _run(arguments: argparse.Namespace) -> int:
         arguments.verify_report,
         arguments.verify_report_sha256,
     )
+    canary = _load_exact_object(
+        arguments.canary_report,
+        arguments.canary_report_sha256,
+    )
     _require(
         upload.get("plan_file_sha256") == arguments.plan_sha256
         and upload.get("upload", {}).get("status") == "PASS_UPLOAD"
@@ -127,6 +133,19 @@ async def _run(arguments: argparse.Namespace) -> int:
         and verify.get("verification", {}).get("remote_record_count")
         == plan.manifest.record_count,
         "verification report binding mismatch",
+    )
+    _require(
+        canary.get("status") == "PASS_CANARY"
+        and canary.get("plan_sha256") == arguments.plan_sha256
+        and canary.get("upload_report_sha256")
+        == arguments.upload_report_sha256
+        and canary.get("verify_report_sha256")
+        == arguments.verify_report_sha256
+        and canary.get("metrics", {})
+        .get("document_recall_at_10", {})
+        .get("value", 0)
+        >= 0.90,
+        "independent canary gate failed",
     )
     dataset_bytes, sidecar, selected = _selection(
         arguments.dataset,
@@ -152,6 +171,7 @@ async def _run(arguments: argparse.Namespace) -> int:
         plan_sha256=arguments.plan_sha256,
         upload_report_sha256=arguments.upload_report_sha256,
         verify_receipt_sha256=arguments.verify_report_sha256,
+        canary_report_sha256=arguments.canary_report_sha256,
         p2_baseline_sha256=arguments.p2_baseline_sha256,
         dense_vector_name="integrated_dense",
         sparse_vector_name=None,

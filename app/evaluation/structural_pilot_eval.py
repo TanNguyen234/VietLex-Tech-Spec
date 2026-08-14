@@ -101,6 +101,10 @@ class StructuralEvaluationBinding(BaseModel):
         pattern=_SHA256_PATTERN,
     )
     verify_receipt_sha256: str = Field(pattern=_SHA256_PATTERN)
+    canary_report_sha256: str | None = Field(
+        default=None,
+        pattern=_SHA256_PATTERN,
+    )
     p2_baseline_sha256: str = Field(pattern=_SHA256_PATTERN)
     dense_vector_name: Literal["dense"] = "dense"
     sparse_vector_name: str | None = "bm25"

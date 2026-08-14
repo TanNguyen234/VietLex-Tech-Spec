@@ -1,0 +1,47 @@
+{
+  "contract": {
+    "batch_size": 96,
+    "dense_top_k": 48,
+    "dimension": 1024,
+    "exact_top_k": 24,
+    "fused_limit": 48,
+    "index_name": "llama-text-embed-v2-index",
+    "max_workers": 16,
+    "metric": "cosine",
+    "model": "llama-text-embed-v2",
+    "namespace": "national-primary-v2",
+    "per_document_limit": 8,
+    "rrf_k": 60,
+    "schema_version": "1.0.0",
+    "text_field": "text"
+  },
+  "git_diff_sha256": "a571d12a3a3820cbb29afa01e05ee4b1fad4d8f7e6983b3fb44e534d75b40fd5",
+  "git_dirty": true,
+  "git_sha": "66012ed83f079878eda253d08f15d9c9290732f4",
+  "manifest": {
+    "approximate_token_count": 10876502,
+    "body_bytes": 65712409,
+    "chunk_max_tokens": 420,
+    "chunk_overlap_tokens": 48,
+    "dataset_repository": "vohuutridung/vietnamese-legal-documents",
+    "dataset_revision": "4d4e10b201544e8a4c49a1d3fa496595a7d486d0",
+    "document_count": 827,
+    "legal_types": [
+      "Hiến pháp",
+      "Luật",
+      "Pháp lệnh"
+    ],
+    "ordered_record_ids_sha256": "c6a0f69cadf90863d32a3eec1856808cd49499aabe3c960c41848a09dc7e4358",
+    "per_legal_type_counts": {
+      "Hiến pháp": 4,
+      "Luật": 595,
+      "Pháp lệnh": 228
+    },
+    "provider_calls": 0,
+    "record_count": 134334,
+    "schema_version": "2.0.0",
+    "selected_document_ids_sha256": "14597589492bf06d73847499dc2f1806a9ddecf1e9fcfc225805cd837685104b"
+  },
+  "schema_version": "1.0.0",
+  "source_state_sha256": "58cbc421174a1314f77a748f613eb20bfd33481a06f774dd431d473583fe92c1"
+}
