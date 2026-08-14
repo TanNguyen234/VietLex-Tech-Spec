@@ -324,6 +324,13 @@ def _transient_provider_error(error: Exception) -> bool:
     )
 
 
+def _provider_status_code(error: Exception) -> int | None:
+    status = getattr(error, "status_code", None)
+    if status is None:
+        status = getattr(getattr(error, "response", None), "status_code", None)
+    return status if isinstance(status, int) and not isinstance(status, bool) else None
+
+
 def _record_batches(
     records: Iterable[StructuralRecord],
     size: int,
@@ -341,7 +348,7 @@ def _upsert_batch(
     sleep: Callable[[float], None],
 ) -> tuple[tuple[StructuralRecord, ...], int]:
     attempts = 0
-    while attempts < 5:
+    while attempts < 30:
         attempts += 1
         try:
             response = index.upsert_records(
@@ -350,12 +357,17 @@ def _upsert_batch(
                 timeout=120.0,
             )
         except Exception as error:
-            if attempts >= 5 or not _transient_provider_error(error):
+            if attempts >= 30 or not _transient_provider_error(error):
                 raise PineconeStructuralError(
                     "Pinecone structural upsert failed "
                     f"({type(error).__name__})"
                 ) from error
-            sleep(min(8.0, 0.5 * (2 ** (attempts - 1))))
+            delay = (
+                60.0
+                if _provider_status_code(error) == 429
+                else min(8.0, 0.5 * (2 ** (attempts - 1)))
+            )
+            sleep(delay)
             continue
         count = getattr(response, "record_count", None)
         if isinstance(count, bool) or count != len(batch):

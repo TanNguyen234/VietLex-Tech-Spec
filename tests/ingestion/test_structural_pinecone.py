@@ -210,18 +210,20 @@ def test_upload_retries_transient_failure_before_checkpoint(tmp_path: Path) -> N
         _binding().model_copy(update={"manifest_record_count": 1}),
     )
     index = Index()
+    delays: list[float] = []
 
     report = upload_pinecone_structural_records(
         index,
         [_record()],
         checkpoint=checkpoint,
         contract=PineconeStructuralContract(max_workers=1),
-        sleep=lambda _delay: None,
+        sleep=delays.append,
     )
 
     assert index.calls == 2
     assert report.provider_calls == 2
     assert report.retry_count == 1
+    assert delays == [60.0]
     assert checkpoint.committed_count() == 1
 
 
