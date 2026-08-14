@@ -24,6 +24,7 @@ from app.ingestion.structural_qdrant import (
 
 _SHA256 = r"^[0-9a-f]{64}$"
 _PositiveInt = Annotated[StrictInt, Field(gt=0)]
+_RATE_LIMIT_RETRY_STAGGER_SECONDS = 6.0
 
 
 class PineconeStructuralError(RuntimeError):
@@ -346,6 +347,7 @@ def _upsert_batch(
     *,
     contract: PineconeStructuralContract,
     sleep: Callable[[float], None],
+    rate_limit_retry_offset: float = 0.0,
 ) -> tuple[tuple[StructuralRecord, ...], int]:
     attempts = 0
     while attempts < 30:
@@ -363,7 +365,7 @@ def _upsert_batch(
                     f"({type(error).__name__})"
                 ) from error
             delay = (
-                60.0
+                60.0 + rate_limit_retry_offset
                 if _provider_status_code(error) == 429
                 else min(8.0, 0.5 * (2 ** (attempts - 1)))
             )
@@ -402,8 +404,11 @@ def upload_pinecone_structural_records(
                     batch,
                     contract=contract,
                     sleep=sleep,
+                    rate_limit_retry_offset=(
+                        position * _RATE_LIMIT_RETRY_STAGGER_SECONDS
+                    ),
                 )
-                for batch in wave
+                for position, batch in enumerate(wave)
             ]
             for future in as_completed(futures):
                 batch, attempts = future.result()

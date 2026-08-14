@@ -227,6 +227,43 @@ def test_upload_retries_transient_failure_before_checkpoint(tmp_path: Path) -> N
     assert checkpoint.committed_count() == 1
 
 
+def test_upload_staggers_rate_limit_retries_across_a_concurrent_wave(
+    tmp_path: Path,
+) -> None:
+    class RateLimited(RuntimeError):
+        status_code = 429
+
+    class Index:
+        def __init__(self) -> None:
+            self.calls: dict[str, int] = {}
+
+        def upsert_records(self, **kwargs):
+            first_id = kwargs["records"][0]["_id"]
+            self.calls[first_id] = self.calls.get(first_id, 0) + 1
+            if self.calls[first_id] == 1:
+                raise RateLimited("quota")
+            return SimpleNamespace(record_count=len(kwargs["records"]))
+
+    records = [_record(f"record-{index:03d}") for index in range(192)]
+    checkpoint = PineconeStructuralCheckpoint(
+        tmp_path / "resume.sqlite3",
+        _binding().model_copy(update={"manifest_record_count": 192}),
+    )
+    delays: list[float] = []
+
+    report = upload_pinecone_structural_records(
+        Index(),
+        records,
+        checkpoint=checkpoint,
+        contract=PineconeStructuralContract(max_workers=2),
+        sleep=delays.append,
+    )
+
+    assert sorted(delays) == [60.0, 66.0]
+    assert report.retry_count == 2
+    assert checkpoint.committed_count() == 192
+
+
 def test_upload_rejects_malformed_response_without_checkpoint(
     tmp_path: Path,
 ) -> None:
