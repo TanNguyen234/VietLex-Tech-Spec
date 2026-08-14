@@ -41,3 +41,6 @@ data/tmp/
 *.md.report
 # Added by code-review-graph
 .code-review-graph/
+
+# Local resumable provider checkpoints (never durable evaluation evidence)
+.superpowers/runtime/
