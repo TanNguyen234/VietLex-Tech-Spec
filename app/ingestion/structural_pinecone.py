@@ -45,7 +45,7 @@ class PineconeStructuralContract(BaseModel):
     metric: Literal["cosine"] = "cosine"
     text_field: Literal["text"] = "text"
     batch_size: Literal[96] = 96
-    max_workers: _PositiveInt = 4
+    max_workers: Annotated[StrictInt, Field(gt=0, le=32)] = 16
     dense_top_k: _PositiveInt = 48
     exact_top_k: _PositiveInt = 24
     fused_limit: _PositiveInt = 48
