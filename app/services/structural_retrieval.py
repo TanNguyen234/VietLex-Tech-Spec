@@ -332,7 +332,7 @@ def _technical_error(
     )
 
 
-def _source_hits(
+def structural_source_hits(
     points: Sequence[object],
     *,
     dataset_revision: str,
@@ -492,7 +492,7 @@ def _interleave_neighbors(
     return result
 
 
-def _bounded_fused_candidates(
+def bounded_fused_candidates(
     candidates: Sequence[StructuralCandidate],
     *,
     limit: int,
@@ -510,7 +510,9 @@ def _bounded_fused_candidates(
     return selected
 
 
-def _candidate_to_evidence(candidate: StructuralCandidate) -> EvidenceChunk:
+def structural_candidate_to_evidence(
+    candidate: StructuralCandidate,
+) -> EvidenceChunk:
     return EvidenceChunk(
         document_id=candidate.document_id,
         document_number=candidate.document_number,
@@ -629,7 +631,7 @@ class StructuralRetriever:
                 raise _MalformedPayloadError(
                     "structural source returned more than the requested limit"
                 )
-            hits = _source_hits(
+            hits = structural_source_hits(
                 points,
                 dataset_revision=self.settings.DATASET_REVISION,
             )
@@ -823,7 +825,7 @@ class StructuralRetriever:
             latency["structural_neighbors"] = (
                 time.perf_counter() - neighbor_started
             )
-        fused = _bounded_fused_candidates(
+        fused = bounded_fused_candidates(
             fused,
             limit=self.contract.fused_limit,
             per_document_limit=self.contract.per_document_limit,
@@ -903,7 +905,9 @@ class StructuralRetriever:
 
         final = self._select_final(reranked)
         trace.final_hits = final
-        evidence = [_candidate_to_evidence(candidate) for candidate in final]
+        evidence = [
+            structural_candidate_to_evidence(candidate) for candidate in final
+        ]
         latency["total"] = time.perf_counter() - total_started
         status: Literal[
             "ok",
@@ -930,12 +934,26 @@ class StructuralRetriever:
         outcome: RerankOutcome,
         candidates: Sequence[StructuralCandidate],
     ) -> list[StructuralCandidate]:
-        if (
+        return validate_structural_rerank(outcome, candidates, self.settings)
+
+    def _select_final(
+        self,
+        candidates: Sequence[StructuralCandidate],
+    ) -> list[StructuralCandidate]:
+        return select_final_structural_candidates(candidates, self.settings)
+
+
+def validate_structural_rerank(
+    outcome: RerankOutcome,
+    candidates: Sequence[StructuralCandidate],
+    settings: Settings,
+) -> list[StructuralCandidate]:
+    if (
             not isinstance(outcome.provider, str)
             or not outcome.provider
             or not isinstance(outcome.model, str)
             or not outcome.model
-            or len(outcome.results) > self.settings.RERANK_RETURN_LIMIT
+            or len(outcome.results) > settings.RERANK_RETURN_LIMIT
             or isinstance(outcome.input_count, bool)
             or outcome.input_count != len(candidates)
             or isinstance(outcome.output_count, bool)
@@ -952,58 +970,59 @@ class StructuralRetriever:
                 in {"qdrant_transient", "qdrant_circuit_open"}
                 and outcome.provider != "pinecone"
             )
+    ):
+        raise StructuralRetrievalError("reranker response is malformed")
+    result: list[StructuralCandidate] = []
+    seen: set[int] = set()
+    for rank, item in enumerate(outcome.results, start=1):
+        if (
+            isinstance(item.index, bool)
+            or not isinstance(item.index, int)
+            or item.index < 0
+            or item.index >= len(candidates)
+            or item.index in seen
+            or isinstance(item.score, bool)
+            or not isinstance(item.score, (int, float))
+            or not math.isfinite(item.score)
         ):
-            raise StructuralRetrievalError("reranker response is malformed")
-        result: list[StructuralCandidate] = []
-        seen: set[int] = set()
-        for rank, item in enumerate(outcome.results, start=1):
-            if (
-                isinstance(item.index, bool)
-                or not isinstance(item.index, int)
-                or item.index < 0
-                or item.index >= len(candidates)
-                or item.index in seen
-                or isinstance(item.score, bool)
-                or not isinstance(item.score, (int, float))
-                or not math.isfinite(item.score)
-            ):
-                raise StructuralRetrievalError("reranker result is malformed")
-            seen.add(item.index)
-            result.append(
-                candidates[item.index].model_copy(
-                    update={
-                        "reranker_rank": rank,
-                        "reranker_score": float(item.score),
-                    }
-                )
+            raise StructuralRetrievalError("reranker result is malformed")
+        seen.add(item.index)
+        result.append(
+            candidates[item.index].model_copy(
+                update={
+                    "reranker_rank": rank,
+                    "reranker_score": float(item.score),
+                }
             )
-        if not result and candidates:
-            raise StructuralRetrievalError("reranker returned no candidates")
-        return result
+        )
+    if not result and candidates:
+        raise StructuralRetrievalError("reranker returned no candidates")
+    return result
 
-    def _select_final(
-        self,
-        candidates: Sequence[StructuralCandidate],
-    ) -> list[StructuralCandidate]:
-        selected: list[StructuralCandidate] = []
-        per_document: Counter[int] = Counter()
-        tokens = 0
-        for candidate in candidates:
-            if len(selected) >= self.settings.FINAL_EVIDENCE_LIMIT:
-                break
-            if (
-                candidate.reranker_score is None
-                or candidate.reranker_score < self.settings.RERANK_MIN_SCORE
-                or per_document[candidate.document_id]
-                >= self.settings.LLM_CONTEXT_PER_DOCUMENT_LIMIT
-                or tokens + candidate.token_count
-                > self.settings.LLM_CONTEXT_MAX_TOKENS
-            ):
-                continue
-            selected.append(candidate)
-            per_document[candidate.document_id] += 1
-            tokens += candidate.token_count
-        return selected
+
+def select_final_structural_candidates(
+    candidates: Sequence[StructuralCandidate],
+    settings: Settings,
+) -> list[StructuralCandidate]:
+    selected: list[StructuralCandidate] = []
+    per_document: Counter[int] = Counter()
+    tokens = 0
+    for candidate in candidates:
+        if len(selected) >= settings.FINAL_EVIDENCE_LIMIT:
+            break
+        if (
+            candidate.reranker_score is None
+            or candidate.reranker_score < settings.RERANK_MIN_SCORE
+            or per_document[candidate.document_id]
+            >= settings.LLM_CONTEXT_PER_DOCUMENT_LIMIT
+            or tokens + candidate.token_count
+            > settings.LLM_CONTEXT_MAX_TOKENS
+        ):
+            continue
+        selected.append(candidate)
+        per_document[candidate.document_id] += 1
+        tokens += candidate.token_count
+    return selected
 
 
 def build_structural_retriever(
