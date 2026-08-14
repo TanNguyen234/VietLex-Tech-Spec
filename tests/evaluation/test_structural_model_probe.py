@@ -889,6 +889,32 @@ class FakeInference:
         raise AssertionError("reference probe must not use Pinecone storage")
 
 
+def test_pinecone_reference_embedder_parallel_batches_preserve_order() -> None:
+    class OrderedInference:
+        def embed(self, *, model, inputs, parameters):
+            rows = [
+                SimpleNamespace(values=[float(value)] + [0.0] * 1023)
+                for value in inputs
+            ]
+            return SimpleNamespace(
+                model=model,
+                data=rows,
+                usage=SimpleNamespace(total_tokens=len(inputs)),
+            )
+
+    embedder = PineconeReferenceEmbedder(OrderedInference(), max_workers=4)
+
+    vectors, tokens, calls = embedder._embed(
+        [str(index) for index in range(193)], input_type="passage"
+    )
+
+    assert [vector[0] for vector in vectors] == [
+        float(index) for index in range(193)
+    ]
+    assert tokens == 193
+    assert calls == 3
+
+
 def test_pinecone_reference_embedder_uses_inference_only_and_exact_options(
     tmp_path: Path,
 ) -> None:

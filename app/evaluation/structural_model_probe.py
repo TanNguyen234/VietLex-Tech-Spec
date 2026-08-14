@@ -7,6 +7,7 @@ import json
 import math
 import re
 import time
+from concurrent.futures import ThreadPoolExecutor
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
@@ -702,8 +703,17 @@ def load_verified_probe_scope(
 class PineconeReferenceEmbedder:
     """Inference-only Pinecone reference; this class has no storage client."""
 
-    def __init__(self, inference: object) -> None:
+    def __init__(self, inference: object, *, max_workers: int = 4) -> None:
+        if (
+            isinstance(max_workers, bool)
+            or not isinstance(max_workers, int)
+            or max_workers <= 0
+        ):
+            raise StructuralModelProbeError(
+                "Pinecone reference max workers must be positive"
+            )
         self._inference = inference
+        self._max_workers = max_workers
 
     def evaluate(
         self,
@@ -750,55 +760,76 @@ class PineconeReferenceEmbedder:
         *,
         input_type: Literal["passage", "query"],
     ) -> tuple[list[list[float]], int, int]:
+        batches = list(_batches(texts, _REFERENCE_BATCH_SIZE))
+        if not batches:
+            return [], 0, 0
+        with ThreadPoolExecutor(
+            max_workers=min(self._max_workers, len(batches))
+        ) as executor:
+            batch_results = list(
+                executor.map(
+                    lambda batch: self._embed_batch(
+                        batch,
+                        input_type=input_type,
+                    ),
+                    batches,
+                )
+            )
         vectors: list[list[float]] = []
         tokens = 0
-        calls = 0
-        for batch in _batches(texts, _REFERENCE_BATCH_SIZE):
-            try:
-                response = self._inference.embed(
-                    model=_REFERENCE_MODEL,
-                    inputs=list(batch),
-                    parameters={
-                        "input_type": input_type,
-                        "dimension": _REFERENCE_DIMENSION,
-                        "truncate": "END",
-                    },
-                )
-            except Exception as error:
-                raise StructuralModelProbeError(
-                    "Pinecone reference inference failed "
-                    f"({type(error).__name__})"
-                ) from error
-            if getattr(response, "model", None) != _REFERENCE_MODEL:
-                raise StructuralModelProbeError(
-                    "Pinecone reference model response mismatch"
-                )
-            data = getattr(response, "data", None)
-            if not isinstance(data, list) or len(data) != len(batch):
-                raise StructuralModelProbeError(
-                    "Pinecone reference vector count mismatch"
-                )
-            batch_vectors = [getattr(item, "values", None) for item in data]
-            for vector in batch_vectors:
-                _validate_dense_vector(
-                    vector,
-                    expected_dimension=_REFERENCE_DIMENSION,
-                    stage="Pinecone reference",
-                )
-            usage = getattr(response, "usage", None)
-            total_tokens = getattr(usage, "total_tokens", None)
-            if (
-                isinstance(total_tokens, bool)
-                or not isinstance(total_tokens, int)
-                or total_tokens <= 0
-            ):
-                raise StructuralModelProbeError(
-                    "Pinecone reference usage is missing"
-                )
+        for batch_vectors, batch_tokens in batch_results:
             vectors.extend(batch_vectors)
-            tokens += total_tokens
-            calls += 1
-        return vectors, tokens, calls
+            tokens += batch_tokens
+        return vectors, tokens, len(batches)
+
+    def _embed_batch(
+        self,
+        batch: Sequence[str],
+        *,
+        input_type: Literal["passage", "query"],
+    ) -> tuple[list[list[float]], int]:
+        try:
+            response = self._inference.embed(
+                model=_REFERENCE_MODEL,
+                inputs=list(batch),
+                parameters={
+                    "input_type": input_type,
+                    "dimension": _REFERENCE_DIMENSION,
+                    "truncate": "END",
+                },
+            )
+        except Exception as error:
+            raise StructuralModelProbeError(
+                "Pinecone reference inference failed "
+                f"({type(error).__name__})"
+            ) from error
+        if getattr(response, "model", None) != _REFERENCE_MODEL:
+            raise StructuralModelProbeError(
+                "Pinecone reference model response mismatch"
+            )
+        data = getattr(response, "data", None)
+        if not isinstance(data, list) or len(data) != len(batch):
+            raise StructuralModelProbeError(
+                "Pinecone reference vector count mismatch"
+            )
+        batch_vectors = [getattr(item, "values", None) for item in data]
+        for vector in batch_vectors:
+            _validate_dense_vector(
+                vector,
+                expected_dimension=_REFERENCE_DIMENSION,
+                stage="Pinecone reference",
+            )
+        usage = getattr(response, "usage", None)
+        total_tokens = getattr(usage, "total_tokens", None)
+        if (
+            isinstance(total_tokens, bool)
+            or not isinstance(total_tokens, int)
+            or total_tokens <= 0
+        ):
+            raise StructuralModelProbeError(
+                "Pinecone reference usage is missing"
+            )
+        return batch_vectors, total_tokens
 
 
 def run_structural_model_probe(

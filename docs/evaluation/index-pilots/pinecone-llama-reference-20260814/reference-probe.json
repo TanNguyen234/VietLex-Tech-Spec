@@ -1,0 +1,75 @@
+{
+  "case_ids_sha256": "02b147618710247b69406c62c37ee1733412cf99c803a3b818cfc0040e78cfd6",
+  "dataset_sha256": "d6e125030e8dda700667ba00f25162fac76472a9bfa2d087f54e2b5bc73a1fee",
+  "dimension": 1024,
+  "metrics": {
+    "mrr": {
+      "denominator": 40,
+      "numerator": 37.55263157894737,
+      "value": 0.9388157894736843
+    },
+    "recall_at_1": {
+      "denominator": 40,
+      "numerator": 36.0,
+      "value": 0.9
+    },
+    "recall_at_3": {
+      "denominator": 40,
+      "numerator": 39.0,
+      "value": 0.975
+    }
+  },
+  "model": "llama-text-embed-v2",
+  "passage_input_count": 2573,
+  "per_query_first_relevant_rank": {
+    "case_017": 1,
+    "case_019": 1,
+    "case_021": 1,
+    "case_031": 1,
+    "case_036": 1,
+    "case_039": 1,
+    "case_043": 1,
+    "case_061": 1,
+    "case_065": 2,
+    "case_075": 1,
+    "case_101": 1,
+    "case_121": 1,
+    "case_127": 1,
+    "case_133": 1,
+    "case_135": 1,
+    "case_165": 1,
+    "case_171": 1,
+    "case_177": 1,
+    "case_187": 1,
+    "case_204": 1,
+    "case_227": 1,
+    "case_243": 1,
+    "case_253": 1,
+    "case_257": 2,
+    "case_261": 1,
+    "case_263": 1,
+    "case_285": 1,
+    "case_309": 1,
+    "case_323": 19,
+    "case_329": 1,
+    "case_331": 1,
+    "case_339": 1,
+    "case_355": 1,
+    "case_361": 2,
+    "case_371": 1,
+    "case_374": 1,
+    "case_375": 1,
+    "case_379": 1,
+    "case_397": 1,
+    "case_411": 1
+  },
+  "provider_calls": 28,
+  "provider_usage": {
+    "llama-text-embed-v2": 1236160
+  },
+  "query_input_count": 40,
+  "record_ids_sha256": "96c23ccb14951beecb28ff1d0a4b483905fa4a7af6ff9bc946073092a0703822",
+  "sidecar_sha256": "6044c084fd0cfd7b696b7e927ae2df26130e090aa64cf1a3b39a0784c1d8a9bf",
+  "source_state_sha256": "fcd573edd55f8da6f9d8fb4f2d97faf13525740bdf9242e69fd3faaa3969f963",
+  "text_sha256": "61d7b8c327c10ddce1205c842f7aa67ad28c963200b6d4fda3c30c2fbcf33353"
+}
