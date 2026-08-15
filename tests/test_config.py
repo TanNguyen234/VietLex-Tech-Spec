@@ -96,3 +96,29 @@ def test_qdrant_structural_pilot_defaults_are_exact_and_opt_in() -> None:
     assert settings.STRUCTURAL_CHUNK_OVERLAP_TOKENS == 48
     assert settings.STRUCTURAL_UPLOAD_BATCH_MIN == 64
     assert settings.STRUCTURAL_UPLOAD_BATCH_MAX == 256
+
+
+def test_ragas_evaluation_mode_default_is_off() -> None:
+    settings = Settings(_env_file=None)
+    assert settings.RAGAS_EVALUATION_MODE == "off"
+    assert settings.RAGAS_SAMPLE_RATE == 0.1
+
+
+def test_ragas_evaluation_mode_invalid_fails_validation() -> None:
+    import pytest
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, RAGAS_EVALUATION_MODE="invalid_mode")
+
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, RAGAS_SAMPLE_RATE=1.5)
+
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, RAGAS_SAMPLE_RATE=-0.1)
+
+
+def test_ragas_evaluation_mode_accepted_values() -> None:
+    for mode in ("off", "sample", "all"):
+        s = Settings(_env_file=None, RAGAS_EVALUATION_MODE=mode)
+        assert s.RAGAS_EVALUATION_MODE == mode

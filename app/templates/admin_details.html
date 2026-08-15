@@ -67,48 +67,52 @@
                 </div>
             </div>
             
-            <!-- Ragas Quality Metrics -->
+            <!-- Ragas Proxy Quality Metrics -->
             <div class="space-y-2">
-                <h4 class="font-bold text-slate-400 uppercase tracking-wider text-[10px] font-mono">Đánh giá Ragas (LLM-as-a-judge)</h4>
+                <h4 class="font-bold text-slate-400 uppercase tracking-wider text-[10px] font-mono">Đánh giá Ragas Proxy (LLM-as-a-judge proxy metric)</h4>
                 <div class="grid grid-cols-2 gap-4">
-                    <!-- Faithfulness -->
+                    <!-- Faithfulness Proxy -->
                     <div class="p-3.5 rounded-xl border border-slate-800/80 bg-slate-950/15 flex flex-col justify-between">
-                        <span class="text-[9px] text-slate-500 font-mono uppercase font-semibold">Faithfulness (Độ trung thực)</span>
+                        <span class="text-[9px] text-slate-500 font-mono uppercase font-semibold">Faithfulness (Ragas proxy)</span>
                         <div class="mt-1 flex items-baseline space-x-1">
-                            {% if log.metrics.faithfulness is not none %}
-                                {% if log.metrics.faithfulness >= 0.8 %}
-                                <span class="text-xl font-bold font-mono text-emerald-400">{{ log.metrics.faithfulness }}</span>
-                                {% elif log.metrics.faithfulness >= 0.5 %}
-                                <span class="text-xl font-bold font-mono text-yellow-400">{{ log.metrics.faithfulness }}</span>
+                            {% set faithfulness_val = log.metrics.get('ragas_proxy_faithfulness') if (log.metrics.get('ragas_proxy_faithfulness') is not none) else log.metrics.get('faithfulness') %}
+                            {% if faithfulness_val is not none %}
+                                {% if faithfulness_val >= 0.8 %}
+                                <span class="text-xl font-bold font-mono text-emerald-400">{{ faithfulness_val }}</span>
+                                {% elif faithfulness_val >= 0.5 %}
+                                <span class="text-xl font-bold font-mono text-yellow-400">{{ faithfulness_val }}</span>
                                 {% else %}
-                                <span class="text-xl font-bold font-mono text-red-400">{{ log.metrics.faithfulness }}</span>
+                                <span class="text-xl font-bold font-mono text-red-400">{{ faithfulness_val }}</span>
                                 {% endif %}
                                 <span class="text-[9px] text-slate-500 font-mono">/ 1.0</span>
                             {% else %}
-                            <span class="text-[11px] text-slate-500 italic">Đang chờ đánh giá</span>
+                            <span class="text-[11px] text-slate-500 italic">{{ 'Lỗi đánh giá' if log.metrics.get('ragas_status') == 'error' else 'Không đánh giá / Chưa có' }}</span>
                             {% endif %}
                         </div>
                     </div>
-                    <!-- Relevance -->
+                    <!-- Relevance Proxy -->
                     <div class="p-3.5 rounded-xl border border-slate-800/80 bg-slate-950/15 flex flex-col justify-between">
-                        <span class="text-[9px] text-slate-500 font-mono uppercase font-semibold">Answer Relevance (Độ tương quan)</span>
+                        <span class="text-[9px] text-slate-500 font-mono uppercase font-semibold">Answer Relevance (Ragas proxy)</span>
                         <div class="mt-1 flex items-baseline space-x-1">
-                            {% if log.metrics.answer_relevance is not none %}
-                                {% if log.metrics.answer_relevance >= 0.8 %}
-                                <span class="text-xl font-bold font-mono text-emerald-400">{{ log.metrics.answer_relevance }}</span>
-                                {% elif log.metrics.answer_relevance >= 0.5 %}
-                                <span class="text-xl font-bold font-mono text-yellow-400">{{ log.metrics.answer_relevance }}</span>
+                            {% set relevance_val = log.metrics.get('ragas_proxy_answer_relevance') if (log.metrics.get('ragas_proxy_answer_relevance') is not none) else log.metrics.get('answer_relevance') %}
+                            {% if relevance_val is not none %}
+                                {% if relevance_val >= 0.8 %}
+                                <span class="text-xl font-bold font-mono text-emerald-400">{{ relevance_val }}</span>
+                                {% elif relevance_val >= 0.5 %}
+                                <span class="text-xl font-bold font-mono text-yellow-400">{{ relevance_val }}</span>
                                 {% else %}
-                                <span class="text-xl font-bold font-mono text-red-400">{{ log.metrics.answer_relevance }}</span>
+                                <span class="text-xl font-bold font-mono text-red-400">{{ relevance_val }}</span>
                                 {% endif %}
                                 <span class="text-[9px] text-slate-500 font-mono">/ 1.0</span>
                             {% else %}
-                            <span class="text-[11px] text-slate-500 italic">Đang chờ đánh giá</span>
+                            <span class="text-[11px] text-slate-500 italic">{{ 'Lỗi đánh giá' if log.metrics.get('ragas_status') == 'error' else 'Không đánh giá / Chưa có' }}</span>
                             {% endif %}
                         </div>
                     </div>
                 </div>
             </div>
+
+
 
             <!-- Contexts Used -->
             <div class="space-y-2">

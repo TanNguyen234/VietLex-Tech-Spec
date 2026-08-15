@@ -54,12 +54,26 @@ async def log_interaction(
     input_safe: bool = True,
     output_safe: bool = True,
     rejection_reason: Optional[str] = None,
-    session_id: str = "default"
+    session_id: str = "default",
+    *,
+    latency: Optional[Dict[str, Any]] = None,
+    observed_provider: Optional[str] = None,
+    ragas_mode: str = "off",
+    ragas_status: str = "disabled",
+    citation_count: Optional[int] = None,
+    context_count: Optional[int] = None,
+    no_evidence: bool = False,
+    refusal_category: Optional[str] = None,
+    technical_error: Optional[str] = None,
 ) -> Dict[str, Any]:
     database = get_db()
     collection = database.evaluation_logs
     
+    ctx_count = context_count if context_count is not None else len(contexts)
+    cit_count = citation_count if citation_count is not None else 0
+
     document = {
+
         "_id": trace_id,
         "trace_id": trace_id,
         "session_id": session_id,
@@ -74,9 +88,24 @@ async def log_interaction(
             "rejection_reason": rejection_reason
         },
         "metrics": {
+            # Explicit Ragas proxy labels (proxy metric only, not legal correctness or law faithfulness)
+            "ragas_proxy_faithfulness": None,
+            "ragas_proxy_answer_relevance": None,
+            "ragas_mode": ragas_mode,
+            "ragas_status": ragas_status,
+            "ragas_error": None,
+            "evaluated_at": None,
+            # Compatibility aliases
             "faithfulness": None,
             "answer_relevance": None,
-            "evaluated_at": None
+            # Observable operational facts
+            "context_count": ctx_count,
+            "citation_count": cit_count,
+            "no_evidence": no_evidence,
+            "refusal_category": refusal_category,
+            "technical_error": technical_error,
+            "observed_provider": observed_provider or "unobserved",
+            "latency": latency or {}
         },
         "feedback": {
             "rating": None,
@@ -92,14 +121,26 @@ async def log_interaction(
         logfire.error("Failed to log interaction to MongoDB: {error}", error=str(e), trace_id=trace_id)
         return {}
 
-async def update_evaluation(trace_id: str, faithfulness: float, answer_relevance: float) -> bool:
+async def update_evaluation(
+    trace_id: str,
+    faithfulness: Optional[float] = None,
+    answer_relevance: Optional[float] = None,
+    status: str = "ok",
+    error: Optional[str] = None
+) -> bool:
+
     database = get_db()
     collection = database.evaluation_logs
     
     update_data = {
+        "metrics.ragas_proxy_faithfulness": faithfulness,
+        "metrics.ragas_proxy_answer_relevance": answer_relevance,
+        "metrics.ragas_status": status,
+        "metrics.ragas_error": error,
+        "metrics.evaluated_at": datetime.utcnow(),
+        # Compatibility aliases
         "metrics.faithfulness": faithfulness,
         "metrics.answer_relevance": answer_relevance,
-        "metrics.evaluated_at": datetime.utcnow()
     }
     
     try:
@@ -108,7 +149,7 @@ async def update_evaluation(trace_id: str, faithfulness: float, answer_relevance
             {"$set": update_data}
         )
         if result.modified_count > 0:
-            logfire.info("Updated Ragas evaluation metrics for trace: {trace_id}", trace_id=trace_id)
+            logfire.info("Updated Ragas proxy evaluation metrics for trace: {trace_id}", trace_id=trace_id)
             return True
         else:
             logfire.warning("No interaction found to update evaluation for trace: {trace_id}", trace_id=trace_id)
@@ -116,6 +157,7 @@ async def update_evaluation(trace_id: str, faithfulness: float, answer_relevance
     except Exception as e:
         logfire.error("Failed to update evaluation in MongoDB: {error}", error=str(e), trace_id=trace_id)
         return False
+
 
 async def update_feedback(trace_id: str, rating: str) -> bool:
     database = get_db()
@@ -172,6 +214,8 @@ async def get_admin_stats() -> Dict[str, Any]:
         "cache_hit_rate": 0.0,
         "avg_faithfulness": 0.0,
         "avg_relevance": 0.0,
+        "avg_ragas_proxy_faithfulness": 0.0,
+        "avg_ragas_proxy_relevance": 0.0,
         "positive_feedback_rate": 0.0
     }
     
@@ -185,17 +229,17 @@ async def get_admin_stats() -> Dict[str, Any]:
                         {"$count": "count"}
                     ],
                     "avg_faithfulness": [
-                        {"$match": {"metrics.faithfulness": {"$ne": None}}},
+                        {"$match": {"$or": [{"metrics.ragas_proxy_faithfulness": {"$ne": None}}, {"metrics.faithfulness": {"$ne": None}}]}},
                         {"$group": {
                             "_id": None,
-                            "avg": {"$avg": "$metrics.faithfulness"}
+                            "avg": {"$avg": {"$ifNull": ["$metrics.ragas_proxy_faithfulness", "$metrics.faithfulness"]}}
                         }}
                     ],
                     "avg_relevance": [
-                        {"$match": {"metrics.answer_relevance": {"$ne": None}}},
+                        {"$match": {"$or": [{"metrics.ragas_proxy_answer_relevance": {"$ne": None}}, {"metrics.answer_relevance": {"$ne": None}}]}},
                         {"$group": {
                             "_id": None,
-                            "avg": {"$avg": "$metrics.answer_relevance"}
+                            "avg": {"$avg": {"$ifNull": ["$metrics.ragas_proxy_answer_relevance", "$metrics.answer_relevance"]}}
                         }}
                     ],
                     "total_feedback": [
@@ -223,10 +267,14 @@ async def get_admin_stats() -> Dict[str, Any]:
                 stats["cache_hit_rate"] = round((cached_count / total_count) * 100, 2)
                 
             if facet["avg_faithfulness"] and facet["avg_faithfulness"][0]["avg"] is not None:
-                stats["avg_faithfulness"] = round(facet["avg_faithfulness"][0]["avg"], 2)
+                val = round(facet["avg_faithfulness"][0]["avg"], 2)
+                stats["avg_faithfulness"] = val
+                stats["avg_ragas_proxy_faithfulness"] = val
                 
             if facet["avg_relevance"] and facet["avg_relevance"][0]["avg"] is not None:
-                stats["avg_relevance"] = round(facet["avg_relevance"][0]["avg"], 2)
+                val = round(facet["avg_relevance"][0]["avg"], 2)
+                stats["avg_relevance"] = val
+                stats["avg_ragas_proxy_relevance"] = val
                 
             total_fb = facet["total_feedback"][0]["count"] if facet["total_feedback"] else 0
             if total_fb > 0:
@@ -235,6 +283,7 @@ async def get_admin_stats() -> Dict[str, Any]:
                 
     except Exception as e:
         logfire.error("Failed to calculate admin stats from MongoDB: {error}", error=str(e))
+
         
     return stats
 

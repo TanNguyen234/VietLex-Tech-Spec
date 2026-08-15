@@ -4,6 +4,8 @@ from fastapi import APIRouter, Request, Depends, Form, BackgroundTasks
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
+from app.config import get_settings
+from app.evaluation.online_metrics import build_online_metrics
 from app.api.dependencies import verify_csrf
 from app.services.semantic_cache import check_semantic_cache, save_to_semantic_cache
 from app.services.guardrails import (
@@ -45,9 +47,20 @@ async def chat(
         
     with logfire.span("Xử lý Chat Request: {message}", message=message) as span:
         # Step 2: Check Semantic Cache
+        settings = get_settings()
         cached_response = await check_semantic_cache(message)
         if cached_response:
             span.set_attribute("cache_hit", True)
+            metrics = build_online_metrics(
+                trace_id=trace_id,
+                request_status="cache_hit",
+                latency={"t_total": 0.0},
+                context_used=[],
+                bot_response=cached_response,
+                cached=True,
+                ragas_mode=settings.RAGAS_EVALUATION_MODE,
+                ragas_sample_rate=settings.RAGAS_SAMPLE_RATE,
+            )
             # Log cached interaction
             await log_interaction(
                 trace_id=trace_id,
@@ -55,7 +68,15 @@ async def chat(
                 bot_response=cached_response,
                 contexts=[],
                 cached=True,
-                session_id=session_id
+                session_id=session_id,
+                latency=metrics.latency,
+                observed_provider=metrics.observed_provider,
+                ragas_mode=metrics.ragas_mode,
+                ragas_status=metrics.ragas_status,
+                citation_count=metrics.citation_count,
+                context_count=metrics.context_count,
+                no_evidence=metrics.no_evidence,
+                refusal_category=metrics.refusal_category,
             )
             response = templates.TemplateResponse(
                 request,
@@ -90,6 +111,18 @@ async def chat(
             )
         if not input_safe:
             span.set_attribute("guardrails_blocked_input", True)
+            metrics = build_online_metrics(
+                trace_id=trace_id,
+                request_status="blocked_input",
+                latency={"t_total": 0.0},
+                context_used=[],
+                bot_response=rejection_message,
+                cached=False,
+                input_safe=False,
+                rejection_reason="Jailbreak or off-topic input blocked by guardrails",
+                ragas_mode=settings.RAGAS_EVALUATION_MODE,
+                ragas_sample_rate=settings.RAGAS_SAMPLE_RATE,
+            )
             # Log blocked input interaction
             await log_interaction(
                 trace_id=trace_id,
@@ -99,7 +132,15 @@ async def chat(
                 cached=False,
                 input_safe=False,
                 rejection_reason="Jailbreak or off-topic input blocked by guardrails",
-                session_id=session_id
+                session_id=session_id,
+                latency=metrics.latency,
+                observed_provider=metrics.observed_provider,
+                ragas_mode=metrics.ragas_mode,
+                ragas_status=metrics.ragas_status,
+                citation_count=metrics.citation_count,
+                context_count=metrics.context_count,
+                no_evidence=metrics.no_evidence,
+                refusal_category=metrics.refusal_category,
             )
             response = templates.TemplateResponse(
                 request,
@@ -113,7 +154,6 @@ async def chat(
         # Step 4: Run Advanced Retrieval Pipeline (RAG)
         bot_response, context_used, latency_info = await run_advanced_rag(message)
 
-        
         # Step 5: Apply NeMo Guardrails (Output Check)
         try:
             output_safe, fallback_response = await check_output_guardrails(
@@ -142,6 +182,24 @@ async def chat(
         final_response = redact_pii(final_response)
         rejection_reason = None if output_safe else "Hallucination or unsafe output detected"
         
+        # Build online operational metrics
+        req_status = "ok" if output_safe else "blocked_output"
+        observed_prov = latency_info.get("observed_provider") if isinstance(latency_info, dict) else None
+        metrics = build_online_metrics(
+            trace_id=trace_id,
+            request_status=req_status,
+            latency=latency_info if isinstance(latency_info, dict) else {},
+            context_used=context_used,
+            bot_response=final_response,
+            cached=False,
+            input_safe=True,
+            output_safe=output_safe,
+            rejection_reason=rejection_reason,
+            ragas_mode=settings.RAGAS_EVALUATION_MODE,
+            ragas_sample_rate=settings.RAGAS_SAMPLE_RATE,
+            observed_provider=observed_prov,
+        )
+
         # Save log to database
         await log_interaction(
             trace_id=trace_id,
@@ -152,14 +210,23 @@ async def chat(
             input_safe=True,
             output_safe=output_safe,
             rejection_reason=rejection_reason,
-            session_id=session_id
+            session_id=session_id,
+            latency=metrics.latency,
+            observed_provider=metrics.observed_provider,
+            ragas_mode=metrics.ragas_mode,
+            ragas_status=metrics.ragas_status,
+            citation_count=metrics.citation_count,
+            context_count=metrics.context_count,
+            no_evidence=metrics.no_evidence,
+            refusal_category=metrics.refusal_category,
         )
         
         # Step 6: Save interaction to Semantic Cache
         background_tasks.add_task(save_to_semantic_cache, message, final_response)
         
-        # Step 8: Trigger Background task: Evaluator
-        background_tasks.add_task(run_llm_as_judge, message, context_used, final_response, trace_id)
+        # Step 8: Trigger Background task: Evaluator (only if Ragas is selected and context exists)
+        if metrics.ragas_selected and context_used:
+            background_tasks.add_task(run_llm_as_judge, message, context_used, final_response, trace_id)
         
         # Step 9: Return HTML partial response
         response = templates.TemplateResponse(
@@ -170,6 +237,7 @@ async def chat(
         if is_new_session:
             response.headers["HX-Trigger"] = "load-sessions"
         return response
+
 
 @router.post("/api/feedback")
 async def feedback(

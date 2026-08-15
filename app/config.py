@@ -1,6 +1,6 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
-from typing import Optional
+from typing import Optional, Literal
 from functools import lru_cache
 from pathlib import Path
 import ssl
@@ -162,6 +162,10 @@ class Settings(BaseSettings):
     QUERY_REWRITE_TIMEOUT_SECONDS: float = 8.0
     GUARDRAIL_TIMEOUT_SECONDS: float = 8.0
 
+    # Online Ragas evaluation control (off | sample | all)
+    RAGAS_EVALUATION_MODE: Literal["off", "sample", "all"] = "off"
+    RAGAS_SAMPLE_RATE: float = Field(default=0.1, ge=0.0, le=1.0)
+
     # Retained for deployments that still provide the old environment name.
     LEXICAL_CHUNK_LIMIT: int = 64
 
@@ -169,8 +173,8 @@ class Settings(BaseSettings):
     def pinecone_api_key(self) -> Optional[str]:
         return self.PINECONE_API_KEY or self.PINECONE_API or self.PIPECONE_API
 
-
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
 
 @lru_cache
 def get_settings() -> Settings:

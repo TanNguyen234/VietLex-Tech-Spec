@@ -24,12 +24,12 @@
     </div>
 </div>
 
-<!-- Card 3: Avg Faithfulness -->
+<!-- Card 3: Avg Faithfulness (Proxy) -->
 <div class="glass-panel p-5 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden group hover:border-slate-800 transition-colors">
     <div class="absolute -right-4 -bottom-4 text-slate-900/10 text-7xl font-bold group-hover:scale-110 transition-transform duration-300">
         <i class="ph ph-shield-check"></i>
     </div>
-    <span class="text-[10px] uppercase font-mono tracking-wider font-semibold text-slate-500">Độ Trung Thực (Faithfulness)</span>
+    <span class="text-[10px] uppercase font-mono tracking-wider font-semibold text-slate-500">Faithfulness (Ragas proxy)</span>
     <div class="mt-2 flex items-baseline space-x-1">
         {% if stats.avg_faithfulness >= 0.8 %}
         <span class="text-3xl font-extrabold text-emerald-400 tracking-tight font-mono">{{ stats.avg_faithfulness }}</span>
@@ -42,12 +42,12 @@
     </div>
 </div>
 
-<!-- Card 4: Avg Relevance -->
+<!-- Card 4: Avg Relevance (Proxy) -->
 <div class="glass-panel p-5 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden group hover:border-slate-800 transition-colors">
     <div class="absolute -right-4 -bottom-4 text-slate-900/10 text-7xl font-bold group-hover:scale-110 transition-transform duration-300">
         <i class="ph ph-bullseye"></i>
     </div>
-    <span class="text-[10px] uppercase font-mono tracking-wider font-semibold text-slate-500">Tương Quan (Answer Relevance)</span>
+    <span class="text-[10px] uppercase font-mono tracking-wider font-semibold text-slate-500">Answer Relevance (Ragas proxy)</span>
     <div class="mt-2 flex items-baseline space-x-1">
         {% if stats.avg_relevance >= 0.8 %}
         <span class="text-3xl font-extrabold text-emerald-400 tracking-tight font-mono">{{ stats.avg_relevance }}</span>
@@ -59,6 +59,7 @@
         <span class="text-[10px] text-slate-500 font-mono">/ 1.0</span>
     </div>
 </div>
+
 
 <!-- Card 5: Positive Feedback Rate -->
 <div class="glass-panel p-5 rounded-2xl flex flex-col justify-between shadow-sm relative overflow-hidden group hover:border-slate-800 transition-colors">
