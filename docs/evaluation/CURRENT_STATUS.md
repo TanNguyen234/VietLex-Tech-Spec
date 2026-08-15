@@ -1,6 +1,8 @@
 # VietLex Evaluation Current Status
 
-**Status (2026-08-14):** P2 retrieval baseline `COMPLETED`; the isolated Qdrant E5-small/BM25 structural collection was fully uploaded and verified; the latest reachable 40-case benchmark remains `FAIL_QUALITY`; production readiness **NOT DEMONSTRATED**.
+**Status (2026-08-15):** P2 retrieval baseline `COMPLETED`; P3 Pinecone structural replacement is closed `BLOCKED_EXTERNAL_QUOTA` at 21,696/134,334 uploaded records; production readiness **NOT DEMONSTRATED**.
+
+P3 closure evidence: Pinecone paused monthly inference access for `llama-text-embed-v2`. The resumable checkpoint remains intact and maps the committed records to 247/827 selected documents. Offline coverage inspection found only 24/64 independent canary documents present, with 40 missing. Therefore upload verification, the independent canary, and the final P3 benchmark are `NOT RUN`; no upload-completion report was fabricated. The isolated incomplete namespace and checkpoint are preserved, the upload processes were stopped, and the P3 monitor was deleted. No production route, Pinecone v1 data, Qdrant data, local corpus, FTS, or credentials were changed by closure.
 
 The current decision artifact is `docs/evaluation/runs/structural-e5-384-hybrid-parser-fix-20260812/`. It executed all 40 promoted `all-required-verified` cases with zero skipped cases, zero technical errors, complete provider-usage observation, and no provenance drift. Fused Document Recall@24 is `1.0`, Article Recall@24 is `0.90`, Clause Recall@24 is `0.8571`, all-required coverage is `0.725`, and the no-candidate/retrieval/reranker error rates are all `0`. The exact `FAIL_QUALITY` result is therefore usable evidence, not a blocked run. The reranker reduced identical-input evidence survival: document `1.0 -> 0.9057`, article `0.90 -> 0.8333`, and clause `0.8571 -> 0.7857`. Production cutover remains unauthorized.
 

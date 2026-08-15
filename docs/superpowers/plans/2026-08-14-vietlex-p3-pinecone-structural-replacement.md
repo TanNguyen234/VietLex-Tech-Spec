@@ -1,5 +1,11 @@
 # P3 Pinecone structural replacement
 
+## Closure — 2026-08-15
+
+P3 is closed as `BLOCKED_EXTERNAL_QUOTA`. Pinecone paused monthly inference access for `llama-text-embed-v2`; the isolated upload stopped at 21,696 of 134,334 records. The checkpoint maps those records to 247 of 827 selected documents and only 24 of 64 independent canary documents. Upload verification, canary evaluation, and the final P3 benchmark are `NOT RUN`; the partial namespace is not quality evidence and production cutover is not authorized.
+
+The checkpoint and incomplete isolated namespace are preserved without deletion or synthetic completion artifacts. No monitor remains active and no automatic resume will occur. Any future replacement retrieval effort requires a new plan rather than reopening this closed P3 run.
+
 ## Frozen contract
 
 - Purpose: recover production-scale structural retrieval after the verified Qdrant pilot became unreachable.
