@@ -1,3 +1,4 @@
+import time
 import uuid
 import logfire
 from fastapi import APIRouter, Request, Depends, Form, BackgroundTasks
@@ -15,7 +16,7 @@ from app.services.guardrails import (
     check_output_guardrails,
     redact_pii,
 )
-from app.services.rag_pipeline import run_advanced_rag
+from app.services.rag_pipeline import RetrievalPipelineError, run_advanced_rag
 from app.services.evaluator import run_llm_as_judge
 from app.database import (
     log_interaction, update_feedback, get_admin_logs, get_admin_stats, get_interaction,
@@ -34,6 +35,7 @@ async def chat(
     session_id: str = Form(None),
     csrf_valid: str = Depends(verify_csrf)
 ):
+    t0 = time.perf_counter()
     message = redact_pii(message)
     trace_id = str(uuid.uuid4())
     is_new_session = False
@@ -51,10 +53,11 @@ async def chat(
         cached_response = await check_semantic_cache(message)
         if cached_response:
             span.set_attribute("cache_hit", True)
+            elapsed = time.perf_counter() - t0
             metrics = build_online_metrics(
                 trace_id=trace_id,
                 request_status="cache_hit",
-                latency={"t_total": 0.0},
+                latency={"t_total": round(elapsed, 4), "t_cache": round(elapsed, 4)},
                 context_used=[],
                 bot_response=cached_response,
                 cached=True,
@@ -69,10 +72,13 @@ async def chat(
                 contexts=[],
                 cached=True,
                 session_id=session_id,
+                request_status="cache_hit",
                 latency=metrics.latency,
                 observed_provider=metrics.observed_provider,
                 ragas_mode=metrics.ragas_mode,
                 ragas_status=metrics.ragas_status,
+                ragas_selected=metrics.ragas_selected,
+                ragas_executed=metrics.ragas_executed,
                 citation_count=metrics.citation_count,
                 context_count=metrics.context_count,
                 no_evidence=metrics.no_evidence,
@@ -93,10 +99,46 @@ async def chat(
         try:
             input_safe, rejection_message = await check_input_guardrails(message)
         except GuardrailUnavailableError as error:
+            elapsed = time.perf_counter() - t0
+            tech_error = {
+                "stage": "guardrails_input",
+                "error_type": error.__class__.__name__,
+                "message": str(error),
+            }
             logfire.error(
                 "Input guardrail unavailable",
                 error=str(error),
                 trace_id=trace_id,
+            )
+            metrics = build_online_metrics(
+                trace_id=trace_id,
+                request_status="technical_error",
+                latency={"t_total": round(elapsed, 4)},
+                context_used=[],
+                bot_response=GUARDRAIL_UNAVAILABLE_MESSAGE,
+                cached=False,
+                technical_error=tech_error,
+                ragas_mode=settings.RAGAS_EVALUATION_MODE,
+                ragas_sample_rate=settings.RAGAS_SAMPLE_RATE,
+            )
+            await log_interaction(
+                trace_id=trace_id,
+                user_query=message,
+                bot_response=GUARDRAIL_UNAVAILABLE_MESSAGE,
+                contexts=[],
+                cached=False,
+                session_id=session_id,
+                request_status="technical_error",
+                technical_error=tech_error,
+                latency=metrics.latency,
+                observed_provider=metrics.observed_provider,
+                ragas_mode=metrics.ragas_mode,
+                ragas_status=metrics.ragas_status,
+                ragas_selected=False,
+                ragas_executed=False,
+                citation_count=0,
+                context_count=0,
+                no_evidence=False,
             )
             return templates.TemplateResponse(
                 request,
@@ -111,10 +153,11 @@ async def chat(
             )
         if not input_safe:
             span.set_attribute("guardrails_blocked_input", True)
+            elapsed = time.perf_counter() - t0
             metrics = build_online_metrics(
                 trace_id=trace_id,
                 request_status="blocked_input",
-                latency={"t_total": 0.0},
+                latency={"t_total": round(elapsed, 4), "t_guardrails_input": round(elapsed, 4)},
                 context_used=[],
                 bot_response=rejection_message,
                 cached=False,
@@ -133,10 +176,13 @@ async def chat(
                 input_safe=False,
                 rejection_reason="Jailbreak or off-topic input blocked by guardrails",
                 session_id=session_id,
+                request_status="blocked_input",
                 latency=metrics.latency,
                 observed_provider=metrics.observed_provider,
                 ragas_mode=metrics.ragas_mode,
                 ragas_status=metrics.ragas_status,
+                ragas_selected=metrics.ragas_selected,
+                ragas_executed=metrics.ragas_executed,
                 citation_count=metrics.citation_count,
                 context_count=metrics.context_count,
                 no_evidence=metrics.no_evidence,
@@ -152,7 +198,58 @@ async def chat(
             return response
             
         # Step 4: Run Advanced Retrieval Pipeline (RAG)
-        bot_response, context_used, latency_info = await run_advanced_rag(message)
+        try:
+            bot_response, context_used, latency_info = await run_advanced_rag(message)
+        except RetrievalPipelineError as error:
+            elapsed = time.perf_counter() - t0
+            tech_error = {
+                "stage": getattr(error, "status", "retrieval_error"),
+                "error_type": error.__class__.__name__,
+                "message": str(error),
+            }
+            error_response = "Hệ thống tra cứu văn bản pháp luật gặp sự cố kỹ thuật. Vui lòng thử lại sau."
+            logfire.error("Retrieval pipeline failed", error=str(error), trace_id=trace_id)
+            metrics = build_online_metrics(
+                trace_id=trace_id,
+                request_status="technical_error",
+                latency=error.latency or {"t_total": round(elapsed, 4)},
+                context_used=[],
+                bot_response=error_response,
+                cached=False,
+                technical_error=tech_error,
+                ragas_mode=settings.RAGAS_EVALUATION_MODE,
+                ragas_sample_rate=settings.RAGAS_SAMPLE_RATE,
+            )
+            await log_interaction(
+                trace_id=trace_id,
+                user_query=message,
+                bot_response=error_response,
+                contexts=[],
+                cached=False,
+                session_id=session_id,
+                request_status="technical_error",
+                technical_error=tech_error,
+                latency=metrics.latency,
+                observed_provider=metrics.observed_provider,
+                ragas_mode=metrics.ragas_mode,
+                ragas_status=metrics.ragas_status,
+                ragas_selected=False,
+                ragas_executed=False,
+                citation_count=0,
+                context_count=0,
+                no_evidence=False,
+            )
+            return templates.TemplateResponse(
+                request,
+                "chat_message.html",
+                {
+                    "user_msg": message,
+                    "bot_msg": error_response,
+                    "trace_id": trace_id,
+                    "session_id": session_id,
+                },
+                status_code=500,
+            )
 
         # Step 5: Apply NeMo Guardrails (Output Check)
         try:
@@ -162,10 +259,46 @@ async def chat(
                 message,
             )
         except GuardrailUnavailableError as error:
+            elapsed = time.perf_counter() - t0
+            tech_error = {
+                "stage": "guardrails_output",
+                "error_type": error.__class__.__name__,
+                "message": str(error),
+            }
             logfire.error(
                 "Output guardrail unavailable",
                 error=str(error),
                 trace_id=trace_id,
+            )
+            metrics = build_online_metrics(
+                trace_id=trace_id,
+                request_status="technical_error",
+                latency={"t_total": round(elapsed, 4)},
+                context_used=context_used,
+                bot_response=GUARDRAIL_UNAVAILABLE_MESSAGE,
+                cached=False,
+                technical_error=tech_error,
+                ragas_mode=settings.RAGAS_EVALUATION_MODE,
+                ragas_sample_rate=settings.RAGAS_SAMPLE_RATE,
+            )
+            await log_interaction(
+                trace_id=trace_id,
+                user_query=message,
+                bot_response=GUARDRAIL_UNAVAILABLE_MESSAGE,
+                contexts=context_used,
+                cached=False,
+                session_id=session_id,
+                request_status="technical_error",
+                technical_error=tech_error,
+                latency=metrics.latency,
+                observed_provider=metrics.observed_provider,
+                ragas_mode=metrics.ragas_mode,
+                ragas_status=metrics.ragas_status,
+                ragas_selected=False,
+                ragas_executed=False,
+                citation_count=0,
+                context_count=len(context_used),
+                no_evidence=False,
             )
             return templates.TemplateResponse(
                 request,
@@ -183,8 +316,17 @@ async def chat(
         rejection_reason = None if output_safe else "Hallucination or unsafe output detected"
         
         # Build online operational metrics
-        req_status = "ok" if output_safe else "blocked_output"
+        if not context_used:
+            req_status = "no_evidence"
+        elif not output_safe:
+            req_status = "blocked_output"
+        else:
+            req_status = "ok"
+
         observed_prov = latency_info.get("observed_provider") if isinstance(latency_info, dict) else None
+        if isinstance(latency_info, dict):
+            latency_info["t_total"] = round(time.perf_counter() - t0, 4)
+
         metrics = build_online_metrics(
             trace_id=trace_id,
             request_status=req_status,
@@ -211,10 +353,13 @@ async def chat(
             output_safe=output_safe,
             rejection_reason=rejection_reason,
             session_id=session_id,
+            request_status=req_status,
             latency=metrics.latency,
             observed_provider=metrics.observed_provider,
             ragas_mode=metrics.ragas_mode,
             ragas_status=metrics.ragas_status,
+            ragas_selected=metrics.ragas_selected,
+            ragas_executed=metrics.ragas_executed,
             citation_count=metrics.citation_count,
             context_count=metrics.context_count,
             no_evidence=metrics.no_evidence,
@@ -237,6 +382,7 @@ async def chat(
         if is_new_session:
             response.headers["HX-Trigger"] = "load-sessions"
         return response
+
 
 
 @router.post("/api/feedback")

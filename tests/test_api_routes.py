@@ -182,3 +182,163 @@ def test_admin_stats_and_details_display_proxy_labels(client, monkeypatch) -> No
     details_resp = client.get("/admin/details/trace-test-admin")
     assert details_resp.status_code == 200
     assert "proxy" in details_resp.text.lower() or "đánh giá ragas" in details_resp.text.lower()
+
+
+def test_chat_route_cache_hit_measures_real_latency_and_persists_status(client, monkeypatch) -> None:
+    monkeypatch.setattr(
+        "app.api.routes.check_semantic_cache",
+        AsyncMock(return_value="Câu trả lời từ cache."),
+    )
+    monkeypatch.setattr("app.api.routes.create_session", AsyncMock())
+
+    logged = {}
+
+    async def fake_log(**kwargs):
+        nonlocal logged
+        logged = kwargs
+        return kwargs
+
+    monkeypatch.setattr("app.api.routes.log_interaction", fake_log)
+
+    resp = client.post(
+        "/chat",
+        data={"message": "Câu hỏi cache", "csrf_token": "valid_token", "session_id": "test-session"},
+    )
+    assert resp.status_code == 200
+    assert "Câu trả lời từ cache." in resp.text
+    assert logged.get("request_status") == "cache_hit"
+    assert logged.get("cached") is True
+    assert "t_total" in logged.get("latency", {})
+    assert logged["latency"]["t_total"] > 0.0
+
+
+def test_chat_route_input_guardrail_unavailable_persists_technical_error(client, monkeypatch) -> None:
+    from app.services.guardrails import GuardrailUnavailableError
+
+    monkeypatch.setattr("app.api.routes.check_semantic_cache", AsyncMock(return_value=None))
+    monkeypatch.setattr(
+        "app.api.routes.check_input_guardrails",
+        AsyncMock(side_effect=GuardrailUnavailableError("input", "Input guardrail service unreachable")),
+    )
+    monkeypatch.setattr("app.api.routes.create_session", AsyncMock())
+
+    logged = {}
+
+    async def fake_log(**kwargs):
+        nonlocal logged
+        logged = kwargs
+        return kwargs
+
+    monkeypatch.setattr("app.api.routes.log_interaction", fake_log)
+
+    resp = client.post(
+        "/chat",
+        data={"message": "Câu hỏi kiểm tra", "csrf_token": "valid_token", "session_id": "test-session"},
+    )
+    assert resp.status_code == 503
+    assert logged.get("request_status") == "technical_error"
+    assert logged.get("technical_error") is not None
+    assert logged["technical_error"]["stage"] == "guardrails_input"
+    assert "t_total" in logged.get("latency", {})
+
+
+def test_chat_route_output_guardrail_unavailable_persists_technical_error(client, monkeypatch) -> None:
+    from app.services.guardrails import GuardrailUnavailableError
+
+    monkeypatch.setattr("app.api.routes.check_semantic_cache", AsyncMock(return_value=None))
+    monkeypatch.setattr("app.api.routes.check_input_guardrails", AsyncMock(return_value=(True, "")))
+    monkeypatch.setattr(
+        "app.api.routes.run_advanced_rag",
+        AsyncMock(return_value=("Câu trả lời thô", ["Context"], {"t_total": 0.3})),
+    )
+    monkeypatch.setattr(
+        "app.api.routes.check_output_guardrails",
+        AsyncMock(side_effect=GuardrailUnavailableError("output", "Output guardrail service unreachable")),
+    )
+    monkeypatch.setattr("app.api.routes.create_session", AsyncMock())
+
+
+    logged = {}
+
+    async def fake_log(**kwargs):
+        nonlocal logged
+        logged = kwargs
+        return kwargs
+
+    monkeypatch.setattr("app.api.routes.log_interaction", fake_log)
+
+    resp = client.post(
+        "/chat",
+        data={"message": "Câu hỏi", "csrf_token": "valid_token", "session_id": "test-session"},
+    )
+    assert resp.status_code == 503
+    assert logged.get("request_status") == "technical_error"
+    assert logged.get("technical_error") is not None
+    assert logged["technical_error"]["stage"] == "guardrails_output"
+
+
+def test_chat_route_retrieval_pipeline_error_persists_technical_error(client, monkeypatch) -> None:
+    from app.services.rag_pipeline import RetrievalPipelineError
+
+    monkeypatch.setattr("app.api.routes.check_semantic_cache", AsyncMock(return_value=None))
+    monkeypatch.setattr("app.api.routes.check_input_guardrails", AsyncMock(return_value=(True, "")))
+    monkeypatch.setattr(
+        "app.api.routes.run_advanced_rag",
+        AsyncMock(
+            side_effect=RetrievalPipelineError(
+                "retrieval_error",
+                "Qdrant staging connection failure",
+                {"error_code": "QDRANT_CONN_ERR"},
+                {"t_total": 0.25},
+            )
+        ),
+    )
+    monkeypatch.setattr("app.api.routes.create_session", AsyncMock())
+
+    logged = {}
+
+    async def fake_log(**kwargs):
+        nonlocal logged
+        logged = kwargs
+        return kwargs
+
+    monkeypatch.setattr("app.api.routes.log_interaction", fake_log)
+
+    resp = client.post(
+        "/chat",
+        data={"message": "Câu hỏi", "csrf_token": "valid_token", "session_id": "test-session"},
+    )
+    assert resp.status_code in (500, 503)
+    assert logged.get("request_status") == "technical_error"
+    assert logged.get("technical_error") is not None
+    assert logged["technical_error"]["stage"] == "retrieval_error"
+
+
+def test_chat_route_no_evidence_persists_no_evidence_status(client, monkeypatch) -> None:
+    monkeypatch.setattr("app.api.routes.check_semantic_cache", AsyncMock(return_value=None))
+    monkeypatch.setattr("app.api.routes.save_to_semantic_cache", AsyncMock())
+    monkeypatch.setattr("app.api.routes.check_input_guardrails", AsyncMock(return_value=(True, "")))
+    monkeypatch.setattr(
+        "app.api.routes.run_advanced_rag",
+        AsyncMock(return_value=("Xin lỗi, tôi không tìm thấy...", [], {"t_total": 0.2, "observed_provider": "none"})),
+    )
+    monkeypatch.setattr("app.api.routes.check_output_guardrails", AsyncMock(return_value=(True, "")))
+    monkeypatch.setattr("app.api.routes.create_session", AsyncMock())
+
+    logged = {}
+
+    async def fake_log(**kwargs):
+        nonlocal logged
+        logged = kwargs
+        return kwargs
+
+    monkeypatch.setattr("app.api.routes.log_interaction", fake_log)
+
+    resp = client.post(
+        "/chat",
+        data={"message": "Câu hỏi không có luật", "csrf_token": "valid_token", "session_id": "test-session"},
+    )
+    assert resp.status_code == 200
+    assert logged.get("request_status") == "no_evidence"
+    assert logged.get("no_evidence") is True
+    assert logged.get("context_count") == 0

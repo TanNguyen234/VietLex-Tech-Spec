@@ -142,7 +142,8 @@ async def test_evaluator_failure_is_typed_and_does_not_mutate_or_throw(
         faithfulness=None,
         answer_relevance=None,
         status: str = "ok",
-        error: str | None = None,
+        error=None,
+        executed: bool = True,
     ):
         nonlocal update_eval_called, captured_kwargs
         update_eval_called = True
@@ -152,6 +153,7 @@ async def test_evaluator_failure_is_typed_and_does_not_mutate_or_throw(
             "answer_relevance": answer_relevance,
             "status": status,
             "error": error,
+            "executed": executed,
         }
         return True
 
@@ -170,7 +172,11 @@ async def test_evaluator_failure_is_typed_and_does_not_mutate_or_throw(
 
     assert update_eval_called is True
     assert captured_kwargs["status"] == "error"
-    assert "Ragas remote connection timeout" in str(captured_kwargs["error"])
+    assert captured_kwargs["executed"] is True
+    assert isinstance(captured_kwargs["error"], dict)
+    assert captured_kwargs["error"]["error_type"] == "RuntimeError"
+    assert "Ragas remote connection timeout" in captured_kwargs["error"]["message"]
+
     # Scores must NOT be silently set to 0.0
     assert captured_kwargs["faithfulness"] is None
     assert captured_kwargs["answer_relevance"] is None

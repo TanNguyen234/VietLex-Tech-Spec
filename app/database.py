@@ -56,24 +56,26 @@ async def log_interaction(
     rejection_reason: Optional[str] = None,
     session_id: str = "default",
     *,
+    request_status: str = "ok",
     latency: Optional[Dict[str, Any]] = None,
     observed_provider: Optional[str] = None,
     ragas_mode: str = "off",
     ragas_status: str = "disabled",
+    ragas_selected: bool = False,
+    ragas_executed: bool = False,
     citation_count: Optional[int] = None,
     context_count: Optional[int] = None,
     no_evidence: bool = False,
     refusal_category: Optional[str] = None,
-    technical_error: Optional[str] = None,
+    technical_error: Optional[Dict[str, Any] | str] = None,
 ) -> Dict[str, Any]:
     database = get_db()
     collection = database.evaluation_logs
-    
+
     ctx_count = context_count if context_count is not None else len(contexts)
     cit_count = citation_count if citation_count is not None else 0
 
     document = {
-
         "_id": trace_id,
         "trace_id": trace_id,
         "session_id": session_id,
@@ -88,31 +90,31 @@ async def log_interaction(
             "rejection_reason": rejection_reason
         },
         "metrics": {
-            # Explicit Ragas proxy labels (proxy metric only, not legal correctness or law faithfulness)
-            "ragas_proxy_faithfulness": None,
-            "ragas_proxy_answer_relevance": None,
-            "ragas_mode": ragas_mode,
-            "ragas_status": ragas_status,
-            "ragas_error": None,
-            "evaluated_at": None,
-            # Compatibility aliases
-            "faithfulness": None,
-            "answer_relevance": None,
-            # Observable operational facts
+            # Operational status & telemetry
+            "request_status": request_status,
+            "observed_provider": observed_provider or "unobserved",
+            "latency": latency or {},
             "context_count": ctx_count,
             "citation_count": cit_count,
             "no_evidence": no_evidence,
             "refusal_category": refusal_category,
             "technical_error": technical_error,
-            "observed_provider": observed_provider or "unobserved",
-            "latency": latency or {}
+            # Ragas proxy metadata & execution state
+            "ragas_mode": ragas_mode,
+            "ragas_status": ragas_status,
+            "ragas_selected": ragas_selected,
+            "ragas_executed": ragas_executed,
+            "ragas_error": None,
+            "ragas_proxy_faithfulness": None,
+            "ragas_proxy_answer_relevance": None,
+            "evaluated_at": None,
         },
         "feedback": {
             "rating": None,
             "updated_at": None
         }
     }
-    
+
     try:
         await collection.replace_one({"_id": trace_id}, document, upsert=True)
         logfire.info("Saved interaction to MongoDB: {trace_id}", trace_id=trace_id)
@@ -126,23 +128,21 @@ async def update_evaluation(
     faithfulness: Optional[float] = None,
     answer_relevance: Optional[float] = None,
     status: str = "ok",
-    error: Optional[str] = None
+    error: Optional[Dict[str, Any] | str] = None,
+    executed: bool = True,
 ) -> bool:
-
     database = get_db()
     collection = database.evaluation_logs
-    
+
     update_data = {
         "metrics.ragas_proxy_faithfulness": faithfulness,
         "metrics.ragas_proxy_answer_relevance": answer_relevance,
         "metrics.ragas_status": status,
+        "metrics.ragas_executed": executed,
         "metrics.ragas_error": error,
         "metrics.evaluated_at": datetime.utcnow(),
-        # Compatibility aliases
-        "metrics.faithfulness": faithfulness,
-        "metrics.answer_relevance": answer_relevance,
     }
-    
+
     try:
         result = await collection.update_one(
             {"_id": trace_id},
@@ -157,6 +157,7 @@ async def update_evaluation(
     except Exception as e:
         logfire.error("Failed to update evaluation in MongoDB: {error}", error=str(e), trace_id=trace_id)
         return False
+
 
 
 async def update_feedback(trace_id: str, rating: str) -> bool:

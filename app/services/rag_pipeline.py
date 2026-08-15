@@ -8,7 +8,11 @@ from typing import Any, Dict, List, Tuple
 import logfire
 
 from app.config import get_settings
-from app.services.direct_llm import generate_llm_response
+from app.services.direct_llm import (
+    LLMGenerationResult,
+    generate_llm_response,
+    generate_llm_response_with_metadata,
+)
 from app.services.retrieval import RetrievalOutcome, get_legal_retriever
 
 
@@ -123,10 +127,12 @@ async def run_advanced_rag(
             time.perf_counter() - started,
             3,
         )
+        latency["observed_provider"] = "none"
+        latency["observed_model"] = "none"
         return NO_EVIDENCE_RESPONSE, [], latency
 
     llm_started = time.perf_counter()
-    response = await generate_response(
+    llm_result = await generate_response_with_metadata(
         user_query,
         rewritten_query,
         contexts,
@@ -139,8 +145,9 @@ async def run_advanced_rag(
         time.perf_counter() - started,
         3,
     )
-    return response, contexts, latency
-
+    latency["observed_provider"] = llm_result.observed_provider
+    latency["observed_model"] = llm_result.observed_model
+    return llm_result.text, contexts, latency
 
 
 @logfire.instrument("Rewrite legal search query")
@@ -201,14 +208,18 @@ async def rewrite_query(
         return query
 
 
-@logfire.instrument("Generate grounded legal answer")
-async def generate_response(
+@logfire.instrument("Generate grounded legal answer with metadata")
+async def generate_response_with_metadata(
     original_query: str,
     rewritten_query: str,
     context: List[str],
-) -> str:
+) -> LLMGenerationResult:
     if not context:
-        return NO_EVIDENCE_RESPONSE
+        return LLMGenerationResult(
+            text=NO_EVIDENCE_RESPONSE,
+            observed_provider="none",
+            observed_model="none",
+        )
     context_text = build_bounded_context(
         context,
         max_tokens=get_settings().LLM_CONTEXT_MAX_TOKENS,
@@ -230,8 +241,22 @@ async def generate_response(
         f"Truy vấn tìm kiếm: {rewritten_query}\n"
         f"Câu hỏi người dùng: {original_query}"
     )
-    return await generate_llm_response(
+    return await generate_llm_response_with_metadata(
         user_prompt,
         system_prompt,
         max_output_tokens=get_settings().LLM_MAX_OUTPUT_TOKENS,
     )
+
+
+@logfire.instrument("Generate grounded legal answer")
+async def generate_response(
+    original_query: str,
+    rewritten_query: str,
+    context: List[str],
+) -> str:
+    result = await generate_response_with_metadata(
+        original_query,
+        rewritten_query,
+        context,
+    )
+    return result.text

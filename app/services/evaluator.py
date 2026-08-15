@@ -120,7 +120,8 @@ async def run_llm_as_judge(
             faithfulness=scores["faithfulness"],
             answer_relevance=scores["answer_relevance"],
             status="ok",
-            error=None
+            error=None,
+            executed=True,
         )
 
         logfire.info(
@@ -133,12 +134,17 @@ async def run_llm_as_judge(
         logfire.error("Lỗi khi chạy Ragas evaluator: {error}", error=str(e), trace_id=trace_id)
         try:
             from app.database import update_evaluation
+            safe_error = {
+                "error_type": e.__class__.__name__,
+                "message": str(e)[:200],
+            }
             await update_evaluation(
                 trace_id,
                 faithfulness=None,
                 answer_relevance=None,
                 status="error",
-                error=str(e)
+                error=safe_error,
+                executed=True,
             )
         except Exception as db_err:
             logfire.error("Lỗi khi ghi nhận trạng thái lỗi Ragas vào DB: {error}", error=str(db_err), trace_id=trace_id)

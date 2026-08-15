@@ -1,8 +1,10 @@
+from dataclasses import dataclass
 import time
 import httpx
 import logfire
 from typing import Optional
 from app.config import get_settings
+
 from app.evaluation.provider_catalog import (
     GEMINI_PRIMARY_MODEL,
     GEMINI_SECONDARY_MODEL,
@@ -181,15 +183,23 @@ async def call_groq_api(prompt: str, system_prompt: str = "", model: str = GROQ_
         logfire.warning("Groq API error: {err}", err=str(e))
     return None
 
-async def generate_llm_response(
+
+@dataclass(frozen=True)
+class LLMGenerationResult:
+    text: str
+    observed_provider: str
+    observed_model: str
+
+
+async def generate_llm_response_with_metadata(
     prompt: str,
     system_prompt: str = "",
     *,
     max_output_tokens: int = 1024,
-) -> str:
+) -> LLMGenerationResult:
     """
     4-Provider Direct Fallback Engine (OpenRouter -> Gemini -> Nvidia -> Groq).
-    Auto-switches provider upon 429 rate limit or HTTP failure.
+    Auto-switches provider upon 429 rate limit or HTTP failure and records observed provider/model.
     """
     now = time.time()
     
@@ -197,40 +207,86 @@ async def generate_llm_response(
     if settings.OPENROUTER_API_KEY and (now >= _cooldowns["openrouter"]):
         res = await call_openrouter_api(prompt, system_prompt, max_output_tokens=max_output_tokens)
         if res:
-            return res
+            return LLMGenerationResult(
+                text=res,
+                observed_provider="openrouter",
+                observed_model=OPENROUTER_PRIMARY_MODEL,
+            )
 
     # 2. Gemini Direct
     if settings.GEMINI_API_KEY and (now >= _cooldowns["gemini"]):
         res = await call_gemini_api(prompt, system_prompt, max_output_tokens=max_output_tokens)
         if res:
-            return res
+            return LLMGenerationResult(
+                text=res,
+                observed_provider="gemini",
+                observed_model=GEMINI_PRIMARY_MODEL,
+            )
 
     # 3. Nvidia NIM
     if settings.NVIDIA_API_KEY and (now >= _cooldowns["nvidia"]):
         res = await call_nvidia_api(prompt, system_prompt, max_output_tokens=max_output_tokens)
         if res:
-            return res
+            return LLMGenerationResult(
+                text=res,
+                observed_provider="nvidia",
+                observed_model=NVIDIA_PRIMARY_MODEL,
+            )
 
     # 4. Groq Direct
     if settings.GROQ_API_KEY and (now >= _cooldowns["groq"]):
         res = await call_groq_api(prompt, system_prompt, max_output_tokens=max_output_tokens)
         if res:
-            return res
+            return LLMGenerationResult(
+                text=res,
+                observed_provider="groq",
+                observed_model=GROQ_PRIMARY_MODEL,
+            )
 
     # Secondary fallback passes
     if settings.OPENROUTER_API_KEY:
         res = await call_openrouter_api(prompt, system_prompt, model=OPENROUTER_PRIMARY_MODEL, max_output_tokens=max_output_tokens)
         if res:
-            return res
+            return LLMGenerationResult(
+                text=res,
+                observed_provider="openrouter",
+                observed_model=OPENROUTER_PRIMARY_MODEL,
+            )
 
     if settings.GEMINI_API_KEY:
         res = await call_gemini_api(prompt, system_prompt, model=GEMINI_SECONDARY_MODEL, max_output_tokens=max_output_tokens)
         if res:
-            return res
+            return LLMGenerationResult(
+                text=res,
+                observed_provider="gemini",
+                observed_model=GEMINI_SECONDARY_MODEL,
+            )
 
     if settings.GROQ_API_KEY:
         res = await call_groq_api(prompt, system_prompt, model=GROQ_SECONDARY_MODEL, max_output_tokens=max_output_tokens)
         if res:
-            return res
+            return LLMGenerationResult(
+                text=res,
+                observed_provider="groq",
+                observed_model=GROQ_SECONDARY_MODEL,
+            )
 
-    return "Hệ thống chưa thể xử lý do toàn bộ API Keys đang bị giới hạn tốc độ. Vui lòng thử lại sau 30 giây."
+    return LLMGenerationResult(
+        text="Hệ thống chưa thể xử lý do toàn bộ API Keys đang bị giới hạn tốc độ. Vui lòng thử lại sau 30 giây.",
+        observed_provider="all_rate_limited",
+        observed_model="none",
+    )
+
+
+async def generate_llm_response(
+    prompt: str,
+    system_prompt: str = "",
+    *,
+    max_output_tokens: int = 1024,
+) -> str:
+    result = await generate_llm_response_with_metadata(
+        prompt,
+        system_prompt,
+        max_output_tokens=max_output_tokens,
+    )
+    return result.text
