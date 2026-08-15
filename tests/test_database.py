@@ -23,6 +23,12 @@ async def test_log_interaction_persists_all_operational_fields() -> None:
             request_status="ok",
             latency={"t_total": 0.45, "t_retrieval": 0.15, "t_llm": 0.30},
             observed_provider="openrouter",
+            observed_model="google/gemini-2.5-flash",
+            provider_usage={
+                "query_rewrite": {"provider": "gemini", "model": "gemini-2.5-flash", "observed": True},
+                "answer_generation": {"provider": "openrouter", "model": "google/gemini-2.5-flash", "observed": True},
+                "guardrails": {"provider": "unobserved", "model": "unobserved", "observed": False},
+            },
             ragas_mode="sample",
             ragas_status="selected",
             ragas_selected=True,
@@ -39,11 +45,14 @@ async def test_log_interaction_persists_all_operational_fields() -> None:
     assert metrics["ragas_selected"] is True
     assert metrics["ragas_executed"] is False
     assert metrics["observed_provider"] == "openrouter"
+    assert metrics["observed_model"] == "google/gemini-2.5-flash"
+    assert metrics["provider_usage"]["query_rewrite"]["provider"] == "gemini"
     assert metrics["latency"]["t_total"] == 0.45
     assert metrics["citation_count"] == 1
     assert metrics["context_count"] == 1
     assert metrics["no_evidence"] is False
     assert metrics["technical_error"] is None
+
     # Verify no ambiguous old aliases are written for new records
     assert "faithfulness" not in metrics
     assert "answer_relevance" not in metrics

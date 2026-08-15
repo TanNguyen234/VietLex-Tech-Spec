@@ -11,12 +11,16 @@ async def test_rewrite_query_rejects_repetitive_model_output(monkeypatch) -> Non
         "gì đối với nợ và người lao động?"
     )
 
-    async def repetitive_response(*_args, **_kwargs) -> str:
-        return 'Trang, "Tr, "Tr, "Tr, "Tr, "Tr, "Tr, "Tr, "Tr, "Tr'
+    async def repetitive_response(*_args, **_kwargs) -> rag_pipeline.LLMGenerationResult:
+        return rag_pipeline.LLMGenerationResult(
+            'Trang, "Tr, "Tr, "Tr, "Tr, "Tr, "Tr, "Tr, "Tr, "Tr',
+            "test_provider",
+            "test_model",
+        )
 
     monkeypatch.setattr(
         rag_pipeline,
-        "generate_llm_response",
+        "generate_llm_response_with_metadata",
         repetitive_response,
     )
 
@@ -32,15 +36,17 @@ async def test_rewrite_query_rejects_provider_exhaustion_message(
         "gì đối với nợ và người lao động?"
     )
 
-    async def unavailable_response(*_args, **_kwargs) -> str:
-        return (
+    async def unavailable_response(*_args, **_kwargs) -> rag_pipeline.LLMGenerationResult:
+        return rag_pipeline.LLMGenerationResult(
             "Hệ thống chưa thể xử lý do toàn bộ API Keys đang bị giới hạn "
-            "tốc độ. Vui lòng thử lại sau 30 giây."
+            "tốc độ. Vui lòng thử lại sau 30 giây.",
+            "all_rate_limited",
+            "none",
         )
 
     monkeypatch.setattr(
         rag_pipeline,
-        "generate_llm_response",
+        "generate_llm_response_with_metadata",
         unavailable_response,
     )
 
@@ -100,23 +106,23 @@ async def test_pipeline_fails_closed_without_calling_answer_model(
     retriever = FakeRetriever([])
     answer_called = False
 
-    async def fake_rewrite(query: str) -> str:
-        return query
+    async def fake_rewrite(query: str, *, raise_on_error: bool = False) -> tuple[str, dict]:
+        return query, {"provider": "none", "model": "none", "observed": False}
 
     async def forbidden_answer(*args, **kwargs):
         nonlocal answer_called
         answer_called = True
-        return "không được gọi"
+        return rag_pipeline.LLMGenerationResult("không được gọi", "unobserved", "unobserved")
 
     monkeypatch.setattr(
         rag_pipeline,
         "get_legal_retriever",
         lambda: retriever,
     )
-    monkeypatch.setattr(rag_pipeline, "rewrite_query", fake_rewrite)
+    monkeypatch.setattr(rag_pipeline, "rewrite_query_with_metadata", fake_rewrite)
     monkeypatch.setattr(
         rag_pipeline,
-        "generate_response",
+        "generate_response_with_metadata",
         forbidden_answer,
     )
 
@@ -140,15 +146,15 @@ async def test_pipeline_does_not_turn_retrieval_error_into_honest_refusal(
         error="both providers unavailable",
     )
 
-    async def fake_rewrite(query: str) -> str:
-        return query
+    async def fake_rewrite(query: str, *, raise_on_error: bool = False) -> tuple[str, dict]:
+        return query, {"provider": "none", "model": "none", "observed": False}
 
     monkeypatch.setattr(
         rag_pipeline,
         "get_legal_retriever",
         lambda: retriever,
     )
-    monkeypatch.setattr(rag_pipeline, "rewrite_query", fake_rewrite)
+    monkeypatch.setattr(rag_pipeline, "rewrite_query_with_metadata", fake_rewrite)
 
     with pytest.raises(rag_pipeline.RetrievalPipelineError) as captured:
         await rag_pipeline.run_advanced_rag("điều kiện thuế")
@@ -164,28 +170,32 @@ async def test_pipeline_formats_ranked_evidence_for_existing_contract(
     evidence = _evidence()
     retriever = FakeRetriever([evidence])
 
-    async def fake_rewrite(query: str) -> str:
-        return "truy vấn pháp lý"
+    async def fake_rewrite(query: str, *, raise_on_error: bool = False) -> tuple[str, dict]:
+        return "truy vấn pháp lý", {"provider": "test_provider", "model": "test_model", "observed": True}
 
     async def fake_answer(
         original_query: str,
         rewritten_query: str,
         context: list[str],
-    ) -> str:
+    ) -> rag_pipeline.LLMGenerationResult:
         assert original_query == "điều kiện thuế"
         assert rewritten_query == "truy vấn pháp lý"
         assert context == [evidence.formatted_context()]
-        return "Câu trả lời có căn cứ."
+        return rag_pipeline.LLMGenerationResult(
+            text="Câu trả lời có căn cứ.",
+            observed_provider="test_provider",
+            observed_model="test_model",
+        )
 
     monkeypatch.setattr(
         rag_pipeline,
         "get_legal_retriever",
         lambda: retriever,
     )
-    monkeypatch.setattr(rag_pipeline, "rewrite_query", fake_rewrite)
+    monkeypatch.setattr(rag_pipeline, "rewrite_query_with_metadata", fake_rewrite)
     monkeypatch.setattr(
         rag_pipeline,
-        "generate_response",
+        "generate_response_with_metadata",
         fake_answer,
     )
 
@@ -199,6 +209,7 @@ async def test_pipeline_formats_ranked_evidence_for_existing_contract(
         ("truy vấn pháp lý", "điều kiện thuế")
     ]
     assert latency["t_retrieval"] >= 0
+
 
 
 def test_context_builder_enforces_one_global_budget_in_rank_order() -> None:
@@ -226,15 +237,19 @@ async def test_answer_model_receives_external_corpus_reliability_rules(
         system_prompt: str,
         *,
         max_output_tokens: int,
-    ) -> str:
+    ) -> rag_pipeline.LLMGenerationResult:
         nonlocal captured_system_prompt
         captured_system_prompt = system_prompt
         assert max_output_tokens == 640
-        return "Câu trả lời."
+        return rag_pipeline.LLMGenerationResult(
+            text="Câu trả lời.",
+            observed_provider="test_provider",
+            observed_model="test_model",
+        )
 
     monkeypatch.setattr(
         rag_pipeline,
-        "generate_llm_response",
+        "generate_llm_response_with_metadata",
         fake_generate,
     )
 

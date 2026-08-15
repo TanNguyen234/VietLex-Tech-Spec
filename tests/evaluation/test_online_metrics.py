@@ -51,10 +51,32 @@ def test_online_metrics_contain_required_observable_fields() -> None:
     assert metrics.technical_error is None
     # If not explicitly observed from generation, must be 'unobserved' or 'unknown', never inferred from config
     assert metrics.observed_provider in ("unobserved", "unknown")
+    assert metrics.observed_model in ("unobserved", "unknown")
+    assert "query_rewrite" in metrics.provider_usage
+    assert "answer_generation" in metrics.provider_usage
     assert metrics.ragas_mode == "off"
     assert metrics.ragas_selected is False
     assert metrics.ragas_executed is False
     assert metrics.ragas_status == "disabled"
+
+
+def test_online_metrics_resolves_provider_usage_and_model() -> None:
+    provider_usage = {
+        "query_rewrite": {"provider": "gemini", "model": "gemini-2.5-flash", "observed": True},
+        "answer_generation": {"provider": "openrouter", "model": "google/gemini-2.5-flash", "observed": True},
+        "guardrails": {"provider": "unobserved", "model": "unobserved", "observed": False},
+    }
+    metrics = build_online_metrics(
+        trace_id="trace-provider-test",
+        request_status="ok",
+        context_used=["Context"],
+        bot_response="Trả lời",
+        provider_usage=provider_usage,
+    )
+    assert metrics.observed_provider == "openrouter"
+    assert metrics.observed_model == "google/gemini-2.5-flash"
+    assert metrics.provider_usage["query_rewrite"]["provider"] == "gemini"
+
 
 
 def test_online_metrics_no_evidence_and_refusal_categorization() -> None:

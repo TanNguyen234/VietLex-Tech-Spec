@@ -10,10 +10,10 @@ import logfire
 from app.config import get_settings
 from app.services.direct_llm import (
     LLMGenerationResult,
-    generate_llm_response,
     generate_llm_response_with_metadata,
 )
 from app.services.retrieval import RetrievalOutcome, get_legal_retriever
+
 
 
 NO_EVIDENCE_RESPONSE = (
@@ -73,15 +73,23 @@ async def run_advanced_rag(
     *,
     rewrite_mode: str = "on",
     profile: Any = None,
-) -> Tuple[str, List[str], Dict[str, Any], RetrievalOutcome]:
+) -> Tuple[str, List[str], Dict[str, Any]]:
     started = time.perf_counter()
 
     if rewrite_mode == "off":
         rewritten_query = user_query
         rewrite_seconds = 0.0
+        rewrite_meta = {
+            "provider": "none",
+            "model": "none",
+            "observed": False,
+            "reason": "disabled",
+        }
     else:
         rewrite_started = time.perf_counter()
-        rewritten_query = await rewrite_query(user_query)
+        rewritten_query, rewrite_meta = await rewrite_query_with_metadata(
+            user_query
+        )
         rewrite_seconds = time.perf_counter() - rewrite_started
 
     retrieval_started = time.perf_counter()
@@ -127,8 +135,36 @@ async def run_advanced_rag(
             time.perf_counter() - started,
             3,
         )
-        latency["observed_provider"] = "none"
-        latency["observed_model"] = "none"
+        answer_meta = {
+            "provider": "none",
+            "model": "none",
+            "observed": False,
+            "reason": "no_contexts",
+        }
+        provider_usage = {
+            "query_rewrite": {
+                "provider": rewrite_meta.get("provider", "unobserved"),
+                "model": rewrite_meta.get("model", "unobserved"),
+                "observed": bool(rewrite_meta.get("observed", False)),
+            },
+            "answer_generation": {
+                "provider": answer_meta["provider"],
+                "model": answer_meta["model"],
+                "observed": answer_meta["observed"],
+            },
+            "guardrails": {
+                "provider": "unobserved",
+                "model": "unobserved",
+                "observed": False,
+            },
+        }
+        latency["provider_usage"] = provider_usage
+        if rewrite_meta.get("observed") and rewrite_meta.get("provider") not in ("none", "unobserved"):
+            latency["observed_provider"] = rewrite_meta["provider"]
+            latency["observed_model"] = rewrite_meta.get("model", "none")
+        else:
+            latency["observed_provider"] = "none"
+            latency["observed_model"] = "none"
         return NO_EVIDENCE_RESPONSE, [], latency
 
     llm_started = time.perf_counter()
@@ -145,19 +181,42 @@ async def run_advanced_rag(
         time.perf_counter() - started,
         3,
     )
+    provider_usage = {
+        "query_rewrite": {
+            "provider": rewrite_meta.get("provider", "unobserved"),
+            "model": rewrite_meta.get("model", "unobserved"),
+            "observed": bool(rewrite_meta.get("observed", False)),
+        },
+        "answer_generation": {
+            "provider": llm_result.observed_provider,
+            "model": llm_result.observed_model,
+            "observed": True,
+        },
+        "guardrails": {
+            "provider": "unobserved",
+            "model": "unobserved",
+            "observed": False,
+        },
+    }
+    latency["provider_usage"] = provider_usage
     latency["observed_provider"] = llm_result.observed_provider
     latency["observed_model"] = llm_result.observed_model
     return llm_result.text, contexts, latency
 
 
-@logfire.instrument("Rewrite legal search query")
-async def rewrite_query(
+@logfire.instrument("Rewrite legal search query with metadata")
+async def rewrite_query_with_metadata(
     query: str,
     *,
     raise_on_error: bool = False,
-) -> str:
+) -> Tuple[str, Dict[str, Any]]:
     if len(query.split()) <= 10:
-        return query
+        return query, {
+            "provider": "none",
+            "model": "none",
+            "observed": False,
+            "reason": "short_query",
+        }
     prompt = (
         "Bạn là chuyên gia pháp luật Việt Nam. Viết lại câu hỏi "
         "sau thành một truy vấn ngắn gọn chứa thuật ngữ pháp lý "
@@ -167,8 +226,8 @@ async def rewrite_query(
         "Chỉ trả về truy vấn đã viết lại, không giải thích."
     )
     try:
-        rewritten = await asyncio.wait_for(
-            generate_llm_response(
+        llm_result = await asyncio.wait_for(
+            generate_llm_response_with_metadata(
                 prompt,
                 max_output_tokens=(
                     get_settings().QUERY_REWRITE_MAX_OUTPUT_TOKENS
@@ -176,7 +235,7 @@ async def rewrite_query(
             ),
             timeout=get_settings().QUERY_REWRITE_TIMEOUT_SECONDS,
         )
-        rewritten = rewritten.strip()
+        rewritten = llm_result.text.strip()
         normalized_rewrite = rewritten.casefold()
         words = re.findall(r"[^\W_]+", rewritten.casefold(), re.UNICODE)
         unique_ratio = len(set(words)) / len(words) if words else 0.0
@@ -192,8 +251,17 @@ async def rewrite_query(
             )
             if raise_on_error:
                 raise QueryRewriteError("malformed rewrite rejected")
-            return query
-        return rewritten
+            return query, {
+                "provider": llm_result.observed_provider,
+                "model": llm_result.observed_model,
+                "observed": True,
+                "rejected": True,
+            }
+        return rewritten, {
+            "provider": llm_result.observed_provider,
+            "model": llm_result.observed_model,
+            "observed": True,
+        }
     except QueryRewriteError:
         raise
     except Exception as error:
@@ -205,7 +273,25 @@ async def rewrite_query(
             raise QueryRewriteError(
                 f"{type(error).__name__}: {error}"
             ) from error
-        return query
+        return query, {
+            "provider": "unobserved",
+            "model": "unobserved",
+            "observed": False,
+            "error": type(error).__name__,
+        }
+
+
+@logfire.instrument("Rewrite legal search query")
+async def rewrite_query(
+    query: str,
+    *,
+    raise_on_error: bool = False,
+) -> str:
+    rewritten, _ = await rewrite_query_with_metadata(
+        query,
+        raise_on_error=raise_on_error,
+    )
+    return rewritten
 
 
 @logfire.instrument("Generate grounded legal answer with metadata")

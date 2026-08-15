@@ -34,15 +34,17 @@ class OnlineOperationalMetrics:
     citation_count: int
     no_evidence: bool
     refusal_category: Optional[str]
-    technical_error: Optional[str]
+    technical_error: Optional[Dict[str, Any] | str]
     observed_provider: str
+    observed_model: str
+    provider_usage: Dict[str, Any]
     ragas_mode: str
     ragas_selected: bool
     ragas_executed: bool
     ragas_status: str
     ragas_proxy_faithfulness: Optional[float] = None
     ragas_proxy_answer_relevance: Optional[float] = None
-    ragas_proxy_error: Optional[str] = None
+    ragas_proxy_error: Optional[Dict[str, Any] | str] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -62,14 +64,16 @@ def build_online_metrics(
     ragas_mode: str = "off",
     ragas_sample_rate: float = 0.1,
     observed_provider: Optional[str] = None,
-    technical_error: Optional[str] = None,
+    observed_model: Optional[str] = None,
+    provider_usage: Optional[Dict[str, Any]] = None,
+    technical_error: Optional[Dict[str, Any] | str] = None,
 ) -> OnlineOperationalMetrics:
     """
     Constructs a provider-free operational metrics record containing ONLY observable facts.
     - citation_count is an observable token/regex count (not legal validity).
     - context_count is an observable list length (not retrieval recall).
     - no_evidence is an observable status (not legal correctness).
-    - observed_provider is explicitly recorded or 'unobserved'/'unknown' (never inferred from config).
+    - observed_provider/observed_model and provider_usage are strictly recorded facts (never inferred).
     """
     cleaned_latency: Dict[str, float] = {}
     if latency:
@@ -98,11 +102,51 @@ def build_online_metrics(
         no_evidence = True
         refusal_category = "no_evidence"
 
-    # Provider observation: strictly observed or explicit unobserved/unknown
+    # Standardize provider_usage
+    default_usage: Dict[str, Any] = {
+        "query_rewrite": {
+            "provider": "unobserved",
+            "model": "unobserved",
+            "observed": False,
+        },
+        "answer_generation": {
+            "provider": "unobserved",
+            "model": "unobserved",
+            "observed": False,
+        },
+        "guardrails": {
+            "provider": "unobserved",
+            "model": "unobserved",
+            "observed": False,
+        },
+    }
+    if provider_usage and isinstance(provider_usage, dict):
+        for stage, info in provider_usage.items():
+            if isinstance(info, dict):
+                default_usage[stage] = {
+                    "provider": str(info.get("provider", "unobserved")),
+                    "model": str(info.get("model", "unobserved")),
+                    "observed": bool(info.get("observed", False)),
+                }
+
+    # Provider & model observation resolution
     if observed_provider and str(observed_provider).strip():
         final_provider = str(observed_provider).strip()
+    elif default_usage["answer_generation"]["observed"] and default_usage["answer_generation"]["provider"] != "unobserved":
+        final_provider = default_usage["answer_generation"]["provider"]
+    elif default_usage["query_rewrite"]["observed"] and default_usage["query_rewrite"]["provider"] != "unobserved":
+        final_provider = default_usage["query_rewrite"]["provider"]
     else:
         final_provider = "unobserved"
+
+    if observed_model and str(observed_model).strip():
+        final_model = str(observed_model).strip()
+    elif default_usage["answer_generation"]["observed"] and default_usage["answer_generation"]["model"] != "unobserved":
+        final_model = default_usage["answer_generation"]["model"]
+    elif default_usage["query_rewrite"]["observed"] and default_usage["query_rewrite"]["model"] != "unobserved":
+        final_model = default_usage["query_rewrite"]["model"]
+    else:
+        final_model = "unobserved"
 
     # Ragas sampling & status
     ragas_selected = False
@@ -130,6 +174,8 @@ def build_online_metrics(
         refusal_category=refusal_category,
         technical_error=technical_error,
         observed_provider=final_provider,
+        observed_model=final_model,
+        provider_usage=default_usage,
         ragas_mode=ragas_mode,
         ragas_selected=ragas_selected,
         ragas_executed=ragas_executed,

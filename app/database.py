@@ -59,6 +59,8 @@ async def log_interaction(
     request_status: str = "ok",
     latency: Optional[Dict[str, Any]] = None,
     observed_provider: Optional[str] = None,
+    observed_model: Optional[str] = None,
+    provider_usage: Optional[Dict[str, Any]] = None,
     ragas_mode: str = "off",
     ragas_status: str = "disabled",
     ragas_selected: bool = False,
@@ -93,6 +95,8 @@ async def log_interaction(
             # Operational status & telemetry
             "request_status": request_status,
             "observed_provider": observed_provider or "unobserved",
+            "observed_model": observed_model or "unobserved",
+            "provider_usage": provider_usage or {},
             "latency": latency or {},
             "context_count": ctx_count,
             "citation_count": cit_count,
@@ -114,6 +118,7 @@ async def log_interaction(
             "updated_at": None
         }
     }
+
 
     try:
         await collection.replace_one({"_id": trace_id}, document, upsert=True)

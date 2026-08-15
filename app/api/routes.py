@@ -1,7 +1,10 @@
 import time
 import uuid
+from typing import Dict
 import logfire
+
 from fastapi import APIRouter, Request, Depends, Form, BackgroundTasks
+
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
@@ -35,7 +38,7 @@ async def chat(
     session_id: str = Form(None),
     csrf_valid: str = Depends(verify_csrf)
 ):
-    t0 = time.perf_counter()
+    request_started = time.perf_counter()
     message = redact_pii(message)
     trace_id = str(uuid.uuid4())
     is_new_session = False
@@ -50,14 +53,18 @@ async def chat(
     with logfire.span("Xử lý Chat Request: {message}", message=message) as span:
         # Step 2: Check Semantic Cache
         settings = get_settings()
+        cache_started = time.perf_counter()
         cached_response = await check_semantic_cache(message)
+        t_cache = round(time.perf_counter() - cache_started, 4)
+
         if cached_response:
             span.set_attribute("cache_hit", True)
-            elapsed = time.perf_counter() - t0
+            t_total = round(time.perf_counter() - request_started, 4)
+            latency_record = {"t_total": t_total, "t_cache": t_cache}
             metrics = build_online_metrics(
                 trace_id=trace_id,
                 request_status="cache_hit",
-                latency={"t_total": round(elapsed, 4), "t_cache": round(elapsed, 4)},
+                latency=latency_record,
                 context_used=[],
                 bot_response=cached_response,
                 cached=True,
@@ -75,6 +82,8 @@ async def chat(
                 request_status="cache_hit",
                 latency=metrics.latency,
                 observed_provider=metrics.observed_provider,
+                observed_model=metrics.observed_model,
+                provider_usage=metrics.provider_usage,
                 ragas_mode=metrics.ragas_mode,
                 ragas_status=metrics.ragas_status,
                 ragas_selected=metrics.ragas_selected,
@@ -96,24 +105,32 @@ async def chat(
         span.set_attribute("cache_hit", False)
         
         # Step 3: Apply NeMo Guardrails (Input Check)
+        input_guardrail_started = time.perf_counter()
         try:
             input_safe, rejection_message = await check_input_guardrails(message)
+            t_guardrails_input = round(time.perf_counter() - input_guardrail_started, 4)
         except GuardrailUnavailableError as error:
-            elapsed = time.perf_counter() - t0
+            t_guardrails_input = round(time.perf_counter() - input_guardrail_started, 4)
+            t_total = round(time.perf_counter() - request_started, 4)
             tech_error = {
                 "stage": "guardrails_input",
                 "error_type": error.__class__.__name__,
-                "message": str(error),
+                "message": str(error)[:200],
             }
             logfire.error(
                 "Input guardrail unavailable",
                 error=str(error),
                 trace_id=trace_id,
             )
+            latency_record = {
+                "t_total": t_total,
+                "t_cache": t_cache,
+                "t_guardrails_input": t_guardrails_input,
+            }
             metrics = build_online_metrics(
                 trace_id=trace_id,
                 request_status="technical_error",
-                latency={"t_total": round(elapsed, 4)},
+                latency=latency_record,
                 context_used=[],
                 bot_response=GUARDRAIL_UNAVAILABLE_MESSAGE,
                 cached=False,
@@ -132,6 +149,8 @@ async def chat(
                 technical_error=tech_error,
                 latency=metrics.latency,
                 observed_provider=metrics.observed_provider,
+                observed_model=metrics.observed_model,
+                provider_usage=metrics.provider_usage,
                 ragas_mode=metrics.ragas_mode,
                 ragas_status=metrics.ragas_status,
                 ragas_selected=False,
@@ -153,11 +172,16 @@ async def chat(
             )
         if not input_safe:
             span.set_attribute("guardrails_blocked_input", True)
-            elapsed = time.perf_counter() - t0
+            t_total = round(time.perf_counter() - request_started, 4)
+            latency_record = {
+                "t_total": t_total,
+                "t_cache": t_cache,
+                "t_guardrails_input": t_guardrails_input,
+            }
             metrics = build_online_metrics(
                 trace_id=trace_id,
                 request_status="blocked_input",
-                latency={"t_total": round(elapsed, 4), "t_guardrails_input": round(elapsed, 4)},
+                latency=latency_record,
                 context_used=[],
                 bot_response=rejection_message,
                 cached=False,
@@ -179,6 +203,8 @@ async def chat(
                 request_status="blocked_input",
                 latency=metrics.latency,
                 observed_provider=metrics.observed_provider,
+                observed_model=metrics.observed_model,
+                provider_usage=metrics.provider_usage,
                 ragas_mode=metrics.ragas_mode,
                 ragas_status=metrics.ragas_status,
                 ragas_selected=metrics.ragas_selected,
@@ -201,18 +227,29 @@ async def chat(
         try:
             bot_response, context_used, latency_info = await run_advanced_rag(message)
         except RetrievalPipelineError as error:
-            elapsed = time.perf_counter() - t0
+            t_total = round(time.perf_counter() - request_started, 4)
             tech_error = {
                 "stage": getattr(error, "status", "retrieval_error"),
                 "error_type": error.__class__.__name__,
-                "message": str(error),
+                "message": str(error)[:200],
             }
             error_response = "Hệ thống tra cứu văn bản pháp luật gặp sự cố kỹ thuật. Vui lòng thử lại sau."
             logfire.error("Retrieval pipeline failed", error=str(error), trace_id=trace_id)
+            err_latency: Dict[str, float] = {
+                "t_total": t_total,
+                "t_cache": t_cache,
+                "t_guardrails_input": t_guardrails_input,
+            }
+            if error.latency:
+                for k, v in error.latency.items():
+                    if isinstance(v, (int, float)):
+                        err_latency[k] = float(v)
+            err_latency["t_total"] = t_total
+
             metrics = build_online_metrics(
                 trace_id=trace_id,
                 request_status="technical_error",
-                latency=error.latency or {"t_total": round(elapsed, 4)},
+                latency=err_latency,
                 context_used=[],
                 bot_response=error_response,
                 cached=False,
@@ -231,6 +268,8 @@ async def chat(
                 technical_error=tech_error,
                 latency=metrics.latency,
                 observed_provider=metrics.observed_provider,
+                observed_model=metrics.observed_model,
+                provider_usage=metrics.provider_usage,
                 ragas_mode=metrics.ragas_mode,
                 ragas_status=metrics.ragas_status,
                 ragas_selected=False,
@@ -252,28 +291,43 @@ async def chat(
             )
 
         # Step 5: Apply NeMo Guardrails (Output Check)
+        output_guardrail_started = time.perf_counter()
         try:
             output_safe, fallback_response = await check_output_guardrails(
                 bot_response,
                 context_used,
                 message,
             )
+            t_guardrails_output = round(time.perf_counter() - output_guardrail_started, 4)
         except GuardrailUnavailableError as error:
-            elapsed = time.perf_counter() - t0
+            t_guardrails_output = round(time.perf_counter() - output_guardrail_started, 4)
+            t_total = round(time.perf_counter() - request_started, 4)
             tech_error = {
                 "stage": "guardrails_output",
                 "error_type": error.__class__.__name__,
-                "message": str(error),
+                "message": str(error)[:200],
             }
             logfire.error(
                 "Output guardrail unavailable",
                 error=str(error),
                 trace_id=trace_id,
             )
+            err_latency = {
+                "t_total": t_total,
+                "t_cache": t_cache,
+                "t_guardrails_input": t_guardrails_input,
+                "t_guardrails_output": t_guardrails_output,
+            }
+            if isinstance(latency_info, dict):
+                for k, v in latency_info.items():
+                    if isinstance(v, (int, float)):
+                        err_latency[k] = float(v)
+            err_latency["t_total"] = t_total
+
             metrics = build_online_metrics(
                 trace_id=trace_id,
                 request_status="technical_error",
-                latency={"t_total": round(elapsed, 4)},
+                latency=err_latency,
                 context_used=context_used,
                 bot_response=GUARDRAIL_UNAVAILABLE_MESSAGE,
                 cached=False,
@@ -292,6 +346,8 @@ async def chat(
                 technical_error=tech_error,
                 latency=metrics.latency,
                 observed_provider=metrics.observed_provider,
+                observed_model=metrics.observed_model,
+                provider_usage=metrics.provider_usage,
                 ragas_mode=metrics.ragas_mode,
                 ragas_status=metrics.ragas_status,
                 ragas_selected=False,
@@ -323,14 +379,27 @@ async def chat(
         else:
             req_status = "ok"
 
-        observed_prov = latency_info.get("observed_provider") if isinstance(latency_info, dict) else None
+        t_total = round(time.perf_counter() - request_started, 4)
+        full_latency: Dict[str, float] = {
+            "t_total": t_total,
+            "t_cache": t_cache,
+            "t_guardrails_input": t_guardrails_input,
+            "t_guardrails_output": t_guardrails_output,
+        }
         if isinstance(latency_info, dict):
-            latency_info["t_total"] = round(time.perf_counter() - t0, 4)
+            for k, v in latency_info.items():
+                if isinstance(v, (int, float)):
+                    full_latency[k] = float(v)
+        full_latency["t_total"] = t_total
+
+        observed_prov = latency_info.get("observed_provider") if isinstance(latency_info, dict) else None
+        observed_mod = latency_info.get("observed_model") if isinstance(latency_info, dict) else None
+        provider_use = latency_info.get("provider_usage") if isinstance(latency_info, dict) else None
 
         metrics = build_online_metrics(
             trace_id=trace_id,
             request_status=req_status,
-            latency=latency_info if isinstance(latency_info, dict) else {},
+            latency=full_latency,
             context_used=context_used,
             bot_response=final_response,
             cached=False,
@@ -340,6 +409,8 @@ async def chat(
             ragas_mode=settings.RAGAS_EVALUATION_MODE,
             ragas_sample_rate=settings.RAGAS_SAMPLE_RATE,
             observed_provider=observed_prov,
+            observed_model=observed_mod,
+            provider_usage=provider_use,
         )
 
         # Save log to database
@@ -356,6 +427,8 @@ async def chat(
             request_status=req_status,
             latency=metrics.latency,
             observed_provider=metrics.observed_provider,
+            observed_model=metrics.observed_model,
+            provider_usage=metrics.provider_usage,
             ragas_mode=metrics.ragas_mode,
             ragas_status=metrics.ragas_status,
             ragas_selected=metrics.ragas_selected,
@@ -382,6 +455,7 @@ async def chat(
         if is_new_session:
             response.headers["HX-Trigger"] = "load-sessions"
         return response
+
 
 
 
