@@ -1,58 +1,28 @@
 from __future__ import annotations
 
-import dataclasses
-import hashlib
 import json
-import os
 import sqlite3
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 import pytest
 
-from app.evaluation.answer_metrics import (
-    aggregate_answer_metrics,
-    calculate_case_answer_metrics,
-    char_f1_metric,
-    chrf_metric,
-    classify_response_refusal,
-    rouge_l_metric,
-    token_level_metrics,
-)
-from app.evaluation.case_selection import build_cases, select_evaluation_cases
-from app.evaluation.gold_sidecar import GoldSidecar, load_gold_sidecar
-from app.evaluation.profiles import PROFILES, EvaluationProfile, get_evaluation_profile
-from app.evaluation.reporting import generate_markdown_report, write_run_report
+from app.evaluation.gold_sidecar import load_gold_sidecar
 from app.evaluation.retrieval_metrics import (
-    aggregate_retrieval_metrics,
-    calculate_case_retrieval_metrics,
     calculate_stage_candidate_metrics,
-    calculate_stage_survival_rates,
     match_gold_evidence,
     normalize_legal_identifier,
 )
 from app.evaluation.run_manifest import (
     atomic_write_json,
-    calculate_configuration_fingerprint,
-    calculate_dataset_sha256,
-    create_run_manifest,
-    generate_unique_run_id,
-    get_git_commit_sha,
-    get_git_provenance,
-    prepare_run_directory,
 )
 from app.evaluation.schemas import (
     CandidateChunk,
-    EvaluationRunManifest,
     EvidenceStatus,
     GoldEvidence,
-    GoldenCase,
     RequiredLevel,
-    RetrievalCaseResult,
-    RetrievalStageCapacities,
-    RetrievalStageTrace,
     StageCandidate,
 )
-from audit_golden_dataset import check_anchor_match, resolve_document_identity
+from audit_golden_dataset import resolve_document_identity
 
 
 # 1. Test Citation Normalization & Evidence Matching
