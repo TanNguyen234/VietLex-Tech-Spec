@@ -298,6 +298,83 @@ async def chat(
                 status_code=500,
             )
 
+        # Early check: Handle Answer Generation Technical Failures BEFORE Output Guardrail
+        generation_status = latency_info.get("generation_status", "success") if isinstance(latency_info, dict) else "success"
+        if generation_status not in ("success", "no_contexts"):
+            t_total = round(time.perf_counter() - request_started, 4)
+            tech_error = {
+                "stage": "answer_generation",
+                "error_type": generation_status,
+                "message": sanitize_error_message(bot_response),
+            }
+            err_latency: Dict[str, float] = {
+                "t_total": t_total,
+                "t_cache": t_cache,
+                "t_guardrails_input": t_guardrails_input,
+                "t_guardrails_output": 0.0,
+            }
+            if isinstance(latency_info, dict):
+                for k, v in latency_info.items():
+                    if isinstance(v, (int, float)):
+                        err_latency[k] = float(v)
+            err_latency["t_total"] = t_total
+
+            err_observed_prov = latency_info.get("observed_provider") if isinstance(latency_info, dict) else None
+            err_observed_mod = latency_info.get("observed_model") if isinstance(latency_info, dict) else None
+            err_provider_usage = latency_info.get("provider_usage") if isinstance(latency_info, dict) else None
+
+            metrics = build_online_metrics(
+                trace_id=trace_id,
+                request_status="technical_error",
+                latency=err_latency,
+                context_used=context_used,
+                bot_response=bot_response,
+                cached=False,
+                input_safe=True,
+                output_safe=True,
+                technical_error=tech_error,
+                observed_provider=err_observed_prov,
+                observed_model=err_observed_mod,
+                provider_usage=err_provider_usage,
+                ragas_mode=settings.RAGAS_EVALUATION_MODE,
+                ragas_sample_rate=settings.RAGAS_SAMPLE_RATE,
+            )
+            await log_interaction(
+                trace_id=trace_id,
+                user_query=message,
+                bot_response=bot_response,
+                contexts=context_used,
+                cached=False,
+                session_id=session_id,
+                request_status="technical_error",
+                technical_error=tech_error,
+                latency=metrics.latency,
+                observed_provider=metrics.observed_provider,
+                observed_model=metrics.observed_model,
+                provider_usage=metrics.provider_usage,
+                ragas_mode=metrics.ragas_mode,
+                ragas_status=metrics.ragas_status,
+                ragas_selected=False,
+                ragas_executed=False,
+                citation_count=metrics.citation_count,
+                context_count=len(context_used),
+                no_evidence=False,
+            )
+            response = templates.TemplateResponse(
+                request,
+                "chat_message.html",
+                {
+                    "user_msg": message,
+                    "bot_msg": bot_response,
+                    "trace_id": trace_id,
+                    "session_id": session_id,
+                    "contexts": context_used,
+                },
+            )
+            if is_new_session:
+                response.headers["HX-Trigger"] = "load-sessions"
+            return response
+
         # Step 5: Apply NeMo Guardrails (Output Check)
         output_guardrail_started = time.perf_counter()
         try:
@@ -388,16 +465,7 @@ async def chat(
         rejection_reason = None if output_safe else "Hallucination or unsafe output detected"
         
         # Build online operational metrics
-        generation_status = latency_info.get("generation_status", "success") if isinstance(latency_info, dict) else "success"
-        tech_error = None
-        if generation_status not in ("success", "no_contexts"):
-            req_status = "technical_error"
-            tech_error = {
-                "stage": "answer_generation",
-                "error_type": generation_status,
-                "message": sanitize_error_message(bot_response),
-            }
-        elif not context_used:
+        if not context_used:
             req_status = "no_evidence"
         elif not output_safe:
             req_status = "blocked_output"
@@ -431,7 +499,6 @@ async def chat(
             input_safe=True,
             output_safe=output_safe,
             rejection_reason=rejection_reason,
-            technical_error=tech_error,
             ragas_mode=settings.RAGAS_EVALUATION_MODE,
             ragas_sample_rate=settings.RAGAS_SAMPLE_RATE,
             observed_provider=observed_prov,
@@ -451,7 +518,6 @@ async def chat(
             rejection_reason=rejection_reason,
             session_id=session_id,
             request_status=req_status,
-            technical_error=tech_error,
             latency=metrics.latency,
             observed_provider=metrics.observed_provider,
             observed_model=metrics.observed_model,
@@ -466,13 +532,14 @@ async def chat(
             refusal_category=metrics.refusal_category,
         )
         
-        # Step 6: Save interaction to Semantic Cache (ONLY if request succeeded)
-        if req_status == "ok":
+        # Step 6: Save interaction to Semantic Cache (for all non-technical-error completions)
+        if req_status != "technical_error":
             background_tasks.add_task(save_to_semantic_cache, message, final_response)
         
-        # Step 8: Trigger Background task: Evaluator (only if request succeeded, Ragas is selected and context exists)
-        if req_status == "ok" and metrics.ragas_selected and not metrics.technical_error and context_used:
+        # Step 8: Trigger Background task: Evaluator (only if Ragas is selected and context exists, non-technical-error)
+        if req_status != "technical_error" and metrics.ragas_selected and context_used:
             background_tasks.add_task(run_llm_as_judge, message, context_used, final_response, trace_id)
+
 
         
         # Step 9: Return HTML partial response

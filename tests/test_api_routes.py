@@ -478,7 +478,8 @@ def test_chat_route_technical_error_sanitizes_secrets(client, monkeypatch) -> No
 def test_chat_route_answer_generation_no_provider_available_persists_technical_error(client, monkeypatch) -> None:
     monkeypatch.setattr("app.api.routes.check_semantic_cache", AsyncMock(return_value=None))
     monkeypatch.setattr("app.api.routes.check_input_guardrails", AsyncMock(return_value=(True, "")))
-    monkeypatch.setattr("app.api.routes.check_output_guardrails", AsyncMock(return_value=(True, "")))
+    mock_output_guard = AsyncMock(return_value=(True, ""))
+    monkeypatch.setattr("app.api.routes.check_output_guardrails", mock_output_guard)
 
     mock_save_cache = AsyncMock()
     mock_evaluator = AsyncMock()
@@ -522,6 +523,8 @@ def test_chat_route_answer_generation_no_provider_available_persists_technical_e
     assert logged["technical_error"]["stage"] == "answer_generation"
     assert logged["technical_error"]["error_type"] == "no_provider_available"
     assert logged.get("observed_provider") in ("unobserved", "none")
+    assert mock_output_guard.called is False
+    mock_output_guard.assert_not_called()
     assert mock_save_cache.called is False
     assert mock_evaluator.called is False
 
@@ -529,7 +532,8 @@ def test_chat_route_answer_generation_no_provider_available_persists_technical_e
 def test_chat_route_answer_generation_providers_exhausted_persists_technical_error(client, monkeypatch) -> None:
     monkeypatch.setattr("app.api.routes.check_semantic_cache", AsyncMock(return_value=None))
     monkeypatch.setattr("app.api.routes.check_input_guardrails", AsyncMock(return_value=(True, "")))
-    monkeypatch.setattr("app.api.routes.check_output_guardrails", AsyncMock(return_value=(True, "")))
+    mock_output_guard = AsyncMock(return_value=(True, ""))
+    monkeypatch.setattr("app.api.routes.check_output_guardrails", mock_output_guard)
 
     mock_save_cache = AsyncMock()
     mock_evaluator = AsyncMock()
@@ -573,5 +577,94 @@ def test_chat_route_answer_generation_providers_exhausted_persists_technical_err
     assert logged["technical_error"]["stage"] == "answer_generation"
     assert logged["technical_error"]["error_type"] == "providers_exhausted"
     assert logged.get("observed_provider") in ("unobserved", "none")
+    assert mock_output_guard.called is False
+    mock_output_guard.assert_not_called()
     assert mock_save_cache.called is False
     assert mock_evaluator.called is False
+
+
+def test_chat_route_no_evidence_caches_and_skips_ragas(client, monkeypatch) -> None:
+    monkeypatch.setattr("app.api.routes.check_semantic_cache", AsyncMock(return_value=None))
+    monkeypatch.setattr("app.api.routes.check_input_guardrails", AsyncMock(return_value=(True, "")))
+    monkeypatch.setattr("app.api.routes.check_output_guardrails", AsyncMock(return_value=(True, "")))
+
+    mock_save_cache = AsyncMock()
+    mock_evaluator = AsyncMock()
+    monkeypatch.setattr("app.api.routes.save_to_semantic_cache", mock_save_cache)
+    monkeypatch.setattr("app.api.routes.run_llm_as_judge", mock_evaluator)
+
+    rag_latency = {
+        "t_total": 0.20,
+        "generation_status": "no_contexts",
+        "observed_provider": "unobserved",
+        "observed_model": "unobserved",
+    }
+    monkeypatch.setattr(
+        "app.api.routes.run_advanced_rag",
+        AsyncMock(return_value=("Không tìm thấy thông tin.", [], rag_latency)),
+    )
+    monkeypatch.setattr("app.api.routes.create_session", AsyncMock())
+
+    logged = {}
+
+    async def fake_log(**kwargs):
+        nonlocal logged
+        logged = kwargs
+        return kwargs
+
+    monkeypatch.setattr("app.api.routes.log_interaction", fake_log)
+
+    resp = client.post(
+        "/chat",
+        data={"message": "Câu hỏi không có căn cứ", "csrf_token": "valid_token", "session_id": "test-session"},
+    )
+    assert resp.status_code == 200
+    assert logged.get("request_status") == "no_evidence"
+    assert logged.get("no_evidence") is True
+    assert mock_save_cache.called is True
+    assert mock_evaluator.called is False
+
+
+def test_chat_route_blocked_output_caches_and_triggers_ragas_when_selected(client, monkeypatch) -> None:
+    from app.config import get_settings
+    monkeypatch.setattr(get_settings(), "RAGAS_EVALUATION_MODE", "all")
+
+    monkeypatch.setattr("app.api.routes.check_semantic_cache", AsyncMock(return_value=None))
+    monkeypatch.setattr("app.api.routes.check_input_guardrails", AsyncMock(return_value=(True, "")))
+    monkeypatch.setattr("app.api.routes.check_output_guardrails", AsyncMock(return_value=(False, "Câu trả lời đã bị chặn an toàn.")))
+
+
+    mock_save_cache = AsyncMock()
+    mock_evaluator = AsyncMock()
+    monkeypatch.setattr("app.api.routes.save_to_semantic_cache", mock_save_cache)
+    monkeypatch.setattr("app.api.routes.run_llm_as_judge", mock_evaluator)
+
+    rag_latency = {
+        "t_total": 0.50,
+        "generation_status": "success",
+        "observed_provider": "openrouter",
+        "observed_model": "google/gemini-2.5-flash",
+    }
+    monkeypatch.setattr(
+        "app.api.routes.run_advanced_rag",
+        AsyncMock(return_value=("Câu trả lời không an toàn", ["Context 1"], rag_latency)),
+    )
+    monkeypatch.setattr("app.api.routes.create_session", AsyncMock())
+
+    logged = {}
+
+    async def fake_log(**kwargs):
+        nonlocal logged
+        logged = kwargs
+        return kwargs
+
+    monkeypatch.setattr("app.api.routes.log_interaction", fake_log)
+
+    resp = client.post(
+        "/chat",
+        data={"message": "Câu hỏi", "csrf_token": "valid_token", "session_id": "test-session"},
+    )
+    assert resp.status_code == 200
+    assert logged.get("request_status") == "blocked_output"
+    assert mock_save_cache.called is True
+    assert mock_evaluator.called is True
