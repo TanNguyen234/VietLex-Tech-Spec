@@ -36,6 +36,7 @@ class RuntimeDependencies:
     collect_git_provenance: Callable[..., Any]
     GitProvenance: type
     get_settings: Callable[..., Any]
+    format_queue_human_preview: Callable[..., str]
 
 
 def repository_root() -> Path:
@@ -51,6 +52,7 @@ def _runtime_dependencies() -> RuntimeDependencies:
         build_promotion_summary,
         canonical_sha256,
         artifact_sha256,
+        format_queue_human_preview,
         select_stratified_case_ids,
         validate_preview_approval,
         build_queue_payload,
@@ -84,6 +86,7 @@ def _runtime_dependencies() -> RuntimeDependencies:
         collect_git_provenance=collect_git_provenance,
         GitProvenance=GitProvenance,
         get_settings=get_settings,
+        format_queue_human_preview=format_queue_human_preview,
     )
 
 
@@ -104,6 +107,7 @@ def build_parser() -> argparse.ArgumentParser:
     queue.add_argument("--fts", type=Path, default=root / "data/huggingface/legal_fts.sqlite3")
     queue.add_argument("--target-cases", type=int, default=40)
     queue.add_argument("--candidate-limit", type=int, default=12)
+    queue.add_argument("--write-preview", action="store_true", default=False)
 
     preview = commands.add_parser("preview", help="rebuild an immutable promotion preview")
     common(preview, root / "docs/evaluation/adjudication/previews")
@@ -270,6 +274,7 @@ def _cmd_queue(args: argparse.Namespace) -> int:
     )
     queue_sha256 = dependencies.artifact_sha256(queue_payload)
     template = dependencies.build_decision_template(queue_payload, queue_sha256)
+    queue_preview_md = dependencies.format_queue_human_preview(queue_payload)
     run_id = args.run_id or dependencies.generate_unique_run_id("gold-adjudication-queue")
     planned_run = _planned_run_dir(output_root, run_id)
     paths = {
@@ -277,6 +282,8 @@ def _cmd_queue(args: argparse.Namespace) -> int:
         "decision_template": _relative_path(planned_run / "decision_template.json", root),
         "queue_summary": _relative_path(planned_run / "queue_summary.json", root),
     }
+    if args.write_preview:
+        paths["queue_preview"] = _relative_path(planned_run / "queue_preview.md", root)
     summary = {
         "command": ["run_gold_adjudication.py", "queue"],
         "run_id": run_id,
@@ -298,6 +305,8 @@ def _cmd_queue(args: argparse.Namespace) -> int:
     dependencies.write_immutable_json(run_dir / "queue.json", queue_payload)
     dependencies.write_immutable_json(run_dir / "decision_template.json", template)
     dependencies.write_immutable_json(run_dir / "queue_summary.json", summary)
+    if args.write_preview:
+        (run_dir / "queue_preview.md").write_text(queue_preview_md, encoding="utf-8")
     return 0
 
 

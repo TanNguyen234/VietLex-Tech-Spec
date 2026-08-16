@@ -1984,3 +1984,274 @@ def test_gold_adjudication_cli_fails_closed_without_writing_new_artifacts(
         cli.main(arguments)
     assert _tree_bytes(tmp_path) == before
     assert not output_root.exists()
+
+
+# ==============================================================================
+# TASK 2: PROVIDER-FREE VERIFIED-GOLD EXPANSION & DIVERSITY TESTS
+# ==============================================================================
+
+def test_task2_selection_determinism_exact_order():
+    """A. Determinism: identical inputs produce identical 20-case IDs in identical order."""
+    cases = [
+        *[_case(f"factoid-{idx:02d}", "factoid") for idx in range(25)],
+        *[_case(f"multi-hop-{idx:02d}", "multi-hop") for idx in range(25)],
+    ]
+    labels_by_case = {case.case_id: [_label(case.case_id)] for case in cases}
+
+    first = select_stratified_case_ids(cases, labels_by_case, target_cases=20, seed="task2-seed-1")
+    second = select_stratified_case_ids(cases, labels_by_case, target_cases=20, seed="task2-seed-1")
+
+    assert len(first) == 20
+    assert first == second
+
+
+def test_task2_exact_batch_size_contract():
+    """B. Exact batch size: exactly 20 unique cases."""
+    cases = [
+        *[_case(f"case-f-{idx:02d}", "factoid") for idx in range(20)],
+        *[_case(f"case-m-{idx:02d}", "multi-hop") for idx in range(20)],
+    ]
+    labels_by_case = {case.case_id: [_label(case.case_id)] for case in cases}
+
+    selected = select_stratified_case_ids(cases, labels_by_case, target_cases=20, seed="batch-20")
+    assert len(selected) == 20
+    assert len(set(selected)) == 20
+
+
+def test_task2_insufficient_pool_fails_closed():
+    """C. Insufficient pool: <20 eligible cases fails closed, never pads/fabricates."""
+    cases = [_case(f"scarce-{idx:02d}", "factoid") for idx in range(12)]
+    labels_by_case = {case.case_id: [_label(case.case_id)] for case in cases}
+
+    # When fail_closed=True, raises ValueError("insufficient_eligible_cases")
+    with pytest.raises(ValueError, match="insufficient_eligible_cases"):
+        select_stratified_case_ids(cases, labels_by_case, target_cases=20, seed="scarce-v2", fail_closed=True)
+
+    # When fail_closed=False, returns exact available cases without padding
+    selected = select_stratified_case_ids(cases, labels_by_case, target_cases=20, seed="scarce-v2", fail_closed=False)
+    assert len(selected) == 12
+    assert len(set(selected)) == 12
+    assert set(selected) == {c.case_id for c in cases}
+
+    # build_queue_payload marks BLOCKED_INSUFFICIENT_ELIGIBLE_CASES
+    sidecar = GoldSidecar(
+        metadata=GoldSidecarMetadata(sidecar_sha256="a" * 64),
+        labels=[_label(c.case_id) for c in cases],
+        labels_by_case_id=labels_by_case,
+    )
+    payload = build_queue_payload(
+        cases=cases,
+        sidecar=sidecar,
+        candidates_by_evidence_id={},
+        selected_case_ids=selected,
+        dataset_sha256="d" * 64,
+        corpus_revision="pinned",
+        provenance=_provenance(),
+        command=["python"],
+        candidate_limit=5,
+        selection_seed="scarce-v2",
+        target_case_count=20,
+    )
+    assert payload["queue_status"] == "BLOCKED_INSUFFICIENT_ELIGIBLE_CASES"
+    assert payload["selected_case_count"] == 12
+    assert payload["selection_diagnostics"]["shortfall"] == 8
+
+
+def test_task2_no_automatic_promotion_candidates_remain_pending():
+    """D. No automatic promotion: every queued candidate remains pending, sidecar untouched."""
+    case = _case("case-pending", "factoid")
+    evidence = _label(case.case_id)
+    sidecar = GoldSidecar(
+        metadata=GoldSidecarMetadata(sidecar_sha256="a" * 64),
+        labels=[evidence],
+        labels_by_case_id={case.case_id: [evidence]},
+    )
+    candidate = _candidate(evidence.evidence_item_id)
+    payload = build_queue_payload(
+        cases=[case],
+        sidecar=sidecar,
+        candidates_by_evidence_id={evidence.evidence_item_id: [candidate]},
+        selected_case_ids=[case.case_id],
+        dataset_sha256="d" * 64,
+        corpus_revision="pinned",
+        provenance=_provenance(),
+        command=["python"],
+        candidate_limit=5,
+        selection_seed="pending-check",
+        target_case_count=20,
+    )
+    row = payload["rows"][0]
+    assert row["decision"]["status"] == "pending"
+    assert row["decision"]["selected_candidate_id"] is None
+    assert row["source_evidence_status"] == EvidenceStatus.AMBIGUOUS.value
+    # Ensure no verified status is assigned
+    assert all(r["decision"]["status"] == "pending" for r in payload["rows"])
+
+
+def test_task2_diversity_aware_selection_prioritizes_underrepresented_documents():
+    """F. Diversity-aware selection: prefers underrepresented documents over overrepresented documents."""
+    cases = []
+    labels_by_case = {}
+
+    # Overrepresented doc 101 and 102 cases
+    for doc_id, prefix, count in [(101, "over101", 5), (102, "over102", 5)]:
+        for i in range(count):
+            cid = f"{prefix}-{i}"
+            c = _case(cid, "factoid")
+            cases.append(c)
+            ev = GoldEvidence(
+                evidence_item_id=f"ev-{cid}",
+                case_id=cid,
+                document_id=doc_id,
+                document_number=f"{doc_id}/2020/ND-CP",
+                required=True,
+                required_level="article",
+                status=EvidenceStatus.VERIFIED,  # already verified representation
+            )
+            labels_by_case[cid] = [ev]
+
+    # Underrepresented doc 201, 202, 203, 204 cases (unverified)
+    for doc_id, prefix, count in [(201, "under201", 5), (202, "under202", 5), (203, "under203", 5), (204, "under204", 5)]:
+        for i in range(count):
+            cid = f"{prefix}-{i}"
+            c = _case(cid, "factoid" if i % 2 == 0 else "multi-hop")
+            cases.append(c)
+            ev = GoldEvidence(
+                evidence_item_id=f"ev-{cid}",
+                case_id=cid,
+                document_id=doc_id,
+                document_number=f"{doc_id}/2020/QH14",
+                required=True,
+                required_level="article",
+                status=EvidenceStatus.NO_CITATION_EXTRACTED,  # unverified candidate
+            )
+            labels_by_case[cid] = [ev]
+
+    # Select 20 cases
+    selected = select_stratified_case_ids(cases, labels_by_case, target_cases=20, seed="diversity-test")
+    assert len(selected) == 20
+
+    # All 20 cases from underrepresented docs (201, 202, 203, 204) must be selected
+    # before taking any from overrepresented docs (101, 102)!
+    overrepresented_selected = [cid for cid in selected if "over" in cid]
+    underrepresented_selected = [cid for cid in selected if "under" in cid]
+    assert len(underrepresented_selected) == 20
+    assert len(overrepresented_selected) == 0
+
+
+def test_task2_provider_free_gate_and_auditability():
+    """G & H. Provider-free gate and auditability of queue preview."""
+    from app.evaluation.adjudication import format_queue_human_preview
+
+    case = _case("case-audit-01", "factoid")
+    evidence = GoldEvidence(
+        evidence_item_id="ev-audit-01",
+        case_id=case.case_id,
+        document_number="83/2015/QH13",
+        article="Điều 5",
+        required=True,
+        required_level="article",
+        status=EvidenceStatus.NO_CITATION_EXTRACTED,
+    )
+    sidecar = GoldSidecar(
+        metadata=GoldSidecarMetadata(sidecar_sha256="a" * 64),
+        labels=[evidence],
+        labels_by_case_id={case.case_id: [evidence]},
+    )
+    candidate = _candidate(evidence.evidence_item_id, document_number="83/2015/QH13")
+    payload = build_queue_payload(
+        cases=[case],
+        sidecar=sidecar,
+        candidates_by_evidence_id={evidence.evidence_item_id: [candidate]},
+        selected_case_ids=[case.case_id],
+        dataset_sha256="d" * 64,
+        corpus_revision="pinned",
+        provenance=_provenance(),
+        command=["python"],
+        candidate_limit=5,
+        selection_seed="audit-seed",
+        target_case_count=20,
+    )
+    assert payload["provider_calls"] == 0
+    assert "selection_diagnostics" in payload
+
+    preview_md = format_queue_human_preview(payload)
+    assert "ADJUDICATION CANDIDATE QUEUE" in preview_md
+    assert "NOT verified legal facts" in preview_md
+    assert "Human review is strictly required" in preview_md
+    assert "PENDING_HUMAN" in preview_md
+    assert "case-audit-01" in preview_md
+
+
+def test_task2_cli_queue_with_20_cases_and_preview_and_input_immutability(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+):
+    """B, E, H. CLI generates 20-case batch, writes preview, leaves inputs strictly immutable."""
+    dataset_path, sidecar_path, documents = _write_cli_review_inputs(tmp_path, case_count=30)
+    content_store_path = tmp_path / "content.sqlite3"
+    fts_path = tmp_path / "fts.sqlite3"
+    content_store_path.touch()
+    fts_path.touch()
+
+    dataset_bytes_before = dataset_path.read_bytes()
+    sidecar_bytes_before = sidecar_path.read_bytes()
+
+    cli = _configure_cli_runtime(monkeypatch, tmp_path, documents)
+    queue_root = tmp_path / "queue-runs-task2"
+
+    assert cli.main([
+        "queue", "--dataset", str(dataset_path), "--sidecar", str(sidecar_path),
+        "--content-store", str(content_store_path), "--fts", str(fts_path),
+        "--target-cases", "20", "--write-preview",
+        "--output-root", str(queue_root), "--run-id", "task2-queue-20",
+    ]) == 0
+
+    # Verify input immutability (E)
+    assert dataset_path.read_bytes() == dataset_bytes_before
+    assert sidecar_path.read_bytes() == sidecar_bytes_before
+
+    # Verify output artifacts
+    run_dir = queue_root / "task2-queue-20"
+    assert (run_dir / "queue.json").exists()
+    assert (run_dir / "decision_template.json").exists()
+    assert (run_dir / "queue_summary.json").exists()
+    assert (run_dir / "queue_preview.md").exists()
+
+    queue_data = json.loads((run_dir / "queue.json").read_text(encoding="utf-8"))
+    assert queue_data["target_case_count"] == 20
+    assert queue_data["selected_case_count"] == 20
+    assert len(queue_data["selected_case_ids"]) == 20
+    assert queue_data["queue_status"] == "READY_FOR_REVIEW"
+    assert queue_data["provider_calls"] == 0
+
+    preview_text = (run_dir / "queue_preview.md").read_text(encoding="utf-8")
+    assert "ADJUDICATION CANDIDATE QUEUE" in preview_text
+    assert "NOT verified legal facts" in preview_text
+    assert "PENDING_HUMAN" in preview_text
+
+
+def test_task2_rerun_safety_prevents_overwrite(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+):
+    """I. Re-run safety: attempting to re-execute with identical run-id fails closed without overwrite."""
+    dataset_path, sidecar_path, documents = _write_cli_review_inputs(tmp_path, case_count=30)
+    content_store_path = tmp_path / "content.sqlite3"
+    fts_path = tmp_path / "fts.sqlite3"
+    content_store_path.touch()
+    fts_path.touch()
+
+    cli = _configure_cli_runtime(monkeypatch, tmp_path, documents)
+    queue_root = tmp_path / "queue-runs-task2-rerun"
+
+    args = [
+        "queue", "--dataset", str(dataset_path), "--sidecar", str(sidecar_path),
+        "--content-store", str(content_store_path), "--fts", str(fts_path),
+        "--target-cases", "20",
+        "--output-root", str(queue_root), "--run-id", "rerun-target",
+    ]
+
+    assert cli.main(args) == 0
+
+    # Second run with same run-id must raise FileExistsError
+    with pytest.raises(FileExistsError):
+        cli.main(args)
