@@ -9,8 +9,9 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from app.config import get_settings
-from app.evaluation.online_metrics import build_online_metrics
+from app.evaluation.online_metrics import build_online_metrics, sanitize_error_message
 from app.api.dependencies import verify_csrf
+
 from app.services.semantic_cache import check_semantic_cache, save_to_semantic_cache
 from app.services.guardrails import (
     GUARDRAIL_UNAVAILABLE_MESSAGE,
@@ -115,7 +116,7 @@ async def chat(
             tech_error = {
                 "stage": "guardrails_input",
                 "error_type": error.__class__.__name__,
-                "message": str(error)[:200],
+                "message": sanitize_error_message(error),
             }
             logfire.error(
                 "Input guardrail unavailable",
@@ -231,7 +232,7 @@ async def chat(
             tech_error = {
                 "stage": getattr(error, "status", "retrieval_error"),
                 "error_type": error.__class__.__name__,
-                "message": str(error)[:200],
+                "message": sanitize_error_message(error),
             }
             error_response = "Hệ thống tra cứu văn bản pháp luật gặp sự cố kỹ thuật. Vui lòng thử lại sau."
             logfire.error("Retrieval pipeline failed", error=str(error), trace_id=trace_id)
@@ -246,6 +247,10 @@ async def chat(
                         err_latency[k] = float(v)
             err_latency["t_total"] = t_total
 
+            err_provider_usage = error.latency.get("provider_usage") if isinstance(error.latency, dict) else None
+            err_observed_prov = error.latency.get("observed_provider") if isinstance(error.latency, dict) else None
+            err_observed_mod = error.latency.get("observed_model") if isinstance(error.latency, dict) else None
+
             metrics = build_online_metrics(
                 trace_id=trace_id,
                 request_status="technical_error",
@@ -254,6 +259,9 @@ async def chat(
                 bot_response=error_response,
                 cached=False,
                 technical_error=tech_error,
+                observed_provider=err_observed_prov,
+                observed_model=err_observed_mod,
+                provider_usage=err_provider_usage,
                 ragas_mode=settings.RAGAS_EVALUATION_MODE,
                 ragas_sample_rate=settings.RAGAS_SAMPLE_RATE,
             )
@@ -305,7 +313,7 @@ async def chat(
             tech_error = {
                 "stage": "guardrails_output",
                 "error_type": error.__class__.__name__,
-                "message": str(error)[:200],
+                "message": sanitize_error_message(error),
             }
             logfire.error(
                 "Output guardrail unavailable",
@@ -324,6 +332,10 @@ async def chat(
                         err_latency[k] = float(v)
             err_latency["t_total"] = t_total
 
+            out_provider_usage = latency_info.get("provider_usage") if isinstance(latency_info, dict) else None
+            out_observed_prov = latency_info.get("observed_provider") if isinstance(latency_info, dict) else None
+            out_observed_mod = latency_info.get("observed_model") if isinstance(latency_info, dict) else None
+
             metrics = build_online_metrics(
                 trace_id=trace_id,
                 request_status="technical_error",
@@ -332,6 +344,9 @@ async def chat(
                 bot_response=GUARDRAIL_UNAVAILABLE_MESSAGE,
                 cached=False,
                 technical_error=tech_error,
+                observed_provider=out_observed_prov,
+                observed_model=out_observed_mod,
+                provider_usage=out_provider_usage,
                 ragas_mode=settings.RAGAS_EVALUATION_MODE,
                 ragas_sample_rate=settings.RAGAS_SAMPLE_RATE,
             )
@@ -367,6 +382,7 @@ async def chat(
                 },
                 status_code=503,
             )
+
         final_response = bot_response if output_safe else fallback_response
         final_response = redact_pii(final_response)
         rejection_reason = None if output_safe else "Hallucination or unsafe output detected"

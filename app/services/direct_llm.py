@@ -189,6 +189,8 @@ class LLMGenerationResult:
     text: str
     observed_provider: str
     observed_model: str
+    observed: bool = False
+    status: str = "success"
 
 
 async def generate_llm_response_with_metadata(
@@ -202,6 +204,20 @@ async def generate_llm_response_with_metadata(
     Auto-switches provider upon 429 rate limit or HTTP failure and records observed provider/model.
     """
     now = time.time()
+    has_any_key = bool(
+        settings.OPENROUTER_API_KEY
+        or settings.GEMINI_API_KEY
+        or settings.NVIDIA_API_KEY
+        or settings.GROQ_API_KEY
+    )
+    if not has_any_key:
+        return LLMGenerationResult(
+            text="Hệ thống chưa được cấu hình API Keys cho dịch vụ LLM.",
+            observed_provider="unobserved",
+            observed_model="unobserved",
+            observed=False,
+            status="no_provider_available",
+        )
     
     # 1. OpenRouter
     if settings.OPENROUTER_API_KEY and (now >= _cooldowns["openrouter"]):
@@ -211,6 +227,8 @@ async def generate_llm_response_with_metadata(
                 text=res,
                 observed_provider="openrouter",
                 observed_model=OPENROUTER_PRIMARY_MODEL,
+                observed=True,
+                status="success",
             )
 
     # 2. Gemini Direct
@@ -221,6 +239,8 @@ async def generate_llm_response_with_metadata(
                 text=res,
                 observed_provider="gemini",
                 observed_model=GEMINI_PRIMARY_MODEL,
+                observed=True,
+                status="success",
             )
 
     # 3. Nvidia NIM
@@ -231,6 +251,8 @@ async def generate_llm_response_with_metadata(
                 text=res,
                 observed_provider="nvidia",
                 observed_model=NVIDIA_PRIMARY_MODEL,
+                observed=True,
+                status="success",
             )
 
     # 4. Groq Direct
@@ -241,6 +263,8 @@ async def generate_llm_response_with_metadata(
                 text=res,
                 observed_provider="groq",
                 observed_model=GROQ_PRIMARY_MODEL,
+                observed=True,
+                status="success",
             )
 
     # Secondary fallback passes
@@ -251,6 +275,8 @@ async def generate_llm_response_with_metadata(
                 text=res,
                 observed_provider="openrouter",
                 observed_model=OPENROUTER_PRIMARY_MODEL,
+                observed=True,
+                status="success",
             )
 
     if settings.GEMINI_API_KEY:
@@ -260,6 +286,8 @@ async def generate_llm_response_with_metadata(
                 text=res,
                 observed_provider="gemini",
                 observed_model=GEMINI_SECONDARY_MODEL,
+                observed=True,
+                status="success",
             )
 
     if settings.GROQ_API_KEY:
@@ -269,13 +297,18 @@ async def generate_llm_response_with_metadata(
                 text=res,
                 observed_provider="groq",
                 observed_model=GROQ_SECONDARY_MODEL,
+                observed=True,
+                status="success",
             )
 
     return LLMGenerationResult(
         text="Hệ thống chưa thể xử lý do toàn bộ API Keys đang bị giới hạn tốc độ. Vui lòng thử lại sau 30 giây.",
-        observed_provider="all_rate_limited",
-        observed_model="none",
+        observed_provider="unobserved",
+        observed_model="unobserved",
+        observed=False,
+        status="providers_exhausted",
     )
+
 
 
 async def generate_llm_response(

@@ -194,3 +194,34 @@ def test_observed_provider_is_truthful_and_not_inferred_from_config() -> None:
         observed_provider=None,
     )
     assert metrics_unobserved.observed_provider in ("unobserved", "unknown")
+
+
+
+def test_sanitize_error_message_redacts_credentials_and_truncates() -> None:
+    from app.evaluation.online_metrics import sanitize_error_message
+
+    raw_err = "HTTP 401 https://api.openrouter.ai/v1/chat?api_key=sk-or-v1-secret123456789 with Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+    sanitized = sanitize_error_message(raw_err)
+
+    assert "sk-or-v1-secret123456789" not in sanitized
+    assert "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9" not in sanitized
+    assert "[REDACTED]" in sanitized
+    assert len(sanitized) <= 200
+
+
+def test_build_online_metrics_sanitizes_technical_error_dict_message() -> None:
+    from app.evaluation.online_metrics import build_online_metrics
+
+    tech_error = {
+        "stage": "retrieval_error",
+        "error_type": "RetrievalPipelineError",
+        "message": "https://pinecone.io/v1/vectors?key=pcsk_secret_val_9999",
+    }
+    metrics = build_online_metrics(
+        trace_id="trace-err-sanitized",
+        request_status="technical_error",
+        technical_error=tech_error,
+    )
+    assert isinstance(metrics.technical_error, dict)
+    assert "pcsk_secret_val_9999" not in metrics.technical_error["message"]
+    assert "[REDACTED]" in metrics.technical_error["message"]

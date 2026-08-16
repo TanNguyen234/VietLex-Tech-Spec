@@ -38,11 +38,16 @@ async def test_rewrite_query_rejects_provider_exhaustion_message(
 
     async def unavailable_response(*_args, **_kwargs) -> rag_pipeline.LLMGenerationResult:
         return rag_pipeline.LLMGenerationResult(
-            "Hệ thống chưa thể xử lý do toàn bộ API Keys đang bị giới hạn "
-            "tốc độ. Vui lòng thử lại sau 30 giây.",
-            "all_rate_limited",
-            "none",
+            text=(
+                "Hệ thống chưa thể xử lý do toàn bộ API Keys đang bị giới hạn "
+                "tốc độ. Vui lòng thử lại sau 30 giây."
+            ),
+            observed_provider="unobserved",
+            observed_model="unobserved",
+            observed=False,
+            status="providers_exhausted",
         )
+
 
     monkeypatch.setattr(
         rag_pipeline,

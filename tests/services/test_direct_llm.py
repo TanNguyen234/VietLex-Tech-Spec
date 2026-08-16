@@ -79,10 +79,12 @@ async def test_generate_llm_response_with_metadata_observes_provider_and_model(
     assert result.text == "Kết quả trực tiếp"
     assert result.observed_provider == "openrouter"
     assert result.observed_model is not None
+    assert result.observed is True
+    assert result.status == "success"
 
 
 @pytest.mark.asyncio
-async def test_generate_llm_response_with_metadata_returns_all_rate_limited_when_no_keys(
+async def test_generate_llm_response_with_metadata_returns_no_provider_available_when_no_keys(
     monkeypatch,
 ) -> None:
     monkeypatch.setattr(
@@ -101,6 +103,41 @@ async def test_generate_llm_response_with_metadata_returns_all_rate_limited_when
     )
 
     assert isinstance(result, direct_llm.LLMGenerationResult)
-    assert result.observed_provider == "all_rate_limited"
-    assert result.observed_model == "none"
+    assert result.observed is False
+    assert result.observed_provider in ("unobserved", "none")
+    assert result.observed_model in ("unobserved", "none")
+    assert result.status == "no_provider_available"
+    assert "chưa được cấu hình" in result.text or "chưa thể xử lý" in result.text
+
+
+@pytest.mark.asyncio
+async def test_generate_llm_response_with_metadata_returns_providers_exhausted_when_cooldown_active(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        direct_llm,
+        "settings",
+        SimpleNamespace(
+            OPENROUTER_API_KEY="test-openrouter",
+            GEMINI_API_KEY="test-gemini",
+            NVIDIA_API_KEY="test-nvidia",
+            GROQ_API_KEY="test-groq",
+        ),
+    )
+    # Set all cooldowns to future
+    future = direct_llm.time.time() + 3600
+    monkeypatch.setattr(
+        direct_llm,
+        "_cooldowns",
+        {"openrouter": future, "gemini": future, "nvidia": future, "groq": future},
+    )
+
+    result = await direct_llm.generate_llm_response_with_metadata(
+        "Câu hỏi",
+    )
+
+    assert isinstance(result, direct_llm.LLMGenerationResult)
+    assert result.observed is False
+    assert result.observed_provider in ("unobserved", "none")
+    assert result.status == "providers_exhausted"
     assert "giới hạn tốc độ" in result.text

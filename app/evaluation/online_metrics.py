@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import hashlib
+import re
 from dataclasses import asdict, dataclass
 from typing import Any, Dict, List, Optional
+
 
 
 from app.evaluation.legal_citations import parse_legal_citations
@@ -50,6 +52,54 @@ class OnlineOperationalMetrics:
         return asdict(self)
 
 
+def sanitize_error_message(error: Any) -> str:
+
+    """
+    Sanitize error message to prevent secret/credential leakage into logs/telemetry.
+    Redacts URL query param secrets, Bearer tokens, and known configured secrets.
+    Limits bounded length to 200 characters.
+    """
+    if error is None:
+        return ""
+    msg = str(error).strip()
+    if not msg:
+        return ""
+
+    # 1. Redact query param secrets like ?api_key=..., &key=..., ?token=..., etc.
+    query_secret_pattern = r"([?&](?:api[_-]?key|key|token|secret|password|auth|bearer)=)[^&\s]+"
+    msg = re.sub(query_secret_pattern, r"\1[REDACTED]", msg, flags=re.IGNORECASE)
+
+    # 2. Redact Authorization header values: Bearer <token>
+    bearer_pattern = r"\b(bearer\s+)[a-zA-Z0-9_\-\.]+"
+    msg = re.sub(bearer_pattern, r"\1[REDACTED]", msg, flags=re.IGNORECASE)
+
+    # 3. Redact known configured secrets from settings
+    try:
+        from app.config import get_settings
+        settings = get_settings()
+        configured_secrets = [
+            getattr(settings, attr, None)
+            for attr in (
+                "OPENROUTER_API_KEY",
+                "GEMINI_API_KEY",
+                "NVIDIA_API_KEY",
+                "GROQ_API_KEY",
+                "LITELLM_MASTER_KEY",
+                "PINECONE_API_KEY",
+                "QDRANT_API_KEY",
+                "MONGODB_URL",
+                "CSRF_SECRET_KEY",
+            )
+        ]
+        for secret in configured_secrets:
+            if secret and isinstance(secret, str) and len(secret) > 4:
+                msg = msg.replace(secret, "[REDACTED]")
+    except Exception:
+        pass
+
+    return msg[:200]
+
+
 def build_online_metrics(
     trace_id: str,
     *,
@@ -87,6 +137,18 @@ def build_online_metrics(
     # Observable citation count using deterministic regex parser
     citations = parse_legal_citations(bot_response) if bot_response else []
     citation_count = len(citations)
+
+    # Sanitize technical error
+    sanitized_technical_error: Optional[Dict[str, Any] | str] = None
+    if technical_error:
+        if isinstance(technical_error, dict):
+            sanitized_technical_error = dict(technical_error)
+            if "message" in sanitized_technical_error:
+                sanitized_technical_error["message"] = sanitize_error_message(
+                    sanitized_technical_error["message"]
+                )
+        else:
+            sanitized_technical_error = sanitize_error_message(technical_error)
 
     # Determine no-evidence and refusal category
     no_evidence = False
@@ -130,7 +192,7 @@ def build_online_metrics(
                 }
 
     # Provider & model observation resolution
-    if observed_provider and str(observed_provider).strip():
+    if observed_provider and str(observed_provider).strip() and str(observed_provider).strip() != "unobserved":
         final_provider = str(observed_provider).strip()
     elif default_usage["answer_generation"]["observed"] and default_usage["answer_generation"]["provider"] != "unobserved":
         final_provider = default_usage["answer_generation"]["provider"]
@@ -139,7 +201,7 @@ def build_online_metrics(
     else:
         final_provider = "unobserved"
 
-    if observed_model and str(observed_model).strip():
+    if observed_model and str(observed_model).strip() and str(observed_model).strip() != "unobserved":
         final_model = str(observed_model).strip()
     elif default_usage["answer_generation"]["observed"] and default_usage["answer_generation"]["model"] != "unobserved":
         final_model = default_usage["answer_generation"]["model"]
@@ -172,7 +234,7 @@ def build_online_metrics(
         citation_count=citation_count,
         no_evidence=no_evidence,
         refusal_category=refusal_category,
-        technical_error=technical_error,
+        technical_error=sanitized_technical_error,
         observed_provider=final_provider,
         observed_model=final_model,
         provider_usage=default_usage,

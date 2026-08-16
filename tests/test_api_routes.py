@@ -342,3 +342,134 @@ def test_chat_route_no_evidence_persists_no_evidence_status(client, monkeypatch)
     assert logged.get("request_status") == "no_evidence"
     assert logged.get("no_evidence") is True
     assert logged.get("context_count") == 0
+
+
+def test_chat_route_retrieval_error_preserves_query_rewrite_provider_usage(client, monkeypatch) -> None:
+    from app.services.rag_pipeline import RetrievalPipelineError
+
+    monkeypatch.setattr("app.api.routes.check_semantic_cache", AsyncMock(return_value=None))
+    monkeypatch.setattr("app.api.routes.check_input_guardrails", AsyncMock(return_value=(True, "")))
+
+    latency_with_provider = {
+        "t_total": 0.25,
+        "t_rewrite": 0.15,
+        "observed_provider": "gemini",
+        "observed_model": "gemini-2.5-flash",
+        "provider_usage": {
+            "query_rewrite": {"provider": "gemini", "model": "gemini-2.5-flash", "observed": True},
+            "answer_generation": {"provider": "unobserved", "model": "unobserved", "observed": False},
+            "guardrails": {"provider": "unobserved", "model": "unobserved", "observed": False},
+        },
+    }
+
+    monkeypatch.setattr(
+        "app.api.routes.run_advanced_rag",
+        AsyncMock(
+            side_effect=RetrievalPipelineError(
+                "retrieval_error",
+                "Qdrant connection timeout",
+                {"error_code": "QDRANT_CONN_ERR"},
+                latency_with_provider,
+            )
+        ),
+    )
+    monkeypatch.setattr("app.api.routes.create_session", AsyncMock())
+
+    logged = {}
+
+    async def fake_log(**kwargs):
+        nonlocal logged
+        logged = kwargs
+        return kwargs
+
+    monkeypatch.setattr("app.api.routes.log_interaction", fake_log)
+
+    resp = client.post(
+        "/chat",
+        data={"message": "Câu hỏi dài cần viết lại", "csrf_token": "valid_token", "session_id": "test-session"},
+    )
+    assert resp.status_code == 500
+    assert logged.get("request_status") == "technical_error"
+    assert logged.get("observed_provider") == "gemini"
+    assert logged.get("observed_model") == "gemini-2.5-flash"
+    assert logged.get("provider_usage", {}).get("query_rewrite", {}).get("provider") == "gemini"
+
+
+def test_chat_route_output_guardrail_unavailable_preserves_answer_provider_usage(client, monkeypatch) -> None:
+    from app.services.guardrails import GuardrailUnavailableError
+
+    monkeypatch.setattr("app.api.routes.check_semantic_cache", AsyncMock(return_value=None))
+    monkeypatch.setattr("app.api.routes.check_input_guardrails", AsyncMock(return_value=(True, "")))
+
+    rag_latency = {
+        "t_total": 0.45,
+        "t_llm": 0.35,
+        "observed_provider": "openrouter",
+        "observed_model": "google/gemini-2.5-flash",
+        "provider_usage": {
+            "query_rewrite": {"provider": "none", "model": "none", "observed": False},
+            "answer_generation": {"provider": "openrouter", "model": "google/gemini-2.5-flash", "observed": True},
+            "guardrails": {"provider": "unobserved", "model": "unobserved", "observed": False},
+        },
+    }
+
+    monkeypatch.setattr(
+        "app.api.routes.run_advanced_rag",
+        AsyncMock(return_value=("Câu trả lời thô", ["Context 1"], rag_latency)),
+    )
+    monkeypatch.setattr(
+        "app.api.routes.check_output_guardrails",
+        AsyncMock(side_effect=GuardrailUnavailableError("output", "Output guardrail service unreachable")),
+    )
+    monkeypatch.setattr("app.api.routes.create_session", AsyncMock())
+
+    logged = {}
+
+    async def fake_log(**kwargs):
+        nonlocal logged
+        logged = kwargs
+        return kwargs
+
+    monkeypatch.setattr("app.api.routes.log_interaction", fake_log)
+
+    resp = client.post(
+        "/chat",
+        data={"message": "Câu hỏi", "csrf_token": "valid_token", "session_id": "test-session"},
+    )
+    assert resp.status_code == 503
+    assert logged.get("request_status") == "technical_error"
+    assert logged.get("observed_provider") == "openrouter"
+    assert logged.get("observed_model") == "google/gemini-2.5-flash"
+    assert logged.get("provider_usage", {}).get("answer_generation", {}).get("provider") == "openrouter"
+
+
+def test_chat_route_technical_error_sanitizes_secrets(client, monkeypatch) -> None:
+    from app.services.guardrails import GuardrailUnavailableError
+
+    secret_in_error = "https://api.openai.com/v1/chat?api_key=sk-secret_test_12345 Bearer super-secret-token"
+    monkeypatch.setattr("app.api.routes.check_semantic_cache", AsyncMock(return_value=None))
+    monkeypatch.setattr(
+        "app.api.routes.check_input_guardrails",
+        AsyncMock(side_effect=GuardrailUnavailableError("input", secret_in_error)),
+    )
+    monkeypatch.setattr("app.api.routes.create_session", AsyncMock())
+
+    logged = {}
+
+    async def fake_log(**kwargs):
+        nonlocal logged
+        logged = kwargs
+        return kwargs
+
+    monkeypatch.setattr("app.api.routes.log_interaction", fake_log)
+
+    resp = client.post(
+        "/chat",
+        data={"message": "Câu hỏi kiểm tra", "csrf_token": "valid_token", "session_id": "test-session"},
+    )
+    assert resp.status_code == 503
+    tech_err = logged.get("technical_error", {})
+    msg = tech_err.get("message", "")
+    assert "sk-secret_test_12345" not in msg
+    assert "super-secret-token" not in msg
+    assert "[REDACTED]" in msg

@@ -119,6 +119,31 @@ async def run_advanced_rag(
         "rewritten_query": rewritten_query,
         "retrieval_outcome": retrieval_outcome,
     }
+    rewrite_provider_usage = {
+        "query_rewrite": {
+            "provider": rewrite_meta.get("provider", "unobserved"),
+            "model": rewrite_meta.get("model", "unobserved"),
+            "observed": bool(rewrite_meta.get("observed", False)),
+        },
+        "answer_generation": {
+            "provider": "unobserved",
+            "model": "unobserved",
+            "observed": False,
+        },
+        "guardrails": {
+            "provider": "unobserved",
+            "model": "unobserved",
+            "observed": False,
+        },
+    }
+    latency["provider_usage"] = rewrite_provider_usage
+    if rewrite_meta.get("observed") and rewrite_meta.get("provider") not in ("none", "unobserved"):
+        latency["observed_provider"] = rewrite_meta["provider"]
+        latency["observed_model"] = rewrite_meta.get("model", "unobserved")
+    else:
+        latency["observed_provider"] = "unobserved"
+        latency["observed_model"] = "unobserved"
+
     if retrieval_outcome.status in {
         "retrieval_error",
         "reranker_error",
@@ -135,36 +160,6 @@ async def run_advanced_rag(
             time.perf_counter() - started,
             3,
         )
-        answer_meta = {
-            "provider": "none",
-            "model": "none",
-            "observed": False,
-            "reason": "no_contexts",
-        }
-        provider_usage = {
-            "query_rewrite": {
-                "provider": rewrite_meta.get("provider", "unobserved"),
-                "model": rewrite_meta.get("model", "unobserved"),
-                "observed": bool(rewrite_meta.get("observed", False)),
-            },
-            "answer_generation": {
-                "provider": answer_meta["provider"],
-                "model": answer_meta["model"],
-                "observed": answer_meta["observed"],
-            },
-            "guardrails": {
-                "provider": "unobserved",
-                "model": "unobserved",
-                "observed": False,
-            },
-        }
-        latency["provider_usage"] = provider_usage
-        if rewrite_meta.get("observed") and rewrite_meta.get("provider") not in ("none", "unobserved"):
-            latency["observed_provider"] = rewrite_meta["provider"]
-            latency["observed_model"] = rewrite_meta.get("model", "none")
-        else:
-            latency["observed_provider"] = "none"
-            latency["observed_model"] = "none"
         return NO_EVIDENCE_RESPONSE, [], latency
 
     llm_started = time.perf_counter()
@@ -190,7 +185,7 @@ async def run_advanced_rag(
         "answer_generation": {
             "provider": llm_result.observed_provider,
             "model": llm_result.observed_model,
-            "observed": True,
+            "observed": bool(llm_result.observed),
         },
         "guardrails": {
             "provider": "unobserved",
@@ -199,8 +194,15 @@ async def run_advanced_rag(
         },
     }
     latency["provider_usage"] = provider_usage
-    latency["observed_provider"] = llm_result.observed_provider
-    latency["observed_model"] = llm_result.observed_model
+    if llm_result.observed and llm_result.observed_provider not in ("none", "unobserved"):
+        latency["observed_provider"] = llm_result.observed_provider
+        latency["observed_model"] = llm_result.observed_model
+    elif rewrite_meta.get("observed") and rewrite_meta.get("provider") not in ("none", "unobserved"):
+        latency["observed_provider"] = rewrite_meta["provider"]
+        latency["observed_model"] = rewrite_meta.get("model", "unobserved")
+    else:
+        latency["observed_provider"] = "unobserved"
+        latency["observed_model"] = "unobserved"
     return llm_result.text, contexts, latency
 
 
@@ -240,11 +242,13 @@ async def rewrite_query_with_metadata(
         words = re.findall(r"[^\W_]+", rewritten.casefold(), re.UNICODE)
         unique_ratio = len(set(words)) / len(words) if words else 0.0
         if (
-            len(words) < 2
+            not llm_result.observed
+            or len(words) < 2
             or (len(words) >= 6 and unique_ratio < 0.5)
             or len(rewritten) > len(query) * 2
             or "hệ thống chưa thể xử lý" in normalized_rewrite
             or "api keys đang bị giới hạn" in normalized_rewrite
+            or "chưa được cấu hình" in normalized_rewrite
         ):
             logfire.warning(
                 "Rejected malformed legal query rewrite; use original query."
@@ -252,15 +256,15 @@ async def rewrite_query_with_metadata(
             if raise_on_error:
                 raise QueryRewriteError("malformed rewrite rejected")
             return query, {
-                "provider": llm_result.observed_provider,
-                "model": llm_result.observed_model,
-                "observed": True,
+                "provider": llm_result.observed_provider if llm_result.observed else "unobserved",
+                "model": llm_result.observed_model if llm_result.observed else "unobserved",
+                "observed": bool(llm_result.observed),
                 "rejected": True,
             }
         return rewritten, {
             "provider": llm_result.observed_provider,
             "model": llm_result.observed_model,
-            "observed": True,
+            "observed": bool(llm_result.observed),
         }
     except QueryRewriteError:
         raise
@@ -270,14 +274,12 @@ async def rewrite_query_with_metadata(
             error=str(error),
         )
         if raise_on_error:
-            raise QueryRewriteError(
-                f"{type(error).__name__}: {error}"
-            ) from error
+            raise QueryRewriteError(str(error)) from error
         return query, {
             "provider": "unobserved",
             "model": "unobserved",
             "observed": False,
-            "error": type(error).__name__,
+            "error": str(error)[:100],
         }
 
 
