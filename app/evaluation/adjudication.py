@@ -208,6 +208,104 @@ def is_case_eligible_for_adjudication(
     return len(unverified_required) > 0
 
 
+_REQUIRED_LEVEL_ORDER = {"document": 0, "article": 1, "clause": 2}
+
+
+def _rank_key(seed: str, case_id: str) -> tuple[str, str]:
+    digest = hashlib.sha256(f"{seed}\0{case_id}".encode("utf-8")).hexdigest()
+    return (digest, case_id)
+
+
+def _reference_context(case: GoldenCase, evidence: GoldEvidence) -> str:
+    if not case.reference_contexts:
+        raise ValueError(f"missing reference context for case '{case.case_id}'")
+    if evidence.context_index < 0:
+        raise ValueError("context_index must be zero or a positive 1-based index")
+    index = evidence.context_index - 1 if evidence.context_index > 0 else 0
+    if index >= len(case.reference_contexts):
+        raise ValueError("context_index is out of range for reference contexts")
+    return case.reference_contexts[index]
+
+
+def resolve_case_diversity_identity(
+    case: GoldenCase,
+    unresolved_required: Sequence[GoldEvidence],
+    doc_counts: Mapping[str, int],
+    legal_type_counts: Mapping[str, int],
+) -> dict[str, Any]:
+    """Deterministically determine the representative document & legal type for a case.
+
+    Derives identity exclusively from unresolved (unverified) required evidence items.
+    For multi-hop cases with multiple unresolved evidence items, selects the representative
+    item that minimizes (document_representation, legal_type_representation, evidence_item_id).
+    """
+    full_case_text = "\n".join([case.question, case.reference_answer, *case.reference_contexts])
+    if not unresolved_required:
+        doc_num = None
+        citations = parse_legal_citations(full_case_text)
+        for cit in citations:
+            if cit.document_number and cit.document_number.strip():
+                doc_num = cit.document_number.strip()
+                break
+        ltype = infer_conservative_legal_type(document_number=doc_num, text=full_case_text)
+        doc_key = doc_num if doc_num else f"case_{case.case_id}"
+        return {
+            "selection_evidence_item_id": None,
+            "document_key": doc_key,
+            "legal_type": ltype,
+            "verified_document_representation_before": doc_counts.get(doc_key, 0),
+            "verified_legal_type_representation_before": legal_type_counts.get(ltype, 0),
+        }
+
+    candidate_identities: list[tuple[tuple[int, int, str], dict[str, Any]]] = []
+    for ev in unresolved_required:
+        doc_id = str(ev.document_id) if ev.document_id is not None else None
+        doc_num = ev.document_number.strip() if ev.document_number and ev.document_number.strip() else None
+
+        ref_text = ""
+        if case.reference_contexts:
+            try:
+                ref_text = _reference_context(case, ev)
+            except ValueError:
+                ref_text = ""
+
+        if not doc_id and not doc_num:
+            if ref_text:
+                citations = parse_legal_citations(ref_text)
+                for cit in citations:
+                    if cit.document_number and cit.document_number.strip():
+                        doc_num = cit.document_number.strip()
+                        break
+            if not doc_num:
+                citations = parse_legal_citations(full_case_text)
+                for cit in citations:
+                    if cit.document_number and cit.document_number.strip():
+                        doc_num = cit.document_number.strip()
+                        break
+
+        doc_key = doc_id if doc_id else (doc_num if doc_num else f"case_{case.case_id}")
+        text_for_ltype = f"{case.question}\n{case.reference_answer}\n{ref_text}" if ref_text else full_case_text
+        ltype = infer_conservative_legal_type(document_number=doc_num, text=text_for_ltype)
+
+        doc_rep = doc_counts.get(doc_key, 0)
+        ltype_rep = legal_type_counts.get(ltype, 0)
+        ev_id = ev.evidence_item_id or ""
+
+        candidate_identities.append((
+            (doc_rep, ltype_rep, ev_id),
+            {
+                "selection_evidence_item_id": ev.evidence_item_id,
+                "document_key": doc_key,
+                "legal_type": ltype,
+                "verified_document_representation_before": doc_rep,
+                "verified_legal_type_representation_before": ltype_rep,
+            },
+        ))
+
+    candidate_identities.sort(key=lambda item: item[0])
+    return candidate_identities[0][1]
+
+
 def select_stratified_case_ids(
     cases: Sequence[GoldenCase],
     labels_by_case_id: Mapping[str, Sequence[GoldEvidence]],
@@ -256,33 +354,19 @@ def select_stratified_case_ids(
             if label.status != "verified" and label.status != EvidenceStatus.VERIFIED
         ]
 
-        # Extract document identifier & legal type
-        doc_id = None
-        doc_num = None
-        for label in labels:  # type: ignore[union-attr]
-            if label.document_id is not None:
-                doc_id = str(label.document_id)
-            if label.document_number and label.document_number.strip():
-                doc_num = label.document_number.strip()
-
-        text = "\n".join([case.question, case.reference_answer, *case.reference_contexts])
-        if not doc_num:
-            citations = parse_legal_citations(text)
-            for cit in citations:
-                if cit.document_number and cit.document_number.strip():
-                    doc_num = cit.document_number.strip()
-                    break
-
-        doc_ident = doc_id if doc_id else (doc_num if doc_num else f"case_{case.case_id}")
-        ltype = infer_conservative_legal_type(document_number=doc_num, text=text)
+        identity = resolve_case_diversity_identity(
+            case=case,
+            unresolved_required=unverified_required,
+            doc_counts=doc_counts,
+            legal_type_counts=legal_type_counts,
+        )
+        doc_rep = identity["verified_document_representation_before"]
+        ltype_rep = identity["verified_legal_type_representation_before"]
         highest = max(
             (label.required_level.value for label in unverified_required),
             key=_REQUIRED_LEVEL_ORDER.__getitem__,
         )
         q_type = case.question_type
-
-        doc_rep = doc_counts.get(doc_ident, 0)
-        ltype_rep = legal_type_counts.get(ltype, 0)
 
         stratum_key = (q_type, highest)
         digest, cid = _rank_key(seed, case.case_id)
@@ -319,9 +403,6 @@ def select_stratified_case_ids(
     return selected
 
 
-_REQUIRED_LEVEL_ORDER = {"document": 0, "article": 1, "clause": 2}
-
-
 def _eligible_strata(
     cases: Sequence[GoldenCase],
     labels_by_case_id: Mapping[str, Sequence[GoldEvidence]],
@@ -347,11 +428,6 @@ def _eligible_strata(
     return strata
 
 
-def _rank_key(seed: str, case_id: str) -> tuple[str, str]:
-    digest = hashlib.sha256(f"{seed}\0{case_id}".encode("utf-8")).hexdigest()
-    return (digest, case_id)
-
-
 def _text_sha256(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
@@ -364,17 +440,6 @@ def _require_sha256(value: str | None, field_name: str) -> str:
     if not isinstance(value, str) or _SHA256_PATTERN.fullmatch(value) is None:
         raise ValueError(f"{field_name} must be a full lowercase SHA-256 hash")
     return value
-
-
-def _reference_context(case: GoldenCase, evidence: GoldEvidence) -> str:
-    if not case.reference_contexts:
-        raise ValueError(f"missing reference context for case '{case.case_id}'")
-    if evidence.context_index < 0:
-        raise ValueError("context_index must be zero or a positive 1-based index")
-    index = evidence.context_index - 1 if evidence.context_index > 0 else 0
-    if index >= len(case.reference_contexts):
-        raise ValueError("context_index is out of range for reference contexts")
-    return case.reference_contexts[index]
 
 
 def _legacy_anchor_hash(value: str | None) -> str | None:
@@ -527,25 +592,12 @@ def build_queue_payload(
         if not unverified_required:
             raise ValueError(f"selected case '{case_id}' has no unresolved required evidence")
 
-        # Extract document identifier & legal type for case diagnostics
-        doc_id = None
-        doc_num = None
-        for label in labels:
-            if label.document_id is not None:
-                doc_id = str(label.document_id)
-            if label.document_number and label.document_number.strip():
-                doc_num = label.document_number.strip()
-
-        text = "\n".join([case.question, case.reference_answer, *case.reference_contexts])
-        if not doc_num:
-            citations = parse_legal_citations(text)
-            for cit in citations:
-                if cit.document_number and cit.document_number.strip():
-                    doc_num = cit.document_number.strip()
-                    break
-
-        doc_ident = doc_id if doc_id else (doc_num if doc_num else f"case_{case.case_id}")
-        ltype = infer_conservative_legal_type(document_number=doc_num, text=text)
+        identity = resolve_case_diversity_identity(
+            case=case,
+            unresolved_required=unverified_required,
+            doc_counts=doc_counts,
+            legal_type_counts=legal_type_counts,
+        )
         highest = max(
             (label.required_level.value for label in unverified_required),
             key=_REQUIRED_LEVEL_ORDER.__getitem__,
@@ -556,10 +608,11 @@ def build_queue_payload(
 
         case_diagnostics.append({
             "case_id": case.case_id,
-            "document_key": doc_ident,
-            "legal_type": ltype,
-            "verified_document_representation_before": doc_counts.get(doc_ident, 0),
-            "verified_legal_type_representation_before": legal_type_counts.get(ltype, 0),
+            "selection_evidence_item_id": identity["selection_evidence_item_id"],
+            "document_key": identity["document_key"],
+            "legal_type": identity["legal_type"],
+            "verified_document_representation_before": identity["verified_document_representation_before"],
+            "verified_legal_type_representation_before": identity["verified_legal_type_representation_before"],
             "selection_stratum": stratum_str,
             "tie_break_digest": digest,
             "selection_policy": TASK2_SELECTION_POLICY,

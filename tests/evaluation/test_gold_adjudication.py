@@ -20,6 +20,7 @@ from app.evaluation.adjudication import (
     build_decision_template,
     build_queue_payload,
     canonical_sha256,
+    resolve_case_diversity_identity,
     select_stratified_case_ids,
     validate_preview_approval,
     validate_decisions,
@@ -2585,6 +2586,146 @@ def test_task2_diversity_aware_selection_prioritizes_underrepresented_legal_type
     selected_nd = [cid for cid in selected if "nd301" in cid]
     assert len(selected_tt) == 20
     assert len(selected_nd) == 0
+
+
+def test_task2_multi_hop_diversity_identity_order_invariant_and_ignores_verified_evidence():
+    """Multi-hop diversity identity ignores already-verified evidence and is order-invariant [A,B] == [B,A]."""
+    # Case with A = VERIFIED doc 101, B = AMBIGUOUS doc 201
+    case = _case("case-multihop-mix", "multi-hop")
+    ev_a = GoldEvidence(
+        evidence_item_id="ev-a-verified-101",
+        case_id=case.case_id,
+        document_id=101,
+        document_number="101/2020/NĐ-CP",
+        required=True,
+        required_level="article",
+        status=EvidenceStatus.VERIFIED,
+    )
+    ev_b = GoldEvidence(
+        evidence_item_id="ev-b-unresolved-201",
+        case_id=case.case_id,
+        document_id=201,
+        document_number="201/2020/NĐ-CP",
+        required=True,
+        required_level="article",
+        status=EvidenceStatus.AMBIGUOUS,
+    )
+
+    doc_counts = {"101": 15, "101/2020/NĐ-CP": 15, "201": 0, "201/2020/NĐ-CP": 0}
+    legal_type_counts = {"Nghị định": 15}
+
+    # Direct helper test for both orders [A, B] and [B, A]
+    id_ab = resolve_case_diversity_identity(
+        case=case,
+        unresolved_required=[ev_b],
+        doc_counts=doc_counts,
+        legal_type_counts=legal_type_counts,
+    )
+    id_ba = resolve_case_diversity_identity(
+        case=case,
+        unresolved_required=[ev_b],
+        doc_counts=doc_counts,
+        legal_type_counts=legal_type_counts,
+    )
+    assert id_ab == id_ba
+    assert id_ab["selection_evidence_item_id"] == "ev-b-unresolved-201"
+    assert id_ab["document_key"] == "201"
+    assert id_ab["legal_type"] == "Nghị định"
+    assert id_ab["verified_document_representation_before"] == 0
+
+    # Build 20 cases for selector & queue payload test
+    filler_cases = [_case(f"filler-m-{i:02d}", "factoid") for i in range(19)]
+    filler_labels_map = {
+        fc.case_id: [
+            GoldEvidence(
+                evidence_item_id=f"ev-{fc.case_id}",
+                case_id=fc.case_id,
+                document_id=300 + i,
+                document_number=f"{300+i}/2020/NĐ-CP",
+                required=True,
+                required_level="article",
+                status=EvidenceStatus.AMBIGUOUS,
+            )
+        ]
+        for i, fc in enumerate(filler_cases)
+    }
+
+    # Test selection & queue payload with labels_ab vs labels_ba
+    for label_order in ([ev_a, ev_b], [ev_b, ev_a]):
+        labels_by_case = {case.case_id: label_order, **filler_labels_map}
+        all_cases = [case, *filler_cases]
+        selected = select_stratified_case_ids(all_cases, labels_by_case, target_cases=20, seed="test-seed")
+        assert case.case_id in selected
+
+        sidecar = GoldSidecar(
+            metadata=GoldSidecarMetadata(sidecar_sha256="a" * 64),
+            labels=[*label_order, *[items[0] for items in filler_labels_map.values()]],
+            labels_by_case_id=labels_by_case,
+        )
+        payload = build_queue_payload(
+            cases=all_cases,
+            sidecar=sidecar,
+            candidates_by_evidence_id={},
+            selected_case_ids=selected,
+            dataset_sha256="d" * 64,
+            corpus_revision="pinned",
+            provenance=_provenance(),
+            command=["python"],
+            candidate_limit=5,
+            target_case_count=20,
+        )
+        diag = next(d for d in payload["selection_diagnostics"]["case_diagnostics"] if d["case_id"] == case.case_id)
+        assert diag["selection_evidence_item_id"] == "ev-b-unresolved-201"
+        assert diag["document_key"] == "201"
+        assert diag["legal_type"] == "Nghị định"
+        assert diag["verified_document_representation_before"] == 0
+
+
+def test_task2_multi_hop_diversity_identity_picks_underrepresented_unresolved_evidence():
+    """Multi-hop case with multiple unresolved items chooses the lowest-representation evidence deterministically."""
+    case = _case("case-multihop-2unresolved", "multi-hop")
+    ev_b = GoldEvidence(
+        evidence_item_id="ev-b-rep10",
+        case_id=case.case_id,
+        document_id=101,
+        document_number="101/2020/NĐ-CP",
+        required=True,
+        required_level="article",
+        status=EvidenceStatus.AMBIGUOUS,
+    )
+    ev_c = GoldEvidence(
+        evidence_item_id="ev-c-rep0",
+        case_id=case.case_id,
+        document_id=201,
+        document_number="201/2020/NĐ-CP",
+        required=True,
+        required_level="article",
+        status=EvidenceStatus.AMBIGUOUS,
+    )
+
+    doc_counts = {"101": 10, "101/2020/NĐ-CP": 10, "201": 0, "201/2020/NĐ-CP": 0}
+    legal_type_counts = {"Nghị định": 10}
+
+    # Test both [B, C] and [C, B]
+    id_bc = resolve_case_diversity_identity(
+        case=case,
+        unresolved_required=[ev_b, ev_c],
+        doc_counts=doc_counts,
+        legal_type_counts=legal_type_counts,
+    )
+    id_cb = resolve_case_diversity_identity(
+        case=case,
+        unresolved_required=[ev_c, ev_b],
+        doc_counts=doc_counts,
+        legal_type_counts=legal_type_counts,
+    )
+
+    assert id_bc == id_cb
+    # C has doc_rep=0 vs B with doc_rep=10 -> C must be selected as representative
+    assert id_bc["selection_evidence_item_id"] == "ev-c-rep0"
+    assert id_bc["document_key"] == "201"
+    assert id_bc["verified_document_representation_before"] == 0
+    assert id_bc["legal_type"] == "Nghị định"
 
 
 def test_task2_eligible_case_count_computation():
