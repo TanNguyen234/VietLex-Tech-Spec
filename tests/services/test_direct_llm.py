@@ -1,7 +1,9 @@
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 import httpx
 import pytest
+
 
 from app.services import direct_llm
 
@@ -131,6 +133,12 @@ async def test_generate_llm_response_with_metadata_returns_providers_exhausted_w
         "_cooldowns",
         {"openrouter": future, "gemini": future, "nvidia": future, "groq": future},
     )
+
+    # Mock all 4 provider functions to ensure zero real HTTP/socket calls
+    monkeypatch.setattr(direct_llm, "call_openrouter_api", AsyncMock(return_value=None))
+    monkeypatch.setattr(direct_llm, "call_gemini_api", AsyncMock(return_value=None))
+    monkeypatch.setattr(direct_llm, "call_nvidia_api", AsyncMock(return_value=None))
+    monkeypatch.setattr(direct_llm, "call_groq_api", AsyncMock(return_value=None))
 
     result = await direct_llm.generate_llm_response_with_metadata(
         "Câu hỏi",

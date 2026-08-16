@@ -473,3 +473,105 @@ def test_chat_route_technical_error_sanitizes_secrets(client, monkeypatch) -> No
     assert "sk-secret_test_12345" not in msg
     assert "super-secret-token" not in msg
     assert "[REDACTED]" in msg
+
+
+def test_chat_route_answer_generation_no_provider_available_persists_technical_error(client, monkeypatch) -> None:
+    monkeypatch.setattr("app.api.routes.check_semantic_cache", AsyncMock(return_value=None))
+    monkeypatch.setattr("app.api.routes.check_input_guardrails", AsyncMock(return_value=(True, "")))
+    monkeypatch.setattr("app.api.routes.check_output_guardrails", AsyncMock(return_value=(True, "")))
+
+    mock_save_cache = AsyncMock()
+    mock_evaluator = AsyncMock()
+    monkeypatch.setattr("app.api.routes.save_to_semantic_cache", mock_save_cache)
+    monkeypatch.setattr("app.api.routes.run_llm_as_judge", mock_evaluator)
+
+    rag_latency = {
+        "t_total": 0.30,
+        "t_llm": 0.20,
+        "generation_status": "no_provider_available",
+        "observed_provider": "unobserved",
+        "observed_model": "unobserved",
+        "provider_usage": {
+            "query_rewrite": {"provider": "none", "model": "none", "observed": False},
+            "answer_generation": {"provider": "unobserved", "model": "unobserved", "observed": False},
+            "guardrails": {"provider": "unobserved", "model": "unobserved", "observed": False},
+        },
+    }
+    monkeypatch.setattr(
+        "app.api.routes.run_advanced_rag",
+        AsyncMock(return_value=("Hệ thống chưa được cấu hình API Keys.", ["Context 1"], rag_latency)),
+    )
+    monkeypatch.setattr("app.api.routes.create_session", AsyncMock())
+
+    logged = {}
+
+    async def fake_log(**kwargs):
+        nonlocal logged
+        logged = kwargs
+        return kwargs
+
+    monkeypatch.setattr("app.api.routes.log_interaction", fake_log)
+
+    resp = client.post(
+        "/chat",
+        data={"message": "Câu hỏi", "csrf_token": "valid_token", "session_id": "test-session"},
+    )
+    assert resp.status_code == 200
+    assert logged.get("request_status") == "technical_error"
+    assert logged.get("technical_error") is not None
+    assert logged["technical_error"]["stage"] == "answer_generation"
+    assert logged["technical_error"]["error_type"] == "no_provider_available"
+    assert logged.get("observed_provider") in ("unobserved", "none")
+    assert mock_save_cache.called is False
+    assert mock_evaluator.called is False
+
+
+def test_chat_route_answer_generation_providers_exhausted_persists_technical_error(client, monkeypatch) -> None:
+    monkeypatch.setattr("app.api.routes.check_semantic_cache", AsyncMock(return_value=None))
+    monkeypatch.setattr("app.api.routes.check_input_guardrails", AsyncMock(return_value=(True, "")))
+    monkeypatch.setattr("app.api.routes.check_output_guardrails", AsyncMock(return_value=(True, "")))
+
+    mock_save_cache = AsyncMock()
+    mock_evaluator = AsyncMock()
+    monkeypatch.setattr("app.api.routes.save_to_semantic_cache", mock_save_cache)
+    monkeypatch.setattr("app.api.routes.run_llm_as_judge", mock_evaluator)
+
+    rag_latency = {
+        "t_total": 0.40,
+        "t_llm": 0.30,
+        "generation_status": "providers_exhausted",
+        "observed_provider": "unobserved",
+        "observed_model": "unobserved",
+        "provider_usage": {
+            "query_rewrite": {"provider": "none", "model": "none", "observed": False},
+            "answer_generation": {"provider": "unobserved", "model": "unobserved", "observed": False},
+            "guardrails": {"provider": "unobserved", "model": "unobserved", "observed": False},
+        },
+    }
+    monkeypatch.setattr(
+        "app.api.routes.run_advanced_rag",
+        AsyncMock(return_value=("Hệ thống bị giới hạn tốc độ...", ["Context 1"], rag_latency)),
+    )
+    monkeypatch.setattr("app.api.routes.create_session", AsyncMock())
+
+    logged = {}
+
+    async def fake_log(**kwargs):
+        nonlocal logged
+        logged = kwargs
+        return kwargs
+
+    monkeypatch.setattr("app.api.routes.log_interaction", fake_log)
+
+    resp = client.post(
+        "/chat",
+        data={"message": "Câu hỏi", "csrf_token": "valid_token", "session_id": "test-session"},
+    )
+    assert resp.status_code == 200
+    assert logged.get("request_status") == "technical_error"
+    assert logged.get("technical_error") is not None
+    assert logged["technical_error"]["stage"] == "answer_generation"
+    assert logged["technical_error"]["error_type"] == "providers_exhausted"
+    assert logged.get("observed_provider") in ("unobserved", "none")
+    assert mock_save_cache.called is False
+    assert mock_evaluator.called is False

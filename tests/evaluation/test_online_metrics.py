@@ -225,3 +225,37 @@ def test_build_online_metrics_sanitizes_technical_error_dict_message() -> None:
     assert isinstance(metrics.technical_error, dict)
     assert "pcsk_secret_val_9999" not in metrics.technical_error["message"]
     assert "[REDACTED]" in metrics.technical_error["message"]
+
+
+def test_sanitize_error_message_redacts_actual_settings_secrets(monkeypatch) -> None:
+    from types import SimpleNamespace
+    from app.evaluation.online_metrics import sanitize_error_message
+
+    fake_settings = SimpleNamespace(
+        OPENROUTER_API_KEY="sk-or-real-openrouter-key",
+        GEMINI_API_KEY="AIzaSyRealGeminiKey123",
+        NVIDIA_API_KEY="nvapi-real-nvidia-key",
+        GROQ_API_KEY="gsk_real_groq_key_999",
+        LITELLM_MASTER_KEY="sk-litellm-master-secret",
+        PINECONE_API_KEY="pcsk_pinecone_key_123",
+        PINECONE_API="pcsk_pinecone_compat_key_456",
+        PIPECONE_API="pcsk_pipecone_legacy_key_789",
+        QDRANT_API_KEY="qdrant-cloud-secret-key",
+        MONGO_URL="mongodb+srv://admin_user:SuperSecretMongoPass123@cluster0.abcde.mongodb.net/vietlex",
+        LOGFIRE_TOKEN="logfire_secret_write_token_xyz",
+    )
+    monkeypatch.setattr("app.config.get_settings", lambda: fake_settings)
+
+    # 1. Test MONGO_URL redaction
+    mongo_err = "ServerSelectionTimeoutError: Connection failed to mongodb+srv://admin_user:SuperSecretMongoPass123@cluster0.abcde.mongodb.net/vietlex"
+    sanitized_mongo = sanitize_error_message(mongo_err)
+    assert "SuperSecretMongoPass123" not in sanitized_mongo
+    assert "mongodb+srv://admin_user:SuperSecretMongoPass123@cluster0.abcde.mongodb.net/vietlex" not in sanitized_mongo
+    assert "[REDACTED]" in sanitized_mongo
+
+    # 2. Test PINECONE_API compatibility key and LOGFIRE_TOKEN redaction
+    pinecone_err = "PineconeException: request failed with key pcsk_pinecone_compat_key_456 and token logfire_secret_write_token_xyz"
+    sanitized_pinecone = sanitize_error_message(pinecone_err)
+    assert "pcsk_pinecone_compat_key_456" not in sanitized_pinecone
+    assert "logfire_secret_write_token_xyz" not in sanitized_pinecone
+    assert "[REDACTED]" in sanitized_pinecone

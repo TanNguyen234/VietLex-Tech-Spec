@@ -388,7 +388,16 @@ async def chat(
         rejection_reason = None if output_safe else "Hallucination or unsafe output detected"
         
         # Build online operational metrics
-        if not context_used:
+        generation_status = latency_info.get("generation_status", "success") if isinstance(latency_info, dict) else "success"
+        tech_error = None
+        if generation_status not in ("success", "no_contexts"):
+            req_status = "technical_error"
+            tech_error = {
+                "stage": "answer_generation",
+                "error_type": generation_status,
+                "message": sanitize_error_message(bot_response),
+            }
+        elif not context_used:
             req_status = "no_evidence"
         elif not output_safe:
             req_status = "blocked_output"
@@ -422,6 +431,7 @@ async def chat(
             input_safe=True,
             output_safe=output_safe,
             rejection_reason=rejection_reason,
+            technical_error=tech_error,
             ragas_mode=settings.RAGAS_EVALUATION_MODE,
             ragas_sample_rate=settings.RAGAS_SAMPLE_RATE,
             observed_provider=observed_prov,
@@ -441,6 +451,7 @@ async def chat(
             rejection_reason=rejection_reason,
             session_id=session_id,
             request_status=req_status,
+            technical_error=tech_error,
             latency=metrics.latency,
             observed_provider=metrics.observed_provider,
             observed_model=metrics.observed_model,
@@ -455,12 +466,14 @@ async def chat(
             refusal_category=metrics.refusal_category,
         )
         
-        # Step 6: Save interaction to Semantic Cache
-        background_tasks.add_task(save_to_semantic_cache, message, final_response)
+        # Step 6: Save interaction to Semantic Cache (ONLY if request succeeded)
+        if req_status == "ok":
+            background_tasks.add_task(save_to_semantic_cache, message, final_response)
         
-        # Step 8: Trigger Background task: Evaluator (only if Ragas is selected and context exists)
-        if metrics.ragas_selected and context_used:
+        # Step 8: Trigger Background task: Evaluator (only if request succeeded, Ragas is selected and context exists)
+        if req_status == "ok" and metrics.ragas_selected and not metrics.technical_error and context_used:
             background_tasks.add_task(run_llm_as_judge, message, context_used, final_response, trace_id)
+
         
         # Step 9: Return HTML partial response
         response = templates.TemplateResponse(

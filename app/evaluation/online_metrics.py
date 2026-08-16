@@ -53,10 +53,10 @@ class OnlineOperationalMetrics:
 
 
 def sanitize_error_message(error: Any) -> str:
-
     """
     Sanitize error message to prevent secret/credential leakage into logs/telemetry.
-    Redacts URL query param secrets, Bearer tokens, and known configured secrets.
+    Redacts URL query param secrets, Bearer tokens, MongoDB connection URI credentials,
+    and actual configured Settings secrets.
     Limits bounded length to 200 characters.
     """
     if error is None:
@@ -73,7 +73,11 @@ def sanitize_error_message(error: Any) -> str:
     bearer_pattern = r"\b(bearer\s+)[a-zA-Z0-9_\-\.]+"
     msg = re.sub(bearer_pattern, r"\1[REDACTED]", msg, flags=re.IGNORECASE)
 
-    # 3. Redact known configured secrets from settings
+    # 3. Redact embedded MongoDB URI credentials like mongodb://user:pass@host or mongodb+srv://user:pass@host
+    mongo_cred_pattern = r"(mongodb(?:\+srv)?:\/\/[^\s:]+:)([^@\s]+)(@[^\s]+)"
+    msg = re.sub(mongo_cred_pattern, r"\1[REDACTED]\3", msg, flags=re.IGNORECASE)
+
+    # 4. Redact known configured secrets from actual Settings
     try:
         from app.config import get_settings
         settings = get_settings()
@@ -86,9 +90,11 @@ def sanitize_error_message(error: Any) -> str:
                 "GROQ_API_KEY",
                 "LITELLM_MASTER_KEY",
                 "PINECONE_API_KEY",
+                "PINECONE_API",
+                "PIPECONE_API",
                 "QDRANT_API_KEY",
-                "MONGODB_URL",
-                "CSRF_SECRET_KEY",
+                "MONGO_URL",
+                "LOGFIRE_TOKEN",
             )
         ]
         for secret in configured_secrets:
@@ -215,6 +221,8 @@ def build_online_metrics(
     ragas_executed = False
     if ragas_mode == "off":
         ragas_status = "disabled"
+    elif technical_error or request_status == "technical_error":
+        ragas_status = "skipped_technical_error"
     elif not contexts:
         ragas_status = "skipped_no_context"
     elif ragas_mode == "all":
@@ -225,6 +233,7 @@ def build_online_metrics(
         ragas_status = "selected" if ragas_selected else "not_selected"
     else:
         ragas_status = "unknown"
+
 
     return OnlineOperationalMetrics(
         trace_id=trace_id,

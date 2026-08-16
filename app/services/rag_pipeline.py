@@ -160,6 +160,7 @@ async def run_advanced_rag(
             time.perf_counter() - started,
             3,
         )
+        latency["generation_status"] = "no_contexts"
         return NO_EVIDENCE_RESPONSE, [], latency
 
     llm_started = time.perf_counter()
@@ -176,6 +177,7 @@ async def run_advanced_rag(
         time.perf_counter() - started,
         3,
     )
+    latency["generation_status"] = getattr(llm_result, "status", "success")
     provider_usage = {
         "query_rewrite": {
             "provider": rewrite_meta.get("provider", "unobserved"),
@@ -204,6 +206,7 @@ async def run_advanced_rag(
         latency["observed_provider"] = "unobserved"
         latency["observed_model"] = "unobserved"
     return llm_result.text, contexts, latency
+
 
 
 @logfire.instrument("Rewrite legal search query with metadata")
