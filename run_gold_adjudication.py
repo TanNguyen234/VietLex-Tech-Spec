@@ -39,6 +39,7 @@ class RuntimeDependencies:
     format_queue_human_preview: Callable[..., str]
     TASK2_SELECTION_SEED: str
     TASK2_BATCH_SIZE: int
+    TASK2_SELECTION_POLICY: str
 
 
 def repository_root() -> Path:
@@ -50,6 +51,7 @@ def _runtime_dependencies() -> RuntimeDependencies:
     from app.config import get_settings
     from app.evaluation.adjudication import (
         TASK2_BATCH_SIZE,
+        TASK2_SELECTION_POLICY,
         TASK2_SELECTION_SEED,
         build_decision_template,
         build_promotion_preview,
@@ -93,6 +95,7 @@ def _runtime_dependencies() -> RuntimeDependencies:
         format_queue_human_preview=format_queue_human_preview,
         TASK2_SELECTION_SEED=TASK2_SELECTION_SEED,
         TASK2_BATCH_SIZE=TASK2_BATCH_SIZE,
+        TASK2_SELECTION_POLICY=TASK2_SELECTION_POLICY,
     )
 
 

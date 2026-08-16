@@ -12,6 +12,8 @@ from pydantic import ValidationError
 import app.evaluation.adjudication as adjudication_module
 from app.evaluation.adjudication import (
     AdjudicationCandidate,
+    AdjudicationQueueRow,
+    TASK2_SELECTION_POLICY,
     artifact_sha256,
     build_promotion_summary,
     build_promotion_preview,
@@ -663,13 +665,9 @@ def test_queue_payload_is_pending_only_and_preserves_hashes_citations_and_candid
         text="candidate text",
     )
 
-    payload = build_queue_payload(
-        cases=[case], sidecar=sidecar,
+    payload = _queue(
+        case, sidecar, provenance,
         candidates_by_evidence_id={evidence.evidence_item_id: [candidate]},
-        selected_case_ids=[case.case_id], dataset_sha256="d" * 64,
-        corpus_revision="pinned-revision", provenance=provenance,
-        command=["python", "-m", "adjudicate"], candidate_limit=5,
-        selection_seed="p1-v1",
     )
 
     row = payload["rows"][0]
@@ -690,21 +688,20 @@ def test_queue_payload_is_pending_only_and_preserves_hashes_citations_and_candid
     assert payload["provenance"]["sidecar_sha256"] == "a" * 64
 
 
-def test_queue_metadata_blocks_insufficient_selection_with_compound_diagnostics():
-    # Break caught: an undersized queue is labeled blocked with deterministic shortfall.
-    case = _case("blocked-case", "factoid")
-    evidence = _label(case.case_id)
+def test_queue_metadata_enforces_exact_20_unique_cases_and_diagnostics():
+    # Break caught: build_queue_payload generates undersized or oversized batches.
+    cases = [_case(f"case-{idx:02d}", "factoid") for idx in range(20)]
     sidecar = GoldSidecar(
         metadata=GoldSidecarMetadata(sidecar_sha256="a" * 64),
-        labels=[evidence],
-        labels_by_case_id={case.case_id: [evidence]},
+        labels=[_label(c.case_id) for c in cases],
+        labels_by_case_id={c.case_id: [_label(c.case_id)] for c in cases},
     )
 
     payload = build_queue_payload(
-        cases=[case],
+        cases=cases,
         sidecar=sidecar,
         candidates_by_evidence_id={},
-        selected_case_ids=[case.case_id],
+        selected_case_ids=[c.case_id for c in cases],
         dataset_sha256="d" * 64,
         corpus_revision="pinned-revision",
         provenance=_provenance(),
@@ -715,12 +712,50 @@ def test_queue_metadata_blocks_insufficient_selection_with_compound_diagnostics(
     )
 
     assert payload["target_case_count"] == 20
-    assert payload["selected_case_count"] == 1
+    assert payload["selected_case_count"] == 20
     assert payload["provider_calls"] == 0
-    assert payload["queue_status"] == "BLOCKED_INSUFFICIENT_ELIGIBLE_CASES"
-    assert payload["selection_diagnostics"]["eligible_case_count"] == 1
-    assert payload["selection_diagnostics"]["shortfall"] == 19
-    assert payload["selection_diagnostics"]["selection_policy"] == "underrepresented_document_then_legal_type_then_sha256"
+    assert payload["queue_status"] == "READY_FOR_REVIEW"
+    assert payload["selection_diagnostics"]["eligible_case_count"] == 20
+    assert payload["selection_diagnostics"]["selection_policy"] == adjudication_module.TASK2_SELECTION_POLICY
+
+    # Fail closed on <20 selected cases
+    with pytest.raises(ValueError, match="selected_case_ids must contain exactly 20 unique cases"):
+        build_queue_payload(
+            cases=cases,
+            sidecar=sidecar,
+            candidates_by_evidence_id={},
+            selected_case_ids=[c.case_id for c in cases[:19]],
+            dataset_sha256="d" * 64,
+            corpus_revision="pinned-revision",
+            provenance=_provenance(),
+            command=["python"],
+            candidate_limit=5,
+            selection_seed="vietlex-p2-v1",
+            target_case_count=20,
+        )
+
+    # Fail closed on >20 selected cases
+    extra_case = _case("case-extra", "factoid")
+    cases_21 = [*cases, extra_case]
+    sidecar_21 = GoldSidecar(
+        metadata=GoldSidecarMetadata(sidecar_sha256="a" * 64),
+        labels=[_label(c.case_id) for c in cases_21],
+        labels_by_case_id={c.case_id: [_label(c.case_id)] for c in cases_21},
+    )
+    with pytest.raises(ValueError, match="selected_case_ids must contain exactly 20 unique cases"):
+        build_queue_payload(
+            cases=cases_21,
+            sidecar=sidecar_21,
+            candidates_by_evidence_id={},
+            selected_case_ids=[c.case_id for c in cases_21],
+            dataset_sha256="d" * 64,
+            corpus_revision="pinned-revision",
+            provenance=_provenance(),
+            command=["python"],
+            candidate_limit=5,
+            selection_seed="vietlex-p2-v1",
+            target_case_count=20,
+        )
 
 
 def test_queue_binds_exact_indexed_context_and_preserves_legacy_anchor_hash():
@@ -791,12 +826,7 @@ def test_empty_candidates_stay_pending_and_decision_template_cannot_verify():
         git_untracked_dirty=False, git_diff_sha256=None, git_diff_status="clean",
         source_state_sha256="c" * 64,
     )
-    payload = build_queue_payload(
-        cases=[case], sidecar=sidecar, candidates_by_evidence_id={},
-        selected_case_ids=[case.case_id], dataset_sha256="d" * 64,
-        corpus_revision="pinned-revision", provenance=provenance,
-        command=["python"], candidate_limit=5, selection_seed="p1-v1",
-    )
+    payload = _queue(case, sidecar, provenance, candidates_by_evidence_id={})
 
     assert payload["rows"][0]["candidates"] == []
     queue_sha256 = artifact_sha256(payload)
@@ -1023,11 +1053,24 @@ def _queue(
     provenance: GitProvenance,
     candidates_by_evidence_id: dict[str, list[AdjudicationCandidate]] | None = None,
 ) -> dict:
+    cases = [case]
+    all_labels = dict(sidecar.labels_by_case_id)
+    if len(cases) < 20:
+        filler = [_case(f"filler-queue-{i:02d}", "factoid") for i in range(20 - len(cases))]
+        cases = [*cases, *filler]
+        for fc in filler:
+            fev = _label(fc.case_id)
+            all_labels[fc.case_id] = [fev]
+        sidecar = GoldSidecar(
+            metadata=sidecar.metadata,
+            labels=[*sidecar.labels, *[_label(fc.case_id) for fc in filler]],
+            labels_by_case_id=all_labels,
+        )
     return build_queue_payload(
-        cases=[case],
+        cases=cases,
         sidecar=sidecar,
         candidates_by_evidence_id=candidates_by_evidence_id or {},
-        selected_case_ids=[case.case_id],
+        selected_case_ids=[c.case_id for c in cases],
         dataset_sha256="d" * 64,
         corpus_revision="pinned-revision",
         provenance=provenance,
@@ -1039,19 +1082,61 @@ def _queue(
 
 
 def _review_queue(*, required_level: str = "article") -> tuple[dict, str]:
-    case = _case("review-case", "factoid")
-    evidence = GoldEvidence(
-        evidence_item_id="review-evidence", case_id=case.case_id, required=True,
-        required_level=required_level, status=EvidenceStatus.AMBIGUOUS,
-    )
-    sidecar = GoldSidecar(
-        metadata=GoldSidecarMetadata(sidecar_sha256="a" * 64), labels=[evidence],
-        labels_by_case_id={case.case_id: [evidence]},
-    )
-    candidate = _candidate(evidence.evidence_item_id)
-    queue = _queue(
-        case, sidecar, _provenance(), {evidence.evidence_item_id: [candidate]}
-    )
+    candidate = _candidate("review-evidence")
+    queue = {
+        "schema_version": "1.0.0",
+        "dataset_sha256": "d" * 64,
+        "corpus_revision": "pinned-revision",
+        "provenance": {
+            **_provenance().model_dump(mode="json"),
+            "sidecar_sha256": "a" * 64,
+        },
+        "command": ["python"],
+        "candidate_limit": 5,
+        "selection_seed": "vietlex-p2-v1",
+        "target_case_count": 40,
+        "selected_case_count": 1,
+        "provider_calls": 0,
+        "queue_status": "BLOCKED_INSUFFICIENT_ELIGIBLE_CASES",
+        "selection_diagnostics": {
+            "eligible_case_count": 1,
+            "shortfall": 39,
+            "selected_strata": {"factoid|article": 1},
+            "selection_policy": adjudication_module.TASK2_SELECTION_POLICY,
+            "case_diagnostics": [{
+                "case_id": "review-case",
+                "document_key": "7/2026/ND-CP",
+                "legal_type": "Nghị định",
+                "verified_document_representation_before": 0,
+                "verified_legal_type_representation_before": 0,
+                "selection_stratum": "factoid|article",
+                "tie_break_digest": "0" * 16,
+                "selection_policy": adjudication_module.TASK2_SELECTION_POLICY,
+            }],
+        },
+        "selected_case_ids": ["review-case"],
+        "rows": [
+            AdjudicationQueueRow(
+                queue_row_id="5d236ae10bc9abf4ef3e0ce259cc0c9b919db8dcf113abf172cc2b23ed1e959c",
+                case_id="review-case",
+                evidence_item_id="review-evidence",
+                question="Question review-case",
+                question_type="factoid",
+                context_index=1,
+                citation_index=1,
+                reference_answer_sha256="d" * 64,
+                reference_context_sha256=["d" * 64],
+                reference_anchor_sha256="d" * 64,
+                reference_anchor_legacy_hash="0123456789abcdef",
+                parsed_citation_units={"document_number": "7/2026/ND-CP", "article": "2", "clause": "1"},
+                citation_parse_status="parsed",
+                source_evidence_status="ambiguous",
+                source_adjudication_provenance={},
+                required_level=required_level,
+                candidates=[candidate],
+            ).model_dump(mode="json")
+        ],
+    }
     return queue, artifact_sha256(queue)
 
 
@@ -2060,12 +2145,30 @@ def test_task2_target_cases_invariant_rejects_non_20():
             selection_seed="seed",
             target_case_count=10,
         )
-    with pytest.raises(ValueError, match="exceeds target_case_count"):
+    with pytest.raises(ValueError, match="selected_case_ids must contain exactly 20 unique cases"):
         build_queue_payload(
             cases=cases[:20],
             sidecar=sidecar,
             candidates_by_evidence_id={},
-            selected_case_ids=[c.case_id for c in cases[:20]] + ["extra-case"],
+            selected_case_ids=[c.case_id for c in cases[:19]],
+            dataset_sha256="d" * 64,
+            corpus_revision="pinned",
+            provenance=_provenance(),
+            command=["python"],
+            candidate_limit=5,
+            selection_seed="seed",
+            target_case_count=20,
+        )
+    with pytest.raises(ValueError, match="selected_case_ids must contain exactly 20 unique cases"):
+        build_queue_payload(
+            cases=cases[:20] + [_case("extra", "factoid")],
+            sidecar=GoldSidecar(
+                metadata=sidecar.metadata,
+                labels=[*sidecar.labels, _label("extra")],
+                labels_by_case_id={**sidecar.labels_by_case_id, "extra": [_label("extra")]},
+            ),
+            candidates_by_evidence_id={},
+            selected_case_ids=[c.case_id for c in cases[:20]] + ["extra"],
             dataset_sha256="d" * 64,
             corpus_revision="pinned",
             provenance=_provenance(),
@@ -2269,7 +2372,7 @@ def test_task2_selection_diagnostics_audit_trail():
     )
 
     diagnostics = payload["selection_diagnostics"]
-    assert diagnostics["selection_policy"] == "underrepresented_document_then_legal_type_then_sha256"
+    assert diagnostics["selection_policy"] == adjudication_module.TASK2_SELECTION_POLICY
     assert len(diagnostics["case_diagnostics"]) == 20
 
     first_diag = diagnostics["case_diagnostics"][0]
@@ -2280,7 +2383,81 @@ def test_task2_selection_diagnostics_audit_trail():
     assert "verified_legal_type_representation_before" in first_diag
     assert "selection_stratum" in first_diag
     assert "tie_break_digest" in first_diag
-    assert first_diag["selection_policy"] == "underrepresented_document_then_legal_type_then_sha256"
+    assert first_diag["selection_policy"] == adjudication_module.TASK2_SELECTION_POLICY
+
+
+def test_task2_preview_legal_type_matches_case_diagnostics():
+    """2. Preview audit consistency: preview uses case_diagnostics[].legal_type, avoiding double inference."""
+    from app.evaluation.adjudication import format_queue_human_preview
+
+    # Construct 20 cases where case 0 has document_number="72/2020/QH14" and question without "Luật",
+    # but reference_contexts has "Luật Bảo vệ môi trường 2020".
+    cases = []
+    labels = []
+    labels_by_case = {}
+
+    # Case 0: question without "Luật", reference context with "Luật"
+    case_0 = _case("case-luat-00", "factoid")
+    case_0.question = "Bảo vệ môi trường nước sông thế nào?"
+    case_0.reference_contexts = ["Luật Bảo vệ môi trường số 72/2020/QH14 quy định chi tiết."]
+    cases.append(case_0)
+    ev_0 = GoldEvidence(
+        evidence_item_id="ev-case-luat-00",
+        case_id="case-luat-00",
+        document_number="72/2020/QH14",
+        required=True,
+        required_level="article",
+        status=EvidenceStatus.AMBIGUOUS,
+    )
+    labels.append(ev_0)
+    labels_by_case["case-luat-00"] = [ev_0]
+
+    # Fill remaining 19 cases
+    for idx in range(1, 20):
+        cid = f"case-other-{idx:02d}"
+        c = _case(cid, "factoid")
+        cases.append(c)
+        ev = GoldEvidence(
+            evidence_item_id=f"ev-{cid}",
+            case_id=cid,
+            document_number="10/2020/NĐ-CP",
+            required=True,
+            required_level="article",
+            status=EvidenceStatus.AMBIGUOUS,
+        )
+        labels.append(ev)
+        labels_by_case[cid] = [ev]
+
+    sidecar = GoldSidecar(
+        metadata=GoldSidecarMetadata(sidecar_sha256="a" * 64),
+        labels=labels,
+        labels_by_case_id=labels_by_case,
+    )
+
+    payload = build_queue_payload(
+        cases=cases,
+        sidecar=sidecar,
+        candidates_by_evidence_id={},
+        selected_case_ids=[c.case_id for c in cases],
+        dataset_sha256="d" * 64,
+        corpus_revision="pinned",
+        provenance=_provenance(),
+        command=["python"],
+        candidate_limit=5,
+        target_case_count=20,
+    )
+
+    # Selection diagnostic recorded "Luật" for case 0
+    case_diag_0 = payload["selection_diagnostics"]["case_diagnostics"][0]
+    assert case_diag_0["case_id"] == "case-luat-00"
+    assert case_diag_0["legal_type"] == "Luật"
+
+    preview_text = format_queue_human_preview(payload)
+    # The preview formatted summary MUST list "Luật", not "unspecified"
+    assert "Luật: 1" in preview_text
+    assert "**Legal Type**: Luật | **Document**: 72/2020/QH14" in preview_text
+    assert "unspecified" not in preview_text
+    assert TASK2_SELECTION_POLICY in preview_text
 
 
 def test_task2_diversity_aware_selection_prioritizes_underrepresented_documents():

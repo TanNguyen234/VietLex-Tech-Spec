@@ -129,6 +129,11 @@ def _json_default(value: Any) -> Any:
 
 TASK2_SELECTION_SEED = "vietlex-p2-v1"
 TASK2_BATCH_SIZE = 20
+TASK2_SELECTION_POLICY = (
+    "round_robin_question_type_required_level_"
+    "then_underrepresented_document_"
+    "then_legal_type_then_sha256"
+)
 
 _CONSERVATIVE_DOC_NUMBER_SUFFIXES: tuple[tuple[str, str], ...] = (
     ("/NĐ-CP", "Nghị định"),
@@ -479,10 +484,10 @@ def build_queue_payload(
         raise ValueError("candidate_limit must be non-negative")
     if target_case_count != TASK2_BATCH_SIZE:
         raise ValueError(f"target_case_count must be exactly {TASK2_BATCH_SIZE} for task 2 queue generation")
-    if len(selected_case_ids) > target_case_count:
-        raise ValueError(f"selected_case_ids ({len(selected_case_ids)}) exceeds target_case_count ({target_case_count})")
     if len(selected_case_ids) != len(set(selected_case_ids)):
         raise ValueError("selected_case_ids must be unique")
+    if len(selected_case_ids) != TASK2_BATCH_SIZE:
+        raise ValueError(f"selected_case_ids must contain exactly {TASK2_BATCH_SIZE} unique cases, got {len(selected_case_ids)}")
     sidecar_sha256 = _require_sha256(sidecar.metadata.sidecar_sha256, "sidecar_sha256")
     case_by_id = {case.case_id: case for case in cases}
     if len(case_by_id) != len(cases):
@@ -557,7 +562,7 @@ def build_queue_payload(
             "verified_legal_type_representation_before": legal_type_counts.get(ltype, 0),
             "selection_stratum": stratum_str,
             "tie_break_digest": digest,
-            "selection_policy": "underrepresented_document_then_legal_type_then_sha256",
+            "selection_policy": TASK2_SELECTION_POLICY,
         })
 
         for evidence in unverified_required:
@@ -610,12 +615,6 @@ def build_queue_payload(
                 ).model_dump(mode="json")
             )
 
-    shortfall = max(0, target_case_count - len(selected_case_ids))
-    queue_status = (
-        "BLOCKED_INSUFFICIENT_ELIGIBLE_CASES"
-        if shortfall > 0
-        else "READY_FOR_REVIEW"
-    )
     eligible_count = sum(
         1 for c in cases
         if is_case_eligible_for_adjudication(c, sidecar.labels_by_case_id.get(c.case_id))
@@ -623,11 +622,9 @@ def build_queue_payload(
     diagnostics: dict[str, Any] = {
         "eligible_case_count": eligible_count,
         "selected_strata": selected_strata_counts,
-        "selection_policy": "underrepresented_document_then_legal_type_then_sha256",
+        "selection_policy": TASK2_SELECTION_POLICY,
         "case_diagnostics": case_diagnostics,
     }
-    if shortfall > 0:
-        diagnostics["shortfall"] = shortfall
 
     return {
         "schema_version": "1.0.0",
@@ -643,7 +640,7 @@ def build_queue_payload(
         "target_case_count": target_case_count,
         "selected_case_count": len(selected_case_ids),
         "provider_calls": 0,
-        "queue_status": queue_status,
+        "queue_status": "READY_FOR_REVIEW",
         "selection_diagnostics": diagnostics,
         "selected_case_ids": list(selected_case_ids),
         "rows": rows,
@@ -657,8 +654,14 @@ def format_queue_human_preview(queue_payload: Mapping[str, Any]) -> str:
     status = queue_payload.get("queue_status", "UNKNOWN")
     diagnostics = queue_payload.get("selection_diagnostics", {})
     selected_strata = diagnostics.get("selected_strata", {})
-    selection_policy = diagnostics.get("selection_policy", "underrepresented_document_then_legal_type_then_sha256")
+    selection_policy = diagnostics.get("selection_policy", TASK2_SELECTION_POLICY)
     rows = queue_payload.get("rows", [])
+
+    case_diag_map = {
+        cd.get("case_id"): cd.get("legal_type")
+        for cd in diagnostics.get("case_diagnostics", [])
+        if isinstance(cd, dict) and cd.get("case_id") and cd.get("legal_type")
+    }
 
     legal_types: dict[str, int] = {}
     q_types: dict[str, int] = {}
@@ -675,7 +678,9 @@ def format_queue_human_preview(queue_payload: Mapping[str, Any]) -> str:
             doc_num = units.get("document_number")
             if doc_num:
                 doc_numbers.add(doc_num)
-            ltype = infer_conservative_legal_type(document_number=doc_num, text=row.get("question", ""))
+            ltype = case_diag_map.get(cid)
+            if not ltype:
+                ltype = infer_conservative_legal_type(document_number=doc_num, text=row.get("question", ""))
             legal_types[ltype] = legal_types.get(ltype, 0) + 1
 
     lines = [
@@ -716,7 +721,9 @@ def format_queue_human_preview(queue_payload: Mapping[str, Any]) -> str:
         req_lvl = first_row.get("required_level", "")
         units = first_row.get("parsed_citation_units", {})
         doc_num = units.get("document_number") or "unspecified"
-        ltype = infer_conservative_legal_type(document_number=units.get("document_number"), text=q_text)
+        ltype = case_diag_map.get(cid)
+        if not ltype:
+            ltype = infer_conservative_legal_type(document_number=units.get("document_number"), text=q_text)
         cand_count = sum(len(r.get("candidates", [])) for r in c_rows)
         lines.extend([
             f"### {idx}. Case `{cid}` — `{q_type}` ({req_lvl})",
