@@ -544,31 +544,31 @@ def _label(case_id: str) -> GoldEvidence:
 def test_stratified_selection_is_deterministic_and_covers_factoid_and_multihop():
     # Break caught: selection ignores the requested seed, range, or question-type strata.
     cases = [
-        *[_case(f"factoid-{index:02d}", "factoid") for index in range(30)],
-        *[_case(f"multi-hop-{index:02d}", "multi-hop") for index in range(30)],
+        *[_case(f"factoid-{index:02d}", "factoid") for index in range(20)],
+        *[_case(f"multi-hop-{index:02d}", "multi-hop") for index in range(20)],
     ]
     labels_by_case = {case.case_id: [_label(case.case_id)] for case in cases}
     cases_by_id = {case.case_id: case for case in cases}
 
     selected = select_stratified_case_ids(
-        cases, labels_by_case, target_cases=40, seed="p1-v1"
+        cases, labels_by_case, target_cases=20, seed="p1-v1"
     )
 
-    assert len(selected) == 40
+    assert len(selected) == 20
     assert selected == select_stratified_case_ids(
-        cases, labels_by_case, target_cases=40, seed="p1-v1"
+        cases, labels_by_case, target_cases=20, seed="p1-v1"
     )
     assert {cases_by_id[item].question_type for item in selected} == {
         "factoid",
         "multi-hop",
     }
-    with pytest.raises(ValueError, match="30 and 50"):
-        select_stratified_case_ids(cases, labels_by_case, target_cases=29, seed="p1-v1")
+    with pytest.raises(ValueError, match="must be exactly 20"):
+        select_stratified_case_ids(cases, labels_by_case, target_cases=19, seed="p1-v1")
 
 
 def test_stratified_selection_round_robins_compound_required_level_strata():
     # Break caught: selection quotas only by question type and drops a sparse evidence level.
-    cases = [_case(f"document-{index:02d}", "factoid") for index in range(40)]
+    cases = [_case(f"document-{index:02d}", "factoid") for index in range(30)]
     cases.extend([
         _case("factoid-clause", "factoid"),
         _case("multi-article", "multi-hop"),
@@ -600,28 +600,26 @@ def test_stratified_selection_round_robins_compound_required_level_strata():
     )
 
     selected = select_stratified_case_ids(
-        cases, labels_by_case, target_cases=30, seed="compound-v1"
+        cases, labels_by_case, target_cases=20, seed="compound-v1"
     )
 
-    assert len(selected) == 30
+    assert len(selected) == 20
     assert "factoid-clause" in selected
     assert "multi-article" in selected
     assert selected == select_stratified_case_ids(
-        cases, labels_by_case, target_cases=30, seed="compound-v1"
+        cases, labels_by_case, target_cases=20, seed="compound-v1"
     )
 
 
-def test_stratified_selection_returns_all_eligible_cases_when_fewer_than_target():
-    # Break caught: a valid 30-case target fabricates replacements or raises on scarcity.
+def test_stratified_selection_fails_closed_when_fewer_than_target():
+    # Break caught: fewer than 20 eligible cases fails closed with ValueError.
     cases = [_case(f"scarce-{index:02d}", "factoid") for index in range(7)]
     labels_by_case = {case.case_id: [_label(case.case_id)] for case in cases}
 
-    selected = select_stratified_case_ids(
-        cases, labels_by_case, target_cases=30, seed="scarce-v1"
-    )
-
-    assert set(selected) == {case.case_id for case in cases}
-    assert len(selected) == 7
+    with pytest.raises(ValueError, match="insufficient_eligible_cases"):
+        select_stratified_case_ids(
+            cases, labels_by_case, target_cases=20, seed="scarce-v1"
+        )
 
 
 def test_queue_payload_is_pending_only_and_preserves_hashes_citations_and_candidates():
@@ -694,15 +692,13 @@ def test_queue_metadata_blocks_insufficient_selection_with_compound_diagnostics(
 
     payload = _queue(case, sidecar, _provenance())
 
-    assert payload["target_case_count"] == 40
+    assert payload["target_case_count"] == 20
     assert payload["selected_case_count"] == 1
     assert payload["provider_calls"] == 0
     assert payload["queue_status"] == "BLOCKED_INSUFFICIENT_ELIGIBLE_CASES"
-    assert payload["selection_diagnostics"] == {
-        "eligible_case_count": 1,
-        "selected_strata": {"factoid|article": 1},
-        "shortfall": 39,
-    }
+    assert payload["selection_diagnostics"]["eligible_case_count"] == 1
+    assert payload["selection_diagnostics"]["shortfall"] == 19
+    assert payload["selection_diagnostics"]["selection_policy"] == "underrepresented_document_then_legal_type_then_sha256"
 
 
 def test_queue_binds_exact_indexed_context_and_preserves_legacy_anchor_hash():
@@ -1782,7 +1778,7 @@ def test_gold_adjudication_cli_queue_preview_and_promotion_are_immutable(
     queue = json.loads((queue_run / "queue.json").read_text(encoding="utf-8"))
     template = json.loads((queue_run / "decision_template.json").read_text(encoding="utf-8"))
     summary = json.loads((queue_run / "queue_summary.json").read_text(encoding="utf-8"))
-    assert len(queue["selected_case_ids"]) == 40
+    assert len(queue["selected_case_ids"]) == 20
     assert {row["question_type"] for row in queue["rows"]} == {"factoid", "multi-hop"}
     assert {entry["decision"]["status"] for entry in template["decisions"]} == {"pending"}
     assert template["queue_sha256"] == dependencies.artifact_sha256(queue)
@@ -1849,27 +1845,17 @@ def test_gold_adjudication_cli_persists_blocked_queue_without_replacements(
     cli = _configure_cli_runtime(monkeypatch, tmp_path, documents)
     queue_root = tmp_path / "blocked-queue-runs"
 
-    assert cli.main(_cli_queue_args(
-        dataset_path,
-        sidecar_path,
-        content_store_path,
-        fts_path,
-        queue_root,
-        "blocked-queue",
-    )) == 0
+    with pytest.raises(ValueError, match="insufficient_eligible_cases"):
+        cli.main(_cli_queue_args(
+            dataset_path,
+            sidecar_path,
+            content_store_path,
+            fts_path,
+            queue_root,
+            "blocked-queue",
+        ))
 
-    run_dir = queue_root / "blocked-queue"
-    assert sorted(path.name for path in run_dir.iterdir()) == [
-        "decision_template.json", "queue.json", "queue_summary.json",
-    ]
-    queue = json.loads((run_dir / "queue.json").read_text(encoding="utf-8"))
-    summary = json.loads((run_dir / "queue_summary.json").read_text(encoding="utf-8"))
-    assert queue["selected_case_count"] == 12
-    assert queue["target_case_count"] == 40
-    assert queue["queue_status"] == "BLOCKED_INSUFFICIENT_ELIGIBLE_CASES"
-    assert summary["queue_status"] == queue["queue_status"]
-    assert summary["selection_diagnostics"] == queue["selection_diagnostics"]
-    assert summary["provider_calls"] == 0
+    assert not (queue_root / "blocked-queue").exists()
 
 
 def test_gold_adjudication_cli_rejects_external_outputs_and_missing_approval_before_writing(
@@ -1980,7 +1966,7 @@ def test_gold_adjudication_cli_fails_closed_without_writing_new_artifacts(
                 "--output-root", str(output_root), "--run-id", f"preview-{failure}",
             ]
     before = _tree_bytes(tmp_path)
-    with pytest.raises((FileNotFoundError, FileExistsError, ValueError)):
+    with pytest.raises((FileNotFoundError, FileExistsError, ValueError, SystemExit)):
         cli.main(arguments)
     assert _tree_bytes(tmp_path) == before
     assert not output_root.exists()
@@ -2005,40 +1991,227 @@ def test_task2_selection_determinism_exact_order():
     assert first == second
 
 
-def test_task2_exact_batch_size_contract():
-    """B. Exact batch size: exactly 20 unique cases."""
+def test_task2_target_cases_invariant_rejects_non_20():
+    """B. Target cases invariant: exactly 20 cases only; rejects 19, 21, 40."""
     cases = [
         *[_case(f"case-f-{idx:02d}", "factoid") for idx in range(20)],
         *[_case(f"case-m-{idx:02d}", "multi-hop") for idx in range(20)],
     ]
     labels_by_case = {case.case_id: [_label(case.case_id)] for case in cases}
 
+    # Valid: target_cases=20
     selected = select_stratified_case_ids(cases, labels_by_case, target_cases=20, seed="batch-20")
     assert len(selected) == 20
-    assert len(set(selected)) == 20
+
+    # Invalid: rejects non-20 target_cases
+    with pytest.raises(ValueError, match="must be exactly 20"):
+        select_stratified_case_ids(cases, labels_by_case, target_cases=19, seed="batch-20")
+    with pytest.raises(ValueError, match="must be exactly 20"):
+        select_stratified_case_ids(cases, labels_by_case, target_cases=21, seed="batch-20")
+    with pytest.raises(ValueError, match="must be exactly 20"):
+        select_stratified_case_ids(cases, labels_by_case, target_cases=40, seed="batch-20")
+
+    # Invalid in build_queue_payload
+    sidecar = GoldSidecar(
+        metadata=GoldSidecarMetadata(sidecar_sha256="a" * 64),
+        labels=[_label(c.case_id) for c in cases[:20]],
+        labels_by_case_id={c.case_id: [_label(c.case_id)] for c in cases[:20]},
+    )
+    with pytest.raises(ValueError, match="exceeds target_case_count"):
+        build_queue_payload(
+            cases=cases[:20],
+            sidecar=sidecar,
+            candidates_by_evidence_id={},
+            selected_case_ids=[c.case_id for c in cases[:20]],
+            dataset_sha256="d" * 64,
+            corpus_revision="pinned",
+            provenance=_provenance(),
+            command=["python"],
+            candidate_limit=5,
+            selection_seed="seed",
+            target_case_count=10,
+        )
 
 
-def test_task2_insufficient_pool_fails_closed():
-    """C. Insufficient pool: <20 eligible cases fails closed, never pads/fabricates."""
-    cases = [_case(f"scarce-{idx:02d}", "factoid") for idx in range(12)]
-    labels_by_case = {case.case_id: [_label(case.case_id)] for case in cases}
+def test_task2_cli_insufficient_eligible_cases_fails_closed(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+):
+    """C. Insufficient pool: <20 eligible cases fails closed on real CLI, no directory created."""
+    # Write only 19 cases (< 20 target)
+    dataset_path, sidecar_path, documents = _write_cli_review_inputs(tmp_path, case_count=19)
+    content_store_path = tmp_path / "content.sqlite3"
+    fts_path = tmp_path / "fts.sqlite3"
+    content_store_path.touch()
+    fts_path.touch()
 
-    # When fail_closed=True, raises ValueError("insufficient_eligible_cases")
+    cli = _configure_cli_runtime(monkeypatch, tmp_path, documents)
+    queue_root = tmp_path / "queue-runs-insufficient"
+    run_id = "insufficient-19-run"
+
     with pytest.raises(ValueError, match="insufficient_eligible_cases"):
-        select_stratified_case_ids(cases, labels_by_case, target_cases=20, seed="scarce-v2", fail_closed=True)
+        cli.main([
+            "queue", "--dataset", str(dataset_path), "--sidecar", str(sidecar_path),
+            "--content-store", str(content_store_path), "--fts", str(fts_path),
+            "--target-cases", "20",
+            "--output-root", str(queue_root), "--run-id", run_id,
+        ])
 
-    # When fail_closed=False, returns exact available cases without padding
-    selected = select_stratified_case_ids(cases, labels_by_case, target_cases=20, seed="scarce-v2", fail_closed=False)
-    assert len(selected) == 12
-    assert len(set(selected)) == 12
-    assert set(selected) == {c.case_id for c in cases}
+    # Assert no output artifact or run directory was created
+    assert not (queue_root / run_id).exists()
 
-    # build_queue_payload marks BLOCKED_INSUFFICIENT_ELIGIBLE_CASES
+
+def test_task2_unresolved_evidence_only_in_decision_rows():
+    """D & 3. Queue decision rows contain only unverified required evidence; verified evidence excluded."""
+    # Case with Evidence A = VERIFIED and Evidence B = AMBIGUOUS
+    case = _case("multihop-partial-verified", "multi-hop")
+    ev_a = GoldEvidence(
+        evidence_item_id="ev-a-verified",
+        case_id=case.case_id,
+        required=True,
+        required_level="article",
+        document_number="72/2020/QH14",
+        status=EvidenceStatus.VERIFIED,  # already verified!
+    )
+    ev_b = GoldEvidence(
+        evidence_item_id="ev-b-ambiguous",
+        case_id=case.case_id,
+        required=True,
+        required_level="clause",
+        document_number="83/2015/QH13",
+        status=EvidenceStatus.AMBIGUOUS,  # needs human review
+    )
+
+    # 19 filler cases to make exact 20 batch
+    filler_cases = [_case(f"filler-{idx:02d}", "factoid") for idx in range(19)]
+    all_cases = [case, *filler_cases]
+    labels_by_case = {case.case_id: [ev_a, ev_b]}
+    for fc in filler_cases:
+        labels_by_case[fc.case_id] = [_label(fc.case_id)]
+
+    sidecar = GoldSidecar(
+        metadata=GoldSidecarMetadata(sidecar_sha256="a" * 64),
+        labels=[ev_a, ev_b, *[_label(fc.case_id) for fc in filler_cases]],
+        labels_by_case_id=labels_by_case,
+    )
+
+    selected = select_stratified_case_ids(all_cases, labels_by_case, target_cases=20)
+    assert case.case_id in selected
+
+    cand_b = _candidate(ev_b.evidence_item_id)
+    payload = build_queue_payload(
+        cases=all_cases,
+        sidecar=sidecar,
+        candidates_by_evidence_id={ev_b.evidence_item_id: [cand_b]},
+        selected_case_ids=selected,
+        dataset_sha256="d" * 64,
+        corpus_revision="pinned",
+        provenance=_provenance(),
+        command=["python"],
+        candidate_limit=5,
+        target_case_count=20,
+    )
+
+    # Find rows for multihop-partial-verified
+    case_rows = [r for r in payload["rows"] if r["case_id"] == case.case_id]
+    # ONLY evidence B is in decision rows!
+    assert len(case_rows) == 1
+    assert case_rows[0]["evidence_item_id"] == "ev-b-ambiguous"
+    assert case_rows[0]["source_evidence_status"] == EvidenceStatus.AMBIGUOUS.value
+
+    # Check decision template
+    template = build_decision_template(payload, artifact_sha256(payload))
+    template_evidence_ids = [d["evidence_item_id"] for d in template["decisions"]]
+    assert "ev-b-ambiguous" in template_evidence_ids
+    assert "ev-a-verified" not in template_evidence_ids
+
+    # Case with ALL required evidence items verified -> NEVER selected
+    fully_verified_case = _case("fully-verified-case", "factoid")
+    fv_ev = GoldEvidence(
+        evidence_item_id="fv-ev-1",
+        case_id=fully_verified_case.case_id,
+        required=True,
+        required_level="article",
+        status=EvidenceStatus.VERIFIED,
+    )
+    labels_with_fv = {**labels_by_case, fully_verified_case.case_id: [fv_ev]}
+    selected_with_fv = select_stratified_case_ids([*all_cases, fully_verified_case], labels_with_fv, target_cases=20)
+    assert fully_verified_case.case_id not in selected_with_fv
+
+
+def test_task2_selection_seed_recorded_matches_selector_reproducibility(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+):
+    """4. Provenance: recorded selection_seed matches seed used and reproduces exact case order."""
+    from app.evaluation.adjudication import TASK2_SELECTION_SEED
+
+    dataset_path, sidecar_path, documents = _write_cli_review_inputs(tmp_path, case_count=30)
+    content_store_path = tmp_path / "content.sqlite3"
+    fts_path = tmp_path / "fts.sqlite3"
+    content_store_path.touch()
+    fts_path.touch()
+
+    cli = _configure_cli_runtime(monkeypatch, tmp_path, documents)
+    queue_root = tmp_path / "queue-runs-seed"
+
+    assert cli.main([
+        "queue", "--dataset", str(dataset_path), "--sidecar", str(sidecar_path),
+        "--content-store", str(content_store_path), "--fts", str(fts_path),
+        "--target-cases", "20",
+        "--output-root", str(queue_root), "--run-id", "seed-run",
+    ]) == 0
+
+    queue_data = json.loads((queue_root / "seed-run" / "queue.json").read_text(encoding="utf-8"))
+    recorded_seed = queue_data["selection_seed"]
+    assert recorded_seed == TASK2_SELECTION_SEED == "vietlex-p2-v1"
+
+    # Re-run selector directly with recorded seed
+    dependencies = cli._runtime_dependencies()
+    cases = dependencies.build_cases(json.loads(dataset_path.read_text(encoding="utf-8")), {})
+    sidecar_obj = dependencies.load_gold_sidecar(sidecar_path)
+    rerun_selected = select_stratified_case_ids(
+        cases, sidecar_obj.labels_by_case_id, target_cases=20, seed=recorded_seed
+    )
+    assert rerun_selected == queue_data["selected_case_ids"]
+
+
+def test_task2_conservative_legal_type_inference():
+    """5. Conservative legal-type inference: avoids over-generalizing /QH or /UBTVQH."""
+    from app.evaluation.adjudication import infer_conservative_legal_type
+
+    # Specific suffixes
+    assert infer_conservative_legal_type(document_number="12/2020/NĐ-CP") == "Nghị định"
+    assert infer_conservative_legal_type(document_number="05/2021/TT-BXD") == "Thông tư"
+    assert infer_conservative_legal_type(document_number="01/2020/TTLT-BCA-BQP") == "Thông tư liên tịch"
+    assert infer_conservative_legal_type(document_number="15/2019/QĐ-TTg") == "Quyết định"
+    assert infer_conservative_legal_type(document_number="42/2021/NQ-CP") == "Nghị quyết"
+    assert infer_conservative_legal_type(document_number="08/2020/CT-TTg") == "Chỉ thị"
+    assert infer_conservative_legal_type(document_number="01/VBHN-VPQH") == "Văn bản hợp nhất"
+
+    # /QH and /UBTVQH alone without text keywords should NOT assume Luật/Pháp lệnh
+    assert infer_conservative_legal_type(document_number="72/2020/QH14") == "unspecified"
+    assert infer_conservative_legal_type(document_number="10/2018/UBTVQH14") == "unspecified"
+
+    # With text keywords, correctly resolves
+    assert infer_conservative_legal_type(document_number="72/2020/QH14", text="Luật Bảo vệ môi trường 2020") == "Luật"
+    assert infer_conservative_legal_type(document_number="91/2015/QH13", text="Bộ luật Dân sự 2015") == "Bộ luật"
+    assert infer_conservative_legal_type(document_number="10/2018/UBTVQH14", text="Pháp lệnh số 10 về cán bộ") == "Pháp lệnh"
+    assert infer_conservative_legal_type(text="Hiến pháp nước CHXHCN Việt Nam") == "Hiến pháp"
+
+
+def test_task2_selection_diagnostics_audit_trail():
+    """6. Diagnostics audit trail: exposes representation counts, stratum, digest, and policy."""
+    cases = [
+        *[_case(f"factoid-{idx:02d}", "factoid") for idx in range(10)],
+        *[_case(f"multi-hop-{idx:02d}", "multi-hop") for idx in range(10)],
+    ]
+    labels_by_case = {case.case_id: [_label(case.case_id)] for case in cases}
     sidecar = GoldSidecar(
         metadata=GoldSidecarMetadata(sidecar_sha256="a" * 64),
         labels=[_label(c.case_id) for c in cases],
         labels_by_case_id=labels_by_case,
     )
+
+    selected = select_stratified_case_ids(cases, labels_by_case, target_cases=20)
     payload = build_queue_payload(
         cases=cases,
         sidecar=sidecar,
@@ -2049,43 +2222,22 @@ def test_task2_insufficient_pool_fails_closed():
         provenance=_provenance(),
         command=["python"],
         candidate_limit=5,
-        selection_seed="scarce-v2",
         target_case_count=20,
     )
-    assert payload["queue_status"] == "BLOCKED_INSUFFICIENT_ELIGIBLE_CASES"
-    assert payload["selected_case_count"] == 12
-    assert payload["selection_diagnostics"]["shortfall"] == 8
 
+    diagnostics = payload["selection_diagnostics"]
+    assert diagnostics["selection_policy"] == "underrepresented_document_then_legal_type_then_sha256"
+    assert len(diagnostics["case_diagnostics"]) == 20
 
-def test_task2_no_automatic_promotion_candidates_remain_pending():
-    """D. No automatic promotion: every queued candidate remains pending, sidecar untouched."""
-    case = _case("case-pending", "factoid")
-    evidence = _label(case.case_id)
-    sidecar = GoldSidecar(
-        metadata=GoldSidecarMetadata(sidecar_sha256="a" * 64),
-        labels=[evidence],
-        labels_by_case_id={case.case_id: [evidence]},
-    )
-    candidate = _candidate(evidence.evidence_item_id)
-    payload = build_queue_payload(
-        cases=[case],
-        sidecar=sidecar,
-        candidates_by_evidence_id={evidence.evidence_item_id: [candidate]},
-        selected_case_ids=[case.case_id],
-        dataset_sha256="d" * 64,
-        corpus_revision="pinned",
-        provenance=_provenance(),
-        command=["python"],
-        candidate_limit=5,
-        selection_seed="pending-check",
-        target_case_count=20,
-    )
-    row = payload["rows"][0]
-    assert row["decision"]["status"] == "pending"
-    assert row["decision"]["selected_candidate_id"] is None
-    assert row["source_evidence_status"] == EvidenceStatus.AMBIGUOUS.value
-    # Ensure no verified status is assigned
-    assert all(r["decision"]["status"] == "pending" for r in payload["rows"])
+    first_diag = diagnostics["case_diagnostics"][0]
+    assert "case_id" in first_diag
+    assert "document_key" in first_diag
+    assert "legal_type" in first_diag
+    assert "verified_document_representation_before" in first_diag
+    assert "verified_legal_type_representation_before" in first_diag
+    assert "selection_stratum" in first_diag
+    assert "tie_break_digest" in first_diag
+    assert first_diag["selection_policy"] == "underrepresented_document_then_legal_type_then_sha256"
 
 
 def test_task2_diversity_aware_selection_prioritizes_underrepresented_documents():
@@ -2120,7 +2272,7 @@ def test_task2_diversity_aware_selection_prioritizes_underrepresented_documents(
                 evidence_item_id=f"ev-{cid}",
                 case_id=cid,
                 document_id=doc_id,
-                document_number=f"{doc_id}/2020/QH14",
+                document_number=f"{doc_id}/2020/NĐ-CP",
                 required=True,
                 required_level="article",
                 status=EvidenceStatus.NO_CITATION_EXTRACTED,  # unverified candidate
@@ -2139,48 +2291,43 @@ def test_task2_diversity_aware_selection_prioritizes_underrepresented_documents(
     assert len(overrepresented_selected) == 0
 
 
-def test_task2_provider_free_gate_and_auditability():
-    """G & H. Provider-free gate and auditability of queue preview."""
-    from app.evaluation.adjudication import format_queue_human_preview
+def test_task2_provider_free_strict_network_guard(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    """7 & G. Strict provider-free boundary guard: monkeypatch network calls to raise immediately."""
+    import http.client
+    import socket
+    import urllib.request
 
-    case = _case("case-audit-01", "factoid")
-    evidence = GoldEvidence(
-        evidence_item_id="ev-audit-01",
-        case_id=case.case_id,
-        document_number="83/2015/QH13",
-        article="Điều 5",
-        required=True,
-        required_level="article",
-        status=EvidenceStatus.NO_CITATION_EXTRACTED,
-    )
-    sidecar = GoldSidecar(
-        metadata=GoldSidecarMetadata(sidecar_sha256="a" * 64),
-        labels=[evidence],
-        labels_by_case_id={case.case_id: [evidence]},
-    )
-    candidate = _candidate(evidence.evidence_item_id, document_number="83/2015/QH13")
-    payload = build_queue_payload(
-        cases=[case],
-        sidecar=sidecar,
-        candidates_by_evidence_id={evidence.evidence_item_id: [candidate]},
-        selected_case_ids=[case.case_id],
-        dataset_sha256="d" * 64,
-        corpus_revision="pinned",
-        provenance=_provenance(),
-        command=["python"],
-        candidate_limit=5,
-        selection_seed="audit-seed",
-        target_case_count=20,
-    )
-    assert payload["provider_calls"] == 0
-    assert "selection_diagnostics" in payload
+    def _forbidden_network(*args, **kwargs):
+        raise RuntimeError("FORBIDDEN_NETWORK_CALL: Task 2 must be 100% provider-free local execution")
 
-    preview_md = format_queue_human_preview(payload)
-    assert "ADJUDICATION CANDIDATE QUEUE" in preview_md
-    assert "NOT verified legal facts" in preview_md
-    assert "Human review is strictly required" in preview_md
-    assert "PENDING_HUMAN" in preview_md
-    assert "case-audit-01" in preview_md
+    monkeypatch.setattr(socket.socket, "connect", _forbidden_network)
+    monkeypatch.setattr(urllib.request, "urlopen", _forbidden_network)
+    monkeypatch.setattr(http.client.HTTPConnection, "connect", _forbidden_network)
+
+    try:
+        import requests
+        monkeypatch.setattr(requests.Session, "send", _forbidden_network)
+    except ImportError:
+        pass
+
+    # Run the full queue CLI flow with 30 cases -> exactly 20 selected
+    dataset_path, sidecar_path, documents = _write_cli_review_inputs(tmp_path, case_count=30)
+    content_store_path = tmp_path / "content.sqlite3"
+    fts_path = tmp_path / "fts.sqlite3"
+    content_store_path.touch()
+    fts_path.touch()
+
+    cli = _configure_cli_runtime(monkeypatch, tmp_path, documents)
+    queue_root = tmp_path / "queue-guard"
+
+    result = cli.main([
+        "queue", "--dataset", str(dataset_path), "--sidecar", str(sidecar_path),
+        "--content-store", str(content_store_path), "--fts", str(fts_path),
+        "--target-cases", "20", "--write-preview",
+        "--output-root", str(queue_root), "--run-id", "guard-run",
+    ])
+    assert result == 0
+    assert (queue_root / "guard-run" / "queue.json").exists()
 
 
 def test_task2_cli_queue_with_20_cases_and_preview_and_input_immutability(

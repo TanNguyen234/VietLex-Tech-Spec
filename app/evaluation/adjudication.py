@@ -127,25 +127,10 @@ def _json_default(value: Any) -> Any:
     raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
 
 
-_CANONICAL_LEGAL_TYPES = (
-    "Hiến pháp",
-    "Bộ luật",
-    "Luật",
-    "Pháp lệnh",
-    "Nghị định",
-    "Nghị quyết",
-    "Thông tư liên tịch",
-    "Thông tư",
-    "Quyết định",
-    "Chỉ thị",
-    "Văn bản hợp nhất",
-    "Quy định",
-    "Quy chế",
-)
+TASK2_SELECTION_SEED = "vietlex-p2-v1"
+TASK2_BATCH_SIZE = 20
 
-_DOC_NUMBER_LEGAL_TYPE_MAP = (
-    ("/UBTVQH", "Pháp lệnh"),
-    ("/QH", "Luật"),
+_CONSERVATIVE_DOC_NUMBER_SUFFIXES: tuple[tuple[str, str], ...] = (
     ("/NĐ-CP", "Nghị định"),
     ("/ND-CP", "Nghị định"),
     ("/TTLT-", "Thông tư liên tịch"),
@@ -157,37 +142,63 @@ _DOC_NUMBER_LEGAL_TYPE_MAP = (
     ("/VBHN-", "Văn bản hợp nhất"),
 )
 
+_EXPLICIT_TEXT_KEYWORDS: tuple[tuple[str, str], ...] = (
+    ("Hiến pháp", "Hiến pháp"),
+    ("Bộ luật", "Bộ luật"),
+    ("Luật", "Luật"),
+    ("Pháp lệnh", "Pháp lệnh"),
+    ("Nghị định", "Nghị định"),
+    ("Nghị quyết", "Nghị quyết"),
+    ("Thông tư liên tịch", "Thông tư liên tịch"),
+    ("Thông tư", "Thông tư"),
+    ("Quyết định", "Quyết định"),
+    ("Chỉ thị", "Chỉ thị"),
+    ("Văn bản hợp nhất", "Văn bản hợp nhất"),
+)
 
-def infer_deterministic_legal_type(
+
+def infer_conservative_legal_type(
     *,
     document_number: str | None = None,
     text: str | None = None,
+    known_legal_type: str | None = None,
 ) -> str:
-    """Infer legal document type deterministically without any LLM or external calls."""
-    if document_number:
+    """Infer legal document type conservatively without any LLM or external calls.
+
+    Does not assume /QH is Luật or /UBTVQH is Pháp lệnh without text keyword evidence.
+    """
+    if known_legal_type and isinstance(known_legal_type, str) and known_legal_type.strip():
+        return known_legal_type.strip()
+    if document_number and isinstance(document_number, str):
         num = document_number.upper().strip()
-        for suffix, lt in _DOC_NUMBER_LEGAL_TYPE_MAP:
+        for suffix, lt in _CONSERVATIVE_DOC_NUMBER_SUFFIXES:
             if suffix in num:
                 return lt
-    if text:
-        for lt in _CANONICAL_LEGAL_TYPES:
-            pattern = rf"\b{re.escape(lt)}\b"
+    if text and isinstance(text, str):
+        for keyword, lt in _EXPLICIT_TEXT_KEYWORDS:
+            pattern = rf"\b{re.escape(keyword)}\b"
             if re.search(pattern, text, re.IGNORECASE):
                 return lt
     return "unspecified"
+
+
+# Alias for backward compatibility
+infer_deterministic_legal_type = infer_conservative_legal_type
 
 
 def select_stratified_case_ids(
     cases: Sequence[GoldenCase],
     labels_by_case_id: Mapping[str, Sequence[GoldEvidence]],
     *,
-    target_cases: int = 20,
-    seed: str = "vietlex-p2-v1",
-    fail_closed: bool = False,
+    target_cases: int = TASK2_BATCH_SIZE,
+    seed: str = TASK2_SELECTION_SEED,
 ) -> list[str]:
-    """Round-robin answerable cases with diversity prioritization across legal types and documents."""
-    if target_cases not in (20,) and not (30 <= target_cases <= 50):
-        raise ValueError("target_cases must be 20 or between 30 and 50")
+    """Round-robin answerable cases with diversity prioritization across legal types and documents.
+
+    Fails closed immediately if fewer than target_cases (exactly 20) eligible cases exist.
+    """
+    if target_cases != TASK2_BATCH_SIZE:
+        raise ValueError(f"target_cases must be exactly {TASK2_BATCH_SIZE} for task 2 queue generation")
 
     case_ids = [case.case_id for case in cases]
     if len(case_ids) != len(set(case_ids)):
@@ -205,7 +216,7 @@ def select_stratified_case_ids(
                 if label.document_number and label.document_number.strip():
                     key = label.document_number.strip()
                     doc_counts[key] = doc_counts.get(key, 0) + 1
-                    lt = infer_deterministic_legal_type(document_number=key)
+                    lt = infer_conservative_legal_type(document_number=key)
                     if lt != "unspecified":
                         legal_type_counts[lt] = legal_type_counts.get(lt, 0) + 1
 
@@ -224,7 +235,7 @@ def select_stratified_case_ids(
             label for label in required
             if label.status != "verified" and label.status != EvidenceStatus.VERIFIED
         ]
-        # If all required evidence is already verified, case is already verified gold
+        # If all required evidence is already verified, case is already verified gold -> never select
         if not unverified_required:
             continue
 
@@ -246,7 +257,7 @@ def select_stratified_case_ids(
                     break
 
         doc_ident = doc_id if doc_id else (doc_num if doc_num else f"case_{case.case_id}")
-        ltype = infer_deterministic_legal_type(document_number=doc_num, text=text)
+        ltype = infer_conservative_legal_type(document_number=doc_num, text=text)
         highest = max(
             (label.required_level.value for label in unverified_required),
             key=_REQUIRED_LEVEL_ORDER.__getitem__,
@@ -260,24 +271,6 @@ def select_stratified_case_ids(
         digest, cid = _rank_key(seed, case.case_id)
         sort_tuple = (doc_rep, ltype_rep, digest, cid)
         strata.setdefault(stratum_key, []).append((sort_tuple, case))
-
-    # Fallback if no unverified required cases exist
-    if not strata:
-        for case in cases:
-            labels = labels_by_case_id.get(case.case_id)
-            if not labels or not case.answerable:
-                continue
-            required = [label for label in labels if label.required]
-            if not required:
-                continue
-            highest = max(
-                (label.required_level.value for label in required),
-                key=_REQUIRED_LEVEL_ORDER.__getitem__,
-            )
-            stratum_key = (case.question_type, highest, "unspecified")
-            digest, cid = _rank_key(seed, case.case_id)
-            sort_tuple = (0, 0, digest, cid)
-            strata.setdefault(stratum_key, []).append((sort_tuple, case))
 
     sorted_strata: dict[tuple[str, str, str], list[GoldenCase]] = {}
     for key in sorted(strata.keys()):
@@ -301,8 +294,10 @@ def select_stratified_case_ids(
         if not added:
             break
 
-    if fail_closed and len(selected) < target_cases:
-        raise ValueError(f"insufficient_eligible_cases: found {len(selected)} < {target_cases}")
+    if len(selected) < target_cases:
+        raise ValueError(
+            f"insufficient_eligible_cases: found {len(selected)} eligible cases, expected exactly {target_cases}"
+        )
 
     return selected
 
@@ -461,30 +456,99 @@ def build_queue_payload(
     provenance: GitProvenance,
     command: Sequence[str],
     candidate_limit: int,
-    selection_seed: str,
-    target_case_count: int = 40,
+    selection_seed: str = TASK2_SELECTION_SEED,
+    target_case_count: int = TASK2_BATCH_SIZE,
 ) -> dict[str, Any]:
-    """Build a review queue without asserting that any candidate is verified."""
+    """Build a review queue without asserting that any candidate is verified.
+
+    Contains decision rows exclusively for unresolved (unverified) required evidence items.
+    """
     if candidate_limit < 0:
         raise ValueError("candidate_limit must be non-negative")
-    if target_case_count not in (20,) and not (30 <= target_case_count <= 50):
-        raise ValueError("target_case_count must be 20 or between 30 and 50")
+    if target_case_count < 1:
+        raise ValueError("target_case_count must be positive")
     if len(selected_case_ids) != len(set(selected_case_ids)):
         raise ValueError("selected_case_ids must be unique")
     if len(selected_case_ids) > target_case_count:
-        raise ValueError("selected_case_ids cannot exceed target_case_count")
+        raise ValueError(f"selected_case_ids ({len(selected_case_ids)}) exceeds target_case_count ({target_case_count})")
     sidecar_sha256 = _require_sha256(sidecar.metadata.sidecar_sha256, "sidecar_sha256")
     case_by_id = {case.case_id: case for case in cases}
     if len(case_by_id) != len(cases):
         raise ValueError("case IDs must be unique")
 
+    # Compute baseline verified representation counts across sidecar
+    doc_counts: dict[str, int] = {}
+    legal_type_counts: dict[str, int] = {}
+    for case_id, labels in sidecar.labels_by_case_id.items():
+        for label in labels:
+            if label.status == "verified" or label.status == EvidenceStatus.VERIFIED:
+                if label.document_id is not None:
+                    key = str(label.document_id)
+                    doc_counts[key] = doc_counts.get(key, 0) + 1
+                if label.document_number and label.document_number.strip():
+                    key = label.document_number.strip()
+                    doc_counts[key] = doc_counts.get(key, 0) + 1
+                    lt = infer_conservative_legal_type(document_number=key)
+                    if lt != "unspecified":
+                        legal_type_counts[lt] = legal_type_counts.get(lt, 0) + 1
+
     rows: list[dict[str, Any]] = []
+    case_diagnostics: list[dict[str, Any]] = []
+    selected_strata_counts: dict[str, int] = {}
+
     for case_id in selected_case_ids:
         case = case_by_id.get(case_id)
         labels = sidecar.labels_by_case_id.get(case_id)
         if case is None or not labels:
             raise ValueError(f"missing case or evidence labels for '{case_id}'")
-        for evidence in labels:
+
+        # Exclude already-verified evidence items from decision rows
+        unverified_required = [
+            ev for ev in labels
+            if ev.required and ev.status != EvidenceStatus.VERIFIED and ev.status != "verified"
+        ]
+        if not unverified_required:
+            raise ValueError(f"selected case '{case_id}' has no unresolved required evidence")
+
+        # Extract document identifier & legal type for case diagnostics
+        doc_id = None
+        doc_num = None
+        for label in labels:
+            if label.document_id is not None:
+                doc_id = str(label.document_id)
+            if label.document_number and label.document_number.strip():
+                doc_num = label.document_number.strip()
+
+        text = "\n".join([case.question, case.reference_answer, *case.reference_contexts])
+        if not doc_num:
+            citations = parse_legal_citations(text)
+            for cit in citations:
+                if cit.document_number and cit.document_number.strip():
+                    doc_num = cit.document_number.strip()
+                    break
+
+        doc_ident = doc_id if doc_id else (doc_num if doc_num else f"case_{case.case_id}")
+        ltype = infer_conservative_legal_type(document_number=doc_num, text=text)
+        highest = max(
+            (label.required_level.value for label in unverified_required),
+            key=_REQUIRED_LEVEL_ORDER.__getitem__,
+        )
+        stratum_str = f"{case.question_type}|{highest}|{ltype}"
+        selected_strata_counts[stratum_str] = selected_strata_counts.get(stratum_str, 0) + 1
+        digest, _ = _rank_key(selection_seed, case.case_id)
+
+        case_diagnostics.append({
+            "case_id": case.case_id,
+            "document_key": doc_ident,
+            "legal_type": ltype,
+            "verified_document_representation_before": doc_counts.get(doc_ident, 0),
+            "verified_legal_type_representation_before": legal_type_counts.get(ltype, 0),
+            "selection_stratum": stratum_str,
+            "tie_break_digest": digest,
+            "selection_policy": "underrepresented_document_then_legal_type_then_sha256",
+        })
+
+        for evidence in unverified_required:
             if evidence.case_id != case_id or not evidence.evidence_item_id:
                 raise ValueError(f"invalid evidence identity for case '{case_id}'")
             reference_answer_sha256 = _require_sha256(
@@ -534,16 +598,22 @@ def build_queue_payload(
                 ).model_dump(mode="json")
             )
 
-    eligible_strata = _eligible_strata(cases, sidecar.labels_by_case_id)
-    selected_set = set(selected_case_ids)
-    selected_strata = {
-        f"{question_type}|{required_level}": sum(
-            case.case_id in selected_set for case in stratum_cases
-        )
-        for (question_type, required_level), stratum_cases in sorted(eligible_strata.items())
-        if any(case.case_id in selected_set for case in stratum_cases)
+
+    shortfall = max(0, target_case_count - len(selected_case_ids))
+    queue_status = (
+        "BLOCKED_INSUFFICIENT_ELIGIBLE_CASES"
+        if shortfall > 0
+        else "READY_FOR_REVIEW"
+    )
+    diagnostics: dict[str, Any] = {
+        "eligible_case_count": len(cases),
+        "selected_strata": selected_strata_counts,
+        "selection_policy": "underrepresented_document_then_legal_type_then_sha256",
+        "case_diagnostics": case_diagnostics,
     }
-    selected_case_count = len(selected_case_ids)
+    if shortfall > 0:
+        diagnostics["shortfall"] = shortfall
+
     return {
         "schema_version": "1.0.0",
         "dataset_sha256": dataset_sha256,
@@ -556,18 +626,10 @@ def build_queue_payload(
         "candidate_limit": candidate_limit,
         "selection_seed": selection_seed,
         "target_case_count": target_case_count,
-        "selected_case_count": selected_case_count,
+        "selected_case_count": len(selected_case_ids),
         "provider_calls": 0,
-        "queue_status": (
-            "READY_FOR_REVIEW"
-            if (selected_case_count == target_case_count and (target_case_count == 20 or 30 <= target_case_count <= 50))
-            else "BLOCKED_INSUFFICIENT_ELIGIBLE_CASES"
-        ),
-        "selection_diagnostics": {
-            "eligible_case_count": sum(len(items) for items in eligible_strata.values()),
-            "selected_strata": selected_strata,
-            "shortfall": max(target_case_count - selected_case_count, 0),
-        },
+        "queue_status": queue_status,
+        "selection_diagnostics": diagnostics,
         "selected_case_ids": list(selected_case_ids),
         "rows": rows,
     }
@@ -580,6 +642,7 @@ def format_queue_human_preview(queue_payload: Mapping[str, Any]) -> str:
     status = queue_payload.get("queue_status", "UNKNOWN")
     diagnostics = queue_payload.get("selection_diagnostics", {})
     selected_strata = diagnostics.get("selected_strata", {})
+    selection_policy = diagnostics.get("selection_policy", "underrepresented_document_then_legal_type_then_sha256")
     rows = queue_payload.get("rows", [])
 
     legal_types: dict[str, int] = {}
@@ -597,7 +660,7 @@ def format_queue_human_preview(queue_payload: Mapping[str, Any]) -> str:
             doc_num = units.get("document_number")
             if doc_num:
                 doc_numbers.add(doc_num)
-            ltype = infer_deterministic_legal_type(document_number=doc_num, text=row.get("question", ""))
+            ltype = infer_conservative_legal_type(document_number=doc_num, text=row.get("question", ""))
             legal_types[ltype] = legal_types.get(ltype, 0) + 1
 
     lines = [
@@ -616,6 +679,7 @@ def format_queue_human_preview(queue_payload: Mapping[str, Any]) -> str:
         f"- **Selected Case Count**: {selected_count}",
         f"- **Provider Calls**: {queue_payload.get('provider_calls', 0)} (Deterministic local discovery only)",
         "- **Adjudication State**: `PENDING_HUMAN` (All queued evidence items are unverified)",
+        f"- **Selection Policy**: `{selection_policy}`",
         "",
         "## Diversity Breakdown",
         f"- **Distinct Legal Types**: {', '.join(f'{k}: {v}' for k, v in sorted(legal_types.items())) if legal_types else 'None'}",
@@ -637,7 +701,7 @@ def format_queue_human_preview(queue_payload: Mapping[str, Any]) -> str:
         req_lvl = first_row.get("required_level", "")
         units = first_row.get("parsed_citation_units", {})
         doc_num = units.get("document_number") or "unspecified"
-        ltype = infer_deterministic_legal_type(document_number=units.get("document_number"), text=q_text)
+        ltype = infer_conservative_legal_type(document_number=units.get("document_number"), text=q_text)
         cand_count = sum(len(r.get("candidates", [])) for r in c_rows)
         lines.extend([
             f"### {idx}. Case `{cid}` — `{q_type}` ({req_lvl})",
@@ -645,7 +709,6 @@ def format_queue_human_preview(queue_payload: Mapping[str, Any]) -> str:
             f"- **Legal Type**: {ltype} | **Document**: {doc_num}",
             "- **Status**: `PENDING_HUMAN` (Unverified)",
             f"- **Evidence Items**: {len(c_rows)} | **Candidates Discovered**: {cand_count}",
-            "",
         ])
 
     return "\n".join(lines)

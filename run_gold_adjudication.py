@@ -37,6 +37,8 @@ class RuntimeDependencies:
     GitProvenance: type
     get_settings: Callable[..., Any]
     format_queue_human_preview: Callable[..., str]
+    TASK2_SELECTION_SEED: str
+    TASK2_BATCH_SIZE: int
 
 
 def repository_root() -> Path:
@@ -47,6 +49,8 @@ def _runtime_dependencies() -> RuntimeDependencies:
     """Import evaluation and local-corpus code only after command validation."""
     from app.config import get_settings
     from app.evaluation.adjudication import (
+        TASK2_BATCH_SIZE,
+        TASK2_SELECTION_SEED,
         build_decision_template,
         build_promotion_preview,
         build_promotion_summary,
@@ -87,6 +91,8 @@ def _runtime_dependencies() -> RuntimeDependencies:
         GitProvenance=GitProvenance,
         get_settings=get_settings,
         format_queue_human_preview=format_queue_human_preview,
+        TASK2_SELECTION_SEED=TASK2_SELECTION_SEED,
+        TASK2_BATCH_SIZE=TASK2_BATCH_SIZE,
     )
 
 
@@ -105,7 +111,7 @@ def build_parser() -> argparse.ArgumentParser:
     common(queue, root / "docs/evaluation/adjudication/queues")
     queue.add_argument("--content-store", type=Path, default=root / "data/huggingface/content_store.sqlite3")
     queue.add_argument("--fts", type=Path, default=root / "data/huggingface/legal_fts.sqlite3")
-    queue.add_argument("--target-cases", type=int, default=40)
+    queue.add_argument("--target-cases", type=int, default=20, choices=[20], help="target cases for review queue (must be exactly 20 for Task 2)")
     queue.add_argument("--candidate-limit", type=int, default=12)
     queue.add_argument("--write-preview", action="store_true", default=False)
 
@@ -234,11 +240,16 @@ def _cmd_queue(args: argparse.Namespace) -> int:
     _require_file(args.content_store, "content store")
     _require_file(args.fts, "FTS")
     dependencies = _runtime_dependencies()
+    if args.target_cases != dependencies.TASK2_BATCH_SIZE:
+        raise ValueError(f"target_cases must be exactly {dependencies.TASK2_BATCH_SIZE} for Task 2 queue generation")
     cases, sidecar, _, dataset_sha256, _ = _load_sources(args, dependencies)
     if args.candidate_limit <= 0:
         raise ValueError("candidate_limit must be positive")
     selected_case_ids = dependencies.select_stratified_case_ids(
-        cases, sidecar.labels_by_case_id, target_cases=args.target_cases
+        cases,
+        sidecar.labels_by_case_id,
+        target_cases=args.target_cases,
+        seed=dependencies.TASK2_SELECTION_SEED,
     )
     settings = dependencies.get_settings()
     store = dependencies.ContentStore(Path(args.content_store))
@@ -269,7 +280,7 @@ def _cmd_queue(args: argparse.Namespace) -> int:
         provenance=provenance,
         command=["run_gold_adjudication.py", "queue"],
         candidate_limit=args.candidate_limit,
-        selection_seed="vietlex-p1-v1",
+        selection_seed=dependencies.TASK2_SELECTION_SEED,
         target_case_count=args.target_cases,
     )
     queue_sha256 = dependencies.artifact_sha256(queue_payload)
