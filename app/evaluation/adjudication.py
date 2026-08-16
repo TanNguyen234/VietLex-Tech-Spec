@@ -227,6 +227,49 @@ def _reference_context(case: GoldenCase, evidence: GoldEvidence) -> str:
     return case.reference_contexts[index]
 
 
+def compute_verified_diversity_counts(
+    cases: Sequence[GoldenCase],
+    labels_by_case_id: Mapping[str, Sequence[GoldEvidence]],
+) -> tuple[dict[str, int], dict[str, int]]:
+    """Compute representation counts (doc_counts, legal_type_counts) for verified evidence.
+
+    Uses deterministic text evidence from case question, answer, and reference context
+    for conservative legal type inference.
+    """
+    case_by_id = {case.case_id: case for case in cases}
+    doc_counts: dict[str, int] = {}
+    legal_type_counts: dict[str, int] = {}
+
+    for case_id, labels in labels_by_case_id.items():
+        case = case_by_id.get(case_id)
+        for label in labels:
+            if label.status == "verified" or label.status == EvidenceStatus.VERIFIED:
+                doc_num = label.document_number.strip() if label.document_number and label.document_number.strip() else None
+                if label.document_id is not None:
+                    key = str(label.document_id)
+                    doc_counts[key] = doc_counts.get(key, 0) + 1
+                if doc_num:
+                    doc_counts[doc_num] = doc_counts.get(doc_num, 0) + 1
+
+                ref_text = ""
+                if case and case.reference_contexts:
+                    try:
+                        ref_text = _reference_context(case, label)
+                    except ValueError:
+                        ref_text = ""
+
+                text_for_ltype = ""
+                if case:
+                    full_case_text = "\n".join([case.question, case.reference_answer, *case.reference_contexts])
+                    text_for_ltype = f"{case.question}\n{case.reference_answer}\n{ref_text}" if ref_text else full_case_text
+
+                lt = infer_conservative_legal_type(document_number=doc_num, text=text_for_ltype)
+                if lt != "unspecified":
+                    legal_type_counts[lt] = legal_type_counts.get(lt, 0) + 1
+
+    return doc_counts, legal_type_counts
+
+
 def resolve_case_diversity_identity(
     case: GoldenCase,
     unresolved_required: Sequence[GoldEvidence],
@@ -325,20 +368,7 @@ def select_stratified_case_ids(
         raise ValueError("case IDs must be unique")
 
     # Compute representation counts for verified items across the sidecar
-    doc_counts: dict[str, int] = {}
-    legal_type_counts: dict[str, int] = {}
-    for case_id, labels in labels_by_case_id.items():
-        for label in labels:
-            if label.status == "verified" or label.status == EvidenceStatus.VERIFIED:
-                if label.document_id is not None:
-                    key = str(label.document_id)
-                    doc_counts[key] = doc_counts.get(key, 0) + 1
-                if label.document_number and label.document_number.strip():
-                    key = label.document_number.strip()
-                    doc_counts[key] = doc_counts.get(key, 0) + 1
-                    lt = infer_conservative_legal_type(document_number=key)
-                    if lt != "unspecified":
-                        legal_type_counts[lt] = legal_type_counts.get(lt, 0) + 1
+    doc_counts, legal_type_counts = compute_verified_diversity_counts(cases, labels_by_case_id)
 
     strata: dict[tuple[str, str], list[tuple[tuple[int, int, str, str], GoldenCase]]] = {}
 
@@ -559,20 +589,7 @@ def build_queue_payload(
         raise ValueError("case IDs must be unique")
 
     # Compute baseline verified representation counts across sidecar
-    doc_counts: dict[str, int] = {}
-    legal_type_counts: dict[str, int] = {}
-    for case_id, labels in sidecar.labels_by_case_id.items():
-        for label in labels:
-            if label.status == "verified" or label.status == EvidenceStatus.VERIFIED:
-                if label.document_id is not None:
-                    key = str(label.document_id)
-                    doc_counts[key] = doc_counts.get(key, 0) + 1
-                if label.document_number and label.document_number.strip():
-                    key = label.document_number.strip()
-                    doc_counts[key] = doc_counts.get(key, 0) + 1
-                    lt = infer_conservative_legal_type(document_number=key)
-                    if lt != "unspecified":
-                        legal_type_counts[lt] = legal_type_counts.get(lt, 0) + 1
+    doc_counts, legal_type_counts = compute_verified_diversity_counts(cases, sidecar.labels_by_case_id)
 
     rows: list[dict[str, Any]] = []
     case_diagnostics: list[dict[str, Any]] = []

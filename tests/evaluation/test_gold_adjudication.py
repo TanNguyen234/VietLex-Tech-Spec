@@ -20,6 +20,7 @@ from app.evaluation.adjudication import (
     build_decision_template,
     build_queue_payload,
     canonical_sha256,
+    compute_verified_diversity_counts,
     resolve_case_diversity_identity,
     select_stratified_case_ids,
     validate_preview_approval,
@@ -2588,6 +2589,104 @@ def test_task2_diversity_aware_selection_prioritizes_underrepresented_legal_type
     assert len(selected_nd) == 0
 
 
+def test_task2_diversity_aware_selection_with_production_qh_verified_baseline():
+    """Production-like /QH verified baseline counts 'Luật' from context text, preferring 'Nghị định' candidates."""
+    cases = []
+    labels_by_case = {}
+
+    # 1. 20 VERIFIED cases for 72/2020/QH14 with text mentioning 'Luật'
+    for i in range(20):
+        cid = f"base-qh72-{i:02d}"
+        c = _case(cid, "factoid")
+        c.reference_contexts = ["Luật Bảo vệ môi trường số 72/2020/QH14 quy định chi tiết."]
+        cases.append(c)
+        ev = GoldEvidence(
+            evidence_item_id=f"ev-{cid}",
+            case_id=cid,
+            document_id=431147,
+            document_number="72/2020/QH14",
+            required=True,
+            required_level="article",
+            status=EvidenceStatus.VERIFIED,
+        )
+        labels_by_case[cid] = [ev]
+
+    # Verify that compute_verified_diversity_counts correctly infers "Luật"
+    doc_counts, legal_type_counts = compute_verified_diversity_counts(cases, labels_by_case)
+    assert doc_counts["431147"] == 20
+    assert doc_counts["72/2020/QH14"] == 20
+    assert legal_type_counts["Luật"] == 20
+    assert "Nghị định" not in legal_type_counts
+
+    # 2. 20 UNRESOLVED candidate cases for novel doc 80/2020/QH14 ("Luật", doc_rep=0, ltype_rep=20)
+    for i in range(20):
+        cid = f"cand-luat80-{i:02d}"
+        c = _case(cid, "factoid")
+        c.reference_contexts = ["Luật Doanh nghiệp số 80/2020/QH14."]
+        cases.append(c)
+        ev = GoldEvidence(
+            evidence_item_id=f"ev-{cid}",
+            case_id=cid,
+            document_id=501,
+            document_number="80/2020/QH14",
+            required=True,
+            required_level="article",
+            status=EvidenceStatus.AMBIGUOUS,
+        )
+        labels_by_case[cid] = [ev]
+
+    # 3. 20 UNRESOLVED candidate cases for novel doc 80/2020/NĐ-CP ("Nghị định", doc_rep=0, ltype_rep=0)
+    for i in range(20):
+        cid = f"cand-nd80-{i:02d}"
+        c = _case(cid, "factoid")
+        c.reference_contexts = ["Nghị định số 80/2020/NĐ-CP quy định chi tiết."]
+        cases.append(c)
+        ev = GoldEvidence(
+            evidence_item_id=f"ev-{cid}",
+            case_id=cid,
+            document_id=601,
+            document_number="80/2020/NĐ-CP",
+            required=True,
+            required_level="article",
+            status=EvidenceStatus.AMBIGUOUS,
+        )
+        labels_by_case[cid] = [ev]
+
+    # Both groups have doc_rep=0; selector must prioritize ltype_rep=0 ("Nghị định") over ltype_rep=20 ("Luật")
+    selected = select_stratified_case_ids(cases, labels_by_case, target_cases=20, seed="diversity-qh-test")
+    assert len(selected) == 20
+
+    selected_nd = [cid for cid in selected if "cand-nd80" in cid]
+    selected_luat = [cid for cid in selected if "cand-luat80" in cid]
+    assert len(selected_nd) == 20
+    assert len(selected_luat) == 0
+
+
+def test_task2_conservative_legal_type_qh_without_text_stays_unspecified():
+    """Conservative legal type inference never assumes /QH is 'Luật' without text keyword evidence."""
+    from app.evaluation.adjudication import infer_conservative_legal_type
+
+    # /QH document number alone -> unspecified
+    assert infer_conservative_legal_type(document_number="72/2020/QH14") == "unspecified"
+    assert infer_conservative_legal_type(document_number="59/2020/QH14") == "unspecified"
+    assert infer_conservative_legal_type(document_number="12/2017/QH14") == "unspecified"
+
+    # /QH with non-legal text -> unspecified
+    assert infer_conservative_legal_type(
+        document_number="72/2020/QH14",
+        text="Văn bản này quy định về bảo vệ môi trường nước.",
+    ) == "unspecified"
+
+    # /QH with explicit 'Luật' keyword in text -> 'Luật'
+    assert infer_conservative_legal_type(
+        document_number="72/2020/QH14",
+        text="Căn cứ Luật Bảo vệ môi trường số 72/2020/QH14.",
+    ) == "Luật"
+
+    # /NĐ-CP suffix alone -> 'Nghị định'
+    assert infer_conservative_legal_type(document_number="10/2020/NĐ-CP") == "Nghị định"
+
+
 def test_task2_multi_hop_diversity_identity_order_invariant_and_ignores_verified_evidence():
     """Multi-hop diversity identity ignores already-verified evidence and is order-invariant [A,B] == [B,A]."""
     # Case with A = VERIFIED doc 101, B = AMBIGUOUS doc 201
@@ -2726,6 +2825,69 @@ def test_task2_multi_hop_diversity_identity_picks_underrepresented_unresolved_ev
     assert id_bc["document_key"] == "201"
     assert id_bc["verified_document_representation_before"] == 0
     assert id_bc["legal_type"] == "Nghị định"
+
+
+def test_task2_compute_verified_diversity_counts_consistent_between_selector_and_builder():
+    """Selector and builder diagnostics use identical verified diversity counts."""
+    cases = []
+    labels = []
+    labels_by_case = {}
+
+    v_c1 = _case("v-case-1", "factoid")
+    v_c1.reference_contexts = ["Luật Đất đai số 45/2013/QH13."]
+    v_ev1 = GoldEvidence(
+        evidence_item_id="v-ev-1", case_id=v_c1.case_id, document_id=1001,
+        document_number="45/2013/QH13", required=True, required_level="article",
+        status=EvidenceStatus.VERIFIED,
+    )
+    cases.append(v_c1)
+    labels.append(v_ev1)
+    labels_by_case[v_c1.case_id] = [v_ev1]
+
+    # 20 candidate cases with unverified labels
+    cand_cases = [_case(f"c-case-{i:02d}", "factoid") for i in range(20)]
+    for i, c in enumerate(cand_cases):
+        c.reference_contexts = [f"Nghị định số {500+i}/2020/NĐ-CP quy định."]
+        ev = GoldEvidence(
+            evidence_item_id=f"c-ev-{i:02d}", case_id=c.case_id, document_id=500 + i,
+            document_number=f"{500+i}/2020/NĐ-CP", required=True, required_level="article",
+            status=EvidenceStatus.AMBIGUOUS,
+        )
+        cases.append(c)
+        labels.append(ev)
+        labels_by_case[c.case_id] = [ev]
+
+    sidecar = GoldSidecar(
+        metadata=GoldSidecarMetadata(sidecar_sha256="a" * 64),
+        labels=labels,
+        labels_by_case_id=labels_by_case,
+    )
+
+    doc_counts, legal_type_counts = compute_verified_diversity_counts(cases, labels_by_case)
+    assert doc_counts["1001"] == 1
+    assert doc_counts["45/2013/QH13"] == 1
+    assert legal_type_counts["Luật"] == 1
+    assert "Nghị định" not in legal_type_counts
+
+    selected = select_stratified_case_ids(cases, labels_by_case, target_cases=20, seed="consistency-test")
+    assert len(selected) == 20
+
+    payload = build_queue_payload(
+        cases=cases,
+        sidecar=sidecar,
+        candidates_by_evidence_id={},
+        selected_case_ids=selected,
+        dataset_sha256="d" * 64,
+        corpus_revision="pinned",
+        provenance=_provenance(),
+        command=["python"],
+        candidate_limit=5,
+        target_case_count=20,
+    )
+
+    for diag in payload["selection_diagnostics"]["case_diagnostics"]:
+        assert diag["verified_document_representation_before"] == 0
+        assert diag["verified_legal_type_representation_before"] == 0
 
 
 def test_task2_eligible_case_count_computation():
