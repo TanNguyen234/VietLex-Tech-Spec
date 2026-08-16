@@ -186,6 +186,23 @@ def infer_conservative_legal_type(
 infer_deterministic_legal_type = infer_conservative_legal_type
 
 
+def is_case_eligible_for_adjudication(
+    case: GoldenCase,
+    labels: Sequence[GoldEvidence] | None,
+) -> bool:
+    """Return True if a case is answerable, has labels, and has at least one unresolved required evidence."""
+    if not case.answerable or not labels:
+        return False
+    required = [label for label in labels if label.required]
+    if not required:
+        return False
+    unverified_required = [
+        label for label in required
+        if label.status != "verified" and label.status != EvidenceStatus.VERIFIED
+    ]
+    return len(unverified_required) > 0
+
+
 def select_stratified_case_ids(
     cases: Sequence[GoldenCase],
     labels_by_case_id: Mapping[str, Sequence[GoldEvidence]],
@@ -220,29 +237,24 @@ def select_stratified_case_ids(
                     if lt != "unspecified":
                         legal_type_counts[lt] = legal_type_counts.get(lt, 0) + 1
 
-    strata: dict[tuple[str, str, str], list[tuple[tuple[int, int, str, str], GoldenCase]]] = {}
+    strata: dict[tuple[str, str], list[tuple[tuple[int, int, str, str], GoldenCase]]] = {}
 
     for case in cases:
         labels = labels_by_case_id.get(case.case_id)
-        if not labels or not case.answerable:
+        if not is_case_eligible_for_adjudication(case, labels):
             continue
-        if any(label.case_id != case.case_id or not label.evidence_item_id for label in labels):
+        if any(label.case_id != case.case_id or not label.evidence_item_id for label in (labels or ())):
             raise ValueError(f"invalid evidence identity for case '{case.case_id}'")
-        required = [label for label in labels if label.required]
-        if not required:
-            continue
+        required = [label for label in labels if label.required]  # type: ignore[union-attr]
         unverified_required = [
             label for label in required
             if label.status != "verified" and label.status != EvidenceStatus.VERIFIED
         ]
-        # If all required evidence is already verified, case is already verified gold -> never select
-        if not unverified_required:
-            continue
 
         # Extract document identifier & legal type
         doc_id = None
         doc_num = None
-        for label in labels:
+        for label in labels:  # type: ignore[union-attr]
             if label.document_id is not None:
                 doc_id = str(label.document_id)
             if label.document_number and label.document_number.strip():
@@ -267,12 +279,12 @@ def select_stratified_case_ids(
         doc_rep = doc_counts.get(doc_ident, 0)
         ltype_rep = legal_type_counts.get(ltype, 0)
 
-        stratum_key = (q_type, highest, ltype)
+        stratum_key = (q_type, highest)
         digest, cid = _rank_key(seed, case.case_id)
         sort_tuple = (doc_rep, ltype_rep, digest, cid)
         strata.setdefault(stratum_key, []).append((sort_tuple, case))
 
-    sorted_strata: dict[tuple[str, str, str], list[GoldenCase]] = {}
+    sorted_strata: dict[tuple[str, str], list[GoldenCase]] = {}
     for key in sorted(strata.keys()):
         items = strata[key]
         items.sort(key=lambda pair: pair[0])
@@ -465,12 +477,12 @@ def build_queue_payload(
     """
     if candidate_limit < 0:
         raise ValueError("candidate_limit must be non-negative")
-    if target_case_count < 1:
-        raise ValueError("target_case_count must be positive")
-    if len(selected_case_ids) != len(set(selected_case_ids)):
-        raise ValueError("selected_case_ids must be unique")
+    if target_case_count != TASK2_BATCH_SIZE:
+        raise ValueError(f"target_case_count must be exactly {TASK2_BATCH_SIZE} for task 2 queue generation")
     if len(selected_case_ids) > target_case_count:
         raise ValueError(f"selected_case_ids ({len(selected_case_ids)}) exceeds target_case_count ({target_case_count})")
+    if len(selected_case_ids) != len(set(selected_case_ids)):
+        raise ValueError("selected_case_ids must be unique")
     sidecar_sha256 = _require_sha256(sidecar.metadata.sidecar_sha256, "sidecar_sha256")
     case_by_id = {case.case_id: case for case in cases}
     if len(case_by_id) != len(cases):
@@ -533,7 +545,7 @@ def build_queue_payload(
             (label.required_level.value for label in unverified_required),
             key=_REQUIRED_LEVEL_ORDER.__getitem__,
         )
-        stratum_str = f"{case.question_type}|{highest}|{ltype}"
+        stratum_str = f"{case.question_type}|{highest}"
         selected_strata_counts[stratum_str] = selected_strata_counts.get(stratum_str, 0) + 1
         digest, _ = _rank_key(selection_seed, case.case_id)
 
@@ -598,15 +610,18 @@ def build_queue_payload(
                 ).model_dump(mode="json")
             )
 
-
     shortfall = max(0, target_case_count - len(selected_case_ids))
     queue_status = (
         "BLOCKED_INSUFFICIENT_ELIGIBLE_CASES"
         if shortfall > 0
         else "READY_FOR_REVIEW"
     )
+    eligible_count = sum(
+        1 for c in cases
+        if is_case_eligible_for_adjudication(c, sidecar.labels_by_case_id.get(c.case_id))
+    )
     diagnostics: dict[str, Any] = {
-        "eligible_case_count": len(cases),
+        "eligible_case_count": eligible_count,
         "selected_strata": selected_strata_counts,
         "selection_policy": "underrepresented_document_then_legal_type_then_sha256",
         "case_diagnostics": case_diagnostics,

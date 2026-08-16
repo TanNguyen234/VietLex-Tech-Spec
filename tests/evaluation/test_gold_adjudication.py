@@ -532,13 +532,23 @@ def _case(case_id: str, question_type: str) -> GoldenCase:
     )
 
 
-def _label(case_id: str) -> GoldEvidence:
-    return GoldEvidence(
-        evidence_item_id=f"evidence-{case_id}",
-        case_id=case_id,
-        required=True,
-        status=EvidenceStatus.AMBIGUOUS,
-    )
+def _label(
+    case_id: str,
+    *,
+    status: EvidenceStatus = EvidenceStatus.AMBIGUOUS,
+    required: bool = True,
+    required_level: str = "article",
+    **updates,
+) -> GoldEvidence:
+    payload = {
+        "evidence_item_id": f"evidence-{case_id}",
+        "case_id": case_id,
+        "required": required,
+        "required_level": required_level,
+        "status": status,
+    }
+    payload.update(updates)
+    return GoldEvidence(**payload)
 
 
 def test_stratified_selection_is_deterministic_and_covers_factoid_and_multihop():
@@ -681,7 +691,7 @@ def test_queue_payload_is_pending_only_and_preserves_hashes_citations_and_candid
 
 
 def test_queue_metadata_blocks_insufficient_selection_with_compound_diagnostics():
-    # Break caught: an undersized queue is labeled ready or hides its deterministic shortfall.
+    # Break caught: an undersized queue is labeled blocked with deterministic shortfall.
     case = _case("blocked-case", "factoid")
     evidence = _label(case.case_id)
     sidecar = GoldSidecar(
@@ -690,7 +700,19 @@ def test_queue_metadata_blocks_insufficient_selection_with_compound_diagnostics(
         labels_by_case_id={case.case_id: [evidence]},
     )
 
-    payload = _queue(case, sidecar, _provenance())
+    payload = build_queue_payload(
+        cases=[case],
+        sidecar=sidecar,
+        candidates_by_evidence_id={},
+        selected_case_ids=[case.case_id],
+        dataset_sha256="d" * 64,
+        corpus_revision="pinned-revision",
+        provenance=_provenance(),
+        command=["python"],
+        candidate_limit=5,
+        selection_seed="vietlex-p2-v1",
+        target_case_count=20,
+    )
 
     assert payload["target_case_count"] == 20
     assert payload["selected_case_count"] == 1
@@ -1002,10 +1024,17 @@ def _queue(
     candidates_by_evidence_id: dict[str, list[AdjudicationCandidate]] | None = None,
 ) -> dict:
     return build_queue_payload(
-        cases=[case], sidecar=sidecar, candidates_by_evidence_id=candidates_by_evidence_id or {},
-        selected_case_ids=[case.case_id], dataset_sha256="d" * 64,
-        corpus_revision="pinned-revision", provenance=provenance,
-        command=["python"], candidate_limit=5, selection_seed="p1-v1",
+        cases=[case],
+        sidecar=sidecar,
+        candidates_by_evidence_id=candidates_by_evidence_id or {},
+        selected_case_ids=[case.case_id],
+        dataset_sha256="d" * 64,
+        corpus_revision="pinned-revision",
+        provenance=provenance,
+        command=["python"],
+        candidate_limit=5,
+        selection_seed="vietlex-p2-v1",
+        target_case_count=20,
     )
 
 
@@ -2017,7 +2046,7 @@ def test_task2_target_cases_invariant_rejects_non_20():
         labels=[_label(c.case_id) for c in cases[:20]],
         labels_by_case_id={c.case_id: [_label(c.case_id)] for c in cases[:20]},
     )
-    with pytest.raises(ValueError, match="exceeds target_case_count"):
+    with pytest.raises(ValueError, match="target_case_count must be exactly 20"):
         build_queue_payload(
             cases=cases[:20],
             sidecar=sidecar,
@@ -2030,6 +2059,20 @@ def test_task2_target_cases_invariant_rejects_non_20():
             candidate_limit=5,
             selection_seed="seed",
             target_case_count=10,
+        )
+    with pytest.raises(ValueError, match="exceeds target_case_count"):
+        build_queue_payload(
+            cases=cases[:20],
+            sidecar=sidecar,
+            candidates_by_evidence_id={},
+            selected_case_ids=[c.case_id for c in cases[:20]] + ["extra-case"],
+            dataset_sha256="d" * 64,
+            corpus_revision="pinned",
+            provenance=_provenance(),
+            command=["python"],
+            candidate_limit=5,
+            selection_seed="seed",
+            target_case_count=20,
         )
 
 
@@ -2241,54 +2284,272 @@ def test_task2_selection_diagnostics_audit_trail():
 
 
 def test_task2_diversity_aware_selection_prioritizes_underrepresented_documents():
-    """F. Diversity-aware selection: prefers underrepresented documents over overrepresented documents."""
+    """F & 4. Diversity-aware selection: prefers underrepresented documents over overrepresented documents."""
     cases = []
     labels_by_case = {}
 
-    # Overrepresented doc 101 and 102 cases
-    for doc_id, prefix, count in [(101, "over101", 5), (102, "over102", 5)]:
-        for i in range(count):
-            cid = f"{prefix}-{i}"
-            c = _case(cid, "factoid")
-            cases.append(c)
-            ev = GoldEvidence(
-                evidence_item_id=f"ev-{cid}",
-                case_id=cid,
-                document_id=doc_id,
-                document_number=f"{doc_id}/2020/ND-CP",
-                required=True,
-                required_level="article",
-                status=EvidenceStatus.VERIFIED,  # already verified representation
-            )
-            labels_by_case[cid] = [ev]
+    # 1. Baseline verified cases in sidecar (20 cases for doc 101) -> doc_counts["101/2020/NĐ-CP"] = 20
+    for i in range(20):
+        cid = f"base-101-{i:02d}"
+        c = _case(cid, "factoid")
+        cases.append(c)
+        ev = GoldEvidence(
+            evidence_item_id=f"ev-{cid}",
+            case_id=cid,
+            document_id=101,
+            document_number="101/2020/NĐ-CP",
+            required=True,
+            required_level="article",
+            status=EvidenceStatus.VERIFIED,  # already verified baseline
+        )
+        labels_by_case[cid] = [ev]
 
-    # Underrepresented doc 201, 202, 203, 204 cases (unverified)
-    for doc_id, prefix, count in [(201, "under201", 5), (202, "under202", 5), (203, "under203", 5), (204, "under204", 5)]:
-        for i in range(count):
-            cid = f"{prefix}-{i}"
-            c = _case(cid, "factoid" if i % 2 == 0 else "multi-hop")
-            cases.append(c)
-            ev = GoldEvidence(
-                evidence_item_id=f"ev-{cid}",
-                case_id=cid,
-                document_id=doc_id,
-                document_number=f"{doc_id}/2020/NĐ-CP",
-                required=True,
-                required_level="article",
-                status=EvidenceStatus.NO_CITATION_EXTRACTED,  # unverified candidate
-            )
-            labels_by_case[cid] = [ev]
+    # 2. Candidate UNRESOLVED cases for overrepresented doc 101 (20 cases, doc_rep=20)
+    for i in range(20):
+        cid = f"cand-over101-{i:02d}"
+        c = _case(cid, "factoid")
+        cases.append(c)
+        ev = GoldEvidence(
+            evidence_item_id=f"ev-{cid}",
+            case_id=cid,
+            document_id=101,
+            document_number="101/2020/NĐ-CP",
+            required=True,
+            required_level="article",
+            status=EvidenceStatus.AMBIGUOUS,  # unverified candidate
+        )
+        labels_by_case[cid] = [ev]
 
-    # Select 20 cases
-    selected = select_stratified_case_ids(cases, labels_by_case, target_cases=20, seed="diversity-test")
+    # 3. Candidate UNRESOLVED cases for novel doc 201 (20 cases, doc_rep=0)
+    for i in range(20):
+        cid = f"cand-under201-{i:02d}"
+        c = _case(cid, "factoid")
+        cases.append(c)
+        ev = GoldEvidence(
+            evidence_item_id=f"ev-{cid}",
+            case_id=cid,
+            document_id=201,
+            document_number="201/2020/NĐ-CP",
+            required=True,
+            required_level="article",
+            status=EvidenceStatus.AMBIGUOUS,  # unverified candidate
+        )
+        labels_by_case[cid] = [ev]
+
+    # Run selection with target_cases=20
+    selected = select_stratified_case_ids(cases, labels_by_case, target_cases=20, seed="diversity-doc-test")
     assert len(selected) == 20
 
-    # All 20 cases from underrepresented docs (201, 202, 203, 204) must be selected
-    # before taking any from overrepresented docs (101, 102)!
-    overrepresented_selected = [cid for cid in selected if "over" in cid]
-    underrepresented_selected = [cid for cid in selected if "under" in cid]
-    assert len(underrepresented_selected) == 20
-    assert len(overrepresented_selected) == 0
+    # All 20 selected cases MUST be from novel doc 201 (doc_rep=0)
+    selected_under = [cid for cid in selected if "under201" in cid]
+    selected_over = [cid for cid in selected if "over101" in cid]
+    assert len(selected_under) == 20
+    assert len(selected_over) == 0
+
+
+def test_task2_diversity_aware_selection_prioritizes_underrepresented_legal_types():
+    """2 & 4. Diversity-aware selection: prefers underrepresented legal types when doc_rep is equal."""
+    cases = []
+    labels_by_case = {}
+
+    # 1. Baseline verified cases in sidecar (20 cases for Nghị định) -> legal_type_counts["Nghị định"] = 20, "Thông tư" = 0
+    for i in range(20):
+        cid = f"base-nd-{i:02d}"
+        c = _case(cid, "factoid")
+        cases.append(c)
+        ev = GoldEvidence(
+            evidence_item_id=f"ev-{cid}",
+            case_id=cid,
+            document_id=101,
+            document_number="101/2020/NĐ-CP",
+            required=True,
+            required_level="article",
+            status=EvidenceStatus.VERIFIED,  # already verified baseline
+        )
+        labels_by_case[cid] = [ev]
+
+    # 2. Candidate UNRESOLVED cases for novel doc 301 (Nghị định, doc_rep=0, ltype_rep=20)
+    for i in range(20):
+        cid = f"cand-nd301-{i:02d}"
+        c = _case(cid, "factoid")
+        cases.append(c)
+        ev = GoldEvidence(
+            evidence_item_id=f"ev-{cid}",
+            case_id=cid,
+            document_id=301,
+            document_number="301/2020/NĐ-CP",
+            required=True,
+            required_level="article",
+            status=EvidenceStatus.AMBIGUOUS,
+        )
+        labels_by_case[cid] = [ev]
+
+    # 3. Candidate UNRESOLVED cases for novel doc 401 (Thông tư, doc_rep=0, ltype_rep=0)
+    for i in range(20):
+        cid = f"cand-tt401-{i:02d}"
+        c = _case(cid, "factoid")
+        cases.append(c)
+        ev = GoldEvidence(
+            evidence_item_id=f"ev-{cid}",
+            case_id=cid,
+            document_id=401,
+            document_number="401/2020/TT-BXD",
+            required=True,
+            required_level="article",
+            status=EvidenceStatus.AMBIGUOUS,
+        )
+        labels_by_case[cid] = [ev]
+
+    # Both candidate groups have doc_rep=0; selector must prefer ltype_rep=0 ("Thông tư")
+    selected = select_stratified_case_ids(cases, labels_by_case, target_cases=20, seed="diversity-ltype-test")
+    assert len(selected) == 20
+
+    selected_tt = [cid for cid in selected if "tt401" in cid]
+    selected_nd = [cid for cid in selected if "nd301" in cid]
+    assert len(selected_tt) == 20
+    assert len(selected_nd) == 0
+
+
+def test_task2_eligible_case_count_computation():
+    """3. eligible_case_count accurately reflects only truly eligible cases."""
+    from app.evaluation.adjudication import is_case_eligible_for_adjudication
+
+    # 1: Fully verified case (2/2 required verified)
+    c1 = _case("case-fv-1", "factoid")
+    ev1 = _label(c1.case_id, status=EvidenceStatus.VERIFIED)
+    ev2 = _label(c1.case_id, status=EvidenceStatus.VERIFIED)
+
+    # 2: Fully verified case (1/1 required verified)
+    c2 = _case("case-fv-2", "multi-hop")
+    ev3 = _label(c2.case_id, status=EvidenceStatus.VERIFIED)
+
+    # 3: Unanswerable case
+    c3 = _case("case-unanswerable", "factoid")
+    c3.answerable = False
+    ev4 = _label(c3.case_id, status=EvidenceStatus.AMBIGUOUS)
+
+    # 4: Eligible case (1 required unresolved)
+    c4 = _case("case-eligible-1", "factoid")
+    ev5 = _label(c4.case_id, status=EvidenceStatus.AMBIGUOUS)
+
+    # 5: Eligible case (1 verified, 1 unresolved required)
+    c5 = _case("case-eligible-2", "multi-hop")
+    ev6 = _label(c5.case_id, status=EvidenceStatus.VERIFIED)
+    ev7 = _label(c5.case_id, status=EvidenceStatus.AMBIGUOUS)
+
+    five_cases = [c1, c2, c3, c4, c5]
+    labels_by_case = {
+        c1.case_id: [ev1, ev2],
+        c2.case_id: [ev3],
+        c3.case_id: [ev4],
+        c4.case_id: [ev5],
+        c5.case_id: [ev6, ev7],
+    }
+
+    # Test predicate directly
+    assert not is_case_eligible_for_adjudication(c1, labels_by_case[c1.case_id])
+    assert not is_case_eligible_for_adjudication(c2, labels_by_case[c2.case_id])
+    assert not is_case_eligible_for_adjudication(c3, labels_by_case[c3.case_id])
+    assert is_case_eligible_for_adjudication(c4, labels_by_case[c4.case_id])
+    assert is_case_eligible_for_adjudication(c5, labels_by_case[c5.case_id])
+
+    # 18 filler eligible cases + 5 cases = 23 total cases (20 eligible)
+    filler = [_case(f"filler-el-{i:02d}", "factoid") for i in range(18)]
+    all_23 = [*five_cases, *filler]
+    all_labels = {**labels_by_case}
+    for fc in filler:
+        all_labels[fc.case_id] = [_label(fc.case_id, status=EvidenceStatus.AMBIGUOUS)]
+
+    sidecar_23 = GoldSidecar(
+        metadata=GoldSidecarMetadata(sidecar_sha256="a" * 64),
+        labels=[ev for evs in all_labels.values() for ev in evs],
+        labels_by_case_id=all_labels,
+    )
+    eligible_20_ids = [c.case_id for c in all_23 if is_case_eligible_for_adjudication(c, all_labels.get(c.case_id))]
+    assert len(eligible_20_ids) == 20
+
+    payload = build_queue_payload(
+        cases=all_23,
+        sidecar=sidecar_23,
+        candidates_by_evidence_id={},
+        selected_case_ids=eligible_20_ids,
+        dataset_sha256="d" * 64,
+        corpus_revision="pinned",
+        provenance=_provenance(),
+        command=["python"],
+        candidate_limit=5,
+        target_case_count=20,
+    )
+    # Total cases passed = 23, but eligible_case_count accurately = 20
+    assert payload["selection_diagnostics"]["eligible_case_count"] == 20
+
+
+def test_task2_current_promoted_verified_checkpoint_integration():
+    """1. Task 2 binds to the frozen promoted verified-gold checkpoint."""
+    import run_gold_adjudication as cli
+    from app.evaluation.adjudication import is_case_eligible_for_adjudication
+
+    parser = cli.build_parser()
+    queue_parser = parser._subparsers._actions[1].choices["queue"]  # type: ignore[attr-defined]
+    default_dataset = queue_parser.get_default("dataset")
+    default_sidecar = queue_parser.get_default("sidecar")
+
+    assert default_dataset.exists()
+    assert default_sidecar.exists()
+    assert "curated_v1" in default_dataset.name
+    assert "labels_v2.json" in default_sidecar.name or "promotions" in str(default_sidecar)
+
+    # Load live sources
+    dependencies = cli._runtime_dependencies()
+    dataset_raw = json.loads(default_dataset.read_text(encoding="utf-8"))
+    assert len(dataset_raw) == 420
+
+    cases = dependencies.build_cases(dataset_raw, {})
+    assert len(cases) == 420
+    dataset_case_ids = [c.case_id for c in cases]
+
+    sidecar = dependencies.load_gold_sidecar(
+        default_sidecar,
+        dataset_case_ids=dataset_case_ids,
+    )
+    assert len(sidecar.labels) == 484
+
+    # Assert exact promoted counts
+    verified_labels = [
+        label for label in sidecar.labels
+        if label.status == "verified" or label.status == EvidenceStatus.VERIFIED
+    ]
+    assert len(verified_labels) == 53
+
+    cases = dependencies.build_cases(dataset_raw, sidecar.labels_by_case_id)
+    assert len(cases) == 420
+
+    # Check all-required-verified count
+    all_required_verified_cases = []
+    for c in cases:
+        c_labels = sidecar.labels_by_case_id.get(c.case_id, [])
+        required = [label for label in c_labels if label.required]
+        if required and all(label.status in ("verified", EvidenceStatus.VERIFIED) for label in required):
+            all_required_verified_cases.append(c.case_id)
+    assert len(all_required_verified_cases) == 40
+
+    # Check eligible cases for Task 2 expansion
+    eligible_cases = [
+        c for c in cases
+        if is_case_eligible_for_adjudication(c, sidecar.labels_by_case_id.get(c.case_id))
+    ]
+    assert len(eligible_cases) == 205
+
+    # Run selector on live promoted checkpoint
+    selected = select_stratified_case_ids(
+        cases,
+        sidecar.labels_by_case_id,
+        target_cases=20,
+        seed="vietlex-p2-v1",
+    )
+    assert len(selected) == 20
+    # None of the 40 already-verified cases should be selected
+    assert set(selected).isdisjoint(set(all_required_verified_cases))
 
 
 def test_task2_provider_free_strict_network_guard(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):

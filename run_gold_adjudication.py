@@ -102,8 +102,16 @@ def build_parser() -> argparse.ArgumentParser:
     commands = parser.add_subparsers(dest="command", required=True)
 
     def common(command: argparse.ArgumentParser, output_root: Path) -> None:
-        command.add_argument("--dataset", type=Path, default=root / "app/data/namsyntax_legal_qa_420.json")
-        command.add_argument("--sidecar", type=Path, default=root / "docs/evaluation/gold_labels/namsyntax_legal_qa_420_labels_v2.json")
+        command.add_argument(
+            "--dataset",
+            type=Path,
+            default=root / "app/data/namsyntax_legal_qa_420_curated_v1.json",
+        )
+        command.add_argument(
+            "--sidecar",
+            type=Path,
+            default=root / "docs/evaluation/adjudication/promotions/gold-adjudication-promotion-curated-v4_20260809_151015_227377/labels_v2.json",
+        )
         command.add_argument("--output-root", type=Path, default=output_root)
         command.add_argument("--run-id")
 
