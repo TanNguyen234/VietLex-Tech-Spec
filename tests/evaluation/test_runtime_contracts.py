@@ -262,7 +262,7 @@ async def test_rewrite_failure_falls_back_and_is_observable() -> None:
             return_value=retriever,
         ),
         patch(
-            "app.services.rag_pipeline.generate_llm_response",
+            "app.services.rag_pipeline.generate_llm_response_with_metadata",
             new=provider_call,
         ),
         patch(
@@ -276,7 +276,7 @@ async def test_rewrite_failure_falls_back_and_is_observable() -> None:
 
     assert result.query_used == case.question
     assert result.technical_errors == {
-        "rewrite": "QueryRewriteError: TimeoutError: rewrite timeout"
+        "rewrite": "QueryRewriteError: rewrite timeout"
     }
     provider_call.assert_awaited_once()
 

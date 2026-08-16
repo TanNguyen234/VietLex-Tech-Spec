@@ -10,11 +10,9 @@ import logfire
 from app.config import get_settings
 from app.services.direct_llm import (
     LLMGenerationResult,
-    generate_llm_response,
     generate_llm_response_with_metadata,
 )
 from app.services.retrieval import RetrievalOutcome, get_legal_retriever
-
 
 
 
@@ -233,38 +231,15 @@ async def rewrite_query_with_metadata(
         "Chỉ trả về truy vấn đã viết lại, không giải thích."
     )
     try:
-        if "generate_llm_response" in globals() and getattr(
-            generate_llm_response, "__module__", ""
-        ) != "app.services.direct_llm":
-            resp = await asyncio.wait_for(
-                generate_llm_response(
-                    prompt,
-                    max_output_tokens=(
-                        get_settings().QUERY_REWRITE_MAX_OUTPUT_TOKENS
-                    ),
+        llm_result = await asyncio.wait_for(
+            generate_llm_response_with_metadata(
+                prompt,
+                max_output_tokens=(
+                    get_settings().QUERY_REWRITE_MAX_OUTPUT_TOKENS
                 ),
-                timeout=get_settings().QUERY_REWRITE_TIMEOUT_SECONDS,
-            )
-            if isinstance(resp, LLMGenerationResult):
-                llm_result = resp
-            else:
-                llm_result = LLMGenerationResult(
-                    text=str(resp),
-                    observed_provider="mock",
-                    observed_model="mock",
-                    observed=True,
-                    status="success",
-                )
-        else:
-            llm_result = await asyncio.wait_for(
-                generate_llm_response_with_metadata(
-                    prompt,
-                    max_output_tokens=(
-                        get_settings().QUERY_REWRITE_MAX_OUTPUT_TOKENS
-                    ),
-                ),
-                timeout=get_settings().QUERY_REWRITE_TIMEOUT_SECONDS,
-            )
+            ),
+            timeout=get_settings().QUERY_REWRITE_TIMEOUT_SECONDS,
+        )
         rewritten = llm_result.text.strip()
         normalized_rewrite = rewritten.casefold()
         words = re.findall(r"[^\W_]+", rewritten.casefold(), re.UNICODE)
@@ -302,14 +277,13 @@ async def rewrite_query_with_metadata(
             error=str(error),
         )
         if raise_on_error:
-            raise QueryRewriteError(f"{type(error).__name__}: {error}") from error
+            raise QueryRewriteError(str(error)) from error
         return query, {
             "provider": "unobserved",
             "model": "unobserved",
             "observed": False,
             "error": str(error)[:100],
         }
-
 
 
 @logfire.instrument("Rewrite legal search query")
