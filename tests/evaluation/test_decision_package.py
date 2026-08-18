@@ -112,6 +112,7 @@ def _create_valid_production_benchmark(
     override_no_candidate: Optional[Dict[str, Any]] = None,
     override_retrieval_error: Optional[Dict[str, Any]] = None,
     override_reranker_error: Optional[Dict[str, Any]] = None,
+    omit_git_dirty: bool = False,
 ) -> Path:
     benchmark_dir = tmp_path / "benchmark_run"
     benchmark_dir.mkdir(parents=True, exist_ok=True)
@@ -172,6 +173,9 @@ def _create_valid_production_benchmark(
             "reranker_fallback": {"provider": "pinecone", "model": "bge-reranker-v2-m3"},
         },
     }
+    if omit_git_dirty and "git_dirty" in manifest_data:
+        del manifest_data["git_dirty"]
+
     (benchmark_dir / "manifest.json").write_text(
         json.dumps(manifest_data, ensure_ascii=False, indent=2), encoding="utf-8"
     )
@@ -1509,3 +1513,349 @@ def test_package_id_cannot_escape_output_directory(tmp_path: Path) -> None:
                 output_dir=out_dir,
                 package_id=bad_id,
             )
+
+
+# ==============================================================================
+# R. P2-F1 Exact Clean Benchmark Provenance Tests
+# ==============================================================================
+
+def test_missing_git_dirty_cannot_prove_clean_benchmark(tmp_path: Path) -> None:
+    dataset_file = _create_minimal_dataset(tmp_path)
+    sidecar_file = _create_minimal_sidecar(tmp_path)
+    out_dir = tmp_path / "out"
+
+    selected_ids = ["case_001", "case_002"]
+    selected_sha = hashlib.sha256(json.dumps(selected_ids, separators=(",", ":")).encode()).hexdigest()
+
+    benchmark_dir = _create_valid_production_benchmark(
+        tmp_path,
+        dataset_file,
+        sidecar_file,
+        selected_ids,
+        selected_sha,
+        git_sha="target_sha_123",
+        omit_git_dirty=True,
+        pass_all_thresholds=True,
+    )
+
+    pkg = build_decision_package(
+        dataset_path=dataset_file,
+        sidecar_path=sidecar_file,
+        production_benchmark_dir=benchmark_dir,
+        target_git_sha="target_sha_123",
+        output_dir=out_dir,
+    )
+    readiness = pkg.decision_dict["production_readiness"]
+    benchmark_gate = readiness["gates"]["production_benchmark_quality_gate"]
+
+    assert benchmark_gate["status"] == "INSUFFICIENT_EVIDENCE"
+    assert benchmark_gate["readiness_eligible"] is False
+    assert "benchmark_source_cleanliness_unproven" in readiness["blockers"]
+
+
+def test_null_git_dirty_cannot_prove_clean_benchmark(tmp_path: Path) -> None:
+    dataset_file = _create_minimal_dataset(tmp_path)
+    sidecar_file = _create_minimal_sidecar(tmp_path)
+    out_dir = tmp_path / "out"
+
+    selected_ids = ["case_001", "case_002"]
+    selected_sha = hashlib.sha256(json.dumps(selected_ids, separators=(",", ":")).encode()).hexdigest()
+
+    benchmark_dir = _create_valid_production_benchmark(
+        tmp_path,
+        dataset_file,
+        sidecar_file,
+        selected_ids,
+        selected_sha,
+        git_sha="target_sha_123",
+        git_dirty=None,
+        pass_all_thresholds=True,
+    )
+
+    pkg = build_decision_package(
+        dataset_path=dataset_file,
+        sidecar_path=sidecar_file,
+        production_benchmark_dir=benchmark_dir,
+        target_git_sha="target_sha_123",
+        output_dir=out_dir,
+    )
+    readiness = pkg.decision_dict["production_readiness"]
+    benchmark_gate = readiness["gates"]["production_benchmark_quality_gate"]
+
+    assert benchmark_gate["status"] == "INSUFFICIENT_EVIDENCE"
+    assert benchmark_gate["readiness_eligible"] is False
+    assert "benchmark_source_cleanliness_unproven" in readiness["blockers"]
+
+
+def test_non_boolean_git_dirty_cannot_prove_clean_benchmark(tmp_path: Path) -> None:
+    dataset_file = _create_minimal_dataset(tmp_path)
+    sidecar_file = _create_minimal_sidecar(tmp_path)
+    out_dir = tmp_path / "out"
+
+    selected_ids = ["case_001", "case_002"]
+    selected_sha = hashlib.sha256(json.dumps(selected_ids, separators=(",", ":")).encode()).hexdigest()
+
+    for idx, invalid_dirty in enumerate(["false", 0, "0", 1, [], {}]):
+        case_tmp = tmp_path / f"bench_invalid_{idx}"
+        case_tmp.mkdir(parents=True, exist_ok=True)
+        benchmark_dir = _create_valid_production_benchmark(
+            case_tmp,
+            dataset_file,
+            sidecar_file,
+            selected_ids,
+            selected_sha,
+            git_sha="target_sha_123",
+            git_dirty=invalid_dirty,
+            pass_all_thresholds=True,
+        )
+
+        pkg = build_decision_package(
+            dataset_path=dataset_file,
+            sidecar_path=sidecar_file,
+            production_benchmark_dir=benchmark_dir,
+            target_git_sha="target_sha_123",
+            output_dir=out_dir / f"out_{idx}",
+        )
+        readiness = pkg.decision_dict["production_readiness"]
+        benchmark_gate = readiness["gates"]["production_benchmark_quality_gate"]
+
+        assert benchmark_gate["status"] == "INSUFFICIENT_EVIDENCE"
+        assert benchmark_gate["readiness_eligible"] is False
+        assert "benchmark_source_cleanliness_unproven" in readiness["blockers"]
+
+
+def test_exact_false_git_dirty_is_accepted_for_cleanliness_check(tmp_path: Path) -> None:
+    dataset_file = _create_minimal_dataset(tmp_path)
+    sidecar_file = _create_minimal_sidecar(tmp_path)
+    out_dir = tmp_path / "out"
+
+    selected_ids = ["case_001", "case_002"]
+    selected_sha = hashlib.sha256(json.dumps(selected_ids, separators=(",", ":")).encode()).hexdigest()
+
+    benchmark_dir = _create_valid_production_benchmark(
+        tmp_path,
+        dataset_file,
+        sidecar_file,
+        selected_ids,
+        selected_sha,
+        git_sha="target_sha_123",
+        git_dirty=False,
+        pass_all_thresholds=True,
+    )
+
+    pkg = build_decision_package(
+        dataset_path=dataset_file,
+        sidecar_path=sidecar_file,
+        production_benchmark_dir=benchmark_dir,
+        target_git_sha="target_sha_123",
+        output_dir=out_dir,
+    )
+    readiness = pkg.decision_dict["production_readiness"]
+    benchmark_gate = readiness["gates"]["production_benchmark_quality_gate"]
+
+    assert "benchmark_source_cleanliness_unproven" not in readiness["blockers"]
+    assert "benchmark_source_dirty" not in readiness["blockers"]
+
+
+# ==============================================================================
+# S. P2-F2 Exact Production Script Basename Tests
+# ==============================================================================
+
+def test_python_module_form_cannot_classify_as_production_script(tmp_path: Path) -> None:
+    dataset_file = _create_minimal_dataset(tmp_path)
+    sidecar_file = _create_minimal_sidecar(tmp_path)
+    out_dir = tmp_path / "out"
+
+    selected_ids = ["case_001", "case_002"]
+    selected_sha = hashlib.sha256(json.dumps(selected_ids, separators=(",", ":")).encode()).hexdigest()
+
+    benchmark_dir = _create_valid_production_benchmark(
+        tmp_path,
+        dataset_file,
+        sidecar_file,
+        selected_ids,
+        selected_sha,
+        git_sha="target_sha_123",
+        command="python -m run_retrieval_eval --k 24",
+        pass_all_thresholds=True,
+    )
+
+    pkg = build_decision_package(
+        dataset_path=dataset_file,
+        sidecar_path=sidecar_file,
+        production_benchmark_dir=benchmark_dir,
+        target_git_sha="target_sha_123",
+        output_dir=out_dir,
+    )
+    readiness = pkg.decision_dict["production_readiness"]
+    benchmark_gate = readiness["gates"]["production_benchmark_quality_gate"]
+
+    assert benchmark_gate["status"] == "NON_PRODUCTION"
+    assert benchmark_gate["readiness_eligible"] is False
+    assert "non_standard_retrieval_entrypoint" in readiness["blockers"]
+
+
+def test_extensionless_retrieval_runner_cannot_classify_as_production_script(tmp_path: Path) -> None:
+    dataset_file = _create_minimal_dataset(tmp_path)
+    sidecar_file = _create_minimal_sidecar(tmp_path)
+    out_dir = tmp_path / "out"
+
+    selected_ids = ["case_001", "case_002"]
+    selected_sha = hashlib.sha256(json.dumps(selected_ids, separators=(",", ":")).encode()).hexdigest()
+
+    benchmark_dir = _create_valid_production_benchmark(
+        tmp_path,
+        dataset_file,
+        sidecar_file,
+        selected_ids,
+        selected_sha,
+        git_sha="target_sha_123",
+        command="python run_retrieval_eval --k 24",
+        pass_all_thresholds=True,
+    )
+
+    pkg = build_decision_package(
+        dataset_path=dataset_file,
+        sidecar_path=sidecar_file,
+        production_benchmark_dir=benchmark_dir,
+        target_git_sha="target_sha_123",
+        output_dir=out_dir,
+    )
+    readiness = pkg.decision_dict["production_readiness"]
+    benchmark_gate = readiness["gates"]["production_benchmark_quality_gate"]
+
+    assert benchmark_gate["status"] == "NON_PRODUCTION"
+    assert benchmark_gate["readiness_eligible"] is False
+    assert "non_standard_retrieval_entrypoint" in readiness["blockers"]
+
+
+def test_exact_run_retrieval_eval_py_remains_production_candidate(tmp_path: Path) -> None:
+    dataset_file = _create_minimal_dataset(tmp_path)
+    sidecar_file = _create_minimal_sidecar(tmp_path)
+    out_dir = tmp_path / "out"
+
+    selected_ids = ["case_001", "case_002"]
+    selected_sha = hashlib.sha256(json.dumps(selected_ids, separators=(",", ":")).encode()).hexdigest()
+
+    for idx, valid_cmd in enumerate([
+        "python run_retrieval_eval.py --k 24",
+        "python ./run_retrieval_eval.py --k 24",
+        "python scripts/evaluation/run_retrieval_eval.py --k 24",
+    ]):
+        case_tmp = tmp_path / f"bench_valid_{idx}"
+        case_tmp.mkdir(parents=True, exist_ok=True)
+        benchmark_dir = _create_valid_production_benchmark(
+            case_tmp,
+            dataset_file,
+            sidecar_file,
+            selected_ids,
+            selected_sha,
+            git_sha="target_sha_123",
+            command=valid_cmd,
+            pass_all_thresholds=True,
+        )
+
+        pkg = build_decision_package(
+            dataset_path=dataset_file,
+            sidecar_path=sidecar_file,
+            production_benchmark_dir=benchmark_dir,
+            target_git_sha="target_sha_123",
+            output_dir=out_dir / f"out_valid_{idx}",
+        )
+        readiness = pkg.decision_dict["production_readiness"]
+        benchmark_gate = readiness["gates"]["production_benchmark_quality_gate"]
+
+        assert "non_standard_retrieval_entrypoint" not in readiness["blockers"]
+        assert "non_production_benchmark_route" not in readiness["blockers"]
+
+
+# ==============================================================================
+# T. P2-F3 Explicit Zero-Denominator Fail Closed Tests
+# ==============================================================================
+
+def test_zero_denominator_metric_cannot_pass_quality_gate(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    dataset_file = _create_minimal_dataset(tmp_path)
+    sidecar_file = _create_minimal_sidecar(tmp_path)
+    out_dir = tmp_path / "out"
+
+    selected_ids = ["case_001", "case_002"]
+    selected_sha = hashlib.sha256(json.dumps(selected_ids, separators=(",", ":")).encode()).hexdigest()
+
+    benchmark_dir = _create_valid_production_benchmark(
+        tmp_path,
+        dataset_file,
+        sidecar_file,
+        selected_ids,
+        selected_sha,
+        git_sha="target_sha_123",
+        pass_all_thresholds=True,
+    )
+
+    from app.evaluation import decision_package
+    orig_aggregate = decision_package.aggregate_retrieval_metrics
+
+    def patched_aggregate(case_results):
+        res = orig_aggregate(case_results)
+        res["document_recall"]["24"] = {"micro": 0.0, "macro": 0.0, "denominator": 0}
+        return res
+
+    monkeypatch.setattr(decision_package, "aggregate_retrieval_metrics", patched_aggregate)
+
+    pkg = build_decision_package(
+        dataset_path=dataset_file,
+        sidecar_path=sidecar_file,
+        production_benchmark_dir=benchmark_dir,
+        target_git_sha="target_sha_123",
+        output_dir=out_dir,
+    )
+    readiness = pkg.decision_dict["production_readiness"]
+    benchmark_gate = readiness["gates"]["production_benchmark_quality_gate"]
+
+    assert benchmark_gate["status"] in ("FAIL", "UNSUPPORTED")
+    assert benchmark_gate["details"]["threshold_evaluations"]["document_recall_at_24"]["observed"] is None
+    assert benchmark_gate["details"]["threshold_evaluations"]["document_recall_at_24"]["status"] == "UNSUPPORTED"
+    assert benchmark_gate["readiness_eligible"] is False
+
+
+def test_non_finite_metric_cannot_pass_quality_gate(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    dataset_file = _create_minimal_dataset(tmp_path)
+    sidecar_file = _create_minimal_sidecar(tmp_path)
+    out_dir = tmp_path / "out"
+
+    selected_ids = ["case_001", "case_002"]
+    selected_sha = hashlib.sha256(json.dumps(selected_ids, separators=(",", ":")).encode()).hexdigest()
+
+    benchmark_dir = _create_valid_production_benchmark(
+        tmp_path,
+        dataset_file,
+        sidecar_file,
+        selected_ids,
+        selected_sha,
+        git_sha="target_sha_123",
+        pass_all_thresholds=True,
+    )
+
+    from app.evaluation import decision_package
+    orig_aggregate = decision_package.aggregate_retrieval_metrics
+
+    def patched_aggregate(case_results):
+        res = orig_aggregate(case_results)
+        res["document_recall"]["24"] = {"micro": float("nan"), "macro": float("nan"), "denominator": float("inf")}
+        return res
+
+    monkeypatch.setattr(decision_package, "aggregate_retrieval_metrics", patched_aggregate)
+
+    pkg = build_decision_package(
+        dataset_path=dataset_file,
+        sidecar_path=sidecar_file,
+        production_benchmark_dir=benchmark_dir,
+        target_git_sha="target_sha_123",
+        output_dir=out_dir,
+    )
+    readiness = pkg.decision_dict["production_readiness"]
+    benchmark_gate = readiness["gates"]["production_benchmark_quality_gate"]
+
+    assert benchmark_gate["status"] in ("FAIL", "UNSUPPORTED")
+    assert benchmark_gate["details"]["threshold_evaluations"]["document_recall_at_24"]["observed"] is None
+    assert benchmark_gate["details"]["threshold_evaluations"]["document_recall_at_24"]["status"] == "UNSUPPORTED"
+    assert benchmark_gate["readiness_eligible"] is False

@@ -274,7 +274,7 @@ def load_production_benchmark(
         if script_basename in NON_PRODUCTION_RUNNERS:
             ineligibility_reasons.append("non_production_benchmark_route")
             status = "NON_PRODUCTION"
-        elif script_basename != "run_retrieval_eval.py" and script_basename != "run_retrieval_eval":
+        elif script_basename != "run_retrieval_eval.py":
             ineligibility_reasons.append("non_standard_retrieval_entrypoint")
             status = "NON_PRODUCTION"
 
@@ -321,8 +321,13 @@ def load_production_benchmark(
         if status not in ("NON_PRODUCTION", "FAIL", "STALE_SOURCE"):
             status = "INSUFFICIENT_EVIDENCE"
 
-    if manifest_data.get("git_dirty") is True:
+    git_dirty_val = manifest_data.get("git_dirty")
+    if git_dirty_val is True:
         ineligibility_reasons.append("benchmark_source_dirty")
+        if status not in ("NON_PRODUCTION", "FAIL", "STALE_SOURCE"):
+            status = "INSUFFICIENT_EVIDENCE"
+    elif git_dirty_val is not False or not isinstance(git_dirty_val, bool):
+        ineligibility_reasons.append("benchmark_source_cleanliness_unproven")
         if status not in ("NON_PRODUCTION", "FAIL", "STALE_SOURCE"):
             status = "INSUFFICIENT_EVIDENCE"
 
@@ -425,7 +430,7 @@ def load_production_benchmark(
         op: Literal["gte", "lte", "eq"],
     ) -> None:
         nonlocal thresholds_passed
-        if metric_data is None:
+        if metric_data is None or not isinstance(metric_data, dict):
             thresholds[metric_name] = {
                 "required": required_val,
                 "observed": None,
@@ -438,17 +443,72 @@ def load_production_benchmark(
         val = metric_data.get("micro") if metric_data.get("micro") is not None else metric_data.get("macro")
         denom = metric_data.get("denominator")
 
-        if val is None or denom is None:
+        # Validate denominator: must be numeric, finite, and > 0
+        if denom is None or isinstance(denom, bool) or not isinstance(denom, (int, float)):
             thresholds[metric_name] = {
                 "required": required_val,
                 "observed": None,
                 "status": "UNSUPPORTED",
-                "reason": metric_data.get("reason") or "metric_unavailable",
+                "reason": metric_data.get("reason") or "invalid_or_missing_denominator",
             }
             thresholds_passed = False
             return
 
-        val_float = float(val)
+        try:
+            denom_float = float(denom)
+        except (ValueError, TypeError):
+            thresholds[metric_name] = {
+                "required": required_val,
+                "observed": None,
+                "status": "UNSUPPORTED",
+                "reason": metric_data.get("reason") or "invalid_denominator",
+            }
+            thresholds_passed = False
+            return
+
+        if not math.isfinite(denom_float) or denom_float <= 0:
+            thresholds[metric_name] = {
+                "required": required_val,
+                "observed": None,
+                "status": "UNSUPPORTED",
+                "reason": metric_data.get("reason") or "zero_or_non_finite_denominator",
+            }
+            thresholds_passed = False
+            return
+
+        # Validate observed value: must be numeric and finite
+        if val is None or isinstance(val, bool) or not isinstance(val, (int, float)):
+            thresholds[metric_name] = {
+                "required": required_val,
+                "observed": None,
+                "status": "UNSUPPORTED",
+                "reason": metric_data.get("reason") or "invalid_or_missing_observed_value",
+            }
+            thresholds_passed = False
+            return
+
+        try:
+            val_float = float(val)
+        except (ValueError, TypeError):
+            thresholds[metric_name] = {
+                "required": required_val,
+                "observed": None,
+                "status": "UNSUPPORTED",
+                "reason": metric_data.get("reason") or "invalid_observed_value",
+            }
+            thresholds_passed = False
+            return
+
+        if not math.isfinite(val_float):
+            thresholds[metric_name] = {
+                "required": required_val,
+                "observed": None,
+                "status": "UNSUPPORTED",
+                "reason": metric_data.get("reason") or "non_finite_observed_value",
+            }
+            thresholds_passed = False
+            return
+
         if op == "eq":
             passed = (val_float == required_val)
         elif op == "gte":
