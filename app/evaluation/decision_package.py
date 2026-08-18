@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 import hashlib
 import json
 import math
 import os
+import re
+import shlex
 from dataclasses import dataclass
-from pathlib import Path, PurePosixPath
+from pathlib import Path, PurePath, PurePosixPath
 from typing import Any, Dict, List, Literal, Optional, Tuple
 
 from pydantic import BaseModel, Field
@@ -43,6 +43,8 @@ NON_PRODUCTION_RUNNERS = (
     "run_structural_index_pilot.py",
 )
 
+PACKAGE_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+
 # Quality Floors for Production Retrieval Gate
 DOCUMENT_RECALL_FLOOR = 1.00
 ARTICLE_RECALL_FLOOR = 0.95
@@ -51,6 +53,46 @@ ALL_REQUIRED_COVERAGE_FLOOR = 0.95
 NO_CANDIDATE_RATE_CEILING = 0.00
 RETRIEVAL_ERROR_RATE_CEILING = 0.00
 RERANKER_ERROR_RATE_CEILING = 0.00
+
+
+def validate_package_id(package_id: str, output_dir: Path) -> Path:
+    if not isinstance(package_id, str) or not PACKAGE_ID_PATTERN.match(package_id):
+        raise ValueError(
+            f"Invalid package_id: '{package_id}'. Must match regex ^[A-Za-z0-9][A-Za-z0-9._-]{{0,127}}$ "
+            f"and not contain path separators or parent directory references."
+        )
+    resolved_out = Path(output_dir).resolve()
+    target_pkg_dir = (resolved_out / package_id).resolve()
+    if target_pkg_dir.parent != resolved_out:
+        raise ValueError(
+            f"Directory escape detected for package_id: '{package_id}'. "
+            f"Resolved directory {target_pkg_dir} parent must equal {resolved_out}."
+        )
+    return target_pkg_dir
+
+
+def _extract_script_target(command_str: str) -> Optional[str]:
+    if not command_str:
+        return None
+    try:
+        tokens = shlex.split(command_str, posix=False)
+    except Exception:
+        tokens = command_str.split()
+
+    clean_tokens = [t.strip("\"'") for t in tokens if t.strip("\"'")]
+    idx = 0
+    while idx < len(clean_tokens):
+        token = clean_tokens[idx]
+        token_name = PurePath(token.replace("\\", "/")).name.lower()
+        if token_name in ("python", "python.exe", "python3", "python3.exe", "py", "py.exe"):
+            idx += 1
+            while idx < len(clean_tokens) and clean_tokens[idx].startswith("-"):
+                if clean_tokens[idx] == "-m" and idx + 1 < len(clean_tokens):
+                    return clean_tokens[idx + 1]
+                idx += 1
+            continue
+        return token
+    return None
 
 
 def hash_file_sha256(path: Path | str) -> str:
@@ -222,15 +264,26 @@ def load_production_benchmark(
     judge_mode = manifest_data.get("judge_mode")
     gold_policy = manifest_data.get("gold_policy")
 
-    # 1. Non-production runner check
-    for non_prod in NON_PRODUCTION_RUNNERS:
-        if non_prod in command:
-            ineligibility_reasons.append("non_production_benchmark_route")
-            status = "NON_PRODUCTION"
-
-    if "run_retrieval_eval.py" not in command and status != "NON_PRODUCTION":
+    # 1. Non-production runner check via token parsing
+    script_target = _extract_script_target(command)
+    if script_target is None:
         ineligibility_reasons.append("non_standard_retrieval_entrypoint")
         status = "NON_PRODUCTION"
+    else:
+        script_basename = PurePath(script_target.replace("\\", "/")).name
+        if script_basename in NON_PRODUCTION_RUNNERS:
+            ineligibility_reasons.append("non_production_benchmark_route")
+            status = "NON_PRODUCTION"
+        elif script_basename != "run_retrieval_eval.py" and script_basename != "run_retrieval_eval":
+            ineligibility_reasons.append("non_standard_retrieval_entrypoint")
+            status = "NON_PRODUCTION"
+
+    if status != "NON_PRODUCTION":
+        for non_prod in NON_PRODUCTION_RUNNERS:
+            if non_prod in command:
+                ineligibility_reasons.append("non_production_benchmark_route")
+                status = "NON_PRODUCTION"
+                break
 
     if eval_mode != "retrieval-only":
         ineligibility_reasons.append("invalid_eval_mode")
@@ -263,13 +316,8 @@ def load_production_benchmark(
         if status not in ("NON_PRODUCTION", "FAIL"):
             status = "STALE_SOURCE"
 
-    bench_case_sha = manifest_data.get("selected_case_ids_sha256")
-    bench_case_count = manifest_data.get("selected_case_count")
-    if (
-        bench_case_sha != target_selected_case_ids_sha
-        or bench_case_count != len(target_selected_case_ids)
-    ):
-        ineligibility_reasons.append("benchmark_case_set_mismatch")
+    if manifest_data.get("provenance_status") != "ok":
+        ineligibility_reasons.append("benchmark_provenance_unavailable")
         if status not in ("NON_PRODUCTION", "FAIL", "STALE_SOURCE"):
             status = "INSUFFICIENT_EVIDENCE"
 
@@ -278,7 +326,79 @@ def load_production_benchmark(
         if status not in ("NON_PRODUCTION", "FAIL", "STALE_SOURCE"):
             status = "INSUFFICIENT_EVIDENCE"
 
-    # 3. Deterministic Metric Recomputation
+    # 3. Exact Case Set Integrity Validation (F1)
+    manifest_selected = manifest_data.get("selected_case_ids")
+    manifest_case_sha = manifest_data.get("selected_case_ids_sha256")
+    manifest_case_count = manifest_data.get("selected_case_count")
+
+    case_set_valid = True
+
+    if manifest_selected is None or not isinstance(manifest_selected, list):
+        ineligibility_reasons.append("benchmark_manifest_case_set_mismatch")
+        if status not in ("NON_PRODUCTION", "FAIL", "STALE_SOURCE"):
+            status = "INSUFFICIENT_EVIDENCE"
+        case_set_valid = False
+    else:
+        if len(manifest_selected) != len(set(manifest_selected)):
+            ineligibility_reasons.append("benchmark_manifest_case_set_mismatch")
+            if status not in ("NON_PRODUCTION", "FAIL", "STALE_SOURCE"):
+                status = "INSUFFICIENT_EVIDENCE"
+            case_set_valid = False
+
+        recomputed_manifest_sha = hashlib.sha256(
+            json.dumps(manifest_selected, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+
+        if recomputed_manifest_sha != manifest_case_sha:
+            ineligibility_reasons.append("benchmark_manifest_case_set_hash_invalid")
+            if status not in ("NON_PRODUCTION", "FAIL", "STALE_SOURCE"):
+                status = "INSUFFICIENT_EVIDENCE"
+            case_set_valid = False
+
+        if manifest_selected != target_selected_case_ids or manifest_case_count != len(target_selected_case_ids):
+            ineligibility_reasons.append("benchmark_manifest_case_set_mismatch")
+            if status not in ("NON_PRODUCTION", "FAIL", "STALE_SOURCE"):
+                status = "INSUFFICIENT_EVIDENCE"
+            case_set_valid = False
+
+    if not isinstance(case_results_data, list):
+        ineligibility_reasons.append("benchmark_results_case_set_mismatch")
+        if status not in ("NON_PRODUCTION", "FAIL", "STALE_SOURCE"):
+            status = "INSUFFICIENT_EVIDENCE"
+        case_set_valid = False
+    else:
+        result_case_ids = [r.get("case_id") for r in case_results_data if isinstance(r, dict)]
+        if len(result_case_ids) != len(set(result_case_ids)):
+            ineligibility_reasons.append("benchmark_results_duplicate_case_ids")
+            if status not in ("NON_PRODUCTION", "FAIL", "STALE_SOURCE"):
+                status = "INSUFFICIENT_EVIDENCE"
+            case_set_valid = False
+
+        expected_ids = (
+            manifest_selected
+            if (manifest_selected is not None and isinstance(manifest_selected, list))
+            else target_selected_case_ids
+        )
+        if result_case_ids != expected_ids:
+            ineligibility_reasons.append("benchmark_results_case_set_mismatch")
+            if status not in ("NON_PRODUCTION", "FAIL", "STALE_SOURCE"):
+                status = "INSUFFICIENT_EVIDENCE"
+            case_set_valid = False
+
+    if not case_set_valid:
+        return {
+            "status": status,
+            "readiness_eligible": False,
+            "ineligibility_reasons": ineligibility_reasons,
+            "benchmark_dir": str(bench_path),
+            "manifest_sha256": manifest_sha,
+            "results_sha256": results_sha,
+            "manifest": manifest_data,
+            "metrics": None,
+            "threshold_evaluations": {},
+        }
+
+    # 4. Deterministic Metric Recomputation
     try:
         recomputed_metrics = aggregate_retrieval_metrics(case_results_data)
     except Exception as err:
@@ -294,158 +414,95 @@ def load_production_benchmark(
             "threshold_evaluations": {},
         }
 
-    # 4. Threshold evaluations
+    # 5. Threshold evaluations (F2 & F3 fail-closed)
     thresholds: Dict[str, Dict[str, Any]] = {}
     thresholds_passed = True
 
+    def _eval_threshold(
+        metric_name: str,
+        metric_data: Optional[Dict[str, Any]],
+        required_val: float,
+        op: Literal["gte", "lte", "eq"],
+    ) -> None:
+        nonlocal thresholds_passed
+        if metric_data is None:
+            thresholds[metric_name] = {
+                "required": required_val,
+                "observed": None,
+                "status": "UNSUPPORTED",
+                "reason": "metric_unavailable",
+            }
+            thresholds_passed = False
+            return
+
+        val = metric_data.get("micro") if metric_data.get("micro") is not None else metric_data.get("macro")
+        denom = metric_data.get("denominator")
+
+        if val is None or denom is None:
+            thresholds[metric_name] = {
+                "required": required_val,
+                "observed": None,
+                "status": "UNSUPPORTED",
+                "reason": metric_data.get("reason") or "metric_unavailable",
+            }
+            thresholds_passed = False
+            return
+
+        val_float = float(val)
+        if op == "eq":
+            passed = (val_float == required_val)
+        elif op == "gte":
+            passed = (val_float >= required_val)
+        else:
+            passed = (val_float <= required_val)
+
+        thresholds[metric_name] = {
+            "required": required_val,
+            "observed": val_float,
+            "status": "PASS" if passed else "FAIL",
+        }
+        if not passed:
+            thresholds_passed = False
+
     # Document Recall @ 24
-    doc_rec_24 = recomputed_metrics.get("document_recall", {}).get(24) or recomputed_metrics.get("document_recall", {}).get("24")
-    if doc_rec_24 is None:
-        thresholds["document_recall_at_24"] = {
-            "required": 1.00,
-            "observed": None,
-            "status": "UNSUPPORTED",
-            "reason": "metric_unavailable",
-        }
-        thresholds_passed = False
-    else:
-        obs_val = doc_rec_24.get("micro") if doc_rec_24.get("micro") is not None else doc_rec_24.get("macro")
-        if obs_val is None:
-            thresholds["document_recall_at_24"] = {
-                "required": 1.00,
-                "observed": None,
-                "status": "UNSUPPORTED",
-                "reason": doc_rec_24.get("reason") or "metric_unavailable",
-            }
-            thresholds_passed = False
-        else:
-            obs_float = float(obs_val)
-            p = (obs_float == DOCUMENT_RECALL_FLOOR)
-            thresholds["document_recall_at_24"] = {
-                "required": 1.00,
-                "observed": obs_float,
-                "status": "PASS" if p else "FAIL",
-            }
-            if not p:
-                thresholds_passed = False
+    doc_rec_dict = recomputed_metrics.get("document_recall", {})
+    doc_rec_24 = doc_rec_dict.get(24) if 24 in doc_rec_dict else doc_rec_dict.get("24")
+    _eval_threshold("document_recall_at_24", doc_rec_24, DOCUMENT_RECALL_FLOOR, "eq")
 
-    # Article Recall @ 24 or highest k
+    # Article Recall @ 24 (STRICT @ 24, never @ 6)
     art_rec_dict = recomputed_metrics.get("article_recall", {})
-    art_k = 24 if (24 in art_rec_dict or "24" in art_rec_dict) else (6 if (6 in art_rec_dict or "6" in art_rec_dict) else (max([int(k) for k in art_rec_dict.keys()]) if art_rec_dict else 24))
-    art_metric = art_rec_dict.get(art_k) or art_rec_dict.get(str(art_k))
-    if art_metric is None:
-        thresholds["article_recall"] = {
-            "required": 0.95,
-            "observed": None,
-            "status": "UNSUPPORTED",
-            "reason": "metric_unavailable",
-        }
-        thresholds_passed = False
-    else:
-        obs_val = art_metric.get("micro") if art_metric.get("micro") is not None else art_metric.get("macro")
-        if obs_val is None and art_metric.get("denominator", 0) > 0:
-            thresholds["article_recall"] = {
-                "required": 0.95,
-                "observed": None,
-                "status": "UNSUPPORTED",
-                "reason": art_metric.get("reason") or "metric_unavailable",
-            }
-            thresholds_passed = False
-        else:
-            obs_float = float(obs_val) if obs_val is not None else 1.0
-            p = (obs_float >= ARTICLE_RECALL_FLOOR)
-            thresholds["article_recall"] = {
-                "required": 0.95,
-                "observed": obs_float,
-                "status": "PASS" if p else "FAIL",
-            }
-            if not p:
-                thresholds_passed = False
+    art_rec_24 = art_rec_dict.get(24) if 24 in art_rec_dict else art_rec_dict.get("24")
+    _eval_threshold("article_recall_at_24", art_rec_24, ARTICLE_RECALL_FLOOR, "gte")
 
-    # Clause Recall @ 24 or highest k
+    # Clause Recall @ 24 (STRICT @ 24, never @ 6)
     cl_rec_dict = recomputed_metrics.get("clause_recall", {})
-    cl_k = 24 if (24 in cl_rec_dict or "24" in cl_rec_dict) else (6 if (6 in cl_rec_dict or "6" in cl_rec_dict) else (max([int(k) for k in cl_rec_dict.keys()]) if cl_rec_dict else 24))
-    cl_metric = cl_rec_dict.get(cl_k) or cl_rec_dict.get(str(cl_k))
-    if cl_metric is None:
-        thresholds["clause_recall"] = {
-            "required": 0.90,
-            "observed": None,
-            "status": "UNSUPPORTED",
-            "reason": "metric_unavailable",
-        }
-        thresholds_passed = False
-    else:
-        obs_val = cl_metric.get("micro") if cl_metric.get("micro") is not None else cl_metric.get("macro")
-        if obs_val is None and cl_metric.get("denominator", 0) > 0:
-            thresholds["clause_recall"] = {
-                "required": 0.90,
-                "observed": None,
-                "status": "UNSUPPORTED",
-                "reason": cl_metric.get("reason") or "metric_unavailable",
-            }
-            thresholds_passed = False
-        else:
-            obs_float = float(obs_val) if obs_val is not None else 1.0
-            p = (obs_float >= CLAUSE_RECALL_FLOOR)
-            thresholds["clause_recall"] = {
-                "required": 0.90,
-                "observed": obs_float,
-                "status": "PASS" if p else "FAIL",
-            }
-            if not p:
-                thresholds_passed = False
+    cl_rec_24 = cl_rec_dict.get(24) if 24 in cl_rec_dict else cl_rec_dict.get("24")
+    _eval_threshold("clause_recall_at_24", cl_rec_24, CLAUSE_RECALL_FLOOR, "gte")
 
     # Multi-hop all required coverage
-    all_req_metric = recomputed_metrics.get("multi_hop_all_required", {})
-    obs_val = all_req_metric.get("micro") if all_req_metric.get("micro") is not None else all_req_metric.get("macro")
-    if obs_val is None and all_req_metric.get("denominator", 0) > 0:
-        thresholds["multi_hop_all_required"] = {
-            "required": 0.95,
-            "observed": None,
-            "status": "UNSUPPORTED",
-        }
-        thresholds_passed = False
-    else:
-        obs_float = float(obs_val) if obs_val is not None else 1.0
-        p = (obs_float >= ALL_REQUIRED_COVERAGE_FLOOR)
-        thresholds["multi_hop_all_required"] = {
-            "required": 0.95,
-            "observed": obs_float,
-            "status": "PASS" if p else "FAIL",
-        }
-        if not p:
-            thresholds_passed = False
+    all_req = recomputed_metrics.get("multi_hop_all_required")
+    _eval_threshold("multi_hop_all_required", all_req, ALL_REQUIRED_COVERAGE_FLOOR, "gte")
 
     # Operational rates in benchmark
-    no_cand = recomputed_metrics.get("no_candidate_rate", {})
-    ret_err = recomputed_metrics.get("retrieval_technical_error_rate", {})
-    rer_err = recomputed_metrics.get("reranker_technical_error_rate", {})
+    no_cand = recomputed_metrics.get("no_candidate_rate")
+    _eval_threshold("no_candidate_rate", no_cand, NO_CANDIDATE_RATE_CEILING, "eq")
 
-    nc_val = float(no_cand.get("micro", 0.0) if no_cand.get("micro") is not None else 0.0)
-    re_val = float(ret_err.get("micro", 0.0) if ret_err.get("micro") is not None else 0.0)
-    re_rer_val = float(rer_err.get("micro", 0.0) if rer_err.get("micro") is not None else 0.0)
+    ret_err = recomputed_metrics.get("retrieval_technical_error_rate")
+    _eval_threshold("retrieval_technical_error_rate", ret_err, RETRIEVAL_ERROR_RATE_CEILING, "eq")
 
-    thresholds["no_candidate_rate"] = {
-        "required": 0.00,
-        "observed": nc_val,
-        "status": "PASS" if nc_val == NO_CANDIDATE_RATE_CEILING else "FAIL",
-    }
-    thresholds["retrieval_technical_error_rate"] = {
-        "required": 0.00,
-        "observed": re_val,
-        "status": "PASS" if re_val == RETRIEVAL_ERROR_RATE_CEILING else "FAIL",
-    }
-    thresholds["reranker_technical_error_rate"] = {
-        "required": 0.00,
-        "observed": re_rer_val,
-        "status": "PASS" if re_rer_val == RERANKER_ERROR_RATE_CEILING else "FAIL",
-    }
+    rer_err = recomputed_metrics.get("reranker_technical_error_rate")
+    _eval_threshold("reranker_technical_error_rate", rer_err, RERANKER_ERROR_RATE_CEILING, "eq")
 
-    if nc_val != 0.0 or re_val != 0.0 or re_rer_val != 0.0:
-        thresholds_passed = False
+    has_unsupported = any(t.get("status") == "UNSUPPORTED" for t in thresholds.values())
+    has_fail = any(t.get("status") == "FAIL" for t in thresholds.values())
 
-    if not thresholds_passed:
+    if has_unsupported:
         if status not in ("NON_PRODUCTION", "STALE_SOURCE", "INSUFFICIENT_EVIDENCE"):
+            status = "UNSUPPORTED"
+        ineligibility_reasons.append("unsupported_or_missing_benchmark_metrics")
+
+    if has_fail:
+        if status not in ("NON_PRODUCTION", "STALE_SOURCE", "INSUFFICIENT_EVIDENCE", "UNSUPPORTED"):
             status = "FAIL"
         ineligibility_reasons.append("retrieval_quality_thresholds_failed")
 
@@ -999,6 +1056,8 @@ class DecisionPackageBuilder:
         self.output_dir = Path(output_dir).resolve()
         self.production_benchmark_dir = Path(production_benchmark_dir).resolve() if production_benchmark_dir else None
         self.online_snapshot_path = Path(online_snapshot_path).resolve() if online_snapshot_path else None
+        if package_id is not None:
+            validate_package_id(package_id, self.output_dir)
         self.package_id = package_id
         self.target_git_sha = target_git_sha
         self.gold_policy = gold_policy
@@ -1057,9 +1116,10 @@ class DecisionPackageBuilder:
             user_feedback,
         )
 
-        # 6. Package Identity
+        # 6. Package Identity & Directory Resolution
         if self.package_id:
             pkg_id = self.package_id
+            pkg_dir = validate_package_id(pkg_id, self.output_dir)
         else:
             seed_data = {
                 "dataset_sha256": dataset_sha,
@@ -1073,6 +1133,7 @@ class DecisionPackageBuilder:
             seed_bytes = canonical_json_bytes(seed_data)
             seed_hash = hashlib.sha256(seed_bytes).hexdigest()[:16]
             pkg_id = f"pkg_{seed_hash}"
+            pkg_dir = validate_package_id(pkg_id, self.output_dir)
 
         # 7. Assemble Document
         decision_doc: Dict[str, Any] = {
@@ -1106,7 +1167,6 @@ class DecisionPackageBuilder:
         }
 
         # 8. Write immutable artifacts
-        pkg_dir = self.output_dir / pkg_id
         pkg_dir.mkdir(parents=True, exist_ok=True)
 
         decision_file = pkg_dir / "decision.json"
