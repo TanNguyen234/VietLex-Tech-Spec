@@ -23,6 +23,14 @@ The current priority is to establish a verified, measurable, reproducible, and d
 - Stage-level candidate survival must be tracked continuously across all 8 retrieval pipeline stages.
 - Benchmark runs from uncommitted git trees must be recorded with `git_dirty=true` and a git diff SHA-256 hash.
 
+## Google Cloud model layer (Phase G0)
+
+- Production answer generation uses Google Cloud Vertex AI through ADC with `gemini-3.5-flash` as primary. Typed Vertex failures may use the existing OpenRouter, Gemini Direct API, NVIDIA, and Groq models as secondary providers; runtime metadata must preserve the actual provider/model and primary error kind.
+- NeMo input/output guardrails use the same Vertex-primary adapter; legacy direct APIs remain secondary models. OmniGate is retained for evaluator use, not as the guardrail primary.
+- Query rewriting is OFF by default and remains an explicit evaluation experiment.
+- `gemini-embedding-2` is integrated only for isolated 384/768/1024 probes. Production dense retrieval remains E5-small 384d.
+- Online `/chat` never runs Ragas. Optional offline Ragas uses Vertex AI `gemini-3.5-flash` through ADC as its primary judge; legacy APIs remain best-effort fallbacks.
+
 ## Opt-in Qdrant structural pilot
 
 - A guarded v2 pilot is code-prepared for the 827 primary-legislation documents in the pinned 518,255-document corpus. Its immutable structural contract contains 134,334 article/clause records at 420/48 chunking.

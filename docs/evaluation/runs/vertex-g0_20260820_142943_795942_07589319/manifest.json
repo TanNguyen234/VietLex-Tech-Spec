@@ -1,0 +1,33 @@
+{
+  "command": "python run_vertex_g0_probe.py",
+  "configuration_fingerprint": "07589319ae266af66a521542db7b8930d325f679147ad06d06ba5c63e4a25c9b",
+  "created_at_utc": "2026-08-20T14:29:45.596923+00:00",
+  "dataset_revision": "4d4e10b201544e8a4c49a1d3fa496595a7d486d0",
+  "git": {
+    "error": null,
+    "git_diff_reason": null,
+    "git_diff_sha256": "70df3406f747081c69416cdd2d464aad2e9a4c635a6ba23326b7169b9c8595b6",
+    "git_diff_status": "ok",
+    "git_dirty": true,
+    "git_sha": "1a922af6774b3500ca59e74621bc60106dcbb98d",
+    "git_staged_dirty": false,
+    "git_tracked_dirty": true,
+    "git_untracked_dirty": true,
+    "repository_root": "D:\\Download\\ProfessionalLegalRAG",
+    "source_state_sha256": "2647e0f7afef2d405e7ff67dfabca5b1b4a762ff14f61416f647f8fd2c0e19c3",
+    "status": "ok"
+  },
+  "phase": "G0",
+  "provider": "google_vertex_ai",
+  "provider_models": [
+    "gemini-3.5-flash",
+    "gemini-embedding-2"
+  ],
+  "remote_effects": {
+    "embedding_requests": 13,
+    "generation_requests": 1,
+    "vector_database_writes": 0
+  },
+  "run_id": "vertex-g0_20260820_142943_795942_07589319",
+  "status": "pass"
+}

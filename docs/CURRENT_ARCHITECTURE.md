@@ -19,10 +19,11 @@ Local SQLite Content Store (Compressed Zstandard Full Text)
 ## Runtime Pipeline Stages
 
 1. **User Query**: Original query used for sparse and exact reference search.
-2. **Query Rewrite**: Optional short query rewriting using LLM.
+2. **Query Rewrite**: Default OFF; an explicit evaluation run may opt in to a short LLM rewrite. The original query always remains sufficient for production retrieval.
 3. **Hybrid Search & Document Resolution**:
    - Pinecone hybrid search (up to `RETRIEVAL_DOCUMENT_LIMIT`).
    - SQLite FTS lookup (up to `LEGAL_FTS_RESULT_LIMIT`).
+   - A remote dense failure with usable FTS evidence is `partial_retrieval_error`, not a silent success: answer/retrieval scoring continues and the technical-error counter increments.
    - Merged & balanced document selection (up to `RESOLVED_DOCUMENT_LIMIT`).
 4. **Local Structural Chunking & Selection**:
    - Documents resolved from local content store.
@@ -36,7 +37,19 @@ Local SQLite Content Store (Compressed Zstandard Full Text)
 7. **Final Context Selection**:
    - Top reranked evidence chunks (up to `FINAL_EVIDENCE_LIMIT` within `LLM_CONTEXT_MAX_TOKENS`).
 8. **Answer Generation**:
-   - Remote LLM call via OmniGate / provider chain.
+   - Primary: Google Cloud Vertex AI through ADC, `gemini-3.5-flash`.
+   - On a typed Vertex technical failure, secondary providers are attempted in order: OpenRouter, Gemini Direct API, NVIDIA NIM, and Groq, followed by the existing secondary-model pass.
+   - Current secondary model IDs remain pinned by `app/evaluation/provider_catalog.py`: OpenRouter `meta-llama/llama-3.3-70b-instruct`; Gemini API `gemini-2.0-flash` then `gemini-1.5-flash`; NVIDIA `meta/llama-3.3-70b-instruct`; Groq `llama-3.3-70b-versatile` then `llama3-8b-8192`.
+   - Runtime evidence records the actual provider/model, `fallback_used`, and the Vertex `primary_error_kind`. NeMo guardrails use the same Vertex-primary adapter and legacy direct-API fallbacks. OmniGate remains evaluator infrastructure rather than an answer or guardrail primary.
+
+## Phase G0 Google Cloud model boundary
+
+- `app/services/vertex_ai.py` owns ADC discovery, reusable `google-genai` client creation, timeouts/retries, error mapping, generation, and embedding calls.
+- `gemini-embedding-2` is probe-only at 384/768/1024 dimensions. It is never used to query the existing E5 Pinecone index.
+- `run_vertex_g0_probe.py` performs isolated live checks and writes immutable artifacts without credential material or vector writes.
+- Ragas is never enqueued by `/chat`; opt-in offline audits use Vertex AI `gemini-3.5-flash` through ADC as the primary judge and retain legacy APIs as best-effort fallbacks.
+- The input-rail prompt explicitly permits lawful legal questions about public authorities, policy, office, and jurisdiction; ambiguous inputs default to allow while clear jailbreak/off-topic/harm requests remain blocked.
+- Pinecone `vietlex-legal-rag-v1`, Qdrant staging, SQLite FTS, the content store, and production retrieval topology remain unchanged in G0.
 
 ## Verification & Provenance
 

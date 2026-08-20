@@ -57,9 +57,10 @@ flowchart LR
     Vector --> Pinecone["Pinecone serverless"]
     Sparse --> Pinecone
 
-    Query["Original query"] --> Rewrite["Short legal rewrite"]
+    Query["Original query"] --> QueryEmbed["Dense query via Qdrant staging"]
+    Query -. "explicit evaluation only" .-> Rewrite["Optional short legal rewrite"]
     Query --> FTS["SQLite FTS5 + exact document number"]
-    Rewrite --> QueryEmbed["Dense query via Qdrant staging"]
+    Rewrite -.-> QueryEmbed
     Query --> SparseQuery["Exact sparse query"]
     QueryEmbed --> Hybrid["Single Pinecone dense+sparse query"]
     SparseQuery --> Hybrid
@@ -70,7 +71,7 @@ flowchart LR
     Chunk --> Bound["Max 12 candidates; ≤2/document"]
     Bound --> Rerank["Qdrant ColBERT; Pinecone BGE fallback"]
     Rerank --> Budget["Top 3; context ≤720 tokens"]
-    Budget --> Answer["Grounded answer ≤640 output tokens"]
+    Budget --> Answer["Vertex AI gemini-3.5-flash via ADC"]
 ```
 
 ## Setup
@@ -88,7 +89,21 @@ Required secrets:
 
 - `PIPECONE_API` or `PINECONE_API_KEY`
 - `QDRANT_URL`, `QDRANT_API_KEY` (embedding + ColBERT cloud inference)
-- `OMNIGATE_BASE_URL`, `LITELLM_MASTER_KEY` (answer model gateway)
+- `GOOGLE_APPLICATION_CREDENTIALS` (path only, pointing to a Git-ignored local JSON key)
+- `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION=global`
+- `VERTEX_LLM_MODEL=gemini-3.5-flash`, `VERTEX_EMBEDDING_MODEL=gemini-embedding-2`
+- Optional secondary APIs: `OPENROUTER_API_KEY`, `GEMINI_API_KEY`, `NVIDIA_API_KEY`, `GROQ_API_KEY`
+
+Production generation and the guardrail LLM use Vertex AI `gemini-3.5-flash`
+as primary. A typed Vertex failure may fall back to OpenRouter, the Gemini Direct API, NVIDIA, and
+Groq; runtime metadata records the actual provider/model and primary failure.
+Query rewriting is off by default. `gemini-embedding-2` is probe-only at
+384/768/1024 dimensions and never queries or mutates the production E5 index.
+Ragas is an offline audit only and is never run by `/chat`. Its primary judge is Vertex AI `gemini-3.5-flash` through ADC; legacy APIs and OmniGate are best-effort fallbacks.
+When the dense lane fails but FTS remains usable, retrieval reports
+`partial_retrieval_error`: lexical evidence is still scored while the provider
+failure is counted in the technical-error rate. Lawful questions about public
+authorities, policy, and legal powers are explicitly allowed by the input rail.
 
 ## Ingestion
 

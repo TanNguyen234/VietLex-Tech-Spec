@@ -33,7 +33,8 @@ Original query
    |
    +--> sparse encoding -------------------------+
    |                                             |
-   +--> optional short rewrite --> Qdrant E5 ----+--> Pinecone hybrid top 24
+   +--> original query (default) -> Qdrant E5 ---+--> Pinecone hybrid top 24
+   |    optional evaluation rewrite only         |
                                                   |
 FTS IDs ------------------------------------------+
                                                   v
@@ -55,12 +56,27 @@ FTS IDs ------------------------------------------+
                                     top 3, context <= 720 tokens
                                                   |
                                                   v
-                                          answer generation
+                                Vertex AI answer generation
+                                  gemini-3.5-flash via ADC
+                                                  |
+                                   typed technical failure only
+                                                  v
+                   OpenRouter -> Gemini Direct API -> NVIDIA -> Groq
+                              secondary answer models
 ```
+
+`gemini-embedding-2` is isolated behind the Vertex provider for G0 probes at
+384/768/1024 dimensions. It cannot feed the production E5 index, and the probe
+has no Pinecone/Qdrant write dependency. Vertex generation failures are typed
+and may activate the existing direct-API models as secondary answer providers.
+The observed provider/model and primary failure kind remain in runtime metadata.
+NeMo guardrails use the same Vertex-primary adapter and legacy direct-API fallbacks.
+OmniGate remains an evaluator dependency, not an answer or guardrail primary.
 
 ## Current implementation cautions
 
 - `RETRIEVAL_DOCUMENT_LIMIT` and `RERANK_CANDIDATE_LIMIT` represent different concepts and must not be conflated.
+- Dense-provider failure plus usable FTS evidence is observable as `partial_retrieval_error`; it remains quality-scoreable but counts as a retrieval technical error.
 - Only a limited number of chunks currently survive per document before reranking.
 - FTS is not article-body FTS.
 - Current sparse encoding is not full BM25 with corpus-level IDF.
@@ -72,16 +88,17 @@ FTS IDs ------------------------------------------+
 
 ```text
 Stage A: online execution
-query -> retrieval -> optional generation -> persist raw result -> release online semaphore
+query -> retrieval -> Vertex generation -> persist raw result -> release online semaphore
 
 Stage B: deterministic offline evaluation
 persisted result -> retrieval metrics -> answer metrics -> latency metrics -> report
 
-Stage C: optional judge audit
-sampled persisted result -> optional Ragas/LLM judge -> separate audit artifact
+Stage C: optional offline judge audit
+sampled persisted result -> optional Ragas/Vertex judge -> separate audit artifact
 ```
 
-Default evaluation performs zero judge LLM calls.
+`/chat` performs zero Ragas calls. Default evaluation also performs zero judge
+LLM calls.
 
 ## Sources of truth
 

@@ -55,6 +55,8 @@ VietLex là hệ thống Retrieval-Augmented Generation (RAG) phục vụ tra c�
 | `eval:answer` | `python -u run_answer_eval.py --profile separated_intent --verified-only --judge none --guardrails off` | Đánh giá câu trả lời, không dùng LLM judge |
 | `test` | `python -m pytest -q` | Chạy test suite |
 | `test:live-rerank` | `$env:RUN_LIVE_RERANK_TEST='1'`<br>`python -m pytest tests/integration/test_remote_reranker_live.py -q`<br>`Remove-Item Env:RUN_LIVE_RERANK_TEST` | Smoke live reranker |
+| `test:live-vertex` | `$env:RUN_VERTEX_LIVE_TESTS='1'`<br>`python -m pytest --run-live tests/integration/test_vertex_ai_live.py -q`<br>`Remove-Item Env:RUN_VERTEX_LIVE_TESTS` | Một generation + một embedding live qua Vertex AI |
+| `probe:vertex-g0` | `python run_vertex_g0_probe.py` | Probe cô lập `gemini-embedding-2` 384/768/1024; không ghi vector DB |
 | `check` | `python -m compileall -q app tests`<br>`git diff --check` | Kiểm tra compile + whitespace diff |
 
 ---
@@ -98,9 +100,10 @@ flowchart LR
     Vector --> Pinecone["Pinecone serverless"]
     Sparse --> Pinecone
 
-    Query["Original query"] --> Rewrite["Short legal rewrite"]
+    Query["Original query"] --> QueryEmbed["Dense query via Qdrant staging"]
+    Query -. "explicit evaluation only" .-> Rewrite["Optional short legal rewrite"]
     Query --> FTS["SQLite FTS5 + exact document number"]
-    Rewrite --> QueryEmbed["Dense query via Qdrant staging"]
+    Rewrite -.-> QueryEmbed
     Query --> SparseQuery["Exact sparse query"]
     QueryEmbed --> Hybrid["Một Pinecone dense+sparse query"]
     SparseQuery --> Hybrid
@@ -111,7 +114,7 @@ flowchart LR
     Chunk --> Bound["Tối đa 12 candidates; ≤2/document"]
     Bound --> Rerank["Qdrant ColBERT; Pinecone BGE fallback"]
     Rerank --> Budget["Top 3; context ≤720 tokens"]
-    Budget --> Answer["Grounded answer ≤640 output tokens"]
+    Budget --> Answer["Vertex AI gemini-3.5-flash via ADC"]
 ```
 
 ### Chi tiết Lưu trữ & Inference Engine
@@ -141,7 +144,10 @@ Các biến môi trường bắt buộc cấu hình trong tệp `.env`:
 
 * `PIPECONE_API` hoặc `PINECONE_API_KEY`: API Key kết nối Pinecone Serverless.
 * `QDRANT_URL`, `QDRANT_API_KEY`: Thông tin kết nối Qdrant Cloud Inference (cho Embedding & ColBERT).
-* `OMNIGATE_BASE_URL`, `LITELLM_MASTER_KEY`: Thông tin API Gateway kết nối model sinh câu trả lời (Answer Model).
+* `GOOGLE_APPLICATION_CREDENTIALS`: Đường dẫn tới JSON key local đã nằm trong `.secrets/` và được Git ignore; không chép nội dung JSON vào `.env`.
+* `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION=global`: Project/location cho Vertex AI.
+* `VERTEX_LLM_MODEL=gemini-3.5-flash`, `VERTEX_EMBEDDING_MODEL=gemini-embedding-2`: generation production và embedding probe-only.
+* Tùy chọn fallback: `OPENROUTER_API_KEY`, `GEMINI_API_KEY`, `NVIDIA_API_KEY`, `GROQ_API_KEY`. Các API này chỉ chạy khi Vertex primary gặp lỗi kỹ thuật.
 
 > [!NOTE]
 > Tên `PIPECONE_API` được hỗ trợ để tương thích với cấu hình secret hiện có, mặc dù tên chuẩn của Pinecone là `PINECONE_API_KEY`. Tuyệt đối không hardcode hoặc ghi secret vào log/checkpoint.
@@ -193,12 +199,16 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
   * Fallback Reranker: Pinecone `bge-reranker-v2-m3` (chỉ kích hoạt khi Qdrant bị timeout, trả về lỗi 429/5xx, hoặc khi circuit breaker đang mở).
   * Nếu cả hai provider đều gặp lỗi, hệ thống sẽ ghi nhận lỗi `reranker_error` thay vì báo câu từ chối "không có dữ liệu".
 * **Hybrid Retrieval & Fallback:** Ghi nhận timing riêng biệt cho Qdrant embedding và Pinecone query. Query Pinecone được thử lại tối đa 2 lượt với timeout 8 giây/lượt; nếu truy vấn hybrid remote vẫn thất bại nhưng FTS local có kết quả, request sẽ tự động chuyển sang chế độ `lexical_fallback` để phục vụ người dùng thay vì gây lỗi toàn pipeline.
+  Luồng này mang status `partial_retrieval_error`: vẫn score chất lượng từ FTS nhưng đồng thời được tính vào retrieval technical-error rate, không che lỗi dense provider.
 * **Candidate Interleaving:** Khi cả FTS và Pinecone đều trả về kết quả, ngân sách document sẽ được xen kẽ cân bằng giữa lexical và semantic để 12 kết quả từ FTS không chiếm toàn bộ candidate rerank.
 * **Query Processing & Chunking:**
-  * Luồng query dùng bản rewrite ngắn cho dense embedding, nhưng **giữ nguyên câu hỏi gốc** cho sparse search để bảo toàn số Điều, số hiệu văn bản, ngày tháng và tên riêng.
+  * Mặc định không gọi rewrite: câu hỏi gốc cấp cả dense, sparse và exact retrieval. Rewrite chỉ bật rõ ràng trong thí nghiệm evaluation; sparse/exact vẫn luôn dùng câu hỏi gốc.
   * Full text chỉ được chunk sau khi resolve từ SQLite: tách theo cấu trúc **Chương → Mục → Điều → Khoản**, tối đa **220 whitespace tokens/chunk** và overlap **24 tokens** (chỉ áp dụng khi một đơn vị cấu trúc quá dài).
   * Candidate rerank giới hạn tối đa **12 chunks**, không quá **2 chunks/document**.
   * Prompt cuối có ngân sách context toàn cục **720 tokens** và output model tối đa **640 tokens** (mọi thông số đều tùy chỉnh được qua `.env`).
+* **Generation và guardrail LLM:** Primary là Google Cloud Vertex AI `gemini-3.5-flash` qua ADC. Khi Vertex gặp lỗi auth/permission/quota/model/network, pipeline thử các model phụ OpenRouter → Gemini Direct API → NVIDIA → Groq, gồm secondary pass theo `provider_catalog.py`. Các model cũ giữ nguyên ID hiện có; metadata lưu provider/model thực tế, `fallback_used` và loại lỗi primary. OmniGate còn trong chuỗi evaluator Ragas, không phải answer hoặc guardrail primary.
+  Input guardrail cho phép các câu hỏi pháp luật hợp pháp về cơ quan nhà nước, chính sách và thẩm quyền; trường hợp mơ hồ được cho qua thay vì false-positive block.
+* **Embedding G0:** `gemini-embedding-2` chỉ dùng trong `run_vertex_g0_probe.py` cho 384/768/1024 chiều. Không gửi vector Gemini vào index E5 hiện tại và không ghi Pinecone/Qdrant.
 
 ### Xây dựng SQLite FTS5 Index
 
@@ -256,13 +266,13 @@ Metric retrieval xác định gồm Document/Article/Clause Recall@K, MRR, nDCG@
 python -u run_eval_suite.py --fresh --factoids 12 --multihop 12 --unanswerable 6 --concurrency 2 --judge none
 ```
 
-Chỉ bật Ragas khi chủ động thực hiện audit có ngân sách và chấp nhận phụ thuộc provider:
+Chỉ bật Ragas khi chủ động thực hiện audit offline có ngân sách và chấp nhận phụ thuộc provider; route `/chat` không bao giờ enqueue Ragas:
 
 ```powershell
 python -u run_eval_suite.py --fresh --factoids 12 --multihop 12 --unanswerable 6 --concurrency 2 --judge ragas --judge-concurrency 4
 ```
 
-Ragas có thể phát sinh chi phí và lỗi quota/timeout; kết quả của nó không thay thế metric retrieval xác định. Lỗi kỹ thuật của judge hoặc guardrail phải được ghi riêng, không được phân loại thành hallucination hay vi phạm nội dung.
+Ragas dùng Vertex AI `gemini-3.5-flash` qua ADC làm judge primary; các API cũ và OmniGate chỉ là fallback best-effort. Ragas có thể phát sinh chi phí và lỗi quota/timeout; kết quả của nó không thay thế metric retrieval xác định. Lỗi kỹ thuật của judge hoặc guardrail phải được ghi riêng, không được phân loại thành hallucination hay vi phạm nội dung.
 
 ---
 

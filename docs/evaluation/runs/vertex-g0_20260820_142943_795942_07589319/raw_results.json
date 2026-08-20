@@ -1,0 +1,93 @@
+{
+  "dimension_probe": {
+    "dimensions": [
+      {
+        "dimension": 384,
+        "document_dimension": 384,
+        "document_l2_norm": 1.0000001053862149,
+        "document_repeat_cosine": 1.0,
+        "latency_ms": {
+          "document_first": 593.889,
+          "document_repeat": 1247.003,
+          "query_first": 573.57,
+          "query_repeat": 579.632
+        },
+        "location": "global",
+        "model": "gemini-embedding-2",
+        "project": "project-438388f9-27d7-4dba-a2d",
+        "provider": "google_vertex_ai",
+        "query_dimension": 384,
+        "query_l2_norm": 0.9999998821774541,
+        "query_repeat_cosine": 1.0,
+        "status": "pass"
+      },
+      {
+        "dimension": 768,
+        "document_dimension": 768,
+        "document_l2_norm": 0.9999998539104437,
+        "document_repeat_cosine": 1.0000000000000002,
+        "latency_ms": {
+          "document_first": 918.348,
+          "document_repeat": 614.319,
+          "query_first": 590.385,
+          "query_repeat": 636.258
+        },
+        "location": "global",
+        "model": "gemini-embedding-2",
+        "project": "project-438388f9-27d7-4dba-a2d",
+        "provider": "google_vertex_ai",
+        "query_dimension": 768,
+        "query_l2_norm": 0.9999990815722507,
+        "query_repeat_cosine": 1.0,
+        "status": "pass"
+      },
+      {
+        "dimension": 1024,
+        "document_dimension": 1024,
+        "document_l2_norm": 0.9999998687824205,
+        "document_repeat_cosine": 1.0,
+        "latency_ms": {
+          "document_first": 905.639,
+          "document_repeat": 411.42,
+          "query_first": 512.157,
+          "query_repeat": 629.626
+        },
+        "location": "global",
+        "model": "gemini-embedding-2",
+        "project": "project-438388f9-27d7-4dba-a2d",
+        "provider": "google_vertex_ai",
+        "query_dimension": 1024,
+        "query_l2_norm": 0.9999990722814087,
+        "query_repeat_cosine": 1.0000000000000002,
+        "status": "pass"
+      }
+    ],
+    "document_sha256": "664b6ca1df40fb5d411cf1ffc7253a2674bbb1f672d67c7aee3054eaafc60688",
+    "production_retrieval_changed": false,
+    "query_sha256": "e5e6d146d65d5314bce3681006ee9defd85d5d3e51dda60db15d34fa74903ddd",
+    "repeat_cosine_minimum": 0.999,
+    "status": "pass",
+    "vector_write_attempted": false
+  },
+  "preflight": {
+    "embedding": {
+      "dimension": 384,
+      "l2_norm": 1.0000001232292108,
+      "latency_ms": 1465.017,
+      "location": "global",
+      "model": "gemini-embedding-2",
+      "project": "project-438388f9-27d7-4dba-a2d",
+      "provider": "google_vertex_ai",
+      "status": "success"
+    },
+    "generation": {
+      "latency_ms": 5737.13,
+      "location": "global",
+      "model": "gemini-3.5-flash",
+      "project": "project-438388f9-27d7-4dba-a2d",
+      "provider": "google_vertex_ai",
+      "status": "success"
+    },
+    "status": "pass"
+  }
+}
