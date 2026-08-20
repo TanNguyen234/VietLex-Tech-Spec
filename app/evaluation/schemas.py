@@ -246,7 +246,8 @@ class RetrievalCaseResult(BaseModel):
     query_used: str
     original_query: str
     rewritten_query: Optional[str] = None
-    status: str  # "ok", "no_candidate", "retrieval_error", "reranker_error"
+    # ok, no_candidate, partial_retrieval_error, retrieval_error, reranker_error
+    status: str
     retrieved_evidence: List[CandidateChunk] = Field(default_factory=list)
     stage_trace: RetrievalStageTrace = Field(default_factory=RetrievalStageTrace)
     latency: Dict[str, float] = Field(default_factory=dict)

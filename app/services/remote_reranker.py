@@ -16,6 +16,7 @@ from app.config import Settings
 
 
 _TRANSIENT_STATUS_CODES = {408, 429, 500, 502, 503, 504}
+_UNAVAILABLE_STATUS_CODES = {404}
 _TRANSIENT_ERROR_NAMES = {
     "ConnectError",
     "ConnectTimeout",
@@ -46,6 +47,14 @@ def is_transient_provider_error(error: Exception) -> bool:
         status_code in _TRANSIENT_STATUS_CODES
         or type(error).__name__ in _TRANSIENT_ERROR_NAMES
     )
+
+
+def is_unavailable_provider_error(error: Exception) -> bool:
+    status_code = getattr(error, "status_code", None)
+    if status_code is None:
+        response = getattr(error, "response", None)
+        status_code = getattr(response, "status_code", None)
+    return status_code in _UNAVAILABLE_STATUS_CODES
 
 
 @dataclass(frozen=True)
@@ -442,12 +451,16 @@ class RemoteReranker:
         try:
             return await self._qdrant_rerank(query, documents, rerank_return_limit=rerank_return_limit)
         except Exception as error:
-            if not is_transient_provider_error(error):
+            transient = is_transient_provider_error(error)
+            unavailable = is_unavailable_provider_error(error)
+            if not transient and not unavailable:
                 raise
             return await self._pinecone_rerank(
                 query,
                 documents,
-                fallback_reason="qdrant_transient",
+                fallback_reason=(
+                    "qdrant_transient" if transient else "qdrant_unavailable"
+                ),
                 attempts=(
                     max(1, self._settings.QDRANT_RERANK_MAX_RETRIES) + 1
                 ),

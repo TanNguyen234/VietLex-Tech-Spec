@@ -894,12 +894,13 @@ class StructuralRetriever:
         if rerank.fallback_reason in {
             "qdrant_transient",
             "qdrant_circuit_open",
+            "qdrant_unavailable",
         }:
             technical_errors["reranker_primary"] = StructuralTechnicalError(
                 stage="reranker_primary",
                 category=rerank.fallback_reason,
                 error_type="QdrantRerankerFallback",
-                transient=True,
+                transient=rerank.fallback_reason != "qdrant_unavailable",
                 attempts=max(1, rerank.attempts),
             )
 
@@ -967,7 +968,11 @@ def validate_structural_rerank(
             or outcome.latency < 0
             or (
                 outcome.fallback_reason
-                in {"qdrant_transient", "qdrant_circuit_open"}
+                in {
+                    "qdrant_transient",
+                    "qdrant_circuit_open",
+                    "qdrant_unavailable",
+                }
                 and outcome.provider != "pinecone"
             )
     ):

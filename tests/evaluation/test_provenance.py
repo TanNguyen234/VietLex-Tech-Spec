@@ -132,6 +132,22 @@ def test_untracked_env_is_dirty_but_secret_content_is_never_hashed(
     assert "do-not-read-or-hash" not in dirty.model_dump_json()
 
 
+def test_tracked_env_example_is_a_hashable_template(tmp_path: Path) -> None:
+    repo = initialized_repo(tmp_path)
+    template = repo / ".env.example"
+    template.write_text("PROJECT=placeholder\n", encoding="utf-8")
+    git(repo, "add", ".env.example")
+    git(repo, "commit", "-m", "add environment template")
+    template.write_text("PROJECT=example-project\n", encoding="utf-8")
+
+    dirty = collect_git_provenance(repo)
+
+    assert dirty.git_dirty is True
+    assert dirty.git_diff_status == "ok"
+    assert dirty.git_diff_sha256 is not None
+    assert dirty.git_diff_reason is None
+
+
 def test_staged_and_untracked_source_changes_affect_source_state(
     tmp_path: Path,
 ) -> None:
@@ -206,6 +222,7 @@ def settings() -> SimpleNamespace:
         DENSE_INFERENCE_MODEL="intfloat/multilingual-e5-small",
         QDRANT_RERANK_MODEL="answerdotai/answerai-colbert-small-v1",
         PINECONE_RERANK_MODEL="bge-reranker-v2-m3",
+        VERTEX_LLM_MODEL="gemini-3.5-flash",
     )
 
 
@@ -305,15 +322,21 @@ def test_answer_manifest_records_full_configured_fallback_catalog(
     assert manifest.configured_provider_models["generation"] == {
         "mode": "configured_fallback_chain",
         "candidates": [
-            {"provider": item.provider, "model": item.model}
-            for item in GENERATION_PROVIDER_MODELS
+            {"provider": "Google Vertex AI", "model": "gemini-3.5-flash"},
+            *[
+                {"provider": item.provider, "model": item.model}
+                for item in GENERATION_PROVIDER_MODELS
+            ],
         ],
     }
     assert manifest.configured_provider_models["judge"] == {
         "mode": "ragas",
         "candidates": [
-            {"provider": item.provider, "model": item.model}
-            for item in JUDGE_PROVIDER_MODELS
+            {"provider": "Google Vertex AI", "model": "gemini-3.5-flash"},
+            *[
+                {"provider": item.provider, "model": item.model}
+                for item in JUDGE_PROVIDER_MODELS
+            ],
         ],
     }
     assert_manifest_is_public_and_self_consistent(manifest)

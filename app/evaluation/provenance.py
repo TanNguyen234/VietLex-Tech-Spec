@@ -49,9 +49,15 @@ def normalize_git_path(value: str) -> str:
     return PurePosixPath(value.replace("\\", "/")).as_posix()
 
 
+def is_safe_env_template(path: str) -> bool:
+    return PurePosixPath(normalize_git_path(path)).name.casefold() == ".env.example"
+
+
 def is_sensitive_path(path: str) -> bool:
     normalized = normalize_git_path(path)
     name = PurePosixPath(normalized).name.casefold()
+    if is_safe_env_template(normalized):
+        return False
     return (
         name == ".env"
         or name.startswith(".env.")
@@ -157,6 +163,7 @@ def collect_git_provenance(
         staged_dirty = False
         untracked_paths: list[str] = []
         safe_untracked_paths: list[str] = []
+        safe_env_template_diff_paths: list[str] = []
         sensitive_dirty = False
 
         for entry in entries:
@@ -170,6 +177,8 @@ def collect_git_provenance(
                 if not is_sensitive_path(path):
                     safe_untracked_paths.append(path)
                 continue
+            if is_safe_env_template(path):
+                safe_env_template_diff_paths.append(path)
             staged_dirty = staged_dirty or code[0] not in {" ", "?"}
             tracked_dirty = tracked_dirty or code[1] not in {" ", "?"}
 
@@ -182,10 +191,23 @@ def collect_git_provenance(
             ".",
             *GIT_SENSITIVE_EXCLUDES,
         )
+        safe_env_template_diff = (
+            _run_git(
+                root,
+                "diff",
+                "--binary",
+                "HEAD",
+                "--",
+                *safe_env_template_diff_paths,
+            )
+            if safe_env_template_diff_paths
+            else b""
+        )
         full_payload = b"\n".join(
             [
                 sha.encode(),
                 full_diff,
+                safe_env_template_diff,
                 _hash_untracked(root, safe_untracked_paths),
             ]
         )

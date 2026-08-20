@@ -185,6 +185,21 @@ def test_aggregate_has_known_denominators_and_candidate_distribution() -> None:
     ].first_loss_evidence_count == 1
 
 
+def test_partial_retrieval_error_counts_without_skipping_quality() -> None:
+    row = scored_row("case_001", 1)
+    row["status"] = "partial_retrieval_error"
+    row["metrics"]["status"] = "partial_retrieval_error"
+    row["metrics"]["retrieval_technical_error"] = True
+
+    summary = RetrievalAggregateMetrics.model_validate(
+        aggregate_retrieval_metrics([row])
+    )
+
+    assert summary.scored_cases == 1
+    assert summary.retrieval_technical_error_rate.numerator == 1
+    assert summary.retrieval_technical_error_rate.denominator == 1
+
+
 def test_aggregate_rejects_conflicting_stage_capacities() -> None:
     first = scored_row("case_001", 1)
     second = scored_row("case_002", 2)

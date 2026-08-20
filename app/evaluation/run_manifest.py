@@ -85,7 +85,13 @@ def build_configured_provider_models(
                 else "not_applicable"
             ),
             "candidates": (
-                _public_candidates(GENERATION_PROVIDER_MODELS)
+                [
+                    {
+                        "provider": "Google Vertex AI",
+                        "model": settings.VERTEX_LLM_MODEL,
+                    },
+                    *_public_candidates(GENERATION_PROVIDER_MODELS),
+                ]
                 if eval_mode == "answer"
                 else []
             ),
@@ -93,7 +99,13 @@ def build_configured_provider_models(
         "judge": {
             "mode": judge_mode,
             "candidates": (
-                _public_candidates(JUDGE_PROVIDER_MODELS)
+                [
+                    {
+                        "provider": "Google Vertex AI",
+                        "model": settings.VERTEX_LLM_MODEL,
+                    },
+                    *_public_candidates(JUDGE_PROVIDER_MODELS),
+                ]
                 if judge_mode == "ragas"
                 else []
             ),

@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 import pytest
 
+import run_answer_eval
 import run_retrieval_eval
 from app.evaluation.artifact_io import (
     ArtifactCollisionError,
@@ -146,6 +147,42 @@ def test_custom_sidecar_validation_does_not_require_unrelated_audit_summary(
     assert selection.selected_case_ids == ["case_001"]
     assert sidecar.metadata.total_evidence_items == 1
     assert audit_summary == {}
+
+
+def test_answer_runner_custom_sidecar_does_not_bind_legacy_summary(
+    tmp_path: Path,
+) -> None:
+    custom_sidecar = tmp_path / "promoted-labels.json"
+    arguments = run_answer_eval.build_parser().parse_args(
+        ["--sidecar", str(custom_sidecar)]
+    )
+
+    resolved = run_answer_eval.resolve_audit_summary_path(
+        Path(arguments.sidecar).resolve(),
+        arguments.audit_summary,
+    )
+
+    assert resolved is None
+
+
+def test_answer_runner_preserves_explicit_audit_summary(tmp_path: Path) -> None:
+    custom_sidecar = tmp_path / "promoted-labels.json"
+    explicit_summary = tmp_path / "promotion-summary.json"
+    arguments = run_answer_eval.build_parser().parse_args(
+        [
+            "--sidecar",
+            str(custom_sidecar),
+            "--audit-summary",
+            str(explicit_summary),
+        ]
+    )
+
+    resolved = run_answer_eval.resolve_audit_summary_path(
+        Path(arguments.sidecar).resolve(),
+        arguments.audit_summary,
+    )
+
+    assert resolved == explicit_summary.resolve()
 
 
 def test_explicit_audit_summary_option_remains_fail_closed(

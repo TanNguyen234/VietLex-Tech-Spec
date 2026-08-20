@@ -5,6 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 import run_eval_suite
+from pydantic import BaseModel
 
 
 def test_help_does_not_boot_the_full_rag_application() -> None:
@@ -85,9 +86,10 @@ def test_evaluation_preflight_rejects_unready_fts() -> None:
         run_eval_suite.require_evaluation_fts(UnreadyIndex())
 
 
-def test_judge_provider_is_independent_from_primary_openrouter_model() -> None:
+def test_judge_provider_uses_vertex_primary_before_api_fallbacks() -> None:
     provider = run_eval_suite.select_judge_provider(
         SimpleNamespace(
+            VERTEX_LLM_MODEL="gemini-3.5-flash",
             OPENROUTER_API_KEY="openrouter-key",
             GEMINI_API_KEY="gemini-key",
             NVIDIA_API_KEY=None,
@@ -98,11 +100,33 @@ def test_judge_provider_is_independent_from_primary_openrouter_model() -> None:
     )
 
     assert provider == {
-        "name": "Gemini",
-        "model": "gemini-2.0-flash",
-        "api_key": "gemini-key",
-        "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/",
+        "name": "Google Vertex AI",
+        "model": "gemini-3.5-flash",
+        "transport": "vertex_adc",
     }
+
+
+@pytest.mark.asyncio
+async def test_vertex_ragas_adapter_uses_modern_structured_llm(monkeypatch) -> None:
+    run_eval_suite._install_ragas_vertex_shim()
+    from ragas.llms.base import InstructorBaseRagasLLM
+    import app.services.vertex_ai as vertex_ai
+
+    class Verdict(BaseModel):
+        value: int
+
+    class FakeProvider:
+        async def generate_structured(self, prompt, *, response_model, **kwargs):
+            assert prompt == "Return a verdict."
+            assert response_model is Verdict
+            return Verdict(value=1)
+
+    monkeypatch.setattr(vertex_ai, "get_vertex_provider", lambda: FakeProvider())
+
+    llm = run_eval_suite._build_vertex_ragas_llm()
+
+    assert isinstance(llm, InstructorBaseRagasLLM)
+    assert await llm.agenerate("Return a verdict.", Verdict) == Verdict(value=1)
 
 
 @pytest.mark.asyncio
@@ -144,6 +168,33 @@ async def test_wrapped_judge_quota_error_falls_back_to_next_provider() -> None:
         attempted.append(provider["name"])
         if provider["name"] == "Gemini":
             raise RuntimeError("Ragas metric failed: Error code: 429 quota")
+        return {"answer_accuracy": 0.75}
+
+    scores, provider = await run_eval_suite.run_with_provider_fallback(
+        providers,
+        evaluate,
+    )
+
+    assert scores == {"answer_accuracy": 0.75}
+    assert provider["name"] == "NVIDIA"
+    assert attempted == ["Gemini", "NVIDIA"]
+
+
+@pytest.mark.asyncio
+async def test_unavailable_judge_model_falls_back_to_next_provider() -> None:
+    providers = [
+        {"name": "Gemini", "model": "retired-model"},
+        {"name": "NVIDIA", "model": "llama"},
+    ]
+    attempted: list[str] = []
+
+    class ModelNotFoundError(RuntimeError):
+        status_code = 404
+
+    async def evaluate(provider):
+        attempted.append(provider["name"])
+        if provider["name"] == "Gemini":
+            raise ModelNotFoundError("model is no longer available")
         return {"answer_accuracy": 0.75}
 
     scores, provider = await run_eval_suite.run_with_provider_fallback(

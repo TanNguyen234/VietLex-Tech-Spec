@@ -613,7 +613,8 @@ async def test_hybrid_timeout_falls_back_to_lexical_results(
 
     outcome = await retriever.retrieve_detailed("khấu trừ thuế")
 
-    assert outcome.status == "ok"
+    assert outcome.status == "partial_retrieval_error"
     assert outcome.evidence
     assert outcome.diagnostics["retrieval_mode"] == "lexical_fallback"
     assert outcome.diagnostics["hybrid_error_stage"] == "pinecone_query"
+    assert outcome.error is not None

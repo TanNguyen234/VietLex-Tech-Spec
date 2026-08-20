@@ -1,6 +1,6 @@
 from dataclasses import FrozenInstanceError, fields
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, create_autospec, patch
+from unittest.mock import AsyncMock, MagicMock, create_autospec, patch
 
 import pytest
 
@@ -437,6 +437,79 @@ async def test_answer_stage_b_skips_quality_and_judge_on_technical_status() -> N
 
 
 @pytest.mark.asyncio
+async def test_answer_stage_b_records_judge_failure_as_typed_technical_error() -> None:
+    case = make_case()
+    retrieval_result = RetrievalCaseResult(
+        case_id=case.case_id,
+        question=case.question,
+        original_query=case.question,
+        question_type=case.question_type,
+        answerable=case.answerable,
+        query_used=case.question,
+        status="ok",
+    )
+    stage_a_result = {
+        "raw_response": "Grounded response",
+        "final_response": "Grounded response",
+        "contexts": ["Grounded context"],
+        "input_safe": True,
+        "output_safe": True,
+        "status": "ok",
+        "technical_errors": {},
+        "latency": {"t_total": 0.01},
+        "retrieval_result": retrieval_result,
+    }
+
+    async def failing_evaluator(**_kwargs):
+        raise RuntimeError("judge model unavailable")
+
+    with patch(
+        "run_eval_suite.build_ragas_evaluator",
+        return_value=failing_evaluator,
+    ):
+        result = await run_stage_b_offline(
+            case,
+            stage_a_result,
+            SimpleNamespace(),
+            "ragas",
+        )
+
+    assert result.status == "ok"
+    assert result.ragas_metrics is None
+    assert result.technical_errors["judge"] == (
+        "RuntimeError: judge model unavailable"
+    )
+
+
+@pytest.mark.asyncio
+async def test_partial_retrieval_error_remains_scoreable_and_observable() -> None:
+    case = make_case()
+    retriever = MagicMock()
+    retriever.retrieve_detailed = AsyncMock(
+        return_value=RetrievalOutcome(
+            evidence=[],
+            latency={},
+            status="partial_retrieval_error",
+            diagnostics={"hybrid_error_stage": "qdrant_embedding"},
+            error="qdrant_embedding failed: HTTP 404",
+        )
+    )
+
+    with patch("app.services.retrieval.get_legal_retriever", return_value=retriever):
+        result = await evaluate_single_retrieval_case(
+            case,
+            make_settings(),
+            get_evaluation_profile("separated_intent"),
+        )
+
+    assert result.status == "partial_retrieval_error"
+    assert result.technical_errors == {
+        "retrieval_fallback": "qdrant_embedding failed: HTTP 404"
+    }
+    assert result.metrics["retrieval_technical_error"] is True
+
+
+@pytest.mark.asyncio
 async def test_input_guardrail_error_is_typed_and_runs_zero_retrieval() -> None:
     profile = get_evaluation_profile("separated_intent")
     retrieval_call = AsyncMock()
@@ -457,6 +530,48 @@ async def test_input_guardrail_error_is_typed_and_runs_zero_retrieval() -> None:
         "input_guardrail": "TimeoutError: guardrail timeout"
     }
     assert result["retrieval_result"].status == "input_guardrail_error"
+
+
+@pytest.mark.asyncio
+async def test_input_guardrail_error_in_shadow_keeps_pipeline_scoreable() -> None:
+    profile = get_evaluation_profile("separated_intent")
+    case = make_case()
+    retrieval_result = RetrievalCaseResult(
+        case_id=case.case_id,
+        question=case.question,
+        original_query=case.question,
+        question_type=case.question_type,
+        answerable=case.answerable,
+        query_used=case.question,
+        status="ok",
+    )
+    with (
+        patch(
+            "app.services.guardrails.check_input_guardrails",
+            new=AsyncMock(side_effect=TimeoutError("guardrail timeout")),
+        ),
+        patch(
+            "run_answer_eval.evaluate_single_retrieval_case",
+            new=AsyncMock(return_value=retrieval_result),
+        ),
+        patch(
+            "app.services.rag_pipeline.generate_response",
+            new=AsyncMock(return_value="Generated answer"),
+        ),
+        patch(
+            "app.services.guardrails.check_output_guardrails",
+            new=AsyncMock(return_value=(True, "")),
+        ),
+    ):
+        result = await run_stage_a_online(
+            case, make_settings(), "shadow", profile
+        )
+
+    assert result["status"] == "ok"
+    assert result["input_safe"] is False
+    assert result["technical_errors"] == {
+        "input_guardrail": "TimeoutError: guardrail timeout"
+    }
 
 
 @pytest.mark.asyncio
@@ -501,6 +616,48 @@ async def test_output_guardrail_error_is_typed_not_a_hallucination_block() -> No
     assert result["raw_response"] == "Generated answer"
     assert result["final_response"] == "Generated answer"
     assert result["output_safe"] is False
+
+
+@pytest.mark.asyncio
+async def test_output_guardrail_error_in_shadow_keeps_pipeline_scoreable() -> None:
+    profile = get_evaluation_profile("separated_intent")
+    case = make_case()
+    retrieval_result = RetrievalCaseResult(
+        case_id=case.case_id,
+        question=case.question,
+        original_query=case.question,
+        question_type=case.question_type,
+        answerable=case.answerable,
+        query_used=case.question,
+        status="ok",
+    )
+    with (
+        patch(
+            "app.services.guardrails.check_input_guardrails",
+            new=AsyncMock(return_value=(True, "")),
+        ),
+        patch(
+            "run_answer_eval.evaluate_single_retrieval_case",
+            new=AsyncMock(return_value=retrieval_result),
+        ),
+        patch(
+            "app.services.rag_pipeline.generate_response",
+            new=AsyncMock(return_value="Generated answer"),
+        ),
+        patch(
+            "app.services.guardrails.check_output_guardrails",
+            new=AsyncMock(side_effect=TimeoutError("guardrail timeout")),
+        ),
+    ):
+        result = await run_stage_a_online(
+            case, make_settings(), "shadow", profile
+        )
+
+    assert result["status"] == "ok"
+    assert result["output_safe"] is False
+    assert result["technical_errors"] == {
+        "output_guardrail": "TimeoutError: guardrail timeout"
+    }
 
 
 def test_run_directory_cannot_overwrite_existing_run(tmp_path) -> None:

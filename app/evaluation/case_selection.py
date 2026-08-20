@@ -65,6 +65,7 @@ def select_evaluation_cases(
     gold_policy: str,
     include_unanswerable: bool = False,
     limit: Optional[int] = None,
+    requested_case_ids: Optional[List[str]] = None,
 ) -> CaseSelectionResult:
     selected_cases: List[GoldenCase] = []
     selected_case_ids: List[str] = []
@@ -77,7 +78,19 @@ def select_evaluation_cases(
     verified_evidence_count = 0
     status_counts: Dict[str, int] = {}
 
-    for case in cases:
+    candidate_cases = cases
+    if requested_case_ids is not None:
+        if not requested_case_ids:
+            raise ValueError("requested case IDs must not be empty")
+        if len(requested_case_ids) != len(set(requested_case_ids)):
+            raise ValueError("requested case IDs must be unique")
+        cases_by_id = {case.case_id: case for case in cases}
+        missing = [case_id for case_id in requested_case_ids if case_id not in cases_by_id]
+        if missing:
+            raise ValueError(f"requested case IDs are unknown: {missing}")
+        candidate_cases = [cases_by_id[case_id] for case_id in requested_case_ids]
+
+    for case in candidate_cases:
         if not case.answerable and not include_unanswerable:
             excluded_unanswerable += 1
             status_counts["excluded_unanswerable"] = status_counts.get("excluded_unanswerable", 0) + 1
@@ -134,6 +147,17 @@ def select_evaluation_cases(
         else:
             excluded_no_verified += 1
             status_counts["excluded_no_verified_label"] = status_counts.get("excluded_no_verified_label", 0) + 1
+
+    if requested_case_ids is not None:
+        ineligible = [
+            case_id
+            for case_id in requested_case_ids
+            if case_id not in selected_case_ids
+        ]
+        if ineligible:
+            raise ValueError(
+                f"requested case IDs are not eligible under '{gold_policy}': {ineligible}"
+            )
 
     # Stable canonical JSON serialization SHA-256
     canonical_json = json.dumps(selected_case_ids, separators=(",", ":"))

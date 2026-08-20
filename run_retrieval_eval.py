@@ -137,6 +137,7 @@ def perform_pre_execution_validation(
     verified_only: bool,
     require_clean_git: bool,
     limit: Optional[int] = None,
+    requested_case_ids: Optional[List[str]] = None,
 ) -> Tuple[List[GoldenCase], CaseSelectionResult, GoldSidecar, Dict[str, Any]]:
     if not dataset_path.exists():
         raise FileNotFoundError(f"Dataset file not found: {dataset_path}")
@@ -185,7 +186,8 @@ def perform_pre_execution_validation(
         all_cases, 
         effective_policy, 
         include_unanswerable=not verified_only,
-        limit=limit if limit and limit > 0 else None
+        limit=limit if limit and limit > 0 else None,
+        requested_case_ids=requested_case_ids,
     )
 
     return all_cases, selection, sidecar, audit_summary
@@ -337,6 +339,10 @@ async def evaluate_single_retrieval_case(
     if outcome.status == "retrieval_error":
         technical_errors["retrieval"] = (
             outcome.error or "retrieval_error_without_error_detail"
+        )
+    elif outcome.status == "partial_retrieval_error":
+        technical_errors["retrieval_fallback"] = (
+            outcome.error or "partial_retrieval_error_without_error_detail"
         )
     elif outcome.status == "reranker_error":
         technical_errors["reranker"] = (

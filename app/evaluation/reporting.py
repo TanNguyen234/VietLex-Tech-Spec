@@ -121,7 +121,7 @@ def generate_markdown_report(
     append_metric(
         "Retrieval technical-error rate",
         summary.retrieval_technical_error_rate,
-        "Exact status retrieval_error",
+        "Status retrieval_error or partial_retrieval_error",
         percentage=True,
     )
     append_metric(

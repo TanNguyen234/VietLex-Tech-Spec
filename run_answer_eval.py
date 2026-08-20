@@ -57,6 +57,15 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--dataset", type=Path, default=DEFAULT_DATASET_PATH)
     parser.add_argument("--sidecar", type=Path, default=DEFAULT_SIDECAR_PATH)
     parser.add_argument(
+        "--audit-summary",
+        type=Path,
+        default=None,
+        help=(
+            "Optional machine-readable audit summary matching --sidecar. "
+            "The legacy default is used only with the legacy default sidecar."
+        ),
+    )
+    parser.add_argument(
         "--profile",
         choices=["legacy", "separated_no_intent", "separated_intent"],
         default="separated_intent",
@@ -87,6 +96,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--limit", type=int, default=None, help="Limit maximum number of cases to evaluate"
     )
     parser.add_argument(
+        "--case-ids",
+        nargs="+",
+        default=None,
+        help="Evaluate exactly these case IDs in the supplied order",
+    )
+    parser.add_argument(
         "--verified-only",
         action="store_true",
         help="Filter evaluation to cases with verified gold evidence in the current corpus",
@@ -110,6 +125,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--run-id", type=str, default=None, help="Optional custom Run ID")
     return parser
+
+
+def resolve_audit_summary_path(
+    sidecar_path: Path,
+    explicit_summary: Path | None,
+) -> Path | None:
+    if explicit_summary is not None:
+        return Path(explicit_summary).resolve()
+    if sidecar_path == DEFAULT_SIDECAR_PATH.resolve():
+        return DEFAULT_SUMMARY_PATH.resolve()
+    return None
 
 
 def format_candidate_context(chunk: CandidateChunk) -> str:
@@ -196,10 +222,10 @@ async def run_stage_a_online(
         except Exception as error:
             input_guardrail_latency = time.perf_counter() - gr_start
             input_safe = False
-            online_status = "input_guardrail_error"
             message = f"{type(error).__name__}: {error}"
             technical_errors["input_guardrail"] = message
             if guardrails_mode == "enforce":
+                online_status = "input_guardrail_error"
                 fallback = (
                     "Hệ thống chưa thể xử lý yêu cầu do guardrail error."
                 )
@@ -278,10 +304,11 @@ async def run_stage_a_online(
         except Exception as error:
             output_guardrail_latency = time.perf_counter() - gr_start
             output_safe = False
-            online_status = "output_guardrail_error"
             technical_errors["output_guardrail"] = (
                 f"{type(error).__name__}: {error}"
             )
+            if guardrails_mode == "enforce":
+                online_status = "output_guardrail_error"
 
     t_total = time.perf_counter() - started
     raw_latency = {
@@ -337,6 +364,7 @@ async def run_stage_b_offline(
 
     ragas_scores = None
     ragas_error = None
+    technical_errors = dict(stage_a_result.get("technical_errors", {}))
 
     if (
         judge_mode == "ragas"
@@ -355,7 +383,8 @@ async def run_stage_b_offline(
                 reference=case.reference_answer,
             )
         except Exception as err:
-            ragas_error = str(err)
+            ragas_error = f"{type(err).__name__}: {err}"
+            technical_errors["judge"] = ragas_error
 
     return AnswerCaseResult(
         case_id=case.case_id,
@@ -374,14 +403,13 @@ async def run_stage_b_offline(
         error=(
             "; ".join(
                 [
-                    *stage_a_result.get("technical_errors", {}).values(),
-                    *([ragas_error] if ragas_error else []),
+                    *technical_errors.values(),
                 ]
             )
             or None
         ),
         status=status,
-        technical_errors=stage_a_result.get("technical_errors", {}),
+        technical_errors=technical_errors,
     )
 
 
@@ -389,11 +417,20 @@ async def run_answer_evaluation(arguments=None) -> Dict[str, Any]:
     args = arguments or build_parser().parse_args()
     if args.concurrency <= 0:
         raise ValueError("concurrency must be positive.")
+    if args.case_ids and args.limit is not None:
+        raise ValueError("--case-ids and --limit cannot be used together.")
 
     settings = get_settings()
+    if args.guardrails in {"shadow", "enforce"}:
+        from app.services.guardrails import warm_guardrails
+
+        await warm_guardrails()
     dataset_path = Path(args.dataset).resolve()
     sidecar_path = Path(args.sidecar).resolve()
-    summary_path = DEFAULT_SUMMARY_PATH
+    summary_path = resolve_audit_summary_path(
+        sidecar_path,
+        args.audit_summary,
+    )
 
     base_profile = get_evaluation_profile(args.profile)
     effective_profile = dataclasses.replace(
@@ -411,6 +448,7 @@ async def run_answer_evaluation(arguments=None) -> Dict[str, Any]:
         verified_only=args.verified_only,
         require_clean_git=args.require_clean_git,
         limit=args.limit,
+        requested_case_ids=args.case_ids,
     )
 
     if args.verified_only and selection.selected_case_count == 0:

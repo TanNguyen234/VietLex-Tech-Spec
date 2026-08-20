@@ -628,6 +628,26 @@ async def test_qdrant_reranker_fallback_is_observable_not_mislabeled() -> None:
     )
 
 
+@pytest.mark.asyncio
+async def test_qdrant_unavailable_fallback_is_observable() -> None:
+    retriever, _transport, _fts, _reranker = _retriever(
+        reranker=FakeReranker(
+            provider="pinecone",
+            fallback_reason="qdrant_unavailable",
+        )
+    )
+
+    outcome = await retriever.retrieve("môi trường")
+
+    assert outcome.status == "partial_technical_error"
+    assert outcome.trace.reranker_provider == "pinecone"
+    assert outcome.trace.reranker_fallback_reason == "qdrant_unavailable"
+    assert outcome.technical_errors["reranker_primary"].category == (
+        "qdrant_unavailable"
+    )
+    assert outcome.technical_errors["reranker_primary"].transient is False
+
+
 def test_factory_is_opt_in_and_does_not_modify_default_retriever() -> None:
     settings = _settings(STRUCTURAL_BACKEND_ENABLED=False)
 

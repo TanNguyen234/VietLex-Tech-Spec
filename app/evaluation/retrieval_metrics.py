@@ -953,7 +953,10 @@ def calculate_case_retrieval_metrics(
             "partial_metric": partial_metric,
         },
         no_candidate=status == "no_candidate",
-        retrieval_technical_error=status == "retrieval_error",
+        retrieval_technical_error=status in {
+            "retrieval_error",
+            "partial_retrieval_error",
+        },
         reranker_technical_error=status == "reranker_error",
         stages=stages,
         first_loss_by_evidence=(
@@ -1353,7 +1356,10 @@ def aggregate_retrieval_metrics(
             denominator=total_cases,
         ),
         retrieval_technical_error_rate=_operational_rate(
-            numerator=statuses.count("retrieval_error"),
+            numerator=(
+                statuses.count("retrieval_error")
+                + statuses.count("partial_retrieval_error")
+            ),
             denominator=total_cases,
         ),
         reranker_technical_error_rate=_operational_rate(

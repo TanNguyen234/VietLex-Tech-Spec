@@ -669,7 +669,13 @@ def configured_judge_providers(settings) -> list[dict[str, str]]:
             "https://openrouter.ai/api/v1",
         ),
     )
-    providers: list[dict[str, str]] = []
+    providers: list[dict[str, str]] = [
+        {
+            "name": "Google Vertex AI",
+            "model": getattr(settings, "VERTEX_LLM_MODEL", "gemini-3.5-flash"),
+            "transport": "vertex_adc",
+        }
+    ]
     for (field, base_url), provider_model in zip(
         runtime_mapping,
         JUDGE_PROVIDER_MODELS[:4],
@@ -742,13 +748,27 @@ def is_transient_judge_error(error: Exception) -> bool:
     }
 
 
+def is_unavailable_judge_error(error: Exception) -> bool:
+    status_code = getattr(error, "status_code", None)
+    if status_code is None:
+        status_code = getattr(
+            getattr(error, "response", None),
+            "status_code",
+            None,
+        )
+    return status_code == 404 or "error code: 404" in str(error).casefold()
+
+
 async def run_with_provider_fallback(providers, operation):
     for index, provider in enumerate(providers):
         try:
             return await operation(provider), provider
         except Exception as error:
             has_fallback = index + 1 < len(providers)
-            if not has_fallback or not is_transient_judge_error(error):
+            if not has_fallback or not (
+                is_transient_judge_error(error)
+                or is_unavailable_judge_error(error)
+            ):
                 raise
             next_provider = providers[index + 1]
             print(
@@ -775,6 +795,35 @@ def _install_ragas_vertex_shim() -> None:
         sys.modules[module_name] = vertex_module
 
 
+def _build_vertex_ragas_llm():
+    from ragas.llms.base import InstructorBaseRagasLLM
+
+    from app.services.vertex_ai import get_vertex_provider
+
+    class VertexRagasLLM(InstructorBaseRagasLLM):
+        async def agenerate(
+            self,
+            prompt: str,
+            response_model,
+        ):
+            return await get_vertex_provider().generate_structured(
+                prompt,
+                response_model=response_model,
+                max_output_tokens=768,
+            )
+
+        def generate(
+            self,
+            prompt: str,
+            response_model,
+        ):
+            return asyncio.run(
+                self.agenerate(prompt, response_model)
+            )
+
+    return VertexRagasLLM()
+
+
 def build_ragas_evaluator(settings, *, judge_concurrency: int):
     if judge_concurrency <= 0:
         raise ValueError("judge_concurrency must be positive.")
@@ -795,18 +844,21 @@ def build_ragas_evaluator(settings, *, judge_concurrency: int):
     def provider_metrics(provider: dict[str, str]) -> dict:
         key = f"{provider['name']}:{provider['model']}"
         if key not in metrics_by_provider:
-            client = AsyncOpenAI(
-                api_key=provider["api_key"],
-                base_url=provider["base_url"],
-                timeout=60.0,
-                max_retries=1,
-            )
-            llm = llm_factory(
-                provider["model"],
-                client=client,
-                temperature=0,
-                max_tokens=768,
-            )
+            if provider.get("transport") == "vertex_adc":
+                llm = _build_vertex_ragas_llm()
+            else:
+                client = AsyncOpenAI(
+                    api_key=provider["api_key"],
+                    base_url=provider["base_url"],
+                    timeout=60.0,
+                    max_retries=1,
+                )
+                llm = llm_factory(
+                    provider["model"],
+                    client=client,
+                    temperature=0,
+                    max_tokens=768,
+                )
             metrics_by_provider[key] = {
                 "faithfulness": Faithfulness(llm=llm),
                 "answer_accuracy": AnswerAccuracy(llm=llm),
@@ -816,9 +868,9 @@ def build_ragas_evaluator(settings, *, judge_concurrency: int):
         return metrics_by_provider[key]
     semaphore = asyncio.Semaphore(judge_concurrency)
 
-    async def score(name: str, coroutine) -> tuple[str, float]:
+    async def score(name: str, operation) -> tuple[str, float]:
         async with semaphore:
-            result = await coroutine
+            result = await operation()
         value = float(result.value)
         if not 0.0 <= value <= 1.0:
             raise ValueError(f"Ragas {name} returned invalid score {value}.")
@@ -833,40 +885,40 @@ def build_ragas_evaluator(settings, *, judge_concurrency: int):
         reference: str,
     ) -> dict[str, float]:
         metrics = provider_metrics(provider)
-        scored = await asyncio.gather(
-            score(
+        scored = [
+            await score(
                 "faithfulness",
-                metrics["faithfulness"].ascore(
+                lambda: metrics["faithfulness"].ascore(
                     user_input=query,
                     response=response,
                     retrieved_contexts=contexts,
                 ),
             ),
-            score(
+            await score(
                 "answer_accuracy",
-                metrics["answer_accuracy"].ascore(
+                lambda: metrics["answer_accuracy"].ascore(
                     user_input=query,
                     response=response,
                     reference=reference,
                 ),
             ),
-            score(
+            await score(
                 "context_precision",
-                metrics["context_precision"].ascore(
+                lambda: metrics["context_precision"].ascore(
                     user_input=query,
                     reference=reference,
                     retrieved_contexts=contexts,
                 ),
             ),
-            score(
+            await score(
                 "context_recall",
-                metrics["context_recall"].ascore(
+                lambda: metrics["context_recall"].ascore(
                     user_input=query,
                     reference=reference,
                     retrieved_contexts=contexts,
                 ),
             ),
-        )
+        ]
         return dict(scored)
 
     async def evaluate_case(

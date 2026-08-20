@@ -134,6 +134,25 @@ async def test_transient_qdrant_failure_falls_back_to_pinecone() -> None:
 
 
 @pytest.mark.asyncio
+async def test_unavailable_qdrant_endpoint_falls_back_to_pinecone() -> None:
+    settings = Settings(_env_file=None, QDRANT_RERANK_MAX_RETRIES=1)
+    qdrant = FakeQdrant(error=ProviderError(404))
+    pinecone = SimpleNamespace(inference=FakeInference())
+    reranker = RemoteReranker(
+        settings=settings,
+        qdrant=qdrant,
+        pinecone=pinecone,
+    )
+
+    outcome = await reranker.rerank("thuế", ["Điều 1"])
+
+    assert outcome.provider == "pinecone"
+    assert outcome.model == settings.PINECONE_RERANK_MODEL
+    assert outcome.fallback_reason == "qdrant_unavailable"
+    assert [item.index for item in outcome.results] == [0]
+
+
+@pytest.mark.asyncio
 async def test_permanent_qdrant_failure_is_not_hidden_by_fallback() -> None:
     settings = Settings(_env_file=None, QDRANT_RERANK_MAX_RETRIES=1)
     qdrant = FakeQdrant(error=ProviderError(401))

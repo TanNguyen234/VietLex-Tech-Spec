@@ -820,8 +820,13 @@ class LegalRetriever:
             return RetrievalOutcome(
                 evidence=evidence,
                 latency=latency,
-                status="ok" if evidence else "no_candidate",
+                status=(
+                    "partial_retrieval_error"
+                    if evidence and hybrid_error is not None
+                    else "ok" if evidence else "no_candidate"
+                ),
                 diagnostics=diagnostics,
+                error=(str(hybrid_error) if hybrid_error is not None else None),
             )
         except Exception as error:
             logfire.error(
