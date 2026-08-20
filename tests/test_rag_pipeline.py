@@ -190,6 +190,12 @@ async def test_pipeline_formats_ranked_evidence_for_existing_contract(
             text="Câu trả lời có căn cứ.",
             observed_provider="test_provider",
             observed_model="test_model",
+            observed=True,
+            project="vietlex-test-project",
+            location="global",
+            provider_latency_ms=12.5,
+            fallback_used=True,
+            primary_error_kind="quota",
         )
 
     monkeypatch.setattr(
@@ -205,7 +211,8 @@ async def test_pipeline_formats_ranked_evidence_for_existing_contract(
     )
 
     response, contexts, latency = await rag_pipeline.run_advanced_rag(
-        "điều kiện thuế"
+        "điều kiện thuế",
+        rewrite_mode="on",
     )
 
     assert response == "Câu trả lời có căn cứ."
@@ -214,6 +221,51 @@ async def test_pipeline_formats_ranked_evidence_for_existing_contract(
         ("truy vấn pháp lý", "điều kiện thuế")
     ]
     assert latency["t_retrieval"] >= 0
+    generation_usage = latency["provider_usage"]["answer_generation"]
+    assert generation_usage == {
+        "provider": "test_provider",
+        "model": "test_model",
+        "observed": True,
+        "project": "vietlex-test-project",
+        "location": "global",
+        "status": "success",
+        "latency_ms": 12.5,
+        "fallback_used": True,
+        "primary_error_kind": "quota",
+    }
+
+
+@pytest.mark.asyncio
+async def test_pipeline_uses_original_query_when_rewrite_is_not_requested(
+    monkeypatch,
+) -> None:
+    evidence = _evidence()
+    retriever = FakeRetriever([evidence])
+
+    async def forbidden_rewrite(*_args, **_kwargs):
+        pytest.fail("query rewrite must be opt-in")
+
+    async def fake_answer(
+        original_query: str,
+        rewritten_query: str,
+        context: list[str],
+    ) -> rag_pipeline.LLMGenerationResult:
+        assert original_query == "điều kiện thuế"
+        assert rewritten_query == original_query
+        return rag_pipeline.LLMGenerationResult(
+            text="Câu trả lời có căn cứ.",
+            observed_provider="google_vertex_ai",
+            observed_model="gemini-3.5-flash",
+            observed=True,
+        )
+
+    monkeypatch.setattr(rag_pipeline, "get_legal_retriever", lambda: retriever)
+    monkeypatch.setattr(rag_pipeline, "rewrite_query_with_metadata", forbidden_rewrite)
+    monkeypatch.setattr(rag_pipeline, "generate_response_with_metadata", fake_answer)
+
+    await rag_pipeline.run_advanced_rag("điều kiện thuế")
+
+    assert retriever.queries == [("điều kiện thuế", "điều kiện thuế")]
 
 
 

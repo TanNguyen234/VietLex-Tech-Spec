@@ -5,9 +5,15 @@ import re
 import asyncio
 import os
 from typing import Tuple, List
+from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.messages import AIMessage, BaseMessage
+from langchain_core.outputs import ChatGeneration, ChatResult
 from nemoguardrails import LLMRails, RailsConfig
 from app.config import get_settings, install_system_trust_store
-from app.services.direct_llm import generate_llm_response
+from app.services.direct_llm import (
+    generate_llm_response,
+    generate_llm_response_with_metadata,
+)
 
 settings = get_settings()
 
@@ -69,6 +75,63 @@ async def call_llm_guard(prompt: str) -> str:
 
 _rails_instance = None
 
+
+class VertexPrimaryGuardrailModel(BaseChatModel):
+    @property
+    def _llm_type(self) -> str:
+        return "vietlex_vertex_primary_guardrail"
+
+    @property
+    def _identifying_params(self) -> dict:
+        return {
+            "primary_provider": "google_vertex_ai",
+            "primary_model": settings.VERTEX_LLM_MODEL,
+        }
+
+    @staticmethod
+    def _prompt(messages: List[BaseMessage]) -> str:
+        return "\n".join(str(message.content) for message in messages)
+
+    async def _agenerate(
+        self,
+        messages: List[BaseMessage],
+        stop=None,
+        run_manager=None,
+        **kwargs,
+    ) -> ChatResult:
+        result = await generate_llm_response_with_metadata(
+            self._prompt(messages),
+            max_output_tokens=64,
+            thinking_level="MINIMAL",
+        )
+        return ChatResult(
+            generations=[
+                ChatGeneration(message=AIMessage(content=result.text))
+            ],
+            llm_output={
+                "provider": result.observed_provider,
+                "model": result.observed_model,
+                "fallback_used": result.fallback_used,
+                "primary_error_kind": result.primary_error_kind,
+            },
+        )
+
+    def _generate(
+        self,
+        messages: List[BaseMessage],
+        stop=None,
+        run_manager=None,
+        **kwargs,
+    ) -> ChatResult:
+        return asyncio.run(
+            self._agenerate(
+                messages,
+                stop=stop,
+                run_manager=run_manager,
+                **kwargs,
+            )
+        )
+
 def get_rails():
     global _rails_instance
     if _rails_instance is None:
@@ -78,47 +141,32 @@ def get_rails():
         
         config = RailsConfig.from_path(config_dir)
         
-        target_model = "meta-llama/llama-3.3-70b-instruct"
-        target_base_url = "https://openrouter.ai/api/v1"
-        target_key = settings.OPENROUTER_API_KEY
-        
-        if settings.OPENROUTER_API_KEY:
-            target_model = "meta-llama/llama-3.3-70b-instruct"
-            target_base_url = "https://openrouter.ai/api/v1"
-            target_key = settings.OPENROUTER_API_KEY
-        elif settings.GEMINI_API_KEY:
-            target_model = "gemini-2.0-flash"
-            target_base_url = "https://generativelanguage.googleapis.com/v1beta/openai/"
-            target_key = settings.GEMINI_API_KEY
-        elif settings.NVIDIA_API_KEY:
-            target_model = "meta/llama-3.3-70b-instruct"
-            target_base_url = "https://integrate.api.nvidia.com/v1"
-            target_key = settings.NVIDIA_API_KEY
-        elif settings.GROQ_API_KEY:
-            target_model = "llama-3.3-70b-versatile"
-            target_base_url = "https://api.groq.com/openai/v1"
-            target_key = settings.GROQ_API_KEY
-        else:
-            target_model = "legal-core-model"
-            target_base_url = settings.OMNIGATE_BASE_URL
-            target_key = settings.LITELLM_MASTER_KEY
-            
-        os.environ["OPENAI_API_KEY"] = target_key
-        os.environ["OPENAI_BASE_URL"] = target_base_url
-        os.environ["OPENAI_API_BASE"] = target_base_url
-        
-        if config.models:
-            config.models[0].model = target_model
-            config.models[0].parameters = {"base_url": target_base_url, "api_key": target_key}
-            
-        _rails_instance = LLMRails(config)
+        _rails_instance = LLMRails(
+            config,
+            llm=VertexPrimaryGuardrailModel(),
+        )
     return _rails_instance
 
 
 async def warm_guardrails() -> None:
-    """Initialize NeMo before the first request without blocking the loop."""
+    """Initialize NeMo and prime the Vertex input rail before evaluation."""
     try:
-        await asyncio.to_thread(get_rails)
+        rails = await asyncio.to_thread(get_rails)
+        await asyncio.wait_for(
+            rails.generate_async(
+                messages=[
+                    {
+                        "role": "user",
+                        "content": "Câu hỏi pháp luật Việt Nam.",
+                    }
+                ],
+                options={"rails": ["input"]},
+            ),
+            timeout=max(
+                settings.GUARDRAIL_TIMEOUT_SECONDS,
+                settings.VERTEX_REQUEST_TIMEOUT_SECONDS,
+            ),
+        )
     except Exception as error:
         logfire.error(
             "Guardrails startup warm-up failed: {error}",

@@ -9,6 +9,13 @@ __pycache__/
 .env.local
 .env.*.local
 
+# Local cloud credentials (ADC key files must never enter Git)
+.secrets/
+/service-account*.json
+/service_account*.json
+/gcloud-key*.json
+/google-credentials*.json
+
 # Virtual environments
 .venv/
 venv/

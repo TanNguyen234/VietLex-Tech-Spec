@@ -122,3 +122,15 @@ def test_ragas_evaluation_mode_accepted_values() -> None:
     for mode in ("off", "sample", "all"):
         s = Settings(_env_file=None, RAGAS_EVALUATION_MODE=mode)
         assert s.RAGAS_EVALUATION_MODE == mode
+
+
+def test_vertex_defaults_are_narrow_and_do_not_model_adc_credentials() -> None:
+    settings = Settings(_env_file=None)
+
+    assert settings.GOOGLE_CLOUD_PROJECT is None
+    assert settings.GOOGLE_CLOUD_LOCATION == "global"
+    assert settings.VERTEX_LLM_MODEL == "gemini-3.5-flash"
+    assert settings.VERTEX_EMBEDDING_MODEL == "gemini-embedding-2"
+    assert settings.VERTEX_REQUEST_TIMEOUT_SECONDS == 30.0
+    assert settings.VERTEX_MAX_RETRIES == 2
+    assert "GOOGLE_APPLICATION_CREDENTIALS" not in Settings.model_fields

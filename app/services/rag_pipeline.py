@@ -71,7 +71,7 @@ def build_bounded_context(
 async def run_advanced_rag(
     user_query: str,
     *,
-    rewrite_mode: str = "on",
+    rewrite_mode: str = "off",
     profile: Any = None,
 ) -> Tuple[str, List[str], Dict[str, Any]]:
     started = time.perf_counter()
@@ -188,6 +188,12 @@ async def run_advanced_rag(
             "provider": llm_result.observed_provider,
             "model": llm_result.observed_model,
             "observed": bool(llm_result.observed),
+            "project": llm_result.project,
+            "location": llm_result.location,
+            "status": llm_result.status,
+            "latency_ms": llm_result.provider_latency_ms,
+            "fallback_used": llm_result.fallback_used,
+            "primary_error_kind": llm_result.primary_error_kind,
         },
         "guardrails": {
             "provider": "unobserved",

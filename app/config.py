@@ -101,6 +101,16 @@ class Settings(BaseSettings):
     GROQ_API_KEY: Optional[str] = None
     OPENROUTER_API_KEY: Optional[str] = None
     NVIDIA_API_KEY: Optional[str] = None
+
+    # Google Cloud Vertex AI via Application Default Credentials (ADC).
+    # GOOGLE_APPLICATION_CREDENTIALS is intentionally consumed by google-auth,
+    # not modeled or serialized by application settings.
+    GOOGLE_CLOUD_PROJECT: Optional[str] = None
+    GOOGLE_CLOUD_LOCATION: str = "global"
+    VERTEX_LLM_MODEL: str = "gemini-3.5-flash"
+    VERTEX_EMBEDDING_MODEL: str = "gemini-embedding-2"
+    VERTEX_REQUEST_TIMEOUT_SECONDS: float = Field(default=30.0, gt=0)
+    VERTEX_MAX_RETRIES: int = Field(default=2, ge=0, le=5)
     
     # Logfire Token
     LOGFIRE_TOKEN: Optional[str] = None

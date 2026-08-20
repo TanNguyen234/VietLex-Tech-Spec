@@ -65,7 +65,7 @@ def test_chat_route_off_mode_does_not_enqueue_ragas(client, monkeypatch) -> None
     )
 
     ragas_mock = MagicMock()
-    monkeypatch.setattr("app.api.routes.run_llm_as_judge", ragas_mock)
+    monkeypatch.setattr("app.services.evaluator.run_llm_as_judge", ragas_mock)
 
     # settings RAGAS_EVALUATION_MODE is default 'off'
     response = client.post(
@@ -84,7 +84,7 @@ def test_chat_route_off_mode_does_not_enqueue_ragas(client, monkeypatch) -> None
     assert logged_interaction.get("trace_id") is not None
 
 
-def test_chat_route_all_mode_enqueues_ragas_for_valid_rag(client, monkeypatch) -> None:
+def test_chat_route_never_enqueues_online_ragas_even_when_legacy_mode_is_all(client, monkeypatch) -> None:
     monkeypatch.setattr(
         "app.api.routes.check_semantic_cache",
         AsyncMock(return_value=None),
@@ -129,7 +129,10 @@ def test_chat_route_all_mode_enqueues_ragas_for_valid_rag(client, monkeypatch) -
         nonlocal ragas_enqueued
         ragas_enqueued = True
 
-    monkeypatch.setattr("app.api.routes.run_llm_as_judge", fake_run_llm_as_judge)
+    monkeypatch.setattr(
+        "app.services.evaluator.run_llm_as_judge",
+        fake_run_llm_as_judge,
+    )
 
     response = client.post(
         "/chat",
@@ -141,7 +144,7 @@ def test_chat_route_all_mode_enqueues_ragas_for_valid_rag(client, monkeypatch) -
     )
 
     assert response.status_code == 200
-    assert ragas_enqueued is True
+    assert ragas_enqueued is False
 
 
 def test_admin_stats_and_details_display_proxy_labels(client, monkeypatch) -> None:
@@ -404,11 +407,11 @@ def test_chat_route_output_guardrail_unavailable_preserves_answer_provider_usage
     rag_latency = {
         "t_total": 0.45,
         "t_llm": 0.35,
-        "observed_provider": "openrouter",
-        "observed_model": "google/gemini-2.5-flash",
+        "observed_provider": "google_vertex_ai",
+        "observed_model": "gemini-3.5-flash",
         "provider_usage": {
             "query_rewrite": {"provider": "none", "model": "none", "observed": False},
-            "answer_generation": {"provider": "openrouter", "model": "google/gemini-2.5-flash", "observed": True},
+            "answer_generation": {"provider": "google_vertex_ai", "model": "gemini-3.5-flash", "observed": True},
             "guardrails": {"provider": "unobserved", "model": "unobserved", "observed": False},
         },
     }
@@ -438,9 +441,9 @@ def test_chat_route_output_guardrail_unavailable_preserves_answer_provider_usage
     )
     assert resp.status_code == 503
     assert logged.get("request_status") == "technical_error"
-    assert logged.get("observed_provider") == "openrouter"
-    assert logged.get("observed_model") == "google/gemini-2.5-flash"
-    assert logged.get("provider_usage", {}).get("answer_generation", {}).get("provider") == "openrouter"
+    assert logged.get("observed_provider") == "google_vertex_ai"
+    assert logged.get("observed_model") == "gemini-3.5-flash"
+    assert logged.get("provider_usage", {}).get("answer_generation", {}).get("provider") == "google_vertex_ai"
 
 
 def test_chat_route_technical_error_sanitizes_secrets(client, monkeypatch) -> None:
@@ -475,32 +478,30 @@ def test_chat_route_technical_error_sanitizes_secrets(client, monkeypatch) -> No
     assert "[REDACTED]" in msg
 
 
-def test_chat_route_answer_generation_no_provider_available_persists_technical_error(client, monkeypatch) -> None:
+def test_chat_route_answer_generation_authentication_failure_persists_technical_error(client, monkeypatch) -> None:
     monkeypatch.setattr("app.api.routes.check_semantic_cache", AsyncMock(return_value=None))
     monkeypatch.setattr("app.api.routes.check_input_guardrails", AsyncMock(return_value=(True, "")))
     mock_output_guard = AsyncMock(return_value=(True, ""))
     monkeypatch.setattr("app.api.routes.check_output_guardrails", mock_output_guard)
 
     mock_save_cache = AsyncMock()
-    mock_evaluator = AsyncMock()
     monkeypatch.setattr("app.api.routes.save_to_semantic_cache", mock_save_cache)
-    monkeypatch.setattr("app.api.routes.run_llm_as_judge", mock_evaluator)
 
     rag_latency = {
         "t_total": 0.30,
         "t_llm": 0.20,
-        "generation_status": "no_provider_available",
-        "observed_provider": "unobserved",
-        "observed_model": "unobserved",
+        "generation_status": "authentication",
+        "observed_provider": "google_vertex_ai",
+        "observed_model": "gemini-3.5-flash",
         "provider_usage": {
             "query_rewrite": {"provider": "none", "model": "none", "observed": False},
-            "answer_generation": {"provider": "unobserved", "model": "unobserved", "observed": False},
+            "answer_generation": {"provider": "google_vertex_ai", "model": "gemini-3.5-flash", "observed": True},
             "guardrails": {"provider": "unobserved", "model": "unobserved", "observed": False},
         },
     }
     monkeypatch.setattr(
         "app.api.routes.run_advanced_rag",
-        AsyncMock(return_value=("Hệ thống chưa được cấu hình API Keys.", ["Context 1"], rag_latency)),
+        AsyncMock(return_value=("Không thể xác thực Google Cloud Vertex AI.", ["Context 1"], rag_latency)),
     )
     monkeypatch.setattr("app.api.routes.create_session", AsyncMock())
 
@@ -521,77 +522,20 @@ def test_chat_route_answer_generation_no_provider_available_persists_technical_e
     assert logged.get("request_status") == "technical_error"
     assert logged.get("technical_error") is not None
     assert logged["technical_error"]["stage"] == "answer_generation"
-    assert logged["technical_error"]["error_type"] == "no_provider_available"
-    assert logged.get("observed_provider") in ("unobserved", "none")
+    assert logged["technical_error"]["error_type"] == "authentication"
+    assert logged.get("observed_provider") == "google_vertex_ai"
     assert mock_output_guard.called is False
     mock_output_guard.assert_not_called()
     assert mock_save_cache.called is False
-    assert mock_evaluator.called is False
 
 
-def test_chat_route_answer_generation_providers_exhausted_persists_technical_error(client, monkeypatch) -> None:
-    monkeypatch.setattr("app.api.routes.check_semantic_cache", AsyncMock(return_value=None))
-    monkeypatch.setattr("app.api.routes.check_input_guardrails", AsyncMock(return_value=(True, "")))
-    mock_output_guard = AsyncMock(return_value=(True, ""))
-    monkeypatch.setattr("app.api.routes.check_output_guardrails", mock_output_guard)
-
-    mock_save_cache = AsyncMock()
-    mock_evaluator = AsyncMock()
-    monkeypatch.setattr("app.api.routes.save_to_semantic_cache", mock_save_cache)
-    monkeypatch.setattr("app.api.routes.run_llm_as_judge", mock_evaluator)
-
-    rag_latency = {
-        "t_total": 0.40,
-        "t_llm": 0.30,
-        "generation_status": "providers_exhausted",
-        "observed_provider": "unobserved",
-        "observed_model": "unobserved",
-        "provider_usage": {
-            "query_rewrite": {"provider": "none", "model": "none", "observed": False},
-            "answer_generation": {"provider": "unobserved", "model": "unobserved", "observed": False},
-            "guardrails": {"provider": "unobserved", "model": "unobserved", "observed": False},
-        },
-    }
-    monkeypatch.setattr(
-        "app.api.routes.run_advanced_rag",
-        AsyncMock(return_value=("Hệ thống bị giới hạn tốc độ...", ["Context 1"], rag_latency)),
-    )
-    monkeypatch.setattr("app.api.routes.create_session", AsyncMock())
-
-    logged = {}
-
-    async def fake_log(**kwargs):
-        nonlocal logged
-        logged = kwargs
-        return kwargs
-
-    monkeypatch.setattr("app.api.routes.log_interaction", fake_log)
-
-    resp = client.post(
-        "/chat",
-        data={"message": "Câu hỏi", "csrf_token": "valid_token", "session_id": "test-session"},
-    )
-    assert resp.status_code == 200
-    assert logged.get("request_status") == "technical_error"
-    assert logged.get("technical_error") is not None
-    assert logged["technical_error"]["stage"] == "answer_generation"
-    assert logged["technical_error"]["error_type"] == "providers_exhausted"
-    assert logged.get("observed_provider") in ("unobserved", "none")
-    assert mock_output_guard.called is False
-    mock_output_guard.assert_not_called()
-    assert mock_save_cache.called is False
-    assert mock_evaluator.called is False
-
-
-def test_chat_route_no_evidence_caches_and_skips_ragas(client, monkeypatch) -> None:
+def test_chat_route_no_evidence_caches_response(client, monkeypatch) -> None:
     monkeypatch.setattr("app.api.routes.check_semantic_cache", AsyncMock(return_value=None))
     monkeypatch.setattr("app.api.routes.check_input_guardrails", AsyncMock(return_value=(True, "")))
     monkeypatch.setattr("app.api.routes.check_output_guardrails", AsyncMock(return_value=(True, "")))
 
     mock_save_cache = AsyncMock()
-    mock_evaluator = AsyncMock()
     monkeypatch.setattr("app.api.routes.save_to_semantic_cache", mock_save_cache)
-    monkeypatch.setattr("app.api.routes.run_llm_as_judge", mock_evaluator)
 
     rag_latency = {
         "t_total": 0.20,
@@ -622,10 +566,9 @@ def test_chat_route_no_evidence_caches_and_skips_ragas(client, monkeypatch) -> N
     assert logged.get("request_status") == "no_evidence"
     assert logged.get("no_evidence") is True
     assert mock_save_cache.called is True
-    assert mock_evaluator.called is False
 
 
-def test_chat_route_blocked_output_caches_and_triggers_ragas_when_selected(client, monkeypatch) -> None:
+def test_chat_route_blocked_output_caches_without_online_ragas(client, monkeypatch) -> None:
     from app.config import get_settings
     monkeypatch.setattr(get_settings(), "RAGAS_EVALUATION_MODE", "all")
 
@@ -635,15 +578,13 @@ def test_chat_route_blocked_output_caches_and_triggers_ragas_when_selected(clien
 
 
     mock_save_cache = AsyncMock()
-    mock_evaluator = AsyncMock()
     monkeypatch.setattr("app.api.routes.save_to_semantic_cache", mock_save_cache)
-    monkeypatch.setattr("app.api.routes.run_llm_as_judge", mock_evaluator)
 
     rag_latency = {
         "t_total": 0.50,
         "generation_status": "success",
-        "observed_provider": "openrouter",
-        "observed_model": "google/gemini-2.5-flash",
+        "observed_provider": "google_vertex_ai",
+        "observed_model": "gemini-3.5-flash",
     }
     monkeypatch.setattr(
         "app.api.routes.run_advanced_rag",
@@ -667,4 +608,3 @@ def test_chat_route_blocked_output_caches_and_triggers_ragas_when_selected(clien
     assert resp.status_code == 200
     assert logged.get("request_status") == "blocked_output"
     assert mock_save_cache.called is True
-    assert mock_evaluator.called is True

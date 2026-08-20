@@ -21,7 +21,6 @@ from app.services.guardrails import (
     redact_pii,
 )
 from app.services.rag_pipeline import RetrievalPipelineError, run_advanced_rag
-from app.services.evaluator import run_llm_as_judge
 from app.database import (
     log_interaction, update_feedback, get_admin_logs, get_admin_stats, get_interaction,
     create_session, get_sessions, get_session_messages, delete_session, rename_session
@@ -69,8 +68,8 @@ async def chat(
                 context_used=[],
                 bot_response=cached_response,
                 cached=True,
-                ragas_mode=settings.RAGAS_EVALUATION_MODE,
-                ragas_sample_rate=settings.RAGAS_SAMPLE_RATE,
+                ragas_mode="off",
+                ragas_sample_rate=0.0,
             )
             # Log cached interaction
             await log_interaction(
@@ -136,8 +135,8 @@ async def chat(
                 bot_response=GUARDRAIL_UNAVAILABLE_MESSAGE,
                 cached=False,
                 technical_error=tech_error,
-                ragas_mode=settings.RAGAS_EVALUATION_MODE,
-                ragas_sample_rate=settings.RAGAS_SAMPLE_RATE,
+                ragas_mode="off",
+                ragas_sample_rate=0.0,
             )
             await log_interaction(
                 trace_id=trace_id,
@@ -188,8 +187,8 @@ async def chat(
                 cached=False,
                 input_safe=False,
                 rejection_reason="Jailbreak or off-topic input blocked by guardrails",
-                ragas_mode=settings.RAGAS_EVALUATION_MODE,
-                ragas_sample_rate=settings.RAGAS_SAMPLE_RATE,
+                ragas_mode="off",
+                ragas_sample_rate=0.0,
             )
             # Log blocked input interaction
             await log_interaction(
@@ -262,8 +261,8 @@ async def chat(
                 observed_provider=err_observed_prov,
                 observed_model=err_observed_mod,
                 provider_usage=err_provider_usage,
-                ragas_mode=settings.RAGAS_EVALUATION_MODE,
-                ragas_sample_rate=settings.RAGAS_SAMPLE_RATE,
+                ragas_mode="off",
+                ragas_sample_rate=0.0,
             )
             await log_interaction(
                 trace_id=trace_id,
@@ -336,8 +335,8 @@ async def chat(
                 observed_provider=err_observed_prov,
                 observed_model=err_observed_mod,
                 provider_usage=err_provider_usage,
-                ragas_mode=settings.RAGAS_EVALUATION_MODE,
-                ragas_sample_rate=settings.RAGAS_SAMPLE_RATE,
+                ragas_mode="off",
+                ragas_sample_rate=0.0,
             )
             await log_interaction(
                 trace_id=trace_id,
@@ -424,8 +423,8 @@ async def chat(
                 observed_provider=out_observed_prov,
                 observed_model=out_observed_mod,
                 provider_usage=out_provider_usage,
-                ragas_mode=settings.RAGAS_EVALUATION_MODE,
-                ragas_sample_rate=settings.RAGAS_SAMPLE_RATE,
+                ragas_mode="off",
+                ragas_sample_rate=0.0,
             )
             await log_interaction(
                 trace_id=trace_id,
@@ -499,8 +498,8 @@ async def chat(
             input_safe=True,
             output_safe=output_safe,
             rejection_reason=rejection_reason,
-            ragas_mode=settings.RAGAS_EVALUATION_MODE,
-            ragas_sample_rate=settings.RAGAS_SAMPLE_RATE,
+            ragas_mode="off",
+            ragas_sample_rate=0.0,
             observed_provider=observed_prov,
             observed_model=observed_mod,
             provider_usage=provider_use,
@@ -536,13 +535,8 @@ async def chat(
         if req_status != "technical_error":
             background_tasks.add_task(save_to_semantic_cache, message, final_response)
         
-        # Step 8: Trigger Background task: Evaluator (only if Ragas is selected and context exists, non-technical-error)
-        if req_status != "technical_error" and metrics.ragas_selected and context_used:
-            background_tasks.add_task(run_llm_as_judge, message, context_used, final_response, trace_id)
-
-
-        
-        # Step 9: Return HTML partial response
+        # Ragas is an opt-in offline audit and is never enqueued by /chat.
+        # Step 8: Return HTML partial response
         response = templates.TemplateResponse(
             request,
             "chat_message.html",

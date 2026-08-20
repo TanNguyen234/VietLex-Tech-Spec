@@ -1,22 +1,117 @@
 from types import SimpleNamespace
 
 import pytest
+from langchain_core.messages import HumanMessage
+from pathlib import Path
 
 from app.services import guardrails
+from app.services.direct_llm import LLMGenerationResult
+
+
+def test_input_prompt_allows_lawful_government_and_policy_questions() -> None:
+    prompt = (
+        Path(guardrails.__file__).parents[2]
+        / "guardrails_config"
+        / "prompts.yml"
+    ).read_text(encoding="utf-8")
+
+    assert "cơ quan nhà nước" in prompt
+    assert "trường hợp mơ hồ" in prompt
+
+
+@pytest.mark.asyncio
+async def test_guardrail_model_uses_vertex_primary_chain_with_minimal_thinking(
+    monkeypatch,
+) -> None:
+    captured = {}
+
+    async def fake_generate(prompt, **kwargs):
+        captured["prompt"] = prompt
+        captured.update(kwargs)
+        return LLMGenerationResult(
+            text="no",
+            observed_provider="google_vertex_ai",
+            observed_model="gemini-3.5-flash",
+            observed=True,
+        )
+
+    monkeypatch.setattr(
+        guardrails,
+        "generate_llm_response_with_metadata",
+        fake_generate,
+        raising=False,
+    )
+
+    result = await guardrails.VertexPrimaryGuardrailModel()._agenerate(
+        [HumanMessage(content="Câu hỏi pháp luật")]
+    )
+
+    assert result.generations[0].message.content == "no"
+    assert captured["prompt"] == "Câu hỏi pháp luật"
+    assert captured["thinking_level"] == "MINIMAL"
+    assert captured["max_output_tokens"] == 64
+    assert result.llm_output["provider"] == "google_vertex_ai"
+
+
+def test_get_rails_injects_vertex_primary_guardrail_model(monkeypatch) -> None:
+    guardrail_model = object()
+    captured = {}
+    monkeypatch.setattr(guardrails, "_rails_instance", None)
+    monkeypatch.setattr(
+        guardrails.RailsConfig,
+        "from_path",
+        lambda _path: SimpleNamespace(models=[]),
+    )
+    monkeypatch.setattr(
+        guardrails,
+        "VertexPrimaryGuardrailModel",
+        lambda: guardrail_model,
+        raising=False,
+    )
+    monkeypatch.setattr(
+        guardrails,
+        "install_system_trust_store",
+        lambda: None,
+    )
+
+    def fake_rails(config, *, llm):
+        captured["config"] = config
+        captured["llm"] = llm
+        return object()
+
+    monkeypatch.setattr(guardrails, "LLMRails", fake_rails)
+
+    guardrails.get_rails()
+
+    assert captured["llm"] is guardrail_model
 
 
 @pytest.mark.asyncio
 async def test_warm_guardrails_initializes_rails_once(monkeypatch) -> None:
     calls: list[str] = []
+
+    class WarmRails:
+        async def generate_async(self, **kwargs):
+            calls.append(kwargs["messages"][0]["content"])
+            return SimpleNamespace(response=[])
+
     monkeypatch.setattr(
         guardrails,
         "get_rails",
-        lambda: calls.append("get_rails") or object(),
+        lambda: calls.append("get_rails") or WarmRails(),
+    )
+    monkeypatch.setattr(
+        guardrails,
+        "settings",
+        SimpleNamespace(
+            GUARDRAIL_TIMEOUT_SECONDS=8.0,
+            VERTEX_REQUEST_TIMEOUT_SECONDS=30.0,
+        ),
     )
 
     await guardrails.warm_guardrails()
 
-    assert calls == ["get_rails"]
+    assert calls == ["get_rails", "Câu hỏi pháp luật Việt Nam."]
 
 
 @pytest.mark.asyncio
@@ -64,7 +159,7 @@ def test_get_rails_installs_system_trust_before_creating_client(
     monkeypatch.setattr(
         guardrails,
         "LLMRails",
-        lambda _config: events.append("client") or object(),
+        lambda _config, *, llm: events.append("client") or object(),
     )
 
     guardrails.get_rails()
