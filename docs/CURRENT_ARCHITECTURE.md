@@ -56,9 +56,9 @@ Local SQLite Content Store (Compressed Zstandard Full Text)
 - Configuration declarations in `app/config.py` do not prove runtime usage until verified by code execution.
 - Evaluation runs from dirty working trees are marked with `git_dirty=true` and `git_diff_sha256`.
 
-## Opt-in structural v2 path (not production)
+## Opt-in structural v2 primary path
 
-The codebase also contains an explicitly gated Qdrant structural pilot. It does not alter `get_legal_retriever()` or the Pinecone v1 topology above.
+The explicitly gated Qdrant structural pilot becomes the primary retrieval path for runtime and evaluation when `STRUCTURAL_BACKEND_ENABLED=true`. `get_legal_retriever()` and the Pinecone v1 topology remain intact as an observable fallback.
 
 ```text
 Pinned local primary-legislation scope (827 documents)
@@ -66,16 +66,17 @@ Pinned local primary-legislation scope (827 documents)
         v
 134,334 immutable structural records (420 max tokens / 48 overlap)
         |
-        +--> Qdrant Cloud Inference dense: Qwen3-Embedding-0.6B, 1024d
+        +--> Qdrant Cloud Inference dense: multilingual-e5-small, 384d
         +--> Qdrant corpus-level sparse: qdrant/bm25 with IDF
         |
         v
-Opt-in collection vietlex-legal-rag-v2-pilot
+Opt-in collection vietlex-legal-rag-v2-pilot-384
         |
         +--> concurrent dense / BM25 / exact-reference lanes
         +--> deterministic RRF and per-document cap
-        +--> existing remote reranker chain
+        +--> Pinecone bge-reranker-v2-m3 by default
         +--> direct structural evidence (no second local re-chunk)
+        +--> observable Pinecone-v1 fallback on technical/no-candidate result
 ```
 
 Each inference document is contract-versioned as `vietlex-structural-document-v2` and contains the corpus title, document number, legal type, structural path, citation, and unchanged chunk body. Its SHA-256 is persisted separately from the body/chunk hash and participates in checkpoint identity.
@@ -84,4 +85,4 @@ The pre-upload model probe is corpus-discriminative rather than relevant-only: 1
 
 The final pilot benchmark requires fused Document Recall@24 `1.0`, applicable Article Recall@24 at least `0.95`, applicable Clause Recall@24 at least `0.90`, all-required coverage at least `0.95`, and zero no-candidate/retrieval/reranker error rates. It reports reranker input/output deltas on identical cases; it does not infer reranker quality when verified evidence is absent from its input.
 
-Remote execution is ordered and artifact-bound: `create -> probe-model -> upload -> finalize -> verify -> benchmark`. The benchmark requires an exact `PASS_VERIFY` receipt and exact P2 comparison provenance before any remote client is constructed. Its raw trace uses only `dense_hits`, `bm25_hits`, `exact_hits`, `fused_hits`, `reranker_input`, `reranker_output`, and `final_hits`; legacy metric-v3 names exist only in a declared offline adapter.
+Remote ingestion is ordered and artifact-bound: `create -> probe-model -> upload -> finalize -> verify -> benchmark`. Runtime/evaluation reads do not create indexes or mutate payload schemas. Raw structural traces use only `dense_hits`, `bm25_hits`, `exact_hits`, `fused_hits`, `reranker_input`, `reranker_output`, and `final_hits`; legacy metric-v3 names exist only in a declared offline adapter. The evaluator records the effective structural collection, limits, reranker mode, and Pinecone fallback in its configuration fingerprint.

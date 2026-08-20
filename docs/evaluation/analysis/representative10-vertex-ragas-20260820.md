@@ -90,3 +90,34 @@ production benchmark.
   safe, `0` blocks, and `0` technical errors. Mean per-case latency was
   `1.816s`; the separate cold warm-up took `13.280s`. This validates input
   calibration only and does not change the failed retrieval production gate.
+
+## Structural 384 follow-up — 2026-08-21
+
+The replacement Qdrant endpoint is healthy. Read-only inspection found
+collection `vietlex-legal-rag-v2-pilot-384` green with 134,334 points and an
+E5-small 384-dimensional cosine dense vector plus BM25-IDF sparse vector. A
+direct query embedding returned 384 values with norm `1.0`; the earlier 404 is
+therefore resolved and was an endpoint failure, not evidence against 384d.
+
+A bounded retrieval-only diagnostic on the same ten cases produced Document
+Recall `1.0`. Source Article/Clause required coverage was `13/14` using the
+published sidecar and `14/14` after correcting one demonstrably stale label in
+diagnostic memory only. No promoted gold file was mutated:
+
+- `case_323` asks for the ten-day charter-capital registration duty. The local
+  source text places that rule at Điều 123 khoản 4, while the published sidecar
+  points to Điều 124 khoản 1. This requires human adjudication before promotion.
+- `case_397` was a candidate-budget/reranker loss, not missing knowledge. With
+  per-document cap 8, reranker input 64, return 6, final 5, and 720 tokens / two
+  chunks per document, both required provisions survive final evidence.
+- On identical ten-case reranker inputs, Qdrant ColBERT retained `12/14`
+  corrected required items; Pinecone `bge-reranker-v2-m3` retained `14/14`.
+  The structural default is therefore Pinecone BGE; Qdrant mode remains in
+  code rather than being deleted.
+
+This is still `NOT PRODUCTION-READY`: the structural collection covers only
+827 documents, the official published score remains `13/14` until human
+adjudication of `case_323`, and no new full-40 answer/Ragas run has been
+promoted. The valid next gate is human gold correction followed by the same
+representative ten through the stable runtime, guardrails, deterministic
+answer metrics, and optional Ragas; only then should the verified 40 run.

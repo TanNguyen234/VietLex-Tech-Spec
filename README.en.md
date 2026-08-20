@@ -8,9 +8,10 @@
 Language: [Tiếng Việt](README.md) | **English**
 
 VietLex is a production-oriented RAG system for Vietnamese legal document
-retrieval and grounded QA. The corpus is stored in Pinecone. Qdrant Cloud is
-used only for remote inference (embedding + rerank), with a Pinecone reranker
-fallback when Qdrant is temporarily unavailable.
+retrieval and grounded QA. The complete corpus is durably stored in Pinecone.
+Qdrant Cloud provides remote inference and an opt-in structural collection for
+827 primary-legislation documents. When enabled it is the primary retrieval
+path, with the full-corpus Pinecone v1 path retained as an observable fallback.
 
 > [!WARNING]
 > The corpus comes from a third-party research dataset:
@@ -89,7 +90,9 @@ Required secrets:
 
 - `PIPECONE_API` or `PINECONE_API_KEY`
 - `QDRANT_URL`, `QDRANT_API_KEY` (embedding + ColBERT cloud inference)
-- `GOOGLE_APPLICATION_CREDENTIALS` (path only, pointing to a Git-ignored local JSON key)
+- Structural primary (optional): `STRUCTURAL_BACKEND_ENABLED=true` and `STRUCTURAL_COLLECTION_NAME=vietlex-legal-rag-v2-pilot-384`; Pinecone v1 remains the full-corpus fallback
+- Local: `GOOGLE_APPLICATION_CREDENTIALS=.secrets/vertex-adc.json` (project-relative path to a Git-ignored key)
+- Vercel/serverless: `GOOGLE_SERVICE_ACCOUNT_JSON` (the complete service-account JSON stored as a platform secret and loaded in memory)
 - `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION=global`
 - `VERTEX_LLM_MODEL=gemini-3.5-flash`, `VERTEX_EMBEDDING_MODEL=gemini-embedding-2`
 - Optional secondary APIs: `OPENROUTER_API_KEY`, `GEMINI_API_KEY`, `NVIDIA_API_KEY`, `GROQ_API_KEY`

@@ -24,6 +24,13 @@ Local content store (SQLite + compressed full text)
 
 Pinecone is the durable vector store. Qdrant is not a durable copy of the 518,255-document corpus.
 
+An opt-in partial-scope collection, `vietlex-legal-rag-v2-pilot-384`, stores
+134,334 structural chunks for 827 primary-legislation documents. With
+`STRUCTURAL_BACKEND_ENABLED=true`, the runtime and evaluator query its E5-384
+dense and BM25-IDF sparse lanes first, rerank with Pinecone BGE, and fall back
+observably to the full-corpus Pinecone v1 path on technical/no-candidate
+results. This pilot is not a full-corpus migration.
+
 ## Runtime retrieval
 
 ```text

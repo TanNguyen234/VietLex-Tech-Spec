@@ -28,7 +28,7 @@ Ngôn ngữ: **Tiếng Việt** | [English](README.en.md)
 
 ---
 
-VietLex là hệ thống Retrieval-Augmented Generation (RAG) phục vụ tra cứu văn bản pháp luật Việt Nam. Toàn bộ corpus được lưu trữ trên **Pinecone**; **Qdrant Cloud** chỉ thực thi inference từ xa để tạo vector dense 384 chiều (`intfloat/multilingual-e5-small`) và rerank bằng **ColBERT**. Trong trường hợp Qdrant Cloud tạm thời quá tải, pipeline sẽ tự động fallback sang Pinecone Inference (`bge-reranker-v2-m3`). **Không có embedding hoặc reranker nào chạy tại local.**
+VietLex là hệ thống Retrieval-Augmented Generation (RAG) phục vụ tra cứu văn bản pháp luật Việt Nam. Toàn bộ corpus 518.255 văn bản được lưu trữ bền vững trên **Pinecone**. **Qdrant Cloud** thực thi inference từ xa và có collection structural opt-in `vietlex-legal-rag-v2-pilot-384` cho 827 văn bản luật chính. Khi bật structural, đây là retrieval primary; Pinecone v1 vẫn là fallback full-corpus có observability. **Không có embedding hoặc reranker nào chạy tại local.**
 
 > [!WARNING]
 > **Tuyên bố miễn trừ trách nhiệm về dữ liệu:**
@@ -120,7 +120,7 @@ flowchart LR
 ### Chi tiết Lưu trữ & Inference Engine
 
 * **Pinecone Serverless:** Lưu đúng 1 record/document với metadata tối thiểu: `document ID`, `content-store key`, `corpus revision`, và `content SHA-256`. Với 384 dense values và tối đa 64 sparse values, dung lượng raw vector payload ước tính khoảng **1,06 GB** (chưa tính ID, metadata và overhead của index). Thiết kế nhắm tới gói Starter 2 GB nhưng không thể bảo đảm quota nếu tài khoản chứa index khác; pipeline sẽ dừng rõ ràng khi Pinecone trả `QUOTA_EXCEEDED`.
-* **Qdrant Cloud Staging & Inference:** Dense embedding sử dụng Qdrant Cloud Inference với model `intfloat/multilingual-e5-small`. Qdrant chỉ giữ collection staging tối đa 2.049 point ID cố định cho embedding và một collection rerank tạm thời cho tối đa 12 chunks/request. Toàn bộ dense + sparse vectors lâu dài vẫn nằm tại Pinecone; Qdrant không giữ bản sao corpus.
+* **Qdrant Cloud Staging, Inference & Structural Pilot:** Dense embedding sử dụng Qdrant Cloud Inference với model `intfloat/multilingual-e5-small`. Ngoài các collection staging/rerank tạm thời, collection opt-in `vietlex-legal-rag-v2-pilot-384` giữ 134.334 structural chunks của 827 văn bản luật chính. Đây không phải bản sao đầy đủ của corpus; Pinecone vẫn là durable full-corpus store.
 
 ---
 
@@ -144,13 +144,15 @@ Các biến môi trường bắt buộc cấu hình trong tệp `.env`:
 
 * `PIPECONE_API` hoặc `PINECONE_API_KEY`: API Key kết nối Pinecone Serverless.
 * `QDRANT_URL`, `QDRANT_API_KEY`: Thông tin kết nối Qdrant Cloud Inference (cho Embedding & ColBERT).
-* `GOOGLE_APPLICATION_CREDENTIALS`: Đường dẫn tới JSON key local đã nằm trong `.secrets/` và được Git ignore; không chép nội dung JSON vào `.env`.
+* Để dùng structural primary: `STRUCTURAL_BACKEND_ENABLED=true`, `STRUCTURAL_COLLECTION_NAME=vietlex-legal-rag-v2-pilot-384`. Collection này chỉ phủ 827 văn bản; Pinecone v1 vẫn fallback cho lỗi kỹ thuật/no-candidate.
+* Local: `GOOGLE_APPLICATION_CREDENTIALS=.secrets/vertex-adc.json` dùng đường dẫn tương đối tới key đã được Git ignore; không hardcode đường dẫn Windows.
+* Vercel/serverless: đặt toàn bộ JSON service account trong secret `GOOGLE_SERVICE_ACCOUNT_JSON`. Provider tạo credential trực tiếp trong memory, không cần ghi key ra filesystem.
 * `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION=global`: Project/location cho Vertex AI.
 * `VERTEX_LLM_MODEL=gemini-3.5-flash`, `VERTEX_EMBEDDING_MODEL=gemini-embedding-2`: generation production và embedding probe-only.
 * Tùy chọn fallback: `OPENROUTER_API_KEY`, `GEMINI_API_KEY`, `NVIDIA_API_KEY`, `GROQ_API_KEY`. Các API này chỉ chạy khi Vertex primary gặp lỗi kỹ thuật.
 
 > [!NOTE]
-> Tên `PIPECONE_API` được hỗ trợ để tương thích với cấu hình secret hiện có, mặc dù tên chuẩn của Pinecone là `PINECONE_API_KEY`. Tuyệt đối không hardcode hoặc ghi secret vào log/checkpoint.
+> Tên `PIPECONE_API` được hỗ trợ để tương thích với cấu hình secret hiện có, mặc dù tên chuẩn của Pinecone là `PINECONE_API_KEY`. Tuyệt đối không hardcode hoặc ghi secret vào log/checkpoint. Không đặt đồng thời JSON thô vào `GOOGLE_APPLICATION_CREDENTIALS`; biến chuẩn này vẫn dành cho đường dẫn local.
 
 ---
 

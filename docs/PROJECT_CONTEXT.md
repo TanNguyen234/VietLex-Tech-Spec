@@ -14,7 +14,7 @@ The current priority is to establish a verified, measurable, reproducible, and d
 - **Local Content Store**: SQLite + compressed Zstandard full document store (`data/huggingface/content_store.sqlite3`).
 - **Dense Inference**: Qdrant Cloud staging (`intfloat/multilingual-e5-small`, 384 dimensions).
 - **Lexical Search**: Local SQLite FTS index for document numbers and titles (`data/huggingface/legal_fts.sqlite3`).
-- **Reranker**: Primary Qdrant ColBERT (`answerdotai/answerai-colbert-small-v1`) with fallback to Pinecone `bge-reranker-v2-m3`.
+- **Reranker**: Pinecone v1 uses Qdrant ColBERT with Pinecone BGE fallback. The opt-in structural path uses Pinecone `bge-reranker-v2-m3` by default after an identical-input representative-10 A/B; Qdrant ColBERT remains an available secondary mode.
 
 ## Evaluation Integrity Policy
 
@@ -33,10 +33,11 @@ The current priority is to establish a verified, measurable, reproducible, and d
 
 ## Opt-in Qdrant structural pilot
 
-- A guarded v2 pilot is code-prepared for the 827 primary-legislation documents in the pinned 518,255-document corpus. Its immutable structural contract contains 134,334 article/clause records at 420/48 chunking.
-- The pilot uses Qdrant Cloud Inference only: `Qwen/Qwen3-Embedding-0.6B` dense vectors at 1024 dimensions plus corpus-level `qdrant/bm25`. There is no local embedding fallback.
+- Collection `vietlex-legal-rag-v2-pilot-384` contains 134,334 structural records for 827 primary-legislation documents from the pinned 518,255-document corpus, at 420/48 chunking. It is not a full-corpus durable replacement for Pinecone.
+- The live pilot contract uses Qdrant Cloud Inference with `intfloat/multilingual-e5-small` dense vectors at 384 dimensions plus `qdrant/bm25` sparse vectors with IDF. There is no local embedding fallback.
 - Dense and BM25 document inputs use version `vietlex-structural-document-v2`: title, document number, legal type, structural path, citation, and unchanged evidence body. Payload/readback/checkpoints bind the exact inference-text SHA-256.
 - The bounded model probe contains all 1,748 verified relevant rows plus one deterministic real row from each of the other 825 documents and 64 corpus title canaries. Golden labels never select corpus membership.
 - The default probe performs no Pinecone inference. An immutable reference artifact is optional and cannot relax the absolute Qdrant gates.
 - `audit` and `plan` are provider-free. `create`, `probe-model`, `upload`, `finalize`, `verify`, and `benchmark` are separate fail-closed remote phases and are not evidence of success until their immutable artifacts exist.
-- The structural retriever and benchmark are opt-in. Pinecone `vietlex-legal-rag-v1` remains the production retrieval path; no cutover is authorized by local code completion.
+- `STRUCTURAL_BACKEND_ENABLED=true` makes this collection the primary runtime and evaluation retrieval path. A technical failure or no-candidate result falls back observably to Pinecone v1; the fallback is never reported as an unqualified success.
+- Pinecone `vietlex-legal-rag-v1` remains the durable full-corpus store. The structural collection's limited scope and the unresolved `case_323` gold-label defect prevent a production-ready claim or a full verified benchmark promotion.
