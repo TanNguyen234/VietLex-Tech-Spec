@@ -28,6 +28,11 @@ class GuardrailUnavailableError(RuntimeError):
         self.stage = stage
         super().__init__(f"{stage} guardrail unavailable: {reason}")
 
+
+def _normalize_guardrail_decision(text: str) -> str:
+    match = re.search(r"\b(yes|no)\b\s*[.!]?\s*$", text, re.IGNORECASE)
+    return match.group(1).lower() if match else text
+
 def redact_pii(text: str) -> str:
     """
     Tự động nhận diện và ẩn thông tin cá nhân nhạy cảm (PII) trong tiếng Việt.
@@ -106,7 +111,11 @@ class VertexPrimaryGuardrailModel(BaseChatModel):
         )
         return ChatResult(
             generations=[
-                ChatGeneration(message=AIMessage(content=result.text))
+                ChatGeneration(
+                    message=AIMessage(
+                        content=_normalize_guardrail_decision(result.text)
+                    )
+                )
             ],
             llm_output={
                 "provider": result.observed_provider,

@@ -53,6 +53,32 @@ async def test_guardrail_model_uses_vertex_primary_chain_with_minimal_thinking(
     assert result.llm_output["provider"] == "google_vertex_ai"
 
 
+@pytest.mark.asyncio
+async def test_guardrail_model_normalizes_labeled_safe_decision(
+    monkeypatch,
+) -> None:
+    async def fake_generate(_prompt, **_kwargs):
+        return LLMGenerationResult(
+            text="Đánh giá (yes/no): no",
+            observed_provider="google_vertex_ai",
+            observed_model="gemini-3.5-flash",
+            observed=True,
+        )
+
+    monkeypatch.setattr(
+        guardrails,
+        "generate_llm_response_with_metadata",
+        fake_generate,
+        raising=False,
+    )
+
+    result = await guardrails.VertexPrimaryGuardrailModel()._agenerate(
+        [HumanMessage(content="Câu hỏi pháp luật")]
+    )
+
+    assert result.generations[0].message.content == "no"
+
+
 def test_get_rails_injects_vertex_primary_guardrail_model(monkeypatch) -> None:
     guardrail_model = object()
     captured = {}

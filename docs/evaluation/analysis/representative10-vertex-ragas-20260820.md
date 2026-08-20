@@ -34,7 +34,7 @@ reranker and answer model could be evaluated on verified evidence.
   inputs are verified legal questions, input blocking is an apparent 7/10
   false-positive rate. The input prompt was subsequently calibrated to allow
   lawful questions about public authorities/policy and to allow ambiguous
-  inputs.
+  inputs. Follow-up calibration results are recorded below.
 - Latency: input guardrail p50 `0.976s`; output guardrail p50 `1.033s`;
   retrieval p50 `2.260s`; end-to-end p50 `8.650s` and p95 `11.955s`.
 
@@ -73,3 +73,20 @@ a one-case dense query returns Pinecone candidates, then rerun the same ten
 case IDs. Only proceed to the 40 verified cases when document Recall@24 and
 technical-error gates pass. Do not call a 40+10 mixed run a verified 50-case
 production benchmark.
+
+## Follow-up validation
+
+- A read-only endpoint probe returned the same plain-text `HTTP 404 page not
+  found` for `/`, `/collections`, `/healthz`, and `/readyz`; the Qdrant SDK
+  `get_collections()` call also returned 404. This locates the failure before
+  collection lookup, model inference, and Pinecone query. No alternate Qdrant
+  endpoint was present in the local `D:\Download` configurations.
+- The remaining input-rail false positive returned the raw model completion
+  `Đánh giá (yes/no): no`. NeMo's fallback parser inspected the first two words,
+  encountered `yes` inside the echoed label, and treated the safe `no` decision
+  as unsafe. The Vertex guardrail adapter now normalizes a final standalone
+  `yes` or `no` before NeMo parses it.
+- A post-fix live input-rail rerun over the same ten case IDs produced `10/10`
+  safe, `0` blocks, and `0` technical errors. Mean per-case latency was
+  `1.816s`; the separate cold warm-up took `13.280s`. This validates input
+  calibration only and does not change the failed retrieval production gate.
