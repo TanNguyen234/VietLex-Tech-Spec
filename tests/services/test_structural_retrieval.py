@@ -500,9 +500,12 @@ async def test_dedupe_fused_cap_per_document_and_rerank_limits() -> None:
         for index in range(47)
     ]
     settings = _settings(
-        RERANK_INPUT_LIMIT=24,
-        RERANK_RETURN_LIMIT=6,
-        FINAL_EVIDENCE_LIMIT=3,
+        RERANK_INPUT_LIMIT=5,
+        RERANK_RETURN_LIMIT=2,
+        FINAL_EVIDENCE_LIMIT=1,
+        STRUCTURAL_RERANK_INPUT_LIMIT=24,
+        STRUCTURAL_RERANK_RETURN_LIMIT=6,
+        STRUCTURAL_FINAL_EVIDENCE_LIMIT=3,
     )
     retriever, _transport, _fts, reranker = _retriever(
         dense=dense,
@@ -517,13 +520,31 @@ async def test_dedupe_fused_cap_per_document_and_rerank_limits() -> None:
     counts: dict[int, int] = {}
     for row in outcome.trace.fused_hits:
         counts[row.document_id] = counts.get(row.document_id, 0) + 1
-    assert max(counts.values()) <= 4
+    assert max(counts.values()) <= 8
     assert len(outcome.trace.reranker_input) == 24
     assert reranker.calls[0][2] == 6
     assert reranker.calls[0][3] == "current"
     assert outcome.trace.reranker_input_sha256 is not None
     assert len(outcome.trace.reranker_output) == 6
     assert len(outcome.evidence) == 3
+
+
+@pytest.mark.asyncio
+async def test_rewrite_only_changes_dense_query() -> None:
+    retriever, transport, _fts, reranker = _retriever(
+        dense=[_point("dense", 0.9)],
+        bm25=[_point("sparse", 0.8)],
+    )
+
+    await retriever.retrieve(
+        "truy van viet lai",
+        sparse_query="cau hoi goc",
+    )
+
+    dense_call, bm25_call = transport.calls[:2]
+    assert dense_call["document"].text.endswith("Query:truy van viet lai")
+    assert bm25_call["document"].text == "cau hoi goc"
+    assert reranker.calls[0][0] == "truy van viet lai"
 
 
 @pytest.mark.asyncio

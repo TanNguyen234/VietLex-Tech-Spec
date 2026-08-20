@@ -618,3 +618,50 @@ async def test_hybrid_timeout_falls_back_to_lexical_results(
     assert outcome.diagnostics["retrieval_mode"] == "lexical_fallback"
     assert outcome.diagnostics["hybrid_error_stage"] == "pinecone_query"
     assert outcome.error is not None
+
+
+def test_structural_runtime_factory_uses_configured_reranker_mode(
+    monkeypatch,
+) -> None:
+    retrieval = _retrieval_module()
+    structural = importlib.import_module(
+        "app.services.structural_retrieval"
+    )
+    sentinel = object()
+    captured = {}
+    settings = SimpleNamespace(
+        CONTENT_STORE_PATH="content.sqlite3",
+        LEGAL_FTS_PATH="fts.sqlite3",
+        DATASET_REVISION="revision-1",
+        STRUCTURAL_RERANKER_MODE="qdrant-only",
+    )
+
+    monkeypatch.setattr(retrieval, "_structural_retriever", None)
+    monkeypatch.setattr(retrieval, "get_settings", lambda: settings)
+    monkeypatch.setattr(retrieval, "ContentStore", lambda _path: object())
+    monkeypatch.setattr(
+        retrieval,
+        "LegalFtsIndex",
+        lambda **_kwargs: object(),
+    )
+    monkeypatch.setattr(
+        retrieval,
+        "get_qdrant_inference_client",
+        lambda: object(),
+    )
+    monkeypatch.setattr(
+        retrieval,
+        "get_remote_reranker",
+        lambda: object(),
+    )
+
+    def build(*_args, **kwargs):
+        captured.update(kwargs)
+        return sentinel
+
+    monkeypatch.setattr(structural, "build_structural_retriever", build)
+
+    result = retrieval.get_structural_legal_retriever()
+
+    assert result is sentinel
+    assert captured["reranker_mode"] == "qdrant-only"

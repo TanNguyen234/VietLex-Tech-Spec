@@ -852,6 +852,7 @@ class LegalRetriever:
 
 
 _retriever: LegalRetriever | None = None
+_structural_retriever: Any | None = None
 
 
 def get_legal_retriever() -> LegalRetriever:
@@ -877,6 +878,31 @@ def get_legal_retriever() -> LegalRetriever:
     return _retriever
 
 
+def get_structural_legal_retriever() -> Any:
+    global _structural_retriever
+    if _structural_retriever is None:
+        from app.services.structural_retrieval import (
+            build_structural_retriever,
+        )
+
+        settings = get_settings()
+        store = ContentStore(settings.CONTENT_STORE_PATH)
+        fts_index = LegalFtsIndex(
+            store=store,
+            path=settings.LEGAL_FTS_PATH,
+            dataset_revision=settings.DATASET_REVISION,
+        )
+        _structural_retriever = build_structural_retriever(
+            settings,
+            client=get_qdrant_inference_client(),
+            fts_index=fts_index,
+            reranker=get_remote_reranker(),
+            reranker_mode=settings.STRUCTURAL_RERANKER_MODE,
+        )
+    return _structural_retriever
+
+
 def reset_retriever() -> None:
-    global _retriever
+    global _retriever, _structural_retriever
     _retriever = None
+    _structural_retriever = None

@@ -1,4 +1,5 @@
 import importlib
+import json
 import math
 import os
 from types import SimpleNamespace
@@ -8,6 +9,7 @@ import pytest
 import requests
 from google.auth import exceptions as google_auth_exceptions
 from google.genai import types
+from google.oauth2 import service_account
 from pydantic import BaseModel
 
 
@@ -242,10 +244,12 @@ async def test_local_dotenv_can_supply_adc_path_without_modeling_credentials(
     monkeypatch,
 ) -> None:
     vertex_ai = _module()
-    credential_path = tmp_path / "local-adc.json"
+    relative_credential_path = ".secrets/local-adc.json"
+    credential_path = tmp_path / relative_credential_path
+    credential_path.parent.mkdir()
     credential_path.write_text("{}", encoding="utf-8")
     (tmp_path / ".env").write_text(
-        f"GOOGLE_APPLICATION_CREDENTIALS={credential_path}\n"
+        f"GOOGLE_APPLICATION_CREDENTIALS={relative_credential_path}\n"
         "GOOGLE_CLOUD_PROJECT=must-not-be-exported\n",
         encoding="utf-8",
     )
@@ -254,9 +258,10 @@ async def test_local_dotenv_can_supply_adc_path_without_modeling_credentials(
     monkeypatch.delenv("GOOGLE_CLOUD_PROJECT", raising=False)
 
     def credentials_loader():
-        assert os.environ["GOOGLE_APPLICATION_CREDENTIALS"] == str(
-            credential_path
+        assert os.environ["GOOGLE_APPLICATION_CREDENTIALS"] == (
+            str(credential_path.resolve())
         )
+        assert credential_path.is_file()
         return object(), "adc-project"
 
     provider = vertex_ai.VertexAIProvider(
@@ -317,3 +322,48 @@ async def test_default_adc_loader_requests_cloud_platform_scope(monkeypatch) -> 
     assert captured["scopes"] == [
         "https://www.googleapis.com/auth/cloud-platform"
     ]
+
+
+def test_service_account_json_env_avoids_filesystem_adc(monkeypatch) -> None:
+    vertex_ai = _module()
+    info = {
+        "type": "service_account",
+        "project_id": "vercel-project",
+        "private_key_id": "test-key-id",
+        "private_key": "test-private-key",
+        "client_email": "vertex@example.invalid",
+        "token_uri": "https://oauth2.googleapis.com/token",
+    }
+    expected_credentials = object()
+    captured = {}
+
+    monkeypatch.setenv(
+        "GOOGLE_SERVICE_ACCOUNT_JSON",
+        json.dumps(info),
+    )
+    monkeypatch.delenv("GOOGLE_APPLICATION_CREDENTIALS", raising=False)
+
+    def from_service_account_info(payload, *, scopes=None):
+        captured["payload"] = payload
+        captured["scopes"] = scopes
+        return expected_credentials
+
+    monkeypatch.setattr(
+        service_account.Credentials,
+        "from_service_account_info",
+        from_service_account_info,
+    )
+    monkeypatch.setattr(
+        vertex_ai.google_auth,
+        "default",
+        lambda **_kwargs: pytest.fail("filesystem ADC must not be used"),
+    )
+
+    credentials, project = vertex_ai._load_adc()
+
+    assert credentials is expected_credentials
+    assert project == "vercel-project"
+    assert captured == {
+        "payload": info,
+        "scopes": ["https://www.googleapis.com/auth/cloud-platform"],
+    }

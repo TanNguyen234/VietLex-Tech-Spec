@@ -13,9 +13,69 @@ from app.evaluation.provider_catalog import (
     JUDGE_PROVIDER_MODELS,
 )
 from app.evaluation.run_manifest import (
+    build_run_configuration,
     calculate_configuration_fingerprint,
     create_run_manifest,
 )
+
+
+def test_structural_run_configuration_records_effective_backend() -> None:
+    configured = build_run_configuration(
+        profile_name="separated_intent",
+        profile={},
+        eval_mode="retrieval-only",
+        judge_mode="none",
+        guardrail_mode="off",
+        rewrite_mode="off",
+        reranker_provider="current",
+        gold_policy="all-required-verified",
+        selected_case_ids=[],
+        selected_case_ids_sha256=hashlib.sha256(b"[]").hexdigest(),
+        settings=SimpleNamespace(
+            STRUCTURAL_BACKEND_ENABLED=True,
+            STRUCTURAL_COLLECTION_NAME="vietlex-legal-rag-v2-pilot-384",
+            STRUCTURAL_DENSE_MODEL="intfloat/multilingual-e5-small",
+            STRUCTURAL_SPARSE_MODEL="qdrant/bm25",
+            STRUCTURAL_RERANKER_MODE="pinecone-only",
+            STRUCTURAL_DENSE_TOP_K=48,
+            STRUCTURAL_BM25_TOP_K=48,
+            STRUCTURAL_FUSED_LIMIT=64,
+            STRUCTURAL_RERANK_INPUT_LIMIT=64,
+            STRUCTURAL_RERANK_RETURN_LIMIT=6,
+            STRUCTURAL_FINAL_EVIDENCE_LIMIT=5,
+            DENSE_INFERENCE_MODEL="intfloat/multilingual-e5-small",
+            QDRANT_RERANK_MODEL="answerdotai/answerai-colbert-small-v1",
+            PINECONE_RERANK_MODEL="bge-reranker-v2-m3",
+            VERTEX_LLM_MODEL="gemini-3.5-flash",
+        ),
+    )
+
+    assert configured["retrieval_runtime"] == {
+        "backend": "qdrant_structural_v2",
+        "collection": "vietlex-legal-rag-v2-pilot-384",
+        "dense_model": "intfloat/multilingual-e5-small",
+        "sparse_model": "qdrant/bm25",
+        "reranker_mode": "pinecone-only",
+        "dense_top_k": 48,
+        "bm25_top_k": 48,
+        "fused_limit": 64,
+        "rerank_input_limit": 64,
+        "rerank_return_limit": 6,
+        "final_evidence_limit": 5,
+        "fallback_backend": "pinecone_v1",
+    }
+    assert configured["configured_provider_models"]["dense"] == {
+        "provider": "qdrant-structural-collection",
+        "model": "intfloat/multilingual-e5-small",
+    }
+    assert configured["configured_provider_models"]["reranker_primary"] == {
+        "provider": "pinecone",
+        "model": "bge-reranker-v2-m3",
+    }
+    assert configured["configured_provider_models"]["reranker_fallback"] == {
+        "provider": "qdrant-via-pinecone-v1-fallback",
+        "model": "answerdotai/answerai-colbert-small-v1",
+    }
 
 
 def git(repo: Path, *args: str) -> str:

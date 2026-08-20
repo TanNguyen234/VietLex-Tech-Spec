@@ -3,6 +3,20 @@ from app.evaluation.schemas import RetrievalStageCapacities
 from app.evaluation.profiles import EvaluationProfile
 
 def build_stage_capacities(profile: EvaluationProfile, settings: Any) -> RetrievalStageCapacities:
+    if getattr(settings, "STRUCTURAL_BACKEND_ENABLED", False):
+        fused_limit = settings.STRUCTURAL_FUSED_LIMIT
+        return RetrievalStageCapacities(
+            pinecone_document_limit=settings.STRUCTURAL_DENSE_TOP_K,
+            fts_document_limit=settings.STRUCTURAL_BM25_TOP_K,
+            merged_document_limit=fused_limit,
+            resolved_document_limit=fused_limit,
+            structural_chunk_limit=fused_limit,
+            local_chunks_limit=None,
+            rerank_input_limit=settings.STRUCTURAL_RERANK_INPUT_LIMIT,
+            rerank_return_limit=settings.STRUCTURAL_RERANK_RETURN_LIMIT,
+            final_evidence_limit=settings.STRUCTURAL_FINAL_EVIDENCE_LIMIT,
+        )
+
     fts_limit = getattr(settings, "LEGAL_FTS_RESULT_LIMIT", 24)
     pinecone_limit = profile.retrieval_document_limit
     

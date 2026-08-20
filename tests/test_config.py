@@ -94,6 +94,13 @@ def test_qdrant_structural_pilot_defaults_are_exact_and_opt_in() -> None:
     )
     assert settings.STRUCTURAL_CHUNK_MAX_TOKENS == 420
     assert settings.STRUCTURAL_CHUNK_OVERLAP_TOKENS == 48
+    assert settings.STRUCTURAL_PER_DOCUMENT_LIMIT == 8
+    assert settings.STRUCTURAL_RERANKER_MODE == "pinecone-only"
+    assert settings.STRUCTURAL_RERANK_INPUT_LIMIT == 64
+    assert settings.STRUCTURAL_RERANK_RETURN_LIMIT == 6
+    assert settings.STRUCTURAL_FINAL_EVIDENCE_LIMIT == 5
+    assert settings.STRUCTURAL_CONTEXT_MAX_TOKENS == 720
+    assert settings.STRUCTURAL_CONTEXT_PER_DOCUMENT_LIMIT == 2
     assert settings.STRUCTURAL_UPLOAD_BATCH_MIN == 64
     assert settings.STRUCTURAL_UPLOAD_BATCH_MAX == 256
 
@@ -134,3 +141,4 @@ def test_vertex_defaults_are_narrow_and_do_not_model_adc_credentials() -> None:
     assert settings.VERTEX_REQUEST_TIMEOUT_SECONDS == 30.0
     assert settings.VERTEX_MAX_RETRIES == 2
     assert "GOOGLE_APPLICATION_CREDENTIALS" not in Settings.model_fields
+    assert "GOOGLE_SERVICE_ACCOUNT_JSON" not in Settings.model_fields

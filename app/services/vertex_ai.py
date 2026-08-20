@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+import json
 import math
 import os
+from pathlib import Path
 import re
 import time
 from typing import Any, Callable
@@ -13,6 +15,7 @@ from google import auth as google_auth
 from google.auth import exceptions as google_auth_exceptions
 from google import genai
 from google.genai import types
+from google.oauth2 import service_account
 from dotenv import dotenv_values, find_dotenv
 
 from app.config import Settings, get_settings, install_system_trust_store
@@ -109,6 +112,14 @@ def _mapped_error(error: BaseException) -> VertexAIError:
 
 
 def _load_adc() -> tuple[Any, str | None]:
+    service_account_json = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
+    if service_account_json:
+        info = json.loads(service_account_json)
+        credentials = service_account.Credentials.from_service_account_info(
+            info,
+            scopes=[_CLOUD_PLATFORM_SCOPE],
+        )
+        return credentials, info.get("project_id")
     return google_auth.default(scopes=[_CLOUD_PLATFORM_SCOPE])
 
 
@@ -163,7 +174,12 @@ class VertexAIProvider:
                 "GOOGLE_APPLICATION_CREDENTIALS"
             )
             if credential_path:
-                os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credential_path
+                resolved = Path(credential_path)
+                if not resolved.is_absolute():
+                    resolved = Path(dotenv_path).parent / resolved
+                os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(
+                    resolved.resolve()
+                )
         try:
             credentials, adc_project = self._credentials_loader()
         except Exception:

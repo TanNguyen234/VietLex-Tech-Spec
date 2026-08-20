@@ -12,7 +12,11 @@ from app.services.direct_llm import (
     LLMGenerationResult,
     generate_llm_response_with_metadata,
 )
-from app.services.retrieval import RetrievalOutcome, get_legal_retriever
+from app.services.retrieval import (
+    RetrievalOutcome,
+    get_legal_retriever,
+    get_structural_legal_retriever,
+)
 
 
 
@@ -38,6 +42,135 @@ class RetrievalPipelineError(RuntimeError):
 
 class QueryRewriteError(RuntimeError):
     """Typed rewrite failure used by observable evaluation paths."""
+
+
+def _structural_retrieval_outcome(outcome: Any) -> RetrievalOutcome:
+    from app.evaluation.structural_pilot_eval import (
+        structural_evaluation_trace,
+        to_metric_v3_trace,
+    )
+
+    technical_errors = {
+        key: value.model_dump(mode="json")
+        for key, value in outcome.technical_errors.items()
+    }
+    stage_trace = to_metric_v3_trace(
+        structural_evaluation_trace(outcome.trace)
+    )
+    return RetrievalOutcome(
+        evidence=list(outcome.evidence),
+        latency={
+            f"t_structural_{key}": value
+            for key, value in outcome.latency.items()
+        },
+        status=(
+            "partial_retrieval_error"
+            if outcome.status == "partial_technical_error"
+            else outcome.status
+        ),
+        diagnostics={
+            "retrieval_backend": "qdrant_structural_v2",
+            "structural_trace": outcome.trace,
+            "stage_trace": stage_trace,
+            "structural_technical_errors": technical_errors,
+            "structural_provider_usage": dict(outcome.provider_usage),
+        },
+        error=(
+            "Structural retrieval reported a technical error."
+            if technical_errors
+            else None
+        ),
+    )
+
+
+async def _legacy_retrieval_outcome(
+    rewritten_query: str,
+    user_query: str,
+    profile: Any,
+) -> RetrievalOutcome:
+    retrieval_kwargs: dict[str, Any] = {"sparse_query": user_query}
+    if profile is not None:
+        retrieval_kwargs["profile"] = profile
+    return await get_legal_retriever().retrieve_detailed(
+        rewritten_query,
+        **retrieval_kwargs,
+    )
+
+
+async def retrieve_configured_legal_evidence(
+    rewritten_query: str,
+    user_query: str,
+    profile: Any,
+) -> RetrievalOutcome:
+    if not get_settings().STRUCTURAL_BACKEND_ENABLED:
+        return await _legacy_retrieval_outcome(
+            rewritten_query,
+            user_query,
+            profile,
+        )
+    try:
+        structural = _structural_retrieval_outcome(
+            await get_structural_legal_retriever().retrieve(
+                rewritten_query,
+                sparse_query=user_query,
+            )
+        )
+    except Exception as error:
+        structural = RetrievalOutcome(
+            evidence=[],
+            latency={},
+            status="retrieval_error",
+            diagnostics={
+                "retrieval_backend": "qdrant_structural_v2",
+                "structural_technical_errors": {
+                    "initialization": {
+                        "category": type(error).__name__,
+                    }
+                },
+            },
+            error="Structural retrieval initialization failed.",
+        )
+    if structural.evidence and structural.status in {
+        "ok",
+        "partial_retrieval_error",
+    }:
+        return structural
+
+    legacy = await _legacy_retrieval_outcome(
+        rewritten_query,
+        user_query,
+        profile,
+    )
+    diagnostics = dict(legacy.diagnostics)
+    diagnostics.update(
+        {
+            "retrieval_backend": "pinecone_v1_fallback",
+            "structural_fallback_reason": structural.status,
+            "structural_primary_technical_errors": (
+                structural.diagnostics.get(
+                    "structural_technical_errors",
+                    {},
+                )
+            ),
+        }
+    )
+    structural_failed = structural.status in {
+        "retrieval_error",
+        "reranker_error",
+        "partial_retrieval_error",
+    }
+    status = legacy.status
+    error = legacy.error
+    if structural_failed and legacy.evidence and legacy.status == "ok":
+        status = "partial_retrieval_error"
+        error = structural.error
+    return RetrievalOutcome(
+        evidence=list(legacy.evidence),
+        latency={**structural.latency, **legacy.latency},
+        status=status,
+        diagnostics=diagnostics,
+        error=error,
+    )
 
 
 def build_bounded_context(
@@ -93,14 +226,10 @@ async def run_advanced_rag(
         rewrite_seconds = time.perf_counter() - rewrite_started
 
     retrieval_started = time.perf_counter()
-    retrieval_kwargs: dict[str, Any] = {"sparse_query": user_query}
-    if profile is not None:
-        retrieval_kwargs["profile"] = profile
-    retrieval_outcome: RetrievalOutcome = (
-        await get_legal_retriever().retrieve_detailed(
-            rewritten_query,
-            **retrieval_kwargs,
-        )
+    retrieval_outcome = await retrieve_configured_legal_evidence(
+        rewritten_query,
+        user_query,
+        profile,
     )
     evidence = retrieval_outcome.evidence
     retrieval_seconds = time.perf_counter() - retrieval_started

@@ -1,7 +1,13 @@
 import pytest
 
+from app.evaluation.schemas import RetrievalStageTrace
 from app.ingestion.legal_text import EvidenceChunk
 from app.services import rag_pipeline
+from app.services.structural_retrieval import (
+    StructuralRetrievalOutcome,
+    StructuralRetrievalTrace,
+    StructuralTechnicalError,
+)
 
 
 @pytest.mark.asyncio
@@ -233,6 +239,159 @@ async def test_pipeline_formats_ranked_evidence_for_existing_contract(
         "fallback_used": True,
         "primary_error_kind": "quota",
     }
+
+
+@pytest.mark.asyncio
+async def test_pipeline_uses_structural_retrieval_when_enabled(
+    monkeypatch,
+) -> None:
+    evidence = _evidence()
+
+    class StructuralRetriever:
+        def __init__(self) -> None:
+            self.queries = []
+
+        async def retrieve(self, query: str, *, sparse_query: str | None = None):
+            self.queries.append((query, sparse_query))
+            return StructuralRetrievalOutcome(
+                status="ok",
+                evidence=[evidence],
+                trace=StructuralRetrievalTrace(),
+                latency={"total": 0.02},
+                technical_errors={},
+                provider_usage={"intfloat/multilingual-e5-small": 8},
+            )
+
+    structural = StructuralRetriever()
+
+    monkeypatch.setattr(
+        rag_pipeline,
+        "get_settings",
+        lambda: type(
+            "RuntimeSettings",
+            (),
+            {"STRUCTURAL_BACKEND_ENABLED": True},
+        )(),
+    )
+    monkeypatch.setattr(
+        rag_pipeline,
+        "get_structural_legal_retriever",
+        lambda: structural,
+    )
+    monkeypatch.setattr(
+        rag_pipeline,
+        "get_legal_retriever",
+        lambda: pytest.fail("legacy retrieval must not run"),
+    )
+
+    async def fake_answer(*_args, **_kwargs):
+        return rag_pipeline.LLMGenerationResult(
+            text="Câu trả lời structural.",
+            observed_provider="google_vertex_ai",
+            observed_model="gemini-3.5-flash",
+            observed=True,
+        )
+
+    monkeypatch.setattr(
+        rag_pipeline,
+        "generate_response_with_metadata",
+        fake_answer,
+    )
+
+    response, contexts, latency = await rag_pipeline.run_advanced_rag(
+        "điều kiện thuế"
+    )
+
+    assert response == "Câu trả lời structural."
+    assert contexts == [evidence.formatted_context()]
+    assert structural.queries == [("điều kiện thuế", "điều kiện thuế")]
+    assert latency["retrieval_diagnostics"]["retrieval_backend"] == (
+        "qdrant_structural_v2"
+    )
+    assert isinstance(
+        latency["retrieval_diagnostics"]["stage_trace"],
+        RetrievalStageTrace,
+    )
+
+
+@pytest.mark.asyncio
+async def test_pipeline_observes_structural_error_when_legacy_fallback_succeeds(
+    monkeypatch,
+) -> None:
+    evidence = _evidence()
+    legacy = FakeRetriever([evidence])
+
+    class FailedStructuralRetriever:
+        async def retrieve(
+            self,
+            _query: str,
+            *,
+            sparse_query: str | None = None,
+        ):
+            return StructuralRetrievalOutcome(
+                status="retrieval_error",
+                evidence=[],
+                trace=StructuralRetrievalTrace(),
+                latency={"total": 0.02},
+                technical_errors={
+                    "dense": StructuralTechnicalError(
+                        stage="dense",
+                        category="unavailable",
+                        error_type="ProviderUnavailable",
+                        transient=True,
+                    )
+                },
+                provider_usage={},
+            )
+
+    monkeypatch.setattr(
+        rag_pipeline,
+        "get_settings",
+        lambda: type(
+            "RuntimeSettings",
+            (),
+            {"STRUCTURAL_BACKEND_ENABLED": True},
+        )(),
+    )
+    monkeypatch.setattr(
+        rag_pipeline,
+        "get_structural_legal_retriever",
+        lambda: FailedStructuralRetriever(),
+    )
+    monkeypatch.setattr(
+        rag_pipeline,
+        "get_legal_retriever",
+        lambda: legacy,
+    )
+
+    async def fake_answer(*_args, **_kwargs):
+        return rag_pipeline.LLMGenerationResult(
+            text="Câu trả lời fallback.",
+            observed_provider="google_vertex_ai",
+            observed_model="gemini-3.5-flash",
+            observed=True,
+        )
+
+    monkeypatch.setattr(
+        rag_pipeline,
+        "generate_response_with_metadata",
+        fake_answer,
+    )
+
+    response, contexts, latency = await rag_pipeline.run_advanced_rag(
+        "điều kiện thuế"
+    )
+
+    assert response == "Câu trả lời fallback."
+    assert contexts == [evidence.formatted_context()]
+    assert legacy.queries == [("điều kiện thuế", "điều kiện thuế")]
+    assert latency["retrieval_status"] == "partial_retrieval_error"
+    diagnostics = latency["retrieval_diagnostics"]
+    assert diagnostics["retrieval_backend"] == "pinecone_v1_fallback"
+    assert diagnostics["structural_fallback_reason"] == "retrieval_error"
+    assert diagnostics["structural_primary_technical_errors"]["dense"][
+        "category"
+    ] == "unavailable"
 
 
 @pytest.mark.asyncio

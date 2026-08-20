@@ -65,19 +65,44 @@ def _public_candidates(
 def build_configured_provider_models(
     *, settings: Any, eval_mode: str, judge_mode: str
 ) -> Dict[str, Any]:
-    return {
-        "dense": {
+    structural_enabled = getattr(
+        settings,
+        "STRUCTURAL_BACKEND_ENABLED",
+        False,
+    )
+    reranker_mode = getattr(settings, "STRUCTURAL_RERANKER_MODE", "current")
+    if structural_enabled:
+        dense = {
+            "provider": "qdrant-structural-collection",
+            "model": settings.STRUCTURAL_DENSE_MODEL,
+        }
+    else:
+        dense = {
             "provider": "qdrant-cloud-staging",
             "model": settings.DENSE_INFERENCE_MODEL,
-        },
-        "reranker_primary": {
-            "provider": "qdrant",
-            "model": settings.QDRANT_RERANK_MODEL,
-        },
-        "reranker_fallback": {
+        }
+    if structural_enabled and reranker_mode == "pinecone-only":
+        reranker_primary = {
             "provider": "pinecone",
             "model": settings.PINECONE_RERANK_MODEL,
-        },
+        }
+        reranker_fallback = {
+            "provider": "qdrant-via-pinecone-v1-fallback",
+            "model": settings.QDRANT_RERANK_MODEL,
+        }
+    else:
+        reranker_primary = {
+            "provider": "qdrant",
+            "model": settings.QDRANT_RERANK_MODEL,
+        }
+        reranker_fallback = {
+            "provider": "pinecone",
+            "model": settings.PINECONE_RERANK_MODEL,
+        }
+    return {
+        "dense": dense,
+        "reranker_primary": reranker_primary,
+        "reranker_fallback": reranker_fallback,
         "generation": {
             "mode": (
                 "configured_fallback_chain"
@@ -142,6 +167,26 @@ def build_run_configuration(
         eval_mode=eval_mode,
         judge_mode=judge_mode,
     )
+    if getattr(settings, "STRUCTURAL_BACKEND_ENABLED", False):
+        retrieval_runtime = {
+            "backend": "qdrant_structural_v2",
+            "collection": settings.STRUCTURAL_COLLECTION_NAME,
+            "dense_model": settings.STRUCTURAL_DENSE_MODEL,
+            "sparse_model": settings.STRUCTURAL_SPARSE_MODEL,
+            "reranker_mode": settings.STRUCTURAL_RERANKER_MODE,
+            "dense_top_k": settings.STRUCTURAL_DENSE_TOP_K,
+            "bm25_top_k": settings.STRUCTURAL_BM25_TOP_K,
+            "fused_limit": settings.STRUCTURAL_FUSED_LIMIT,
+            "rerank_input_limit": settings.STRUCTURAL_RERANK_INPUT_LIMIT,
+            "rerank_return_limit": settings.STRUCTURAL_RERANK_RETURN_LIMIT,
+            "final_evidence_limit": settings.STRUCTURAL_FINAL_EVIDENCE_LIMIT,
+            "fallback_backend": "pinecone_v1",
+        }
+    else:
+        retrieval_runtime = {
+            "backend": "pinecone_v1",
+            "fallback_backend": "sqlite_fts",
+        }
     return {
         "profile_name": profile_name,
         "profile": profile,
@@ -153,6 +198,7 @@ def build_run_configuration(
         "gold_policy": gold_policy,
         "selected_case_count": len(selected_case_ids),
         "selected_case_ids_sha256": selected_case_ids_sha256,
+        "retrieval_runtime": retrieval_runtime,
         "configured_provider_models": provider_models,
     }
 

@@ -262,10 +262,8 @@ async def evaluate_single_retrieval_case(
     settings: Any,
     effective_profile: EvaluationProfile,
 ) -> RetrievalCaseResult:
-    from app.services.retrieval import get_legal_retriever
     from app.evaluation.capacities import build_stage_capacities
 
-    retriever = get_legal_retriever()
     started = time.perf_counter()
     caps = build_stage_capacities(effective_profile, settings)
 
@@ -293,11 +291,24 @@ async def evaluate_single_retrieval_case(
 
     t_ret_start = time.perf_counter()
     try:
-        outcome = await retriever.retrieve_detailed(
-            query_used,
-            sparse_query=case.question,
-            profile=effective_profile,
-        )
+        if getattr(settings, "STRUCTURAL_BACKEND_ENABLED", False):
+            from app.services.rag_pipeline import (
+                retrieve_configured_legal_evidence,
+            )
+
+            outcome = await retrieve_configured_legal_evidence(
+                query_used,
+                case.question,
+                effective_profile,
+            )
+        else:
+            from app.services.retrieval import get_legal_retriever
+
+            outcome = await get_legal_retriever().retrieve_detailed(
+                query_used,
+                sparse_query=case.question,
+                profile=effective_profile,
+            )
     except Exception as error:
         message = f"{type(error).__name__}: {error}"
         technical_errors["retrieval"] = message

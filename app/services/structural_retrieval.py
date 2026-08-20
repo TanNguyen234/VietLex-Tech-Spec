@@ -561,11 +561,11 @@ class StructuralRetriever:
                 "structural neighbor expansion flag is invalid"
             )
         runtime_limits = (
-            settings.RERANK_INPUT_LIMIT,
-            settings.RERANK_RETURN_LIMIT,
-            settings.FINAL_EVIDENCE_LIMIT,
-            settings.LLM_CONTEXT_MAX_TOKENS,
-            settings.LLM_CONTEXT_PER_DOCUMENT_LIMIT,
+            settings.STRUCTURAL_RERANK_INPUT_LIMIT,
+            settings.STRUCTURAL_RERANK_RETURN_LIMIT,
+            settings.STRUCTURAL_FINAL_EVIDENCE_LIMIT,
+            settings.STRUCTURAL_CONTEXT_MAX_TOKENS,
+            settings.STRUCTURAL_CONTEXT_PER_DOCUMENT_LIMIT,
             resolved_neighbor_limit,
         )
         if any(
@@ -715,13 +715,26 @@ class StructuralRetriever:
         result.latency_seconds = time.perf_counter() - started
         return result
 
-    async def retrieve(self, query: str) -> StructuralRetrievalOutcome:
+    async def retrieve(
+        self,
+        query: str,
+        *,
+        sparse_query: str | None = None,
+    ) -> StructuralRetrievalOutcome:
         normalized = " ".join(query.split()) if isinstance(query, str) else ""
         if not normalized:
             raise StructuralRetrievalError("structural query must be nonblank")
+        normalized_sparse = (
+            " ".join(sparse_query.split())
+            if isinstance(sparse_query, str) and sparse_query.strip()
+            else normalized
+        )
         total_started = time.perf_counter()
         dense_document = dense_query_document(normalized, self.contract)
-        sparse_document = sparse_query_document(normalized, self.contract)
+        sparse_document = sparse_query_document(
+            normalized_sparse,
+            self.contract,
+        )
         dense, bm25, exact = await asyncio.gather(
             self._query_lane(
                 lane="dense",
@@ -737,7 +750,7 @@ class StructuralRetriever:
                 using=self.contract.sparse_vector_name,
                 limit=self.contract.bm25_top_k,
             ),
-            self._exact_lane(normalized, sparse_document),
+            self._exact_lane(normalized_sparse, sparse_document),
         )
         technical_errors = {
             **dense.errors,
@@ -831,7 +844,9 @@ class StructuralRetriever:
             per_document_limit=self.contract.per_document_limit,
         )
         trace.fused_hits = fused
-        reranker_input = fused[: self.settings.RERANK_INPUT_LIMIT]
+        reranker_input = fused[
+            : self.settings.STRUCTURAL_RERANK_INPUT_LIMIT
+        ]
         trace.reranker_input = reranker_input
         if not reranker_input:
             latency["total"] = time.perf_counter() - total_started
@@ -864,7 +879,9 @@ class StructuralRetriever:
                 normalized,
                 reranker_documents,
                 mode=self.reranker_mode,
-                rerank_return_limit=self.settings.RERANK_RETURN_LIMIT,
+                rerank_return_limit=(
+                    self.settings.STRUCTURAL_RERANK_RETURN_LIMIT
+                ),
             )
             reranked = self._validated_rerank(rerank, reranker_input)
         except Exception as error:
@@ -954,7 +971,8 @@ def validate_structural_rerank(
             or not outcome.provider
             or not isinstance(outcome.model, str)
             or not outcome.model
-            or len(outcome.results) > settings.RERANK_RETURN_LIMIT
+            or len(outcome.results)
+            > settings.STRUCTURAL_RERANK_RETURN_LIMIT
             or isinstance(outcome.input_count, bool)
             or outcome.input_count != len(candidates)
             or isinstance(outcome.output_count, bool)
@@ -1013,15 +1031,15 @@ def select_final_structural_candidates(
     per_document: Counter[int] = Counter()
     tokens = 0
     for candidate in candidates:
-        if len(selected) >= settings.FINAL_EVIDENCE_LIMIT:
+        if len(selected) >= settings.STRUCTURAL_FINAL_EVIDENCE_LIMIT:
             break
         if (
             candidate.reranker_score is None
             or candidate.reranker_score < settings.RERANK_MIN_SCORE
             or per_document[candidate.document_id]
-            >= settings.LLM_CONTEXT_PER_DOCUMENT_LIMIT
+            >= settings.STRUCTURAL_CONTEXT_PER_DOCUMENT_LIMIT
             or tokens + candidate.token_count
-            > settings.LLM_CONTEXT_MAX_TOKENS
+            > settings.STRUCTURAL_CONTEXT_MAX_TOKENS
         ):
             continue
         selected.append(candidate)
