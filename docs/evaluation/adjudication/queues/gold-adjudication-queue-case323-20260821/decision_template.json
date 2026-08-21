@@ -1,0 +1,18 @@
+{
+  "decisions": [
+    {
+      "decision": {
+        "confidence": "unreviewed",
+        "notes": "",
+        "reviewed_at_utc": null,
+        "reviewer_identity": null,
+        "selected_candidate_id": null,
+        "status": "pending"
+      },
+      "evidence_item_id": "case_323_ctx01_cit01",
+      "queue_row_id": "89427abc0f04dd793bb375f5ce8ebc4105bff5b800b7faab3f4af67c62393d9f"
+    }
+  ],
+  "queue_sha256": "97e6f0eece6140cf05f8daaee4549521692975b2c41221cc0ec96f3831d4474c",
+  "schema_version": "1.0.0"
+}

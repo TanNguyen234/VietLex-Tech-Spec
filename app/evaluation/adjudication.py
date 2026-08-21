@@ -5,6 +5,7 @@ import json
 import re
 from copy import deepcopy
 from datetime import datetime, timezone
+from enum import Enum
 from typing import Annotated, Any, Literal, Mapping, Sequence
 
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, StringConstraints
@@ -15,6 +16,11 @@ from app.evaluation.legal_citations import parse_legal_citations
 from app.evaluation.provenance import GitProvenance
 from app.evaluation.retrieval_metrics import normalize_legal_identifier
 from app.evaluation.schemas import EvidenceStatus, GoldEvidence, GoldenCase
+
+
+class AdjudicationMode(str, Enum):
+    NORMAL = "normal"
+    TARGETED_RE_ADJUDICATION = "targeted_re_adjudication"
 
 
 class AdjudicationDecision(BaseModel):
@@ -529,24 +535,43 @@ def _normalize_candidate(
 
 
 def _normalize_citation_units(evidence: GoldEvidence) -> tuple[dict[str, str | None], Literal["parsed", "none"]]:
+    clause_val = _strip_or_none(evidence.clause)
+    clause_query = (
+        f"Khoản {clause_val}"
+        if (clause_val and not clause_val.lower().startswith("khoản"))
+        else clause_val
+    )
     supplied = {
         "document_number": _strip_or_none(evidence.document_number),
         "article": _strip_or_none(evidence.article),
-        "clause": _strip_or_none(evidence.clause),
+        "clause": clause_val,
     }
     if not any(supplied.values()):
         return supplied, "none"
-    parsed = parse_legal_citations(" ".join(value for value in supplied.values() if value))
+    citation_str = " ".join(
+        v for v in [supplied["document_number"], supplied["article"], clause_query] if v
+    )
+    parsed = parse_legal_citations(citation_str)
     for item in parsed:
         unit = {
             "document_number": _strip_or_none(item.document_number),
             "article": _strip_or_none(item.article),
             "clause": _strip_or_none(item.clause),
         }
-        if all(
-            value is None or normalize_legal_identifier(value) == normalize_legal_identifier(unit[key])
-            for key, value in supplied.items()
-        ):
+        doc_matches = (
+            supplied["document_number"] is None
+            or normalize_legal_identifier(supplied["document_number"]) == normalize_legal_identifier(unit["document_number"])
+        )
+        art_matches = (
+            supplied["article"] is None
+            or normalize_legal_identifier(supplied["article"]) == normalize_legal_identifier(unit["article"])
+        )
+        cl_matches = (
+            supplied["clause"] is None
+            or normalize_legal_identifier(supplied["clause"]) == normalize_legal_identifier(unit["clause"])
+            or normalize_legal_identifier(f"Khoản {supplied['clause']}") == normalize_legal_identifier(unit["clause"])
+        )
+        if doc_matches and art_matches and cl_matches:
             return unit, "parsed"
     raise ValueError("citation units must satisfy the legal-citation contract")
 
@@ -570,19 +595,35 @@ def build_queue_payload(
     candidate_limit: int,
     selection_seed: str = TASK2_SELECTION_SEED,
     target_case_count: int = TASK2_BATCH_SIZE,
+    mode: AdjudicationMode = AdjudicationMode.NORMAL,
+    re_adjudication_reason: str | None = None,
+    source_sidecar_path: str | None = None,
 ) -> dict[str, Any]:
-    """Build a review queue without asserting that any candidate is verified.
-
-    Contains decision rows exclusively for unresolved (unverified) required evidence items.
-    """
+    """Build a review queue without asserting that any candidate is verified."""
     if candidate_limit < 0:
         raise ValueError("candidate_limit must be non-negative")
-    if target_case_count != TASK2_BATCH_SIZE:
-        raise ValueError(f"target_case_count must be exactly {TASK2_BATCH_SIZE} for task 2 queue generation")
+    if not selected_case_ids:
+        raise ValueError("selected_case_ids must not be empty")
     if len(selected_case_ids) != len(set(selected_case_ids)):
         raise ValueError("selected_case_ids must be unique")
-    if len(selected_case_ids) != TASK2_BATCH_SIZE:
-        raise ValueError(f"selected_case_ids must contain exactly {TASK2_BATCH_SIZE} unique cases, got {len(selected_case_ids)}")
+
+    is_targeted = (
+        mode == AdjudicationMode.TARGETED_RE_ADJUDICATION
+        or (isinstance(mode, str) and mode == "targeted_re_adjudication")
+    )
+    if is_targeted:
+        if target_case_count <= 0 or len(selected_case_ids) != target_case_count:
+            raise ValueError(f"selected_case_ids count ({len(selected_case_ids)}) must match target_case_count ({target_case_count})")
+        if not source_sidecar_path:
+            raise ValueError("source_sidecar_path must be provided in targeted_re_adjudication mode")
+        selection_policy = "explicit_targeted_case_ids"
+    else:
+        if target_case_count != TASK2_BATCH_SIZE:
+            raise ValueError(f"target_case_count must be exactly {TASK2_BATCH_SIZE} for task 2 queue generation")
+        if len(selected_case_ids) != TASK2_BATCH_SIZE:
+            raise ValueError(f"selected_case_ids must contain exactly {TASK2_BATCH_SIZE} unique cases, got {len(selected_case_ids)}")
+        selection_policy = TASK2_SELECTION_POLICY
+
     sidecar_sha256 = _require_sha256(sidecar.metadata.sidecar_sha256, "sidecar_sha256")
     case_by_id = {case.case_id: case for case in cases}
     if len(case_by_id) != len(cases):
@@ -601,22 +642,27 @@ def build_queue_payload(
         if case is None or not labels:
             raise ValueError(f"missing case or evidence labels for '{case_id}'")
 
-        # Exclude already-verified evidence items from decision rows
-        unverified_required = [
-            ev for ev in labels
-            if ev.required and ev.status != EvidenceStatus.VERIFIED and ev.status != "verified"
-        ]
-        if not unverified_required:
-            raise ValueError(f"selected case '{case_id}' has no unresolved required evidence")
+        if is_targeted:
+            target_evidence = [ev for ev in labels if ev.required]
+            if not target_evidence:
+                raise ValueError(f"selected case '{case_id}' has no required evidence to re-adjudicate")
+        else:
+            # Exclude already-verified evidence items from decision rows in normal mode
+            target_evidence = [
+                ev for ev in labels
+                if ev.required and ev.status != EvidenceStatus.VERIFIED and ev.status != "verified"
+            ]
+            if not target_evidence:
+                raise ValueError(f"selected case '{case_id}' has no unresolved required evidence")
 
         identity = resolve_case_diversity_identity(
             case=case,
-            unresolved_required=unverified_required,
+            unresolved_required=target_evidence,
             doc_counts=doc_counts,
             legal_type_counts=legal_type_counts,
         )
         highest = max(
-            (label.required_level.value for label in unverified_required),
+            (label.required_level.value for label in target_evidence),
             key=_REQUIRED_LEVEL_ORDER.__getitem__,
         )
         stratum_str = f"{case.question_type}|{highest}"
@@ -632,10 +678,10 @@ def build_queue_payload(
             "verified_legal_type_representation_before": identity["verified_legal_type_representation_before"],
             "selection_stratum": stratum_str,
             "tie_break_digest": digest,
-            "selection_policy": TASK2_SELECTION_POLICY,
+            "selection_policy": selection_policy,
         })
 
-        for evidence in unverified_required:
+        for evidence in target_evidence:
             if evidence.case_id != case_id or not evidence.evidence_item_id:
                 raise ValueError(f"invalid evidence identity for case '{case_id}'")
             reference_answer_sha256 = _require_sha256(
@@ -692,18 +738,21 @@ def build_queue_payload(
     diagnostics: dict[str, Any] = {
         "eligible_case_count": eligible_count,
         "selected_strata": selected_strata_counts,
-        "selection_policy": TASK2_SELECTION_POLICY,
+        "selection_policy": selection_policy,
         "case_diagnostics": case_diagnostics,
     }
 
-    return {
+    provenance_data = provenance.model_dump(mode="json")
+    provenance_data["sidecar_sha256"] = sidecar_sha256
+    if source_sidecar_path:
+        provenance_data["source_sidecar_path"] = source_sidecar_path
+
+    payload = {
         "schema_version": "1.0.0",
+        "mode": mode.value if isinstance(mode, AdjudicationMode) else str(mode),
         "dataset_sha256": dataset_sha256,
         "corpus_revision": corpus_revision,
-        "provenance": {
-            **provenance.model_dump(mode="json"),
-            "sidecar_sha256": sidecar_sha256,
-        },
+        "provenance": provenance_data,
         "command": list(command),
         "candidate_limit": candidate_limit,
         "selection_seed": selection_seed,
@@ -715,6 +764,9 @@ def build_queue_payload(
         "selected_case_ids": list(selected_case_ids),
         "rows": rows,
     }
+    if re_adjudication_reason:
+        payload["re_adjudication_reason"] = re_adjudication_reason
+    return payload
 
 
 def format_queue_human_preview(queue_payload: Mapping[str, Any]) -> str:
@@ -863,13 +915,25 @@ def _normalized_utc_timestamp(value: Any) -> str:
 def _validated_queue_rows(queue_payload: Mapping[str, Any]) -> list[AdjudicationQueueRow]:
     if queue_payload.get("schema_version") != _DECISION_SCHEMA_VERSION:
         raise ValueError("unsupported queue schema_version")
+    is_targeted = (
+        queue_payload.get("mode") == "targeted_re_adjudication"
+        or queue_payload.get("mode") == AdjudicationMode.TARGETED_RE_ADJUDICATION.value
+    )
     target_case_count = queue_payload.get("target_case_count")
-    if (
-        isinstance(target_case_count, bool)
-        or not isinstance(target_case_count, int)
-        or (target_case_count not in (20,) and not (30 <= target_case_count <= 50))
-    ):
-        raise ValueError("queue target_case_count must be 20 or between 30 and 50")
+    if is_targeted:
+        if (
+            isinstance(target_case_count, bool)
+            or not isinstance(target_case_count, int)
+            or target_case_count <= 0
+        ):
+            raise ValueError("queue target_case_count must be a positive integer in targeted mode")
+    else:
+        if (
+            isinstance(target_case_count, bool)
+            or not isinstance(target_case_count, int)
+            or (target_case_count not in (20,) and not (30 <= target_case_count <= 50))
+        ):
+            raise ValueError("queue target_case_count must be 20 or between 30 and 50")
     selected_case_count = queue_payload.get("selected_case_count")
     if isinstance(selected_case_count, bool) or not isinstance(selected_case_count, int):
         raise ValueError("queue selected_case_count must be an integer")
@@ -886,7 +950,7 @@ def _validated_queue_rows(queue_payload: Mapping[str, Any]) -> list[Adjudication
         raise ValueError("queue selected_case_count cannot exceed target_case_count")
     expected_status = (
         "READY_FOR_REVIEW"
-        if (selected_case_count == target_case_count and (target_case_count == 20 or 30 <= target_case_count <= 50))
+        if (selected_case_count == target_case_count and (target_case_count == 20 or 30 <= target_case_count <= 50 or is_targeted))
         else "BLOCKED_INSUFFICIENT_ELIGIBLE_CASES"
     )
     if queue_payload.get("queue_status") != expected_status:
@@ -1119,6 +1183,11 @@ def build_promotion_preview(
         for case_id in selected_case_ids
     )
     negative_counts = {status: sum(1 for decision in decisions if decision.status == status) for status in sorted(_NEGATIVE_DECISION_STATUSES)}
+    is_targeted = (
+        queue_payload.get("mode") == "targeted_re_adjudication"
+        or queue_payload.get("mode") == AdjudicationMode.TARGETED_RE_ADJUDICATION.value
+    )
+
     preview_core = {
         "schema_version": _DECISION_SCHEMA_VERSION,
         "source_hashes": {
@@ -1139,6 +1208,13 @@ def build_promotion_preview(
         "negative_counts": negative_counts,
         "proposed_sidecar": source,
     }
+    if is_targeted:
+        preview_core["mode"] = "targeted_re_adjudication"
+        preview_core["parent_lineage"] = {
+            "gold_version": 5,
+            "parent_gold_version": 4,
+            "parent_sidecar_sha256": source_sidecar_sha256,
+        }
     return {**preview_core, "preview_sha256": canonical_sha256(preview_core)}
 
 
@@ -1177,7 +1253,8 @@ def build_promotion_summary(preview_payload: Mapping[str, Any]) -> dict[str, Any
     if declared_hash != recomputed_hash:
         raise ValueError("preview_sha256 does not match the canonical preview payload")
     fully_verified_case_count = preview["fully_verified_selected_case_count"]
-    return {
+    is_targeted = preview.get("mode") == "targeted_re_adjudication"
+    summary = {
         "preview_sha256": declared_hash,
         "source_hashes": deepcopy(dict(preview["source_hashes"])),
         "provenance": deepcopy(dict(preview["provenance"])),
@@ -1189,10 +1266,13 @@ def build_promotion_summary(preview_payload: Mapping[str, Any]) -> dict[str, Any
         "proposed_sidecar_sha256": canonical_sha256(preview["proposed_sidecar"]),
         "status": (
             "READY_FOR_P2"
-            if (fully_verified_case_count == 20 or 30 <= fully_verified_case_count <= 50)
+            if (fully_verified_case_count == 20 or 30 <= fully_verified_case_count <= 50 or is_targeted)
             else "BLOCKED_INSUFFICIENT_VERIFIED_CASES"
         ),
     }
+    if "parent_lineage" in preview:
+        summary["parent_lineage"] = deepcopy(dict(preview["parent_lineage"]))
+    return summary
 
 
 def _validate_promotion_preview(preview_payload: Mapping[str, Any]) -> Mapping[str, Any]:

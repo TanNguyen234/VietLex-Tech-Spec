@@ -3143,3 +3143,274 @@ def test_task2_rerun_safety_prevents_overwrite(
     # Second run with same run-id must raise FileExistsError
     with pytest.raises(FileExistsError):
         cli.main(args)
+
+
+def test_candidate_satisfies_required_level_semantics():
+    """Verify _candidate_satisfies_required_level enforces structural requirements correctly."""
+    from app.evaluation.adjudication_candidates import _candidate_satisfies_required_level
+    from app.evaluation.schemas import RequiredLevel
+
+    # Document level: always true
+    assert _candidate_satisfies_required_level(RequiredLevel.DOCUMENT, None, None) is True
+    assert _candidate_satisfies_required_level(RequiredLevel.DOCUMENT, "Điều 1", None) is True
+
+    # Article level: requires non-blank article
+    assert _candidate_satisfies_required_level(RequiredLevel.ARTICLE, "Điều 123", None) is True
+    assert _candidate_satisfies_required_level(RequiredLevel.ARTICLE, "Điều 123", "4") is True
+    assert _candidate_satisfies_required_level(RequiredLevel.ARTICLE, None, None) is False
+    assert _candidate_satisfies_required_level(RequiredLevel.ARTICLE, "   ", None) is False
+
+    # Clause level: requires non-blank article AND clause
+    assert _candidate_satisfies_required_level(RequiredLevel.CLAUSE, "Điều 123", "4") is True
+    assert _candidate_satisfies_required_level(RequiredLevel.CLAUSE, "Điều 123", None) is False
+    assert _candidate_satisfies_required_level(RequiredLevel.CLAUSE, None, "4") is False
+    assert _candidate_satisfies_required_level(RequiredLevel.CLAUSE, "Điều 123", "   ") is False
+
+
+def test_targeted_re_adjudication_queue_validation_and_parent_lineage(tmp_path: Path):
+    """Verify targeted re-adjudication mode validation and CAS parent lineage."""
+    from app.evaluation.adjudication import AdjudicationMode, build_queue_payload, build_promotion_preview, build_promotion_summary
+
+    cases = [_case(f"case_{idx:03d}", "factoid") for idx in range(1, 11)]
+    labels = [_label(c.case_id) for c in cases]
+    sidecar = GoldSidecar(
+        metadata=GoldSidecarMetadata(sidecar_sha256="4" * 64),
+        labels=labels,
+        labels_by_case_id={c.case_id: [_label(c.case_id)] for c in cases},
+    )
+
+    # Empty case_ids raises ValueError
+    with pytest.raises(ValueError, match="selected_case_ids must not be empty"):
+        build_queue_payload(
+            cases=cases,
+            sidecar=sidecar,
+            candidates_by_evidence_id={},
+            selected_case_ids=[],
+            dataset_sha256="d" * 64,
+            corpus_revision="pinned",
+            provenance=_provenance(),
+            command=["python"],
+            candidate_limit=5,
+            target_case_count=0,
+            mode=AdjudicationMode.TARGETED_RE_ADJUDICATION,
+            source_sidecar_path="path/to/v4.json",
+        )
+
+    # Missing source_sidecar_path raises ValueError in targeted mode
+    with pytest.raises(ValueError, match="source_sidecar_path must be provided"):
+        build_queue_payload(
+            cases=cases,
+            sidecar=sidecar,
+            candidates_by_evidence_id={},
+            selected_case_ids=["case_001"],
+            dataset_sha256="d" * 64,
+            corpus_revision="pinned",
+            provenance=_provenance(),
+            command=["python"],
+            candidate_limit=5,
+            target_case_count=1,
+            mode=AdjudicationMode.TARGETED_RE_ADJUDICATION,
+            source_sidecar_path=None,
+        )
+
+    # Valid targeted queue payload
+    queue_payload = build_queue_payload(
+        cases=cases,
+        sidecar=sidecar,
+        candidates_by_evidence_id={},
+        selected_case_ids=["case_001"],
+        dataset_sha256="d" * 64,
+        corpus_revision="pinned",
+        provenance=_provenance(),
+        command=["python"],
+        candidate_limit=5,
+        target_case_count=1,
+        mode=AdjudicationMode.TARGETED_RE_ADJUDICATION,
+        source_sidecar_path="docs/evaluation/adjudication/v4/labels_v2.json",
+        re_adjudication_reason="ground_truth_correction",
+    )
+
+    assert queue_payload["mode"] == "targeted_re_adjudication"
+    assert queue_payload["selected_case_ids"] == ["case_001"]
+    assert queue_payload["target_case_count"] == 1
+    assert queue_payload["selected_case_count"] == 1
+    assert queue_payload["selection_diagnostics"]["selection_policy"] == "explicit_targeted_case_ids"
+    assert queue_payload["provenance"]["source_sidecar_path"] == "docs/evaluation/adjudication/v4/labels_v2.json"
+    assert queue_payload["re_adjudication_reason"] == "ground_truth_correction"
+
+
+def test_representative_10_precheck_invariants():
+    """Verify Representative-10 contains exactly 14 required evidence items with case_323 corrected."""
+    import json
+    from app.evaluation.gold_sidecar import load_gold_sidecar
+    from app.evaluation.case_selection import build_cases
+
+    v5_path = Path("docs/evaluation/adjudication/promotions/gold-adjudication-promotion-curated-v5_20260821_case323/labels_v2.json")
+    dataset_path = Path("app/data/namsyntax_legal_qa_420_curated_v1.json")
+    if not v5_path.exists() or not dataset_path.exists():
+        pytest.skip("V5 sidecar or dataset artifact not present in local filesystem")
+
+    v5 = load_gold_sidecar(v5_path)
+    dataset = json.loads(dataset_path.read_text(encoding="utf-8"))
+    cases = build_cases(dataset, v5.labels_by_case_id)
+    case_map = {c.case_id: c for c in cases}
+
+    representative_10 = [
+        "case_017",
+        "case_036",
+        "case_061",
+        "case_101",
+        "case_165",
+        "case_243",
+        "case_261",
+        "case_323",
+        "case_329",
+        "case_397",
+    ]
+
+    total_required = 0
+    for cid in representative_10:
+        assert cid in case_map, f"Missing {cid} in dataset"
+        labels = v5.labels_by_case_id.get(cid, [])
+        req_labels = [l for l in labels if l.required]
+        total_required += len(req_labels)
+
+    assert total_required == 14, f"Representative 10 total required evidence must be 14, got {total_required}"
+
+    # Verify case_323 in V5
+    c323_labels = [l for l in v5.labels_by_case_id["case_323"] if l.required]
+    assert len(c323_labels) == 1
+    l323 = c323_labels[0]
+    assert l323.document_id == 427301
+    assert l323.document_number == "59/2020/QH14"
+    assert l323.article == "Điều 123"
+    assert l323.clause == "4"
+    assert l323.status == EvidenceStatus.VERIFIED
+
+
+def test_preview_determinism_invariant():
+    """Verify build_promotion_preview produces identical preview_sha256 on identical semantic inputs."""
+    import json
+    from app.evaluation.adjudication import build_promotion_preview
+    from app.evaluation.provenance import GitProvenance
+
+    queue_path = Path("docs/evaluation/adjudication/queues/gold-adjudication-queue-case323-20260821/queue.json")
+    decisions_path = Path("docs/evaluation/adjudication/decisions/gold-adjudication-decisions-case323-20260821/decisions.json")
+    v4_path = Path("docs/evaluation/adjudication/promotions/gold-adjudication-promotion-curated-v4_20260809_151015_227377/labels_v2.json")
+    dataset_path = Path("app/data/namsyntax_legal_qa_420_curated_v1.json")
+    if not (queue_path.exists() and decisions_path.exists() and v4_path.exists() and dataset_path.exists()):
+        pytest.skip("Historical artifacts not present in local filesystem")
+
+    queue = json.loads(queue_path.read_text(encoding="utf-8"))
+    decisions = json.loads(decisions_path.read_text(encoding="utf-8"))
+    sidecar_data = json.loads(v4_path.read_text(encoding="utf-8"))
+    from app.evaluation.gold_sidecar import load_gold_sidecar
+    from app.evaluation.case_selection import build_cases
+    v4_sidecar = load_gold_sidecar(v4_path)
+    dataset = json.loads(dataset_path.read_text(encoding="utf-8"))
+    cases = build_cases(dataset, v4_sidecar.labels_by_case_id)
+    dataset_case_ids = [c.case_id for c in cases]
+
+    prov = GitProvenance(
+        git_sha="24773eba16f5bd3bf295adcf3434bd0a803fd49a",
+        git_dirty=True,
+        git_staged_dirty=False,
+        git_tracked_dirty=True,
+        git_untracked_dirty=True,
+        git_diff_sha256="4aa7af0e1e313165e4eba140bb0e699397c770814617bed787d18e309707e04c",
+        git_diff_status="ok",
+        git_diff_reason=None,
+        source_state_sha256="635987e685a2f24b65368b69e94792ddd17fdf986b2c6c257344ca53c67276e7",
+        repository_root=".",
+        status="ok",
+        error=None,
+    )
+
+    preview_a = build_promotion_preview(
+        queue_payload=queue,
+        queue_sha256="97e6f0eece6140cf05f8daaee4549521692975b2c41221cc0ec96f3831d4474c",
+        decisions_payload=decisions,
+        decisions_sha256="cb96890dc5adc6211a43a7b2fab2d1ee16b0573c805d8b13e7a24cfaae1e7c09",
+        source_sidecar_payload=sidecar_data,
+        source_sidecar_sha256="6044c084fd0cfd7b696b7e927ae2df26130e090aa64cf1a3b39a0784c1d8a9bf",
+        dataset_case_ids=dataset_case_ids,
+        provenance=prov,
+    )
+
+    preview_b = build_promotion_preview(
+        queue_payload=queue,
+        queue_sha256="97e6f0eece6140cf05f8daaee4549521692975b2c41221cc0ec96f3831d4474c",
+        decisions_payload=decisions,
+        decisions_sha256="cb96890dc5adc6211a43a7b2fab2d1ee16b0573c805d8b13e7a24cfaae1e7c09",
+        source_sidecar_payload=sidecar_data,
+        source_sidecar_sha256="6044c084fd0cfd7b696b7e927ae2df26130e090aa64cf1a3b39a0784c1d8a9bf",
+        dataset_case_ids=dataset_case_ids,
+        provenance=prov,
+    )
+
+    assert preview_a["preview_sha256"] == preview_b["preview_sha256"]
+    assert preview_a["preview_sha256"] == "3d708e9e367244af62d9a8fb5027159e2bbfe36e5b8013eb6054211832d19940"
+
+
+def test_v4_v5_exact_single_label_diff_and_immutability():
+    """Verify V4 and V5 sidecars differ exclusively at case_323_ctx01_cit01."""
+    from app.evaluation.gold_sidecar import load_gold_sidecar
+
+    v4_path = Path("docs/evaluation/adjudication/promotions/gold-adjudication-promotion-curated-v4_20260809_151015_227377/labels_v2.json")
+    v5_path = Path("docs/evaluation/adjudication/promotions/gold-adjudication-promotion-curated-v5_20260821_case323/labels_v2.json")
+    if not v4_path.exists() or not v5_path.exists():
+        pytest.skip("V4 or V5 sidecar artifact not present in local filesystem")
+
+    v4 = load_gold_sidecar(v4_path)
+    v5 = load_gold_sidecar(v5_path)
+
+    assert len(v4.labels) == len(v5.labels) == 484
+    v4_ids = [l.evidence_item_id for l in v4.labels]
+    v5_ids = [l.evidence_item_id for l in v5.labels]
+    assert v4_ids == v5_ids
+
+    changed = [
+        (l4.evidence_item_id, l4, l5)
+        for l4, l5 in zip(v4.labels, v5.labels)
+        if l4.model_dump() != l5.model_dump()
+    ]
+    assert len(changed) == 1
+    eid, l4, l5 = changed[0]
+    assert eid == "case_323_ctx01_cit01"
+    assert l4.article == "Điều 124" and l4.clause == "1"
+    assert l5.article == "Điều 123" and l5.clause == "4"
+    assert l5.document_id == 427301
+    assert l5.status == EvidenceStatus.VERIFIED
+
+
+def test_normal_task2_deterministic_regression_invariants():
+    """Verify normal Task-2 selection invariants remain strictly intact."""
+    import json
+    from app.evaluation.adjudication import (
+        TASK2_BATCH_SIZE, TASK2_SELECTION_SEED, TASK2_SELECTION_POLICY,
+        select_stratified_case_ids
+    )
+    from app.evaluation.gold_sidecar import load_gold_sidecar
+    from app.evaluation.case_selection import build_cases
+
+    assert TASK2_BATCH_SIZE == 20
+    assert TASK2_SELECTION_SEED == "vietlex-p2-v1"
+    assert TASK2_SELECTION_POLICY == "round_robin_question_type_required_level_then_underrepresented_document_then_legal_type_then_sha256"
+
+    v4_path = Path("docs/evaluation/adjudication/promotions/gold-adjudication-promotion-curated-v4_20260809_151015_227377/labels_v2.json")
+    dataset_path = Path("app/data/namsyntax_legal_qa_420_curated_v1.json")
+    if not v4_path.exists() or not dataset_path.exists():
+        pytest.skip("V4 sidecar or dataset artifact not present in local filesystem")
+
+    v4 = load_gold_sidecar(v4_path)
+    dataset = json.loads(dataset_path.read_text(encoding="utf-8"))
+    cases = build_cases(dataset, v4.labels_by_case_id)
+
+    selected = select_stratified_case_ids(cases, v4.labels_by_case_id, target_cases=TASK2_BATCH_SIZE, seed=TASK2_SELECTION_SEED)
+    expected_case_ids = [
+        "case_193", "case_254", "case_215", "case_224", "case_023",
+        "case_345", "case_115", "case_055", "case_277", "case_401",
+        "case_265", "case_111", "case_007", "case_273", "case_033",
+        "case_271", "case_410", "case_365", "case_195", "case_025",
+    ]
+    assert selected == expected_case_ids

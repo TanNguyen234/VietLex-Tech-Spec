@@ -1,0 +1,57 @@
+{
+  "artifact_hashes": {
+    "decision_template_sha256": "40b8b027e46a802a1f191bdf2522f7ccb9e2e62d58cddeeda4375cc78c041a79",
+    "queue_sha256": "97e6f0eece6140cf05f8daaee4549521692975b2c41221cc0ec96f3831d4474c"
+  },
+  "artifact_paths": {
+    "decision_template": "docs/evaluation/adjudication/queues/gold-adjudication-queue-case323-20260821/decision_template.json",
+    "queue": "docs/evaluation/adjudication/queues/gold-adjudication-queue-case323-20260821/queue.json",
+    "queue_preview": "docs/evaluation/adjudication/queues/gold-adjudication-queue-case323-20260821/queue_preview.md",
+    "queue_summary": "docs/evaluation/adjudication/queues/gold-adjudication-queue-case323-20260821/queue_summary.json"
+  },
+  "command": [
+    "run_gold_adjudication.py",
+    "queue"
+  ],
+  "dataset_sha256": "b458880e2c2fc4f2813965d57dc96517555488a5ada3702da12fb811f05fb90b",
+  "provenance": {
+    "error": null,
+    "git_diff_reason": null,
+    "git_diff_sha256": "4aa7af0e1e313165e4eba140bb0e699397c770814617bed787d18e309707e04c",
+    "git_diff_status": "ok",
+    "git_dirty": true,
+    "git_sha": "24773eba16f5bd3bf295adcf3434bd0a803fd49a",
+    "git_staged_dirty": false,
+    "git_tracked_dirty": true,
+    "git_untracked_dirty": true,
+    "repository_root": ".",
+    "source_state_sha256": "635987e685a2f24b65368b69e94792ddd17fdf986b2c6c257344ca53c67276e7",
+    "status": "ok"
+  },
+  "provider_calls": 0,
+  "queue_status": "READY_FOR_REVIEW",
+  "run_id": "gold-adjudication-queue-case323-20260821",
+  "selected_case_count": 1,
+  "selection_diagnostics": {
+    "case_diagnostics": [
+      {
+        "case_id": "case_323",
+        "document_key": "427301",
+        "legal_type": "unspecified",
+        "selection_evidence_item_id": "case_323_ctx01_cit01",
+        "selection_policy": "explicit_targeted_case_ids",
+        "selection_stratum": "factoid|article",
+        "tie_break_digest": "cbd8e584ed12b08aa804c950ccf3af50d4ed5d98c4250393adc6e992e965e358",
+        "verified_document_representation_before": 29,
+        "verified_legal_type_representation_before": 0
+      }
+    ],
+    "eligible_case_count": 205,
+    "selected_strata": {
+      "factoid|article": 1
+    },
+    "selection_policy": "explicit_targeted_case_ids"
+  },
+  "source_sidecar_sha256": "6044c084fd0cfd7b696b7e927ae2df26130e090aa64cf1a3b39a0784c1d8a9bf",
+  "target_case_count": 1
+}

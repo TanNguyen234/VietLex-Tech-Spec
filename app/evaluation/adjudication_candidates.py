@@ -308,6 +308,37 @@ def _stable_bounded_ids(source_ids: Sequence[int], fts_ids: Sequence[object], li
             raise ValueError("invalid corpus document identity")
         if raw_id not in ids:
             ids.append(raw_id)
+
+
+def _source_document_ids(labels: Sequence[GoldEvidence], case_id: str) -> list[int]:
+    document_ids: list[int] = []
+    for label in labels:
+        if label.document_id is None:
+            continue
+        if isinstance(label.document_id, bool) or not isinstance(label.document_id, int) or label.document_id <= 0:
+            raise ValueError(f"invalid corpus document identity for selected case '{case_id}'")
+        document_ids.append(label.document_id)
+    return document_ids
+
+
+def _case_query(case: GoldenCase) -> str:
+    texts = [case.question, case.reference_answer, *case.reference_contexts]
+    document_numbers: list[str] = []
+    seen: set[str] = set()
+    for citation in parse_legal_citations("\n".join(texts)):
+        if citation.document_number and citation.document_number not in seen:
+            seen.add(citation.document_number)
+            document_numbers.append(citation.document_number)
+    return "\n".join([case.question, *document_numbers])
+
+
+def _stable_bounded_ids(source_ids: Sequence[int], fts_ids: Sequence[object], limit: int) -> list[int]:
+    ids: list[int] = []
+    for raw_id in [*source_ids, *fts_ids]:
+        if isinstance(raw_id, bool) or not isinstance(raw_id, int) or raw_id <= 0:
+            raise ValueError("invalid corpus document identity")
+        if raw_id not in ids:
+            ids.append(raw_id)
         if len(ids) == limit:
             break
     return ids
@@ -324,33 +355,63 @@ def _reference_anchor(case: GoldenCase, evidence: GoldEvidence) -> str:
     return case.reference_contexts[index]
 
 
+def _candidate_satisfies_required_level(
+    required_level: RequiredLevel,
+    article: str | None,
+    clause: str | None,
+) -> bool:
+    if required_level == RequiredLevel.DOCUMENT:
+        return True
+    article_valid = bool(article and article.strip())
+    if required_level == RequiredLevel.ARTICLE:
+        return article_valid
+    if required_level == RequiredLevel.CLAUSE:
+        clause_valid = bool(clause and clause.strip())
+        return article_valid and clause_valid
+    return False
+
+
+def _supports_required_level(evidence: GoldEvidence, chunk: EvidenceChunk | None) -> bool:
+    """Check whether a discovered structural candidate chunk satisfies evidence required_level."""
+    if evidence.required_level == RequiredLevel.DOCUMENT:
+        return True
+    if chunk is None:
+        return False
+    return _candidate_satisfies_required_level(
+        evidence.required_level, chunk.article, chunk.clause
+    )
+
+
 def _first_structural_anchor(
     case: GoldenCase, evidence: GoldEvidence, chunks: Sequence[EvidenceChunk]
 ) -> EvidenceChunk | None:
+    if case.reference_answer:
+        norm_ans = norm_text(case.reference_answer)
+        if len(norm_ans.split()) >= 3:
+            answer_matches = [
+                chunk for chunk in chunks
+                if norm_ans in norm_text(chunk.text)
+            ]
+            if len(answer_matches) == 1:
+                return answer_matches[0]
+            if len(answer_matches) > 1:
+                anchor = _reference_anchor(case, evidence)
+                norm_anc = norm_text(anchor)
+                for chunk in answer_matches:
+                    norm_ch = norm_text(chunk.text)
+                    if norm_ch in norm_anc or any(
+                        w in norm_anc
+                        for w in [" ".join(norm_ch.split()[j:j+6]) for j in range(0, max(1, len(norm_ch.split())-5), 4)]
+                    ):
+                        return chunk
+                return answer_matches[0]
+
     anchor = _reference_anchor(case, evidence)
     for chunk in chunks:
         matched, _, _ = check_anchor_match(anchor, chunk.text)
         if matched:
             return chunk
     return None
-
-
-def _supports_required_level(evidence: GoldEvidence, chunk: EvidenceChunk | None) -> bool:
-    if evidence.required_level == RequiredLevel.DOCUMENT:
-        return True
-    if chunk is None:
-        return False
-    article_matches = bool(
-        evidence.article and chunk.article and norm_text(evidence.article) == norm_text(chunk.article)
-    )
-    if evidence.required_level == RequiredLevel.ARTICLE:
-        return article_matches
-    return bool(
-        article_matches
-        and evidence.clause
-        and chunk.clause
-        and norm_text(evidence.clause) == norm_text(f"Khoản {chunk.clause}")
-    )
 
 
 def _validate_document(document_id: int, metadata: object, document: object) -> None:

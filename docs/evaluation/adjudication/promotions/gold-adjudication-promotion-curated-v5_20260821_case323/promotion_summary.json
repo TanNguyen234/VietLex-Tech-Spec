@@ -1,0 +1,60 @@
+{
+  "fully_verified_selected_case_count": 1,
+  "negative_counts": {
+    "ambiguous": 0,
+    "corpus_missing": 0,
+    "insufficient_evidence": 0,
+    "rejected": 0
+  },
+  "parent_lineage": {
+    "gold_version": 5,
+    "parent_gold_version": 4,
+    "parent_sidecar_sha256": "6044c084fd0cfd7b696b7e927ae2df26130e090aa64cf1a3b39a0784c1d8a9bf"
+  },
+  "per_evidence_diff": [
+    {
+      "after_status": "verified",
+      "before_status": "verified",
+      "case_id": "case_323",
+      "evidence_item_id": "case_323_ctx01_cit01",
+      "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0"
+    }
+  ],
+  "preview_sha256": "3d708e9e367244af62d9a8fb5027159e2bbfe36e5b8013eb6054211832d19940",
+  "proposed_sidecar_sha256": "06a2ac58ed1143f23fbb149539605f7a802735dda6259619b21fbe12e55fab05",
+  "provenance": {
+    "error": null,
+    "git_diff_reason": null,
+    "git_diff_sha256": "4aa7af0e1e313165e4eba140bb0e699397c770814617bed787d18e309707e04c",
+    "git_diff_status": "ok",
+    "git_dirty": true,
+    "git_sha": "24773eba16f5bd3bf295adcf3434bd0a803fd49a",
+    "git_staged_dirty": false,
+    "git_tracked_dirty": true,
+    "git_untracked_dirty": true,
+    "repository_root": ".",
+    "source_state_sha256": "635987e685a2f24b65368b69e94792ddd17fdf986b2c6c257344ca53c67276e7",
+    "status": "ok"
+  },
+  "source_hashes": {
+    "decisions_sha256": "cb96890dc5adc6211a43a7b2fab2d1ee16b0573c805d8b13e7a24cfaae1e7c09",
+    "queue_sha256": "97e6f0eece6140cf05f8daaee4549521692975b2c41221cc0ec96f3831d4474c",
+    "source_sidecar_sha256": "6044c084fd0cfd7b696b7e927ae2df26130e090aa64cf1a3b39a0784c1d8a9bf"
+  },
+  "status": "READY_FOR_P2",
+  "status_counts": {
+    "after": {
+      "no_citation_extracted": 254,
+      "not_found_by_local_deterministic_audit": 2,
+      "unanswerable": 175,
+      "verified": 53
+    },
+    "before": {
+      "no_citation_extracted": 254,
+      "not_found_by_local_deterministic_audit": 2,
+      "unanswerable": 175,
+      "verified": 53
+    }
+  },
+  "verified_evidence_count": 53
+}

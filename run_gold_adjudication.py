@@ -40,6 +40,7 @@ class RuntimeDependencies:
     TASK2_SELECTION_SEED: str
     TASK2_BATCH_SIZE: int
     TASK2_SELECTION_POLICY: str
+    AdjudicationMode: type
 
 
 def repository_root() -> Path:
@@ -53,6 +54,7 @@ def _runtime_dependencies() -> RuntimeDependencies:
         TASK2_BATCH_SIZE,
         TASK2_SELECTION_POLICY,
         TASK2_SELECTION_SEED,
+        AdjudicationMode,
         build_decision_template,
         build_promotion_preview,
         build_promotion_summary,
@@ -96,6 +98,7 @@ def _runtime_dependencies() -> RuntimeDependencies:
         TASK2_SELECTION_SEED=TASK2_SELECTION_SEED,
         TASK2_BATCH_SIZE=TASK2_BATCH_SIZE,
         TASK2_SELECTION_POLICY=TASK2_SELECTION_POLICY,
+        AdjudicationMode=AdjudicationMode,
     )
 
 
@@ -125,6 +128,10 @@ def build_parser() -> argparse.ArgumentParser:
     queue.add_argument("--target-cases", type=int, default=20, choices=[20], help="target cases for review queue (must be exactly 20 for Task 2)")
     queue.add_argument("--candidate-limit", type=int, default=12)
     queue.add_argument("--write-preview", action="store_true", default=False)
+    queue.add_argument("--case-ids", nargs="+", help="explicit case IDs for targeted re-adjudication")
+    queue.add_argument("--re-adjudicate", action="store_true", default=False, help="explicit flag enabling targeted re-adjudication")
+    queue.add_argument("--re-adjudication-reason", type=str, default="ground_truth_correction", help="reason for targeted re-adjudication")
+    queue.add_argument("--source-sidecar", type=Path, default=None, help="explicit source sidecar path for targeted re-adjudication")
 
     preview = commands.add_parser("preview", help="rebuild an immutable promotion preview")
     common(preview, root / "docs/evaluation/adjudication/previews")
@@ -251,17 +258,38 @@ def _cmd_queue(args: argparse.Namespace) -> int:
     _require_file(args.content_store, "content store")
     _require_file(args.fts, "FTS")
     dependencies = _runtime_dependencies()
-    if args.target_cases != dependencies.TASK2_BATCH_SIZE:
-        raise ValueError(f"target_cases must be exactly {dependencies.TASK2_BATCH_SIZE} for Task 2 queue generation")
+
+    is_targeted = bool(args.re_adjudicate or args.case_ids)
+    if is_targeted:
+        if not args.re_adjudicate:
+            raise ValueError("targeted correction requires explicit --re-adjudicate flag")
+        if not args.case_ids:
+            raise ValueError("targeted re-adjudication requires non-empty --case-ids")
+        if len(args.case_ids) != len(set(args.case_ids)):
+            raise ValueError("duplicate case IDs in --case-ids")
+        if args.source_sidecar:
+            args.sidecar = args.source_sidecar
+        mode = dependencies.AdjudicationMode.TARGETED_RE_ADJUDICATION
+        selected_case_ids = list(args.case_ids)
+        target_case_count = len(selected_case_ids)
+    else:
+        if args.target_cases != dependencies.TASK2_BATCH_SIZE:
+            raise ValueError(f"target_cases must be exactly {dependencies.TASK2_BATCH_SIZE} for Task 2 queue generation")
+        mode = dependencies.AdjudicationMode.NORMAL
+        target_case_count = dependencies.TASK2_BATCH_SIZE
+
     cases, sidecar, _, dataset_sha256, _ = _load_sources(args, dependencies)
     if args.candidate_limit <= 0:
         raise ValueError("candidate_limit must be positive")
-    selected_case_ids = dependencies.select_stratified_case_ids(
-        cases,
-        sidecar.labels_by_case_id,
-        target_cases=args.target_cases,
-        seed=dependencies.TASK2_SELECTION_SEED,
-    )
+
+    if not is_targeted:
+        selected_case_ids = dependencies.select_stratified_case_ids(
+            cases,
+            sidecar.labels_by_case_id,
+            target_cases=args.target_cases,
+            seed=dependencies.TASK2_SELECTION_SEED,
+        )
+
     settings = dependencies.get_settings()
     store = dependencies.ContentStore(Path(args.content_store))
     fts_index = dependencies.LegalFtsIndex(
@@ -281,6 +309,7 @@ def _cmd_queue(args: argparse.Namespace) -> int:
             if candidate.evidence_item_id:
                 candidates_by_evidence.setdefault(candidate.evidence_item_id, []).append(candidate)
     provenance = _safe_provenance(dependencies, root)
+    source_sidecar_rel = _relative_path(Path(args.sidecar), root)
     queue_payload = dependencies.build_queue_payload(
         cases=cases,
         sidecar=sidecar,
@@ -292,7 +321,10 @@ def _cmd_queue(args: argparse.Namespace) -> int:
         command=["run_gold_adjudication.py", "queue"],
         candidate_limit=args.candidate_limit,
         selection_seed=dependencies.TASK2_SELECTION_SEED,
-        target_case_count=args.target_cases,
+        target_case_count=target_case_count,
+        mode=mode,
+        re_adjudication_reason=args.re_adjudication_reason if is_targeted else None,
+        source_sidecar_path=source_sidecar_rel if is_targeted else None,
     )
     queue_sha256 = dependencies.artifact_sha256(queue_payload)
     template = dependencies.build_decision_template(queue_payload, queue_sha256)

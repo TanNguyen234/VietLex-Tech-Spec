@@ -1,0 +1,18 @@
+{
+  "decisions": [
+    {
+      "decision": {
+        "confidence": "high",
+        "notes": "Re-adjudicate case_323 ground truth: 10-day charter capital change registration is governed by Dieu 123 Khoan 4 (59/2020/QH14), correcting previous reference pointing to Dieu 124 Khoan 1.",
+        "reviewed_at_utc": "2026-08-21T14:16:00.000000Z",
+        "reviewer_identity": "human-adjudicator",
+        "selected_candidate_id": "bee120fd33d1ce1cf566d5e70fe509214ef410436772f6a158215b6686b637e0",
+        "status": "verified"
+      },
+      "evidence_item_id": "case_323_ctx01_cit01",
+      "queue_row_id": "89427abc0f04dd793bb375f5ce8ebc4105bff5b800b7faab3f4af67c62393d9f"
+    }
+  ],
+  "queue_sha256": "97e6f0eece6140cf05f8daaee4549521692975b2c41221cc0ec96f3831d4474c",
+  "schema_version": "1.0.0"
+}
