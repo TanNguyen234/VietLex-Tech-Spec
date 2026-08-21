@@ -267,8 +267,9 @@ def _cmd_queue(args: argparse.Namespace) -> int:
             raise ValueError("targeted re-adjudication requires non-empty --case-ids")
         if len(args.case_ids) != len(set(args.case_ids)):
             raise ValueError("duplicate case IDs in --case-ids")
-        if args.source_sidecar:
-            args.sidecar = args.source_sidecar
+        if not args.source_sidecar:
+            raise ValueError("targeted re-adjudication requires explicit --source-sidecar")
+        args.sidecar = args.source_sidecar
         mode = dependencies.AdjudicationMode.TARGETED_RE_ADJUDICATION
         selected_case_ids = list(args.case_ids)
         target_case_count = len(selected_case_ids)

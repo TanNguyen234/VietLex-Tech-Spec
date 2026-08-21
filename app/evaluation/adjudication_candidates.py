@@ -308,37 +308,6 @@ def _stable_bounded_ids(source_ids: Sequence[int], fts_ids: Sequence[object], li
             raise ValueError("invalid corpus document identity")
         if raw_id not in ids:
             ids.append(raw_id)
-
-
-def _source_document_ids(labels: Sequence[GoldEvidence], case_id: str) -> list[int]:
-    document_ids: list[int] = []
-    for label in labels:
-        if label.document_id is None:
-            continue
-        if isinstance(label.document_id, bool) or not isinstance(label.document_id, int) or label.document_id <= 0:
-            raise ValueError(f"invalid corpus document identity for selected case '{case_id}'")
-        document_ids.append(label.document_id)
-    return document_ids
-
-
-def _case_query(case: GoldenCase) -> str:
-    texts = [case.question, case.reference_answer, *case.reference_contexts]
-    document_numbers: list[str] = []
-    seen: set[str] = set()
-    for citation in parse_legal_citations("\n".join(texts)):
-        if citation.document_number and citation.document_number not in seen:
-            seen.add(citation.document_number)
-            document_numbers.append(citation.document_number)
-    return "\n".join([case.question, *document_numbers])
-
-
-def _stable_bounded_ids(source_ids: Sequence[int], fts_ids: Sequence[object], limit: int) -> list[int]:
-    ids: list[int] = []
-    for raw_id in [*source_ids, *fts_ids]:
-        if isinstance(raw_id, bool) or not isinstance(raw_id, int) or raw_id <= 0:
-            raise ValueError("invalid corpus document identity")
-        if raw_id not in ids:
-            ids.append(raw_id)
         if len(ids) == limit:
             break
     return ids

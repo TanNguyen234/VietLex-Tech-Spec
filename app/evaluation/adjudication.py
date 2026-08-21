@@ -1210,9 +1210,21 @@ def build_promotion_preview(
     }
     if is_targeted:
         preview_core["mode"] = "targeted_re_adjudication"
+        parent_ver = None
+        source_meta = source.get("metadata")
+        if isinstance(source_meta, dict):
+            parent_ver = source_meta.get("gold_version")
+        if parent_ver is None:
+            source_path = str(queue_payload.get("provenance", {}).get("source_sidecar_path", ""))
+            match = re.search(r"curated-v(\d+)", source_path)
+            if match:
+                parent_ver = int(match.group(1))
+            else:
+                parent_ver = 4
+        gold_ver = parent_ver + 1
         preview_core["parent_lineage"] = {
-            "gold_version": 5,
-            "parent_gold_version": 4,
+            "gold_version": gold_ver,
+            "parent_gold_version": parent_ver,
             "parent_sidecar_sha256": source_sidecar_sha256,
         }
     return {**preview_core, "preview_sha256": canonical_sha256(preview_core)}

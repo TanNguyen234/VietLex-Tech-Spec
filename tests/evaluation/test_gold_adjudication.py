@@ -3240,7 +3240,7 @@ def test_targeted_re_adjudication_queue_validation_and_parent_lineage(tmp_path: 
 
 
 def test_representative_10_precheck_invariants():
-    """Verify Representative-10 contains exactly 14 required evidence items with case_323 corrected."""
+    """Verify Representative-10 contains exactly 14 required evidence items with full tuple verification."""
     import json
     from app.evaluation.gold_sidecar import load_gold_sidecar
     from app.evaluation.case_selection import build_cases
@@ -3255,37 +3255,64 @@ def test_representative_10_precheck_invariants():
     cases = build_cases(dataset, v5.labels_by_case_id)
     case_map = {c.case_id: c for c in cases}
 
-    representative_10 = [
-        "case_017",
-        "case_036",
-        "case_061",
-        "case_101",
-        "case_165",
-        "case_243",
-        "case_261",
-        "case_323",
-        "case_329",
-        "case_397",
-    ]
+    expected_representative_10 = {
+        "case_017": [("case_017_ctx01_cit01", 431147, "72/2020/QH14", "Điều 16", "2", EvidenceStatus.VERIFIED)],
+        "case_036": [
+            ("case_036_ctx01_cit01", 431147, "72/2020/QH14", "Điều 34", "5", EvidenceStatus.VERIFIED),
+            ("case_036_ctx02_cit01", 431147, "72/2020/QH14", "Điều 34", "6", EvidenceStatus.VERIFIED),
+        ],
+        "case_061": [("case_061_ctx01_cit01", 431147, "72/2020/QH14", "Điều 52", "2", EvidenceStatus.VERIFIED)],
+        "case_101": [("case_101_ctx01_cit01", 431147, "72/2020/QH14", "Điều 81", "1", EvidenceStatus.VERIFIED)],
+        "case_165": [("case_165_ctx01_cit01", 431147, "72/2020/QH14", "Điều 130", "3", EvidenceStatus.VERIFIED)],
+        "case_243": [
+            ("case_243_ctx01_cit01", 427301, "59/2020/QH14", "Điều 39", "1", EvidenceStatus.VERIFIED),
+            ("case_243_ctx02_cit01", 427301, "59/2020/QH14", "Điều 39", "2", EvidenceStatus.VERIFIED),
+        ],
+        "case_261": [("case_261_ctx01_cit01", 427301, "59/2020/QH14", "Điều 57", "6", EvidenceStatus.VERIFIED)],
+        "case_323": [("case_323_ctx01_cit01", 427301, "59/2020/QH14", "Điều 123", "4", EvidenceStatus.VERIFIED)],
+        "case_329": [
+            ("case_329_ctx01_cit01", 427301, "59/2020/QH14", "Điều 128", "3", EvidenceStatus.VERIFIED),
+            ("case_329_ctx02_cit01", 427301, "59/2020/QH14", "Điều 130", "1", EvidenceStatus.VERIFIED),
+        ],
+        "case_397": [
+            ("case_397_ctx01_cit01", 427301, "59/2020/QH14", "Điều 196", "5", EvidenceStatus.VERIFIED),
+            ("case_397_ctx02_cit01", 427301, "59/2020/QH14", "Điều 197", "1", EvidenceStatus.VERIFIED),
+        ],
+    }
 
     total_required = 0
-    for cid in representative_10:
+    for cid, expected_tuples in expected_representative_10.items():
         assert cid in case_map, f"Missing {cid} in dataset"
         labels = v5.labels_by_case_id.get(cid, [])
         req_labels = [l for l in labels if l.required]
         total_required += len(req_labels)
 
+        actual_tuples = [
+            (l.evidence_item_id, l.document_id, l.document_number, l.article, l.clause, l.status)
+            for l in req_labels
+        ]
+        assert actual_tuples == expected_tuples, f"Mismatch for {cid}: {actual_tuples} != {expected_tuples}"
+
     assert total_required == 14, f"Representative 10 total required evidence must be 14, got {total_required}"
 
-    # Verify case_323 in V5
-    c323_labels = [l for l in v5.labels_by_case_id["case_323"] if l.required]
-    assert len(c323_labels) == 1
-    l323 = c323_labels[0]
-    assert l323.document_id == 427301
-    assert l323.document_number == "59/2020/QH14"
-    assert l323.article == "Điều 123"
-    assert l323.clause == "4"
-    assert l323.status == EvidenceStatus.VERIFIED
+
+def test_cli_queue_targeted_mode_requires_explicit_source_sidecar():
+    """Verify CLI queue command fails closed if targeted re-adjudication lacks explicit --source-sidecar."""
+    import run_gold_adjudication as cli
+    cs_path = Path("data/huggingface/content_store.sqlite3")
+    fts_path = Path("data/huggingface/legal_fts.sqlite3")
+    if not (cs_path.exists() and fts_path.exists()):
+        pytest.skip("Local content store / FTS index required for CLI queue validation")
+    args = [
+        "queue",
+        "--re-adjudicate",
+        "--case-ids", "case_323",
+        "--run-id", "test-missing-source-sidecar",
+        "--content-store", str(cs_path),
+        "--fts", str(fts_path),
+    ]
+    with pytest.raises(ValueError, match="targeted re-adjudication requires explicit --source-sidecar"):
+        cli.main(args)
 
 
 def test_preview_determinism_invariant():
@@ -3384,14 +3411,17 @@ def test_v4_v5_exact_single_label_diff_and_immutability():
 
 
 def test_normal_task2_deterministic_regression_invariants():
-    """Verify normal Task-2 selection invariants remain strictly intact."""
+    """Verify normal Task-2 selection and candidate structural stability."""
     import json
     from app.evaluation.adjudication import (
         TASK2_BATCH_SIZE, TASK2_SELECTION_SEED, TASK2_SELECTION_POLICY,
         select_stratified_case_ids
     )
+    from app.evaluation.adjudication_candidates import discover_adjudication_candidates
     from app.evaluation.gold_sidecar import load_gold_sidecar
     from app.evaluation.case_selection import build_cases
+    from app.ingestion.content_store import ContentStore
+    from app.ingestion.legal_fts import LegalFtsIndex
 
     assert TASK2_BATCH_SIZE == 20
     assert TASK2_SELECTION_SEED == "vietlex-p2-v1"
@@ -3414,3 +3444,28 @@ def test_normal_task2_deterministic_regression_invariants():
         "case_271", "case_410", "case_365", "case_195", "case_025",
     ]
     assert selected == expected_case_ids
+
+    # If local stores exist, verify candidate discovery structural stability for sample normal cases
+    cs_path = Path("data/huggingface/content_store.sqlite3")
+    fts_path = Path("data/huggingface/legal_fts.sqlite3")
+    if cs_path.exists() and fts_path.exists():
+        content_store = ContentStore(cs_path)
+        fts_index = LegalFtsIndex(store=content_store, path=fts_path, dataset_revision="pinned")
+        sample_cases = ["case_193", "case_023", "case_007"]
+        sample_case_map = {c.case_id: c for c in cases if c.case_id in sample_cases}
+        candidates = discover_adjudication_candidates(
+            cases_by_id=sample_case_map,
+            labels_by_case_id=v4.labels_by_case_id,
+            selected_case_ids=sample_cases,
+            content_store=content_store,
+            fts_index=fts_index,
+            candidate_limit=6,
+        )
+        assert "case_193" in candidates
+        c193 = candidates["case_193"]
+        assert len(c193) > 0
+        assert c193[0].evidence_item_id == "case_193_ctx01_cit01"
+        assert c193[0].document_number == "55/2014/QH13"
+        assert c193[0].article == "Điều 161"
+        assert c193[0].clause == "1"
+        assert c193[0].required_level_supported is True
