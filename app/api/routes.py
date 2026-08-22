@@ -8,7 +8,6 @@ from fastapi import APIRouter, Request, Depends, Form, BackgroundTasks
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from app.config import get_settings
 from app.evaluation.online_metrics import build_online_metrics, sanitize_error_message
 from app.api.dependencies import verify_csrf
 
@@ -51,60 +50,9 @@ async def chat(
         is_new_session = True
         
     with logfire.span("Xử lý Chat Request: {message}", message=message) as span:
-        # Step 2: Check Semantic Cache
-        settings = get_settings()
-        cache_started = time.perf_counter()
-        cached_response = await check_semantic_cache(message)
-        t_cache = round(time.perf_counter() - cache_started, 4)
+        t_cache = 0.0
 
-        if cached_response:
-            span.set_attribute("cache_hit", True)
-            t_total = round(time.perf_counter() - request_started, 4)
-            latency_record = {"t_total": t_total, "t_cache": t_cache}
-            metrics = build_online_metrics(
-                trace_id=trace_id,
-                request_status="cache_hit",
-                latency=latency_record,
-                context_used=[],
-                bot_response=cached_response,
-                cached=True,
-                ragas_mode="off",
-                ragas_sample_rate=0.0,
-            )
-            # Log cached interaction
-            await log_interaction(
-                trace_id=trace_id,
-                user_query=message,
-                bot_response=cached_response,
-                contexts=[],
-                cached=True,
-                session_id=session_id,
-                request_status="cache_hit",
-                latency=metrics.latency,
-                observed_provider=metrics.observed_provider,
-                observed_model=metrics.observed_model,
-                provider_usage=metrics.provider_usage,
-                ragas_mode=metrics.ragas_mode,
-                ragas_status=metrics.ragas_status,
-                ragas_selected=metrics.ragas_selected,
-                ragas_executed=metrics.ragas_executed,
-                citation_count=metrics.citation_count,
-                context_count=metrics.context_count,
-                no_evidence=metrics.no_evidence,
-                refusal_category=metrics.refusal_category,
-            )
-            response = templates.TemplateResponse(
-                request,
-                "chat_message.html", 
-                {"user_msg": message, "bot_msg": cached_response, "trace_id": trace_id, "cached": True, "session_id": session_id}
-            )
-            if is_new_session:
-                response.headers["HX-Trigger"] = "load-sessions"
-            return response
-        
-        span.set_attribute("cache_hit", False)
-        
-        # Step 3: Apply NeMo Guardrails (Input Check)
+        # Step 2: Apply NeMo Guardrails (Input Check)
         input_guardrail_started = time.perf_counter()
         try:
             input_safe, rejection_message = await check_input_guardrails(message)
@@ -222,7 +170,70 @@ async def chat(
             if is_new_session:
                 response.headers["HX-Trigger"] = "load-sessions"
             return response
-            
+
+        # Step 3: Check Semantic Cache only after the input is approved.
+        cache_started = time.perf_counter()
+        cached_response = await check_semantic_cache(message)
+        t_cache = round(time.perf_counter() - cache_started, 4)
+
+        if cached_response:
+            span.set_attribute("cache_hit", True)
+            t_total = round(time.perf_counter() - request_started, 4)
+            latency_record = {
+                "t_total": t_total,
+                "t_cache": t_cache,
+                "t_guardrails_input": t_guardrails_input,
+            }
+            metrics = build_online_metrics(
+                trace_id=trace_id,
+                request_status="cache_hit",
+                latency=latency_record,
+                context_used=[],
+                bot_response=cached_response,
+                cached=True,
+                input_safe=True,
+                ragas_mode="off",
+                ragas_sample_rate=0.0,
+            )
+            await log_interaction(
+                trace_id=trace_id,
+                user_query=message,
+                bot_response=cached_response,
+                contexts=[],
+                cached=True,
+                input_safe=True,
+                session_id=session_id,
+                request_status="cache_hit",
+                latency=metrics.latency,
+                observed_provider=metrics.observed_provider,
+                observed_model=metrics.observed_model,
+                provider_usage=metrics.provider_usage,
+                ragas_mode=metrics.ragas_mode,
+                ragas_status=metrics.ragas_status,
+                ragas_selected=metrics.ragas_selected,
+                ragas_executed=metrics.ragas_executed,
+                citation_count=metrics.citation_count,
+                context_count=metrics.context_count,
+                no_evidence=metrics.no_evidence,
+                refusal_category=metrics.refusal_category,
+            )
+            response = templates.TemplateResponse(
+                request,
+                "chat_message.html",
+                {
+                    "user_msg": message,
+                    "bot_msg": cached_response,
+                    "trace_id": trace_id,
+                    "cached": True,
+                    "session_id": session_id,
+                },
+            )
+            if is_new_session:
+                response.headers["HX-Trigger"] = "load-sessions"
+            return response
+
+        span.set_attribute("cache_hit", False)
+
         # Step 4: Run Advanced Retrieval Pipeline (RAG)
         try:
             bot_response, context_used, latency_info = await run_advanced_rag(message)
