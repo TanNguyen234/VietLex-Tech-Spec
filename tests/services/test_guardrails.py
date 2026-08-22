@@ -19,6 +19,17 @@ def test_input_prompt_allows_lawful_government_and_policy_questions() -> None:
     assert "trường hợp mơ hồ" in prompt
 
 
+def test_output_fact_prompt_matches_nemo_accuracy_score_polarity() -> None:
+    prompt = (
+        Path(guardrails.__file__).parents[2]
+        / "guardrails_config"
+        / "prompts.yml"
+    ).read_text(encoding="utf-8")
+
+    assert 'Trả lời "yes" nếu câu trả lời hoàn toàn chính xác' in prompt
+    assert 'Trả lời "no" nếu câu trả lời chứa thông tin sai lệch' in prompt
+
+
 @pytest.mark.asyncio
 async def test_guardrail_model_uses_vertex_primary_chain_with_minimal_thinking(
     monkeypatch,

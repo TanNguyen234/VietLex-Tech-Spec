@@ -28,7 +28,7 @@ prompts:
       Câu trả lời của trợ lý: {{ response }}
 
       Hãy đánh giá:
-      Trả lời "yes" nếu câu trả lời chứa thông tin sai lệch, ảo giác hoặc không có trong tài liệu.
-      Trả lời "no" nếu câu trả lời hoàn toàn chính xác, trung thực và dựa trên tài liệu.
+      Trả lời "yes" nếu câu trả lời hoàn toàn chính xác, trung thực và dựa trên tài liệu.
+      Trả lời "no" nếu câu trả lời chứa thông tin sai lệch, ảo giác hoặc không có trong tài liệu.
 
       Đánh giá (yes/no):
