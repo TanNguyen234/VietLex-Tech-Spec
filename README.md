@@ -128,6 +128,7 @@ flowchart LR
 
 ### Yêu cầu Hệ thống
 * **Python:** 3.10+
+* **MongoDB:** một instance đang chạy (local hoặc MongoDB Atlas). Cấu hình URI qua `MONGO_URL`; ứng dụng sẽ dừng khi không kết nối được vì session và log phụ thuộc vào MongoDB.
 
 ### Các bước Cài đặt
 
@@ -138,12 +139,19 @@ python -m pip install -r requirements.txt
 Copy-Item .env.example .env
 ```
 
+Nếu chưa có MongoDB local và đã cài Docker, có thể khởi động nhanh:
+
+```powershell
+docker run --name vietlex-mongodb -p 127.0.0.1:27017:27017 -d mongo:7
+```
+
 ### Cấu hình Biến Môi trường (Secrets)
 
 Các biến môi trường bắt buộc cấu hình trong tệp `.env`:
 
 * `PIPECONE_API` hoặc `PINECONE_API_KEY`: API Key kết nối Pinecone Serverless.
 * `QDRANT_URL`, `QDRANT_API_KEY`: Thông tin kết nối Qdrant Cloud Inference (cho Embedding & ColBERT).
+* `MONGO_URL`: MongoDB dùng cho session, log, feedback và trang admin; local mặc định có thể dùng `mongodb://localhost:27017/vietlex`.
 * Để dùng structural primary: `STRUCTURAL_BACKEND_ENABLED=true`, `STRUCTURAL_COLLECTION_NAME=vietlex-legal-rag-v2-pilot-384`. Collection này chỉ phủ 827 văn bản; Pinecone v1 vẫn fallback cho lỗi kỹ thuật/no-candidate.
 * Local: `GOOGLE_APPLICATION_CREDENTIALS=.secrets/vertex-adc.json` dùng đường dẫn tương đối tới key đã được Git ignore; không hardcode đường dẫn Windows.
 * Vercel/serverless: đặt toàn bộ JSON service account trong secret `GOOGLE_SERVICE_ACCOUNT_JSON`. Provider tạo credential trực tiếp trong memory, không cần ghi key ra filesystem.
