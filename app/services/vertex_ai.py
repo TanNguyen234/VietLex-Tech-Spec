@@ -140,6 +140,13 @@ class ProviderMetadata:
 class GenerationResult:
     text: str
     metadata: ProviderMetadata
+    finish_reason: str | None = None
+    prompt_token_count: int | None = None
+    output_token_count: int | None = None
+    thought_token_count: int | None = None
+    total_token_count: int | None = None
+    max_output_tokens: int | None = None
+    thinking_level: str = "DEFAULT"
 
 
 @dataclass(frozen=True)
@@ -255,9 +262,31 @@ class VertexAIProvider:
             raise VertexInvalidResponseError(
                 "Vertex AI returned an empty generation response."
             )
+        candidates = getattr(response, "candidates", None) or []
+        finish_reason_value = (
+            getattr(candidates[0], "finish_reason", None)
+            if candidates
+            else None
+        )
+        finish_reason = getattr(
+            finish_reason_value,
+            "value",
+            finish_reason_value,
+        )
+        usage = getattr(response, "usage_metadata", None)
+        thinking_value = getattr(thinking_level, "value", thinking_level)
         return GenerationResult(
             text=text,
             metadata=self._metadata(self.settings.VERTEX_LLM_MODEL, started),
+            finish_reason=(str(finish_reason) if finish_reason else None),
+            prompt_token_count=getattr(usage, "prompt_token_count", None),
+            output_token_count=getattr(usage, "candidates_token_count", None),
+            thought_token_count=getattr(usage, "thoughts_token_count", None),
+            total_token_count=getattr(usage, "total_token_count", None),
+            max_output_tokens=max_output_tokens,
+            thinking_level=(
+                str(thinking_value) if thinking_value else "DEFAULT"
+            ),
         )
 
     async def generate_structured(

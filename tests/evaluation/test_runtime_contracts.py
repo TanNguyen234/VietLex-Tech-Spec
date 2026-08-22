@@ -12,6 +12,7 @@ from app.evaluation.schemas import (
     RetrievalStageTrace,
 )
 from app.ingestion.legal_text import EvidenceChunk
+from app.services.direct_llm import LLMGenerationResult
 from app.services.retrieval import LegalRetriever, RetrievalOutcome
 from run_answer_eval import run_stage_a_online, run_stage_b_offline
 from run_retrieval_eval import (
@@ -342,10 +343,40 @@ async def test_answer_stage_uses_one_retrieval_and_three_generation_arguments() 
         retrieved_evidence=[chunk],
     )
     retrieval_call = AsyncMock(return_value=retrieval_result)
-    generation_call = AsyncMock(return_value="Generated answer")
+    generation_call = AsyncMock(
+        return_value=SimpleNamespace(
+            text="Generated answer",
+            observed_provider="google_vertex_ai",
+            observed_model="gemini-3.5-flash",
+            observed=True,
+            status="success",
+            project="vietlex-test-project",
+            location="global",
+            provider_latency_ms=12.5,
+            fallback_used=False,
+            primary_error_kind=None,
+            finish_reason="MAX_TOKENS",
+            prompt_token_count=120,
+            output_token_count=18,
+            thought_token_count=46,
+            total_token_count=184,
+            max_output_tokens=640,
+            thinking_level="DEFAULT",
+        )
+    )
+    legacy_generation_call = AsyncMock(
+        side_effect=AssertionError("evaluation must retain generation metadata")
+    )
     with (
         patch("run_answer_eval.evaluate_single_retrieval_case", retrieval_call),
-        patch("app.services.rag_pipeline.generate_response", generation_call),
+        patch(
+            "app.services.rag_pipeline.generate_response_with_metadata",
+            generation_call,
+        ),
+        patch(
+            "app.services.rag_pipeline.generate_response",
+            legacy_generation_call,
+        ),
     ):
         result = await run_stage_a_online(
             make_case(), make_settings(), "off", profile
@@ -357,6 +388,20 @@ async def test_answer_stage_uses_one_retrieval_and_three_generation_arguments() 
         "tax deduction",
         result["contexts"],
     )
+    assert result["raw_response"] == "Generated answer"
+    assert result["generation_metadata"] == {
+        "provider": "google_vertex_ai",
+        "model": "gemini-3.5-flash",
+        "observed": True,
+        "status": "success",
+        "finish_reason": "MAX_TOKENS",
+        "prompt_token_count": 120,
+        "output_token_count": 18,
+        "thought_token_count": 46,
+        "total_token_count": 184,
+        "max_output_tokens": 640,
+        "thinking_level": "DEFAULT",
+    }
 
 
 @pytest.mark.asyncio
@@ -380,8 +425,14 @@ async def test_answer_stage_propagates_reranker_error_status() -> None:
             new=AsyncMock(return_value=retrieval_result),
         ),
         patch(
-            "app.services.rag_pipeline.generate_response",
-            new=AsyncMock(return_value="System cannot process the request."),
+            "app.services.rag_pipeline.generate_response_with_metadata",
+            new=AsyncMock(
+                return_value=LLMGenerationResult(
+                    text="System cannot process the request.",
+                    observed_provider="test",
+                    observed_model="test",
+                )
+            ),
         ),
     ):
         result = await run_stage_a_online(
@@ -555,8 +606,14 @@ async def test_input_guardrail_error_in_shadow_keeps_pipeline_scoreable() -> Non
             new=AsyncMock(return_value=retrieval_result),
         ),
         patch(
-            "app.services.rag_pipeline.generate_response",
-            new=AsyncMock(return_value="Generated answer"),
+            "app.services.rag_pipeline.generate_response_with_metadata",
+            new=AsyncMock(
+                return_value=LLMGenerationResult(
+                    text="Generated answer",
+                    observed_provider="test",
+                    observed_model="test",
+                )
+            ),
         ),
         patch(
             "app.services.guardrails.check_output_guardrails",
@@ -597,8 +654,14 @@ async def test_output_guardrail_error_is_typed_not_a_hallucination_block() -> No
             new=AsyncMock(return_value=retrieval_result),
         ),
         patch(
-            "app.services.rag_pipeline.generate_response",
-            new=AsyncMock(return_value="Generated answer"),
+            "app.services.rag_pipeline.generate_response_with_metadata",
+            new=AsyncMock(
+                return_value=LLMGenerationResult(
+                    text="Generated answer",
+                    observed_provider="test",
+                    observed_model="test",
+                )
+            ),
         ),
         patch(
             "app.services.guardrails.check_output_guardrails",
@@ -641,8 +704,14 @@ async def test_output_guardrail_error_in_shadow_keeps_pipeline_scoreable() -> No
             new=AsyncMock(return_value=retrieval_result),
         ),
         patch(
-            "app.services.rag_pipeline.generate_response",
-            new=AsyncMock(return_value="Generated answer"),
+            "app.services.rag_pipeline.generate_response_with_metadata",
+            new=AsyncMock(
+                return_value=LLMGenerationResult(
+                    text="Generated answer",
+                    observed_provider="test",
+                    observed_model="test",
+                )
+            ),
         ),
         patch(
             "app.services.guardrails.check_output_guardrails",

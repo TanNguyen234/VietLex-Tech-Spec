@@ -453,10 +453,12 @@ async def test_answer_model_receives_external_corpus_reliability_rules(
         system_prompt: str,
         *,
         max_output_tokens: int,
+        thinking_level: str | None = None,
     ) -> rag_pipeline.LLMGenerationResult:
         nonlocal captured_system_prompt
         captured_system_prompt = system_prompt
         assert max_output_tokens == 640
+        assert thinking_level == "MINIMAL"
         return rag_pipeline.LLMGenerationResult(
             text="Câu trả lời.",
             observed_provider="test_provider",
@@ -469,7 +471,7 @@ async def test_answer_model_receives_external_corpus_reliability_rules(
         fake_generate,
     )
 
-    await rag_pipeline.generate_response(
+    await rag_pipeline.generate_response_with_metadata(
         "Văn bản còn hiệu lực không?",
         "hiệu lực văn bản",
         [_evidence().formatted_context()],

@@ -75,6 +75,18 @@ class _ProviderAPIError(RuntimeError):
 async def test_generation_returns_typed_vertex_metadata_without_credentials() -> None:
     vertex_ai = _module()
     models = _Models()
+    models.generation_response = SimpleNamespace(
+        text="Câu trả lời Vertex",
+        candidates=[
+            SimpleNamespace(finish_reason=types.FinishReason.MAX_TOKENS)
+        ],
+        usage_metadata=SimpleNamespace(
+            prompt_token_count=120,
+            candidates_token_count=18,
+            thoughts_token_count=46,
+            total_token_count=184,
+        ),
+    )
     captured_client_args = {}
 
     def client_factory(**kwargs):
@@ -101,6 +113,13 @@ async def test_generation_returns_typed_vertex_metadata_without_credentials() ->
     assert result.metadata.location == "global"
     assert result.metadata.status == "success"
     assert result.metadata.latency_ms >= 0
+    assert result.finish_reason == "MAX_TOKENS"
+    assert result.prompt_token_count == 120
+    assert result.output_token_count == 18
+    assert result.thought_token_count == 46
+    assert result.total_token_count == 184
+    assert result.max_output_tokens == 64
+    assert result.thinking_level == "MINIMAL"
     assert "credentials" in captured_client_args
     assert "api_key" not in captured_client_args
     assert "credentials" not in result.metadata.to_dict()

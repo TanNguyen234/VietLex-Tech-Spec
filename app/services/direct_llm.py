@@ -229,6 +229,13 @@ class LLMGenerationResult:
     provider_latency_ms: float | None = None
     fallback_used: bool = False
     primary_error_kind: str | None = None
+    finish_reason: str | None = None
+    prompt_token_count: int | None = None
+    output_token_count: int | None = None
+    thought_token_count: int | None = None
+    total_token_count: int | None = None
+    max_output_tokens: int | None = None
+    thinking_level: str = "DEFAULT"
 
 
 def _vertex_failure_result(
@@ -411,6 +418,13 @@ async def generate_llm_response_with_metadata(
         project=metadata.project,
         location=metadata.location,
         provider_latency_ms=metadata.latency_ms,
+        finish_reason=result.finish_reason,
+        prompt_token_count=result.prompt_token_count,
+        output_token_count=result.output_token_count,
+        thought_token_count=result.thought_token_count,
+        total_token_count=result.total_token_count,
+        max_output_tokens=result.max_output_tokens,
+        thinking_level=result.thinking_level,
     )
 
 

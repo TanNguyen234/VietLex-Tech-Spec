@@ -168,7 +168,7 @@ async def run_stage_a_online(
         check_input_guardrails,
         check_output_guardrails,
     )
-    from app.services.rag_pipeline import generate_response
+    from app.services.rag_pipeline import generate_response_with_metadata
 
     started = time.perf_counter()
     input_safe = True
@@ -285,9 +285,27 @@ async def run_stage_a_online(
         online_status = retrieval_res.status
     contexts = [format_candidate_context(c) for c in retrieval_res.retrieved_evidence]
 
-    # 2. Real 3-argument generate_response call: (original_query, rewritten_query, contexts)
+    # 2. Real 3-argument generation call with observed provider metadata.
     rewritten_q = retrieval_res.rewritten_query or retrieval_res.query_used or case.question
-    bot_response = await generate_response(case.question, rewritten_q, contexts)
+    generation = await generate_response_with_metadata(
+        case.question,
+        rewritten_q,
+        contexts,
+    )
+    bot_response = generation.text
+    generation_metadata = {
+        "provider": generation.observed_provider,
+        "model": generation.observed_model,
+        "observed": generation.observed,
+        "status": generation.status,
+        "finish_reason": generation.finish_reason,
+        "prompt_token_count": generation.prompt_token_count,
+        "output_token_count": generation.output_token_count,
+        "thought_token_count": generation.thought_token_count,
+        "total_token_count": generation.total_token_count,
+        "max_output_tokens": generation.max_output_tokens,
+        "thinking_level": generation.thinking_level,
+    }
 
     # Output guardrails execution
     final_response = bot_response
@@ -328,6 +346,7 @@ async def run_stage_a_online(
         "case_id": case.case_id,
         "raw_response": bot_response,
         "final_response": final_response,
+        "generation_metadata": generation_metadata,
         "contexts": contexts,
         "input_safe": input_safe,
         "output_safe": output_safe,
@@ -394,6 +413,7 @@ async def run_stage_b_offline(
         retrieval_result=retrieval_case_res,
         raw_response=raw_response,
         final_response=final_response,
+        generation_metadata=stage_a_result.get("generation_metadata", {}),
         input_safe=stage_a_result["input_safe"],
         output_safe=stage_a_result["output_safe"],
         refusal_category=det_metrics["refusal_category"],

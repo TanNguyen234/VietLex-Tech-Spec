@@ -439,6 +439,8 @@ async def generate_response_with_metadata(
     original_query: str,
     rewritten_query: str,
     context: List[str],
+    *,
+    thinking_level: Any = "MINIMAL",
 ) -> LLMGenerationResult:
     if not context:
         return LLMGenerationResult(
@@ -471,6 +473,7 @@ async def generate_response_with_metadata(
         user_prompt,
         system_prompt,
         max_output_tokens=get_settings().LLM_MAX_OUTPUT_TOKENS,
+        thinking_level=thinking_level,
     )
 
 
