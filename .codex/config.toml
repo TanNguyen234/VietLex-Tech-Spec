@@ -1,6 +1,6 @@
 model = "gpt-5.6-sol"
-model_reasoning_effort = "medium"
-plan_mode_reasoning_effort = "medium"
+model_reasoning_effort = "high"
+plan_mode_reasoning_effort = "high"
 approval_policy = "on-request"
 approvals_reviewer = "auto_review"
 sandbox_mode = "workspace-write"
@@ -59,87 +59,3 @@ enabled = true
 
 [plugins."superpowers@openai-curated"]
 enabled = true
-
-[[skills.config]]
-path = "../.agents/skills/caveman"
-enabled = false
-
-[[skills.config]]
-path = "../.agents/skills/create-readme"
-enabled = false
-
-[[skills.config]]
-path = "../.agents/skills/cv-enhancer-prism-ai"
-enabled = false
-
-[[skills.config]]
-path = "../.agents/skills/deep-agents-core"
-enabled = false
-
-[[skills.config]]
-path = "../.agents/skills/deep-agents-memory"
-enabled = false
-
-[[skills.config]]
-path = "../.agents/skills/deep-agents-orchestration"
-enabled = false
-
-[[skills.config]]
-path = "../.agents/skills/ecosystem-primer"
-enabled = false
-
-[[skills.config]]
-path = "../.agents/skills/improve-codebase-architecture"
-enabled = false
-
-[[skills.config]]
-path = "../.agents/skills/langchain-dependencies"
-enabled = false
-
-[[skills.config]]
-path = "../.agents/skills/langchain-fundamentals"
-enabled = false
-
-[[skills.config]]
-path = "../.agents/skills/langchain-middleware"
-enabled = false
-
-[[skills.config]]
-path = "../.agents/skills/langgraph-cli"
-enabled = false
-
-[[skills.config]]
-path = "../.agents/skills/langgraph-fundamentals"
-enabled = false
-
-[[skills.config]]
-path = "../.agents/skills/langgraph-human-in-the-loop"
-enabled = false
-
-[[skills.config]]
-path = "../.agents/skills/langgraph-persistence"
-enabled = false
-
-[[skills.config]]
-path = "../.agents/skills/managed-deep-agents"
-enabled = false
-
-[[skills.config]]
-path = "../.agents/skills/markitdown"
-enabled = false
-
-[[skills.config]]
-path = "../.agents/skills/ponytail"
-enabled = false
-
-[[skills.config]]
-path = "../.agents/skills/skill-creator"
-enabled = false
-
-[[skills.config]]
-path = "../.agents/skills/swarm"
-enabled = false
-
-[[skills.config]]
-path = "../.agents/skills/writing-plans"
-enabled = false
