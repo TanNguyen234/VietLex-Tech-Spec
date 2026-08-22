@@ -4,7 +4,9 @@ FROM python:3.10-slim
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PORT=8000
+    PORT=8000 \
+    CONTENT_STORE_PATH=/data/content_store.sqlite3 \
+    LEGAL_FTS_PATH=/data/legal_fts.sqlite3
 
 # Set working directory
 WORKDIR /app
@@ -22,6 +24,9 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy application source code
 COPY app/ ./app/
 COPY assets/ ./assets/
+
+# The indexed corpus is mounted at runtime and is never baked into the image.
+VOLUME ["/data"]
 
 # Expose server port
 EXPOSE 8000

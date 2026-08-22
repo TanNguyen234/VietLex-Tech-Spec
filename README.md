@@ -234,6 +234,14 @@ python -u -m app.ingestion.legal_fts build --batch-size 256
 
 ### Ghi chú Triển khai (Deployment Note)
 
+Để người khác chạy demo online, kiến trúc triển khai tách thành hai phần:
+
+- **Vercel public gateway:** `vercel.json` và `api/proxy.py`; chỉ proxy HTML/API/static, không chứa corpus.
+- **FastAPI origin:** chạy `Dockerfile` trên dịch vụ có persistent disk; mount `content_store.sqlite3` và `legal_fts.sqlite3` vào `/data`, đồng thời dùng MongoDB Atlas cho session/log/feedback.
+- **Bảo mật mặc định:** chat không cần tài khoản nhưng hội thoại được cô lập bằng signed cookie; `/admin` dùng HTTP Basic và fail-closed nếu chưa cấu hình; NeMo và public Ragas mặc định tắt; chat/evaluation/session đều có rate limit.
+
+Hướng dẫn chi tiết: [`deploy/vercel-proxy/README.md`](deploy/vercel-proxy/README.md). Đây là cấu hình sẵn sàng triển khai, không phải tuyên bố hệ thống đã có URL production.
+
 * Trong môi trường Production Online, file `legal_fts.sqlite3` (~213 MiB đối với revision hiện tại) phải được đặt trên persistent volume hoặc tải về khi khởi động container và mở ở chế độ read-only.
 * Không nên thêm MongoDB chỉ để sao chép lại 518 nghìn document: Pinecone hybrid đã đảm nhiệm tốt lớp semantic + sparse, trong khi SQLite bổ sung exact document number/title BM25.
 * Chỉ nên chuyển lexical layer sang MongoDB Atlas Search khi hệ thống triển khai nhiều replica không dùng chung volume được, hoặc MongoDB đã là document store chính (cần đo lường recall và latency trước khi thay thế SQLite).
@@ -247,13 +255,26 @@ python -u -m app.ingestion.legal_fts build --batch-size 256
 
 Nguồn đánh giá hiện tại gồm 420 câu hỏi trong `app/data/namsyntax_legal_qa_420.json`. Metric xác định trong code là mặc định; Ragas và các LLM judge khác chỉ là audit tùy chọn. Xem trạng thái có hiệu lực tại [`docs/evaluation/CURRENT_STATUS.md`](docs/evaluation/CURRENT_STATUS.md).
 
+### Kết quả live gần nhất (2026-08-22)
+
+Hai cổng đánh giá bất biến đã chạy với Vertex AI `gemini-3.5-flash`, NeMo Guardrails ở chế độ `enforce`, query rewrite tắt và Ragas audit offline:
+
+| Tập đánh giá | Generation `STOP` | NeMo input/output safe | Ragas coverage | Faithfulness | Answer accuracy | Context precision | Context recall | Technical errors |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Representative-10, `all-required-verified` | 10/10 | 10/10 | 10/10 | 0.9857 | 0.9750 | 0.9400 | 1.0000 | 0 |
+| Balanced-50, 26 factoid + 24 multi-hop | 50/50 | 50/50 | 50/50 | 0.9158 | 0.8950 | 0.8757 | 0.9333 | 0 |
+
+Balanced-50 giữ nguyên danh sách case có SHA-256 `56ae294f9698569ab4f7ae11ed87aabfa7c79b616919378dc0f5d4e32e53bdf3`. Trong đó 40 case có toàn bộ required retrieval evidence đã xác minh; 10 case còn lại chỉ dùng reference answer/context của dataset để mở rộng Ragas audit. Trên 40 case có verified gold, Document Recall@3 đạt macro `0.9250`, micro `50/53 = 0.9434`. Không gọi cả 50 case là fully verified golden và không dùng lexical similarity để suy ra độ đúng pháp lý.
+
+Artifact: [`Representative-10 report`](docs/evaluation/runs/answer-representative10-v6-live-20260822/report.md), [`Balanced-50 report`](docs/evaluation/runs/answer-balanced50-v2-live-20260822/report.md), và [`CV/portfolio evidence`](docs/evaluation/PORTFOLIO_EVIDENCE.md).
+
 ### Preflight provider-free
 
 ```powershell
 python -u run_retrieval_eval.py --preflight-all-profiles --verified-only --gold-policy all-required-verified --rewrite off --reranker current
 ```
 
-Preflight không gọi Pinecone, Qdrant, reranker, generation, guardrail hoặc LLM judge. Nó ghi một batch artifact bất biến cho ba profile và trả exit code khác 0 nếu bất kỳ profile nào chưa đủ điều kiện. Với sidecar hiện tại (**420 cases, 483 evidence items, 0 verified**), kết quả đúng phải là `BLOCKED` và exit code 1.
+Preflight không gọi Pinecone, Qdrant, reranker, generation, guardrail hoặc LLM judge. Nó ghi một batch artifact bất biến cho ba profile và trả exit code khác 0 nếu bất kỳ profile nào chưa đủ điều kiện. Sidecar hiện tại có **40 case** thỏa `all-required-verified`, với **53 verified evidence items**.
 
 ### Đánh giá retrieval và answer
 

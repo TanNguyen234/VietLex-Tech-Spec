@@ -137,7 +137,24 @@ python -u -m app.ingestion.legal_fts build --batch-size 256
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
+### Shareable online demo
+
+The deployment is deliberately split: Vercel runs the thin gateway in `api/proxy.py`, while the FastAPI `Dockerfile` runs on a host with a persistent `/data` disk for both SQLite stores. MongoDB stores only sessions, logs, feedback, and admin data—not the legal corpus. Public chat is anonymous with signed-cookie isolation; admin authentication fails closed; NeMo and public Ragas default to off; public endpoints are rate-limited.
+
+See [`deploy/vercel-proxy/README.md`](deploy/vercel-proxy/README.md). The repository is deployment-ready but does not claim a live URL until an actual deployment is verified.
+
 ## Evaluation
+
+Latest live evidence (2026-08-22):
+
+| Evaluation set | Generation `STOP` | NeMo input/output safe | Ragas coverage | Faithfulness | Answer accuracy | Context precision | Context recall | Technical errors |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Representative-10, `all-required-verified` | 10/10 | 10/10 | 10/10 | 0.9857 | 0.9750 | 0.9400 | 1.0000 | 0 |
+| Balanced-50, 26 factoid + 24 multi-hop | 50/50 | 50/50 | 50/50 | 0.9158 | 0.8950 | 0.8757 | 0.9333 | 0 |
+
+The Balanced-50 case-list SHA-256 is `56ae294f9698569ab4f7ae11ed87aabfa7c79b616919378dc0f5d4e32e53bdf3`. Forty cases have fully verified required retrieval evidence; ten reference-only cases extend the Ragas audit. On the verified 40-case subset, macro Document Recall@3 is `0.9250` and micro recall is `50/53 = 0.9434`. The project does not describe all 50 cases as fully verified golden data or use lexical similarity as proof of legal correctness.
+
+Evidence: [`Representative-10 report`](docs/evaluation/runs/answer-representative10-v6-live-20260822/report.md), [`Balanced-50 report`](docs/evaluation/runs/answer-balanced50-v2-live-20260822/report.md), and [`CV/portfolio evidence`](docs/evaluation/PORTFOLIO_EVIDENCE.md).
 
 Full golden evaluation:
 
