@@ -5,8 +5,8 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
+from fastapi.staticfiles import StaticFiles
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from app.config import get_settings
@@ -16,6 +16,8 @@ from app.services.clients import close_clients
 from app.services.retrieval import reset_retriever
 from app.services.semantic_cache import ensure_semantic_cache_collection
 from app.services.guardrails import warm_guardrails
+from app.services.web_security import AnonymousClientMiddleware
+from app.rate_limit import limiter
 
 # Load environment variables from .env before logfire/settings initialization
 load_dotenv()
@@ -23,6 +25,13 @@ load_dotenv()
 settings = get_settings()
 
 app = FastAPI(title="VietLex Advanced Legal RAG")
+
+app.add_middleware(
+    AnonymousClientMiddleware,
+    secret=settings.WEB_SESSION_SECRET or secrets.token_urlsafe(32),
+    cookie_name=settings.ANONYMOUS_COOKIE_NAME,
+    max_age=settings.ANONYMOUS_COOKIE_MAX_AGE_SECONDS,
+)
 
 @app.on_event("startup")
 async def startup_event():
@@ -40,7 +49,6 @@ async def shutdown_event():
 logfire.instrument_fastapi(app)
 
 # Rate Limiting (Slowapi)
-limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
@@ -55,6 +63,7 @@ app.add_middleware(
 )
 
 templates = Jinja2Templates(directory="app/templates")
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 # CSRF helper function
 def get_csrf_token(request: Request) -> str:

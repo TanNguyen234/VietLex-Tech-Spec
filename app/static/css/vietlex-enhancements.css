@@ -1,0 +1,10 @@
+.answer-text h1,.answer-text h2,.answer-text h3{font-family:inherit;line-height:1.35;margin:1.25em 0 .5em;color:var(--color-text)}
+.answer-text h1{font-size:1.3rem}.answer-text h2{font-size:1.18rem}.answer-text h3{font-size:1.08rem}
+.answer-text p{margin:.65em 0}.answer-text ul,.answer-text ol{margin:.65em 0;padding-left:1.45rem;white-space:normal}.answer-text li{margin:.35em 0}
+.answer-text code{padding:.12em .35em;border-radius:5px;background:var(--color-bg);font-size:.92em}.answer-text hr{border:0;border-top:1px solid var(--color-line);margin:1.1rem 0}
+.streaming-cursor{display:inline-block;width:7px;height:1.05em;margin-left:3px;vertical-align:-2px;background:var(--color-accent);animation:cursor-blink .8s steps(1) infinite}
+.evaluation-title{margin:4px 0 10px;font-size:15px}.evaluation-table{width:100%;border-collapse:collapse;font-size:12px}.evaluation-table th,.evaluation-table td{padding:8px;border-bottom:1px solid var(--color-line);text-align:left;vertical-align:top}.evaluation-table th{width:22%;font-weight:700}
+.timing-table{margin-bottom:10px}.check-badge{display:inline-block;padding:3px 6px;border-radius:999px;font-size:10px;font-weight:800}.check-badge.pass{color:var(--color-positive);background:#64d6a21a}.check-badge.fail{color:var(--color-negative);background:#ff8f891a}.ragas-empty{font-weight:800;color:var(--color-negative)}.metric-explainer{display:grid;gap:8px;margin-top:10px}
+.loading-row{display:flex;align-items:center;gap:9px}.loading-row[hidden]{display:none}.pipeline-elapsed{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--color-accent)}
+@keyframes cursor-blink{50%{opacity:0}}
+@media(max-width:760px){.evaluation-table,.evaluation-table tbody,.evaluation-table tr,.evaluation-table th,.evaluation-table td{display:block}.evaluation-table tr{padding:7px 0;border-bottom:1px solid var(--color-line)}.evaluation-table th,.evaluation-table td{width:auto;border:0;padding:3px 0}}

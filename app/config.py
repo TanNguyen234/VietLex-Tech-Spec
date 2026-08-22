@@ -126,6 +126,23 @@ class Settings(BaseSettings):
     # MongoDB Connection URL
     MONGO_URL: Optional[str] = None
 
+    # Public web application security and opt-in evaluation controls.
+    WEB_SESSION_SECRET: Optional[str] = None
+    ANONYMOUS_COOKIE_NAME: str = "vietlex_client"
+    ANONYMOUS_COOKIE_MAX_AGE_SECONDS: int = Field(
+        default=2_592_000, ge=3_600, le=31_536_000
+    )
+    ADMIN_USERNAME: Optional[str] = None
+    ADMIN_PASSWORD: Optional[str] = None
+    PUBLIC_NEMO_DEFAULT_ENABLED: bool = False
+    PUBLIC_RAGAS_ENABLED: bool = False
+    PUBLIC_RAGAS_CLIENT_DAILY_LIMIT: int = Field(default=3, ge=1, le=20)
+    PUBLIC_RAGAS_GLOBAL_DAILY_LIMIT: int = Field(default=20, ge=1, le=1_000)
+    CHAT_RATE_LIMIT: str = "6/minute"
+    PUBLIC_EVALUATION_RATE_LIMIT: str = "6/minute"
+    PUBLIC_PROGRESS_RATE_LIMIT: str = "180/minute"
+    SESSION_RATE_LIMIT: str = "30/minute"
+
     # Pinned external legal corpus
     DATASET_REPOSITORY: str = "vohuutridung/vietnamese-legal-documents"
     DATASET_REVISION: str = "4d4e10b201544e8a4c49a1d3fa496595a7d486d0"
@@ -174,7 +191,7 @@ class Settings(BaseSettings):
     RERANK_CIRCUIT_BREAKER_COOLDOWN_SECONDS: float = 30.0
     LLM_CONTEXT_MAX_TOKENS: int = 720
     LLM_CONTEXT_PER_DOCUMENT_LIMIT: int = 2
-    LLM_MAX_OUTPUT_TOKENS: int = 640
+    LLM_MAX_OUTPUT_TOKENS: int = 1536
     QUERY_REWRITE_MAX_CHARACTERS: int = 2_000
     QUERY_REWRITE_MAX_OUTPUT_TOKENS: int = 96
     QUERY_REWRITE_TIMEOUT_SECONDS: float = 8.0

@@ -30,6 +30,7 @@ def test_migration_defaults_are_pinned_and_capacity_bounded() -> None:
     assert settings.RERANK_CANDIDATE_LIMIT == 12
     assert settings.RERANK_RETURN_LIMIT == 6
     assert settings.LLM_CONTEXT_MAX_TOKENS == 720
+    assert settings.LLM_MAX_OUTPUT_TOKENS == 1536
     assert settings.QDRANT_RERANK_MODEL == (
         "answerdotai/answerai-colbert-small-v1"
     )
@@ -109,6 +110,18 @@ def test_ragas_evaluation_mode_default_is_off() -> None:
     settings = Settings(_env_file=None)
     assert settings.RAGAS_EVALUATION_MODE == "off"
     assert settings.RAGAS_SAMPLE_RATE == 0.1
+
+
+def test_public_web_features_default_to_safe_off() -> None:
+    settings = Settings(_env_file=None)
+
+    assert settings.PUBLIC_NEMO_DEFAULT_ENABLED is False
+    assert settings.PUBLIC_RAGAS_ENABLED is False
+    assert settings.PUBLIC_RAGAS_CLIENT_DAILY_LIMIT == 3
+    assert settings.PUBLIC_RAGAS_GLOBAL_DAILY_LIMIT == 20
+    assert settings.CHAT_RATE_LIMIT == "6/minute"
+    assert settings.PUBLIC_EVALUATION_RATE_LIMIT == "6/minute"
+    assert settings.PUBLIC_PROGRESS_RATE_LIMIT == "180/minute"
 
 
 def test_ragas_evaluation_mode_invalid_fails_validation() -> None:

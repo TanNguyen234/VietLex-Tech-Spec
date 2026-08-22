@@ -1,4 +1,5 @@
 import logfire
+import re
 from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime
 from typing import Optional, List, Dict, Any
@@ -39,6 +40,7 @@ async def init_db():
         # Initialize sessions collection index
         sessions_collection = database.chat_sessions
         await sessions_collection.create_index([("timestamp", -1)])
+        await sessions_collection.create_index([("client_id", 1), ("timestamp", -1)])
         
         logfire.info("MongoDB database and indexes initialized successfully.")
     except Exception as e:
@@ -56,6 +58,7 @@ async def log_interaction(
     rejection_reason: Optional[str] = None,
     session_id: str = "default",
     *,
+    client_id: Optional[str] = None,
     request_status: str = "ok",
     latency: Optional[Dict[str, Any]] = None,
     observed_provider: Optional[str] = None,
@@ -81,6 +84,7 @@ async def log_interaction(
         "_id": trace_id,
         "trace_id": trace_id,
         "session_id": session_id,
+        "client_id": client_id,
         "timestamp": datetime.utcnow(),
         "user_query": user_query,
         "bot_response": bot_response,
@@ -165,7 +169,9 @@ async def update_evaluation(
 
 
 
-async def update_feedback(trace_id: str, rating: str) -> bool:
+async def update_feedback(
+    trace_id: str, rating: str, client_id: Optional[str] = None
+) -> bool:
     database = get_db()
     collection = database.evaluation_logs
     
@@ -175,8 +181,11 @@ async def update_feedback(trace_id: str, rating: str) -> bool:
     }
     
     try:
+        query: Dict[str, Any] = {"_id": trace_id}
+        if client_id is not None:
+            query["client_id"] = client_id
         result = await collection.update_one(
-            {"_id": trace_id},
+            query,
             {"$set": update_data}
         )
         if result.modified_count > 0:
@@ -222,7 +231,9 @@ async def get_admin_stats() -> Dict[str, Any]:
         "avg_relevance": 0.0,
         "avg_ragas_proxy_faithfulness": 0.0,
         "avg_ragas_proxy_relevance": 0.0,
-        "positive_feedback_rate": 0.0
+        "positive_feedback_rate": 0.0,
+        "technical_error_count": 0,
+        "ragas_coverage_rate": 0.0,
     }
     
     try:
@@ -255,6 +266,14 @@ async def get_admin_stats() -> Dict[str, Any]:
                     "positive_feedback": [
                         {"$match": {"feedback.rating": "up"}},
                         {"$count": "count"}
+                    ],
+                    "technical_errors": [
+                        {"$match": {"metrics.request_status": "technical_error"}},
+                        {"$count": "count"}
+                    ],
+                    "ragas_executed": [
+                        {"$match": {"metrics.ragas_executed": True}},
+                        {"$count": "count"}
                     ]
                 }
             }
@@ -271,6 +290,14 @@ async def get_admin_stats() -> Dict[str, Any]:
             if total_count > 0:
                 cached_count = facet["cached"][0]["count"] if facet["cached"] else 0
                 stats["cache_hit_rate"] = round((cached_count / total_count) * 100, 2)
+                ragas_count = facet["ragas_executed"][0]["count"] if facet["ragas_executed"] else 0
+                stats["ragas_coverage_rate"] = round((ragas_count / total_count) * 100, 2)
+
+            stats["technical_error_count"] = (
+                facet["technical_errors"][0]["count"]
+                if facet["technical_errors"]
+                else 0
+            )
                 
             if facet["avg_faithfulness"] and facet["avg_faithfulness"][0]["avg"] is not None:
                 val = round(facet["avg_faithfulness"][0]["avg"], 2)
@@ -303,13 +330,33 @@ async def get_interaction(trace_id: str) -> Optional[Dict[str, Any]]:
         logfire.error("Failed to fetch interaction from MongoDB: {error}", error=str(e), trace_id=trace_id)
         return None
 
-async def create_session(session_id: str, title: str) -> Dict[str, Any]:
+
+async def get_owned_interaction(
+    trace_id: str, client_id: str
+) -> Optional[Dict[str, Any]]:
+    database = get_db()
+    try:
+        return await database.evaluation_logs.find_one(
+            {"_id": trace_id, "client_id": client_id}
+        )
+    except Exception as e:
+        logfire.error(
+            "Failed to fetch owned interaction: {error}",
+            error=str(e),
+            trace_id=trace_id,
+        )
+        return None
+
+async def create_session(
+    session_id: str, title: str, client_id: Optional[str] = None
+) -> Dict[str, Any]:
     database = get_db()
     collection = database.chat_sessions
     document = {
         "_id": session_id,
         "session_id": session_id,
         "title": title,
+        "client_id": client_id,
         "timestamp": datetime.utcnow()
     }
     try:
@@ -319,45 +366,72 @@ async def create_session(session_id: str, title: str) -> Dict[str, Any]:
         logfire.error("Failed to create session {session_id}: {error}", session_id=session_id, error=str(e))
         return {}
 
-async def get_sessions() -> List[Dict[str, Any]]:
+async def get_sessions(
+    client_id: Optional[str] = None, search_query: Optional[str] = None
+) -> List[Dict[str, Any]]:
     database = get_db()
     collection = database.chat_sessions
     try:
-        cursor = collection.find({}).sort("timestamp", -1)
+        query: Dict[str, Any] = {}
+        if client_id is not None:
+            query["client_id"] = client_id
+        if search_query:
+            query["title"] = {
+                "$regex": re.escape(search_query[:100]),
+                "$options": "i",
+            }
+        cursor = collection.find(query).sort("timestamp", -1)
         sessions = await cursor.to_list(length=100)
         return sessions
     except Exception as e:
         logfire.error("Failed to fetch sessions: {error}", error=str(e))
         return []
 
-async def get_session_messages(session_id: str) -> List[Dict[str, Any]]:
+async def get_session_messages(
+    session_id: str, client_id: Optional[str] = None
+) -> List[Dict[str, Any]]:
     database = get_db()
     collection = database.evaluation_logs
     try:
-        cursor = collection.find({"session_id": session_id}).sort("timestamp", 1)
+        query: Dict[str, Any] = {"session_id": session_id}
+        if client_id is not None:
+            query["client_id"] = client_id
+        cursor = collection.find(query).sort("timestamp", 1)
         messages = await cursor.to_list(length=200)
         return messages
     except Exception as e:
         logfire.error("Failed to fetch messages for session {session_id}: {error}", session_id=session_id, error=str(e))
         return []
 
-async def delete_session(session_id: str) -> bool:
+async def delete_session(
+    session_id: str, client_id: Optional[str] = None
+) -> bool:
     database = get_db()
     sessions_coll = database.chat_sessions
     logs_coll = database.evaluation_logs
     try:
-        await sessions_coll.delete_one({"_id": session_id})
-        await logs_coll.delete_many({"session_id": session_id})
+        session_query: Dict[str, Any] = {"_id": session_id}
+        log_query: Dict[str, Any] = {"session_id": session_id}
+        if client_id is not None:
+            session_query["client_id"] = client_id
+            log_query["client_id"] = client_id
+        await sessions_coll.delete_one(session_query)
+        await logs_coll.delete_many(log_query)
         return True
     except Exception as e:
         logfire.error("Failed to delete session {session_id}: {error}", session_id=session_id, error=str(e))
         return False
 
-async def rename_session(session_id: str, title: str) -> bool:
+async def rename_session(
+    session_id: str, title: str, client_id: Optional[str] = None
+) -> bool:
     database = get_db()
     collection = database.chat_sessions
     try:
-        result = await collection.update_one({"_id": session_id}, {"$set": {"title": title}})
+        query: Dict[str, Any] = {"_id": session_id}
+        if client_id is not None:
+            query["client_id"] = client_id
+        result = await collection.update_one(query, {"$set": {"title": title}})
         return result.modified_count > 0
     except Exception as e:
         logfire.error("Failed to rename session {session_id}: {error}", session_id=session_id, error=str(e))

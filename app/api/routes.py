@@ -1,15 +1,30 @@
+import asyncio
 import time
 import uuid
+from pathlib import Path
 from typing import Dict
 import logfire
 
-from fastapi import APIRouter, Request, Depends, Form, BackgroundTasks
+from fastapi import APIRouter, Request, Depends, Form, BackgroundTasks, HTTPException
 
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.templating import Jinja2Templates
 
 from app.evaluation.online_metrics import build_online_metrics, sanitize_error_message
-from app.api.dependencies import verify_csrf
+from app.api.dependencies import require_admin, verify_csrf, verify_csrf_header
+from app.config import get_settings
+from app.services.public_evaluation import (
+    DailyRagasQuota,
+    build_code_evaluation,
+    ragas_metric_catalog,
+)
+from app.services.evaluator import run_llm_as_judge
+from app.services.conversation_export import render_conversation_markdown
+from app.services.readiness import build_readiness
+from app.rate_limit import limiter
+from app.services.evidence_presenter import present_context
+from app.services.portfolio_evidence import load_portfolio_evidence
+from app.services.chat_progress import chat_progress
 
 from app.services.semantic_cache import check_semantic_cache, save_to_semantic_cache
 from app.services.guardrails import (
@@ -22,43 +37,112 @@ from app.services.guardrails import (
 from app.services.rag_pipeline import RetrievalPipelineError, run_advanced_rag
 from app.database import (
     log_interaction, update_feedback, get_admin_logs, get_admin_stats, get_interaction,
-    create_session, get_sessions, get_session_messages, delete_session, rename_session
+    create_session, get_sessions, get_session_messages, delete_session, rename_session,
+    get_owned_interaction,
 )
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
+settings = get_settings()
+_public_ragas_quota = DailyRagasQuota(
+    client_limit=settings.PUBLIC_RAGAS_CLIENT_DAILY_LIMIT,
+    global_limit=settings.PUBLIC_RAGAS_GLOBAL_DAILY_LIMIT,
+)
+_public_ragas_semaphore = asyncio.Semaphore(1)
+
+
+async def _optional_input_guardrail(
+    message: str, enabled: bool
+) -> tuple[bool, str, float]:
+    if not enabled:
+        return True, "", 0.0
+    started = time.perf_counter()
+    safe, rejection = await check_input_guardrails(message)
+    return safe, rejection, round(time.perf_counter() - started, 4)
+
+
+async def _optional_output_guardrail(
+    response: str, contexts: list[str], query: str, enabled: bool
+) -> tuple[bool, str, float]:
+    if not enabled:
+        return True, "", 0.0
+    started = time.perf_counter()
+    safe, fallback = await check_output_guardrails(response, contexts, query)
+    return safe, fallback, round(time.perf_counter() - started, 4)
+
+
+@router.get("/healthz")
+async def healthz():
+    return {"status": "ok", "service": "vietlex"}
+
+
+@router.get("/readyz")
+async def readyz():
+    async def mongo_ping() -> bool:
+        from app.database import get_db
+
+        result = await get_db().command("ping")
+        return result.get("ok") == 1.0
+
+    snapshot = await build_readiness(settings, mongo_ping)
+    status_code = 200 if snapshot["status"] == "ready" else 503
+    return JSONResponse(snapshot, status_code=status_code)
+
+
+@router.get("/api/progress/{request_id}")
+@limiter.limit(settings.PUBLIC_PROGRESS_RATE_LIMIT)
+async def chat_progress_status(request: Request, request_id: str):
+    snapshot = chat_progress.get(
+        request_id, getattr(request.state, "client_id", "legacy")
+    )
+    if snapshot is None:
+        raise HTTPException(status_code=404, detail="Progress not found")
+    return snapshot
 
 @router.post("/chat", response_class=HTMLResponse)
+@limiter.limit(settings.CHAT_RATE_LIMIT)
 async def chat(
     request: Request,
     background_tasks: BackgroundTasks,
     message: str = Form(...),
     csrf_token: str = Form(...),
     session_id: str = Form(None),
+    nemo_enabled: bool = Form(False),
+    request_id: str = Form(""),
     csrf_valid: str = Depends(verify_csrf)
 ):
     request_started = time.perf_counter()
     message = redact_pii(message)
     trace_id = str(uuid.uuid4())
+    client_id = getattr(request.state, "client_id", "legacy")
+    if request_id:
+        chat_progress.start(request_id, client_id, nemo_enabled=nemo_enabled)
     is_new_session = False
     
     if not session_id or session_id == "default":
         session_id = str(uuid.uuid4())
         words = message.split()
         title = " ".join(words[:5]) + ("..." if len(words) > 5 else "")
-        await create_session(session_id, title)
+        await create_session(session_id, title, client_id=client_id)
         is_new_session = True
         
     with logfire.span("Xử lý Chat Request: {message}", message=message) as span:
         t_cache = 0.0
 
         # Step 2: Apply NeMo Guardrails (Input Check)
-        input_guardrail_started = time.perf_counter()
+        if request_id:
+            chat_progress.advance(
+                request_id,
+                client_id,
+                "input_guardrail",
+                "Đang kiểm tra NeMo input" if nemo_enabled else "NeMo input đang tắt",
+            )
         try:
-            input_safe, rejection_message = await check_input_guardrails(message)
-            t_guardrails_input = round(time.perf_counter() - input_guardrail_started, 4)
+            input_safe, rejection_message, t_guardrails_input = (
+                await _optional_input_guardrail(message, nemo_enabled)
+            )
         except GuardrailUnavailableError as error:
-            t_guardrails_input = round(time.perf_counter() - input_guardrail_started, 4)
+            t_guardrails_input = round(time.perf_counter() - request_started, 4)
             t_total = round(time.perf_counter() - request_started, 4)
             tech_error = {
                 "stage": "guardrails_input",
@@ -93,6 +177,7 @@ async def chat(
                 contexts=[],
                 cached=False,
                 session_id=session_id,
+                client_id=client_id,
                 request_status="technical_error",
                 technical_error=tech_error,
                 latency=metrics.latency,
@@ -107,6 +192,8 @@ async def chat(
                 context_count=0,
                 no_evidence=False,
             )
+            if request_id:
+                chat_progress.complete(request_id, client_id, status="technical_error")
             return templates.TemplateResponse(
                 request,
                 "chat_message.html",
@@ -148,6 +235,7 @@ async def chat(
                 input_safe=False,
                 rejection_reason="Jailbreak or off-topic input blocked by guardrails",
                 session_id=session_id,
+                client_id=client_id,
                 request_status="blocked_input",
                 latency=metrics.latency,
                 observed_provider=metrics.observed_provider,
@@ -169,9 +257,15 @@ async def chat(
             )
             if is_new_session:
                 response.headers["HX-Trigger"] = "load-sessions"
+            if request_id:
+                chat_progress.complete(request_id, client_id, status="blocked_input")
             return response
 
         # Step 3: Check Semantic Cache only after the input is approved.
+        if request_id:
+            chat_progress.advance(
+                request_id, client_id, "semantic_cache", "Đang kiểm tra semantic cache"
+            )
         cache_started = time.perf_counter()
         cached_response = await check_semantic_cache(message)
         t_cache = round(time.perf_counter() - cache_started, 4)
@@ -203,6 +297,7 @@ async def chat(
                 cached=True,
                 input_safe=True,
                 session_id=session_id,
+                client_id=client_id,
                 request_status="cache_hit",
                 latency=metrics.latency,
                 observed_provider=metrics.observed_provider,
@@ -230,11 +325,20 @@ async def chat(
             )
             if is_new_session:
                 response.headers["HX-Trigger"] = "load-sessions"
+            if request_id:
+                chat_progress.complete(request_id, client_id, status="cache_hit")
             return response
 
         span.set_attribute("cache_hit", False)
 
         # Step 4: Run Advanced Retrieval Pipeline (RAG)
+        if request_id:
+            chat_progress.advance(
+                request_id,
+                client_id,
+                "retrieval_generation",
+                "Đang retrieval, rerank và tạo câu trả lời",
+            )
         try:
             bot_response, context_used, latency_info = await run_advanced_rag(message)
         except RetrievalPipelineError as error:
@@ -282,6 +386,7 @@ async def chat(
                 contexts=[],
                 cached=False,
                 session_id=session_id,
+                client_id=client_id,
                 request_status="technical_error",
                 technical_error=tech_error,
                 latency=metrics.latency,
@@ -296,6 +401,8 @@ async def chat(
                 context_count=0,
                 no_evidence=False,
             )
+            if request_id:
+                chat_progress.complete(request_id, client_id, status="technical_error")
             return templates.TemplateResponse(
                 request,
                 "chat_message.html",
@@ -356,6 +463,7 @@ async def chat(
                 contexts=context_used,
                 cached=False,
                 session_id=session_id,
+                client_id=client_id,
                 request_status="technical_error",
                 technical_error=tech_error,
                 latency=metrics.latency,
@@ -379,23 +487,34 @@ async def chat(
                     "trace_id": trace_id,
                     "session_id": session_id,
                     "contexts": context_used,
+                    "evidence_views": [present_context(item) for item in context_used],
                 },
             )
             if is_new_session:
                 response.headers["HX-Trigger"] = "load-sessions"
+            if request_id:
+                chat_progress.complete(request_id, client_id, status="technical_error")
             return response
 
         # Step 5: Apply NeMo Guardrails (Output Check)
-        output_guardrail_started = time.perf_counter()
-        try:
-            output_safe, fallback_response = await check_output_guardrails(
-                bot_response,
-                context_used,
-                message,
+        if request_id:
+            chat_progress.advance(
+                request_id,
+                client_id,
+                "output_guardrail",
+                "Đang kiểm tra NeMo output" if nemo_enabled else "NeMo output đang tắt",
             )
-            t_guardrails_output = round(time.perf_counter() - output_guardrail_started, 4)
+        try:
+            output_safe, fallback_response, t_guardrails_output = (
+                await _optional_output_guardrail(
+                    bot_response,
+                    context_used,
+                    message,
+                    nemo_enabled,
+                )
+            )
         except GuardrailUnavailableError as error:
-            t_guardrails_output = round(time.perf_counter() - output_guardrail_started, 4)
+            t_guardrails_output = round(time.perf_counter() - request_started, 4)
             t_total = round(time.perf_counter() - request_started, 4)
             tech_error = {
                 "stage": "guardrails_output",
@@ -444,6 +563,7 @@ async def chat(
                 contexts=context_used,
                 cached=False,
                 session_id=session_id,
+                client_id=client_id,
                 request_status="technical_error",
                 technical_error=tech_error,
                 latency=metrics.latency,
@@ -458,6 +578,8 @@ async def chat(
                 context_count=len(context_used),
                 no_evidence=False,
             )
+            if request_id:
+                chat_progress.complete(request_id, client_id, status="technical_error")
             return templates.TemplateResponse(
                 request,
                 "chat_message.html",
@@ -527,6 +649,7 @@ async def chat(
             output_safe=output_safe,
             rejection_reason=rejection_reason,
             session_id=session_id,
+            client_id=client_id,
             request_status=req_status,
             latency=metrics.latency,
             observed_provider=metrics.observed_provider,
@@ -551,27 +674,109 @@ async def chat(
         response = templates.TemplateResponse(
             request,
             "chat_message.html",
-            {"user_msg": message, "bot_msg": final_response, "trace_id": trace_id, "session_id": session_id, "contexts": context_used}
+            {"user_msg": message, "bot_msg": final_response, "trace_id": trace_id, "session_id": session_id, "contexts": context_used, "evidence_views": [present_context(item) for item in context_used]}
         )
         if is_new_session:
             response.headers["HX-Trigger"] = "load-sessions"
+        if request_id:
+            chat_progress.complete(request_id, client_id, status=req_status)
         return response
 
 
 
 
 @router.post("/api/feedback")
+@limiter.limit(settings.SESSION_RATE_LIMIT)
 async def feedback(
+    request: Request,
     trace_id: str = Form(...),
-    rating: str = Form(...)
+    rating: str = Form(...),
+    csrf_token: str = Form(...),
+    csrf_valid: str = Depends(verify_csrf),
 ):
+    if rating not in {"up", "down"}:
+        raise HTTPException(status_code=422, detail="Invalid feedback rating")
     with logfire.span("Xử lý Feedback", trace_id=trace_id, rating=rating):
-        await update_feedback(trace_id, rating)
+        updated = await update_feedback(
+            trace_id,
+            rating,
+            client_id=getattr(request.state, "client_id", "legacy"),
+        )
+        if not updated:
+            raise HTTPException(status_code=404, detail="Interaction not found")
         return {"status": "success", "message": "Thank you for your feedback!"}
 
+
+@router.post("/api/evaluation/{trace_id}")
+@limiter.limit(settings.PUBLIC_EVALUATION_RATE_LIMIT)
+async def public_evaluation(
+    request: Request,
+    trace_id: str,
+    run_ragas: bool = Form(False),
+    csrf_token: str = Form(...),
+    csrf_valid: str = Depends(verify_csrf),
+):
+    client_id = getattr(request.state, "client_id", "legacy")
+    interaction = await get_owned_interaction(trace_id, client_id)
+    if interaction is None:
+        raise HTTPException(status_code=404, detail="Interaction not found")
+
+    payload = {
+        "code_evaluation": build_code_evaluation(interaction),
+        "ragas_metrics": ragas_metric_catalog(has_reference=False),
+        "ragas": {"status": "not_requested"},
+    }
+    if not run_ragas:
+        return payload
+    if not getattr(settings, "PUBLIC_RAGAS_ENABLED", False):
+        payload["ragas"] = {"status": "disabled"}
+        return JSONResponse(payload, status_code=503)
+
+    metrics = interaction.get("metrics") or {}
+    if metrics.get("ragas_executed"):
+        payload["ragas"] = {
+            "status": metrics.get("ragas_status") or "cached",
+            "cached": True,
+            "faithfulness": metrics.get("ragas_proxy_faithfulness"),
+            "answer_relevance": metrics.get("ragas_proxy_answer_relevance"),
+        }
+        if metrics.get("ragas_error"):
+            payload["ragas"]["error"] = metrics["ragas_error"]
+        return payload
+
+    if not interaction.get("contexts"):
+        payload["ragas"] = {"status": "skipped_no_context"}
+        return JSONResponse(payload, status_code=422)
+
+    if not _public_ragas_quota.reserve(client_id):
+        payload["ragas"] = {"status": "quota_exceeded"}
+        return JSONResponse(payload, status_code=429)
+
+    async with _public_ragas_semaphore:
+        await run_llm_as_judge(
+            interaction.get("user_query") or "",
+            list(interaction.get("contexts") or []),
+            interaction.get("bot_response") or "",
+            trace_id,
+            force=True,
+        )
+    refreshed = await get_owned_interaction(trace_id, client_id) or interaction
+    refreshed_metrics = refreshed.get("metrics") or {}
+    payload["ragas"] = {
+        "status": refreshed_metrics.get("ragas_status") or "unavailable",
+        "cached": False,
+        "faithfulness": refreshed_metrics.get("ragas_proxy_faithfulness"),
+        "answer_relevance": refreshed_metrics.get("ragas_proxy_answer_relevance"),
+    }
+    if refreshed_metrics.get("ragas_error"):
+        payload["ragas"]["error"] = refreshed_metrics["ragas_error"]
+    return payload
+
 @router.get("/sessions", response_class=HTMLResponse)
-async def list_sessions(request: Request):
-    sessions = await get_sessions()
+@limiter.limit(settings.SESSION_RATE_LIMIT)
+async def list_sessions(request: Request, search: str = ""):
+    client_id = getattr(request.state, "client_id", "legacy")
+    sessions = await get_sessions(client_id, search_query=search.strip()[:100])
     return templates.TemplateResponse(
         request,
         "sidebar_sessions.html",
@@ -579,18 +784,42 @@ async def list_sessions(request: Request):
     )
 
 @router.post("/sessions", response_class=HTMLResponse)
-async def new_session(request: Request):
+@limiter.limit(settings.SESSION_RATE_LIMIT)
+async def new_session(
+    request: Request,
+    _csrf: str = Depends(verify_csrf),
+):
     session_id = str(uuid.uuid4())
-    await create_session(session_id, "Hội thoại mới")
+    client_id = getattr(request.state, "client_id", "legacy")
+    await create_session(session_id, "Hội thoại mới", client_id=client_id)
     response = HTMLResponse(
-        content=f'<div class="flex items-start space-x-3 max-w-[85%]"><div class="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center font-semibold text-xs text-amber-400 flex-shrink-0"><i class="ph ph-robot text-base"></i></div><div class="bg-slate-900/60 rounded-2xl rounded-tl-none p-4 text-sm text-slate-300 border border-slate-900 leading-relaxed shadow-sm">Xin chào! Tôi là Trợ lý Pháp luật **VietLex**. Tôi có thể giúp gì cho bạn hôm nay?</div></div><input type="hidden" name="session_id" value="{session_id}" id="session-id-input" hx-swap-oob="true">'
+        content=(
+            '<article class="message-card assistant-message">'
+            '<div class="message-role">VietLex</div>'
+            '<div class="answer-body"><p>Hội thoại mới đã sẵn sàng. '
+            'Bạn có thể đặt câu hỏi pháp luật bằng tiếng Việt.</p></div>'
+            '</article>'
+            f'<input type="hidden" name="session_id" value="{session_id}" '
+            'id="session-id-input">'
+        )
     )
     response.headers["HX-Trigger"] = "load-sessions"
     return response
 
 @router.get("/sessions/{session_id}", response_class=HTMLResponse)
+@limiter.limit(settings.SESSION_RATE_LIMIT)
 async def get_session_history(request: Request, session_id: str):
-    messages = await get_session_messages(session_id)
+    client_id = getattr(request.state, "client_id", "legacy")
+    raw_messages = await get_session_messages(session_id, client_id)
+    messages = [
+        {
+            **message,
+            "evidence_views": [
+                present_context(item) for item in (message.get("contexts") or [])
+            ],
+        }
+        for message in raw_messages
+    ]
     return templates.TemplateResponse(
         request,
         "chat_history_messages.html",
@@ -598,36 +827,78 @@ async def get_session_history(request: Request, session_id: str):
     )
 
 @router.delete("/sessions/{session_id}")
-async def remove_session(session_id: str):
-    await delete_session(session_id)
+@limiter.limit(settings.SESSION_RATE_LIMIT)
+async def remove_session(
+    request: Request,
+    session_id: str,
+    _csrf: str = Depends(verify_csrf_header),
+):
+    await delete_session(
+        session_id, getattr(request.state, "client_id", "legacy")
+    )
     response = HTMLResponse(content="")
     response.headers["HX-Trigger"] = "load-sessions"
     return response
 
 @router.post("/sessions/{session_id}/rename", response_class=HTMLResponse)
-async def rename_sess(request: Request, session_id: str):
+@limiter.limit(settings.SESSION_RATE_LIMIT)
+async def rename_sess(
+    request: Request,
+    session_id: str,
+    _csrf: str = Depends(verify_csrf),
+):
     new_title = request.headers.get("HX-Prompt")
     if new_title:
-        await rename_session(session_id, new_title.strip())
-    sessions = await get_sessions()
+        await rename_session(
+            session_id,
+            new_title.strip()[:120],
+            getattr(request.state, "client_id", "legacy"),
+        )
+    sessions = await get_sessions(getattr(request.state, "client_id", "legacy"))
     return templates.TemplateResponse(
         request,
         "sidebar_sessions.html",
         {"sessions": sessions}
     )
 
+
+@router.get("/sessions/{session_id}/export")
+@limiter.limit(settings.SESSION_RATE_LIMIT)
+async def export_session(request: Request, session_id: str):
+    client_id = getattr(request.state, "client_id", "legacy")
+    sessions = await get_sessions(client_id)
+    session = next((item for item in sessions if item.get("session_id") == session_id), None)
+    if session is None:
+        raise HTTPException(status_code=404, detail="Session not found")
+    messages = await get_session_messages(session_id, client_id)
+    body = render_conversation_markdown(session, messages)
+    return Response(
+        body.encode("utf-8"),
+        media_type="text/markdown; charset=utf-8",
+        headers={
+            "Content-Disposition": f'attachment; filename="vietlex-{session_id}.md"'
+        },
+    )
+
 @router.get("/admin", response_class=HTMLResponse)
-async def admin_page(request: Request):
+async def admin_page(
+    request: Request,
+    search: str = "",
+    _admin: str = Depends(require_admin),
+):
     stats = await get_admin_stats()
-    logs = await get_admin_logs(limit=15, skip=0)
+    logs = await get_admin_logs(limit=25, skip=0, search_query=search.strip()[:100])
+    portfolio_evidence = load_portfolio_evidence(
+        Path("docs/evaluation/runs/answer-balanced50-v2-live-20260822/report.md")
+    )
     return templates.TemplateResponse(
         request,
         "admin.html",
-        {"stats": stats, "logs": logs, "search": "", "skip": 0, "limit": 15}
+        {"stats": stats, "logs": logs, "search": search, "skip": 0, "limit": 25, "portfolio_evidence": portfolio_evidence}
     )
 
 @router.get("/admin/stats", response_class=HTMLResponse)
-async def admin_stats_partial(request: Request):
+async def admin_stats_partial(request: Request, _admin: str = Depends(require_admin)):
     stats = await get_admin_stats()
     return templates.TemplateResponse(
         request,
@@ -641,6 +912,7 @@ async def admin_logs_partial(
     search: str = "",
     skip: int = 0,
     limit: int = 15
+    , _admin: str = Depends(require_admin)
 ):
     logs = await get_admin_logs(limit=limit, skip=skip, search_query=search)
     return templates.TemplateResponse(
@@ -650,7 +922,11 @@ async def admin_logs_partial(
     )
 
 @router.get("/admin/details/{trace_id}", response_class=HTMLResponse)
-async def admin_details_partial(request: Request, trace_id: str):
+async def admin_details_partial(
+    request: Request,
+    trace_id: str,
+    _admin: str = Depends(require_admin),
+):
     log = await get_interaction(trace_id)
     return templates.TemplateResponse(
         request,

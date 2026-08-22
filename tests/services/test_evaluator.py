@@ -1,182 +1,86 @@
-from __future__ import annotations
-
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 
 import pytest
 
 from app.services import evaluator
 
 
-@pytest.mark.asyncio
-async def test_evaluator_off_mode_makes_zero_model_calls(monkeypatch) -> None:
-    """
-    When RAGAS_EVALUATION_MODE is 'off', run_llm_as_judge must instantiate/call
-    exactly zero LLMs, embedding models, or ragas.evaluate.
-    """
-    chat_mock = MagicMock()
-    embeddings_mock = MagicMock()
-    evaluate_mock = MagicMock()
-    update_mock = AsyncMock()
-
-    monkeypatch.setattr(
-        evaluator,
-        "settings",
-        SimpleNamespace(
-            RAGAS_EVALUATION_MODE="off",
-            RAGAS_SAMPLE_RATE=1.0,
-            LITELLM_MASTER_KEY="test-key",
-            OMNIGATE_BASE_URL="https://example.com",
-        ),
-    )
-    monkeypatch.setattr(evaluator, "ChatOpenAI", chat_mock)
-    monkeypatch.setattr(evaluator, "OpenAIEmbeddings", embeddings_mock)
-    monkeypatch.setattr(evaluator, "evaluate", evaluate_mock)
-
-    with patch("app.database.update_evaluation", update_mock):
-        await evaluator.run_llm_as_judge(
-            user_query="Điều kiện thành lập doanh nghiệp?",
-            context=["Luật Doanh nghiệp 2020 Điều 17."],
-            bot_response="Theo Luật Doanh nghiệp 2020...",
-            trace_id="trace-off-123",
-        )
-
-    chat_mock.assert_not_called()
-    embeddings_mock.assert_not_called()
-    evaluate_mock.assert_not_called()
-    update_mock.assert_not_called()
+def _settings(mode: str, sample_rate: float = 1.0) -> SimpleNamespace:
+    return SimpleNamespace(RAGAS_EVALUATION_MODE=mode, RAGAS_SAMPLE_RATE=sample_rate)
 
 
 @pytest.mark.asyncio
-async def test_evaluator_skips_when_context_is_empty(monkeypatch) -> None:
-    chat_mock = MagicMock()
-    evaluate_mock = MagicMock()
-
-    monkeypatch.setattr(
-        evaluator,
-        "settings",
-        SimpleNamespace(
-            RAGAS_EVALUATION_MODE="all",
-            LITELLM_MASTER_KEY="test-key",
-            OMNIGATE_BASE_URL="https://example.com",
-        ),
-    )
-    monkeypatch.setattr(evaluator, "ChatOpenAI", chat_mock)
-    monkeypatch.setattr(evaluator, "evaluate", evaluate_mock)
-
-    await evaluator.run_llm_as_judge(
-        user_query="Câu hỏi không có ngữ cảnh",
-        context=[],
-        bot_response="Không tìm thấy tài liệu.",
-        trace_id="trace-no-context",
-    )
-
-    chat_mock.assert_not_called()
-    evaluate_mock.assert_not_called()
-
-
-@pytest.mark.asyncio
-async def test_evaluator_sample_mode_deterministic(monkeypatch) -> None:
-    chat_mock = MagicMock()
-    evaluate_mock = MagicMock()
-
-    # trace-sample-off is chosen such that is_sampled_for_ragas returns False with sample_rate 0.0
-    monkeypatch.setattr(
-        evaluator,
-        "settings",
-        SimpleNamespace(
-            RAGAS_EVALUATION_MODE="sample",
-            RAGAS_SAMPLE_RATE=0.0,  # 0.0 always false
-            LITELLM_MASTER_KEY="test-key",
-            OMNIGATE_BASE_URL="https://example.com",
-        ),
-    )
-    monkeypatch.setattr(evaluator, "ChatOpenAI", chat_mock)
-    monkeypatch.setattr(evaluator, "evaluate", evaluate_mock)
-
-    await evaluator.run_llm_as_judge(
-        user_query="Câu hỏi test",
-        context=["Context"],
-        bot_response="Bot response",
-        trace_id="trace-sample-not-selected",
-    )
-
-    chat_mock.assert_not_called()
-    evaluate_mock.assert_not_called()
-
-
-@pytest.mark.asyncio
-async def test_evaluator_failure_is_typed_and_does_not_mutate_or_throw(
-    monkeypatch,
+@pytest.mark.parametrize(
+    ("mode", "sample_rate", "contexts"),
+    [("off", 1.0, ["c"]), ("all", 1.0, []), ("sample", 0.0, ["c"])],
+)
+async def test_evaluator_skips_without_instantiating_judge(
+    monkeypatch, mode, sample_rate, contexts
 ) -> None:
-    """
-    If Ragas evaluation throws an error, it must be recorded as a typed proxy failure
-    without swallowing unobservably or silently setting score 0.0.
-    """
-    monkeypatch.setattr(
-        evaluator,
-        "settings",
-        SimpleNamespace(
-            RAGAS_EVALUATION_MODE="all",
-            LITELLM_MASTER_KEY="test-key",
-            OMNIGATE_BASE_URL="https://example.com",
-        ),
+    scorer = AsyncMock()
+    update = AsyncMock()
+    monkeypatch.setattr(evaluator, "settings", _settings(mode, sample_rate))
+    monkeypatch.setattr(evaluator, "_score_ragas_metrics", scorer)
+    monkeypatch.setattr("app.database.update_evaluation", update)
+
+    await evaluator.run_llm_as_judge("q", contexts, "a", "trace-skip")
+
+    scorer.assert_not_awaited()
+    update.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_modern_ragas_scorer_is_used_and_scores_are_persisted(monkeypatch) -> None:
+    scorer = AsyncMock(return_value={"faithfulness": 0.91, "answer_relevance": 0.87})
+    update = AsyncMock(return_value=True)
+    monkeypatch.setattr(evaluator, "settings", _settings("all"))
+    monkeypatch.setattr(evaluator, "_score_ragas_metrics", scorer)
+    monkeypatch.setattr("app.database.update_evaluation", update)
+
+    await evaluator.run_llm_as_judge("q", ["c"], "a", "trace-modern")
+
+    scorer.assert_awaited_once_with("q", ["c"], "a")
+    assert update.await_args.kwargs["faithfulness"] == 0.91
+    assert update.await_args.kwargs["answer_relevance"] == 0.87
+    assert update.await_args.kwargs["status"] == "ok"
+
+
+@pytest.mark.asyncio
+async def test_failure_is_typed_without_fake_zero_scores(monkeypatch) -> None:
+    scorer = AsyncMock(side_effect=RuntimeError("Ragas remote connection timeout"))
+    update = AsyncMock(return_value=True)
+    monkeypatch.setattr(evaluator, "settings", _settings("all"))
+    monkeypatch.setattr(evaluator, "_score_ragas_metrics", scorer)
+    monkeypatch.setattr("app.database.update_evaluation", update)
+
+    await evaluator.run_llm_as_judge("q", ["c"], "a", "trace-error")
+
+    values = update.await_args.kwargs
+    assert values["status"] == "error"
+    assert values["faithfulness"] is None
+    assert values["answer_relevance"] is None
+    assert values["error"]["error_type"] == "RuntimeError"
+
+
+@pytest.mark.asyncio
+async def test_failure_redacts_secrets_before_persistence(monkeypatch) -> None:
+    scorer = AsyncMock(
+        side_effect=RuntimeError("?api_key=sk-secret Bearer private-token")
     )
-    monkeypatch.setattr(evaluator, "ChatOpenAI", MagicMock())
-    monkeypatch.setattr(evaluator, "OpenAIEmbeddings", MagicMock())
-    monkeypatch.setattr(evaluator, "Dataset", MagicMock())
-    monkeypatch.setattr(evaluator, "_faithfulness", MagicMock())
-    monkeypatch.setattr(evaluator, "_answer_relevancy", MagicMock())
+    update = AsyncMock(return_value=True)
+    monkeypatch.setattr(evaluator, "settings", _settings("all"))
+    monkeypatch.setattr(evaluator, "_score_ragas_metrics", scorer)
+    monkeypatch.setattr("app.database.update_evaluation", update)
 
-    def failing_evaluate(*args, **kwargs):
-        raise RuntimeError("Ragas remote connection timeout")
+    await evaluator.run_llm_as_judge("q", ["c"], "a", "trace-secret")
+
+    message = update.await_args.kwargs["error"]["message"]
+    assert "sk-secret" not in message
+    assert "private-token" not in message
+    assert "[REDACTED]" in message
 
 
-    monkeypatch.setattr(evaluator, "evaluate", failing_evaluate)
-
-    update_eval_called = False
-    captured_kwargs: dict = {}
-
-    async def fake_update_evaluation(
-        trace_id: str,
-        faithfulness=None,
-        answer_relevance=None,
-        status: str = "ok",
-        error=None,
-        executed: bool = True,
-    ):
-        nonlocal update_eval_called, captured_kwargs
-        update_eval_called = True
-        captured_kwargs = {
-            "trace_id": trace_id,
-            "faithfulness": faithfulness,
-            "answer_relevance": answer_relevance,
-            "status": status,
-            "error": error,
-            "executed": executed,
-        }
-        return True
-
-    monkeypatch.setattr(
-        "app.database.update_evaluation",
-        fake_update_evaluation,
-    )
-
-    # Should not raise exception
-    await evaluator.run_llm_as_judge(
-        user_query="Câu hỏi?",
-        context=["Context"],
-        bot_response="Câu trả lời.",
-        trace_id="trace-failure-isolation",
-    )
-
-    assert update_eval_called is True
-    assert captured_kwargs["status"] == "error"
-    assert captured_kwargs["executed"] is True
-    assert isinstance(captured_kwargs["error"], dict)
-    assert captured_kwargs["error"]["error_type"] == "RuntimeError"
-    assert "Ragas remote connection timeout" in captured_kwargs["error"]["message"]
-
-    # Scores must NOT be silently set to 0.0
-    assert captured_kwargs["faithfulness"] is None
-    assert captured_kwargs["answer_relevance"] is None
+def test_numeric_score_rejects_out_of_range_values() -> None:
+    with pytest.raises(ValueError, match="invalid score"):
+        evaluator._numeric_score(1.2, "faithfulness")
