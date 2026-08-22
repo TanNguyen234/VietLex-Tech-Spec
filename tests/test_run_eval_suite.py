@@ -119,6 +119,7 @@ async def test_vertex_ragas_adapter_uses_modern_structured_llm(monkeypatch) -> N
         async def generate_structured(self, prompt, *, response_model, **kwargs):
             assert prompt == "Return a verdict."
             assert response_model is Verdict
+            assert kwargs["max_output_tokens"] == 4096
             return Verdict(value=1)
 
     monkeypatch.setattr(vertex_ai, "get_vertex_provider", lambda: FakeProvider())

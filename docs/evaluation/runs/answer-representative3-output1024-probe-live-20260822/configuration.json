@@ -1,0 +1,118 @@
+{
+  "profile_name": "separated_intent",
+  "profile": {
+    "name": "separated_intent",
+    "retrieval_document_limit": 24,
+    "resolved_document_limit": 16,
+    "local_chunks_per_document": 4,
+    "rerank_input_limit": 24,
+    "rerank_return_limit": 3,
+    "final_evidence_limit": 3,
+    "final_context_token_limit": 720,
+    "intent_scoring_enabled": true,
+    "rewrite_mode": "off",
+    "reranker_mode": "current"
+  },
+  "eval_mode": "answer",
+  "judge_mode": "ragas",
+  "guardrail_mode": "enforce",
+  "rewrite_mode": "off",
+  "reranker_provider": "current",
+  "gold_policy": "all-required-verified",
+  "selected_case_count": 3,
+  "selected_case_ids_sha256": "f10056e996c8c231f3ed43aa502c28db5866191662dbf11e7f9d9d8a3cd27f47",
+  "retrieval_runtime": {
+    "backend": "qdrant_structural_v2",
+    "collection": "vietlex-legal-rag-v2-pilot-384",
+    "dense_model": "intfloat/multilingual-e5-small",
+    "sparse_model": "qdrant/bm25",
+    "reranker_mode": "pinecone-only",
+    "dense_top_k": 48,
+    "bm25_top_k": 48,
+    "fused_limit": 64,
+    "rerank_input_limit": 64,
+    "rerank_return_limit": 6,
+    "final_evidence_limit": 5,
+    "fallback_backend": "pinecone_v1"
+  },
+  "configured_provider_models": {
+    "dense": {
+      "provider": "qdrant-structural-collection",
+      "model": "intfloat/multilingual-e5-small"
+    },
+    "reranker_primary": {
+      "provider": "pinecone",
+      "model": "bge-reranker-v2-m3"
+    },
+    "reranker_fallback": {
+      "provider": "qdrant-via-pinecone-v1-fallback",
+      "model": "answerdotai/answerai-colbert-small-v1"
+    },
+    "generation": {
+      "mode": "configured_fallback_chain",
+      "candidates": [
+        {
+          "provider": "Google Vertex AI",
+          "model": "gemini-3.5-flash"
+        },
+        {
+          "provider": "OpenRouter",
+          "model": "meta-llama/llama-3.3-70b-instruct"
+        },
+        {
+          "provider": "Gemini",
+          "model": "gemini-2.0-flash"
+        },
+        {
+          "provider": "NVIDIA NIM",
+          "model": "meta/llama-3.3-70b-instruct"
+        },
+        {
+          "provider": "Groq",
+          "model": "llama-3.3-70b-versatile"
+        },
+        {
+          "provider": "OpenRouter",
+          "model": "meta-llama/llama-3.3-70b-instruct"
+        },
+        {
+          "provider": "Gemini",
+          "model": "gemini-1.5-flash"
+        },
+        {
+          "provider": "Groq",
+          "model": "llama3-8b-8192"
+        }
+      ]
+    },
+    "judge": {
+      "mode": "ragas",
+      "candidates": [
+        {
+          "provider": "Google Vertex AI",
+          "model": "gemini-3.5-flash"
+        },
+        {
+          "provider": "Gemini",
+          "model": "gemini-2.0-flash"
+        },
+        {
+          "provider": "NVIDIA NIM",
+          "model": "meta/llama-3.3-70b-instruct"
+        },
+        {
+          "provider": "Groq",
+          "model": "llama-3.3-70b-versatile"
+        },
+        {
+          "provider": "OpenRouter",
+          "model": "meta-llama/llama-3.3-70b-instruct"
+        },
+        {
+          "provider": "OmniGate",
+          "model": "legal-core-model"
+        }
+      ]
+    }
+  }
+}

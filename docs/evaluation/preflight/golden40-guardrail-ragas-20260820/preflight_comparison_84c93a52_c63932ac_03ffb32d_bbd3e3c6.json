@@ -1,0 +1,51 @@
+{
+  "case_selection": {
+    "selected_case_count": 0,
+    "selected_case_ids": [],
+    "selected_case_ids_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "meta": {
+    "batch_configuration_fingerprint": "bbd3e3c6045da3231253db83143fdf605eae393c846966a7eaa3f1828c3cd4da",
+    "batch_status": "BLOCKED",
+    "blocked_reason": "selected_case_count_is_zero_under_verified_only",
+    "dataset_revision": "4d4e10b201544e8a4c49a1d3fa496595a7d486d0",
+    "dataset_sha256": "84c93a522c1bc8eac7179aa808f70b59466fe9a55a4a9f98ddae07797c9662c7",
+    "git_diff_reason": null,
+    "git_diff_sha256": "f199e9d6adcf8b35466708c881cd428f83508f525aa6be17b12eacfe2c66f32c",
+    "git_diff_status": "ok",
+    "git_dirty": true,
+    "git_sha": "1a922af6774b3500ca59e74621bc60106dcbb98d",
+    "gold_policy": "all-required-verified",
+    "provenance_error": null,
+    "provenance_status": "ok",
+    "provider_calls": 0,
+    "sidecar_sha256": "c63932ac4101a37ab189d665ea181c4672faac8e9de035d0d83797384d5aa18a",
+    "source_state_sha256": "03ffb32d1f879e6210c6d8a036556503eda55274ae3d69e6d127b68c7ec4662f",
+    "status_code": "preflight_blocked",
+    "verified_only": true
+  },
+  "profiles": {
+    "separated_intent": {
+      "canonical_artifact_path": "docs/evaluation/preflight/golden40-guardrail-ragas-20260820/preflight_separated_intent_21e883b9_84c93a52_c63932ac_03ffb32d.json",
+      "configuration_fingerprint": "21e883b930ae7bcdc3ccb6de2db1a44ff2c808b15f2467f6983584e0303aadc5",
+      "profile": {
+        "final_context_token_limit": 720,
+        "final_evidence_limit": 3,
+        "intent_scoring_enabled": true,
+        "local_chunks_per_document": 4,
+        "name": "separated_intent",
+        "rerank_input_limit": 24,
+        "rerank_return_limit": 3,
+        "reranker_mode": "current",
+        "resolved_document_limit": 16,
+        "retrieval_document_limit": 24,
+        "rewrite_mode": "off"
+      },
+      "profile_name": "separated_intent",
+      "selected_case_count": 0,
+      "selected_case_ids_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "source_state_sha256": "03ffb32d1f879e6210c6d8a036556503eda55274ae3d69e6d127b68c7ec4662f"
+    }
+  },
+  "schema_version": "3.0.0"
+}

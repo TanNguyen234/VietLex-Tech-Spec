@@ -1,0 +1,187 @@
+{
+  "layers": {
+    "human_feedback": {
+      "human_adjudication": {
+        "all_required_verified_case_count": 40,
+        "required_unresolved_count": 256,
+        "status_breakdown": {
+          "no_citation_extracted": 254,
+          "not_found_by_local_deterministic_audit": 2,
+          "unanswerable": 175,
+          "verified": 53
+        },
+        "total_evidence_count": 484,
+        "verified_evidence_count": 53
+      },
+      "user_feedback": {
+        "feedback_observed_count": 0,
+        "negative_count": 0,
+        "positive_count": 0,
+        "positive_rate": null,
+        "response_rate": null,
+        "status": "NOT_AVAILABLE"
+      }
+    },
+    "offline_golden_quality": {
+      "dataset_coverage": {
+        "answerable_cases": 245,
+        "total_cases": 420,
+        "unanswerable_cases": 175
+      },
+      "evidence_verification_coverage": {
+        "all_required_verified_case_count": 40,
+        "all_required_verified_case_coverage": {
+          "denominator": 420,
+          "numerator": 40,
+          "value": 0.0952
+        },
+        "status_breakdown": {
+          "no_citation_extracted": 254,
+          "not_found_by_local_deterministic_audit": 2,
+          "unanswerable": 175,
+          "verified": 53
+        },
+        "total_dataset_case_count": 420,
+        "total_evidence_items": 484,
+        "unresolved_required_evidence_count": 256,
+        "verified_evidence_coverage": {
+          "denominator": 484,
+          "numerator": 53,
+          "value": 0.1095
+        },
+        "verified_evidence_items": 53
+      },
+      "production_retrieval_benchmark": {
+        "benchmark_dir": null,
+        "ineligibility_reasons": [
+          "missing_production_retrieval_benchmark"
+        ],
+        "manifest": null,
+        "manifest_sha256": null,
+        "metrics": null,
+        "readiness_eligible": false,
+        "results_sha256": null,
+        "status": "NOT_RUN",
+        "threshold_evaluations": {}
+      }
+    },
+    "online_no_gold_proxy": {
+      "answer_relevance": {
+        "mean": null,
+        "missing_count": 0,
+        "observed_count": 0
+      },
+      "faithfulness": {
+        "mean": null,
+        "missing_count": 0,
+        "observed_count": 0
+      },
+      "proxy_designation": "NON_GOLD_NON_GATING_PROXY",
+      "ragas_error_count": 0,
+      "ragas_executed_count": 0,
+      "ragas_mode_breakdown": {},
+      "ragas_selected_count": 0,
+      "ragas_status_breakdown": {},
+      "record_count": 0,
+      "status": "NOT_AVAILABLE"
+    },
+    "operational_reliability": {
+      "context_present": {
+        "count": 0,
+        "rate": null
+      },
+      "fallback_usage_observed": null,
+      "latency_summary": {
+        "count": 0,
+        "max": null,
+        "mean": null,
+        "min": null,
+        "p50": null,
+        "p95": null
+      },
+      "no_evidence": {
+        "count": 0,
+        "rate": null
+      },
+      "observed_model_breakdown": {},
+      "observed_provider_breakdown": {},
+      "request_count": 0,
+      "request_status_breakdown": {},
+      "status": "NOT_AVAILABLE",
+      "technical_error": {
+        "count": 0,
+        "rate": null
+      },
+      "telemetry_completeness": {
+        "complete_records": 0,
+        "completeness_rate": null
+      }
+    }
+  },
+  "package_id": "pkg_7b6056ebb23a8a15",
+  "production_readiness": {
+    "blockers": [
+      "insufficient_verified_gold_coverage_governance",
+      "missing_production_retrieval_benchmark"
+    ],
+    "gates": {
+      "human_feedback_gate": {
+        "note": "Human sentiment does not prove retrieval correctness.",
+        "positive_rate": null,
+        "status": "NON_GATING"
+      },
+      "online_ragas_proxy_gate": {
+        "answer_relevance_mean": null,
+        "faithfulness_mean": null,
+        "note": "Ragas is a non-gold, non-gating proxy.",
+        "status": "NON_GATING"
+      },
+      "operational_reliability_gate": {
+        "note": "Operational success does not prove answer correctness.",
+        "request_count": 0,
+        "status": "NON_GATING"
+      },
+      "production_benchmark_quality_gate": {
+        "details": {
+          "ineligibility_reasons": [
+            "missing_production_retrieval_benchmark"
+          ],
+          "threshold_evaluations": {}
+        },
+        "readiness_eligible": false,
+        "status": "NOT_RUN"
+      },
+      "verified_gold_coverage_gate": {
+        "case_coverage_pct": 9.52,
+        "details": "Current verified slice covers 40/420 (9.52%) cases and 53/484 (10.95%) evidence items. Whole-production cutover requires approved verified coverage governance.",
+        "evidence_coverage_pct": 10.95,
+        "governance_status": "UNRESOLVED_GOVERNANCE_BLOCKER",
+        "status": "INSUFFICIENT_EVIDENCE",
+        "total_case_count": 420,
+        "total_evidence_count": 484,
+        "verified_case_count": 40,
+        "verified_evidence_count": 53
+      }
+    },
+    "status": "NOT_PRODUCTION_READY"
+  },
+  "provenance": {
+    "benchmark_manifest_sha256": null,
+    "benchmark_results_sha256": null,
+    "builder_git_dirty": false,
+    "builder_git_sha": "1a922af6774b3500ca59e74621bc60106dcbb98d",
+    "builder_source_state_sha256": "5ff3dd28ac866b8812e8d799c50915ea08c1ed54bb7f6fc09876bc63fcfd03c8",
+    "dataset_path": "D:\\Download\\ProfessionalLegalRAG\\app\\data\\namsyntax_legal_qa_420_curated_v1.json",
+    "dataset_sha256": "d6e125030e8dda700667ba00f25162fac76472a9bfa2d087f54e2b5bc73a1fee",
+    "gold_policy": "all-required-verified",
+    "metric_version": "3.0.0",
+    "online_snapshot_path": null,
+    "online_snapshot_sha256": null,
+    "production_benchmark_path": null,
+    "selected_case_count": 40,
+    "selected_case_ids_sha256": "02b147618710247b69406c62c37ee1733412cf99c803a3b818cfc0040e78cfd6",
+    "sidecar_path": "D:\\Download\\ProfessionalLegalRAG\\docs\\evaluation\\adjudication\\promotions\\gold-adjudication-promotion-curated-v4_20260809_151015_227377\\labels_v2.json",
+    "sidecar_sha256": "6044c084fd0cfd7b696b7e927ae2df26130e090aa64cf1a3b39a0784c1d8a9bf"
+  },
+  "schema_version": "task3-production-light-v1"
+}

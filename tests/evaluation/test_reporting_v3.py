@@ -289,6 +289,55 @@ def test_report_renders_only_valid_v3_contract() -> None:
         assert expected in text
 
 
+def test_answer_report_exposes_generation_guardrail_and_ragas_coverage() -> None:
+    summary = RetrievalAggregateMetrics.model_validate(
+        aggregate_retrieval_metrics(aggregate_fixture())
+    )
+    case_results = [
+        {
+            "case_id": "case_001",
+            "status": "ok",
+            "input_safe": True,
+            "output_safe": True,
+            "generation_metadata": {"finish_reason": "STOP"},
+            "ragas_metrics": {
+                "faithfulness": 1.0,
+                "answer_accuracy": 0.9,
+                "context_precision": 0.8,
+                "context_recall": 1.0,
+            },
+            "technical_errors": {},
+            "latency": {"t_total": 1.0},
+        },
+        {
+            "case_id": "case_002",
+            "status": "ok",
+            "input_safe": True,
+            "output_safe": True,
+            "generation_metadata": {"finish_reason": "MAX_TOKENS"},
+            "ragas_metrics": None,
+            "technical_errors": {"judge": "structured response missing"},
+            "latency": {"t_total": 1.0},
+        },
+    ]
+
+    text = generate_markdown_report(
+        report_manifest(),
+        summary.model_dump(mode="json"),
+        {},
+        {},
+        answer_summary={"scored_cases": 2, "total_cases": 2},
+        case_results=case_results,
+    )
+
+    assert "Generation STOP / total: `1 / 2`" in text
+    assert "Input safe / total: `2 / 2`" in text
+    assert "Output safe / total: `2 / 2`" in text
+    assert "Ragas scored / eligible: `1 / 2`" in text
+    assert "Judge technical errors: `1`" in text
+    assert "| `case_002` | `ok` | `MAX_TOKENS` | `no` | `judge` |" in text
+
+
 def test_report_rejects_legacy_metric_keys() -> None:
     with pytest.raises(EvaluationSchemaError) as captured:
         generate_markdown_report(

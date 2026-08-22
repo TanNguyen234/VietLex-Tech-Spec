@@ -255,11 +255,85 @@ def generate_markdown_report(
                 f"| `{key}` | {fmt_val(answer_summary.get(key))} |"
             )
 
+    if case_results:
+        total_answers = len(case_results)
+        generation_stop = sum(
+            1
+            for result in case_results
+            if result.get("generation_metadata", {}).get("finish_reason")
+            == "STOP"
+        )
+        input_safe = sum(
+            1 for result in case_results if result.get("input_safe") is True
+        )
+        output_safe = sum(
+            1 for result in case_results if result.get("output_safe") is True
+        )
+
+        def ragas_eligible(result: Dict[str, Any]) -> bool:
+            metrics = result.get("metrics") or {}
+            if metrics.get("applicable") is False or metrics.get("is_refusal"):
+                return False
+            retrieval = result.get("retrieval_result")
+            if retrieval is not None and not retrieval.get("retrieved_evidence"):
+                return False
+            return True
+
+        eligible_results = [
+            result for result in case_results if ragas_eligible(result)
+        ]
+        ragas_results = [
+            result
+            for result in eligible_results
+            if result.get("ragas_metrics") is not None
+        ]
+        judge_errors = sum(
+            1
+            for result in case_results
+            if "judge" in (result.get("technical_errors") or {})
+        )
+        lines.extend(
+            [
+                "",
+                "## 6. Generation, guardrail, and judge coverage",
+                "",
+                f"Generation STOP / total: `{generation_stop} / {total_answers}`",
+                f"Input safe / total: `{input_safe} / {total_answers}`",
+                f"Output safe / total: `{output_safe} / {total_answers}`",
+                (
+                    "Ragas scored / eligible: "
+                    f"`{len(ragas_results)} / {len(eligible_results)}`"
+                ),
+                f"Judge technical errors: `{judge_errors}`",
+                "",
+                "| Ragas metric | Mean | Scored cases |",
+                "| :--- | ---: | ---: |",
+            ]
+        )
+        for metric_name in (
+            "faithfulness",
+            "answer_accuracy",
+            "context_precision",
+            "context_recall",
+        ):
+            values = [
+                result["ragas_metrics"].get(metric_name)
+                for result in ragas_results
+                if isinstance(
+                    result["ragas_metrics"].get(metric_name),
+                    (int, float),
+                )
+            ]
+            mean = sum(values) / len(values) if values else None
+            lines.append(
+                f"| `{metric_name}` | {fmt_val(mean)} | {len(values)} |"
+            )
+
     if latency_summary:
         lines.extend(
             [
                 "",
-                "## 6. Latency",
+                "## 7. Latency",
                 "",
                 "| Stage | P50 (s) | P95 (s) | Mean (s) |",
                 "| :--- | ---: | ---: | ---: |",
@@ -276,7 +350,7 @@ def generate_markdown_report(
         lines.extend(
             [
                 "",
-                "## 7. Runtime candidate trace summary",
+                "## 8. Runtime candidate trace summary",
                 "",
                 (
                     "The runtime trace summary is diagnostic only; "
@@ -290,16 +364,28 @@ def generate_markdown_report(
         lines.extend(
             [
                 "",
-                "## 8. Case statuses",
+                "## 9. Case statuses",
                 "",
-                "| Case ID | Status | Total latency (s) |",
-                "| :--- | :--- | ---: |",
+                (
+                    "| Case ID | Status | Finish reason | Ragas scored | "
+                    "Technical error stages | Total latency (s) |"
+                ),
+                "| :--- | :--- | :--- | :---: | :--- | ---: |",
             ]
         )
         for result in case_results:
+            finish_reason = result.get("generation_metadata", {}).get(
+                "finish_reason"
+            ) or "N/A"
+            ragas_scored = "yes" if result.get("ragas_metrics") else "no"
+            error_stages = ", ".join(
+                sorted((result.get("technical_errors") or {}).keys())
+            ) or "none"
             lines.append(
                 f"| `{result.get('case_id', 'N/A')}` | "
                 f"`{result.get('status', 'unknown')}` | "
+                f"`{finish_reason}` | `{ragas_scored}` | "
+                f"`{error_stages}` | "
                 f"{fmt_val(result.get('latency', {}).get('t_total'))} |"
             )
 

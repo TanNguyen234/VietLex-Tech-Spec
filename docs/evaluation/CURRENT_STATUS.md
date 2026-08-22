@@ -1,6 +1,12 @@
 # VietLex Evaluation Current Status
 
-**Status (2026-08-15):** P2 retrieval baseline `COMPLETED`; P3 Pinecone structural replacement is closed `BLOCKED_EXTERNAL_QUOTA` at 21,696/134,334 uploaded records; production readiness **NOT DEMONSTRATED**.
+**Status (2026-08-22):** Answer-evaluation evidence is `COMPLETED` for Representative-10 and Balanced-50; production readiness remains **NOT DEMONSTRATED**.
+
+The latest answer run is `docs/evaluation/runs/answer-balanced50-v2-live-20260822/`. It completed 50/50 generations with `STOP`, passed NeMo input/output rails on 50/50, produced all four Ragas metrics for 50/50, and recorded zero technical errors. Mean Ragas scores are Faithfulness `0.9158`, Answer Accuracy `0.8950`, Context Precision `0.8757`, and Context Recall `0.9333`. The set contains all 40 `all-required-verified` cases plus 10 deterministic reference-only cases; verified retrieval claims therefore use a 40-case denominator. On that denominator, Document Recall@3 is macro `0.9250` and micro `50/53 = 0.9434`. This is bounded portfolio evidence, not proof of whole-corpus or production legal accuracy.
+
+The preceding Representative-10 gate is `docs/evaluation/runs/answer-representative10-v6-live-20260822/`: generation, NeMo, and Ragas coverage are all 10/10 with zero technical errors; Ragas means are `0.9857`, `0.9750`, `0.9400`, and `1.0000` respectively. Both runs preserve Git/source-state provenance and use Vertex AI `gemini-3.5-flash`, `MINIMAL` thinking, guardrails `enforce`, and rewrite `off`.
+
+Historical P2/P3 status follows below. P3 Pinecone structural replacement remains closed `BLOCKED_EXTERNAL_QUOTA` at 21,696/134,334 uploaded records.
 
 P3 closure evidence: Pinecone paused monthly inference access for `llama-text-embed-v2`. The resumable checkpoint remains intact and maps the committed records to 247/827 selected documents. Offline coverage inspection found only 24/64 independent canary documents present, with 40 missing. Therefore upload verification, the independent canary, and the final P3 benchmark are `NOT RUN`; no upload-completion report was fabricated. The isolated incomplete namespace and checkpoint are preserved, the upload processes were stopped, and the P3 monitor was deleted. No production route, Pinecone v1 data, Qdrant data, local corpus, FTS, or credentials were changed by closure.
 

@@ -809,7 +809,7 @@ def _build_vertex_ragas_llm():
             return await get_vertex_provider().generate_structured(
                 prompt,
                 response_model=response_model,
-                max_output_tokens=768,
+                max_output_tokens=4096,
             )
 
         def generate(
