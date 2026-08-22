@@ -20,6 +20,59 @@ from app.evaluation.schemas import (
 )
 
 
+def test_default_evaluation_contract_loads_curated_v5_without_overrides() -> None:
+    retrieval_args = run_retrieval_eval.build_parser().parse_args([])
+    answer_args = run_answer_eval.build_parser().parse_args([])
+    legacy_args = run_eval_suite.build_parser().parse_args([])
+
+    all_cases, _selection, sidecar, manifest = (
+        run_retrieval_eval.perform_pre_execution_validation(
+            dataset_path=retrieval_args.dataset,
+            sidecar_path=retrieval_args.sidecar,
+            summary_path=run_retrieval_eval.DEFAULT_SUMMARY_PATH,
+            gold_policy=retrieval_args.gold_policy,
+            verified_only=retrieval_args.verified_only,
+            require_clean_git=False,
+        )
+    )
+
+    assert len(all_cases) == 420
+    assert sidecar.metadata.total_evidence_items == 484
+    assert manifest["dataset_sha256"] == (
+        "b458880e2c2fc4f2813965d57dc96517555488a5ada3702da12fb811f05fb90b"
+    )
+    assert manifest["sidecar_sha256"] == (
+        "f6dfe09a6f32697b468d43c36bd9fd82d5fe5c0c4b0e5d9684ca3e4d0c1f5b67"
+    )
+    assert answer_args.dataset == retrieval_args.dataset
+    assert answer_args.sidecar == retrieval_args.sidecar
+    assert legacy_args.dataset == retrieval_args.dataset
+
+
+def test_default_evaluation_contract_rejects_missing_identity_hash(
+    tmp_path: Path,
+) -> None:
+    manifest = json.loads(
+        run_retrieval_eval.DEFAULT_SUMMARY_PATH.read_text(encoding="utf-8")
+    )
+    manifest.pop("sidecar_sha256")
+    incomplete_manifest_path = tmp_path / "current_evaluation.json"
+    incomplete_manifest_path.write_text(
+        json.dumps(manifest),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="sidecar_sha256"):
+        run_retrieval_eval.perform_pre_execution_validation(
+            dataset_path=run_retrieval_eval.DEFAULT_DATASET_PATH,
+            sidecar_path=run_retrieval_eval.DEFAULT_SIDECAR_PATH,
+            summary_path=incomplete_manifest_path,
+            gold_policy="none",
+            verified_only=False,
+            require_clean_git=False,
+        )
+
+
 def test_retrieval_entrypoint_has_no_judge_mode() -> None:
     arguments = run_retrieval_eval.build_parser().parse_args([])
 

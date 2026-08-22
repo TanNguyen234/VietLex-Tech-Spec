@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.0.0",
+  "dataset_path": "app/data/namsyntax_legal_qa_420_curated_v1.json",
+  "dataset_sha256": "b458880e2c2fc4f2813965d57dc96517555488a5ada3702da12fb811f05fb90b",
+  "sidecar_path": "docs/evaluation/adjudication/promotions/gold-adjudication-promotion-curated-v5_20260821_case323/labels_v2.json",
+  "sidecar_sha256": "f6dfe09a6f32697b468d43c36bd9fd82d5fe5c0c4b0e5d9684ca3e4d0c1f5b67",
+  "gold_release": "curated-v5",
+  "total_cases": 420,
+  "total_evidence_items": 484
+}

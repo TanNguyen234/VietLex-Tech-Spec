@@ -62,7 +62,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help=(
             "Optional machine-readable audit summary matching --sidecar. "
-            "The legacy default is used only with the legacy default sidecar."
+            "The canonical evaluation manifest is used only with the default sidecar."
         ),
     )
     parser.add_argument(

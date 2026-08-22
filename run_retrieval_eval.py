@@ -49,9 +49,12 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 PROJECT_ROOT = Path(__file__).resolve().parent
 
-DEFAULT_DATASET_PATH = PROJECT_ROOT / "app/data/namsyntax_legal_qa_420.json"
-DEFAULT_SIDECAR_PATH = PROJECT_ROOT / "docs/evaluation/gold_labels/namsyntax_legal_qa_420_labels_v2.json"
-DEFAULT_SUMMARY_PATH = PROJECT_ROOT / "docs/evaluation/gold_labels/namsyntax_legal_qa_420_audit_summary_v2.json"
+DEFAULT_SUMMARY_PATH = PROJECT_ROOT / "docs/evaluation/current_evaluation.json"
+_DEFAULT_EVALUATION_CONTRACT = json.loads(
+    DEFAULT_SUMMARY_PATH.read_text(encoding="utf-8")
+)
+DEFAULT_DATASET_PATH = PROJECT_ROOT / _DEFAULT_EVALUATION_CONTRACT["dataset_path"]
+DEFAULT_SIDECAR_PATH = PROJECT_ROOT / _DEFAULT_EVALUATION_CONTRACT["sidecar_path"]
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -66,7 +69,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help=(
             "Optional machine-readable audit summary matching --sidecar. "
-            "The legacy default summary is used only with the default sidecar."
+            "The canonical evaluation manifest is used only with the default sidecar."
         ),
     )
     parser.add_argument(
@@ -173,6 +176,28 @@ def perform_pre_execution_validation(
                 raise ValueError(
                     f"Counter mismatch: audit summary total_evidence_items ({audit_summary.get('total_evidence_items')}) "
                     f"!= sidecar total_evidence_items ({sidecar.metadata.total_evidence_items})"
+                )
+            expected_dataset_sha256 = audit_summary.get("dataset_sha256")
+            if not expected_dataset_sha256:
+                raise ValueError(
+                    "Evaluation manifest is missing required field: dataset_sha256"
+                )
+            actual_dataset_sha256 = calculate_dataset_sha256(dataset_path)
+            if expected_dataset_sha256 != actual_dataset_sha256:
+                raise ValueError(
+                    "Dataset SHA-256 mismatch: manifest "
+                    f"{expected_dataset_sha256} != actual {actual_dataset_sha256}"
+                )
+            expected_sidecar_sha256 = audit_summary.get("sidecar_sha256")
+            if not expected_sidecar_sha256:
+                raise ValueError(
+                    "Evaluation manifest is missing required field: sidecar_sha256"
+                )
+            if expected_sidecar_sha256 != sidecar.metadata.sidecar_sha256:
+                raise ValueError(
+                    "Sidecar SHA-256 mismatch: manifest "
+                    f"{expected_sidecar_sha256} != actual "
+                    f"{sidecar.metadata.sidecar_sha256}"
                 )
         except Exception as err:
             raise ValueError(f"Pre-execution validation error reading audit summary {summary_path}: {err}") from err
