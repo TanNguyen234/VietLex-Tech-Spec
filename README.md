@@ -28,7 +28,7 @@ Ngôn ngữ: **Tiếng Việt** | [English](README.en.md)
 
 ---
 
-VietLex là hệ thống Retrieval-Augmented Generation (RAG) phục vụ tra cứu văn bản pháp luật Việt Nam. Toàn bộ corpus 518.255 văn bản được lưu trữ bền vững trên **Pinecone**. **Qdrant Cloud** thực thi inference từ xa và có collection structural opt-in `vietlex-legal-rag-v2-pilot-384` cho 827 văn bản luật chính. Khi bật structural, Qdrant structural và Pinecone-v1 + FTS full-corpus chạy song song rồi merge có giới hạn; structural không thể chặn việc tìm kiếm corpus đầy đủ. **Không có embedding hoặc reranker nào chạy tại local.**
+VietLex là hệ thống Retrieval-Augmented Generation (RAG) phục vụ tra cứu văn bản pháp luật Việt Nam. Toàn bộ corpus 518.255 văn bản được lưu trữ bền vững trên **Pinecone**. **Qdrant Cloud** thực thi inference từ xa và có collection structural opt-in `vietlex-legal-rag-v2-pilot-384` cho 827 văn bản luật chính. Khi bật structural, Qdrant structural và Pinecone-v1 + FTS full-corpus chạy song song; pool chung luôn dedupe theo Điều/Khoản. Pinecone BGE final rerank đã được triển khai nhưng mặc định tắt cho đến khi có A/B identical-input. Structural không thể chặn việc tìm kiếm corpus đầy đủ. **Không có embedding hoặc reranker nào chạy tại local.**
 
 > [!WARNING]
 > **Tuyên bố miễn trừ trách nhiệm về dữ liệu:**

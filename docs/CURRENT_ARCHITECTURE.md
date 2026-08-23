@@ -58,7 +58,7 @@ Local SQLite Content Store (Compressed Zstandard Full Text)
 
 ## Opt-in structural v2 parallel path
 
-When `STRUCTURAL_BACKEND_ENABLED=true`, the explicitly gated Qdrant structural pilot and `get_legal_retriever()` (Pinecone v1 + local FTS) execute concurrently. Neither lane can prevent the other from searching. Their already-ranked evidence is deduplicated and rank-interleaved under `FINAL_EVIDENCE_LIMIT`; this is deliberately named rank interleave rather than RRF because provider scores are not assumed to share a calibrated scale.
+When `STRUCTURAL_BACKEND_ENABLED=true`, the explicitly gated Qdrant structural pilot and `get_legal_retriever()` (Pinecone v1 + local FTS) execute concurrently. Neither lane can prevent the other from searching. Candidate evidence is always canonically deduplicated by document/Điều/Khoản. `CROSS_LANE_FINAL_RERANK_ENABLED=true` optionally passes the combined pool through one Pinecone BGE final rerank before the shared evidence/token budget; it remains off by default until the required identical-input A/B authorizes cutover. If the optional final reranker fails, the system falls back to bounded canonical rank interleave and reports `partial_retrieval_error`.
 
 ```text
 Pinned local primary-legislation scope (827 documents)
@@ -83,7 +83,7 @@ A failure in one lane with usable evidence from the other remains observable as 
 
 ## Grounded semantic cache
 
-Semantic cache identity binds corpus revision and a pipeline fingerprint covering retrieval/embedding/reranker/answer-model and evidence-budget configuration. Only grounded `ok` responses are written. Evidence contexts are serialized with a SHA-256 and restored on a cache hit; legacy or tampered entries fail open to fresh retrieval.
+Semantic cache identity binds corpus revision and a pipeline fingerprint covering retrieval/embedding/reranker/answer-model, `ANSWER_PROMPT_VERSION`, and evidence-budget configuration. Prompt or grounding-policy changes must bump this explicit version. Only grounded `ok` responses are written. Evidence contexts are serialized with a SHA-256 and restored on a cache hit; legacy or tampered entries fail open to fresh retrieval.
 
 ## Public runtime lifecycle
 
