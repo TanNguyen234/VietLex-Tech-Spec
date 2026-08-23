@@ -1,7 +1,7 @@
 import logfire
 import re
 from motor.motor_asyncio import AsyncIOMotorClient
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
 from app.config import get_settings
 
@@ -36,11 +36,21 @@ async def init_db():
         await collection.create_index([("feedback.rating", 1)])
         # Create index on session_id
         await collection.create_index([("session_id", 1)])
+        await collection.create_index(
+            [("expires_at", 1)],
+            expireAfterSeconds=0,
+            name="evaluation_logs_retention_ttl",
+        )
         
         # Initialize sessions collection index
         sessions_collection = database.chat_sessions
         await sessions_collection.create_index([("timestamp", -1)])
         await sessions_collection.create_index([("client_id", 1), ("timestamp", -1)])
+        await sessions_collection.create_index(
+            [("expires_at", 1)],
+            expireAfterSeconds=0,
+            name="chat_sessions_retention_ttl",
+        )
         
         logfire.info("MongoDB database and indexes initialized successfully.")
     except Exception as e:
@@ -86,6 +96,9 @@ async def log_interaction(
         "session_id": session_id,
         "client_id": client_id,
         "timestamp": datetime.utcnow(),
+        "expires_at": datetime.utcnow() + timedelta(
+            days=settings.DATA_RETENTION_DAYS
+        ),
         "user_query": user_query,
         "bot_response": bot_response,
         "contexts": contexts,
@@ -357,7 +370,10 @@ async def create_session(
         "session_id": session_id,
         "title": title,
         "client_id": client_id,
-        "timestamp": datetime.utcnow()
+        "timestamp": datetime.utcnow(),
+        "expires_at": datetime.utcnow() + timedelta(
+            days=settings.DATA_RETENTION_DAYS
+        ),
     }
     try:
         await collection.replace_one({"_id": session_id}, document, upsert=True)

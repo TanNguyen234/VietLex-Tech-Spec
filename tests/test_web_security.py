@@ -15,6 +15,18 @@ def test_signed_client_id_rejects_tampering() -> None:
     assert signer.unsign(token + "tampered") is None
 
 
+def test_production_requires_stable_web_session_secret() -> None:
+    from app.services.web_security import resolve_web_session_secret
+
+    with pytest.raises(RuntimeError, match="WEB_SESSION_SECRET"):
+        resolve_web_session_secret(
+            SimpleNamespace(APP_ENV="production", WEB_SESSION_SECRET=None)
+        )
+    assert resolve_web_session_secret(
+        SimpleNamespace(APP_ENV="production", WEB_SESSION_SECRET="stable")
+    ) == "stable"
+
+
 def test_resolve_client_id_reuses_valid_cookie_and_rotates_invalid_cookie() -> None:
     from app.services.web_security import ClientIdentitySigner, resolve_client_id
 

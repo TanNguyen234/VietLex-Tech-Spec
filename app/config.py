@@ -13,6 +13,7 @@ _SYSTEM_TRUST_INSTALLED = False
 _SYSTEM_TRUST_LOCK = threading.Lock()
 
 class Settings(BaseSettings):
+    APP_ENV: Literal["development", "test", "production"] = "development"
     HOST: str = "0.0.0.0"
     PORT: int = 8000
     FRONTEND_URL: str = "http://localhost:8000"
@@ -128,6 +129,7 @@ class Settings(BaseSettings):
 
     # Public web application security and opt-in evaluation controls.
     WEB_SESSION_SECRET: Optional[str] = None
+    DATA_RETENTION_DAYS: int = Field(default=30, ge=1, le=365)
     ANONYMOUS_COOKIE_NAME: str = "vietlex_client"
     ANONYMOUS_COOKIE_MAX_AGE_SECONDS: int = Field(
         default=2_592_000, ge=3_600, le=31_536_000

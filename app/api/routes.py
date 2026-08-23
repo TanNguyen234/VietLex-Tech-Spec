@@ -1,4 +1,5 @@
 import asyncio
+import json
 import time
 import uuid
 from pathlib import Path
@@ -7,7 +8,7 @@ import logfire
 
 from fastapi import APIRouter, Request, Depends, Form, BackgroundTasks, HTTPException
 
-from fastapi.responses import HTMLResponse, JSONResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse, Response, StreamingResponse
 from fastapi.templating import Jinja2Templates
 
 from app.evaluation.online_metrics import build_online_metrics, sanitize_error_message
@@ -98,6 +99,33 @@ async def chat_progress_status(request: Request, request_id: str):
     if snapshot is None:
         raise HTTPException(status_code=404, detail="Progress not found")
     return snapshot
+
+
+@router.get("/api/progress/{request_id}/stream")
+async def chat_progress_stream(request: Request, request_id: str):
+    client_id = getattr(request.state, "client_id", "legacy")
+
+    async def events():
+        last_payload = None
+        for _ in range(300):
+            if await request.is_disconnected():
+                return
+            snapshot = chat_progress.get(request_id, client_id)
+            if snapshot is not None:
+                payload = json.dumps(snapshot, ensure_ascii=False)
+                if payload != last_payload:
+                    yield f"data: {payload}\n\n"
+                    last_payload = payload
+                if snapshot.get("complete"):
+                    return
+            await asyncio.sleep(0.4)
+        yield 'event: timeout\ndata: {"complete":true,"status":"timeout"}\n\n'
+
+    return StreamingResponse(
+        events(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 @router.post("/chat", response_class=HTMLResponse)
 @limiter.limit(settings.CHAT_RATE_LIMIT)
@@ -271,6 +299,8 @@ async def chat(
         t_cache = round(time.perf_counter() - cache_started, 4)
 
         if cached_response:
+            cached_contexts = cached_response.contexts
+            cached_text = cached_response.response
             span.set_attribute("cache_hit", True)
             t_total = round(time.perf_counter() - request_started, 4)
             latency_record = {
@@ -282,8 +312,8 @@ async def chat(
                 trace_id=trace_id,
                 request_status="cache_hit",
                 latency=latency_record,
-                context_used=[],
-                bot_response=cached_response,
+                context_used=cached_contexts,
+                bot_response=cached_text,
                 cached=True,
                 input_safe=True,
                 ragas_mode="off",
@@ -292,8 +322,8 @@ async def chat(
             await log_interaction(
                 trace_id=trace_id,
                 user_query=message,
-                bot_response=cached_response,
-                contexts=[],
+                bot_response=cached_text,
+                contexts=cached_contexts,
                 cached=True,
                 input_safe=True,
                 session_id=session_id,
@@ -317,10 +347,14 @@ async def chat(
                 "chat_message.html",
                 {
                     "user_msg": message,
-                    "bot_msg": cached_response,
+                    "bot_msg": cached_text,
                     "trace_id": trace_id,
                     "cached": True,
                     "session_id": session_id,
+                    "contexts": cached_contexts,
+                    "evidence_views": [
+                        present_context(item) for item in cached_contexts
+                    ],
                 },
             )
             if is_new_session:
@@ -665,9 +699,14 @@ async def chat(
             refusal_category=metrics.refusal_category,
         )
         
-        # Step 6: Save interaction to Semantic Cache (for all non-technical-error completions)
-        if req_status != "technical_error":
-            background_tasks.add_task(save_to_semantic_cache, message, final_response)
+        # Cache only grounded, output-approved answers and preserve their evidence.
+        if req_status == "ok" and context_used:
+            background_tasks.add_task(
+                save_to_semantic_cache,
+                message,
+                final_response,
+                context_used,
+            )
         
         # Ragas is an opt-in offline audit and is never enqueued by /chat.
         # Step 8: Return HTML partial response

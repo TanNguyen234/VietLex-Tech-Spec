@@ -16,7 +16,10 @@ from app.services.clients import close_clients
 from app.services.retrieval import reset_retriever
 from app.services.semantic_cache import ensure_semantic_cache_collection
 from app.services.guardrails import warm_guardrails
-from app.services.web_security import AnonymousClientMiddleware
+from app.services.web_security import (
+    AnonymousClientMiddleware,
+    resolve_web_session_secret,
+)
 from app.rate_limit import limiter
 
 # Load environment variables from .env before logfire/settings initialization
@@ -28,7 +31,7 @@ app = FastAPI(title="VietLex Advanced Legal RAG")
 
 app.add_middleware(
     AnonymousClientMiddleware,
-    secret=settings.WEB_SESSION_SECRET or secrets.token_urlsafe(32),
+    secret=resolve_web_session_secret(settings),
     cookie_name=settings.ANONYMOUS_COOKIE_NAME,
     max_age=settings.ANONYMOUS_COOKIE_MAX_AGE_SECONDS,
 )

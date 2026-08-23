@@ -16,6 +16,18 @@ class AdminAuthState(str, Enum):
     UNAVAILABLE = "unavailable"
 
 
+def resolve_web_session_secret(settings: Any) -> str:
+    configured = getattr(settings, "WEB_SESSION_SECRET", None)
+    environment = getattr(settings, "APP_ENV", "development")
+    if configured:
+        return configured
+    if environment == "production":
+        raise RuntimeError(
+            "WEB_SESSION_SECRET is required when APP_ENV=production"
+        )
+    return secrets.token_urlsafe(32)
+
+
 class ClientIdentitySigner:
     def __init__(self, secret: str) -> None:
         if not secret:

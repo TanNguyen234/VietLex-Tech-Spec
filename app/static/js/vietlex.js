@@ -53,8 +53,11 @@
 
   function startProgress(requestId){
     const label=$('#pipeline-progress');const elapsed=$('#pipeline-elapsed');let stopped=false;
-    const poll=async()=>{if(stopped)return;try{const response=await fetch(`/api/progress/${encodeURIComponent(requestId)}`,{credentials:'same-origin'});if(response.ok){const data=await response.json();label.textContent=data.label;elapsed.textContent=`${Number(data.elapsed_seconds||0).toFixed(1)}s`;if(data.complete){stopped=true;return;}}}catch{}if(!stopped)setTimeout(poll,400);};poll();
-    return()=>{stopped=true;};
+    const source=new EventSource(`/api/progress/${encodeURIComponent(requestId)}/stream`);
+    source.onmessage=event=>{if(stopped)return;try{const data=JSON.parse(event.data);label.textContent=data.label||label.textContent;elapsed.textContent=`${Number(data.elapsed_seconds||0).toFixed(1)}s`;if(data.complete){stopped=true;source.close();}}catch{}};
+    source.addEventListener('timeout',()=>{stopped=true;source.close();});
+    source.onerror=()=>{source.close();};
+    return()=>{stopped=true;source.close();};
   }
 
   async function submitChat(form){

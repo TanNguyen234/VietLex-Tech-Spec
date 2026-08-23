@@ -192,9 +192,16 @@ def test_admin_stats_and_details_display_proxy_labels(client, monkeypatch) -> No
 
 
 def test_chat_route_cache_hit_measures_real_latency_and_persists_status(client, monkeypatch) -> None:
+    from app.services.semantic_cache import SemanticCacheHit
+
     monkeypatch.setattr(
         "app.api.routes.check_semantic_cache",
-        AsyncMock(return_value="Câu trả lời từ cache."),
+        AsyncMock(
+            return_value=SemanticCacheHit(
+                response="Câu trả lời từ cache.",
+                contexts=["[Luật 1, Điều 1]\nCăn cứ cache."],
+            )
+        ),
     )
     monkeypatch.setattr(
         "app.api.routes.check_input_guardrails",
@@ -219,6 +226,7 @@ def test_chat_route_cache_hit_measures_real_latency_and_persists_status(client, 
     assert "Câu trả lời từ cache." in resp.text
     assert logged.get("request_status") == "cache_hit"
     assert logged.get("cached") is True
+    assert logged.get("contexts") == ["[Luật 1, Điều 1]\nCăn cứ cache."]
     assert "t_total" in logged.get("latency", {})
     assert logged["latency"]["t_total"] > 0.0
 
@@ -566,7 +574,7 @@ def test_chat_route_answer_generation_authentication_failure_persists_technical_
     assert mock_save_cache.called is False
 
 
-def test_chat_route_no_evidence_caches_response(client, monkeypatch) -> None:
+def test_chat_route_no_evidence_does_not_cache_response(client, monkeypatch) -> None:
     monkeypatch.setattr("app.api.routes.check_semantic_cache", AsyncMock(return_value=None))
     monkeypatch.setattr("app.api.routes.check_input_guardrails", AsyncMock(return_value=(True, "")))
     monkeypatch.setattr("app.api.routes.check_output_guardrails", AsyncMock(return_value=(True, "")))
@@ -602,10 +610,10 @@ def test_chat_route_no_evidence_caches_response(client, monkeypatch) -> None:
     assert resp.status_code == 200
     assert logged.get("request_status") == "no_evidence"
     assert logged.get("no_evidence") is True
-    assert mock_save_cache.called is True
+    assert mock_save_cache.called is False
 
 
-def test_chat_route_blocked_output_caches_without_online_ragas(client, monkeypatch) -> None:
+def test_chat_route_blocked_output_does_not_cache(client, monkeypatch) -> None:
     from app.config import get_settings
     monkeypatch.setattr(get_settings(), "RAGAS_EVALUATION_MODE", "all")
 
@@ -644,4 +652,4 @@ def test_chat_route_blocked_output_caches_without_online_ragas(client, monkeypat
     )
     assert resp.status_code == 200
     assert logged.get("request_status") == "blocked_output"
-    assert mock_save_cache.called is True
+    assert mock_save_cache.called is False
