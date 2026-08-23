@@ -374,7 +374,7 @@ async def test_pipeline_searches_structural_and_full_corpus_when_enabled(
     )
 
 
-def test_parallel_pool_canonically_deduplicates_same_provision() -> None:
+def test_parallel_pool_keeps_distinct_windows_of_same_provision() -> None:
     first = _evidence()
     duplicate = EvidenceChunk(
         document_id=first.document_id,
@@ -397,7 +397,92 @@ def test_parallel_pool_canonically_deduplicates_same_provision() -> None:
         per_document_limit=2,
     )
 
+    assert merged == [first, duplicate]
+
+
+def test_parallel_pool_removes_only_exact_normalized_chunk_duplicate() -> None:
+    first = _evidence()
+    duplicate = EvidenceChunk(
+        **{
+            **first.__dict__,
+            "text": "  " + first.text.upper() + "  ",
+        }
+    )
+
+    merged = rag_pipeline._interleave_evidence(
+        [first],
+        [duplicate],
+        limit=3,
+        max_tokens=720,
+        per_document_limit=2,
+    )
+
     assert merged == [first]
+
+
+@pytest.mark.asyncio
+async def test_final_rerank_zero_survivors_is_not_reported_ok(
+    monkeypatch,
+) -> None:
+    first = _evidence()
+    second = EvidenceChunk(
+        **{
+            **first.__dict__,
+            "document_id": 2,
+            "document_number": "99/2026/NĐ-CP",
+            "citation": "99/2026/NĐ-CP, Điều 2",
+            "article": "Điều 2",
+            "text": "Bằng chứng thứ hai.",
+        }
+    )
+
+    class RejectingReranker:
+        async def rerank(self, *_args, **_kwargs):
+            return RerankOutcome(
+                results=[
+                    RerankResult(index=0, score=0.01),
+                    RerankResult(index=1, score=0.02),
+                ],
+                provider="pinecone",
+                model="bge-reranker-v2-m3",
+                latency=0.01,
+                input_count=2,
+                output_count=2,
+            )
+
+    monkeypatch.setattr(
+        rag_pipeline,
+        "get_settings",
+        lambda: type(
+            "RuntimeSettings",
+            (),
+            {
+                "FINAL_EVIDENCE_LIMIT": 3,
+                "LLM_CONTEXT_MAX_TOKENS": 720,
+                "LLM_CONTEXT_PER_DOCUMENT_LIMIT": 2,
+                "RERANK_MIN_SCORE": 0.05,
+                "CROSS_LANE_FINAL_RERANK_ENABLED": True,
+            },
+        )(),
+    )
+    monkeypatch.setattr(
+        rag_pipeline,
+        "get_remote_reranker",
+        lambda: RejectingReranker(),
+    )
+
+    outcome = await rag_pipeline._parallel_retrieval_outcome(
+        rag_pipeline.RetrievalOutcome([first], {}, diagnostics={}),
+        rag_pipeline.RetrievalOutcome([second], {}, diagnostics={}),
+        query="câu hỏi",
+    )
+
+    assert outcome.status == "no_candidate"
+    assert outcome.diagnostics["no_candidate_reason"] == (
+        "no_candidate_after_final_rerank"
+    )
+    assert outcome.diagnostics["pre_final_candidate_count"] == 2
+    assert outcome.diagnostics["post_final_candidate_count"] == 0
 
 
 def test_canonical_identity_does_not_merge_clause_without_article() -> None:

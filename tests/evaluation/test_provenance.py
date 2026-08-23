@@ -33,6 +33,7 @@ def test_structural_run_configuration_records_effective_backend() -> None:
         selected_case_ids_sha256=hashlib.sha256(b"[]").hexdigest(),
         settings=SimpleNamespace(
             STRUCTURAL_BACKEND_ENABLED=True,
+            CROSS_LANE_FINAL_RERANK_ENABLED=False,
             STRUCTURAL_COLLECTION_NAME="vietlex-legal-rag-v2-pilot-384",
             STRUCTURAL_DENSE_MODEL="intfloat/multilingual-e5-small",
             STRUCTURAL_SPARSE_MODEL="qdrant/bm25",
@@ -62,6 +63,8 @@ def test_structural_run_configuration_records_effective_backend() -> None:
         "rerank_input_limit": 64,
         "rerank_return_limit": 6,
         "final_evidence_limit": 5,
+        "cross_lane_final_rerank_enabled": False,
+        "cross_lane_final_reranker": "pinecone:bge-reranker-v2-m3",
         "fallback_backend": "pinecone_v1",
     }
     assert configured["configured_provider_models"]["dense"] == {

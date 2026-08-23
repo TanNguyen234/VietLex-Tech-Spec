@@ -180,6 +180,16 @@ def build_run_configuration(
             "rerank_input_limit": settings.STRUCTURAL_RERANK_INPUT_LIMIT,
             "rerank_return_limit": settings.STRUCTURAL_RERANK_RETURN_LIMIT,
             "final_evidence_limit": settings.STRUCTURAL_FINAL_EVIDENCE_LIMIT,
+            "cross_lane_final_rerank_enabled": bool(
+                getattr(
+                    settings,
+                    "CROSS_LANE_FINAL_RERANK_ENABLED",
+                    False,
+                )
+            ),
+            "cross_lane_final_reranker": (
+                f"pinecone:{settings.PINECONE_RERANK_MODEL}"
+            ),
             "fallback_backend": "pinecone_v1",
         }
     else:

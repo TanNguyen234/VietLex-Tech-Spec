@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import re
 import time
 from typing import Any, Dict, List, Tuple
@@ -105,13 +106,22 @@ def _evidence_identity(item: Any) -> tuple[Any, ...]:
     clause = " ".join((item.clause or "").casefold().split())
     if clause.isdigit():
         clause = str(int(clause))
-    if article:
-        return (item.document_id, "provision", article, clause)
+    normalized_text = " ".join((item.text or "").casefold().split())
+    if normalized_text:
+        content_identity = hashlib.sha256(
+            normalized_text.encode("utf-8")
+        ).hexdigest()
+        return (
+            item.document_id,
+            "exact_chunk",
+            article,
+            clause,
+            content_identity,
+        )
     citation = " ".join((item.citation or "").casefold().split())
     if citation:
         return (item.document_id, "citation", citation)
-    text = " ".join((item.text or "").casefold().split())
-    return (item.document_id, "text", text)
+    return (item.document_id, "empty")
 
 
 def _interleave_evidence(
@@ -202,6 +212,18 @@ async def _parallel_retrieval_outcome(
         1,
         int(getattr(get_settings(), "LLM_CONTEXT_PER_DOCUMENT_LIMIT", 2)),
     )
+    pool_size = len(structural.evidence) + len(legacy.evidence)
+    pool_tokens = sum(
+        max(1, int(item.token_count))
+        for item in (*structural.evidence, *legacy.evidence)
+    )
+    candidate_pool = _interleave_evidence(
+        structural.evidence,
+        legacy.evidence,
+        limit=max(1, pool_size),
+        max_tokens=max(1, pool_tokens),
+        per_document_limit=max(1, pool_size),
+    )
     fallback_evidence = _interleave_evidence(
         structural.evidence,
         legacy.evidence,
@@ -217,18 +239,6 @@ async def _parallel_retrieval_outcome(
         getattr(get_settings(), "CROSS_LANE_FINAL_RERANK_ENABLED", False)
     )
     if final_rerank_enabled and structural.evidence and legacy.evidence:
-        pool_size = len(structural.evidence) + len(legacy.evidence)
-        pool_tokens = sum(
-            max(1, int(item.token_count))
-            for item in (*structural.evidence, *legacy.evidence)
-        )
-        candidate_pool = _interleave_evidence(
-            structural.evidence,
-            legacy.evidence,
-            limit=max(1, pool_size),
-            max_tokens=max(1, pool_tokens),
-            per_document_limit=max(1, pool_size),
-        )
         if len(candidate_pool) > 1:
             try:
                 final_reranker = await get_remote_reranker().rerank(
@@ -272,7 +282,9 @@ async def _parallel_retrieval_outcome(
     ]
     if final_reranker_error is not None:
         failed_lanes.append("final_reranker")
-    if evidence and failed_lanes:
+    if final_reranker is not None and not evidence:
+        status = "no_candidate"
+    elif evidence and failed_lanes:
         status = "partial_retrieval_error"
     elif evidence:
         status = "ok"
@@ -306,6 +318,13 @@ async def _parallel_retrieval_outcome(
             ),
             "final_reranker_error": final_reranker_error,
             "final_reranker_enabled": final_rerank_enabled,
+            "pre_final_candidate_count": len(candidate_pool),
+            "post_final_candidate_count": len(evidence),
+            "no_candidate_reason": (
+                "no_candidate_after_final_rerank"
+                if final_reranker is not None and not evidence
+                else None
+            ),
         }
     )
     if combined_stage_trace is not None:
