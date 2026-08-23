@@ -69,7 +69,7 @@ flowchart LR
     Hybrid --> Merge
     Merge --> Resolve["Resolve full text from SQLite"]
     Resolve --> Chunk["Chapter → Section → Article → Clause"]
-    Chunk --> Bound["Max 12 candidates; ≤2/document"]
+    Chunk --> Bound["Max 24 reranker inputs; up to 4 local chunks/document"]
     Bound --> Rerank["Qdrant ColBERT; Pinecone BGE fallback"]
     Rerank --> Budget["Top 3; context ≤720 tokens"]
     Budget --> Answer["Vertex AI gemini-3.5-flash via ADC"]
@@ -90,7 +90,8 @@ Required secrets:
 
 - `PIPECONE_API` or `PINECONE_API_KEY`
 - `QDRANT_URL`, `QDRANT_API_KEY` (embedding + ColBERT cloud inference)
-- Structural primary (optional): `STRUCTURAL_BACKEND_ENABLED=true` and `STRUCTURAL_COLLECTION_NAME=vietlex-legal-rag-v2-pilot-384`; Pinecone v1 remains the full-corpus fallback
+- Parallel structural augmentation (optional): `STRUCTURAL_BACKEND_ENABLED=true` and `STRUCTURAL_COLLECTION_NAME=vietlex-legal-rag-v2-pilot-384`; Pinecone v1 + FTS still search the full corpus on every request
+- Cross-lane Pinecone BGE final rerank is implemented behind `CROSS_LANE_FINAL_RERANK_ENABLED=false` and requires an identical-input A/B before cutover
 - Local: `GOOGLE_APPLICATION_CREDENTIALS=.secrets/vertex-adc.json` (project-relative path to a Git-ignored key)
 - Vercel/serverless: `GOOGLE_SERVICE_ACCOUNT_JSON` (the complete service-account JSON stored as a platform secret and loaded in memory)
 - `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION=global`

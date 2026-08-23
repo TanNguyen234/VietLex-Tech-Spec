@@ -58,7 +58,7 @@ Local SQLite Content Store (Compressed Zstandard Full Text)
 
 ## Opt-in structural v2 parallel path
 
-When `STRUCTURAL_BACKEND_ENABLED=true`, the explicitly gated Qdrant structural pilot and `get_legal_retriever()` (Pinecone v1 + local FTS) execute concurrently. Neither lane can prevent the other from searching. Candidate evidence is always canonically deduplicated by document/Điều/Khoản. `CROSS_LANE_FINAL_RERANK_ENABLED=true` optionally passes the combined pool through one Pinecone BGE final rerank before the shared evidence/token budget; it remains off by default until the required identical-input A/B authorizes cutover. If the optional final reranker fails, the system falls back to bounded canonical rank interleave and reports `partial_retrieval_error`.
+When `STRUCTURAL_BACKEND_ENABLED=true`, the explicitly gated Qdrant structural pilot and `get_legal_retriever()` (Pinecone v1 + local FTS) execute concurrently. Neither lane can prevent the other from searching. Fusion removes only exact normalized chunk duplicates using document identity plus normalized content SHA-256; distinct windows within the same Điều/Khoản remain candidates. `CROSS_LANE_FINAL_RERANK_ENABLED=true` optionally passes the combined pool through one Pinecone BGE final rerank before the shared evidence/token budget; it remains off by default until the required identical-input A/B authorizes cutover. If the optional final reranker fails, the system falls back to bounded exact-deduplicated rank interleave and reports `partial_retrieval_error`. A successful final rerank that rejects every candidate keeps the standard `no_candidate` status and records reason `no_candidate_after_final_rerank` with pre/post candidate counts.
 
 ```text
 Pinned local primary-legislation scope (827 documents)
@@ -89,7 +89,7 @@ Semantic cache identity binds corpus revision and a pipeline fingerprint coverin
 
 - `APP_ENV=production` requires a stable `WEB_SESSION_SECRET`; production startup never silently rotates anonymous identities.
 - New MongoDB session and interaction records carry `expires_at` and are governed by TTL indexes using `DATA_RETENTION_DAYS` (30 days by default). Explicit session deletion removes both the session and its owned interaction logs.
-- Browser progress uses SSE rather than repeated 400 ms HTTP polling. Progress state remains bounded and process-local, so multi-replica deployment still requires sticky routing or a shared event backend.
+- Direct FastAPI clients use SSE progress. Requests marked by the buffering Vercel gateway use 1-second polling instead; the public topology does not claim end-to-end SSE. Progress state remains bounded and process-local, so multi-replica deployment still requires sticky routing or a shared event backend.
 
 Each inference document is contract-versioned as `vietlex-structural-document-v2` and contains the corpus title, document number, legal type, structural path, citation, and unchanged chunk body. Its SHA-256 is persisted separately from the body/chunk hash and participates in checkpoint identity.
 

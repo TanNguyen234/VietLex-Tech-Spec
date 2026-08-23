@@ -17,5 +17,6 @@ Vercel chỉ làm cổng HTTPS mỏng. FastAPI, MongoDB và hai SQLite corpus ph
 - Quota Ragas trong process phù hợp demo một instance. Nếu scale nhiều instance, cần quota store dùng chung như Redis trước khi tăng traffic.
 - NeMo do từng người dùng bật cho từng câu hỏi; mặc định tắt.
 - Vercel proxy có timeout nền tảng. Backend vẫn phải giới hạn thời gian xử lý và rate limit.
+- Vercel Python proxy buffer upstream responses, nên gateway đánh dấu request bằng `gateway=vercel` và UI dùng polling progress 1 giây. Chỉ client truy cập FastAPI trực tiếp mới dùng SSE.
 - Không commit secret, service-account JSON, corpus hoặc file `.env`.
 - Cấu hình này là gói sẵn sàng triển khai; repository không tuyên bố đã deploy nếu chưa có URL và kiểm tra live.
