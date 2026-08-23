@@ -6,7 +6,7 @@
   <title>VietLex · Trợ lý tra cứu pháp luật</title>
   <link rel="stylesheet" href="/static/css/vietlex.css"><link rel="stylesheet" href="/static/css/vietlex-enhancements.css"><script src="/static/js/vietlex.js" defer></script>
 </head>
-<body>
+<body data-progress-transport="{{ progress_transport | default('sse') }}">
   <a class="skip-link" href="#chat-input">Bỏ qua đến ô nhập câu hỏi</a>
   <header class="topbar">
     <a class="brand" href="/" aria-label="VietLex — trang chủ"><span class="brand-mark">VL</span><span><strong>VietLex</strong><small>Vietnamese Legal RAG</small></span></a>

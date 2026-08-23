@@ -15,6 +15,19 @@ def test_vercel_is_a_thin_proxy_with_environment_only_origin() -> None:
     assert "data/" not in json.dumps(config)
 
 
+def test_vercel_marks_buffered_progress_transport() -> None:
+    config = json.loads((ROOT / "vercel.json").read_text(encoding="utf-8"))
+    index = (ROOT / "app/templates/index.html").read_text(encoding="utf-8")
+    script = (ROOT / "app/static/js/vietlex.js").read_text(encoding="utf-8")
+    main = (ROOT / "app/main.py").read_text(encoding="utf-8")
+
+    assert "gateway=vercel" in config["rewrites"][0]["destination"]
+    assert "progress_transport" in main
+    assert "data-progress-transport" in index
+    assert "progressTransport" in script
+    assert "setTimeout(poll,1000)" in script
+
+
 def test_container_uses_persistent_corpus_paths_without_copying_data() -> None:
     dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
     dockerignore = (ROOT / ".dockerignore").read_text(encoding="utf-8")

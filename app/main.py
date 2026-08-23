@@ -81,7 +81,19 @@ app.include_router(api_router)
 async def get_index(request: Request):
     # CSRF generation
     token = secrets.token_hex(32)
-    response = templates.TemplateResponse(request, "index.html", {"csrf_token": token})
+    progress_transport = (
+        "polling"
+        if request.query_params.get("gateway") == "vercel"
+        else "sse"
+    )
+    response = templates.TemplateResponse(
+        request,
+        "index.html",
+        {
+            "csrf_token": token,
+            "progress_transport": progress_transport,
+        },
+    )
     # Save token in cookie for validation
     response.set_cookie(key="csrf_token", value=token, httponly=True, samesite="strict")
     return response
