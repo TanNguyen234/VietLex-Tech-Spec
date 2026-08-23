@@ -1,0 +1,128 @@
+{
+  "run_id": "retrieval-crosslane-a-rep10-20260823",
+  "utc_timestamp": "2026-08-23T13:21:25.903472+00:00",
+  "git_sha": "733f95baa2cb72090ed2e6ab8492ca5ca350baba",
+  "git_dirty": false,
+  "git_tracked_dirty": false,
+  "git_staged_dirty": false,
+  "git_untracked_dirty": false,
+  "git_diff_sha256": null,
+  "git_diff_status": "clean",
+  "git_diff_reason": null,
+  "source_state_sha256": "2fd30a9b885a6e17af33c2e3f445d5f1a9b62e4ea219d0f17362b2c50db15924",
+  "provenance_status": "ok",
+  "provenance_error": null,
+  "repository_root": "D:\\Download\\ProfessionalLegalRAG",
+  "dataset_revision": "4d4e10b201544e8a4c49a1d3fa496595a7d486d0",
+  "dataset_sha256": "b458880e2c2fc4f2813965d57dc96517555488a5ada3702da12fb811f05fb90b",
+  "evaluation_dataset_sha256": "b458880e2c2fc4f2813965d57dc96517555488a5ada3702da12fb811f05fb90b",
+  "gold_label_sidecar_sha256": "f6dfe09a6f32697b468d43c36bd9fd82d5fe5c0c4b0e5d9684ca3e4d0c1f5b67",
+  "gold_policy": "all-required-verified",
+  "selected_case_count": 10,
+  "selected_case_ids": [
+    "case_017",
+    "case_036",
+    "case_061",
+    "case_101",
+    "case_165",
+    "case_243",
+    "case_261",
+    "case_323",
+    "case_329",
+    "case_397"
+  ],
+  "selected_case_ids_sha256": "c183716561498a8eabae4fd7cac724b6068dd4758264501a3d88bae47febae40",
+  "configuration_fingerprint": "1635926badd2f40127d82bac14c6a185ff9339181dd039a9c64dd71137997936",
+  "command": "run_retrieval_eval.py --case-ids case_017 case_036 case_061 case_101 case_165 case_243 case_261 case_323 case_329 case_397 --verified-only --gold-policy all-required-verified --profile separated_intent --rewrite off --reranker current --concurrency 1 --require-clean-git --run-id retrieval-crosslane-a-rep10-20260823",
+  "eval_mode": "retrieval-only",
+  "judge_mode": "none",
+  "guardrail_mode": "off",
+  "rewrite_mode": "off",
+  "reranker_provider": "current",
+  "profile_name": "separated_intent",
+  "configuration": {
+    "profile_name": "separated_intent",
+    "profile": {
+      "name": "separated_intent",
+      "retrieval_document_limit": 24,
+      "resolved_document_limit": 16,
+      "local_chunks_per_document": 4,
+      "rerank_input_limit": 24,
+      "rerank_return_limit": 3,
+      "final_evidence_limit": 3,
+      "final_context_token_limit": 720,
+      "intent_scoring_enabled": true,
+      "rewrite_mode": "off",
+      "reranker_mode": "current"
+    },
+    "eval_mode": "retrieval-only",
+    "judge_mode": "none",
+    "guardrail_mode": "off",
+    "rewrite_mode": "off",
+    "reranker_provider": "current",
+    "gold_policy": "all-required-verified",
+    "selected_case_count": 10,
+    "selected_case_ids_sha256": "c183716561498a8eabae4fd7cac724b6068dd4758264501a3d88bae47febae40",
+    "retrieval_runtime": {
+      "backend": "qdrant_structural_v2",
+      "collection": "vietlex-legal-rag-v2-pilot-384",
+      "dense_model": "intfloat/multilingual-e5-small",
+      "sparse_model": "qdrant/bm25",
+      "reranker_mode": "pinecone-only",
+      "dense_top_k": 48,
+      "bm25_top_k": 48,
+      "fused_limit": 64,
+      "rerank_input_limit": 64,
+      "rerank_return_limit": 6,
+      "final_evidence_limit": 5,
+      "cross_lane_final_rerank_enabled": false,
+      "cross_lane_final_reranker": "pinecone:bge-reranker-v2-m3",
+      "fallback_backend": "pinecone_v1"
+    },
+    "configured_provider_models": {
+      "dense": {
+        "provider": "qdrant-structural-collection",
+        "model": "intfloat/multilingual-e5-small"
+      },
+      "reranker_primary": {
+        "provider": "pinecone",
+        "model": "bge-reranker-v2-m3"
+      },
+      "reranker_fallback": {
+        "provider": "qdrant-via-pinecone-v1-fallback",
+        "model": "answerdotai/answerai-colbert-small-v1"
+      },
+      "generation": {
+        "mode": "not_applicable",
+        "candidates": []
+      },
+      "judge": {
+        "mode": "none",
+        "candidates": []
+      }
+    }
+  },
+  "configured_provider_models": {
+    "dense": {
+      "provider": "qdrant-structural-collection",
+      "model": "intfloat/multilingual-e5-small"
+    },
+    "reranker_primary": {
+      "provider": "pinecone",
+      "model": "bge-reranker-v2-m3"
+    },
+    "reranker_fallback": {
+      "provider": "qdrant-via-pinecone-v1-fallback",
+      "model": "answerdotai/answerai-colbert-small-v1"
+    },
+    "generation": {
+      "mode": "not_applicable",
+      "candidates": []
+    },
+    "judge": {
+      "mode": "none",
+      "candidates": []
+    }
+  },
+  "code_metric_version": "3.0.0"
+}
