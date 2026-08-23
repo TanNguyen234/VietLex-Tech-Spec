@@ -1,5 +1,7 @@
 import json
 from pathlib import Path
+import subprocess
+import sys
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -26,6 +28,41 @@ def test_vercel_marks_buffered_progress_transport() -> None:
     assert "data-progress-transport" in index
     assert "progressTransport" in script
     assert "setTimeout(poll,1000)" in script
+
+
+def test_runtime_selects_progress_transport_without_leaking_local_env() -> None:
+    script = """
+import json
+from fastapi.testclient import TestClient
+from app.main import app
+
+client = TestClient(app)
+vercel = client.get('/?gateway=vercel')
+direct = client.get('/')
+print(json.dumps({
+    'vercel_status': vercel.status_code,
+    'vercel_polling': 'data-progress-transport=\"polling\"' in vercel.text,
+    'direct_status': direct.status_code,
+    'direct_sse': 'data-progress-transport=\"sse\"' in direct.text,
+}))
+"""
+    completed = subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    payload = json.loads(completed.stdout.strip().splitlines()[-1])
+    assert payload == {
+        "vercel_status": 200,
+        "vercel_polling": True,
+        "direct_status": 200,
+        "direct_sse": True,
+    }
 
 
 def test_container_uses_persistent_corpus_paths_without_copying_data() -> None:
