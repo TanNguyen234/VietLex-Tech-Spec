@@ -79,6 +79,14 @@ def test_retrieval_entrypoint_has_no_judge_mode() -> None:
     assert not hasattr(arguments, "judge")
 
 
+def test_retrieval_entrypoint_accepts_explicit_representative_case_ids() -> None:
+    arguments = run_retrieval_eval.build_parser().parse_args(
+        ["--case-ids", "case_017", "case_036", "case_323"]
+    )
+
+    assert arguments.case_ids == ["case_017", "case_036", "case_323"]
+
+
 def test_structural_pilot_entrypoint_defaults_are_provider_free() -> None:
     audit = run_structural_index_pilot.build_parser().parse_args(["audit"])
     plan = run_structural_index_pilot.build_parser().parse_args(["plan"])

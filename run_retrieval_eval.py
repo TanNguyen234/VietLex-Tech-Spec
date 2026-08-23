@@ -97,6 +97,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--limit", type=int, default=None, help="Limit maximum number of cases to evaluate"
     )
     parser.add_argument(
+        "--case-ids",
+        nargs="+",
+        default=None,
+        help="Evaluate only the explicitly ordered case IDs.",
+    )
+    parser.add_argument(
         "--verified-only",
         action="store_true",
         help="Filter evaluation to cases with verified gold evidence in the current corpus",
@@ -482,6 +488,7 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
         verified_only=args.verified_only,
         require_clean_git=args.require_clean_git,
         limit=args.limit,
+        requested_case_ids=args.case_ids,
     )
 
     if args.preflight or args.preflight_all_profiles:
