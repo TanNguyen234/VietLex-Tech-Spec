@@ -1,83 +1,126 @@
-# VietLex — Vietnamese Legal RAG (English)
+# VietLex — Vietnamese Legal RAG
+
+<div align="center">
 
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-Production-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![RAG](https://img.shields.io/badge/RAG-Legal%20QA-6A5ACD)](#)
-[![License](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey)](https://creativecommons.org/licenses/by/4.0/)
+[![Corpus](https://img.shields.io/badge/Corpus-518%2C255%20documents-2E8B57)](https://huggingface.co/datasets/vohuutridung/vietnamese-legal-documents)
+[![Dense embedding](https://img.shields.io/badge/Embedding-E5--small%20384d-F59E0B)](https://huggingface.co/intfloat/multilingual-e5-small)
+[![Backend](https://img.shields.io/badge/Backend-FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+
+**Evidence-grounded Vietnamese Legal RAG over 518,255 documents using hybrid retrieval, reranking, and Vertex AI.**
 
 Language: [Tiếng Việt](README.md) | **English**
 
-VietLex is a production-oriented RAG system for Vietnamese legal document
-retrieval and grounded QA. The complete corpus is durably stored in Pinecone.
-Qdrant Cloud provides remote inference and an opt-in structural collection for
-827 primary-legislation documents. When enabled it is the primary retrieval
-path, with the full-corpus Pinecone v1 path retained as an observable fallback.
+</div>
+
+VietLex is an AI/ML portfolio project for evidence-grounded Vietnamese legal question answering. It combines Pinecone dense+sparse retrieval with SQLite FTS5 document-number/title search, resolves full text locally, creates legal-structure-aware chunks, reranks the evidence, and generates grounded answers with Vertex AI Gemini.
 
 > [!WARNING]
-> The corpus comes from a third-party research dataset:
-> [`vohuutridung/vietnamese-legal-documents`](https://huggingface.co/datasets/vohuutridung/vietnamese-legal-documents).
-> It is **not** an official legal source and does not guarantee legal validity.
-> Results are informational only, not legal advice. Always verify against
-> official up-to-date legal sources before making decisions.
+> The corpus comes from the third-party research dataset [`vohuutridung/vietnamese-legal-documents`](https://huggingface.co/datasets/vohuutridung/vietnamese-legal-documents). It is not an official legal database and does not establish current legal validity. Results are informational, not legal advice; always verify against current official sources.
 
-## ⚡ Quick scripts (professional README style)
+## Key results
 
-| Script | Command | Purpose |
-| --- | --- | --- |
-| `setup` | `python -m venv .venv`<br>`.venv\Scripts\Activate.ps1`<br>`python -m pip install -r requirements.txt`<br>`Copy-Item .env.example .env` | Initialize local environment |
-| `dev` | `uvicorn app.main:app --host 0.0.0.0 --port 8000` | Run local API server |
-| `ingest:full` | `python -u -m app.ingestion.hf_pipeline full --delete-existing --yes` | Full corpus ingestion/rebuild |
-| `ingest:download` | `python -m app.ingestion.hf_pipeline download` | Download dataset snapshot |
-| `ingest:prepare` | `python -m app.ingestion.hf_pipeline prepare` | Prepare ingestion artifacts |
-| `ingest:smoke` | `python -m app.ingestion.hf_pipeline smoke` | Ingestion smoke checks |
-| `ingest:verify` | `python -m app.ingestion.hf_pipeline verify` | Validate ingestion state |
-| `fts:build` | `python -u -m app.ingestion.legal_fts build --batch-size 256` | Build SQLite FTS5 index |
-| `eval:full` | `python -u run_eval_suite.py --fresh --factoids 12 --multihop 12 --unanswerable 6 --concurrency 2 --judge-concurrency 4` | Full golden evaluation |
-| `eval:smoke` | `python -u run_eval_suite.py --fresh --factoids 2 --multihop 2 --unanswerable 2 --concurrency 1 --judge-concurrency 1 --checkpoint docs/smoke_eval_checkpoints.json --report docs/smoke_evaluation_report.md` | Fast smoke evaluation |
-| `test` | `python -m pytest -q` | Run test suite |
-| `test:live-rerank` | `$env:RUN_LIVE_RERANK_TEST='1'`<br>`python -m pytest tests/integration/test_remote_reranker_live.py -q`<br>`Remove-Item Env:RUN_LIVE_RERANK_TEST` | Live reranker smoke test |
-| `check` | `python -m compileall -q app tests`<br>`git diff --check` | Compile + whitespace checks |
+| Portfolio evidence | Result preserved in repository artifacts |
+| :--- | :--- |
+| Balanced-50 answer evaluation | Faithfulness **0.9158** · Answer Accuracy **0.8950** · Context Precision **0.8757** · Context Recall **0.9333** |
+| Completed pipeline | **50/50** generation `STOP` · **50/50** NeMo input/output safe · **0** technical errors in the run |
+| Verified retrieval subset | **40** cases with all required evidence verified · Document Recall@3 macro **0.9250**, micro **50/53** |
+| Automated verification | More than **800** unit/integration tests; live-provider tests are opt-in |
 
-## Corpus
+Balanced-50 contains 40 cases with fully verified required retrieval evidence and 10 deterministic reference-only cases. These metrics demonstrate a bounded evaluation slice—not whole-corpus legal accuracy or production readiness. See [`PORTFOLIO_EVIDENCE.md`](docs/evaluation/PORTFOLIO_EVIDENCE.md) for full provenance and evidence boundaries.
 
-- Revision pin: `4d4e10b201544e8a4c49a1d3fa496595a7d486d0`
-- Document count: `518,255`
-- Publisher-declared license: CC BY 4.0
-- Snapshot integrity: 13 files with size + SHA-256 verification
-- Full content stays in local SQLite/Zstandard, not in Pinecone payload
+## Demo
+
+![VietLex legal question-answering interface](docs/images/chat_flow.png)
+
+The repository includes a real FastAPI/Jinja2 chat interface. This is a repository screenshot, not a mockup or a claim that a public deployment is live.
+
+## Core capabilities
+
+- **Full-corpus hybrid retrieval:** one Pinecone dense+sparse query runs in parallel with SQLite FTS5 exact document-number/title search.
+- **Dense inference:** `intfloat/multilingual-e5-small`, 384 dimensions, through Qdrant Cloud inference staging; persistent vectors remain in Pinecone.
+- **Sparse retrieval:** local `FastSparseEncoder`, up to 64 nonzero terms; it is not described as full BM25 because it has no corpus-level IDF.
+- **Evidence resolution:** full text remains in SQLite/Zstandard and is chunked only after a document is resolved.
+- **Legal-aware chunking:** Chapter → Section → Article → Clause, 220 approximate whitespace tokens with 24-token overlap for oversized units.
+- **Remote reranking:** Qdrant ColBERT is primary; Pinecone `bge-reranker-v2-m3` is the technical fallback.
+- **Grounded generation:** Vertex AI `gemini-3.5-flash` through ADC, with citations and typed provider diagnostics.
+- **Evaluation:** deterministic retrieval/answer metrics by default; Ragas/LLM judges are opt-in offline audits.
+- **Web backend:** FastAPI, Jinja2/HTMX, MongoDB session/log/feedback storage, rate limiting, and guardrail modes `off`/`shadow`/`enforce`.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    HF["Pinned Hugging Face snapshot"] --> Store["SQLite + Zstandard"]
-    Store --> Text["Dense: metadata + outline + representative body"]
-    Text --> Stage["Qdrant inference staging: E5-small 384"]
-    Stage --> Vector["Dense vector"]
-    Text --> Sparse["Fast Vietnamese lexical sparse, max 64 terms"]
-    Vector --> Pinecone["Pinecone serverless"]
+    Corpus["Pinned corpus: 518,255 documents"] --> Store["SQLite + Zstandard full text"]
+    Store --> DenseText["Metadata + outline + representative body"]
+    Store --> Sparse["FastSparseEncoder · max 64 terms"]
+    DenseText --> Stage["Qdrant inference staging · E5-small 384d"]
+    Stage --> Pinecone["Pinecone · one record/document"]
     Sparse --> Pinecone
 
-    Query["Original query"] --> QueryEmbed["Dense query via Qdrant staging"]
-    Query -. "explicit evaluation only" .-> Rewrite["Optional short legal rewrite"]
-    Query --> FTS["SQLite FTS5 + exact document number"]
-    Rewrite -.-> QueryEmbed
-    Query --> SparseQuery["Exact sparse query"]
-    QueryEmbed --> Hybrid["Single Pinecone dense+sparse query"]
-    SparseQuery --> Hybrid
-    FTS --> Merge["Merge + deduplicate"]
-    Hybrid --> Merge
-    Merge --> Resolve["Resolve full text from SQLite"]
-    Resolve --> Chunk["Chapter → Section → Article → Clause"]
-    Chunk --> Bound["Max 24 reranker inputs; up to 4 local chunks/document"]
-    Bound --> Rerank["Qdrant ColBERT; Pinecone BGE fallback"]
-    Rerank --> Budget["Top 3; context ≤720 tokens"]
-    Budget --> Answer["Vertex AI gemini-3.5-flash via ADC"]
+    Query["Original query"] --> Embed["Qdrant dense query inference"]
+    Query --> SparseQ["Original sparse query"]
+    Query --> FTS["SQLite FTS5 · number/title"]
+    Embed --> Hybrid["Pinecone hybrid search"]
+    SparseQ --> Hybrid
+    Hybrid --> Merge["Merge + exact deduplication"]
+    FTS --> Merge
+    Merge --> Resolve["Resolve full text"]
+    Resolve --> Chunk["Structural local chunks"]
+    Chunk --> Bound["Max 24 reranker inputs · up to 4 chunks/document"]
+    Bound --> Rerank["Qdrant ColBERT · Pinecone BGE fallback"]
+    Rerank --> FullEvidence["Full-corpus evidence lane"]
+    FullEvidence --> Combine["Exact dedupe + bounded rank interleave"]
+    Combine --> Evidence["Up to 3 evidence chunks · 720 context tokens"]
+    Evidence --> Answer["Vertex AI Gemini answer"]
+
+    Query -. opt-in .-> Structural["Qdrant structural pilot · 827 documents"]
+    Structural -. parallel retrieval + rerank .-> Combine
 ```
 
-## Setup
+The runtime default remains `STRUCTURAL_BACKEND_ENABLED=false`. When the structural pilot is enabled, its 827-document Qdrant lane runs **in parallel** with the full-corpus Pinecone-v1 + FTS lane; it does not replace full-corpus retrieval or imply structural coverage of all 518,255 documents.
 
-Requires Python 3.10+:
+Cross-lane Pinecone BGE final reranking was implemented and evaluated on identical inputs but remains `CROSS_LANE_FINAL_RERANK_ENABLED=false`: the evidence did not justify cutover. The closure did not rerun that A/B benchmark.
+
+## Tech stack
+
+| Layer | Technology |
+| :--- | :--- |
+| API & UI | Python 3.10+, FastAPI, Uvicorn, Jinja2, HTMX |
+| Durable vector retrieval | Pinecone Serverless, index `vietlex-legal-rag-v1`, namespace `legal-documents-v1` |
+| Dense inference & reranking | Qdrant Cloud, multilingual E5-small 384d, AnswerAI ColBERT-small-v1 |
+| Lexical & content storage | SQLite FTS5, SQLite/Zstandard, local `FastSparseEncoder` |
+| Generation | Google Vertex AI `gemini-3.5-flash` through Application Default Credentials |
+| Runtime data | MongoDB for sessions, interaction logs, feedback, and admin data—not the legal corpus |
+| Evaluation & safety | Pytest, deterministic metrics, optional Ragas, NeMo Guardrails |
+| Delivery | Docker, GitHub Actions, Vercel thin gateway + persistent-disk FastAPI origin |
+
+## Evaluation
+
+### Verified portfolio evidence
+
+| Evaluation set | Generation `STOP` | NeMo safe | Ragas coverage | Faithfulness | Answer accuracy | Context precision | Context recall | Technical errors |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Representative-10, `all-required-verified` | 10/10 | 10/10 | 10/10 | 0.9857 | 0.9750 | 0.9400 | 1.0000 | 0 |
+| Balanced-50, 26 factoid + 24 multi-hop | 50/50 | 50/50 | 50/50 | 0.9158 | 0.8950 | 0.8757 | 0.9333 | 0 |
+
+Immutable sources:
+
+- [`Balanced-50 report`](docs/evaluation/runs/answer-balanced50-v2-live-20260822/report.md)
+- [`Representative-10 report`](docs/evaluation/runs/answer-representative10-v6-live-20260822/report.md)
+- [`Portfolio evidence`](docs/evaluation/PORTFOLIO_EVIDENCE.md)
+- [`Current evaluation status`](docs/evaluation/CURRENT_STATUS.md)
+
+Code-based deterministic metrics are the default. Retrieval metrics cover Document/Article/Clause Recall@K, MRR, nDCG, exact-reference hit, multi-hop coverage, stage survival, no-candidate rate, and technical-error rates. Answer metrics cover exact match, token/character F1, ROUGE-L/CHRF, number/date/entity, citation, and refusal metrics. Aggregates preserve numerator, denominator, coverage, skipped cases, and skip reasons.
+
+## Setup and usage
+
+### Requirements
+
+- Python 3.10+
+- Local MongoDB or MongoDB Atlas
+- Pinecone, Qdrant Cloud, and Google Cloud credentials for the live runtime
+- Local corpus stores for full retrieval
 
 ```powershell
 python -m venv .venv
@@ -86,90 +129,15 @@ python -m pip install -r requirements.txt
 Copy-Item .env.example .env
 ```
 
-Required secrets:
+Primary variables are documented in [`.env.example`](.env.example). Inject secrets through environment/platform secret storage; never hardcode or commit credential files.
 
-- `PIPECONE_API` or `PINECONE_API_KEY`
-- `QDRANT_URL`, `QDRANT_API_KEY` (embedding + ColBERT cloud inference)
-- Parallel structural augmentation (optional): `STRUCTURAL_BACKEND_ENABLED=true` and `STRUCTURAL_COLLECTION_NAME=vietlex-legal-rag-v2-pilot-384`; Pinecone v1 + FTS still search the full corpus on every request
-- Cross-lane Pinecone BGE final rerank is implemented behind `CROSS_LANE_FINAL_RERANK_ENABLED=false` and requires an identical-input A/B before cutover
-- Local: `GOOGLE_APPLICATION_CREDENTIALS=.secrets/vertex-adc.json` (project-relative path to a Git-ignored key)
-- Vercel/serverless: `GOOGLE_SERVICE_ACCOUNT_JSON` (the complete service-account JSON stored as a platform secret and loaded in memory)
-- `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION=global`
-- `VERTEX_LLM_MODEL=gemini-3.5-flash`, `VERTEX_EMBEDDING_MODEL=gemini-embedding-2`
-- Optional secondary APIs: `OPENROUTER_API_KEY`, `GEMINI_API_KEY`, `NVIDIA_API_KEY`, `GROQ_API_KEY`
-
-Production generation and the guardrail LLM use Vertex AI `gemini-3.5-flash`
-as primary. A typed Vertex failure may fall back to OpenRouter, the Gemini Direct API, NVIDIA, and
-Groq; runtime metadata records the actual provider/model and primary failure.
-Query rewriting is off by default. `gemini-embedding-2` is probe-only at
-384/768/1024 dimensions and never queries or mutates the production E5 index.
-Ragas is an offline audit only and is never run by `/chat`. Its primary judge is Vertex AI `gemini-3.5-flash` through ADC; legacy APIs and OmniGate are best-effort fallbacks.
-When the dense lane fails but FTS remains usable, retrieval reports
-`partial_retrieval_error`: lexical evidence is still scored while the provider
-failure is counted in the technical-error rate. Lawful questions about public
-authorities, policy, and legal powers are explicitly allowed by the input rail.
-
-## Ingestion
-
-Run full ingestion:
-
-```powershell
-python -u -m app.ingestion.hf_pipeline full --delete-existing --yes
-```
-
-Optional phases:
-
-```powershell
-python -m app.ingestion.hf_pipeline download
-python -m app.ingestion.hf_pipeline prepare
-python -m app.ingestion.hf_pipeline smoke
-python -m app.ingestion.hf_pipeline verify
-```
-
-Build FTS5 index:
-
-```powershell
-python -u -m app.ingestion.legal_fts build --batch-size 256
-```
-
-## Run application
+Run the application:
 
 ```powershell
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-### Shareable online demo
-
-The deployment is deliberately split: Vercel runs the thin gateway in `api/proxy.py`, while the FastAPI `Dockerfile` runs on a host with a persistent `/data` disk for both SQLite stores. MongoDB stores only sessions, logs, feedback, and admin data—not the legal corpus. Public chat is anonymous with signed-cookie isolation; admin authentication fails closed; NeMo and public Ragas default to off; public endpoints are rate-limited.
-
-See [`deploy/vercel-proxy/README.md`](deploy/vercel-proxy/README.md). The repository is deployment-ready but does not claim a live URL until an actual deployment is verified.
-
-## Evaluation
-
-Latest live evidence (2026-08-22):
-
-| Evaluation set | Generation `STOP` | NeMo input/output safe | Ragas coverage | Faithfulness | Answer accuracy | Context precision | Context recall | Technical errors |
-| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Representative-10, `all-required-verified` | 10/10 | 10/10 | 10/10 | 0.9857 | 0.9750 | 0.9400 | 1.0000 | 0 |
-| Balanced-50, 26 factoid + 24 multi-hop | 50/50 | 50/50 | 50/50 | 0.9158 | 0.8950 | 0.8757 | 0.9333 | 0 |
-
-The Balanced-50 case-list SHA-256 is `56ae294f9698569ab4f7ae11ed87aabfa7c79b616919378dc0f5d4e32e53bdf3`. Forty cases have fully verified required retrieval evidence; ten reference-only cases extend the Ragas audit. On the verified 40-case subset, macro Document Recall@3 is `0.9250` and micro recall is `50/53 = 0.9434`. The project does not describe all 50 cases as fully verified golden data or use lexical similarity as proof of legal correctness.
-
-Evidence: [`Representative-10 report`](docs/evaluation/runs/answer-representative10-v6-live-20260822/report.md), [`Balanced-50 report`](docs/evaluation/runs/answer-balanced50-v2-live-20260822/report.md), and [`CV/portfolio evidence`](docs/evaluation/PORTFOLIO_EVIDENCE.md).
-
-Full golden evaluation:
-
-```powershell
-python -u run_eval_suite.py --fresh --factoids 12 --multihop 12 --unanswerable 6 --concurrency 2 --judge-concurrency 4
-```
-
-Smoke evaluation:
-
-```powershell
-python -u run_eval_suite.py --fresh --factoids 2 --multihop 2 --unanswerable 2 --concurrency 1 --judge-concurrency 1 --checkpoint docs/smoke_eval_checkpoints.json --report docs/smoke_evaluation_report.md
-```
-
-## Testing
+Run the default provider-free checks:
 
 ```powershell
 python -m pytest -q
@@ -177,18 +145,68 @@ python -m compileall -q app tests
 git diff --check
 ```
 
-Live reranker smoke:
+### Deployment topology
+
+- **Vercel public gateway:** `vercel.json` and `api/proxy.py` proxy HTML/API/static content; the gateway uses one-second polling because the serverless proxy buffers responses.
+- **FastAPI origin:** the `Dockerfile` runs on a host with persistent `/data` storage for `content_store.sqlite3` and `legal_fts.sqlite3`.
+- Direct FastAPI clients use SSE progress; the repository does not claim end-to-end SSE through Vercel or an unverified live production URL.
+
+See [`deploy/vercel-proxy/README.md`](deploy/vercel-proxy/README.md).
+
+## Advanced evaluation and adjudication
+
+### Provider-free gold adjudication
+
+`run_gold_adjudication.py` creates immutable repository-local human-review artifacts without provider, Ragas, generation, guardrail, corpus/index, or vector writes.
 
 ```powershell
-$env:RUN_LIVE_RERANK_TEST='1'
-python -m pytest tests/integration/test_remote_reranker_live.py -q
-Remove-Item Env:RUN_LIVE_RERANK_TEST
+python -u run_gold_adjudication.py queue --dataset app/data/namsyntax_legal_qa_420.json --sidecar docs/evaluation/gold_labels/namsyntax_legal_qa_420_labels_v2.json --content-store data/huggingface/content_store.sqlite3 --fts data/huggingface/legal_fts.sqlite3 --target-cases 40 --candidate-limit 12
+python -u run_gold_adjudication.py preview --dataset app/data/namsyntax_legal_qa_420.json --sidecar docs/evaluation/gold_labels/namsyntax_legal_qa_420_labels_v2.json --queue docs/evaluation/adjudication/queues/<run-id>/queue.json --decisions <decisions.json>
+python -u run_gold_adjudication.py promote --dataset app/data/namsyntax_legal_qa_420.json --sidecar docs/evaluation/gold_labels/namsyntax_legal_qa_420_labels_v2.json --queue docs/evaluation/adjudication/queues/<run-id>/queue.json --decisions <decisions.json> --preview docs/evaluation/adjudication/previews/<run-id>/preview.json --approve-preview-sha256 <approved-preview-sha256>
 ```
 
-## Notes
+Promotion never edits the source sidecar. It rebuilds the preview, requires the exact approved preview SHA-256, and writes a new `labels_v2.json`; insufficient verified coverage remains `BLOCKED_INSUFFICIENT_VERIFIED_CASES`.
 
-- Runtime uses one Pinecone hybrid read and one SQLite FTS5 read in parallel.
-- Semantic cache uses a dedicated namespace with threshold `0.96`.
-- Production does not use mock retrieval/rerank paths.
-- Detailed operations guide:
-  [Hugging Face ingestion runbook](docs/huggingface-ingestion-runbook.md).
+### Deterministic evaluation
+
+```powershell
+python -u run_retrieval_eval.py --preflight-all-profiles --verified-only --gold-policy all-required-verified --rewrite off --reranker current
+python -u run_retrieval_eval.py --profile separated_intent --verified-only --gold-policy all-required-verified --rewrite off --reranker current
+python -u run_answer_eval.py --profile separated_intent --verified-only --judge none --guardrails off
+```
+
+Ragas is enabled only for an explicitly budgeted offline audit; `/chat` never enqueues Ragas. Live-provider tests/evaluations are outside the default suite and may consume quota or incur cost.
+
+### Corpus operations
+
+Full ingestion may delete/recreate the remote index and must only run with explicit migration/reingestion authority:
+
+```powershell
+python -u -m app.ingestion.hf_pipeline full --delete-existing --yes
+```
+
+Provider-free phases and FTS build:
+
+```powershell
+python -m app.ingestion.hf_pipeline download
+python -m app.ingestion.hf_pipeline prepare
+python -m app.ingestion.hf_pipeline smoke
+python -m app.ingestion.hf_pipeline verify
+python -u -m app.ingestion.legal_fts build --batch-size 256
+```
+
+## Declared limitations
+
+- The third-party corpus does not guarantee current legal validity or independent verification of every document.
+- The structural pilot covers 827 primary-law documents, not all 518,255 documents.
+- Evaluation results are a bounded slice, not evidence of whole-corpus legal accuracy or production readiness.
+- The Vercel gateway uses polling; the progress registry remains process-local.
+- Cross-lane final reranking intentionally remains disabled under the `KEEP_DISABLED` decision.
+
+## Documentation
+
+- [`docs/PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md) — source-of-truth context
+- [`docs/CURRENT_ARCHITECTURE.md`](docs/CURRENT_ARCHITECTURE.md) — runtime architecture
+- [`docs/AGENT_WORKFLOW.md`](docs/AGENT_WORKFLOW.md) — engineering/evidence workflow
+- [`docs/evaluation/PORTFOLIO_EVIDENCE.md`](docs/evaluation/PORTFOLIO_EVIDENCE.md) — recruiter-safe evidence
+- [`docs/huggingface-ingestion-runbook.md`](docs/huggingface-ingestion-runbook.md) — ingestion operations
