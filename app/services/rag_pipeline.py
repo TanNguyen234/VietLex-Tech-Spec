@@ -17,6 +17,7 @@ from app.services.retrieval import (
     get_legal_retriever,
     get_structural_legal_retriever,
 )
+from app.evaluation.schemas import RetrievalStageTrace, StageCandidate
 
 
 
@@ -97,6 +98,157 @@ async def _legacy_retrieval_outcome(
     )
 
 
+def _evidence_identity(item: Any) -> tuple[Any, ...]:
+    return (
+        item.document_id,
+        item.article,
+        item.clause,
+        item.text,
+    )
+
+
+def _interleave_evidence(
+    structural: list[Any],
+    full_corpus: list[Any],
+    *,
+    limit: int,
+    max_tokens: int,
+    per_document_limit: int,
+) -> list[Any]:
+    merged: list[Any] = []
+    seen: set[tuple[Any, ...]] = set()
+    tokens_used = 0
+    per_document: dict[int, int] = {}
+    for index in range(max(len(structural), len(full_corpus))):
+        for lane in (structural, full_corpus):
+            if index >= len(lane):
+                continue
+            item = lane[index]
+            identity = _evidence_identity(item)
+            if identity in seen:
+                continue
+            document_count = per_document.get(item.document_id, 0)
+            if document_count >= per_document_limit:
+                continue
+            item_tokens = max(1, int(item.token_count))
+            if tokens_used + item_tokens > max_tokens:
+                continue
+            seen.add(identity)
+            merged.append(item)
+            tokens_used += item_tokens
+            per_document[item.document_id] = document_count + 1
+            if len(merged) >= limit:
+                return merged
+    return merged
+
+
+def _merged_stage_trace(
+    structural: RetrievalOutcome,
+    legacy: RetrievalOutcome,
+    evidence: list[Any],
+) -> RetrievalStageTrace | None:
+    traces = [
+        outcome.diagnostics.get("stage_trace")
+        for outcome in (structural, legacy)
+    ]
+    traces = [trace for trace in traces if isinstance(trace, RetrievalStageTrace)]
+    if not traces:
+        return None
+    merged: dict[str, list[StageCandidate]] = {
+        field: [] for field in RetrievalStageTrace.model_fields
+    }
+    for trace in traces:
+        for field in merged:
+            merged[field].extend(getattr(trace, field))
+    merged["final_evidence_chunks"] = [
+        StageCandidate(
+            document_id=item.document_id,
+            document_number=item.document_number,
+            title=item.title,
+            source_url=item.source_url,
+            citation=item.citation,
+            article=item.article,
+            clause=item.clause,
+            text=item.text,
+            source="parallel_final",
+        )
+        for item in evidence
+    ]
+    return RetrievalStageTrace(**merged)
+
+
+def _parallel_retrieval_outcome(
+    structural: RetrievalOutcome,
+    legacy: RetrievalOutcome,
+) -> RetrievalOutcome:
+    configured_limit = max(
+        1,
+        int(getattr(get_settings(), "FINAL_EVIDENCE_LIMIT", 3)),
+    )
+    max_tokens = max(
+        1,
+        int(getattr(get_settings(), "LLM_CONTEXT_MAX_TOKENS", 720)),
+    )
+    per_document_limit = max(
+        1,
+        int(getattr(get_settings(), "LLM_CONTEXT_PER_DOCUMENT_LIMIT", 2)),
+    )
+    evidence = _interleave_evidence(
+        structural.evidence,
+        legacy.evidence,
+        limit=configured_limit,
+        max_tokens=max_tokens,
+        per_document_limit=per_document_limit,
+    )
+    technical_statuses = {
+        "retrieval_error",
+        "reranker_error",
+        "partial_retrieval_error",
+    }
+    failed_lanes = [
+        name
+        for name, outcome in (
+            ("structural", structural),
+            ("full_corpus", legacy),
+        )
+        if outcome.status in technical_statuses
+    ]
+    if evidence and failed_lanes:
+        status = "partial_retrieval_error"
+    elif evidence:
+        status = "ok"
+    elif "reranker_error" in {structural.status, legacy.status}:
+        status = "reranker_error"
+    elif failed_lanes:
+        status = "retrieval_error"
+    else:
+        status = "ok"
+
+    diagnostics = dict(legacy.diagnostics)
+    combined_stage_trace = _merged_stage_trace(structural, legacy, evidence)
+    diagnostics.update(
+        {
+            "retrieval_backend": "parallel_structural_full_corpus_v1",
+            "fusion_policy": "rank_interleave_deduplicated_v1",
+            "structural_status": structural.status,
+            "full_corpus_status": legacy.status,
+            "failed_lanes": failed_lanes,
+            "structural_diagnostics": structural.diagnostics,
+            "full_corpus_diagnostics": legacy.diagnostics,
+        }
+    )
+    if combined_stage_trace is not None:
+        diagnostics["stage_trace"] = combined_stage_trace
+    errors = [value for value in (structural.error, legacy.error) if value]
+    return RetrievalOutcome(
+        evidence=evidence,
+        latency={**structural.latency, **legacy.latency},
+        status=status,
+        diagnostics=diagnostics,
+        error="; ".join(errors) or None,
+    )
+
+
 async def retrieve_configured_legal_evidence(
     rewritten_query: str,
     user_query: str,
@@ -108,69 +260,53 @@ async def retrieve_configured_legal_evidence(
             user_query,
             profile,
         )
-    try:
-        structural = _structural_retrieval_outcome(
-            await get_structural_legal_retriever().retrieve(
-                rewritten_query,
-                sparse_query=user_query,
-            )
-        )
-    except Exception as error:
-        structural = RetrievalOutcome(
-            evidence=[],
-            latency={},
-            status="retrieval_error",
-            diagnostics={
-                "retrieval_backend": "qdrant_structural_v2",
-                "structural_technical_errors": {
-                    "initialization": {
-                        "category": type(error).__name__,
-                    }
-                },
-            },
-            error="Structural retrieval initialization failed.",
-        )
-    if structural.evidence and structural.status in {
-        "ok",
-        "partial_retrieval_error",
-    }:
-        return structural
-
-    legacy = await _legacy_retrieval_outcome(
-        rewritten_query,
-        user_query,
-        profile,
-    )
-    diagnostics = dict(legacy.diagnostics)
-    diagnostics.update(
-        {
-            "retrieval_backend": "pinecone_v1_fallback",
-            "structural_fallback_reason": structural.status,
-            "structural_primary_technical_errors": (
-                structural.diagnostics.get(
-                    "structural_technical_errors",
-                    {},
+    async def run_structural() -> RetrievalOutcome:
+        try:
+            return _structural_retrieval_outcome(
+                await get_structural_legal_retriever().retrieve(
+                    rewritten_query,
+                    sparse_query=user_query,
                 )
-            ),
-        }
-    )
-    structural_failed = structural.status in {
-        "retrieval_error",
-        "reranker_error",
-        "partial_retrieval_error",
-    }
-    status = legacy.status
-    error = legacy.error
-    if structural_failed and legacy.evidence and legacy.status == "ok":
-        status = "partial_retrieval_error"
-        error = structural.error
-    return RetrievalOutcome(
-        evidence=list(legacy.evidence),
-        latency={**structural.latency, **legacy.latency},
-        status=status,
-        diagnostics=diagnostics,
-        error=error,
-    )
+            )
+        except Exception as error:
+            return RetrievalOutcome(
+                evidence=[],
+                latency={},
+                status="retrieval_error",
+                diagnostics={
+                    "retrieval_backend": "qdrant_structural_v2",
+                    "structural_technical_errors": {
+                        "initialization": {
+                            "category": type(error).__name__,
+                        }
+                    },
+                },
+                error="Structural retrieval initialization failed.",
+            )
+
+    async def run_legacy() -> RetrievalOutcome:
+        try:
+            return await _legacy_retrieval_outcome(
+                rewritten_query,
+                user_query,
+                profile,
+            )
+        except Exception as error:
+            return RetrievalOutcome(
+                evidence=[],
+                latency={},
+                status="retrieval_error",
+                diagnostics={
+                    "retrieval_backend": "pinecone_v1",
+                    "full_corpus_technical_error": {
+                        "category": type(error).__name__,
+                    },
+                },
+                error="Full-corpus retrieval initialization failed.",
+            )
+
+    structural, legacy = await asyncio.gather(run_structural(), run_legacy())
+    return _parallel_retrieval_outcome(structural, legacy)
 
 
 def build_bounded_context(

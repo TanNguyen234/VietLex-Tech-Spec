@@ -130,6 +130,15 @@ async def test_pipeline_fails_closed_without_calling_answer_model(
         "get_legal_retriever",
         lambda: retriever,
     )
+    monkeypatch.setattr(
+        rag_pipeline,
+        "get_settings",
+        lambda: type(
+            "RuntimeSettings",
+            (),
+            {"STRUCTURAL_BACKEND_ENABLED": False},
+        )(),
+    )
     monkeypatch.setattr(rag_pipeline, "rewrite_query_with_metadata", fake_rewrite)
     monkeypatch.setattr(
         rag_pipeline,
@@ -242,7 +251,7 @@ async def test_pipeline_formats_ranked_evidence_for_existing_contract(
 
 
 @pytest.mark.asyncio
-async def test_pipeline_uses_structural_retrieval_when_enabled(
+async def test_pipeline_searches_structural_and_full_corpus_when_enabled(
     monkeypatch,
 ) -> None:
     evidence = _evidence()
@@ -263,6 +272,19 @@ async def test_pipeline_uses_structural_retrieval_when_enabled(
             )
 
     structural = StructuralRetriever()
+    legacy_evidence = EvidenceChunk(
+        document_id=2,
+        document_number="99/2026/NĐ-CP",
+        title="Văn bản ngoài structural pilot",
+        source_url="https://example.invalid/2",
+        heading_path="Điều 9",
+        article="Điều 9",
+        clause="2",
+        citation="99/2026/NĐ-CP, Điều 9, Khoản 2",
+        text="Bằng chứng từ corpus đầy đủ.",
+        token_count=6,
+    )
+    legacy = FakeRetriever([legacy_evidence])
 
     monkeypatch.setattr(
         rag_pipeline,
@@ -281,7 +303,7 @@ async def test_pipeline_uses_structural_retrieval_when_enabled(
     monkeypatch.setattr(
         rag_pipeline,
         "get_legal_retriever",
-        lambda: pytest.fail("legacy retrieval must not run"),
+        lambda: legacy,
     )
 
     async def fake_answer(*_args, **_kwargs):
@@ -303,15 +325,25 @@ async def test_pipeline_uses_structural_retrieval_when_enabled(
     )
 
     assert response == "Câu trả lời structural."
-    assert contexts == [evidence.formatted_context()]
+    assert contexts == [
+        evidence.formatted_context(),
+        legacy_evidence.formatted_context(),
+    ]
     assert structural.queries == [("điều kiện thuế", "điều kiện thuế")]
+    assert legacy.queries == [("điều kiện thuế", "điều kiện thuế")]
     assert latency["retrieval_diagnostics"]["retrieval_backend"] == (
-        "qdrant_structural_v2"
+        "parallel_structural_full_corpus_v1"
     )
     assert isinstance(
         latency["retrieval_diagnostics"]["stage_trace"],
         RetrievalStageTrace,
     )
+    assert [
+        item.document_id
+        for item in latency["retrieval_diagnostics"][
+            "stage_trace"
+        ].final_evidence_chunks
+    ] == [1, 2]
 
 
 @pytest.mark.asyncio
@@ -387,9 +419,14 @@ async def test_pipeline_observes_structural_error_when_legacy_fallback_succeeds(
     assert legacy.queries == [("điều kiện thuế", "điều kiện thuế")]
     assert latency["retrieval_status"] == "partial_retrieval_error"
     diagnostics = latency["retrieval_diagnostics"]
-    assert diagnostics["retrieval_backend"] == "pinecone_v1_fallback"
-    assert diagnostics["structural_fallback_reason"] == "retrieval_error"
-    assert diagnostics["structural_primary_technical_errors"]["dense"][
+    assert diagnostics["retrieval_backend"] == (
+        "parallel_structural_full_corpus_v1"
+    )
+    assert diagnostics["structural_status"] == "retrieval_error"
+    assert diagnostics["failed_lanes"] == ["structural"]
+    assert diagnostics["structural_diagnostics"][
+        "structural_technical_errors"
+    ]["dense"][
         "category"
     ] == "unavailable"
 
