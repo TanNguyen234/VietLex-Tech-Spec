@@ -28,7 +28,7 @@ Ngôn ngữ: **Tiếng Việt** | [English](README.en.md)
 
 ---
 
-VietLex là hệ thống Retrieval-Augmented Generation (RAG) phục vụ tra cứu văn bản pháp luật Việt Nam. Toàn bộ corpus 518.255 văn bản được lưu trữ bền vững trên **Pinecone**. **Qdrant Cloud** thực thi inference từ xa và có collection structural opt-in `vietlex-legal-rag-v2-pilot-384` cho 827 văn bản luật chính. Khi bật structural, đây là retrieval primary; Pinecone v1 vẫn là fallback full-corpus có observability. **Không có embedding hoặc reranker nào chạy tại local.**
+VietLex là hệ thống Retrieval-Augmented Generation (RAG) phục vụ tra cứu văn bản pháp luật Việt Nam. Toàn bộ corpus 518.255 văn bản được lưu trữ bền vững trên **Pinecone**. **Qdrant Cloud** thực thi inference từ xa và có collection structural opt-in `vietlex-legal-rag-v2-pilot-384` cho 827 văn bản luật chính. Khi bật structural, Qdrant structural và Pinecone-v1 + FTS full-corpus chạy song song rồi merge có giới hạn; structural không thể chặn việc tìm kiếm corpus đầy đủ. **Không có embedding hoặc reranker nào chạy tại local.**
 
 > [!WARNING]
 > **Tuyên bố miễn trừ trách nhiệm về dữ liệu:**
@@ -152,7 +152,9 @@ Các biến môi trường bắt buộc cấu hình trong tệp `.env`:
 * `PIPECONE_API` hoặc `PINECONE_API_KEY`: API Key kết nối Pinecone Serverless.
 * `QDRANT_URL`, `QDRANT_API_KEY`: Thông tin kết nối Qdrant Cloud Inference (cho Embedding & ColBERT).
 * `MONGO_URL`: MongoDB dùng cho session, log, feedback và trang admin; local mặc định có thể dùng `mongodb://localhost:27017/vietlex`.
-* Để dùng structural primary: `STRUCTURAL_BACKEND_ENABLED=true`, `STRUCTURAL_COLLECTION_NAME=vietlex-legal-rag-v2-pilot-384`. Collection này chỉ phủ 827 văn bản; Pinecone v1 vẫn fallback cho lỗi kỹ thuật/no-candidate.
+* Để dùng structural song song: `STRUCTURAL_BACKEND_ENABLED=true`, `STRUCTURAL_COLLECTION_NAME=vietlex-legal-rag-v2-pilot-384`. Collection này chỉ phủ 827 văn bản; Pinecone v1 + FTS luôn được truy vấn đồng thời và lỗi từng lane được giữ trong diagnostics.
+* Production phải đặt `APP_ENV=production` và `WEB_SESSION_SECRET` ổn định; ứng dụng fail-fast nếu thiếu secret. MongoDB tự hết hạn log/session mới theo `DATA_RETENTION_DAYS` (mặc định 30 ngày), còn người dùng vẫn có thể xóa session và toàn bộ message liên quan ngay.
+* Progress UI dùng một kết nối SSE thay cho polling HTTP 400 ms. Registry hiện vẫn process-local; triển khai nhiều replica cần sticky routing hoặc shared progress backend.
 * Local: `GOOGLE_APPLICATION_CREDENTIALS=.secrets/vertex-adc.json` dùng đường dẫn tương đối tới key đã được Git ignore; không hardcode đường dẫn Windows.
 * Vercel/serverless: đặt toàn bộ JSON service account trong secret `GOOGLE_SERVICE_ACCOUNT_JSON`. Provider tạo credential trực tiếp trong memory, không cần ghi key ra filesystem.
 * `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION=global`: Project/location cho Vertex AI.

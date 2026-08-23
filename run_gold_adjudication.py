@@ -116,7 +116,7 @@ def build_parser() -> argparse.ArgumentParser:
         command.add_argument(
             "--sidecar",
             type=Path,
-            default=root / "docs/evaluation/adjudication/promotions/gold-adjudication-promotion-curated-v4_20260809_151015_227377/labels_v2.json",
+            default=root / "docs/evaluation/adjudication/promotions/gold-adjudication-promotion-curated-v5_20260821_case323/labels_v2.json",
         )
         command.add_argument("--output-root", type=Path, default=output_root)
         command.add_argument("--run-id")

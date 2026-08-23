@@ -6,7 +6,7 @@ The latest answer run is `docs/evaluation/runs/answer-balanced50-v2-live-2026082
 
 The preceding Representative-10 gate is `docs/evaluation/runs/answer-representative10-v6-live-20260822/`: generation, NeMo, and Ragas coverage are all 10/10 with zero technical errors; Ragas means are `0.9857`, `0.9750`, `0.9400`, and `1.0000` respectively. Both runs preserve Git/source-state provenance and use Vertex AI `gemini-3.5-flash`, `MINIMAL` thinking, guardrails `enforce`, and rewrite `off`.
 
-Historical P2/P3 status follows below. P3 Pinecone structural replacement remains closed `BLOCKED_EXTERNAL_QUOTA` at 21,696/134,334 uploaded records.
+The canonical evaluation contract is now `docs/evaluation/current_evaluation.json`: curated-v5 binds the corrected `case_323` evidence to `59/2020/QH14`, Điều 123 khoản 4. Runtime structural retrieval is an optional parallel augmentation to the full-corpus Pinecone-v1 + FTS lane, not a hard-primary substitute. Historical P2/P3 status follows below. P3 Pinecone structural replacement remains closed `BLOCKED_EXTERNAL_QUOTA` at 21,696/134,334 uploaded records.
 
 P3 closure evidence: Pinecone paused monthly inference access for `llama-text-embed-v2`. The resumable checkpoint remains intact and maps the committed records to 247/827 selected documents. Offline coverage inspection found only 24/64 independent canary documents present, with 40 missing. Therefore upload verification, the independent canary, and the final P3 benchmark are `NOT RUN`; no upload-completion report was fabricated. The isolated incomplete namespace and checkpoint are preserved, the upload processes were stopped, and the P3 monitor was deleted. No production route, Pinecone v1 data, Qdrant data, local corpus, FTS, or credentials were changed by closure.
 
@@ -140,7 +140,7 @@ $PLAN_SHA = "1c6c9e9b338e8e0c9397218ef1772eec1e220286c30ad51ec97fe2639cd827b7"
 $SOURCE_SHA = "18adf38b44083d3b0aa2ae7edd9239cd769fa3f99c5a71ac241e6d8212cae31a"
 $COLLECTION = "vietlex-legal-rag-v2-pilot"
 $DATASET = "app/data/namsyntax_legal_qa_420_curated_v1.json"
-$SIDECAR = "docs/evaluation/adjudication/promotions/gold-adjudication-promotion-curated-v4_20260809_151015_227377/labels_v2.json"
+$SIDECAR = "docs/evaluation/adjudication/promotions/gold-adjudication-promotion-curated-v5_20260821_case323/labels_v2.json"
 $P2 = "docs/evaluation/comparisons/p2-aa3208c/comparison.json"
 $P2_SHA = "e6b45624c25095e2110de61f92b92fe2b0b93d1eaca4b6960feaaa4745495a7a"
 ```

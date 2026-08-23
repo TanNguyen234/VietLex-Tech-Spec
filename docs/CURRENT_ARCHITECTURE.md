@@ -56,9 +56,9 @@ Local SQLite Content Store (Compressed Zstandard Full Text)
 - Configuration declarations in `app/config.py` do not prove runtime usage until verified by code execution.
 - Evaluation runs from dirty working trees are marked with `git_dirty=true` and `git_diff_sha256`.
 
-## Opt-in structural v2 primary path
+## Opt-in structural v2 parallel path
 
-The explicitly gated Qdrant structural pilot becomes the primary retrieval path for runtime and evaluation when `STRUCTURAL_BACKEND_ENABLED=true`. `get_legal_retriever()` and the Pinecone v1 topology remain intact as an observable fallback.
+When `STRUCTURAL_BACKEND_ENABLED=true`, the explicitly gated Qdrant structural pilot and `get_legal_retriever()` (Pinecone v1 + local FTS) execute concurrently. Neither lane can prevent the other from searching. Their already-ranked evidence is deduplicated and rank-interleaved under `FINAL_EVIDENCE_LIMIT`; this is deliberately named rank interleave rather than RRF because provider scores are not assumed to share a calibrated scale.
 
 ```text
 Pinned local primary-legislation scope (827 documents)
@@ -76,8 +76,20 @@ Opt-in collection vietlex-legal-rag-v2-pilot-384
         +--> deterministic RRF and per-document cap
         +--> Pinecone bge-reranker-v2-m3 by default
         +--> direct structural evidence (no second local re-chunk)
-        +--> observable Pinecone-v1 fallback on technical/no-candidate result
+        +--> bounded merge with the concurrent Pinecone-v1 + FTS lane
 ```
+
+A failure in one lane with usable evidence from the other remains observable as `partial_retrieval_error`. If both lanes fail, the pipeline fails closed. Structural coverage remains 827 documents and is not represented as full-corpus coverage.
+
+## Grounded semantic cache
+
+Semantic cache identity binds corpus revision and a pipeline fingerprint covering retrieval/embedding/reranker/answer-model and evidence-budget configuration. Only grounded `ok` responses are written. Evidence contexts are serialized with a SHA-256 and restored on a cache hit; legacy or tampered entries fail open to fresh retrieval.
+
+## Public runtime lifecycle
+
+- `APP_ENV=production` requires a stable `WEB_SESSION_SECRET`; production startup never silently rotates anonymous identities.
+- New MongoDB session and interaction records carry `expires_at` and are governed by TTL indexes using `DATA_RETENTION_DAYS` (30 days by default). Explicit session deletion removes both the session and its owned interaction logs.
+- Browser progress uses SSE rather than repeated 400 ms HTTP polling. Progress state remains bounded and process-local, so multi-replica deployment still requires sticky routing or a shared event backend.
 
 Each inference document is contract-versioned as `vietlex-structural-document-v2` and contains the corpus title, document number, legal type, structural path, citation, and unchanged chunk body. Its SHA-256 is persisted separately from the body/chunk hash and participates in checkpoint identity.
 

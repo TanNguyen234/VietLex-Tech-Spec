@@ -10,7 +10,7 @@ from app.evaluation.provenance import collect_git_provenance
 
 DEFAULT_DATASET = Path("app/data/namsyntax_legal_qa_420_curated_v1.json")
 DEFAULT_SIDECAR = Path(
-    "docs/evaluation/adjudication/promotions/gold-adjudication-promotion-curated-v4_20260809_151015_227377/labels_v2.json"
+    "docs/evaluation/adjudication/promotions/gold-adjudication-promotion-curated-v5_20260821_case323/labels_v2.json"
 )
 DEFAULT_OUTPUT_DIR = Path("docs/evaluation/decision_packages")
 

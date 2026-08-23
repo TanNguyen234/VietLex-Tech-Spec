@@ -39,5 +39,10 @@ The current priority is to establish a verified, measurable, reproducible, and d
 - The bounded model probe contains all 1,748 verified relevant rows plus one deterministic real row from each of the other 825 documents and 64 corpus title canaries. Golden labels never select corpus membership.
 - The default probe performs no Pinecone inference. An immutable reference artifact is optional and cannot relax the absolute Qdrant gates.
 - `audit` and `plan` are provider-free. `create`, `probe-model`, `upload`, `finalize`, `verify`, and `benchmark` are separate fail-closed remote phases and are not evidence of success until their immutable artifacts exist.
-- `STRUCTURAL_BACKEND_ENABLED=true` makes this collection the primary runtime and evaluation retrieval path. A technical failure or no-candidate result falls back observably to Pinecone v1; the fallback is never reported as an unqualified success.
-- Pinecone `vietlex-legal-rag-v1` remains the durable full-corpus store. The structural collection's limited scope and the unresolved `case_323` gold-label defect prevent a production-ready claim or a full verified benchmark promotion.
+- `STRUCTURAL_BACKEND_ENABLED=true` runs this collection concurrently with the Pinecone-v1 + local-FTS full-corpus lane. Final evidence uses a bounded, deduplicated rank interleave, so an in-scope structural match can never suppress searching the other 517k+ documents. A lane failure with usable evidence from the other lane is reported as `partial_retrieval_error`.
+- Pinecone `vietlex-legal-rag-v1` remains the durable full-corpus store. The official curated-v5 gold corrects `case_323` to `59/2020/QH14`, Điều 123 khoản 4. The 827-document structural scope still prevents a standalone structural production-readiness claim; production claims require a reproducible combined-path benchmark.
+
+## Grounded semantic cache
+
+- Cache entries are valid only for the exact corpus and pipeline fingerprint and only for request status `ok`.
+- Each hit carries the original evidence contexts plus their SHA-256. Missing, empty, tampered, old-schema, `no_evidence`, or `blocked_output` entries are ignored.
