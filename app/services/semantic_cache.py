@@ -52,6 +52,9 @@ def semantic_cache_pipeline_revision() -> str:
         "dense_model": settings.DENSE_INFERENCE_MODEL,
         "dense_backend": settings.DENSE_EMBEDDING_BACKEND,
         "structural_enabled": settings.STRUCTURAL_BACKEND_ENABLED,
+        "cross_lane_final_rerank_enabled": (
+            settings.CROSS_LANE_FINAL_RERANK_ENABLED
+        ),
         "structural_collection": settings.STRUCTURAL_COLLECTION_NAME,
         "structural_text_version": settings.STRUCTURAL_DOCUMENT_TEXT_VERSION,
         "structural_query_version": settings.STRUCTURAL_QUERY_INSTRUCTION_VERSION,
@@ -59,6 +62,7 @@ def semantic_cache_pipeline_revision() -> str:
         "legacy_reranker": settings.QDRANT_RERANK_MODEL,
         "fallback_reranker": settings.PINECONE_RERANK_MODEL,
         "answer_model": settings.VERTEX_LLM_MODEL,
+        "answer_prompt_version": settings.ANSWER_PROMPT_VERSION,
         "final_evidence_limit": settings.FINAL_EVIDENCE_LIMIT,
         "context_limit": settings.LLM_CONTEXT_MAX_TOKENS,
     }

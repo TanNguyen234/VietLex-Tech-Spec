@@ -21,6 +21,19 @@ def test_cache_identity_changes_with_corpus_revision() -> None:
     assert first != second
 
 
+def test_pipeline_revision_changes_with_answer_prompt_version(monkeypatch) -> None:
+    cache = _cache_module()
+    original = cache.semantic_cache_pipeline_revision()
+
+    monkeypatch.setattr(
+        cache.settings,
+        "ANSWER_PROMPT_VERSION",
+        "legal-grounded-test-next",
+    )
+
+    assert cache.semantic_cache_pipeline_revision() != original
+
+
 def test_cache_filter_requires_exact_corpus_revision() -> None:
     cache = _cache_module()
 

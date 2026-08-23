@@ -8,6 +8,7 @@ from app.services.structural_retrieval import (
     StructuralRetrievalTrace,
     StructuralTechnicalError,
 )
+from app.services.remote_reranker import RerankOutcome, RerankResult
 
 
 @pytest.mark.asyncio
@@ -292,7 +293,10 @@ async def test_pipeline_searches_structural_and_full_corpus_when_enabled(
         lambda: type(
             "RuntimeSettings",
             (),
-            {"STRUCTURAL_BACKEND_ENABLED": True},
+            {
+                "STRUCTURAL_BACKEND_ENABLED": True,
+                "CROSS_LANE_FINAL_RERANK_ENABLED": True,
+            },
         )(),
     )
     monkeypatch.setattr(
@@ -300,10 +304,31 @@ async def test_pipeline_searches_structural_and_full_corpus_when_enabled(
         "get_structural_legal_retriever",
         lambda: structural,
     )
+    class FinalReranker:
+        async def rerank(self, _query, documents, **kwargs):
+            assert kwargs["mode"] == "pinecone-only"
+            assert len(documents) == 2
+            return RerankOutcome(
+                results=[
+                    RerankResult(index=1, score=0.9),
+                    RerankResult(index=0, score=0.4),
+                ],
+                provider="pinecone",
+                model="bge-reranker-v2-m3",
+                latency=0.01,
+                input_count=2,
+                output_count=2,
+            )
+
     monkeypatch.setattr(
         rag_pipeline,
         "get_legal_retriever",
         lambda: legacy,
+    )
+    monkeypatch.setattr(
+        rag_pipeline,
+        "get_remote_reranker",
+        lambda: FinalReranker(),
     )
 
     async def fake_answer(*_args, **_kwargs):
@@ -326,8 +351,8 @@ async def test_pipeline_searches_structural_and_full_corpus_when_enabled(
 
     assert response == "Câu trả lời structural."
     assert contexts == [
-        evidence.formatted_context(),
         legacy_evidence.formatted_context(),
+        evidence.formatted_context(),
     ]
     assert structural.queries == [("điều kiện thuế", "điều kiện thuế")]
     assert legacy.queries == [("điều kiện thuế", "điều kiện thuế")]
@@ -343,7 +368,58 @@ async def test_pipeline_searches_structural_and_full_corpus_when_enabled(
         for item in latency["retrieval_diagnostics"][
             "stage_trace"
         ].final_evidence_chunks
-    ] == [1, 2]
+    ] == [2, 1]
+    assert latency["retrieval_diagnostics"]["final_reranker_provider"] == (
+        "pinecone"
+    )
+
+
+def test_parallel_pool_canonically_deduplicates_same_provision() -> None:
+    first = _evidence()
+    duplicate = EvidenceChunk(
+        document_id=first.document_id,
+        document_number=first.document_number,
+        title=first.title,
+        source_url=first.source_url,
+        heading_path=first.heading_path,
+        article=" điều 1 ",
+        clause="01",
+        citation=first.citation,
+        text=first.text + " Nội dung structural dài hơn.",
+        token_count=first.token_count + 5,
+    )
+
+    merged = rag_pipeline._interleave_evidence(
+        [first],
+        [duplicate],
+        limit=3,
+        max_tokens=720,
+        per_document_limit=2,
+    )
+
+    assert merged == [first]
+
+
+def test_canonical_identity_does_not_merge_clause_without_article() -> None:
+    first = _evidence()
+    first = EvidenceChunk(
+        **{
+            **first.__dict__,
+            "article": None,
+            "citation": "12/2026/NĐ-CP, Chương I, Khoản 1",
+        }
+    )
+    second = EvidenceChunk(
+        **{
+            **first.__dict__,
+            "citation": "12/2026/NĐ-CP, Chương II, Khoản 1",
+            "text": "Một khoản khác không xác định Điều.",
+        }
+    )
+
+    assert rag_pipeline._evidence_identity(first) != (
+        rag_pipeline._evidence_identity(second)
+    )
 
 
 @pytest.mark.asyncio

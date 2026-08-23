@@ -16,7 +16,9 @@ from app.services.retrieval import (
     RetrievalOutcome,
     get_legal_retriever,
     get_structural_legal_retriever,
+    select_ranked_evidence,
 )
+from app.services.clients import get_remote_reranker
 from app.evaluation.schemas import RetrievalStageTrace, StageCandidate
 
 
@@ -99,12 +101,17 @@ async def _legacy_retrieval_outcome(
 
 
 def _evidence_identity(item: Any) -> tuple[Any, ...]:
-    return (
-        item.document_id,
-        item.article,
-        item.clause,
-        item.text,
-    )
+    article = " ".join((item.article or "").casefold().split())
+    clause = " ".join((item.clause or "").casefold().split())
+    if clause.isdigit():
+        clause = str(int(clause))
+    if article:
+        return (item.document_id, "provision", article, clause)
+    citation = " ".join((item.citation or "").casefold().split())
+    if citation:
+        return (item.document_id, "citation", citation)
+    text = " ".join((item.text or "").casefold().split())
+    return (item.document_id, "text", text)
 
 
 def _interleave_evidence(
@@ -177,9 +184,11 @@ def _merged_stage_trace(
     return RetrievalStageTrace(**merged)
 
 
-def _parallel_retrieval_outcome(
+async def _parallel_retrieval_outcome(
     structural: RetrievalOutcome,
     legacy: RetrievalOutcome,
+    *,
+    query: str,
 ) -> RetrievalOutcome:
     configured_limit = max(
         1,
@@ -193,13 +202,61 @@ def _parallel_retrieval_outcome(
         1,
         int(getattr(get_settings(), "LLM_CONTEXT_PER_DOCUMENT_LIMIT", 2)),
     )
-    evidence = _interleave_evidence(
+    fallback_evidence = _interleave_evidence(
         structural.evidence,
         legacy.evidence,
         limit=configured_limit,
         max_tokens=max_tokens,
         per_document_limit=per_document_limit,
     )
+    evidence = fallback_evidence
+    final_reranker = None
+    final_reranker_error = None
+    final_reranker_latency = 0.0
+    final_rerank_enabled = bool(
+        getattr(get_settings(), "CROSS_LANE_FINAL_RERANK_ENABLED", False)
+    )
+    if final_rerank_enabled and structural.evidence and legacy.evidence:
+        pool_size = len(structural.evidence) + len(legacy.evidence)
+        pool_tokens = sum(
+            max(1, int(item.token_count))
+            for item in (*structural.evidence, *legacy.evidence)
+        )
+        candidate_pool = _interleave_evidence(
+            structural.evidence,
+            legacy.evidence,
+            limit=max(1, pool_size),
+            max_tokens=max(1, pool_tokens),
+            per_document_limit=max(1, pool_size),
+        )
+        if len(candidate_pool) > 1:
+            try:
+                final_reranker = await get_remote_reranker().rerank(
+                    query,
+                    [item.formatted_context() for item in candidate_pool],
+                    mode="pinecone-only",
+                    rerank_return_limit=len(candidate_pool),
+                )
+                final_reranker_latency = final_reranker.latency
+                ranked = [
+                    (result.score, candidate_pool[result.index])
+                    for result in final_reranker.results
+                    if 0 <= result.index < len(candidate_pool)
+                ]
+                evidence = select_ranked_evidence(
+                    ranked,
+                    max_chunks=configured_limit,
+                    max_tokens=max_tokens,
+                    per_document_limit=per_document_limit,
+                    min_score=float(
+                        getattr(get_settings(), "RERANK_MIN_SCORE", 0.05)
+                    ),
+                )
+            except Exception as error:
+                final_reranker_error = {
+                    "category": type(error).__name__,
+                    "provider": "pinecone",
+                }
     technical_statuses = {
         "retrieval_error",
         "reranker_error",
@@ -213,6 +270,8 @@ def _parallel_retrieval_outcome(
         )
         if outcome.status in technical_statuses
     ]
+    if final_reranker_error is not None:
+        failed_lanes.append("final_reranker")
     if evidence and failed_lanes:
         status = "partial_retrieval_error"
     elif evidence:
@@ -229,20 +288,38 @@ def _parallel_retrieval_outcome(
     diagnostics.update(
         {
             "retrieval_backend": "parallel_structural_full_corpus_v1",
-            "fusion_policy": "rank_interleave_deduplicated_v1",
+            "fusion_policy": (
+                "canonical_dedupe_pinecone_final_rerank_v1"
+                if final_reranker is not None
+                else "canonical_dedupe_rank_interleave_fallback_v1"
+            ),
             "structural_status": structural.status,
             "full_corpus_status": legacy.status,
             "failed_lanes": failed_lanes,
             "structural_diagnostics": structural.diagnostics,
             "full_corpus_diagnostics": legacy.diagnostics,
+            "final_reranker_provider": (
+                final_reranker.provider if final_reranker else "none"
+            ),
+            "final_reranker_model": (
+                final_reranker.model if final_reranker else "none"
+            ),
+            "final_reranker_error": final_reranker_error,
+            "final_reranker_enabled": final_rerank_enabled,
         }
     )
     if combined_stage_trace is not None:
         diagnostics["stage_trace"] = combined_stage_trace
     errors = [value for value in (structural.error, legacy.error) if value]
+    if final_reranker_error is not None:
+        errors.append("Final cross-lane reranking failed.")
     return RetrievalOutcome(
         evidence=evidence,
-        latency={**structural.latency, **legacy.latency},
+        latency={
+            **structural.latency,
+            **legacy.latency,
+            "t_final_cross_lane_rerank": final_reranker_latency,
+        },
         status=status,
         diagnostics=diagnostics,
         error="; ".join(errors) or None,
@@ -306,7 +383,11 @@ async def retrieve_configured_legal_evidence(
             )
 
     structural, legacy = await asyncio.gather(run_structural(), run_legacy())
-    return _parallel_retrieval_outcome(structural, legacy)
+    return await _parallel_retrieval_outcome(
+        structural,
+        legacy,
+        query=rewritten_query,
+    )
 
 
 def build_bounded_context(

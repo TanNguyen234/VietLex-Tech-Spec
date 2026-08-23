@@ -37,6 +37,7 @@ class Settings(BaseSettings):
 
     # Opt-in Qdrant structural pilot.
     STRUCTURAL_BACKEND_ENABLED: bool = False
+    CROSS_LANE_FINAL_RERANK_ENABLED: bool = False
     STRUCTURAL_COLLECTION_NAME: str = "vietlex-legal-rag-v2-pilot-384"
     STRUCTURAL_DENSE_VECTOR_NAME: str = "dense"
     STRUCTURAL_SPARSE_VECTOR_NAME: str = "bm25"
@@ -117,6 +118,7 @@ class Settings(BaseSettings):
     GOOGLE_CLOUD_PROJECT: Optional[str] = None
     GOOGLE_CLOUD_LOCATION: str = "global"
     VERTEX_LLM_MODEL: str = "gemini-3.5-flash"
+    ANSWER_PROMPT_VERSION: str = "legal-grounded-v3"
     VERTEX_EMBEDDING_MODEL: str = "gemini-embedding-2"
     VERTEX_REQUEST_TIMEOUT_SECONDS: float = Field(default=30.0, gt=0)
     VERTEX_MAX_RETRIES: int = Field(default=2, ge=0, le=5)
