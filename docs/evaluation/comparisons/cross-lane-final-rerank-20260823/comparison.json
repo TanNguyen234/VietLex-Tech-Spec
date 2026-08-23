@@ -1,0 +1,103 @@
+{
+  "comparison_id": "cross-lane-final-rerank-20260823",
+  "decision": "KEEP_DISABLED",
+  "cutover_status": "BLOCKED",
+  "reason": "Representative-10 improved structural quality but the delta was small. The verified-40 extension was not an exact-reranker-input comparison and arm A contained two partial retrieval errors.",
+  "gate": {
+    "quality_non_regression": true,
+    "quality_improvement": true,
+    "no_new_no_candidate": true,
+    "no_new_technical_error": true,
+    "p95_latency_increase_lte_20_percent": true,
+    "exact_cross_lane_inputs_proven": false,
+    "passed": false
+  },
+  "shared_provenance": {
+    "git_sha": "733f95baa2cb72090ed2e6ab8492ca5ca350baba",
+    "git_dirty": false,
+    "source_state_sha256": "2fd30a9b885a6e17af33c2e3f445d5f1a9b62e4ea219d0f17362b2c50db15924",
+    "dataset_revision": "4d4e10b201544e8a4c49a1d3fa496595a7d486d0",
+    "dataset_sha256": "b458880e2c2fc4f2813965d57dc96517555488a5ada3702da12fb811f05fb90b",
+    "gold_sidecar_sha256": "f6dfe09a6f32697b468d43c36bd9fd82d5fe5c0c4b0e5d9684ca3e4d0c1f5b67",
+    "profile": "separated_intent",
+    "rewrite": "off",
+    "reranker": "current",
+    "structural_collection": "vietlex-legal-rag-v2-pilot-384"
+  },
+  "representative_10": {
+    "case_set_sha256": "c183716561498a8eabae4fd7cac724b6068dd4758264501a3d88bae47febae40",
+    "observable_merged_reranker_output_identity_match": "10/10",
+    "arm_a": {
+      "run_id": "retrieval-crosslane-a-rep10-20260823",
+      "cross_lane_final_rerank_enabled": false,
+      "document_recall_at_3_macro": 1.0,
+      "article_recall_at_3_macro": 0.8571,
+      "clause_recall_at_3_macro": 0.75,
+      "all_required_coverage": 0.9,
+      "no_candidate_rate": 0.0,
+      "retrieval_error_rate": 0.0,
+      "reranker_error_rate": 0.0,
+      "latency_seconds": {"mean": 7.0355, "p50": 5.1155, "p95": 16.6846},
+      "gold_matches_pre_final": {"document": 14, "article": 8, "clause": 5},
+      "gold_matches_post_final": {"document": 12, "article": 6, "clause": 3}
+    },
+    "arm_b": {
+      "run_id": "retrieval-crosslane-b-rep10-20260823",
+      "cross_lane_final_rerank_enabled": true,
+      "document_recall_at_3_macro": 1.0,
+      "article_recall_at_3_macro": 0.9286,
+      "clause_recall_at_3_macro": 0.875,
+      "all_required_coverage": 0.9,
+      "no_candidate_rate": 0.0,
+      "retrieval_error_rate": 0.0,
+      "reranker_error_rate": 0.0,
+      "latency_seconds": {"mean": 8.306, "p50": 6.6749, "p95": 15.6846},
+      "gold_matches_pre_final": {"document": 14, "article": 8, "clause": 5},
+      "gold_matches_post_final": {"document": 14, "article": 7, "clause": 4}
+    }
+  },
+  "verified_40": {
+    "case_set_sha256": "02b147618710247b69406c62c37ee1733412cf99c803a3b818cfc0040e78cfd6",
+    "observable_merged_reranker_output_identity_match": "25/40",
+    "valid_for_causal_cutover": false,
+    "arm_a": {
+      "run_id": "retrieval-crosslane-a-verified40-20260823",
+      "cross_lane_final_rerank_enabled": false,
+      "document_recall_at_3_macro": 0.925,
+      "article_recall_at_3_macro": 0.8704,
+      "clause_recall_at_3_macro": 0.7692,
+      "all_required_coverage": 0.8,
+      "no_candidate_rate": 0.0,
+      "retrieval_error_rate": 0.05,
+      "reranker_error_rate": 0.0,
+      "latency_seconds": {"mean": 6.4553, "p50": 5.2357, "p95": 20.0716},
+      "gold_matches_pre_final": {"document": 52, "article": 28, "clause": 12},
+      "gold_matches_post_final": {"document": 44, "article": 25, "clause": 10}
+    },
+    "arm_b": {
+      "run_id": "retrieval-crosslane-b-verified40-20260823",
+      "cross_lane_final_rerank_enabled": true,
+      "document_recall_at_3_macro": 0.925,
+      "article_recall_at_3_macro": 0.9259,
+      "clause_recall_at_3_macro": 0.8846,
+      "all_required_coverage": 0.85,
+      "no_candidate_rate": 0.0,
+      "retrieval_error_rate": 0.0,
+      "reranker_error_rate": 0.0,
+      "latency_seconds": {"mean": 8.7399, "p50": 8.9153, "p95": 13.1543},
+      "gold_matches_pre_final": {"document": 53, "article": 29, "clause": 13},
+      "gold_matches_post_final": {"document": 48, "article": 27, "clause": 12}
+    }
+  },
+  "provider_usage": {
+    "measured_call_count": null,
+    "measured_cost": null,
+    "inference": "Arm B topology adds at most one Pinecone final-rerank call per eligible case; runtime artifacts do not persist provider usage or billing data."
+  },
+  "limitations": [
+    "The evaluator does not persist the exact cross-lane candidate pool passed to the final reranker.",
+    "Merged lane-reranker output identity is a proxy, not proof of the exact final-reranker input payload.",
+    "Verified-40 arm A had partial retrieval errors in case_061 and case_065.",
+    "No production configuration was changed."
+  ]
+}
