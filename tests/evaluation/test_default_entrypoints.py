@@ -39,7 +39,7 @@ def test_default_evaluation_contract_loads_curated_v5_without_overrides() -> Non
     assert len(all_cases) == 420
     assert sidecar.metadata.total_evidence_items == 484
     assert manifest["dataset_sha256"] == (
-        "b458880e2c2fc4f2813965d57dc96517555488a5ada3702da12fb811f05fb90b"
+        "d6e125030e8dda700667ba00f25162fac76472a9bfa2d087f54e2b5bc73a1fee"
     )
     assert manifest["sidecar_sha256"] == (
         "f6dfe09a6f32697b468d43c36bd9fd82d5fe5c0c4b0e5d9684ca3e4d0c1f5b67"

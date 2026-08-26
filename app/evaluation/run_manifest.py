@@ -42,9 +42,17 @@ def calculate_dataset_sha256(dataset_path: Optional[Path]) -> Optional[str]:
     if not path.exists():
         return "missing_dataset"
     hasher = hashlib.sha256()
+    pending_carriage_return = False
     with path.open("rb") as f:
         while chunk := f.read(65536):
-            hasher.update(chunk)
+            if pending_carriage_return:
+                chunk = b"\r" + chunk
+            pending_carriage_return = chunk.endswith(b"\r")
+            if pending_carriage_return:
+                chunk = chunk[:-1]
+            hasher.update(chunk.replace(b"\r\n", b"\n"))
+    if pending_carriage_return:
+        hasher.update(b"\r")
     return hasher.hexdigest()
 
 

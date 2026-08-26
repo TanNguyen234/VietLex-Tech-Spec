@@ -15,8 +15,25 @@ from app.evaluation.provider_catalog import (
 from app.evaluation.run_manifest import (
     build_run_configuration,
     calculate_configuration_fingerprint,
+    calculate_dataset_sha256,
     create_run_manifest,
 )
+
+
+def test_dataset_sha256_is_stable_across_checkout_line_endings(
+    tmp_path: Path,
+) -> None:
+    lf_dataset = tmp_path / "lf.json"
+    crlf_dataset = tmp_path / "crlf.json"
+    lf_dataset.write_bytes(b"[\n]\n")
+    crlf_dataset.write_bytes(b"[\r\n]\r\n")
+
+    assert calculate_dataset_sha256(lf_dataset) == (
+        "3fbbd4c6d76130399b0c79cdf41758669224a91e05b7b216953f0c9728750865"
+    )
+    assert calculate_dataset_sha256(crlf_dataset) == (
+        "3fbbd4c6d76130399b0c79cdf41758669224a91e05b7b216953f0c9728750865"
+    )
 
 
 def test_structural_run_configuration_records_effective_backend() -> None:

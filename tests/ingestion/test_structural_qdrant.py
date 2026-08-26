@@ -57,6 +57,7 @@ def test_system_grpc_roots_use_and_deduplicate_windows_stores(
                 (b"ignored", "pkcs_7_asn", None),
             ],
         }[store],
+        raising=False,
     )
     monkeypatch.setattr(
         config.ssl,
