@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import math
 import random
+import re
 import time
 from collections import Counter
 from dataclasses import dataclass, field
@@ -170,6 +171,9 @@ INTENT_PATTERNS = {
     "exception": ({"trừ trường hợp", "ngoại lệ", "không áp dụng", "loại trừ"}, {"trừ", "ngoại lệ", "không áp dụng", "loại trừ"}),
 }
 
+_EXPLICIT_ARTICLE_RE = re.compile(r"\bđiều\s+(\d+[a-z]?)\b", re.IGNORECASE)
+_EXPLICIT_CLAUSE_RE = re.compile(r"\bkhoản\s+(\d+)\b", re.IGNORECASE)
+
 
 def _hit_to_stage_candidate(hit: Any, source: str) -> StageCandidate:
     if isinstance(hit, dict):
@@ -223,6 +227,39 @@ def _lexical_score(
             score += 1.0 + math.log(count)
     if query_phrase and query_phrase in normalized_text:
         score += 8.0
+
+    article_match = _EXPLICIT_ARTICLE_RE.search(query_phrase)
+    if article_match:
+        expected_article = f"điều {article_match.group(1)}".casefold()
+        actual_article = (chunk.article or "").casefold()
+        score += 24.0 if actual_article == expected_article else -12.0
+        clause_match = _EXPLICIT_CLAUSE_RE.search(query_phrase)
+        if clause_match and actual_article == expected_article:
+            score += 8.0 if chunk.clause == clause_match.group(1) else -4.0
+
+    # Reward the most specific contiguous concept from the query. Terms that
+    # merely repeat the document title are metadata signals, not evidence that
+    # a chunk answers the question (for example, "Bộ luật Lao động 2019").
+    normalized_title = " ".join(chunk.title.casefold().split())
+    maximum_phrase_terms = min(5, len(query_terms))
+    for phrase_terms in range(maximum_phrase_terms, 1, -1):
+        matched = False
+        for start in range(len(query_terms) - phrase_terms + 1):
+            terms = query_terms[start : start + phrase_terms]
+            phrases = [term.replace("_", " ").casefold() for term in terms]
+            non_title_terms = sum(
+                phrase not in normalized_title
+                for phrase in phrases
+            )
+            if non_title_terms < 2:
+                continue
+            concept_phrase = " ".join(phrases)
+            if concept_phrase in normalized_text:
+                score += 4.0 * phrase_terms
+                matched = True
+                break
+        if matched:
+            break
 
     # Legal intent boost (definition, penalty, deadline, authority, responsibility, condition, exception)
     if intent_scoring_enabled:
