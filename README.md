@@ -25,7 +25,7 @@ VietLex là dự án portfolio AI/ML xây dựng hệ thống hỏi đáp pháp 
 | Balanced-50 answer evaluation | Faithfulness **0,9158** · Answer Accuracy **0,8950** · Context Precision **0,8757** · Context Recall **0,9333** |
 | Hoàn tất pipeline | **50/50** generation `STOP` · **50/50** NeMo input/output safe · **0** lỗi kỹ thuật trong run |
 | Verified retrieval subset | **40** case có toàn bộ required evidence đã xác minh · Document Recall@3 macro **0,9250**, micro **50/53** |
-| Automated verification | Hơn **800** unit/integration tests; live-provider tests là opt-in |
+| Automated verification | Suite provider-free phân tầng; live-provider tests là opt-in |
 
 Balanced-50 gồm 40 case có fully verified required retrieval evidence và 10 deterministic reference-only case. Các metric trên là bằng chứng cho một lát cắt đánh giá có giới hạn, không chứng minh độ chính xác pháp lý trên toàn corpus hoặc production readiness. Xem [`PORTFOLIO_EVIDENCE.md`](docs/evaluation/PORTFOLIO_EVIDENCE.md) để biết provenance và evidence boundary đầy đủ.
 
@@ -46,6 +46,8 @@ Repository cung cấp giao diện chat FastAPI/Jinja2 thật; ảnh trên là sc
 - **Grounded generation:** Vertex AI `gemini-3.5-flash` qua ADC, với citations và typed provider diagnostics.
 - **Evaluation:** deterministic retrieval/answer metrics là mặc định; Ragas/LLM judge chỉ chạy opt-in offline.
 - **Web backend:** FastAPI, Jinja2/HTMX, MongoDB cho session/log/feedback, rate limiting và guardrail modes `off`/`shadow`/`enforce`.
+- **Tài khoản:** đăng ký/đăng nhập, Gmail verification/reset, lịch sử theo chủ sở hữu, export và xóa dữ liệu.
+- **Tra cứu văn bản:** tìm theo số hiệu/tiêu đề và xem toàn văn từ SQLite cục bộ, kèm cảnh báo chưa xác minh hiệu lực.
 
 ## Kiến trúc
 
@@ -76,6 +78,8 @@ flowchart LR
 
     Query -. opt-in .-> Structural["Qdrant structural pilot · 827 documents"]
     Structural -. parallel retrieval + rerank .-> Combine
+    Store -. migration dry-run / pilot .-> VertexLane["Vertex AI gemini-embedding-2 · 1024d"]
+    VertexLane -. isolated hybrid/RRF .-> QdrantV3["Qdrant v3 migration collection"]
 ```
 
 Runtime mặc định giữ `STRUCTURAL_BACKEND_ENABLED=false`. Khi structural pilot được bật, lane Qdrant structural 827 văn bản chạy **song song** với lane Pinecone-v1 + FTS toàn corpus; nó không thay thế hoặc mở rộng structural coverage lên 518.255 văn bản.
@@ -113,34 +117,121 @@ Nguồn bất biến:
 
 Metric deterministic trong code là mặc định. Retrieval metrics bao gồm Document/Article/Clause Recall@K, MRR, nDCG, exact-reference hit, multi-hop coverage, stage survival, no-candidate rate và technical-error rates. Answer metrics bao gồm exact match, token/character F1, ROUGE-L/CHRF, number/date/entity, citation và refusal metrics. Mọi aggregate lưu numerator, denominator, coverage, skipped cases và skip reasons.
 
-## Cài đặt và sử dụng
+## Chạy dự án từ một máy mới
 
-### Yêu cầu
+### 1. Yêu cầu và tài nguyên
 
-- Python 3.10+
-- MongoDB local hoặc MongoDB Atlas
-- Pinecone, Qdrant Cloud và Google Cloud credentials cho live runtime
-- Local corpus stores nếu muốn chạy full retrieval
+- Python 3.10+ và Git.
+- MongoDB local hoặc MongoDB Atlas.
+- Ít nhất khoảng **8 GiB disk trống** để download snapshot, build file tạm và giữ local stores. Trên bản build hiện tại, `content_store.sqlite3` khoảng 3,08 GiB và `legal_fts.sqlite3` khoảng 0,21 GiB.
+- Pinecone, Qdrant Cloud và Google Cloud ADC nếu muốn chạy chat RAG thật giống môi trường tác giả. Chỉ đọc/search văn bản cục bộ không tạo vector mới.
+
+> [!IMPORTANT]
+> Git không chứa corpus vì kích thước lớn và `data/huggingface/` được ignore. Clone repository xong **chưa đủ** để chạy retrieval. Phải dựng local stores theo bước 3 và kết nối đúng Pinecone index nếu muốn chat trên toàn bộ 518.255 văn bản.
+
+### 2. Cài Python và cấu hình
 
 ```powershell
+git clone https://github.com/TanNguyen234/VietLex-Tech-Spec.git
+Set-Location VietLex-Tech-Spec
 python -m venv .venv
 .venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 Copy-Item .env.example .env
 ```
 
-Các biến chính được mô tả trong [`.env.example`](.env.example). Secret phải được inject qua environment/platform secret; không hardcode hoặc commit credential files.
+Điền `.env` theo nhu cầu:
 
-Chạy ứng dụng:
+| Chức năng | Biến bắt buộc |
+| :--- | :--- |
+| Web/session | `MONGO_URL`, `WEB_SESSION_SECRET` (bắt buộc ổn định và ≥32 ký tự ở production) |
+| Full-corpus retrieval/cache | `PINECONE_API_KEY`, index `vietlex-legal-rag-v1`, namespace `legal-documents-v1` |
+| Dense inference/rerank | `QDRANT_URL`, `QDRANT_API_KEY` |
+| Sinh câu trả lời | `GOOGLE_APPLICATION_CREDENTIALS`, `GOOGLE_CLOUD_PROJECT` |
+| Xác minh email | `ACCOUNT_EMAIL_ENABLED=true`, `EMAIL_USER`, Gmail App Password trong `EMAIL_PASS`, `EMAIL_FROM`, `PUBLIC_BASE_URL` |
+
+Các biến và giá trị mặc định đầy đủ nằm trong [`.env.example`](.env.example). Không commit `.env`, JSON service account, cookie hoặc token. Ở production, `FRONTEND_URL` và `PUBLIC_BASE_URL` phải là HTTPS thật.
+
+### 3. Dựng dữ liệu cục bộ
+
+Pipeline tải đúng revision đã pin, hỗ trợ resume HTTP Range, kiểm tra kích thước/SHA-256, rồi stream Parquet thành SQLite/Zstandard:
+
+```powershell
+python -m app.ingestion.hf_pipeline download
+python -m app.ingestion.hf_pipeline prepare
+python -u -m app.ingestion.legal_fts build --batch-size 256
+python -m app.ingestion.hf_pipeline smoke
+```
+
+Sau bước này cần có:
+
+```text
+data/huggingface/content_store.sqlite3   # 518.255 metadata + full-text documents
+data/huggingface/legal_fts.sqlite3       # number/title search index
+```
+
+`smoke` phải báo `snapshot_verified=true`, `content_store_verified=true` và `joined_count=518255`. FTS chỉ tìm số hiệu/tiêu đề; không được mô tả là full-body/article search.
+
+> [!CAUTION]
+> `download` dùng Internet và có thể tải vài GiB. Không copy hai file SQLite đang mở giữa các máy; dùng snapshot/backup đã kiểm tra integrity theo [`docs/PRODUCTION_OPERATIONS.md`](docs/PRODUCTION_OPERATIONS.md).
+
+### 4. Kết nối vector store
+
+Runtime mặc định dùng Pinecone v1 có **518.255 record, một record/văn bản**. Con số **134.334** là số structural chunk của pilot 827 văn bản và không phải kích thước corpus production.
+
+- Nếu bạn được cấp quyền vào index hiện có: chỉ cấu hình đúng key/index/namespace trong `.env`; không ingestion lại.
+- Nếu dùng tài khoản Pinecone mới: phải tự dựng index bằng runbook. Lệnh full có thể xóa/recreate remote index, tốn quota/chi phí và không thuộc quickstart thông thường.
+- Structural Pinecone thay thế hiện mới có 21.696/134.334 record vì hosted-inference quota; không bật `STRUCTURAL_BACKEND_ENABLED` để thay thế lane v1.
+
+Lane migration Vertex–Qdrant mới là **isolated pilot**, không tham gia runtime mặc định. Nó dùng `gemini-embedding-2` 1.024 chiều, dense cosine và sparse IDF trong collection `vietlex-legal-rag-v3-vertex-1024`. Dữ liệu được lấy cân bằng giữa nhiều loại văn bản, chunk theo Điều/Khoản và giới hạn số chunk trên mỗi văn bản để không làm tràn cluster. Lệnh mặc định chỉ lập kế hoạch cục bộ:
+
+```powershell
+# Provider-free dry-run: không tạo collection, không gọi Vertex, không upload.
+python run_vertex_qdrant_migration.py --max-documents 12 --max-points 24
+
+# Pilot live có checkpoint; chỉ chạy khi đã duyệt chi phí/quota và remote write.
+python run_vertex_qdrant_migration.py --max-documents 12 --max-points 24 `
+  --allow-create --allow-remote-write
+
+# Chạy lại bỏ qua các point đã được Qdrant ACK; có thể probe hybrid/RRF.
+python run_vertex_qdrant_migration.py --max-documents 12 --max-points 24 `
+  --allow-remote-write --probe-query "thời gian thử việc"
+```
+
+Tăng `--max-documents` và `--max-points` theo từng đợt; checkpoint mặc định ở `data/huggingface/vertex_qdrant_checkpoint.sqlite3`. Không bật lane này thay Pinecone trước khi có benchmark A/B trên identical inputs và đủ coverage. `gemini-embedding-2` hỗ trợ tối đa 3.072 chiều, nhưng 1.024 được chọn để tăng chất lượng so với 384d mà vẫn giữ ngân sách storage khả thi; xem [Google Cloud model card](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/gemini/embedding-2) và [Qdrant hybrid vectors](https://qdrant.tech/documentation/manage-data/vectors/).
+
+Chi tiết và điều kiện resume: [`docs/huggingface-ingestion-runbook.md`](docs/huggingface-ingestion-runbook.md).
+
+### 5. Chạy ứng dụng
+
 
 ```powershell
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-Chạy kiểm thử provider-free mặc định:
+Mở <http://localhost:8000>. Các endpoint kiểm tra là `GET /healthz` và `GET /readyz`; `/readyz` chỉ xanh khi các dependency được cấu hình thực sự sẵn sàng.
+
+### 6. Kiểm thử vừa đủ
+
+Không cần chạy toàn bộ evaluation suite sau mỗi sửa UI. Dùng tầng nhỏ nhất chứng minh thay đổi:
 
 ```powershell
+# Smoke web/account/legal hằng ngày
+python -m pytest -q tests/test_account_routes.py tests/test_legal_routes.py tests/test_public_web_routes.py tests/test_web_security.py
+
+# Lint mã chạy
+python -m ruff check app
+
+# Full provider-free suite: chỉ trước release/merge hoặc khi đổi retrieval/evaluation
 python -m pytest -q
+```
+
+Các live tests được đánh dấu `live` và không chạy mặc định. Không xóa test evaluation chỉ để giảm số lượng: chúng là bằng chứng tái lập metric. Khi sửa một module, ưu tiên `pytest <file>::<test>` rồi chạy gate rộng đúng một lần khi source đã ổn định.
+
+Kiểm tra packaging/tĩnh bổ sung:
+
+```powershell
 python -m compileall -q app tests
 git diff --check
 ```
@@ -177,23 +268,15 @@ python -u run_answer_eval.py --profile separated_intent --verified-only --judge 
 
 Ragas chỉ được bật rõ ràng cho offline audit có ngân sách; route `/chat` không enqueue Ragas. Các live-provider test/evaluation không thuộc default suite và có thể phát sinh quota hoặc chi phí.
 
-### Corpus operations
+### Corpus operations dành cho operator
 
-Full ingestion có thể xóa/recreate remote index và chỉ nên chạy khi đã có quyền migration/reingestion rõ ràng:
+Full ingestion có thể xóa/recreate remote index và chỉ chạy khi đã có quyền migration/reingestion rõ ràng, quota phù hợp và backup/checkpoint:
 
 ```powershell
 python -u -m app.ingestion.hf_pipeline full --delete-existing --yes
 ```
 
-Các phase provider-free và FTS build:
-
-```powershell
-python -m app.ingestion.hf_pipeline download
-python -m app.ingestion.hf_pipeline prepare
-python -m app.ingestion.hf_pipeline smoke
-python -m app.ingestion.hf_pipeline verify
-python -u -m app.ingestion.legal_fts build --batch-size 256
-```
+`verify` sau ingestion đọc trạng thái Pinecone từ xa; nó không phải provider-free. Các bước local `download`, `prepare`, `smoke` và FTS build đã được mô tả trong quickstart phía trên.
 
 ## Giới hạn đã công bố
 

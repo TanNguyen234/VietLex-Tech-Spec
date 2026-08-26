@@ -45,11 +45,17 @@ Local SQLite Content Store (Compressed Zstandard Full Text)
 ## Phase G0 Google Cloud model boundary
 
 - `app/services/vertex_ai.py` owns ADC discovery, reusable `google-genai` client creation, timeouts/retries, error mapping, generation, and embedding calls.
-- `gemini-embedding-2` is probe-only at 384/768/1024 dimensions. It is never used to query the existing E5 Pinecone index.
+- `gemini-embedding-2` supports isolated probes and the separate Vertex–Qdrant migration collection at 1024 dimensions. It is never used to query the existing E5 Pinecone index or the v2 384d collection.
 - `run_vertex_g0_probe.py` performs isolated live checks and writes immutable artifacts without credential material or vector writes.
 - Ragas is never enqueued by `/chat`; opt-in offline audits use Vertex AI `gemini-3.5-flash` through ADC as the primary judge and retain legacy APIs as best-effort fallbacks.
 - The input-rail prompt explicitly permits lawful legal questions about public authorities, policy, office, and jurisdiction; ambiguous inputs default to allow while clear jailbreak/off-topic/harm requests remain blocked.
 - Pinecone `vietlex-legal-rag-v1`, Qdrant staging, SQLite FTS, the content store, and production retrieval topology remain unchanged in G0.
+
+## Isolated Vertex–Qdrant v3 migration lane
+
+`run_vertex_qdrant_migration.py` prepares deterministic structural records from a balanced set of legal document types, bounds very long documents with evenly spaced structural coverage, embeds them with Vertex AI `gemini-embedding-2` at 1024 dimensions, and stores named dense plus sparse-IDF vectors in `vietlex-legal-rag-v3-vertex-1024`. The default invocation is provider-free and write-free. Creation and upload require explicit flags, and a SQLite acknowledgement ledger makes later batches resumable.
+
+The v3 lane exposes isolated hybrid/RRF probes for A/B evaluation. It is not called by `retrieve_configured_legal_evidence`, does not change the Pinecone query contract, and is not authorized for production cutover. Expanding its point count, adding it as a shadow lane, or replacing Pinecone requires capacity evidence and an identical-input retrieval benchmark.
 
 ## Verification & Provenance
 
