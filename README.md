@@ -31,9 +31,15 @@ Balanced-50 gồm 40 case có fully verified required retrieval evidence và 10 
 
 ## Demo
 
-![Giao diện hỏi đáp pháp luật của VietLex](docs/images/chat_flow.png)
+### Hỏi đáp có dẫn nguồn
 
-Repository cung cấp giao diện chat FastAPI/Jinja2 thật; ảnh trên là screenshot đã lưu trong repository, không phải mockup hay tuyên bố về một deployment công khai.
+![Giao diện hỏi đáp pháp luật mới nhất của VietLex](docs/images/vietlex_web_latest.png)
+
+### Tra cứu văn bản trong local corpus
+
+![Giao diện tra cứu Bộ luật Lao động 2019](docs/images/vietlex_legal_search_latest.png)
+
+Hai ảnh được chụp ngày **2026-08-26** từ web FastAPI/Jinja2 chạy thật với local corpus và MongoDB online; đây không phải mockup hay tuyên bố về một deployment công khai.
 
 ## Năng lực cốt lõi
 
@@ -52,39 +58,108 @@ Repository cung cấp giao diện chat FastAPI/Jinja2 thật; ảnh trên là sc
 ## Kiến trúc
 
 ```mermaid
-flowchart LR
-    Corpus["Pinned corpus: 518,255 documents"] --> Store["SQLite + Zstandard full text"]
-    Store --> DenseText["Metadata + outline + representative body"]
-    Store --> Sparse["FastSparseEncoder · max 64 terms"]
-    DenseText --> Stage["Qdrant inference staging · E5-small 384d"]
-    Stage --> Pinecone["Pinecone · one record/document"]
-    Sparse --> Pinecone
+flowchart TB
+    User["Browser"] --> Gateway["Vercel thin gateway"]
+    Gateway --> Web["FastAPI · Jinja2/HTMX"]
+    Web --> Mongo["MongoDB online<br/>accounts · sessions · logs · feedback"]
 
-    Query["Original query"] --> Embed["Qdrant dense query inference"]
-    Query --> SparseQ["Original sparse query"]
-    Query --> FTS["SQLite FTS5 · number/title"]
-    Embed --> Hybrid["Pinecone hybrid search"]
-    SparseQ --> Hybrid
-    Hybrid --> Merge["Merge + exact deduplication"]
-    FTS --> Merge
-    Merge --> Resolve["Resolve full text"]
-    Resolve --> Chunk["Structural local chunks"]
-    Chunk --> Bound["Max 24 reranker inputs · up to 4 chunks/document"]
-    Bound --> Rerank["Qdrant ColBERT · Pinecone BGE fallback"]
-    Rerank --> FullEvidence["Full-corpus evidence lane"]
-    FullEvidence --> Combine["Exact dedupe + bounded rank interleave"]
-    Combine --> Evidence["Up to 3 evidence chunks · 720 context tokens"]
-    Evidence --> Answer["Vertex AI Gemini answer"]
+    subgraph Ingest["Pinned ingestion contract"]
+        Corpus["Hugging Face snapshot<br/>518,255 documents"] --> Store["SQLite + Zstandard<br/>518,255 full texts · 3.08 GiB"]
+        Store --> FTSBuild["SQLite FTS5<br/>number + title · 0.21 GiB"]
+        Store --> DocRepresentation["Metadata + outline + representative body"]
+        DocRepresentation --> E5Ingest["Qdrant Cloud Inference<br/>E5-small · 384d"]
+        Store --> SparseIngest["Local FastSparseEncoder<br/>max 64 nonzero terms"]
+        E5Ingest --> PCV1["Pinecone v1<br/>518,255 document records"]
+        SparseIngest --> PCV1
+    end
 
-    Query -. opt-in .-> Structural["Qdrant structural pilot · 827 documents"]
-    Structural -. parallel retrieval + rerank .-> Combine
-    Store -. migration dry-run / pilot .-> VertexLane["Vertex AI gemini-embedding-2 · 1024d"]
-    VertexLane -. isolated hybrid/RRF .-> QdrantV3["Qdrant v3 migration collection"]
+    subgraph Runtime["Runtime mặc định"]
+        Web --> Query["Original query"]
+        Query --> Rewrite["Vertex AI query rewrite"]
+        Rewrite --> DenseQ["Qdrant E5 query inference · 384d"]
+        Query --> SparseQ["Local sparse query"]
+        Query --> FTS["SQLite FTS5 exact/title"]
+        DenseQ --> Hybrid["Pinecone dense+sparse hybrid"]
+        SparseQ --> Hybrid
+        Hybrid --> Merge["Merge + exact-location scoring"]
+        FTS --> Merge
+        Merge --> Resolve["Resolve full text from SQLite"]
+        Resolve --> Chunk["Chương → Mục → Điều → Khoản<br/>220 tokens · overlap 24"]
+        Chunk --> Rerank["Qdrant ColBERT<br/>Pinecone BGE fallback"]
+        Rerank --> Evidence["≤3 chunks · ≤720 context tokens"]
+        Evidence --> Generate["Vertex Gemini generation<br/>typed fallback providers"]
+        Generate --> Web
+    end
+
+    subgraph Optional["Các lane bị khóa mặc định"]
+        Query -. "STRUCTURAL_BACKEND_ENABLED" .-> QV2["Qdrant v2 structural pilot<br/>827 documents · 134,334 points · 384d + BM25"]
+        QV2 -. "parallel evidence" .-> Rerank
+        Store -. "resumable migration" .-> Embed2["Vertex gemini-embedding-2<br/>1024d"]
+        Embed2 -.-> QV3["Qdrant v3 isolated<br/>6 points · dense + sparse IDF"]
+        QV3 -. "probe/A-B only; chưa nối runtime" .-> Audit["Deterministic retrieval benchmark"]
+    end
 ```
 
 Runtime mặc định giữ `STRUCTURAL_BACKEND_ENABLED=false`. Khi structural pilot được bật, lane Qdrant structural 827 văn bản chạy **song song** với lane Pinecone-v1 + FTS toàn corpus; nó không thay thế hoặc mở rộng structural coverage lên 518.255 văn bản.
 
 Cross-lane Pinecone BGE final rerank đã được triển khai và đánh giá trên identical inputs nhưng vẫn giữ `CROSS_LANE_FINAL_RERANK_ENABLED=false`: bằng chứng không đủ để phê duyệt cutover. Không chạy lại A/B trong lần closure này.
+
+## Trạng thái dữ liệu và giới hạn hiện tại
+
+Số liệu dưới đây được đọc lại ngày **2026-08-26** bằng API chỉ-đọc của Pinecone/Qdrant và SQLite ở chế độ read-only.
+
+| Kho dữ liệu | Vai trò thực tế | Số lượng quan sát được | Trạng thái / giới hạn |
+| :--- | :--- | ---: | :--- |
+| SQLite/Zstandard `content_store.sqlite3` | Nguồn full text cục bộ | **518.255** văn bản | 3.309.723.648 byte ≈ **3,08 GiB**; đầy đủ theo revision pin |
+| SQLite FTS5 `legal_fts.sqlite3` | Tìm số hiệu và tiêu đề | **518.255** văn bản | 223.526.912 byte ≈ **0,21 GiB**; không tìm full body/Điều/Khoản |
+| Pinecone `vietlex-legal-rag-v1/legal-documents-v1` | Vector store production mặc định | **518.255** vector 384d | Một vector/văn bản; index ready, dot-product |
+| Pinecone `semantic-cache-v1` | Cache câu hỏi đã trả lời | **9** vector | Cùng index v1; chỉ nhận cache hit ở ngưỡng nghiêm ngặt |
+| Pinecone `llama-text-embed-v2-index/national-primary-v2` | Thử nghiệm structural cũ, không phải runtime mặc định | **21.696** vector 1024d | Bị dừng trước mục tiêu 134.334 vì hosted-inference quota |
+| Qdrant `vietlex-embedding-staging` | E5 inference staging | **2.049** point 384d | Collection kỹ thuật, không phải corpus durable |
+| Qdrant `vietlex-rerank-staging` | ColBERT transient staging | **0** point thường trú | Point tạm được dọn sau rerank |
+| Qdrant `vietlex-legal-rag-v2-pilot-384` | Structural pilot opt-in | **134.334** point từ **827** văn bản | Dense 384d + sparse BM25/IDF; collection green nhưng coverage hẹp |
+| Qdrant `vietlex-legal-rag-v3-vertex-1024` | Migration pilot tách biệt | **6** point | Dense 1024d + sparse IDF; chưa tham gia chat |
+| MongoDB online | Tài khoản, phiên, interaction, feedback | Dữ liệu vận hành thay đổi theo người dùng | Không chứa corpus hoặc vector pháp luật |
+
+### Usage limit nào đang áp dụng?
+
+API database cho biết schema và số vector/point, nhưng **không trả về phần trăm quota tháng của tài khoản**. Con số RU/WU, token đã dùng và dung lượng cluster thực tế phải xem trong Pinecone/Qdrant/Google Cloud Console; README không suy đoán chúng.
+
+- Nếu Pinecone đang ở **Starter**, giới hạn công khai hiện tại là 2 GiB storage toàn organization, 5 serverless index, 1.000.000 read units/tháng, 2.000.000 write units/tháng, 5.000.000 embedding tokens/model/tháng và 100 query/giây/namespace. Xem [Pinecone database limits](https://docs.pinecone.io/reference/api/database-limits).
+- Nếu Qdrant đang ở **Free Tier**, cluster có 1 GiB RAM, 0,5 vCPU và 4 GiB disk, một node, không có HA. Selected free inference models có thể miễn phí; usage/model cụ thể chỉ hiện trong tab Inference. Xem [Qdrant pricing](https://qdrant.tech/pricing/) và [Cloud Inference](https://qdrant.tech/documentation/cloud/inference/).
+- `gemini-embedding-2` nhận tối đa 8.192 input token và xuất tối đa 3.072 chiều; VietLex chọn 1.024 chiều. Quota Vertex thực tế phụ thuộc project/region và phải kiểm tra trong Google Cloud Console. Xem [model card](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/gemini/embedding-2).
+- Application tự giới hạn chat ở **6 request/phút/client**; public evaluation 6/phút. Ragas public mặc định tắt; nếu bật thì tối đa 3 lượt/client/ngày và 20 lượt toàn hệ thống/ngày.
+
+### Vấn đề retrieval hiện tại
+
+1. Pinecone v1 bao phủ đủ 518.255 văn bản nhưng chỉ có **một vector đại diện cho mỗi văn bản**. Một Điều/Khoản nằm sâu trong full text có thể không xuất hiện trong representation dùng để embedding.
+2. SQLite FTS5 giúp bắt số hiệu và tiêu đề, nhưng không phải article/body search. Các câu hỏi diễn đạt tự nhiên không nêu số hiệu vẫn phụ thuộc vào document-level semantic recall.
+3. Qdrant v2 có structural chunk tốt hơn nhưng chỉ phủ 827 văn bản. Bật nó không tự biến coverage thành toàn corpus.
+4. Qdrant v3 hiện có 6 point và chưa nối runtime, vì vậy **chưa sửa được** các câu chat gần đây. Exact Điều/Khoản đã được cải thiện bằng location-aware scoring; natural semantic recall vẫn là điểm yếu còn lại.
+
+## Migration sắp tới và mốc hết Google Cloud Trial
+
+Mục tiêu của migration v3 là tìm ở cấp **đoạn pháp lý/Điều/Khoản**, dùng `gemini-embedding-2` 1.024 chiều + sparse IDF + RRF, thay vì phụ thuộc hoàn toàn vào một vector đại diện cho cả văn bản. Điều này có khả năng cải thiện câu hỏi tự nhiên, nhưng chỉ khi chunk liên quan thật sự đã được upload và A/B benchmark chứng minh stage survival/Recall@K tốt hơn.
+
+| Giai đoạn | Phạm vi đề xuất | Quy mô tối đa theo code hiện tại | Điều kiện qua cổng |
+| :--- | :--- | ---: | :--- |
+| G0 — hiện tại | 3 văn bản pilot | **6 point** | Đã chứng minh create/upload/resume/hybrid probe; không có giá trị coverage |
+| G1 — benchmark | 827 văn bản luật chính | tối đa **13.232 point** (16/document) | Identical-input A/B; kiểm tra rằng giới hạn 16 chunk không bỏ Điều/Khoản cần thiết |
+| G2 — targeted expansion | 20.000 văn bản được ưu tiên từ query logs/gold set | tối đa **320.000 point** | Capacity preflight; dense float32 thô đã ≈1,22 GiB, chưa gồm sparse/payload/HNSW |
+| Full theoretical cap | 518.255 văn bản | tối đa **8.292.080 point** | Dense float32 thô ≈31,6 GiB; **không khả thi** trên Qdrant Free 4 GiB |
+
+> [!CAUTION]
+> Code hiện tại lấy tối đa 16 chunk phân bố đều trên mỗi văn bản để giữ chi phí hữu hạn. Cách này có thể vẫn bỏ sót một Điều cụ thể, nên không được quảng bá là đã giải quyết hoàn toàn lỗi chat. Trước G2 cần chọn một trong hai contract: lưu đầy đủ Điều/Khoản cho tập văn bản ưu tiên, hoặc giữ Pinecone làm document router rồi chunk/rerank full text cục bộ theo request.
+
+Theo thông tin vận hành hiện tại, Google Cloud Trial còn khoảng **3 tháng** (mốc chính xác phải xác nhận ở Cloud Billing). Kế hoạch an toàn:
+
+1. **Tháng 1:** chạy G1 có checkpoint, đo Recall/MRR/nDCG và kiểm kê token/chi phí thật; chưa cutover.
+2. **Tháng 2:** quyết định giữ Vertex có billing hay chuyển sang embedding tự host/open-weight. Nếu đổi model, phải tạo collection mới và re-embed; không được query vector Vertex bằng model khác.
+3. **Tháng 3:** chỉ chạy G2 sau capacity gate; đóng băng manifest/model/dimension, hoàn tất benchmark và chuẩn bị fallback trước ngày trial hết.
+
+Nếu trial tự đóng mà không nâng cấp billing, Google cho biết billing project sẽ bị vô hiệu hóa, tài nguyên bị dừng và bước vào grace period 30 ngày. Vector đã ghi trong Qdrant/Pinecone không tự mất vì nằm ở provider khác, nhưng VietLex sẽ không thể gọi Vertex để rewrite/generate hoặc tạo/query embedding v3. Khi đó answer generation chỉ còn hoạt động nếu ít nhất một fallback OpenRouter/Gemini Direct/NVIDIA/Groq vẫn có key và quota. Xem [Google Cloud Free Trial lifecycle](https://docs.cloud.google.com/free/docs/free-cloud-features).
+
+Khuyến nghị thực tế: **không full-migrate hàng triệu point chỉ để tận dụng credit trial**. Hoàn tất G1, đo chất lượng và chi phí, sau đó hoặc bật billing có budget alert cho Vertex, hoặc chọn embedding tự host trước khi G2 để tránh phải re-embed lần hai.
 
 ## Tech stack
 
@@ -182,7 +257,7 @@ Runtime mặc định dùng Pinecone v1 có **518.255 record, một record/văn 
 
 - Nếu bạn được cấp quyền vào index hiện có: chỉ cấu hình đúng key/index/namespace trong `.env`; không ingestion lại.
 - Nếu dùng tài khoản Pinecone mới: phải tự dựng index bằng runbook. Lệnh full có thể xóa/recreate remote index, tốn quota/chi phí và không thuộc quickstart thông thường.
-- Structural Pinecone thay thế hiện mới có 21.696/134.334 record vì hosted-inference quota; không bật `STRUCTURAL_BACKEND_ENABLED` để thay thế lane v1.
+- Index Pinecone thử nghiệm riêng `llama-text-embed-v2-index` có 21.696 vector và không được runtime mặc định đọc. `STRUCTURAL_BACKEND_ENABLED` chỉ điều khiển Qdrant v2 134.334 point, không điều khiển index Pinecone thử nghiệm này.
 
 Lane migration Vertex–Qdrant mới là **isolated pilot**, không tham gia runtime mặc định. Nó dùng `gemini-embedding-2` 1.024 chiều, dense cosine và sparse IDF trong collection `vietlex-legal-rag-v3-vertex-1024`. Dữ liệu được lấy cân bằng giữa nhiều loại văn bản, chunk theo Điều/Khoản và giới hạn số chunk trên mỗi văn bản để không làm tràn cluster. Lệnh mặc định chỉ lập kế hoạch cục bộ:
 
@@ -199,7 +274,7 @@ python run_vertex_qdrant_migration.py --max-documents 12 --max-points 24 `
   --allow-remote-write --probe-query "thời gian thử việc"
 ```
 
-Tăng `--max-documents` và `--max-points` theo từng đợt; checkpoint mặc định ở `data/huggingface/vertex_qdrant_checkpoint.sqlite3`. Không bật lane này thay Pinecone trước khi có benchmark A/B trên identical inputs và đủ coverage. `gemini-embedding-2` hỗ trợ tối đa 3.072 chiều, nhưng 1.024 được chọn để tăng chất lượng so với 384d mà vẫn giữ ngân sách storage khả thi; xem [Google Cloud model card](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/gemini/embedding-2) và [Qdrant hybrid vectors](https://qdrant.tech/documentation/manage-data/vectors/).
+Tăng `--max-documents` và `--max-points` theo từng đợt; checkpoint mặc định ở `data/huggingface/vertex_qdrant_checkpoint.sqlite3`. Không bật lane này thay Pinecone trước khi có benchmark A/B trên identical inputs, đủ coverage và capacity gate theo bảng migration phía trên. `gemini-embedding-2` hỗ trợ tối đa 3.072 chiều, nhưng 1.024 được chọn để cân bằng chất lượng và storage; xem [Google Cloud model card](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/gemini/embedding-2) và [Qdrant hybrid vectors](https://qdrant.tech/documentation/manage-data/vectors/).
 
 Chi tiết và điều kiện resume: [`docs/huggingface-ingestion-runbook.md`](docs/huggingface-ingestion-runbook.md).
 
