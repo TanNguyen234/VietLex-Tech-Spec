@@ -77,3 +77,15 @@ def test_chat_ui_exposes_live_pipeline_progress() -> None:
     assert 'id="pipeline-progress"' in html
     assert "/api/progress/" in script
     assert "request_id" in script
+
+
+def test_legal_search_uses_compact_page_specific_typography() -> None:
+    html = (ROOT / "app/templates/legal_search.html").read_text(encoding="utf-8")
+    css = (ROOT / "app/static/css/vietlex-enhancements.css").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'class="legal-page legal-search-page"' in html
+    assert ".legal-search-page>.welcome-card" in css
+    assert ".legal-results h2" in css
+    assert "font-size:clamp(1.1rem" in css
