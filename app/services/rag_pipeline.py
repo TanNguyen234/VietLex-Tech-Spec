@@ -21,6 +21,7 @@ from app.services.retrieval import (
 )
 from app.services.clients import get_remote_reranker
 from app.evaluation.schemas import RetrievalStageTrace, StageCandidate
+from app.services.runtime_errors import RetrievalPipelineError
 
 
 
@@ -28,20 +29,6 @@ NO_EVIDENCE_RESPONSE = (
     "Xin lỗi, tôi không tìm thấy bằng chứng pháp luật đủ tin cậy "
     "trong kho dữ liệu để trả lời câu hỏi này."
 )
-
-
-class RetrievalPipelineError(RuntimeError):
-    def __init__(
-        self,
-        status: str,
-        message: str,
-        diagnostics: dict[str, Any],
-        latency: dict[str, Any] | None = None,
-    ) -> None:
-        super().__init__(message)
-        self.status = status
-        self.diagnostics = diagnostics
-        self.latency = latency or {}
 
 
 class QueryRewriteError(RuntimeError):

@@ -89,6 +89,19 @@ def _fts_query(query: str) -> str:
     return " OR ".join(f'"{term}"' for term in terms)
 
 
+def _title_phrase_queries(query: str) -> list[str]:
+    terms = [
+        raw.replace('"', '""')
+        for raw in _WORD_RE.findall(query.casefold())
+        if len(raw) >= 2 and raw not in _TITLE_STOPWORDS
+    ][:16]
+    phrases: list[str] = []
+    for size in range(min(8, len(terms)), 3, -1):
+        for start in range(len(terms) - size + 1):
+            phrases.append(f'"{" ".join(terms[start : start + size])}"')
+    return phrases
+
+
 class LegalFtsIndex:
     """Read-optimized legal FTS5 index built from the verified content store."""
 
@@ -453,6 +466,22 @@ class LegalFtsIndex:
                 ).fetchone()
                 rows = []
                 if title_index:
+                    for phrase in _title_phrase_queries(query):
+                        rows = connection.execute(
+                            "SELECT rowid FROM legal_title_fts "
+                            "WHERE legal_title_fts MATCH ? "
+                            "ORDER BY bm25(legal_title_fts) LIMIT ?",
+                            (phrase, limit),
+                        ).fetchall()
+                        if rows:
+                            break
+                    for (document_id,) in rows:
+                        value = int(document_id)
+                        if value not in seen:
+                            selected.append(value)
+                            seen.add(value)
+                        if len(selected) >= limit:
+                            return selected
                     rows = connection.execute(
                         "SELECT rowid FROM legal_title_fts "
                         "WHERE legal_title_fts MATCH ? "

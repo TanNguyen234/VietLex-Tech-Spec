@@ -5,10 +5,8 @@ import os
 import re
 import shlex
 from dataclasses import dataclass
-from pathlib import Path, PurePath, PurePosixPath
+from pathlib import Path, PurePath
 from typing import Any, Dict, List, Literal, Optional, Tuple
-
-from pydantic import BaseModel, Field
 
 from app.evaluation.artifact_io import (
     ArtifactCollisionError,
@@ -21,9 +19,9 @@ from app.evaluation.case_selection import (
     select_evaluation_cases,
 )
 from app.evaluation.gold_sidecar import GoldSidecar, load_gold_sidecar
-from app.evaluation.provenance import GitProvenance, collect_git_provenance
+from app.evaluation.provenance import collect_git_provenance
 from app.evaluation.retrieval_metrics import aggregate_retrieval_metrics
-from app.evaluation.schemas import EvidenceStatus, GoldenCase
+from app.evaluation.schemas import EvidenceStatus
 
 
 SCHEMA_VERSION = "task3-production-light-v1"

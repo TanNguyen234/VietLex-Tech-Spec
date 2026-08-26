@@ -209,6 +209,93 @@ def test_candidate_selection_prefers_matches_and_preserves_document_diversity() 
     assert selected[0].text == "thuế thu nhập cá nhân áp dụng"
 
 
+def test_candidate_selection_prioritizes_specific_multiword_legal_concept() -> None:
+    retrieval = _retrieval_module()
+    chunks = [
+        EvidenceChunk(
+            document_id=1,
+            document_number="45/2019/QH14",
+            title="Bộ luật Lao động 2019",
+            source_url="https://example/1",
+            heading_path="Điều 25",
+            article="Điều 25",
+            clause=None,
+            citation="45/2019/QH14, Điều 25",
+            text=(
+                "Điều 25. Thời gian thử việc do hai bên thỏa thuận. "
+                "Công việc cần trình độ cao đẳng được thử việc không quá 60 ngày."
+            ),
+            token_count=24,
+        ),
+        EvidenceChunk(
+            document_id=1,
+            document_number="45/2019/QH14",
+            title="Bộ luật Lao động 2019",
+            source_url="https://example/1",
+            heading_path="Điều 36",
+            article="Điều 36",
+            clause=None,
+            citation="45/2019/QH14, Điều 36",
+            text=(
+                "Theo Bộ luật lao động 2019, người lao động có quyền chấm dứt "
+                "hợp đồng trong thời gian tối đa theo quy định và báo trước."
+            ),
+            token_count=24,
+        ),
+    ]
+
+    selected = retrieval.select_rerank_candidates(
+        "Theo Bộ luật Lao động 2019, thời gian thử việc tối đa là bao lâu?",
+        chunks,
+        limit=2,
+        per_document_limit=2,
+    )
+
+    assert selected[0].article == "Điều 25"
+
+
+def test_candidate_selection_treats_explicit_article_and_clause_as_constraints() -> None:
+    retrieval = _retrieval_module()
+    chunks = [
+        EvidenceChunk(
+            document_id=1,
+            document_number="45/2019/QH14",
+            title="Bộ luật Lao động 2019",
+            source_url="https://example/1",
+            heading_path="Điều 25",
+            article="Điều 25",
+            clause="2",
+            citation="45/2019/QH14, Điều 25, Khoản 2",
+            text="2. Thử việc không quá 60 ngày đối với công việc yêu cầu trình độ cao đẳng trở lên.",
+            token_count=18,
+        ),
+        EvidenceChunk(
+            document_id=1,
+            document_number="45/2019/QH14",
+            title="Bộ luật Lao động 2019",
+            source_url="https://example/1",
+            heading_path="Điều 219",
+            article="Điều 219",
+            clause="2",
+            citation="45/2019/QH14, Điều 219, Khoản 2",
+            text=(
+                "Khoản 2 Điều 25 Bộ luật Lao động 2019 được nhắc lại trong "
+                "quy định chuyển tiếp về thời gian thử việc tối đa."
+            ),
+            token_count=21,
+        ),
+    ]
+
+    selected = retrieval.select_rerank_candidates(
+        "Khoản 2 Điều 25 Bộ luật Lao động 2019 quy định thời gian thử việc tối đa bao nhiêu ngày?",
+        chunks,
+        limit=2,
+        per_document_limit=2,
+    )
+
+    assert selected[0].citation == "45/2019/QH14, Điều 25, Khoản 2"
+
+
 def test_candidate_selection_normalizes_query_once(monkeypatch) -> None:
     retrieval = _retrieval_module()
     calls: list[str] = []

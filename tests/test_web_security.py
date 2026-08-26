@@ -131,3 +131,26 @@ def test_csrf_header_dependency_accepts_matching_cookie() -> None:
     assert client.delete(
         "/resource", headers={"X-CSRF-Token": "wrong-token"}
     ).status_code == 403
+
+
+def test_security_headers_are_set_and_hsts_requires_https() -> None:
+    from app.services.http_security import SecurityHeadersMiddleware
+
+    app = FastAPI()
+    app.add_middleware(SecurityHeadersMiddleware)
+
+    @app.get("/")
+    async def home():
+        return {"ok": True}
+
+    client = TestClient(app)
+    http = client.get("/")
+    https = client.get("/", headers={"X-Forwarded-Proto": "https"})
+
+    assert "default-src 'self'" in http.headers["Content-Security-Policy"]
+    assert http.headers["X-Content-Type-Options"] == "nosniff"
+    assert http.headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
+    assert http.headers["Permissions-Policy"] == "geolocation=(), camera=(), microphone=()"
+    assert http.headers["X-Frame-Options"] == "DENY"
+    assert "Strict-Transport-Security" not in http.headers
+    assert https.headers["Strict-Transport-Security"] == "max-age=31536000"

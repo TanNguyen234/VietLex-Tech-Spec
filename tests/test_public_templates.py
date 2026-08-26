@@ -29,6 +29,8 @@ def test_message_template_has_visible_actions_and_honest_source_copy() -> None:
     assert 'data-action="evaluate"' in html
     assert 'name="csrf_token"' in html
     assert "evidence_views" in html
+    assert 'href="{{ evidence.source_url }}"' in html
+    assert 'href="/documents/{{ evidence.document_id }}"' in html
 
 
 def test_local_css_covers_focus_touch_and_reduced_motion() -> None:

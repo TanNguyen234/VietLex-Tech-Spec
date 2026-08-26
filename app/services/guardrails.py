@@ -14,46 +14,17 @@ from app.services.direct_llm import (
     generate_llm_response,
     generate_llm_response_with_metadata,
 )
-
-settings = get_settings()
-
-GUARDRAIL_UNAVAILABLE_MESSAGE = (
-    "Hệ thống kiểm tra an toàn đang tạm thời không khả dụng. "
-    "Vui lòng thử lại sau."
+from app.services.pii import redact_pii as redact_pii
+from app.services.runtime_errors import (
+    GUARDRAIL_UNAVAILABLE_MESSAGE as GUARDRAIL_UNAVAILABLE_MESSAGE,
+    GuardrailUnavailableError,
 )
 
-
-class GuardrailUnavailableError(RuntimeError):
-    def __init__(self, stage: str, reason: str) -> None:
-        self.stage = stage
-        super().__init__(f"{stage} guardrail unavailable: {reason}")
-
+settings = get_settings()
 
 def _normalize_guardrail_decision(text: str) -> str:
     match = re.search(r"\b(yes|no)\b\s*[.!]?\s*$", text, re.IGNORECASE)
     return match.group(1).lower() if match else text
-
-def redact_pii(text: str) -> str:
-    """
-    Tự động nhận diện và ẩn thông tin cá nhân nhạy cảm (PII) trong tiếng Việt.
-    Bao gồm: Email, Số điện thoại di động Việt Nam, Số CCCD/CMND.
-    """
-    if not text:
-        return text
-        
-    # 1. Email Regex
-    email_pattern = r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+'
-    text = re.sub(email_pattern, "[EMAIL_ĐÃ_ẨN]", text)
-    
-    # 2. Số điện thoại di động Việt Nam (các đầu số 03, 05, 07, 08, 09 và định dạng quốc tế +84/84)
-    phone_pattern = r'(?:\+?84|0)[35789]\d{8}\b'
-    text = re.sub(phone_pattern, "[SĐT_ĐÃ_ẨN]", text)
-    
-    # 3. Số CCCD/CMND (9 số cũ hoặc 12 số mới)
-    cccd_pattern = r'\b(?:\d{12}|\d{9})\b'
-    text = re.sub(cccd_pattern, "[CCCD_ĐÃ_ẨN]", text)
-    
-    return text
 
 def parse_json_safely(text: str) -> dict:
     """

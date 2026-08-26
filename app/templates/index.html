@@ -10,7 +10,7 @@
   <a class="skip-link" href="#chat-input">Bỏ qua đến ô nhập câu hỏi</a>
   <header class="topbar">
     <a class="brand" href="/" aria-label="VietLex — trang chủ"><span class="brand-mark">VL</span><span><strong>VietLex</strong><small>Vietnamese Legal RAG</small></span></a>
-    <nav class="top-actions" aria-label="Tiện ích"><span id="system-readiness" class="status-chip" role="status" aria-live="polite">Đang kiểm tra hệ thống</span><button id="theme-toggle" class="icon-button" type="button" aria-label="Đổi giao diện sáng tối">◐</button><a class="button button-quiet" href="/admin">Admin</a></nav>
+    <nav class="top-actions" aria-label="Tiện ích"><span id="system-readiness" class="status-chip" role="status" aria-live="polite">Đang kiểm tra hệ thống</span><a class="button button-quiet" href="/search">Tìm văn bản</a><button id="theme-toggle" class="icon-button" type="button" aria-label="Đổi giao diện sáng tối">◐</button>{% if current_user %}<a class="button button-quiet" href="/settings">{{ current_user.email }}</a><form method="post" action="/logout"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="button button-quiet" type="submit">Đăng xuất</button></form>{% else %}<a class="button button-quiet" href="/login">Đăng nhập</a>{% endif %}<a class="button button-quiet" href="/admin">Admin</a></nav>
   </header>
   <main class="workspace">
     <aside class="session-panel" aria-label="Lịch sử hội thoại">
@@ -30,7 +30,7 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="session_id" value="default" id="session-id-input">
         <label for="chat-input" class="sr-only">Nhập câu hỏi pháp luật</label><textarea id="chat-input" name="message" rows="2" maxlength="2000" required placeholder="Ví dụ: Thời gian thử việc tối đa là bao lâu?"></textarea>
         <div class="composer-actions"><label class="switch-row" title="NeMo kiểm tra input và output; mặc định tắt."><input type="checkbox" name="nemo_enabled" value="true"><span>NeMo Guardrails</span><small>Mặc định tắt</small></label><button class="button button-primary" type="submit">Gửi câu hỏi →</button></div>
-        <p class="legal-note">Dữ liệu bên thứ ba, không tự xác nhận tình trạng hiệu lực và không thay thế tư vấn pháp lý. Luôn kiểm tra nguồn chính thức.</p>
+        <p class="legal-note">Dữ liệu bên thứ ba, không tự xác nhận tình trạng hiệu lực và không thay thế tư vấn pháp lý. Luôn kiểm tra nguồn chính thức. <a href="/privacy">Quyền riêng tư</a> · <a href="/terms">Điều khoản</a></p>
       </form>
     </section>
   </main>

@@ -36,6 +36,18 @@ def _document(
 class TinyContentStore:
     def __init__(self) -> None:
         self.documents = {
+            333670: _document(
+                333670,
+                "45/2019/QH14",
+                "Bộ luật Lao động 2019",
+                "Điều 25. Thời gian thử việc.",
+            ),
+            333671: _document(
+                333671,
+                "01/2020/HD",
+                "Hướng dẫn thời gian thử việc theo Bộ luật",
+                "Văn bản hướng dẫn.",
+            ),
             431147: _document(
                 431147,
                 "72/2020/QH14",
@@ -93,6 +105,20 @@ def test_body_phrase_finds_relevant_legal_document(tmp_path) -> None:
         "xin cho biết hoạt động bảo vệ môi trường áp dụng thế nào",
         limit=1,
     ) == [431147]
+
+
+def test_explicit_title_phrase_outranks_broad_query_term_matches(tmp_path) -> None:
+    index = LegalFtsIndex(
+        store=TinyContentStore(),
+        path=tmp_path / "legal_fts.sqlite3",
+        dataset_revision="revision-1",
+    )
+    index.ensure_built(batch_size=2)
+
+    assert index.search(
+        "Theo Bộ luật Lao động 2019, thời gian thử việc tối đa là bao lâu?",
+        limit=4,
+    )[0] == 333670
 
 
 def test_build_restores_process_temp_environment(tmp_path, monkeypatch) -> None:

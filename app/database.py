@@ -51,6 +51,9 @@ async def init_db():
             expireAfterSeconds=0,
             name="chat_sessions_retention_ttl",
         )
+        from app.account_database import init_account_db
+
+        await init_account_db()
         
         logfire.info("MongoDB database and indexes initialized successfully.")
     except Exception as e:
@@ -83,6 +86,7 @@ async def log_interaction(
     no_evidence: bool = False,
     refusal_category: Optional[str] = None,
     technical_error: Optional[Dict[str, Any] | str] = None,
+    user_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     database = get_db()
     collection = database.evaluation_logs
@@ -95,6 +99,7 @@ async def log_interaction(
         "trace_id": trace_id,
         "session_id": session_id,
         "client_id": client_id,
+        "user_id": user_id,
         "timestamp": datetime.utcnow(),
         "expires_at": datetime.utcnow() + timedelta(
             days=settings.DATA_RETENTION_DAYS
@@ -183,7 +188,11 @@ async def update_evaluation(
 
 
 async def update_feedback(
-    trace_id: str, rating: str, client_id: Optional[str] = None
+    trace_id: str,
+    rating: str,
+    client_id: Optional[str] = None,
+    *,
+    user_id: Optional[str] = None,
 ) -> bool:
     database = get_db()
     collection = database.evaluation_logs
@@ -195,7 +204,9 @@ async def update_feedback(
     
     try:
         query: Dict[str, Any] = {"_id": trace_id}
-        if client_id is not None:
+        if user_id is not None:
+            query["user_id"] = user_id
+        elif client_id is not None:
             query["client_id"] = client_id
         result = await collection.update_one(
             query,
@@ -345,13 +356,12 @@ async def get_interaction(trace_id: str) -> Optional[Dict[str, Any]]:
 
 
 async def get_owned_interaction(
-    trace_id: str, client_id: str
+    trace_id: str, client_id: str, *, user_id: Optional[str] = None
 ) -> Optional[Dict[str, Any]]:
     database = get_db()
     try:
-        return await database.evaluation_logs.find_one(
-            {"_id": trace_id, "client_id": client_id}
-        )
+        owner = {"user_id": user_id} if user_id else {"client_id": client_id}
+        return await database.evaluation_logs.find_one({"_id": trace_id, **owner})
     except Exception as e:
         logfire.error(
             "Failed to fetch owned interaction: {error}",
@@ -361,7 +371,11 @@ async def get_owned_interaction(
         return None
 
 async def create_session(
-    session_id: str, title: str, client_id: Optional[str] = None
+    session_id: str,
+    title: str,
+    client_id: Optional[str] = None,
+    *,
+    user_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     database = get_db()
     collection = database.chat_sessions
@@ -370,6 +384,7 @@ async def create_session(
         "session_id": session_id,
         "title": title,
         "client_id": client_id,
+        "user_id": user_id,
         "timestamp": datetime.utcnow(),
         "expires_at": datetime.utcnow() + timedelta(
             days=settings.DATA_RETENTION_DAYS
@@ -383,13 +398,18 @@ async def create_session(
         return {}
 
 async def get_sessions(
-    client_id: Optional[str] = None, search_query: Optional[str] = None
+    client_id: Optional[str] = None,
+    search_query: Optional[str] = None,
+    *,
+    user_id: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     database = get_db()
     collection = database.chat_sessions
     try:
         query: Dict[str, Any] = {}
-        if client_id is not None:
+        if user_id is not None:
+            query["user_id"] = user_id
+        elif client_id is not None:
             query["client_id"] = client_id
         if search_query:
             query["title"] = {
@@ -404,13 +424,18 @@ async def get_sessions(
         return []
 
 async def get_session_messages(
-    session_id: str, client_id: Optional[str] = None
+    session_id: str,
+    client_id: Optional[str] = None,
+    *,
+    user_id: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     database = get_db()
     collection = database.evaluation_logs
     try:
         query: Dict[str, Any] = {"session_id": session_id}
-        if client_id is not None:
+        if user_id is not None:
+            query["user_id"] = user_id
+        elif client_id is not None:
             query["client_id"] = client_id
         cursor = collection.find(query).sort("timestamp", 1)
         messages = await cursor.to_list(length=200)
@@ -420,7 +445,10 @@ async def get_session_messages(
         return []
 
 async def delete_session(
-    session_id: str, client_id: Optional[str] = None
+    session_id: str,
+    client_id: Optional[str] = None,
+    *,
+    user_id: Optional[str] = None,
 ) -> bool:
     database = get_db()
     sessions_coll = database.chat_sessions
@@ -428,7 +456,10 @@ async def delete_session(
     try:
         session_query: Dict[str, Any] = {"_id": session_id}
         log_query: Dict[str, Any] = {"session_id": session_id}
-        if client_id is not None:
+        if user_id is not None:
+            session_query["user_id"] = user_id
+            log_query["user_id"] = user_id
+        elif client_id is not None:
             session_query["client_id"] = client_id
             log_query["client_id"] = client_id
         await sessions_coll.delete_one(session_query)
@@ -439,13 +470,19 @@ async def delete_session(
         return False
 
 async def rename_session(
-    session_id: str, title: str, client_id: Optional[str] = None
+    session_id: str,
+    title: str,
+    client_id: Optional[str] = None,
+    *,
+    user_id: Optional[str] = None,
 ) -> bool:
     database = get_db()
     collection = database.chat_sessions
     try:
         query: Dict[str, Any] = {"_id": session_id}
-        if client_id is not None:
+        if user_id is not None:
+            query["user_id"] = user_id
+        elif client_id is not None:
             query["client_id"] = client_id
         result = await collection.update_one(query, {"$set": {"title": title}})
         return result.modified_count > 0

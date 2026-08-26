@@ -19,7 +19,7 @@ from app.services.clients import (
 
 
 settings = get_settings()
-CACHE_SCHEMA_VERSION = "vietlex-grounded-cache-v2"
+CACHE_SCHEMA_VERSION = "vietlex-grounded-cache-v5-explicit-location"
 
 
 @dataclass(frozen=True)

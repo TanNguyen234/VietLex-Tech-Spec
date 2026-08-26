@@ -55,9 +55,11 @@ class handler(BaseHTTPRequestHandler):
             for key, value in self.headers.items()
             if key.lower() not in _HOP_BY_HOP
         }
+        headers["X-Forwarded-Proto"] = "https"
+        headers["X-Forwarded-Host"] = self.headers.get("Host", "")
         request = Request(target, data=body, headers=headers, method=self.command)
         try:
-            with urlopen(request, timeout=115) as upstream:
+            with urlopen(request, timeout=55) as upstream:
                 self._relay(upstream.status, upstream.headers, upstream.read())
         except HTTPError as exc:
             self._relay(exc.code, exc.headers, exc.read())
