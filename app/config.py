@@ -3,6 +3,7 @@ from pydantic import Field
 from typing import Optional, Literal
 from functools import lru_cache
 from pathlib import Path
+from urllib.parse import urlparse
 import ssl
 import threading
 
@@ -120,6 +121,16 @@ class Settings(BaseSettings):
     VERTEX_LLM_MODEL: str = "gemini-3.5-flash"
     ANSWER_PROMPT_VERSION: str = "legal-grounded-v3"
     VERTEX_EMBEDDING_MODEL: str = "gemini-embedding-2"
+    VERTEX_QDRANT_COLLECTION_NAME: str = (
+        "vietlex-legal-rag-v3-vertex-1024"
+    )
+    VERTEX_QDRANT_VECTOR_SIZE: int = Field(default=1024, ge=768, le=3072)
+    VERTEX_QDRANT_MAX_CHUNKS_PER_DOCUMENT: int = Field(
+        default=16, ge=1, le=256
+    )
+    VERTEX_QDRANT_CHECKPOINT_PATH: Path = Path(
+        "data/huggingface/vertex_qdrant_checkpoint.sqlite3"
+    )
     VERTEX_REQUEST_TIMEOUT_SECONDS: float = Field(default=30.0, gt=0)
     VERTEX_MAX_RETRIES: int = Field(default=2, ge=0, le=5)
     
@@ -138,6 +149,15 @@ class Settings(BaseSettings):
     )
     ADMIN_USERNAME: Optional[str] = None
     ADMIN_PASSWORD: Optional[str] = None
+    ACCOUNT_EMAIL_ENABLED: bool = False
+    EMAIL_USER: Optional[str] = None
+    EMAIL_PASS: Optional[str] = None
+    EMAIL_FROM: Optional[str] = None
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = Field(default=587, ge=1, le=65_535)
+    PUBLIC_BASE_URL: str = "http://localhost:8000"
+    AUTH_COOKIE_NAME: str = "vietlex_auth"
+    AUTH_SESSION_DAYS: int = Field(default=30, ge=1, le=365)
     PUBLIC_NEMO_DEFAULT_ENABLED: bool = False
     PUBLIC_RAGAS_ENABLED: bool = False
     PUBLIC_RAGAS_CLIENT_DAILY_LIMIT: int = Field(default=3, ge=1, le=20)
@@ -213,6 +233,31 @@ class Settings(BaseSettings):
         return self.PINECONE_API_KEY or self.PINECONE_API or self.PIPECONE_API
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+
+def validate_production_settings(settings: Settings) -> None:
+    if settings.APP_ENV != "production":
+        return
+    if not settings.WEB_SESSION_SECRET or len(settings.WEB_SESSION_SECRET) < 32:
+        raise RuntimeError(
+            "WEB_SESSION_SECRET must contain at least 32 characters in production"
+        )
+    frontend = urlparse(settings.FRONTEND_URL)
+    if (
+        frontend.scheme != "https"
+        or not frontend.netloc
+        or frontend.hostname in {"localhost", "127.0.0.1"}
+    ):
+        raise RuntimeError("FRONTEND_URL must be an explicit HTTPS origin in production")
+    if settings.ACCOUNT_EMAIL_ENABLED:
+        for name in ("EMAIL_USER", "EMAIL_PASS", "EMAIL_FROM"):
+            if not getattr(settings, name):
+                raise RuntimeError(f"{name} is required when account email is enabled")
+        public_base = urlparse(settings.PUBLIC_BASE_URL)
+        if public_base.scheme != "https" or not public_base.netloc:
+            raise RuntimeError(
+                "PUBLIC_BASE_URL must be HTTPS when account email is enabled"
+            )
 
 
 @lru_cache

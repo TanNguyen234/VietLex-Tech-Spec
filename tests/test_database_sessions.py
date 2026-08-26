@@ -97,3 +97,29 @@ async def test_owned_interaction_requires_trace_and_owner(monkeypatch) -> None:
     await database.get_owned_interaction("trace-1", "owner-a")
 
     assert logs.find_queries == [{"_id": "trace-1", "client_id": "owner-a"}]
+
+
+@pytest.mark.asyncio
+async def test_authenticated_session_queries_use_user_id(monkeypatch) -> None:
+    import app.database as database
+
+    sessions = _Collection()
+    logs = _Collection()
+    monkeypatch.setattr(
+        database,
+        "get_db",
+        lambda: SimpleNamespace(chat_sessions=sessions, evaluation_logs=logs),
+    )
+
+    await database.create_session(
+        "s-1", "Hợp đồng", client_id="client-a", user_id="user-1"
+    )
+    await database.get_sessions("client-a", user_id="user-1")
+    await database.get_session_messages("s-1", "client-a", user_id="user-1")
+    await database.delete_session("s-1", "client-a", user_id="user-1")
+
+    assert sessions.replace_documents[0][1]["user_id"] == "user-1"
+    assert sessions.find_queries == [{"user_id": "user-1"}]
+    assert logs.find_queries == [{"session_id": "s-1", "user_id": "user-1"}]
+    assert sessions.delete_queries == [{"_id": "s-1", "user_id": "user-1"}]
+    assert logs.delete_queries == [{"session_id": "s-1", "user_id": "user-1"}]

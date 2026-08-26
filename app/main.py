@@ -1,7 +1,7 @@
 import secrets
 from dotenv import load_dotenv
 import logfire
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -9,25 +9,28 @@ from fastapi.staticfiles import StaticFiles
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-from app.config import get_settings
+from app.config import get_settings, validate_production_settings
 from app.database import init_db
 from app.api.routes import router as api_router
-from app.services.clients import close_clients
-from app.services.retrieval import reset_retriever
-from app.services.semantic_cache import ensure_semantic_cache_collection
-from app.services.guardrails import warm_guardrails
+from app.api.account_routes import router as account_router
+from app.api.legal_routes import router as legal_router
+from app.api.dependencies import optional_user
 from app.services.web_security import (
     AnonymousClientMiddleware,
     resolve_web_session_secret,
 )
+from app.services.http_security import SecurityHeadersMiddleware
 from app.rate_limit import limiter
 
 # Load environment variables from .env before logfire/settings initialization
 load_dotenv()
 
 settings = get_settings()
+validate_production_settings(settings)
 
 app = FastAPI(title="VietLex Advanced Legal RAG")
+
+app.add_middleware(SecurityHeadersMiddleware)
 
 app.add_middleware(
     AnonymousClientMiddleware,
@@ -38,13 +41,21 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event():
+    from app.services.semantic_cache import ensure_semantic_cache_collection
+
     logfire.configure()
     await init_db()
     await ensure_semantic_cache_collection()
-    await warm_guardrails()
+    if settings.PUBLIC_NEMO_DEFAULT_ENABLED:
+        from app.services.guardrails import warm_guardrails
+
+        await warm_guardrails()
 
 @app.on_event("shutdown")
 async def shutdown_event():
+    from app.services.clients import close_clients
+    from app.services.retrieval import reset_retriever
+
     await close_clients()
     reset_retriever()
 
@@ -76,9 +87,11 @@ def get_csrf_token(request: Request) -> str:
 
 # Include router
 app.include_router(api_router)
+app.include_router(account_router)
+app.include_router(legal_router)
 
 @app.get("/", response_class=HTMLResponse)
-async def get_index(request: Request):
+async def get_index(request: Request, current_user=Depends(optional_user)):
     # CSRF generation
     token = secrets.token_hex(32)
     progress_transport = (
@@ -92,6 +105,7 @@ async def get_index(request: Request):
         {
             "csrf_token": token,
             "progress_transport": progress_transport,
+            "current_user": current_user,
         },
     )
     # Save token in cookie for validation

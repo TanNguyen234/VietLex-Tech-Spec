@@ -8,12 +8,7 @@
     {% if evidence_views %}<section class="sources"><h3>Nguồn pháp lý truy xuất</h3><div class="source-list">
       {% for evidence in evidence_views %}
       <button type="button" class="source-button" data-action="open-source" data-source-target="source-{{ trace_id }}-{{ loop.index }}">{{ evidence.citation or evidence.title or ('Nguồn ' ~ loop.index) }}</button>
-      <template id="source-{{ trace_id }}-{{ loop.index }}">{% if evidence.citation %}{{ evidence.citation }}
-{% endif %}{% if evidence.title %}{{ evidence.title }}
-{% endif %}{% if evidence.document_number %}Số hiệu: {{ evidence.document_number }}
-{% endif %}{% if evidence.source_url %}Nguồn: {{ evidence.source_url }}
-{% endif %}
-{{ evidence.excerpt }}</template>
+      <template id="source-{{ trace_id }}-{{ loop.index }}"><article>{% if evidence.citation %}<p><strong>{{ evidence.citation }}</strong></p>{% endif %}{% if evidence.title %}<p>{{ evidence.title }}</p>{% endif %}{% if evidence.document_number %}<p>Số hiệu: {{ evidence.document_number }}</p>{% endif %}{% if evidence.document_id %}<p><a href="/documents/{{ evidence.document_id }}">Xem văn bản trong VietLex</a></p>{% endif %}{% if evidence.source_url %}<p><a href="{{ evidence.source_url }}" target="_blank" rel="noopener noreferrer">Mở nguồn dữ liệu ↗</a></p>{% endif %}<pre>{{ evidence.excerpt }}</pre></article></template>
       {% endfor %}
     </div></section>{% endif %}
     <div class="evaluation-panel" hidden></div>

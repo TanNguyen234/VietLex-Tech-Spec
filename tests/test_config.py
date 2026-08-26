@@ -58,10 +58,79 @@ def test_secret_defaults_never_contain_credentials() -> None:
         "PINECONE_API",
         "LITELLM_MASTER_KEY",
         "MONGO_URL",
+        "EMAIL_USER",
+        "EMAIL_PASS",
     )
 
     for secret_name in secret_names:
         assert Settings.model_fields[secret_name].default is None
+
+
+def test_account_email_defaults_are_minimal_and_disabled() -> None:
+    settings = Settings(_env_file=None)
+
+    assert settings.ACCOUNT_EMAIL_ENABLED is False
+    assert settings.EMAIL_USER is None
+    assert settings.EMAIL_PASS is None
+    assert settings.EMAIL_FROM is None
+    assert settings.SMTP_HOST == "smtp.gmail.com"
+    assert settings.SMTP_PORT == 587
+    assert settings.PUBLIC_BASE_URL == "http://localhost:8000"
+    assert settings.AUTH_COOKIE_NAME == "vietlex_auth"
+    assert settings.AUTH_SESSION_DAYS == 30
+
+
+def test_production_web_configuration_fails_closed() -> None:
+    import pytest
+
+    from app.config import validate_production_settings
+
+    with pytest.raises(RuntimeError, match="WEB_SESSION_SECRET"):
+        validate_production_settings(
+            Settings(
+                _env_file=None,
+                APP_ENV="production",
+                FRONTEND_URL="https://vietlex.example",
+            )
+        )
+
+    with pytest.raises(RuntimeError, match="FRONTEND_URL"):
+        validate_production_settings(
+            Settings(
+                _env_file=None,
+                APP_ENV="production",
+                WEB_SESSION_SECRET="x" * 32,
+                FRONTEND_URL="http://localhost:8000",
+            )
+        )
+
+    with pytest.raises(RuntimeError, match="EMAIL_PASS"):
+        validate_production_settings(
+            Settings(
+                _env_file=None,
+                APP_ENV="production",
+                WEB_SESSION_SECRET="x" * 32,
+                FRONTEND_URL="https://vietlex.example",
+                PUBLIC_BASE_URL="https://vietlex.example",
+                ACCOUNT_EMAIL_ENABLED=True,
+                EMAIL_USER="mailer@example.com",
+                EMAIL_FROM="mailer@example.com",
+            )
+        )
+
+    validate_production_settings(
+        Settings(
+            _env_file=None,
+            APP_ENV="production",
+            WEB_SESSION_SECRET="x" * 32,
+            FRONTEND_URL="https://vietlex.example",
+            PUBLIC_BASE_URL="https://vietlex.example",
+            ACCOUNT_EMAIL_ENABLED=True,
+            EMAIL_USER="mailer@example.com",
+            EMAIL_PASS="secret",
+            EMAIL_FROM="mailer@example.com",
+        )
+    )
 
 
 def test_pinecone_api_compatibility_name_is_resolved() -> None:
@@ -151,6 +220,11 @@ def test_vertex_defaults_are_narrow_and_do_not_model_adc_credentials() -> None:
     assert settings.GOOGLE_CLOUD_LOCATION == "global"
     assert settings.VERTEX_LLM_MODEL == "gemini-3.5-flash"
     assert settings.VERTEX_EMBEDDING_MODEL == "gemini-embedding-2"
+    assert settings.VERTEX_QDRANT_COLLECTION_NAME == (
+        "vietlex-legal-rag-v3-vertex-1024"
+    )
+    assert settings.VERTEX_QDRANT_VECTOR_SIZE == 1024
+    assert settings.VERTEX_QDRANT_MAX_CHUNKS_PER_DOCUMENT == 16
     assert settings.VERTEX_REQUEST_TIMEOUT_SECONDS == 30.0
     assert settings.VERTEX_MAX_RETRIES == 2
     assert "GOOGLE_APPLICATION_CREDENTIALS" not in Settings.model_fields

@@ -24,6 +24,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy application source code
 COPY app/ ./app/
 COPY assets/ ./assets/
+COPY guardrails_config/ ./guardrails_config/
 
 # The indexed corpus is mounted at runtime and is never baked into the image.
 VOLUME ["/data"]

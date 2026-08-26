@@ -2,6 +2,7 @@ import asyncio
 import json
 import time
 import uuid
+from functools import partial
 from pathlib import Path
 from typing import Dict
 import logfire
@@ -12,14 +13,18 @@ from fastapi.responses import HTMLResponse, JSONResponse, Response, StreamingRes
 from fastapi.templating import Jinja2Templates
 
 from app.evaluation.online_metrics import build_online_metrics, sanitize_error_message
-from app.api.dependencies import require_admin, verify_csrf, verify_csrf_header
+from app.api.dependencies import (
+    optional_user,
+    require_admin,
+    verify_csrf,
+    verify_csrf_header,
+)
 from app.config import get_settings
 from app.services.public_evaluation import (
     DailyRagasQuota,
     build_code_evaluation,
     ragas_metric_catalog,
 )
-from app.services.evaluator import run_llm_as_judge
 from app.services.conversation_export import render_conversation_markdown
 from app.services.readiness import build_readiness
 from app.rate_limit import limiter
@@ -27,15 +32,12 @@ from app.services.evidence_presenter import present_context
 from app.services.portfolio_evidence import load_portfolio_evidence
 from app.services.chat_progress import chat_progress
 
-from app.services.semantic_cache import check_semantic_cache, save_to_semantic_cache
-from app.services.guardrails import (
+from app.services.pii import redact_pii
+from app.services.runtime_errors import (
     GUARDRAIL_UNAVAILABLE_MESSAGE,
     GuardrailUnavailableError,
-    check_input_guardrails,
-    check_output_guardrails,
-    redact_pii,
+    RetrievalPipelineError,
 )
-from app.services.rag_pipeline import RetrievalPipelineError, run_advanced_rag
 from app.database import (
     log_interaction, update_feedback, get_admin_logs, get_admin_stats, get_interaction,
     create_session, get_sessions, get_session_messages, delete_session, rename_session,
@@ -50,6 +52,48 @@ _public_ragas_quota = DailyRagasQuota(
     global_limit=settings.PUBLIC_RAGAS_GLOBAL_DAILY_LIMIT,
 )
 _public_ragas_semaphore = asyncio.Semaphore(1)
+
+
+async def check_input_guardrails(message: str):
+    from app.services.guardrails import check_input_guardrails as implementation
+
+    return await implementation(message)
+
+
+async def check_output_guardrails(response: str, contexts: list[str], query: str):
+    from app.services.guardrails import check_output_guardrails as implementation
+
+    return await implementation(response, contexts, query)
+
+
+async def check_semantic_cache(message: str):
+    from app.services.semantic_cache import check_semantic_cache as implementation
+
+    return await implementation(message)
+
+
+async def save_to_semantic_cache(*args, **kwargs):
+    from app.services.semantic_cache import save_to_semantic_cache as implementation
+
+    return await implementation(*args, **kwargs)
+
+
+async def run_advanced_rag(message: str):
+    from app.services.rag_pipeline import run_advanced_rag as implementation
+
+    return await implementation(message)
+
+
+async def run_llm_as_judge(*args, **kwargs):
+    from app.services.evaluator import run_llm_as_judge as implementation
+
+    return await implementation(*args, **kwargs)
+
+
+async def _owned_interaction(trace_id: str, client_id: str, user_id: str | None):
+    if user_id:
+        return await get_owned_interaction(trace_id, client_id, user_id=user_id)
+    return await get_owned_interaction(trace_id, client_id)
 
 
 async def _optional_input_guardrail(
@@ -137,12 +181,17 @@ async def chat(
     session_id: str = Form(None),
     nemo_enabled: bool = Form(False),
     request_id: str = Form(""),
-    csrf_valid: str = Depends(verify_csrf)
+    csrf_valid: str = Depends(verify_csrf),
+    current_user=Depends(optional_user),
 ):
     request_started = time.perf_counter()
     message = redact_pii(message)
     trace_id = str(uuid.uuid4())
     client_id = getattr(request.state, "client_id", "legacy")
+    user_id = str(current_user["_id"]) if current_user else None
+    persist_interaction = partial(
+        log_interaction, client_id=client_id, user_id=user_id
+    )
     if request_id:
         chat_progress.start(request_id, client_id, nemo_enabled=nemo_enabled)
     is_new_session = False
@@ -151,7 +200,9 @@ async def chat(
         session_id = str(uuid.uuid4())
         words = message.split()
         title = " ".join(words[:5]) + ("..." if len(words) > 5 else "")
-        await create_session(session_id, title, client_id=client_id)
+        await create_session(
+            session_id, title, client_id=client_id, user_id=user_id
+        )
         is_new_session = True
         
     with logfire.span("Xử lý Chat Request: {message}", message=message) as span:
@@ -198,14 +249,13 @@ async def chat(
                 ragas_mode="off",
                 ragas_sample_rate=0.0,
             )
-            await log_interaction(
+            await persist_interaction(
                 trace_id=trace_id,
                 user_query=message,
                 bot_response=GUARDRAIL_UNAVAILABLE_MESSAGE,
                 contexts=[],
                 cached=False,
                 session_id=session_id,
-                client_id=client_id,
                 request_status="technical_error",
                 technical_error=tech_error,
                 latency=metrics.latency,
@@ -254,7 +304,7 @@ async def chat(
                 ragas_sample_rate=0.0,
             )
             # Log blocked input interaction
-            await log_interaction(
+            await persist_interaction(
                 trace_id=trace_id,
                 user_query=message,
                 bot_response=rejection_message,
@@ -263,7 +313,6 @@ async def chat(
                 input_safe=False,
                 rejection_reason="Jailbreak or off-topic input blocked by guardrails",
                 session_id=session_id,
-                client_id=client_id,
                 request_status="blocked_input",
                 latency=metrics.latency,
                 observed_provider=metrics.observed_provider,
@@ -319,7 +368,7 @@ async def chat(
                 ragas_mode="off",
                 ragas_sample_rate=0.0,
             )
-            await log_interaction(
+            await persist_interaction(
                 trace_id=trace_id,
                 user_query=message,
                 bot_response=cached_text,
@@ -327,7 +376,6 @@ async def chat(
                 cached=True,
                 input_safe=True,
                 session_id=session_id,
-                client_id=client_id,
                 request_status="cache_hit",
                 latency=metrics.latency,
                 observed_provider=metrics.observed_provider,
@@ -413,14 +461,13 @@ async def chat(
                 ragas_mode="off",
                 ragas_sample_rate=0.0,
             )
-            await log_interaction(
+            await persist_interaction(
                 trace_id=trace_id,
                 user_query=message,
                 bot_response=error_response,
                 contexts=[],
                 cached=False,
                 session_id=session_id,
-                client_id=client_id,
                 request_status="technical_error",
                 technical_error=tech_error,
                 latency=metrics.latency,
@@ -490,14 +537,13 @@ async def chat(
                 ragas_mode="off",
                 ragas_sample_rate=0.0,
             )
-            await log_interaction(
+            await persist_interaction(
                 trace_id=trace_id,
                 user_query=message,
                 bot_response=bot_response,
                 contexts=context_used,
                 cached=False,
                 session_id=session_id,
-                client_id=client_id,
                 request_status="technical_error",
                 technical_error=tech_error,
                 latency=metrics.latency,
@@ -590,14 +636,13 @@ async def chat(
                 ragas_mode="off",
                 ragas_sample_rate=0.0,
             )
-            await log_interaction(
+            await persist_interaction(
                 trace_id=trace_id,
                 user_query=message,
                 bot_response=GUARDRAIL_UNAVAILABLE_MESSAGE,
                 contexts=context_used,
                 cached=False,
                 session_id=session_id,
-                client_id=client_id,
                 request_status="technical_error",
                 technical_error=tech_error,
                 latency=metrics.latency,
@@ -673,7 +718,7 @@ async def chat(
         )
 
         # Save log to database
-        await log_interaction(
+        await persist_interaction(
             trace_id=trace_id,
             user_query=message,
             bot_response=final_response,
@@ -683,7 +728,6 @@ async def chat(
             output_safe=output_safe,
             rejection_reason=rejection_reason,
             session_id=session_id,
-            client_id=client_id,
             request_status=req_status,
             latency=metrics.latency,
             observed_provider=metrics.observed_provider,
@@ -732,6 +776,7 @@ async def feedback(
     rating: str = Form(...),
     csrf_token: str = Form(...),
     csrf_valid: str = Depends(verify_csrf),
+    current_user=Depends(optional_user),
 ):
     if rating not in {"up", "down"}:
         raise HTTPException(status_code=422, detail="Invalid feedback rating")
@@ -740,6 +785,7 @@ async def feedback(
             trace_id,
             rating,
             client_id=getattr(request.state, "client_id", "legacy"),
+            user_id=(str(current_user["_id"]) if current_user else None),
         )
         if not updated:
             raise HTTPException(status_code=404, detail="Interaction not found")
@@ -754,9 +800,11 @@ async def public_evaluation(
     run_ragas: bool = Form(False),
     csrf_token: str = Form(...),
     csrf_valid: str = Depends(verify_csrf),
+    current_user=Depends(optional_user),
 ):
     client_id = getattr(request.state, "client_id", "legacy")
-    interaction = await get_owned_interaction(trace_id, client_id)
+    user_id = str(current_user["_id"]) if current_user else None
+    interaction = await _owned_interaction(trace_id, client_id, user_id)
     if interaction is None:
         raise HTTPException(status_code=404, detail="Interaction not found")
 
@@ -799,7 +847,7 @@ async def public_evaluation(
             trace_id,
             force=True,
         )
-    refreshed = await get_owned_interaction(trace_id, client_id) or interaction
+    refreshed = await _owned_interaction(trace_id, client_id, user_id) or interaction
     refreshed_metrics = refreshed.get("metrics") or {}
     payload["ragas"] = {
         "status": refreshed_metrics.get("ragas_status") or "unavailable",
@@ -813,9 +861,17 @@ async def public_evaluation(
 
 @router.get("/sessions", response_class=HTMLResponse)
 @limiter.limit(settings.SESSION_RATE_LIMIT)
-async def list_sessions(request: Request, search: str = ""):
+async def list_sessions(
+    request: Request,
+    search: str = "",
+    current_user=Depends(optional_user),
+):
     client_id = getattr(request.state, "client_id", "legacy")
-    sessions = await get_sessions(client_id, search_query=search.strip()[:100])
+    sessions = await get_sessions(
+        client_id,
+        search_query=search.strip()[:100],
+        user_id=(str(current_user["_id"]) if current_user else None),
+    )
     return templates.TemplateResponse(
         request,
         "sidebar_sessions.html",
@@ -827,10 +883,16 @@ async def list_sessions(request: Request, search: str = ""):
 async def new_session(
     request: Request,
     _csrf: str = Depends(verify_csrf),
+    current_user=Depends(optional_user),
 ):
     session_id = str(uuid.uuid4())
     client_id = getattr(request.state, "client_id", "legacy")
-    await create_session(session_id, "Hội thoại mới", client_id=client_id)
+    await create_session(
+        session_id,
+        "Hội thoại mới",
+        client_id=client_id,
+        user_id=(str(current_user["_id"]) if current_user else None),
+    )
     response = HTMLResponse(
         content=(
             '<article class="message-card assistant-message">'
@@ -847,9 +909,17 @@ async def new_session(
 
 @router.get("/sessions/{session_id}", response_class=HTMLResponse)
 @limiter.limit(settings.SESSION_RATE_LIMIT)
-async def get_session_history(request: Request, session_id: str):
+async def get_session_history(
+    request: Request,
+    session_id: str,
+    current_user=Depends(optional_user),
+):
     client_id = getattr(request.state, "client_id", "legacy")
-    raw_messages = await get_session_messages(session_id, client_id)
+    raw_messages = await get_session_messages(
+        session_id,
+        client_id,
+        user_id=(str(current_user["_id"]) if current_user else None),
+    )
     messages = [
         {
             **message,
@@ -871,9 +941,12 @@ async def remove_session(
     request: Request,
     session_id: str,
     _csrf: str = Depends(verify_csrf_header),
+    current_user=Depends(optional_user),
 ):
     await delete_session(
-        session_id, getattr(request.state, "client_id", "legacy")
+        session_id,
+        getattr(request.state, "client_id", "legacy"),
+        user_id=(str(current_user["_id"]) if current_user else None),
     )
     response = HTMLResponse(content="")
     response.headers["HX-Trigger"] = "load-sessions"
@@ -885,6 +958,7 @@ async def rename_sess(
     request: Request,
     session_id: str,
     _csrf: str = Depends(verify_csrf),
+    current_user=Depends(optional_user),
 ):
     new_title = request.headers.get("HX-Prompt")
     if new_title:
@@ -892,8 +966,12 @@ async def rename_sess(
             session_id,
             new_title.strip()[:120],
             getattr(request.state, "client_id", "legacy"),
+            user_id=(str(current_user["_id"]) if current_user else None),
         )
-    sessions = await get_sessions(getattr(request.state, "client_id", "legacy"))
+    sessions = await get_sessions(
+        getattr(request.state, "client_id", "legacy"),
+        user_id=(str(current_user["_id"]) if current_user else None),
+    )
     return templates.TemplateResponse(
         request,
         "sidebar_sessions.html",
@@ -903,13 +981,20 @@ async def rename_sess(
 
 @router.get("/sessions/{session_id}/export")
 @limiter.limit(settings.SESSION_RATE_LIMIT)
-async def export_session(request: Request, session_id: str):
+async def export_session(
+    request: Request,
+    session_id: str,
+    current_user=Depends(optional_user),
+):
     client_id = getattr(request.state, "client_id", "legacy")
-    sessions = await get_sessions(client_id)
+    user_id = str(current_user["_id"]) if current_user else None
+    sessions = await get_sessions(client_id, user_id=user_id)
     session = next((item for item in sessions if item.get("session_id") == session_id), None)
     if session is None:
         raise HTTPException(status_code=404, detail="Session not found")
-    messages = await get_session_messages(session_id, client_id)
+    messages = await get_session_messages(
+        session_id, client_id, user_id=user_id
+    )
     body = render_conversation_markdown(session, messages)
     return Response(
         body.encode("utf-8"),

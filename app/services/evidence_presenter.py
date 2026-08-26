@@ -11,6 +11,7 @@ _DOCUMENT_NUMBER = re.compile(r"\b\d{1,4}/\d{4}/[A-ZĐ0-9-]+\b", re.IGNORECASE)
 @dataclass(frozen=True)
 class EvidenceView:
     original: str
+    document_id: int | None
     citation: str | None
     document_number: str | None
     title: str | None
@@ -27,6 +28,7 @@ def present_context(text: str) -> EvidenceView:
     original = str(text)
     lines = original.replace("\r\n", "\n").replace("\r", "\n").split("\n")
     citation: str | None = None
+    document_id: int | None = None
     title: str | None = None
     source_url: str | None = None
     excerpt_lines: list[str] = []
@@ -40,6 +42,11 @@ def present_context(text: str) -> EvidenceView:
             continue
         if line.casefold().startswith("dẫn chiếu:"):
             citation = line.split(":", 1)[1].strip() or citation
+            continue
+        if line.casefold().startswith("id tài liệu:"):
+            raw_id = line.split(":", 1)[1].strip()
+            if raw_id.isdecimal() and int(raw_id) > 0:
+                document_id = int(raw_id)
             continue
         if line.casefold().startswith("nguồn:"):
             source_url = _safe_url(line.split(":", 1)[1])
@@ -55,6 +62,7 @@ def present_context(text: str) -> EvidenceView:
     document_match = _DOCUMENT_NUMBER.search(citation or original)
     return EvidenceView(
         original=original,
+        document_id=document_id,
         citation=citation,
         document_number=(document_match.group().upper() if document_match else None),
         title=title,

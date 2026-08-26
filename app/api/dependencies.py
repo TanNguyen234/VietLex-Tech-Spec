@@ -5,6 +5,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from app.config import get_settings
 from app.services.web_security import AdminAuthState, verify_admin_credentials
+from app.account_database import resolve_auth_session
 
 
 _admin_basic = HTTPBasic(auto_error=False)
@@ -58,3 +59,19 @@ async def require_admin(
             headers={"WWW-Authenticate": "Basic"},
         )
     return credentials.username
+
+
+async def optional_user(request: Request):
+    settings = get_settings()
+    return await resolve_auth_session(
+        request.cookies.get(settings.AUTH_COOKIE_NAME)
+    )
+
+
+async def require_user(user=Depends(optional_user)):
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required.",
+        )
+    return user
