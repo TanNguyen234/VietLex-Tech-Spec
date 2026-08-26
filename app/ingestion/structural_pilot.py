@@ -11,7 +11,9 @@ from collections.abc import Callable, Iterable, Mapping, Sequence
 from datetime import datetime, timezone
 from pathlib import Path
 from types import MappingProxyType
-from typing import Annotated, Literal, Self
+from typing import Annotated, Literal
+
+from typing_extensions import Self
 
 from pydantic import (
     BaseModel,

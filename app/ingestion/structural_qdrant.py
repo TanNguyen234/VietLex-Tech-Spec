@@ -5,7 +5,9 @@ from __future__ import annotations
 import hashlib
 from collections.abc import Mapping, Sequence
 from types import MappingProxyType
-from typing import Any, Literal, Self
+from typing import Any, Literal
+
+from typing_extensions import Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_serializer, model_validator
 from qdrant_client import QdrantClient, models

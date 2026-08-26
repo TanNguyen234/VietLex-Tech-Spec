@@ -12,7 +12,9 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from itertools import islice
 from pathlib import Path
-from typing import Annotated, Any, Literal, Protocol, Self, TypeVar
+from typing import Annotated, Any, Literal, Protocol, TypeVar
+
+from typing_extensions import Self
 
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, model_validator
 from qdrant_client import grpc, models

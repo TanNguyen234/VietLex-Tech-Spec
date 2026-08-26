@@ -11,7 +11,9 @@ import time
 from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Annotated, Any, Literal, Protocol, Self
+from typing import Annotated, Any, Literal, Protocol
+
+from typing_extensions import Self
 
 from pydantic import (
     BaseModel,
