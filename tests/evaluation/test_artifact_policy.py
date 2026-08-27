@@ -34,7 +34,7 @@ def test_artifact_policy_detects_secret_assignments(tmp_path: Path) -> None:
     source = tmp_path / "settings.txt"
     source.write_text(
         "SUPABASE_" "SERVICE_ROLE_KEY=secret-value\n"
-        "Authorization: Bearer abcdefghijklmnopqrstuvwxyz",
+        "Authorization: Bearer " "abcdefghijklmnopqrstuvwxyz",
         encoding="utf-8",
     )
 
@@ -42,6 +42,18 @@ def test_artifact_policy_detects_secret_assignments(tmp_path: Path) -> None:
 
     assert [item.kind for item in violations] == ["secret", "secret"]
     assert all(item.path == "settings.txt" for item in violations)
+
+
+def test_artifact_policy_allows_empty_example_assignments(tmp_path: Path) -> None:
+    from scripts.check_repository_artifacts import audit_repository_artifacts
+
+    source = tmp_path / ".env.example"
+    source.write_text(
+        "QDRANT_API_KEY=\nQDRANT_COLLECTION=example\n",
+        encoding="utf-8",
+    )
+
+    assert audit_repository_artifacts(tmp_path, files=[source]) == []
 
 
 def test_manifest_accepts_hashed_artifact_metadata() -> None:

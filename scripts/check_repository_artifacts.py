@@ -17,7 +17,7 @@ class ArtifactViolation:
 _SECRET_PATTERNS = (
     re.compile(
         r"(?im)^(?:export\s+)?[A-Z][A-Z0-9_]*(?:API_KEY|SERVICE_ROLE_KEY|EMAIL_PASS)"
-        r"\s*=\s*(?!YOUR_|None|\$\{|<)[^\s#]+"
+        r"[ \t]*=[ \t]*(?!YOUR_|None|\$\{|<)[^\s#]+"
     ),
     re.compile(r"(?i)authorization\s*:\s*bearer\s+[A-Za-z0-9._-]{20,}"),
 )
