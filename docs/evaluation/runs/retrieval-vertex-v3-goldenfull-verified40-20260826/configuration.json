@@ -1,0 +1,25 @@
+{
+  "backend": "qdrant_v3_vertex_hybrid_rrf",
+  "collection": "vietlex-legal-rag-v3-vertex-1024",
+  "embedding_model": "gemini-embedding-2",
+  "dimension": 1024,
+  "retrieval_limit": 24,
+  "gold_policy": "all-required-verified",
+  "case_count": 40,
+  "rerank_trials": [
+    {
+      "mode": "none",
+      "return_limit": 3
+    },
+    {
+      "mode": "qdrant-only",
+      "model": "answerdotai/answerai-colbert-small-v1",
+      "return_limit": 3
+    },
+    {
+      "mode": "pinecone-only",
+      "model": "bge-reranker-v2-m3",
+      "status": "technical_error_monthly_limit"
+    }
+  ]
+}

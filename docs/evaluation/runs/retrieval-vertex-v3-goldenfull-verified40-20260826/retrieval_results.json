@@ -1,0 +1,71 @@
+{
+  "migration_state": {
+    "collection": "vietlex-legal-rag-v3-vertex-1024",
+    "remote_points": 22037,
+    "remote_status": "green",
+    "balanced_documents": 2000,
+    "planned_balanced_records": 20236,
+    "remote_points_after_balanced_migration": 20239,
+    "verified_gold_documents": [427301, 431147],
+    "full_gold_document_records": 1768,
+    "full_gold_document_uploaded": 1766,
+    "full_gold_document_checkpoint_skipped": 2,
+    "production_retrieval_changed": false
+  },
+  "raw_rrf_top24": {
+    "technical_errors": 0,
+    "no_candidate_cases": 0,
+    "latency_seconds": {"p50": 1.7851, "p95": 4.8954, "mean": 2.1808},
+    "document_recall_at_1": {"numerator": 53, "denominator": 53, "value": 1.0},
+    "document_recall_at_24": {"numerator": 53, "denominator": 53, "value": 1.0},
+    "article_recall_at_1": {"numerator": 25, "denominator": 30, "value": 0.8333},
+    "article_recall_at_3": {"numerator": 30, "denominator": 30, "value": 1.0},
+    "clause_recall_at_1": {"numerator": 10, "denominator": 14, "value": 0.7143},
+    "clause_recall_at_3": {"numerator": 13, "denominator": 14, "value": 0.9286},
+    "all_required_coverage_at_3": {"numerator": 39, "denominator": 40, "value": 0.975},
+    "specific_evidence_misses_at_24": {
+      "case_371": ["case_371_ctx02_cit01"]
+    }
+  },
+  "qdrant_colbert_top3": {
+    "provider": "qdrant",
+    "model": "answerdotai/answerai-colbert-small-v1",
+    "technical_errors": 0,
+    "no_candidate_cases": 0,
+    "latency_seconds": {"p50": 9.3043, "p95": 15.7046, "mean": 9.201},
+    "document_recall_at_1": {"numerator": 44, "denominator": 53, "value": 0.8302},
+    "document_recall_at_3": {"numerator": 48, "denominator": 53, "value": 0.9057},
+    "article_recall_at_1": {"numerator": 21, "denominator": 30, "value": 0.7},
+    "article_recall_at_3": {"numerator": 26, "denominator": 30, "value": 0.8667},
+    "clause_recall_at_1": {"numerator": 7, "denominator": 14, "value": 0.5},
+    "clause_recall_at_3": {"numerator": 11, "denominator": 14, "value": 0.7857},
+    "all_required_coverage_at_3": {"numerator": 33, "denominator": 40, "value": 0.825},
+    "specific_evidence_misses_at_3": {
+      "case_075": ["case_075_ctx01_cit01", "case_075_ctx02_cit01"],
+      "case_135": ["case_135_ctx01_cit01"],
+      "case_204": ["case_204_ctx01_cit01"],
+      "case_263": ["case_263_ctx01_cit01"],
+      "case_371": ["case_371_ctx02_cit01"],
+      "case_397": ["case_397_ctx01_cit01", "case_397_ctx02_cit01"],
+      "case_411": ["case_411_ctx01_cit01", "case_411_ctx02_cit01"]
+    }
+  },
+  "pinecone_bge_top3": {
+    "provider": "pinecone",
+    "model": "bge-reranker-v2-m3",
+    "scored_cases": 0,
+    "technical_errors": 40,
+    "error_type": "RateLimitError",
+    "status_code": 429,
+    "reason": "Monthly rerank request limit 500 reached; quality metrics are NOT SCORED."
+  },
+  "historical_qdrant_v2_comparator": {
+    "run_id": "retrieval-crosslane-b-verified40-20260823",
+    "document_recall_at_3": {"numerator": 50, "denominator": 53, "value": 0.9434},
+    "article_recall_at_3": {"numerator": 27, "denominator": 30, "value": 0.9},
+    "clause_recall_at_3": {"numerator": 12, "denominator": 14, "value": 0.8571},
+    "all_required_coverage": {"numerator": 34, "denominator": 40, "value": 0.85},
+    "retrieval_technical_errors": 0,
+    "latency_seconds": {"p50": 8.9153, "p95": 13.1542, "mean": 8.7398}
+  }
+}

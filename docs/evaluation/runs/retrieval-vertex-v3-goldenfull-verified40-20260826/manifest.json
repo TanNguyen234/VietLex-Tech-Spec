@@ -1,0 +1,33 @@
+{
+  "run_id": "retrieval-vertex-v3-goldenfull-verified40-20260826",
+  "utc_timestamp": "2026-08-26T11:35:32.4158624Z",
+  "git_sha": "aa76cf855699d6fd98f94b73b84cc20fb3cf9112",
+  "git_dirty": true,
+  "git_tracked_dirty": false,
+  "git_staged_dirty": false,
+  "git_untracked_dirty": true,
+  "git_diff_sha256": "62ab7162df462f75410263fc99f3ccfcbf1ae362a94317e24fd07a2cfa9b9622",
+  "git_diff_status": "ok",
+  "source_state_sha256": "17f81fbdd77080b585bea3c3214b59aa14d379d2188b550ae01ce01ea1af86ec",
+  "dataset_revision": "4d4e10b201544e8a4c49a1d3fa496595a7d486d0",
+  "dataset_sha256": "d6e125030e8dda700667ba00f25162fac76472a9bfa2d087f54e2b5bc73a1fee",
+  "gold_label_sidecar_sha256": "f6dfe09a6f32697b468d43c36bd9fd82d5fe5c0c4b0e5d9684ca3e4d0c1f5b67",
+  "configuration_fingerprint": "2ebba67dfecec2b7f97b1e2972a9e7c31674829cee4d0c4839e01d2941562f6f",
+  "selected_case_count": 40,
+  "verified_evidence_count": 53,
+  "execution": [
+    "python run_vertex_qdrant_migration.py --max-documents 2000 --max-points 32000",
+    "python run_vertex_qdrant_migration.py --max-documents 2000 --max-points 32000 --batch-size 4 --concurrency 4 --allow-remote-write",
+    "PYTHONPATH=<repository-root> python data/migration/upload_golden_full.py",
+    "PowerShell here-string piped to python - (40-case raw RRF evaluator in the Codex task transcript)",
+    "PowerShell here-string piped to python - (40-case Qdrant-only reranker evaluator in the Codex task transcript)",
+    "PowerShell here-string piped to python - (40-case Pinecone-only reranker attempt in the Codex task transcript)"
+  ],
+  "limitations": [
+    "The focused evaluator was executed inline and is not a committed reusable entrypoint.",
+    "Raw candidate payloads were not persisted; this artifact preserves aggregate numerators, denominators, case misses, provider status, and latency.",
+    "The Qdrant v2 comparator is the prior immutable live run from 2026-08-23, not a simultaneous rerun.",
+    "All 53 verified evidence labels come from two documents that were deliberately fully indexed; this is a structural retrieval canary, not a representative production benchmark."
+  ],
+  "production_retrieval_changed": false
+}

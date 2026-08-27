@@ -1,0 +1,22 @@
+{
+  "mode": "remote",
+  "collection": "vietlex-legal-rag-v3-vertex-1024",
+  "embedding_provider": "google_vertex_ai",
+  "embedding_model": "gemini-embedding-2",
+  "vector_size": 1024,
+  "selected_documents": 5000,
+  "records_before_point_cap": 50469,
+  "planned_points": 50000,
+  "document_ids_sha256": "9fa80cbeb75c2780328b6f820a138d4a3910d9ef60b49c5952069efd2420e332",
+  "record_ids_sha256": "21a1f573d7d7c8ee1ba23e76289dc37df37874b7c04cc560882452e90d2e4f91",
+  "estimated_dense_bytes": 204800000,
+  "production_retrieval_changed": false,
+  "collection_created": false,
+  "upload": {
+    "attempted": 50000,
+    "uploaded": 14064,
+    "skipped": 35936
+  },
+  "remote_points": 51801,
+  "remote_status": "green"
+}

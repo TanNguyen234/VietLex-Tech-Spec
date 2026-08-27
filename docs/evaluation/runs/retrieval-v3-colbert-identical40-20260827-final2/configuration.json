@@ -1,0 +1,63 @@
+{
+  "requested_backend": "vertex-qdrant-v3",
+  "effective_backend": "vertex-qdrant-v3",
+  "ranking_mode": "qdrant-colbert",
+  "candidate_pool_source": {
+    "run_id": "retrieval-v3-raw-verified40-20260827-final5",
+    "configuration_fingerprint": "0cb40e49d7719b5d66e810c3b54b6ae8efbe2f91b3d08e4c703fae92d3e7f7c1",
+    "source_state_sha256": "b84fa91717df8165f4670b52ed482c58fc2c1a1907d6a2af4e945a883272ae94",
+    "selected_case_ids_sha256": "02b147618710247b69406c62c37ee1733412cf99c803a3b818cfc0040e78cfd6"
+  },
+  "profile_name": "separated_intent",
+  "profile": {
+    "name": "separated_intent",
+    "retrieval_document_limit": 24,
+    "resolved_document_limit": 16,
+    "local_chunks_per_document": 4,
+    "rerank_input_limit": 24,
+    "rerank_return_limit": 3,
+    "final_evidence_limit": 3,
+    "final_context_token_limit": 720,
+    "intent_scoring_enabled": true,
+    "rewrite_mode": "off",
+    "reranker_mode": "qdrant-only"
+  },
+  "eval_mode": "retrieval-only",
+  "judge_mode": "none",
+  "guardrail_mode": "off",
+  "rewrite_mode": "off",
+  "reranker_provider": "qdrant-only",
+  "gold_policy": "all-required-verified",
+  "selected_case_count": 40,
+  "selected_case_ids_sha256": "02b147618710247b69406c62c37ee1733412cf99c803a3b818cfc0040e78cfd6",
+  "retrieval_runtime": {
+    "backend": "vertex-qdrant-v3",
+    "collection": "vietlex-legal-rag-v3-vertex-1024",
+    "dense_model": "gemini-embedding-2",
+    "dense_dimension": 1024,
+    "sparse_model": "FastSparseEncoder",
+    "fallback_backend": null
+  },
+  "configured_provider_models": {
+    "dense": {
+      "provider": "Google Vertex AI",
+      "model": "gemini-embedding-2"
+    },
+    "reranker_primary": {
+      "provider": "qdrant",
+      "model": "answerdotai/answerai-colbert-small-v1"
+    },
+    "reranker_fallback": {
+      "provider": "pinecone",
+      "model": "bge-reranker-v2-m3"
+    },
+    "generation": {
+      "mode": "not_applicable",
+      "candidates": []
+    },
+    "judge": {
+      "mode": "none",
+      "candidates": []
+    }
+  }
+}

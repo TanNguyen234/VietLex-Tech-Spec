@@ -1,0 +1,196 @@
+{
+  "run_id": "retrieval-v3-raw-balanced50-20260827-final",
+  "utc_timestamp": "2026-08-27T11:34:14.561209+00:00",
+  "git_sha": "aa76cf855699d6fd98f94b73b84cc20fb3cf9112",
+  "git_dirty": true,
+  "git_tracked_dirty": true,
+  "git_staged_dirty": false,
+  "git_untracked_dirty": true,
+  "git_diff_sha256": "17c2adb75c72eb7088976564cbcb207d7ce98509b375560c9b67204634c90b00",
+  "git_diff_status": "ok",
+  "git_diff_reason": null,
+  "source_state_sha256": "b84fa91717df8165f4670b52ed482c58fc2c1a1907d6a2af4e945a883272ae94",
+  "provenance_status": "ok",
+  "provenance_error": null,
+  "repository_root": "D:\\Download\\ProfessionalLegalRAG",
+  "dataset_revision": "4d4e10b201544e8a4c49a1d3fa496595a7d486d0",
+  "dataset_sha256": "d6e125030e8dda700667ba00f25162fac76472a9bfa2d087f54e2b5bc73a1fee",
+  "evaluation_dataset_sha256": "d6e125030e8dda700667ba00f25162fac76472a9bfa2d087f54e2b5bc73a1fee",
+  "gold_label_sidecar_sha256": "f6dfe09a6f32697b468d43c36bd9fd82d5fe5c0c4b0e5d9684ca3e4d0c1f5b67",
+  "gold_policy": "none",
+  "selected_case_count": 50,
+  "selected_case_ids": [
+    "case_017",
+    "case_019",
+    "case_021",
+    "case_031",
+    "case_036",
+    "case_039",
+    "case_043",
+    "case_061",
+    "case_065",
+    "case_069",
+    "case_075",
+    "case_101",
+    "case_105",
+    "case_115",
+    "case_116",
+    "case_121",
+    "case_127",
+    "case_133",
+    "case_135",
+    "case_165",
+    "case_171",
+    "case_177",
+    "case_183",
+    "case_187",
+    "case_194",
+    "case_204",
+    "case_227",
+    "case_243",
+    "case_253",
+    "case_257",
+    "case_261",
+    "case_263",
+    "case_285",
+    "case_309",
+    "case_323",
+    "case_325",
+    "case_329",
+    "case_331",
+    "case_339",
+    "case_355",
+    "case_361",
+    "case_362",
+    "case_371",
+    "case_374",
+    "case_375",
+    "case_379",
+    "case_397",
+    "case_411",
+    "case_415",
+    "case_417"
+  ],
+  "selected_case_ids_sha256": "56ae294f9698569ab4f7ae11ed87aabfa7c79b616919378dc0f5d4e32e53bdf3",
+  "configuration_fingerprint": "566bc5db4089dfe5a6e7ed714afbe5e931d6cccacb45fb7e06586d7bcc657500",
+  "command": "run_retrieval_eval.py --backend vertex-qdrant-v3 --ranking raw-rrf --profile separated_intent --rewrite off --reranker current --concurrency 1 --gold-policy none --case-ids case_017 case_019 case_021 case_031 case_036 case_039 case_043 case_061 case_065 case_069 case_075 case_101 case_105 case_115 case_116 case_121 case_127 case_133 case_135 case_165 case_171 case_177 case_183 case_187 case_194 case_204 case_227 case_243 case_253 case_257 case_261 case_263 case_285 case_309 case_323 case_325 case_329 case_331 case_339 case_355 case_361 case_362 case_371 case_374 case_375 case_379 case_397 case_411 case_415 case_417 --run-id retrieval-v3-raw-balanced50-20260827-final",
+  "eval_mode": "retrieval-only",
+  "judge_mode": "none",
+  "guardrail_mode": "off",
+  "rewrite_mode": "off",
+  "reranker_provider": "current",
+  "profile_name": "separated_intent",
+  "configuration": {
+    "requested_backend": "vertex-qdrant-v3",
+    "effective_backend": "vertex-qdrant-v3",
+    "ranking_mode": "raw-rrf",
+    "candidate_pool_source": null,
+    "profile_name": "separated_intent",
+    "profile": {
+      "name": "separated_intent",
+      "retrieval_document_limit": 24,
+      "resolved_document_limit": 16,
+      "local_chunks_per_document": 4,
+      "rerank_input_limit": 24,
+      "rerank_return_limit": 3,
+      "final_evidence_limit": 3,
+      "final_context_token_limit": 720,
+      "intent_scoring_enabled": true,
+      "rewrite_mode": "off",
+      "reranker_mode": "current"
+    },
+    "eval_mode": "retrieval-only",
+    "judge_mode": "none",
+    "guardrail_mode": "off",
+    "rewrite_mode": "off",
+    "reranker_provider": "current",
+    "gold_policy": "none",
+    "selected_case_count": 50,
+    "selected_case_ids_sha256": "56ae294f9698569ab4f7ae11ed87aabfa7c79b616919378dc0f5d4e32e53bdf3",
+    "retrieval_runtime": {
+      "backend": "vertex-qdrant-v3",
+      "collection": "vietlex-legal-rag-v3-vertex-1024",
+      "dense_model": "gemini-embedding-2",
+      "dense_dimension": 1024,
+      "sparse_model": "FastSparseEncoder",
+      "fallback_backend": null
+    },
+    "configured_provider_models": {
+      "dense": {
+        "provider": "Google Vertex AI",
+        "model": "gemini-embedding-2"
+      },
+      "reranker_primary": {
+        "provider": "qdrant",
+        "model": "answerdotai/answerai-colbert-small-v1"
+      },
+      "reranker_fallback": {
+        "provider": "pinecone",
+        "model": "bge-reranker-v2-m3"
+      },
+      "generation": {
+        "mode": "not_applicable",
+        "candidates": []
+      },
+      "judge": {
+        "mode": "none",
+        "candidates": []
+      }
+    }
+  },
+  "configured_provider_models": {
+    "dense": {
+      "provider": "Google Vertex AI",
+      "model": "gemini-embedding-2"
+    },
+    "reranker_primary": {
+      "provider": "qdrant",
+      "model": "answerdotai/answerai-colbert-small-v1"
+    },
+    "reranker_fallback": {
+      "provider": "pinecone",
+      "model": "bge-reranker-v2-m3"
+    },
+    "generation": {
+      "mode": "not_applicable",
+      "candidates": []
+    },
+    "judge": {
+      "mode": "none",
+      "candidates": []
+    }
+  },
+  "artifact_files": [
+    {
+      "path": "configuration.json",
+      "sha256": "75108e07dd1404d237a4368aa2cf26fcabdcda79124a2446332a1e59b59c0aa8",
+      "bytes": 1680,
+      "storage": "git"
+    },
+    {
+      "path": "evaluation_case_set.json",
+      "sha256": "cb4d14cb4867f20c14ccec9914f858931dd67386e1867cb3bb80d558f76a4be7",
+      "bytes": 1013,
+      "storage": "git"
+    },
+    {
+      "path": "quality_gate.json",
+      "sha256": "f6e36a5e4d744fa1db83680de7367346c0389432c2380d4c06da66743b039689",
+      "bytes": 475,
+      "storage": "git"
+    },
+    {
+      "path": "report.md",
+      "sha256": "ec17b69ddbf9f09a2a027f7355b8f680df7ec7736346d6e8d60101c8dd0e17c6",
+      "bytes": 10324,
+      "storage": "git"
+    },
+    {
+      "path": "retrieval_results.json",
+      "sha256": "07f02cd906cbb4719e2bd93081acb2dce30ea5fdf0e369cdf5f1b482073b4140",
+      "bytes": 6800666,
+      "storage": "git"
+    }
+  ],
+  "code_metric_version": "3.0.0"
+}
