@@ -5,6 +5,8 @@ import unicodedata
 from collections import Counter
 from typing import Any, Dict, List, Optional, Set, Tuple
 
+from app.evaluation.legal_citations import LegalCitation, parse_legal_citations
+
 
 ANSWER_QUALITY_SKIP_STATUSES = {
     "input_guardrail_error",
@@ -229,6 +231,25 @@ def extract_legal_citations(text: str) -> Set[str]:
     return set(" ".join(m.casefold().split()) for m in matches)
 
 
+def _citation_satisfies(
+    candidate: LegalCitation,
+    requirement: LegalCitation,
+) -> bool:
+    """Return whether candidate contains every locator present in requirement."""
+    return all(
+        not expected or actual.casefold() == expected.casefold()
+        for actual, expected in (
+            (candidate.document_number, requirement.document_number),
+            (candidate.article, requirement.article),
+            (candidate.clause, requirement.clause),
+        )
+    )
+
+
+def _parsed_citation_set(text: str) -> set[LegalCitation]:
+    return set(parse_legal_citations(text))
+
+
 def calculate_case_answer_metrics(
     pred_response: str,
     ref_answer: str,
@@ -261,17 +282,54 @@ def calculate_case_answer_metrics(
     ent_p, ent_r = calculate_pattern_precision_recall(extracted["entities"], expected_entities or [])
 
     # Legal citation metrics
-    pred_cites = extract_legal_citations(pred_response)
-    ref_cites = extract_legal_citations(ref_answer)
-    if ref_cites:
-        common_cites = len(pred_cites & ref_cites)
-        cite_prec = round(common_cites / len(pred_cites), 4) if pred_cites else 0.0
-        cite_rec = round(common_cites / len(ref_cites), 4)
-        cite_cov = round(common_cites / len(ref_cites), 4)
-        invalid_cites = len(pred_cites - ref_cites)
-        invalid_cite_rate = round(invalid_cites / len(pred_cites), 4) if pred_cites else 0.0
+    pred_cites = _parsed_citation_set(pred_response)
+    ref_cites = _parsed_citation_set(ref_answer)
+    evidence_cites: set[LegalCitation] = set()
+    for context in retrieved_contexts:
+        evidence_cites.update(parse_legal_citations(context))
+
+    supported_pred_cites = {
+        citation
+        for citation in pred_cites
+        if any(
+            _citation_satisfies(evidence, citation)
+            for evidence in evidence_cites
+        )
+    }
+    if evidence_cites:
+        cite_prec = (
+            round(len(supported_pred_cites) / len(pred_cites), 4)
+            if pred_cites
+            else 0.0
+        )
+        invalid_cite_rate = (
+            round(
+                len(pred_cites - supported_pred_cites) / len(pred_cites),
+                4,
+            )
+            if pred_cites
+            else 0.0
+        )
     else:
-        cite_prec, cite_rec, cite_cov, invalid_cite_rate = None, None, None, None
+        cite_prec = None
+        invalid_cite_rate = None
+
+    if ref_cites:
+        covered_reference_cites = {
+            citation
+            for citation in ref_cites
+            if any(
+                _citation_satisfies(predicted, citation)
+                for predicted in pred_cites
+            )
+        }
+        cite_rec = round(
+            len(covered_reference_cites) / len(ref_cites),
+            4,
+        )
+        cite_cov = cite_rec
+    else:
+        cite_rec, cite_cov = None, None
 
     return {
         "applicable": status not in ANSWER_QUALITY_SKIP_STATUSES,

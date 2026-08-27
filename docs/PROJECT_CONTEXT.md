@@ -29,6 +29,7 @@ The current priority is to establish a verified, measurable, reproducible, and d
 - NeMo input/output guardrails use the same Vertex-primary adapter; legacy direct APIs remain secondary models. OmniGate is retained for evaluator use, not as the guardrail primary.
 - Query rewriting is OFF by default and remains an explicit evaluation experiment.
 - `gemini-embedding-2` is integrated only for isolated 384/768/1024 probes. Production dense retrieval remains E5-small 384d.
+- The 1024d Vertex/Qdrant v3 lane has a typed offline evaluation adapter. Live evaluation must select `--backend vertex-qdrant-v3` explicitly and records requested/effective backend plus ranking mode. Optional runtime shadowing is default-off and cannot replace production evidence.
 - Online `/chat` never runs Ragas. Optional offline Ragas uses Vertex AI `gemini-3.5-flash` through ADC as its primary judge; legacy APIs remain best-effort fallbacks.
 
 ## Opt-in Qdrant structural pilot

@@ -312,6 +312,91 @@ async def test_upload_is_resumable_after_acknowledged_batch(tmp_path) -> None:
     assert len(client.upserts) == 1
 
 
+@pytest.mark.asyncio
+async def test_upload_reports_progress_after_each_batch(tmp_path) -> None:
+    from app.ingestion.structural_index import StructuralRecord
+    from app.ingestion.vertex_qdrant_migration import (
+        MigrationCheckpoint,
+        VertexQdrantContract,
+        upload_vertex_records,
+    )
+
+    def record(index: int) -> StructuralRecord:
+        return StructuralRecord(
+            record_id=f"12345678-1234-5678-1234-{index:012d}",
+            body=f"Dieu {index}. Noi dung.",
+            document_id=index,
+            document_number=f"{index}/2026/QH15",
+            title="Luat thu nghiem",
+            source_url=f"https://example.test/{index}",
+            legal_type="Luat",
+            issuing_authority="Quoc hoi",
+            issuance_date="2026-01-01",
+            article=f"Dieu {index}",
+            clause=None,
+            heading_path=f"Dieu {index}",
+            citation=f"{index}/2026/QH15, Dieu {index}",
+            token_count=4,
+            dataset_revision="revision",
+            content_sha256="a" * 64,
+            chunk_sha256=f"{index:064x}",
+        )
+
+    class Provider:
+        async def embed_document(self, _text, *, title, output_dimensionality):
+            assert title == "Luat thu nghiem"
+            return SimpleNamespace(values=(0.0,) * output_dimensionality)
+
+    class Encoder:
+        def encode_document(self, _text):
+            return SimpleNamespace(indices=[1], values=[1.0])
+
+    class Client:
+        async def upsert(self, **_kwargs):
+            return None
+
+    progress: list[dict[str, int]] = []
+    records = [record(1), record(2), record(3)]
+    contract = VertexQdrantContract()
+
+    report = await upload_vertex_records(
+        records,
+        provider=Provider(),
+        client=Client(),
+        sparse_encoder=Encoder(),
+        checkpoint=MigrationCheckpoint(tmp_path / "checkpoint.sqlite3", contract),
+        contract=contract,
+        batch_size=2,
+        concurrency=2,
+        allow_remote_write=True,
+        progress_callback=progress.append,
+    )
+
+    assert report == {"attempted": 3, "uploaded": 3, "skipped": 0}
+    assert progress == [
+        {"attempted": 3, "pending": 3, "uploaded": 2, "skipped": 0},
+        {"attempted": 3, "pending": 3, "uploaded": 3, "skipped": 0},
+    ]
+
+
+@pytest.mark.asyncio
+async def test_migration_rejects_nonpositive_progress_interval() -> None:
+    from run_vertex_qdrant_migration import _run
+
+    args = SimpleNamespace(
+        max_documents=1,
+        max_points=1,
+        batch_size=1,
+        concurrency=1,
+        progress_every=0,
+        allow_create=False,
+        allow_remote_write=False,
+    )
+
+    with pytest.raises(ValueError, match="progress interval"):
+        await _run(args)
+
+
 def test_checkpoint_rejects_changed_remote_contract(tmp_path) -> None:
     from app.ingestion.vertex_qdrant_migration import (
         MigrationCheckpoint,
@@ -326,6 +411,23 @@ def test_checkpoint_rejects_changed_remote_contract(tmp_path) -> None:
             path,
             VertexQdrantContract(collection_name="vietlex-other-vertex-1024"),
         )
+
+
+def test_checkpoint_filters_missing_record_ids_in_bulk(tmp_path) -> None:
+    from app.ingestion.vertex_qdrant_migration import (
+        MigrationCheckpoint,
+        VertexQdrantContract,
+    )
+
+    checkpoint = MigrationCheckpoint(
+        tmp_path / "checkpoint.sqlite3",
+        VertexQdrantContract(),
+    )
+    checkpoint.acknowledge(["record-2", "record-4"])
+
+    assert checkpoint.missing_record_ids(
+        ["record-1", "record-2", "record-3", "record-4"]
+    ) == {"record-1", "record-3"}
 
 
 @pytest.mark.asyncio

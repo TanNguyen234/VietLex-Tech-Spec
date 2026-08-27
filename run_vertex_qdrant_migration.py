@@ -42,6 +42,12 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--concurrency", type=int, default=4)
     parser.add_argument(
+        "--progress-every",
+        type=int,
+        default=25,
+        help="Print upload progress to stderr every N batches (default: 25).",
+    )
+    parser.add_argument(
         "--probe-query",
         help="Optional live hybrid/RRF query after upload; no answer generation.",
     )
@@ -60,6 +66,8 @@ async def _run(args: argparse.Namespace) -> dict[str, object]:
     settings = get_settings()
     if min(args.max_documents, args.max_points, args.batch_size, args.concurrency) <= 0:
         raise ValueError("document, point, batch, and concurrency limits must be positive")
+    if args.progress_every <= 0:
+        raise ValueError("progress interval must be positive")
     if args.allow_create and not args.allow_remote_write:
         raise PermissionError("--allow-create also requires --allow-remote-write")
     max_chunks = (
@@ -78,6 +86,11 @@ async def _run(args: argparse.Namespace) -> dict[str, object]:
         legal_types=legal_types,
         limit=args.max_documents,
     )
+    print(
+        f"[vertex-qdrant] selected_documents={len(document_ids)}",
+        file=sys.stderr,
+        flush=True,
+    )
     records = build_vertex_records(
         store,
         document_ids,
@@ -88,6 +101,12 @@ async def _run(args: argparse.Namespace) -> dict[str, object]:
         max_chunks_per_document=max_chunks,
     )
     planned_records = records[: args.max_points]
+    print(
+        "[vertex-qdrant] "
+        f"records_before_point_cap={len(records)} planned_points={len(planned_records)}",
+        file=sys.stderr,
+        flush=True,
+    )
     base = {
         "mode": "remote" if args.allow_remote_write else "dry-run",
         "collection": contract.collection_name,
@@ -128,6 +147,23 @@ async def _run(args: argparse.Namespace) -> dict[str, object]:
             max_nonzero_terms=settings.PINECONE_SPARSE_MAX_NONZERO,
         )
         provider = get_vertex_provider()
+        progress_seen = 0
+
+        def report_progress(progress: dict[str, int]) -> None:
+            nonlocal progress_seen
+            progress_seen += 1
+            if progress_seen % args.progress_every != 0 and (
+                progress["uploaded"] < progress["pending"]
+            ):
+                return
+            print(
+                "[vertex-qdrant] "
+                f"uploaded={progress['uploaded']}/{progress['pending']} "
+                f"skipped={progress['skipped']}",
+                file=sys.stderr,
+                flush=True,
+            )
+
         report = await upload_vertex_records(
             planned_records,
             provider=provider,
@@ -141,6 +177,7 @@ async def _run(args: argparse.Namespace) -> dict[str, object]:
             batch_size=args.batch_size,
             concurrency=args.concurrency,
             allow_remote_write=True,
+            progress_callback=report_progress,
         )
         info = await client.get_collection(contract.collection_name)
         base.update(

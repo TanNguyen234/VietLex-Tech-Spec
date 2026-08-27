@@ -29,6 +29,13 @@ async def test_readiness_reports_each_dependency_without_provider_calls(tmp_path
             "legal_fts": "ready",
             "mongodb": "ready",
         },
+        "runtime": {
+            "retrieval_backend": "pinecone-v1",
+            "vertex_qdrant_shadow_enabled": False,
+            "pinecone_configured": False,
+            "qdrant_configured": False,
+            "vertex_project_configured": False,
+        },
     }
 
 

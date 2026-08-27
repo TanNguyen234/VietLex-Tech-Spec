@@ -8,7 +8,7 @@ import sqlite3
 from dataclasses import dataclass
 from itertools import zip_longest
 from pathlib import Path
-from typing import Protocol, Sequence
+from typing import Callable, Protocol, Sequence
 from uuid import NAMESPACE_URL, uuid5
 
 from qdrant_client import models
@@ -322,6 +322,24 @@ class MigrationCheckpoint:
             ).fetchone()
         return row is not None
 
+    def missing_record_ids(self, record_ids: Sequence[str]) -> set[str]:
+        requested = set(record_ids)
+        if not requested:
+            return set()
+        found: set[str] = set()
+        values = list(requested)
+        with sqlite3.connect(self.path) as connection:
+            for offset in range(0, len(values), 900):
+                batch = values[offset : offset + 900]
+                placeholders = ",".join("?" for _ in batch)
+                rows = connection.execute(
+                    "SELECT record_id FROM uploaded_records "
+                    f"WHERE record_id IN ({placeholders})",
+                    batch,
+                ).fetchall()
+                found.update(str(row[0]) for row in rows)
+        return requested - found
+
     def acknowledge(self, record_ids: Sequence[str]) -> None:
         with sqlite3.connect(self.path) as connection:
             connection.executemany(
@@ -341,12 +359,14 @@ async def upload_vertex_records(
     batch_size: int,
     concurrency: int,
     allow_remote_write: bool,
+    progress_callback: Callable[[dict[str, int]], None] | None = None,
 ) -> dict[str, int]:
     if not allow_remote_write:
         raise PermissionError("allow_remote_write is required for Qdrant upload")
     if batch_size <= 0 or concurrency <= 0:
         raise ValueError("batch size and concurrency must be positive")
-    pending = [record for record in records if not checkpoint.contains(record.record_id)]
+    missing = checkpoint.missing_record_ids([record.record_id for record in records])
+    pending = [record for record in records if record.record_id in missing]
     skipped = len(records) - len(pending)
     uploaded = 0
     semaphore = asyncio.Semaphore(concurrency)
@@ -377,6 +397,15 @@ async def upload_vertex_records(
         )
         checkpoint.acknowledge([record.record_id for record in batch])
         uploaded += len(batch)
+        if progress_callback is not None:
+            progress_callback(
+                {
+                    "attempted": len(records),
+                    "pending": len(pending),
+                    "uploaded": uploaded,
+                    "skipped": skipped,
+                }
+            )
     return {
         "attempted": len(records),
         "uploaded": uploaded,
@@ -393,36 +422,14 @@ async def query_vertex_records(
     contract: VertexQdrantContract,
     limit: int,
 ) -> list[object]:
-    normalized = " ".join(query.split())
-    if not normalized or limit <= 0:
-        raise ValueError("query must be nonblank and limit must be positive")
-    dense = await provider.embed_query(
-        normalized,
-        output_dimensionality=contract.vector_size,
-        task="question_answering",
-    )
-    sparse = sparse_encoder.encode_query(normalized)
-    prefetch_limit = max(20, limit * 4)
-    response = await client.query_points(
-        collection_name=contract.collection_name,
-        prefetch=[
-            models.Prefetch(
-                query=list(dense.values),
-                using=contract.dense_vector_name,
-                limit=prefetch_limit,
-            ),
-            models.Prefetch(
-                query=models.SparseVector(
-                    indices=list(sparse.indices),
-                    values=list(sparse.values),
-                ),
-                using=contract.sparse_vector_name,
-                limit=prefetch_limit,
-            ),
-        ],
-        query=models.FusionQuery(fusion=models.Fusion.RRF),
+    from app.services.vertex_qdrant_retrieval import query_vertex_points
+
+    return await query_vertex_points(
+        query,
+        sparse_query=query,
+        provider=provider,
+        client=client,
+        sparse_encoder=sparse_encoder,
+        contract=contract,
         limit=limit,
-        with_payload=True,
-        with_vectors=False,
     )
-    return list(response.points)

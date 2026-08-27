@@ -2,8 +2,28 @@ from typing import Any
 from app.evaluation.schemas import RetrievalStageCapacities
 from app.evaluation.profiles import EvaluationProfile
 
-def build_stage_capacities(profile: EvaluationProfile, settings: Any) -> RetrievalStageCapacities:
-    if getattr(settings, "STRUCTURAL_BACKEND_ENABLED", False):
+def build_stage_capacities(
+    profile: EvaluationProfile,
+    settings: Any,
+    *,
+    backend: str = "production",
+) -> RetrievalStageCapacities:
+    if backend == "vertex-qdrant-v3":
+        return RetrievalStageCapacities(
+            pinecone_document_limit=None,
+            fts_document_limit=None,
+            merged_document_limit=profile.rerank_input_limit,
+            resolved_document_limit=profile.rerank_input_limit,
+            structural_chunk_limit=profile.rerank_input_limit,
+            local_chunks_limit=None,
+            rerank_input_limit=profile.rerank_input_limit,
+            rerank_return_limit=profile.final_evidence_limit,
+            final_evidence_limit=profile.final_evidence_limit,
+        )
+    if backend == "qdrant-v2-parallel" or (
+        backend == "production"
+        and getattr(settings, "STRUCTURAL_BACKEND_ENABLED", False)
+    ):
         fused_limit = settings.STRUCTURAL_FUSED_LIMIT
         return RetrievalStageCapacities(
             pinecone_document_limit=settings.STRUCTURAL_DENSE_TOP_K,

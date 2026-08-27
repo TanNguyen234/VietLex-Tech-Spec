@@ -337,11 +337,19 @@ async def retrieve_configured_legal_evidence(
     user_query: str,
     profile: Any,
 ) -> RetrievalOutcome:
-    if not get_settings().STRUCTURAL_BACKEND_ENABLED:
-        return await _legacy_retrieval_outcome(
+    settings = get_settings()
+    if not settings.STRUCTURAL_BACKEND_ENABLED:
+        production = await _legacy_retrieval_outcome(
             rewritten_query,
             user_query,
             profile,
+        )
+        return await _attach_vertex_shadow(
+            production,
+            rewritten_query=rewritten_query,
+            user_query=user_query,
+            profile=profile,
+            settings=settings,
         )
     async def run_structural() -> RetrievalOutcome:
         try:
@@ -389,10 +397,72 @@ async def retrieve_configured_legal_evidence(
             )
 
     structural, legacy = await asyncio.gather(run_structural(), run_legacy())
-    return await _parallel_retrieval_outcome(
+    production = await _parallel_retrieval_outcome(
         structural,
         legacy,
         query=rewritten_query,
+    )
+    return await _attach_vertex_shadow(
+        production,
+        rewritten_query=rewritten_query,
+        user_query=user_query,
+        profile=profile,
+        settings=settings,
+    )
+
+
+async def _run_vertex_shadow(
+    rewritten_query: str,
+    user_query: str,
+    profile: Any,
+) -> RetrievalOutcome:
+    from app.evaluation.retrieval_backends import retrieve_for_evaluation
+
+    return await retrieve_for_evaluation(
+        "vertex-qdrant-v3",
+        dense_query=rewritten_query,
+        sparse_query=user_query,
+        profile=profile,
+        ranking="raw-rrf",
+        case_id="runtime-shadow",
+    )
+
+
+async def _attach_vertex_shadow(
+    production: RetrievalOutcome,
+    *,
+    rewritten_query: str,
+    user_query: str,
+    profile: Any,
+    settings: Any,
+) -> RetrievalOutcome:
+    if not getattr(settings, "VERTEX_QDRANT_SHADOW_ENABLED", False):
+        return production
+    try:
+        shadow = await asyncio.wait_for(
+            _run_vertex_shadow(rewritten_query, user_query, profile),
+            timeout=settings.VERTEX_QDRANT_SHADOW_TIMEOUT_SECONDS,
+        )
+        pool = shadow.diagnostics.get("candidate_pool") or {}
+        shadow_diagnostics = {
+            "status": shadow.status,
+            "candidate_ids_sha256": pool.get("candidate_ids_sha256"),
+            "latency": shadow.latency,
+        }
+    except Exception as error:
+        shadow_diagnostics = {
+            "status": "technical_error",
+            "error_type": type(error).__name__,
+        }
+    return RetrievalOutcome(
+        evidence=production.evidence,
+        latency=production.latency,
+        status=production.status,
+        diagnostics={
+            **production.diagnostics,
+            "vertex_shadow": shadow_diagnostics,
+        },
+        error=production.error,
     )
 
 

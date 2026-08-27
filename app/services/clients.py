@@ -18,6 +18,7 @@ _pinecone_client: Pinecone | None = None
 _pinecone_index: object | None = None
 _qdrant_inference_client: QdrantClient | None = None
 _remote_reranker: RemoteReranker | None = None
+_qdrant_only_reranker: RemoteReranker | None = None
 
 
 def get_http_client() -> httpx.AsyncClient:
@@ -79,9 +80,20 @@ def get_remote_reranker() -> RemoteReranker:
     return _remote_reranker
 
 
+def get_qdrant_only_reranker() -> RemoteReranker:
+    global _qdrant_only_reranker
+    if _qdrant_only_reranker is None:
+        _qdrant_only_reranker = RemoteReranker(
+            settings=get_settings(),
+            qdrant=get_qdrant_inference_client(),
+            pinecone=None,
+        )
+    return _qdrant_only_reranker
+
+
 async def close_clients() -> None:
     global _http_client, _pinecone_client, _pinecone_index
-    global _qdrant_inference_client, _remote_reranker
+    global _qdrant_inference_client, _remote_reranker, _qdrant_only_reranker
     if _http_client is not None:
         await _http_client.aclose()
     for client in (
@@ -97,3 +109,4 @@ async def close_clients() -> None:
     _pinecone_index = None
     _qdrant_inference_client = None
     _remote_reranker = None
+    _qdrant_only_reranker = None

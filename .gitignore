@@ -45,6 +45,7 @@ app/data/*.json.gz
 data/huggingface/
 data/.tmp/
 data/tmp/
+data/migration/
 *.md.report
 # Added by code-review-graph
 .code-review-graph/

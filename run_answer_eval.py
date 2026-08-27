@@ -26,6 +26,7 @@ from app.evaluation.run_manifest import (
     atomic_write_json,
     build_run_configuration,
     calculate_configuration_fingerprint,
+    collect_artifact_files,
     create_run_manifest,
     generate_unique_run_id,
     prepare_run_directory,
@@ -90,6 +91,23 @@ def build_parser() -> argparse.ArgumentParser:
         help="Reranker provider selection (default: current)",
     )
     parser.add_argument(
+        "--backend",
+        choices=[
+            "production",
+            "pinecone-v1",
+            "qdrant-v2-parallel",
+            "vertex-qdrant-v3",
+        ],
+        default="production",
+        help="Explicit retrieval backend identity (default: production)",
+    )
+    parser.add_argument(
+        "--ranking",
+        choices=["raw-rrf", "qdrant-colbert"],
+        default="raw-rrf",
+        help="Vertex/Qdrant v3 ranking mode (default: raw-rrf)",
+    )
+    parser.add_argument(
         "--concurrency", type=int, default=1, help="Pipeline concurrency (default: 1)"
     )
     parser.add_argument(
@@ -117,6 +135,12 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["none", "ragas"],
         default="none",
         help="LLM judge mode (default: none)",
+    )
+    parser.add_argument(
+        "--retrieval-run",
+        type=Path,
+        default=None,
+        help="Passing immutable retrieval run required for Ragas or experimental backends",
     )
     parser.add_argument(
         "--require-clean-git",
@@ -163,6 +187,9 @@ async def run_stage_a_online(
     settings: Any,
     guardrails_mode: str,
     effective_profile: EvaluationProfile,
+    backend: str = "production",
+    ranking: str = "raw-rrf",
+    precomputed_retrieval: RetrievalCaseResult | None = None,
 ) -> Dict[str, Any]:
     from app.services.guardrails import (
         check_input_guardrails,
@@ -273,9 +300,20 @@ async def run_stage_a_online(
                 }
 
     # 1. Single retrieval pass
-    retrieval_res = await evaluate_single_retrieval_case(
-        case, settings, effective_profile
-    )
+    if precomputed_retrieval is not None:
+        retrieval_res = precomputed_retrieval
+    elif backend == "production":
+        retrieval_res = await evaluate_single_retrieval_case(
+            case, settings, effective_profile
+        )
+    else:
+        retrieval_res = await evaluate_single_retrieval_case(
+            case,
+            settings,
+            effective_profile,
+            backend=backend,
+            ranking=ranking,
+        )
     technical_errors.update(retrieval_res.technical_errors)
     if online_status == "ok" and retrieval_res.status in {
         "no_candidate",
@@ -477,6 +515,38 @@ async def run_answer_evaluation(arguments=None) -> Dict[str, Any]:
     cases = selection.selected_cases
     selected_case_ids = selection.selected_case_ids
 
+    retrieval_run = getattr(args, "retrieval_run", None)
+    precomputed_retrieval: dict[str, RetrievalCaseResult] = {}
+    if args.judge == "ragas" or args.backend != "production":
+        if retrieval_run is None:
+            raise ValueError(
+                "--retrieval-run is required before Ragas or experimental answer evaluation"
+            )
+        from app.evaluation.retrieval_gate import validate_retrieval_run
+        from app.evaluation.run_manifest import calculate_dataset_sha256
+
+        bound_retrieval = validate_retrieval_run(
+            Path(retrieval_run),
+            expected_backend=args.backend,
+            expected_ranking=args.ranking,
+            expected_dataset_sha256=(
+                calculate_dataset_sha256(dataset_path) or "missing"
+            ),
+            expected_selected_case_ids_sha256=selection.selected_case_ids_sha256,
+            k=effective_profile.final_evidence_limit,
+        )
+        precomputed_retrieval = {
+            row.case_id: row
+            for row in (
+                RetrievalCaseResult.model_validate(item)
+                for item in bound_retrieval["results"]
+            )
+        }
+        if set(precomputed_retrieval) != set(selected_case_ids):
+            raise ValueError(
+                "retrieval run result case IDs do not match selected answer cases"
+            )
+
     config_dict = build_run_configuration(
         profile_name=effective_profile.name,
         profile=effective_profile.to_dict(),
@@ -489,6 +559,8 @@ async def run_answer_evaluation(arguments=None) -> Dict[str, Any]:
         selected_case_ids=selected_case_ids,
         selected_case_ids_sha256=selection.selected_case_ids_sha256,
         settings=settings,
+        requested_backend=args.backend,
+        ranking_mode=args.ranking,
     )
     fp = calculate_configuration_fingerprint(config_dict)
 
@@ -512,6 +584,8 @@ async def run_answer_evaluation(arguments=None) -> Dict[str, Any]:
         profile_obj=effective_profile,
         gold_policy=args.gold_policy,
         selected_case_ids=selected_case_ids,
+        requested_backend=args.backend,
+        ranking_mode=args.ranking,
     )
 
     runs_base_dir = PROJECT_ROOT / "docs/evaluation/runs"
@@ -533,7 +607,13 @@ async def run_answer_evaluation(arguments=None) -> Dict[str, Any]:
     async def evaluate_case(case: GoldenCase) -> AnswerCaseResult:
         async with semaphore:
             stage_a_res = await run_stage_a_online(
-                case, settings, args.guardrails, effective_profile
+                case,
+                settings,
+                args.guardrails,
+                effective_profile,
+                backend=args.backend,
+                ranking=args.ranking,
+                precomputed_retrieval=precomputed_retrieval.get(case.case_id),
             )
 
         return await run_stage_b_offline(
@@ -582,6 +662,10 @@ async def run_answer_evaluation(arguments=None) -> Dict[str, Any]:
         answer_summary=answer_summary,
         case_results=answer_cases_dict,
     )
+    manifest = manifest.model_copy(
+        update={"artifact_files": collect_artifact_files(run_dir)}
+    )
+    atomic_write_json(run_dir / "manifest.json", manifest.model_dump(mode="json"))
 
     print("=" * 60)
     print(f"Full Answer Evaluation Completed. Report saved to:\n{report_path}")

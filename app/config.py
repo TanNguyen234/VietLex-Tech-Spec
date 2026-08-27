@@ -131,6 +131,8 @@ class Settings(BaseSettings):
     VERTEX_QDRANT_CHECKPOINT_PATH: Path = Path(
         "data/huggingface/vertex_qdrant_checkpoint.sqlite3"
     )
+    VERTEX_QDRANT_SHADOW_ENABLED: bool = False
+    VERTEX_QDRANT_SHADOW_TIMEOUT_SECONDS: float = Field(default=5.0, gt=0)
     VERTEX_REQUEST_TIMEOUT_SECONDS: float = Field(default=30.0, gt=0)
     VERTEX_MAX_RETRIES: int = Field(default=2, ge=0, le=5)
     
@@ -139,6 +141,10 @@ class Settings(BaseSettings):
     
     # MongoDB Connection URL
     MONGO_URL: Optional[str] = None
+
+    # Server-only Supabase target for explicit full-document export jobs.
+    SUPABASE_URL: Optional[str] = None
+    SUPABASE_SERVICE_ROLE_KEY: Optional[str] = None
 
     # Public web application security and opt-in evaluation controls.
     WEB_SESSION_SECRET: Optional[str] = None

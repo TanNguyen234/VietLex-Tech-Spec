@@ -254,6 +254,7 @@ class RetrievalCaseResult(BaseModel):
     metrics: Dict[str, Any] = Field(default_factory=dict)
     error: Optional[str] = None
     technical_errors: Dict[str, str] = Field(default_factory=dict)
+    retrieval_diagnostics: Dict[str, Any] = Field(default_factory=dict)
 
 
 class AnswerCaseResult(BaseModel):
@@ -274,6 +275,13 @@ class AnswerCaseResult(BaseModel):
     error: Optional[str] = None
     status: str = "ok"
     technical_errors: Dict[str, str] = Field(default_factory=dict)
+
+
+class EvaluationArtifactFile(BaseModel):
+    path: str
+    sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    bytes: int = Field(ge=0)
+    storage: Literal["git", "external"]
 
 
 class EvaluationRunManifest(BaseModel):
@@ -309,4 +317,5 @@ class EvaluationRunManifest(BaseModel):
     profile_name: str = "custom"
     configuration: Dict[str, Any] = Field(default_factory=dict)
     configured_provider_models: Dict[str, Any] = Field(default_factory=dict)
+    artifact_files: List[EvaluationArtifactFile] = Field(default_factory=list)
     code_metric_version: str = "3.0.0"

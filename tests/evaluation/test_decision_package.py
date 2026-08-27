@@ -3,19 +3,14 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
-from types import SimpleNamespace
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from unittest.mock import patch
 
 import pytest
 
-from app.evaluation.artifact_io import ArtifactCollisionError, canonical_json_bytes
+from app.evaluation.artifact_io import ArtifactCollisionError
 from app.evaluation.decision_package import (
-    DecisionPackageBuilder,
     build_decision_package,
-    load_production_benchmark,
-    load_online_snapshot,
-    evaluate_production_readiness,
 )
 from app.evaluation.gold_sidecar import load_gold_sidecar
 from app.evaluation.case_selection import build_cases, select_evaluation_cases
@@ -843,13 +838,13 @@ def test_same_inputs_produce_byte_identical_decision_artifacts(tmp_path: Path) -
     out_dir1 = tmp_path / "out1"
     out_dir2 = tmp_path / "out2"
 
-    pkg1 = build_decision_package(
+    build_decision_package(
         dataset_path=dataset_file,
         sidecar_path=sidecar_file,
         output_dir=out_dir1,
         package_id="deterministic_pkg_001",
     )
-    pkg2 = build_decision_package(
+    build_decision_package(
         dataset_path=dataset_file,
         sidecar_path=sidecar_file,
         output_dir=out_dir2,
@@ -1186,7 +1181,7 @@ def test_missing_all_required_metric_cannot_pass(tmp_path: Path, monkeypatch: py
     monkeypatch.setattr(decision_package, "aggregate_retrieval_metrics", patched_aggregate)
 
     pkg = build_decision_package(
-        dataset_path=dataset_path if 'dataset_path' in locals() else dataset_file,
+        dataset_path=dataset_file,
         sidecar_path=sidecar_file,
         production_benchmark_dir=benchmark_dir,
         target_git_sha="target_sha_123",
@@ -1651,8 +1646,6 @@ def test_exact_false_git_dirty_is_accepted_for_cleanliness_check(tmp_path: Path)
         output_dir=out_dir,
     )
     readiness = pkg.decision_dict["production_readiness"]
-    benchmark_gate = readiness["gates"]["production_benchmark_quality_gate"]
-
     assert "benchmark_source_cleanliness_unproven" not in readiness["blockers"]
     assert "benchmark_source_dirty" not in readiness["blockers"]
 
@@ -1763,8 +1756,6 @@ def test_exact_run_retrieval_eval_py_remains_production_candidate(tmp_path: Path
             output_dir=out_dir / f"out_valid_{idx}",
         )
         readiness = pkg.decision_dict["production_readiness"]
-        benchmark_gate = readiness["gates"]["production_benchmark_quality_gate"]
-
         assert "non_standard_retrieval_entrypoint" not in readiness["blockers"]
         assert "non_production_benchmark_route" not in readiness["blockers"]
 

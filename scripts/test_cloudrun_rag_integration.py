@@ -9,7 +9,7 @@ if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
 from app.services.rag_pipeline import run_advanced_rag
-from app.services.semantic_cache import get_embedding, check_semantic_cache, save_to_semantic_cache
+from app.services.semantic_cache import get_embedding
 
 async def test_integration():
     print("=" * 70)

@@ -3169,7 +3169,7 @@ def test_candidate_satisfies_required_level_semantics():
 
 def test_targeted_re_adjudication_queue_validation_and_parent_lineage(tmp_path: Path):
     """Verify targeted re-adjudication mode validation and CAS parent lineage."""
-    from app.evaluation.adjudication import AdjudicationMode, build_queue_payload, build_promotion_preview, build_promotion_summary
+    from app.evaluation.adjudication import AdjudicationMode, build_queue_payload
 
     cases = [_case(f"case_{idx:03d}", "factoid") for idx in range(1, 11)]
     labels = [_label(c.case_id) for c in cases]
@@ -3284,12 +3284,19 @@ def test_representative_10_precheck_invariants():
     for cid, expected_tuples in expected_representative_10.items():
         assert cid in case_map, f"Missing {cid} in dataset"
         labels = v5.labels_by_case_id.get(cid, [])
-        req_labels = [l for l in labels if l.required]
+        req_labels = [label for label in labels if label.required]
         total_required += len(req_labels)
 
         actual_tuples = [
-            (l.evidence_item_id, l.document_id, l.document_number, l.article, l.clause, l.status)
-            for l in req_labels
+            (
+                label.evidence_item_id,
+                label.document_id,
+                label.document_number,
+                label.article,
+                label.clause,
+                label.status,
+            )
+            for label in req_labels
         ]
         assert actual_tuples == expected_tuples, f"Mismatch for {cid}: {actual_tuples} != {expected_tuples}"
 
@@ -3392,8 +3399,8 @@ def test_v4_v5_exact_single_label_diff_and_immutability():
     v5 = load_gold_sidecar(v5_path)
 
     assert len(v4.labels) == len(v5.labels) == 484
-    v4_ids = [l.evidence_item_id for l in v4.labels]
-    v5_ids = [l.evidence_item_id for l in v5.labels]
+    v4_ids = [label.evidence_item_id for label in v4.labels]
+    v5_ids = [label.evidence_item_id for label in v5.labels]
     assert v4_ids == v5_ids
 
     changed = [

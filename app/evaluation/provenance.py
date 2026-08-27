@@ -91,7 +91,7 @@ def is_source_excluded(path: str) -> bool:
 
 def _run_git(root: Path, *args: str) -> bytes:
     completed = subprocess.run(
-        ["git", *args],
+        ["git", "-c", f"safe.directory={root.as_posix()}", *args],
         cwd=root,
         capture_output=True,
         timeout=10,

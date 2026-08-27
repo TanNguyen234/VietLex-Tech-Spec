@@ -593,6 +593,49 @@ async def test_pipeline_observes_structural_error_when_legacy_fallback_succeeds(
 
 
 @pytest.mark.asyncio
+async def test_vertex_shadow_never_changes_production_evidence(monkeypatch) -> None:
+    evidence = _evidence()
+    legacy = FakeRetriever([evidence])
+
+    monkeypatch.setattr(
+        rag_pipeline,
+        "get_settings",
+        lambda: type(
+            "RuntimeSettings",
+            (),
+            {
+                "STRUCTURAL_BACKEND_ENABLED": False,
+                "VERTEX_QDRANT_SHADOW_ENABLED": True,
+                "VERTEX_QDRANT_SHADOW_TIMEOUT_SECONDS": 1.0,
+            },
+        )(),
+    )
+    monkeypatch.setattr(rag_pipeline, "get_legal_retriever", lambda: legacy)
+
+    async def shadow(*_args, **_kwargs):
+        return rag_pipeline.RetrievalOutcome(
+            evidence=[],
+            latency={"vertex_qdrant": 0.1},
+            status="no_candidate",
+            diagnostics={"candidate_pool": {"candidate_ids_sha256": "a" * 64}},
+        )
+
+    monkeypatch.setattr(rag_pipeline, "_run_vertex_shadow", shadow)
+
+    outcome = await rag_pipeline.retrieve_configured_legal_evidence(
+        "dense", "original", None
+    )
+
+    assert outcome.evidence == [evidence]
+    assert outcome.status == "ok"
+    assert outcome.diagnostics["vertex_shadow"] == {
+        "status": "no_candidate",
+        "candidate_ids_sha256": "a" * 64,
+        "latency": {"vertex_qdrant": 0.1},
+    }
+
+
+@pytest.mark.asyncio
 async def test_pipeline_uses_original_query_when_rewrite_is_not_requested(
     monkeypatch,
 ) -> None:

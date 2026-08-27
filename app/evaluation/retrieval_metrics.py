@@ -743,6 +743,8 @@ def calculate_case_retrieval_metrics(
         trace.pinecone_hits,
         trace.fts_hits,
     )
+    if not source_candidates and trace.structural_chunks_generated:
+        source_candidates = list(trace.structural_chunks_generated)
     if not source_candidates and stage_trace is None:
         source_candidates = list(retrieved_chunks)
     final_candidates: List[Any] = list(retrieved_chunks)

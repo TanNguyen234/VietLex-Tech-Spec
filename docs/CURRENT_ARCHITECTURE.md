@@ -55,7 +55,7 @@ Local SQLite Content Store (Compressed Zstandard Full Text)
 
 `run_vertex_qdrant_migration.py` prepares deterministic structural records from a balanced set of legal document types, bounds very long documents with evenly spaced structural coverage, embeds them with Vertex AI `gemini-embedding-2` at 1024 dimensions, and stores named dense plus sparse-IDF vectors in `vietlex-legal-rag-v3-vertex-1024`. The default invocation is provider-free and write-free. Creation and upload require explicit flags, and a SQLite acknowledgement ledger makes later batches resumable.
 
-The v3 lane exposes isolated hybrid/RRF probes for A/B evaluation. It is not called by `retrieve_configured_legal_evidence`, does not change the Pinecone query contract, and is not authorized for production cutover. Expanding its point count, adding it as a shadow lane, or replacing Pinecone requires capacity evidence and an identical-input retrieval benchmark.
+The v3 lane exposes a typed hybrid/RRF evaluation adapter. `run_retrieval_eval.py` and `run_answer_eval.py` require an explicit backend identity for v3 and persist candidate-pool hashes so raw RRF and Qdrant ColBERT comparisons can be checked for identical inputs. `VERTEX_QDRANT_SHADOW_ENABLED=true` optionally records bounded status, latency, and candidate-ID hashes beside production retrieval; shadow evidence never reaches answer generation. Pinecone v1 remains the default, and any primary cutover still requires representative capacity and benchmark evidence.
 
 ## Verification & Provenance
 

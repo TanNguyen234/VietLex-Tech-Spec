@@ -14,7 +14,7 @@ from app.evaluation.provider_catalog import (
     ProviderModel,
 )
 from app.evaluation.provenance import collect_git_provenance
-from app.evaluation.schemas import EvaluationRunManifest
+from app.evaluation.schemas import EvaluationArtifactFile, EvaluationRunManifest
 
 
 def get_git_provenance() -> Tuple[str, bool, bool, bool, bool, Optional[str], str]:
@@ -71,15 +71,27 @@ def _public_candidates(
 
 
 def build_configured_provider_models(
-    *, settings: Any, eval_mode: str, judge_mode: str
+    *,
+    settings: Any,
+    eval_mode: str,
+    judge_mode: str,
+    requested_backend: str = "production",
 ) -> Dict[str, Any]:
     structural_enabled = getattr(
         settings,
         "STRUCTURAL_BACKEND_ENABLED",
         False,
     )
+    structural_for_run = requested_backend == "qdrant-v2-parallel" or (
+        requested_backend == "production" and structural_enabled
+    )
     reranker_mode = getattr(settings, "STRUCTURAL_RERANKER_MODE", "current")
-    if structural_enabled:
+    if requested_backend == "vertex-qdrant-v3":
+        dense = {
+            "provider": "Google Vertex AI",
+            "model": settings.VERTEX_EMBEDDING_MODEL,
+        }
+    elif structural_for_run:
         dense = {
             "provider": "qdrant-structural-collection",
             "model": settings.STRUCTURAL_DENSE_MODEL,
@@ -89,7 +101,7 @@ def build_configured_provider_models(
             "provider": "qdrant-cloud-staging",
             "model": settings.DENSE_INFERENCE_MODEL,
         }
-    if structural_enabled and reranker_mode == "pinecone-only":
+    if structural_for_run and reranker_mode == "pinecone-only":
         reranker_primary = {
             "provider": "pinecone",
             "model": settings.PINECONE_RERANK_MODEL,
@@ -159,6 +171,9 @@ def build_run_configuration(
     selected_case_ids: List[str],
     selected_case_ids_sha256: str,
     settings: Any,
+    requested_backend: str = "production",
+    ranking_mode: str = "raw-rrf",
+    candidate_pool_source: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     expected_selected_ids_sha = hashlib.sha256(
         json.dumps(
@@ -174,8 +189,21 @@ def build_run_configuration(
         settings=settings,
         eval_mode=eval_mode,
         judge_mode=judge_mode,
+        requested_backend=requested_backend,
     )
-    if getattr(settings, "STRUCTURAL_BACKEND_ENABLED", False):
+    if requested_backend == "vertex-qdrant-v3":
+        retrieval_runtime = {
+            "backend": "vertex-qdrant-v3",
+            "collection": settings.VERTEX_QDRANT_COLLECTION_NAME,
+            "dense_model": settings.VERTEX_EMBEDDING_MODEL,
+            "dense_dimension": settings.VERTEX_QDRANT_VECTOR_SIZE,
+            "sparse_model": "FastSparseEncoder",
+            "fallback_backend": None,
+        }
+    elif requested_backend == "qdrant-v2-parallel" or (
+        requested_backend == "production"
+        and getattr(settings, "STRUCTURAL_BACKEND_ENABLED", False)
+    ):
         retrieval_runtime = {
             "backend": "qdrant_structural_v2",
             "collection": settings.STRUCTURAL_COLLECTION_NAME,
@@ -206,6 +234,10 @@ def build_run_configuration(
             "fallback_backend": "sqlite_fts",
         }
     return {
+        "requested_backend": requested_backend,
+        "effective_backend": retrieval_runtime["backend"],
+        "ranking_mode": ranking_mode,
+        "candidate_pool_source": candidate_pool_source,
         "profile_name": profile_name,
         "profile": profile,
         "eval_mode": eval_mode,
@@ -259,6 +291,27 @@ def atomic_write_json(file_path: Path, data: Any) -> None:
     os.replace(temp_path, file_path)
 
 
+def collect_artifact_files(run_dir: Path) -> list[EvaluationArtifactFile]:
+    artifacts: list[EvaluationArtifactFile] = []
+    for path in sorted(run_dir.iterdir()):
+        if not path.is_file() or path.name == "manifest.json":
+            continue
+        size = path.stat().st_size
+        hasher = hashlib.sha256()
+        with path.open("rb") as stream:
+            while chunk := stream.read(65536):
+                hasher.update(chunk)
+        artifacts.append(
+            EvaluationArtifactFile(
+                path=path.name,
+                sha256=hasher.hexdigest(),
+                bytes=size,
+                storage="git" if size <= 20_000_000 else "external",
+            )
+        )
+    return artifacts
+
+
 def create_run_manifest(
     run_id: str,
     eval_mode: str,
@@ -275,6 +328,9 @@ def create_run_manifest(
     profile_obj: Any = None,
     gold_policy: str = "all-required-verified",
     selected_case_ids: Optional[List[str]] = None,
+    requested_backend: str = "production",
+    ranking_mode: str = "raw-rrf",
+    candidate_pool_source: Optional[Dict[str, Any]] = None,
 ) -> EvaluationRunManifest:
     provenance = collect_git_provenance()
     dataset_sha = calculate_dataset_sha256(dataset_path) or "missing"
@@ -294,6 +350,9 @@ def create_run_manifest(
         selected_case_ids=selected_ids,
         selected_case_ids_sha256=selected_case_ids_sha256,
         settings=settings,
+        requested_backend=requested_backend,
+        ranking_mode=ranking_mode,
+        candidate_pool_source=candidate_pool_source,
     )
 
     fp = calculate_configuration_fingerprint(config_dict)

@@ -22,6 +22,7 @@ from app.evaluation.preflight import (
 )
 from app.evaluation.provenance import collect_git_provenance
 from app.evaluation.reporting import write_run_report
+from app.evaluation.retrieval_gate import evaluate_retrieval_gate
 from app.evaluation.retrieval_metrics import (
     aggregate_retrieval_metrics,
     calculate_case_retrieval_metrics,
@@ -32,6 +33,7 @@ from app.evaluation.run_manifest import (
     build_run_configuration,
     calculate_configuration_fingerprint,
     calculate_dataset_sha256,
+    collect_artifact_files,
     create_run_manifest,
     generate_unique_run_id,
     get_git_provenance,
@@ -89,6 +91,29 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["current", "pinecone-only", "qdrant-only"],
         default="current",
         help="Reranker provider selection (default: current)",
+    )
+    parser.add_argument(
+        "--backend",
+        choices=[
+            "production",
+            "pinecone-v1",
+            "qdrant-v2-parallel",
+            "vertex-qdrant-v3",
+        ],
+        default="production",
+        help="Explicit retrieval backend identity (default: production)",
+    )
+    parser.add_argument(
+        "--ranking",
+        choices=["raw-rrf", "qdrant-colbert"],
+        default="raw-rrf",
+        help="Vertex/Qdrant v3 ranking mode (default: raw-rrf)",
+    )
+    parser.add_argument(
+        "--candidate-pool-run",
+        type=Path,
+        default=None,
+        help="Passing raw-RRF run whose persisted candidates are reranked without retrieval",
     )
     parser.add_argument(
         "--concurrency", type=int, default=1, help="Pipeline concurrency (default: 1)"
@@ -292,11 +317,14 @@ async def evaluate_single_retrieval_case(
     case: GoldenCase,
     settings: Any,
     effective_profile: EvaluationProfile,
+    backend: str = "production",
+    ranking: str = "raw-rrf",
+    precomputed_outcome: Any = None,
 ) -> RetrievalCaseResult:
     from app.evaluation.capacities import build_stage_capacities
 
     started = time.perf_counter()
-    caps = build_stage_capacities(effective_profile, settings)
+    caps = build_stage_capacities(effective_profile, settings, backend=backend)
 
     query_used = case.question
     rewritten_q = None
@@ -322,23 +350,35 @@ async def evaluate_single_retrieval_case(
 
     t_ret_start = time.perf_counter()
     try:
-        if getattr(settings, "STRUCTURAL_BACKEND_ENABLED", False):
-            from app.services.rag_pipeline import (
-                retrieve_configured_legal_evidence,
-            )
+        if precomputed_outcome is not None:
+            outcome = precomputed_outcome
+        elif backend == "production":
+            if getattr(settings, "STRUCTURAL_BACKEND_ENABLED", False):
+                from app.services.rag_pipeline import (
+                    retrieve_configured_legal_evidence,
+                )
 
-            outcome = await retrieve_configured_legal_evidence(
-                query_used,
-                case.question,
-                effective_profile,
-            )
+                outcome = await retrieve_configured_legal_evidence(
+                    query_used, case.question, effective_profile
+                )
+            else:
+                from app.services.retrieval import get_legal_retriever
+
+                outcome = await get_legal_retriever().retrieve_detailed(
+                    query_used,
+                    sparse_query=case.question,
+                    profile=effective_profile,
+                )
         else:
-            from app.services.retrieval import get_legal_retriever
+            from app.evaluation.retrieval_backends import retrieve_for_evaluation
 
-            outcome = await get_legal_retriever().retrieve_detailed(
-                query_used,
+            outcome = await retrieve_for_evaluation(
+                backend,
+                dense_query=query_used,
                 sparse_query=case.question,
                 profile=effective_profile,
+                ranking=ranking,
+                case_id=case.case_id,
             )
     except Exception as error:
         message = f"{type(error).__name__}: {error}"
@@ -370,9 +410,12 @@ async def evaluate_single_retrieval_case(
             error=message,
             technical_errors=technical_errors,
         )
-    t_ret = time.perf_counter() - t_ret_start
-
-    t_total = time.perf_counter() - started
+    if precomputed_outcome is not None:
+        t_ret = sum(float(value) for value in outcome.latency.values())
+        t_total = t_rw + t_ret
+    else:
+        t_ret = time.perf_counter() - t_ret_start
+        t_total = time.perf_counter() - started
 
     stage_trace = outcome.diagnostics.get("stage_trace")
     if not isinstance(stage_trace, RetrievalStageTrace):
@@ -435,6 +478,19 @@ async def evaluate_single_retrieval_case(
         metrics=metrics,
         error=outcome.error,
         technical_errors=technical_errors,
+        retrieval_diagnostics={
+            key: outcome.diagnostics[key]
+            for key in (
+                "backend",
+                "collection",
+                "candidate_pool",
+                "ranking",
+                "reranker_provider",
+                "reranker_model",
+                "reranker_error_type",
+            )
+            if key in outcome.diagnostics
+        },
     )
 
 
@@ -546,6 +602,48 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
 
     cases = selection.selected_cases
 
+    candidate_source_results: dict[str, RetrievalCaseResult] = {}
+    candidate_pool_source = None
+    if args.candidate_pool_run is not None:
+        if args.backend != "vertex-qdrant-v3" or args.ranking != "qdrant-colbert":
+            raise ValueError(
+                "--candidate-pool-run requires vertex-qdrant-v3 and qdrant-colbert"
+            )
+        if args.rewrite != "off":
+            raise ValueError("persisted candidate reranking requires --rewrite off")
+        from app.evaluation.retrieval_gate import validate_retrieval_run
+
+        bound = validate_retrieval_run(
+            Path(args.candidate_pool_run),
+            expected_backend="vertex-qdrant-v3",
+            expected_ranking="raw-rrf",
+            expected_dataset_sha256=(
+                calculate_dataset_sha256(dataset_path) or "missing"
+            ),
+            expected_selected_case_ids_sha256=selection.selected_case_ids_sha256,
+            k=effective_profile.final_evidence_limit,
+        )
+        candidate_source_results = {
+            item.case_id: item
+            for item in (
+                RetrievalCaseResult.model_validate(row)
+                for row in bound["results"]
+            )
+        }
+        if set(candidate_source_results) != set(selection.selected_case_ids):
+            raise ValueError("candidate-pool run case IDs do not match selection")
+        source_manifest = bound["manifest"]
+        candidate_pool_source = {
+            "run_id": source_manifest["run_id"],
+            "configuration_fingerprint": source_manifest[
+                "configuration_fingerprint"
+            ],
+            "source_state_sha256": source_manifest.get("source_state_sha256"),
+            "selected_case_ids_sha256": source_manifest[
+                "selected_case_ids_sha256"
+            ],
+        }
+
     config_dict = build_run_configuration(
         profile_name=effective_profile.name,
         profile=effective_profile.to_dict(),
@@ -558,6 +656,9 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
         selected_case_ids=selection.selected_case_ids,
         selected_case_ids_sha256=selection.selected_case_ids_sha256,
         settings=settings,
+        requested_backend=args.backend,
+        ranking_mode=args.ranking,
+        candidate_pool_source=candidate_pool_source,
     )
     fp = calculate_configuration_fingerprint(config_dict)
 
@@ -581,6 +682,9 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
         profile_obj=effective_profile,
         gold_policy=args.gold_policy,
         selected_case_ids=selection.selected_case_ids,
+        requested_backend=args.backend,
+        ranking_mode=args.ranking,
+        candidate_pool_source=candidate_pool_source,
     )
 
     runs_base_dir = PROJECT_ROOT / "docs/evaluation/runs"
@@ -603,10 +707,24 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
 
     async def worker(case: GoldenCase) -> RetrievalCaseResult:
         async with semaphore:
+            precomputed = None
+            if candidate_source_results:
+                from app.evaluation.retrieval_backends import (
+                    rerank_persisted_vertex_candidates,
+                )
+
+                precomputed = await rerank_persisted_vertex_candidates(
+                    candidate_source_results[case.case_id],
+                    query=case.question,
+                    profile=effective_profile,
+                )
             return await evaluate_single_retrieval_case(
                 case,
                 settings,
                 effective_profile,
+                backend=args.backend,
+                ranking=args.ranking,
+                precomputed_outcome=precomputed,
             )
 
     tasks = [asyncio.create_task(worker(case)) for case in cases]
@@ -639,6 +757,13 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
         },
     )
     atomic_write_json(run_dir / "retrieval_results.json", cases_dict)
+    atomic_write_json(
+        run_dir / "quality_gate.json",
+        evaluate_retrieval_gate(
+            retrieval_summary,
+            k=effective_profile.final_evidence_limit,
+        ),
+    )
 
     report_path = write_run_report(
         run_dir=run_dir,
@@ -648,6 +773,10 @@ async def run_retrieval_evaluation(arguments=None) -> Dict[str, Any]:
         latency_summary=latency_summary,
         case_results=cases_dict,
     )
+    manifest = manifest.model_copy(
+        update={"artifact_files": collect_artifact_files(run_dir)}
+    )
+    atomic_write_json(run_dir / "manifest.json", manifest.model_dump(mode="json"))
 
     print("=" * 60, flush=True)
     print(f"Retrieval Evaluation Completed. Report saved to:\n{report_path}", flush=True)

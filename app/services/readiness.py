@@ -21,4 +21,25 @@ async def build_readiness(
         except Exception:
             checks["mongodb"] = "unavailable"
     status = "ready" if all(value == "ready" for value in checks.values()) else "not_ready"
-    return {"status": status, "checks": checks}
+    backend = (
+        "qdrant-v2-parallel"
+        if getattr(settings, "STRUCTURAL_BACKEND_ENABLED", False)
+        else "pinecone-v1"
+    )
+    return {
+        "status": status,
+        "checks": checks,
+        "runtime": {
+            "retrieval_backend": backend,
+            "vertex_qdrant_shadow_enabled": bool(
+                getattr(settings, "VERTEX_QDRANT_SHADOW_ENABLED", False)
+            ),
+            "pinecone_configured": bool(
+                getattr(settings, "pinecone_api_key", None)
+            ),
+            "qdrant_configured": bool(getattr(settings, "QDRANT_URL", None)),
+            "vertex_project_configured": bool(
+                getattr(settings, "GOOGLE_CLOUD_PROJECT", None)
+            ),
+        },
+    }

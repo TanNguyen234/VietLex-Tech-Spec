@@ -60,6 +60,8 @@ def test_secret_defaults_never_contain_credentials() -> None:
         "MONGO_URL",
         "EMAIL_USER",
         "EMAIL_PASS",
+        "SUPABASE_URL",
+        "SUPABASE_SERVICE_ROLE_KEY",
     )
 
     for secret_name in secret_names:
@@ -78,6 +80,13 @@ def test_account_email_defaults_are_minimal_and_disabled() -> None:
     assert settings.PUBLIC_BASE_URL == "http://localhost:8000"
     assert settings.AUTH_COOKIE_NAME == "vietlex_auth"
     assert settings.AUTH_SESSION_DAYS == 30
+
+
+def test_supabase_defaults_are_optional_for_full_doc_export() -> None:
+    settings = Settings(_env_file=None)
+
+    assert settings.SUPABASE_URL is None
+    assert settings.SUPABASE_SERVICE_ROLE_KEY is None
 
 
 def test_production_web_configuration_fails_closed() -> None:

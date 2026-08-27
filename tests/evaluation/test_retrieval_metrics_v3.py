@@ -94,6 +94,27 @@ def validated(metrics: dict) -> RetrievalCaseMetricsV3:
     return RetrievalCaseMetricsV3.model_validate(metrics)
 
 
+def test_structural_only_source_supports_document_recall() -> None:
+    trace = RetrievalStageTrace(
+        structural_chunks_generated=[candidate(7, document_number="7/2026/QH15")],
+        final_evidence_chunks=[candidate(7, document_number="7/2026/QH15")],
+    )
+    metrics = validated(
+        calculate_case_retrieval_metrics(
+            [gold("ev", document_id=7, document_number="7/2026/QH15")],
+            [chunk(7, document_number="7/2026/QH15")],
+            stage_trace=trace,
+            capacities=RetrievalStageCapacities(
+                merged_document_limit=24,
+                structural_chunk_limit=24,
+                final_evidence_limit=3,
+            ),
+        )
+    )
+
+    assert metrics.document_recall[1].value == 1.0
+
+
 def test_required_level_denominators_and_multihop_are_exact() -> None:
     labels = [
         gold("case_001_ev_doc", document_id=1),

@@ -796,6 +796,28 @@ def test_refusal_and_text_metrics_keep_distinct_contracts() -> None:
     assert metrics["refusal_category"] == "normal_answer"
 
 
+def test_citation_precision_uses_retrieved_evidence_not_short_reference() -> None:
+    from app.evaluation.answer_metrics import calculate_case_answer_metrics
+
+    metrics = calculate_case_answer_metrics(
+        pred_response=(
+            "Theo Khoản 2 Điều 87 Luật Doanh nghiệp 2020, công ty có thể "
+            "chuyển đổi và thực hiện theo Khoản 2 Điều 202."
+        ),
+        ref_answer="Công ty thực hiện theo Điều 202 của Luật này.",
+        question_type="factoid",
+        retrieved_contexts=[
+            "Dẫn chiếu: 59/2020/QH14, Điều 87, Khoản 2\nNội dung: ...",
+            "Dẫn chiếu: 59/2020/QH14, Điều 202, Khoản 2\nNội dung: ...",
+        ],
+    )
+
+    assert metrics["citation_precision"] == 1.0
+    assert metrics["citation_recall"] == 1.0
+    assert metrics["citation_coverage"] == 1.0
+    assert metrics["invalid_citation_rate"] == 0.0
+
+
 def test_technical_fallback_is_not_an_honest_refusal() -> None:
     from app.evaluation.answer_metrics import classify_response_refusal
 
