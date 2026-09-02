@@ -1,30 +1,80 @@
 # VietLex CV / Portfolio Evidence
 
+Current evidence date: 2026-09-01.
+
 ## CV bullet — English
 
-Built and empirically evaluated a Vietnamese legal RAG pipeline on 50 deterministic QA cases (26 factoid, 24 multi-hop), achieving Ragas Faithfulness **0.916**, Answer Accuracy **0.895**, Context Precision **0.876**, and Context Recall **0.933**, with **50/50** completed generations, **50/50** NeMo guardrail passes, full Ragas coverage, and zero technical errors. The retrieval audit used 40 cases with fully verified required evidence and reached macro Document Recall@3 **0.925** (`50/53` evidence items by micro recall).
+Built and reproducibly evaluated a Vertex/Qdrant v3 Vietnamese legal RAG
+pipeline on 50 QA cases. The retrieval audit scored 40 cases with verified
+required evidence and achieved Document Recall@3 **53/53**, Article Recall@3
+**30/30**, Clause Recall@3 **13/14**, all-required coverage **39/40**, and zero
+retrieval/reranker technical errors. The separate answer audit completed 50/50
+generations and guardrail checks with zero technical errors; deterministic
+token F1 remained **0.234**, so the result is reported as bounded evidence, not
+whole-corpus legal accuracy or production readiness.
 
 ## Gạch đầu dòng CV — Tiếng Việt
 
-Xây dựng và đánh giá thực nghiệm hệ thống Vietnamese Legal RAG trên 50 câu hỏi xác định (26 factoid, 24 multi-hop), đạt Ragas Faithfulness **0,916**, Answer Accuracy **0,895**, Context Precision **0,876** và Context Recall **0,933**; **50/50** câu sinh hoàn chỉnh, **50/50** vượt NeMo guardrail, Ragas đủ 50/50 và không có lỗi kỹ thuật. Phần retrieval được kiểm chứng trên 40 case có toàn bộ required evidence đã xác minh, đạt Document Recall@3 macro **0,925** và micro `50/53`.
+Xây dựng và đánh giá có provenance pipeline Vietnamese Legal RAG
+Vertex/Qdrant v3 trên 50 câu hỏi. Retrieval audit chấm 40 case có required
+evidence đã xác minh, đạt Document Recall@3 **53/53**, Article Recall@3
+**30/30**, Clause Recall@3 **13/14**, all-required **39/40** và không có lỗi kỹ
+thuật retrieval/reranker. Answer audit hoàn tất 50/50 generation và guardrail
+check, nhưng deterministic token F1 chỉ **0,234**; đây là bằng chứng lát cắt,
+không phải độ chính xác pháp lý toàn corpus hoặc production readiness.
 
-## Evidence boundary
+## Current evidence boundary
 
-- Exact Balanced-50 Ragas means: Faithfulness `0.9158`, Answer Accuracy `0.8950`, Context Precision `0.8757`, and Context Recall `0.9333`.
-- Representative-10 is fully `all-required-verified`: Ragas coverage `10/10`, Faithfulness `0.9857`, Answer Accuracy `0.9750`, Context Precision `0.9400`, Context Recall `1.0000`, and zero technical errors.
-- Balanced-50 contains all 40 fully verified cases plus 10 deterministic reference-only cases. Ragas, generation, and guardrails use all 50; verified retrieval metrics use the 40-case denominator.
-- Balanced-50 case-list SHA-256: `56ae294f9698569ab4f7ae11ed87aabfa7c79b616919378dc0f5d4e32e53bdf3`.
-- Balanced-50 report SHA-256: `9b077dc5acb1ddd8fd40089e1030c1a98638760a676fcf698c3eef2db9df3c99`.
-- Representative-10 report SHA-256: `0e3340af2ea6b3e8b6f344d66e71c704abebd08ffb35d8a8dc80a2c376fd64ce`.
-- Judge: Google Vertex AI `gemini-3.5-flash`; thinking level: `MINIMAL`; NeMo mode: `enforce`; rewrite: `off`.
-- Automated verification before the final live run: `762 passed, 2 skipped`; four deprecation warnings; `git diff --check` passed.
-- These results demonstrate a bounded evaluation slice, not production readiness, whole-corpus legal accuracy, or independent legal review.
+- Dataset: Golden-50 v3, 26 factoid + 24 multi-hop. Retrieval metrics score 40
+  cases with 53 verified evidence items and skip 10 as
+  `no_verified_gold_label`; generation, guardrails, answer metrics, latency,
+  and optional Ragas use all 50.
+- Retrieval: Document Recall@1 macro/micro `0.9500 / 0.9245`; Document,
+  Article, and Clause Recall@3 `1.0000 / 1.0000 / 0.9231` macro; exact legal
+  reference hit `40/40`; all-required coverage `39/40`; no-candidate,
+  retrieval-error, and reranker-error rates all `0.0000`.
+- Deterministic answer metrics: exact match `0.0000`, token F1 `0.2336`,
+  character F1 `0.2250`, ROUGE-L `0.2210`, CHRF `0.3796`, citation precision
+  `0.9567`, and invalid citation rate `0.0433`.
+- Citation recall and citation coverage are each `1.0000` on only one applicable
+  case (`1/50` coverage); do not present them as 50-case citation recall.
+- Opt-in Ragas: Faithfulness `0.9197`, Answer Accuracy `0.9150`, Context
+  Precision `0.8733`, and Context Recall `0.9367`, with 50/50 coverage and zero
+  judge technical errors.
+- Generation and the observed Ragas judge both used Google Vertex AI
+  `gemini-3.5-flash`. The judge is therefore not independent legal review and
+  its means do not override deterministic answer metrics.
+- Response categories were 49 `disclaimer` and one `mixed_claim_refusal`; all
+  50 dataset cases are labelled answerable.
+- Automated verification after the stable deployment source state:
+  `917 passed, 2 skipped`; 10 deprecation warnings.
+- Direct Vercel FastAPI/Jinja SSR at
+  <https://vietlex-legal-rag.vercel.app> passed health, readiness, root, and a
+  CSRF-protected chat smoke request. Deployment success is not an answer-quality
+  gate.
+- Qdrant v3 contains 51,801 points over exactly 4,969 audited document IDs. It
+  is not the pinned 518,255-document corpus.
+- Both current manifests record `git_dirty=true`, provenance status `ok`, the
+  dirty diff hash, and source-state hash. They are not reproducible from the Git
+  commit SHA alone.
 
-## Immutable sources
+## Immutable current sources
 
-- `docs/evaluation/runs/answer-representative10-v6-live-20260822/report.md`
-- `docs/evaluation/runs/answer-representative10-v6-live-20260822/manifest.json`
-- `docs/evaluation/runs/answer-representative10-v6-live-20260822/answer_results.json`
-- `docs/evaluation/runs/answer-balanced50-v2-live-20260822/report.md`
-- `docs/evaluation/runs/answer-balanced50-v2-live-20260822/manifest.json`
-- `docs/evaluation/runs/answer-balanced50-v2-live-20260822/answer_results.json`
+- Retrieval report:
+  `docs/evaluation/runs/retrieval-v3-golden50-online-vercel-20260901/report.md`
+  — SHA-256 `f4b1f1a411e5f90273f6b8b47508630b7a73834695e4c75a48701c7ae54610a6`.
+- Retrieval manifest:
+  `docs/evaluation/runs/retrieval-v3-golden50-online-vercel-20260901/manifest.json`
+  — SHA-256 `b6533bd51a25bc857d6e01fcec4ca4a134f651abbee747314758e4ac9cd27eb2`.
+- Answer report:
+  `docs/evaluation/runs/answer-v3-golden50-online-vercel-20260901/report.md`
+  — SHA-256 `a43772cbdd7fe1b7b54da28df7f76757e800527d1fdafb04deac46b77936ac58`.
+- Answer manifest:
+  `docs/evaluation/runs/answer-v3-golden50-online-vercel-20260901/manifest.json`
+  — SHA-256 `e53ef8bff24f7cedf1c14c378845ec02dc4bc0393b35b2b9db8dc8fefa34f8ad`.
+- Dataset contract: `docs/evaluation/golden50-v3/manifest.json`; dataset
+  SHA-256 `caa3fc19cd22bcce4b87e96adf13544d0c3cc174cca2d0e365a848e0da9a981f`.
+
+The 2026-08-27 recheck and Representative-10 artifacts remain immutable
+historical evidence. They are useful comparisons but no longer supply the
+headline “current” metrics.

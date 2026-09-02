@@ -1,3 +1,8 @@
+> [!NOTE]
+> **HISTORICAL SNAPSHOT (2026-08-02).** Giữ nguyên metric theo contract tại
+> thời điểm chạy. Không dùng làm baseline hiện tại; xem
+> [`evaluation/CURRENT_STATUS.md`](evaluation/CURRENT_STATUS.md).
+
 # SYSTEM EVALUATION REPORT - VIETLEX LEGAL RAG
 
 **Evaluation Timestamp**: `2026-08-02 15:44:19`  

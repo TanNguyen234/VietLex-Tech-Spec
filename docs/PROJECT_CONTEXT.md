@@ -8,13 +8,37 @@ VietLex is an enterprise-grade Vietnamese legal Retrieval-Augmented Generation (
 
 The current priority is to establish a verified, measurable, reproducible, and deterministic evaluation framework before modifying core retrieval models or persistent vector indices.
 
+## Latest verified state (2026-09-01)
+
+- Direct FastAPI/Jinja SSR is deployed at
+  <https://vietlex-legal-rag.vercel.app>. Health, readiness, root, and one
+  CSRF-protected chat smoke request returned HTTP 200.
+- The current Golden-50 v3 retrieval run completed 50/50 with zero
+  retrieval/reranker technical errors and passed its gate: Document Recall@3
+  `53/53`, Article Recall@3 `30/30`, Clause Recall@3 `13/14`, and all-required
+  coverage `39/40` on the 40-case verified denominator.
+- The answer run completed 50/50 without technical errors, but deterministic
+  exact match was `0.0000` and token F1 `0.2336`. Opt-in Ragas means are
+  secondary because generation and the observed judge both used Vertex
+  `gemini-3.5-flash`.
+- Final provider-free verification after the stable deployment source state was
+  `917 passed, 2 skipped` with 10 deprecation warnings.
+- These runs record `git_dirty=true` and source/diff hashes. They are not
+  reproducible from commit SHA alone and do not demonstrate production
+  readiness or whole-corpus legal accuracy.
+
 ## System Boundaries & Stores
 
-- **Durable Vector Storage**: Pinecone index `vietlex-legal-rag-v1` (namespace `legal-documents-v1`).
-- **Local Content Store**: SQLite + compressed Zstandard full document store (`data/huggingface/content_store.sqlite3`).
-- **Dense Inference**: Qdrant Cloud staging (`intfloat/multilingual-e5-small`, 384 dimensions).
-- **Lexical Search**: Local SQLite FTS index for document numbers and titles (`data/huggingface/legal_fts.sqlite3`).
-- **Reranker**: Pinecone v1 uses Qdrant ColBERT with Pinecone BGE fallback. The opt-in structural path uses Pinecone `bge-reranker-v2-m3` by default after an identical-input representative-10 A/B; Qdrant ColBERT remains an available secondary mode.
+- **Vercel online-only SSR:** `SERVERLESS_ONLINE_ONLY=true` runs the existing FastAPI/Jinja app directly on Vercel, omits local corpus files, and uses Qdrant v3 payload evidence. `/search` and `/documents/{id}` remain local-corpus features and are outside this deployment contract.
+
+- **Runtime selector**: `USE_LEGACY_FREE_PIPELINE=false` (default) selects Vertex/Qdrant v3; `true` selects the Pinecone-v1 legacy/free path and blocks Google Cloud before client construction.
+- **Durable full-corpus fallback**: Pinecone index `vietlex-legal-rag-v1` (namespace `legal-documents-v1`).
+- **V3 primary collection**: Qdrant `vietlex-legal-rag-v3-vertex-1024`, 51,801 structural points over exactly 4,969 unique document IDs in the audited remote collection.
+- **V3 local full-doc bundle**: `data/v3/content_store.sqlite3` and `data/v3/legal_fts.sqlite3` contain the exact same 4,969 audited document IDs for document pages, title/number search, and sparse-length calibration. V3 chat evidence itself comes from Qdrant point payload `body`.
+- **Full-corpus local fallback store**: `data/huggingface/content_store.sqlite3` and `data/huggingface/legal_fts.sqlite3` remain the 518,255-document legacy/free stores.
+- **Dense inference**: V3 uses Vertex `gemini-embedding-2` at 1024 dimensions. Legacy/free uses Qdrant Cloud staging `intfloat/multilingual-e5-small` at 384 dimensions.
+- **Reranker**: V3 uses raw RRF because identical-input Qdrant ColBERT A/B reduced verified recall. Legacy/free uses Qdrant ColBERT with Pinecone BGE fallback.
+- **Supabase**: optional one-way export code only; no runtime read client exists.
 
 ## Evaluation Integrity Policy
 
@@ -23,14 +47,15 @@ The current priority is to establish a verified, measurable, reproducible, and d
 - Stage-level candidate survival must be tracked continuously across all 8 retrieval pipeline stages.
 - Benchmark runs from uncommitted git trees must be recorded with `git_dirty=true` and a git diff SHA-256 hash.
 
-## Google Cloud model layer (Phase G0)
+## Google Cloud model layer and free switch
 
-- Production answer generation uses Google Cloud Vertex AI through ADC with `gemini-3.5-flash` as primary. Typed Vertex failures may use the existing OpenRouter, Gemini Direct API, NVIDIA, and Groq models as secondary providers; runtime metadata must preserve the actual provider/model and primary error kind.
+- With `USE_LEGACY_FREE_PIPELINE=false`, production retrieval uses Vertex embeddings against Qdrant v3 and answer generation uses Vertex AI through ADC with `gemini-3.5-flash` as primary. Typed Vertex failures may use existing direct-API providers; runtime metadata preserves the actual provider/model and primary error kind.
+- With `USE_LEGACY_FREE_PIPELINE=true`, Vertex retrieval, generation, rewrite, guardrails, migration helpers, and Vertex Ragas judge selection are disabled centrally before any Vertex client is created. Answer generation can still use configured OpenRouter, Gemini Direct API, NVIDIA, or Groq fallbacks; this means “no Google Cloud”, not guaranteed zero cost or unlimited quota.
 - NeMo input/output guardrails use the same Vertex-primary adapter; legacy direct APIs remain secondary models. OmniGate is retained for evaluator use, not as the guardrail primary.
 - Query rewriting is OFF by default and remains an explicit evaluation experiment.
-- `gemini-embedding-2` is integrated only for isolated 384/768/1024 probes. Production dense retrieval remains E5-small 384d.
-- The 1024d Vertex/Qdrant v3 lane has a typed offline evaluation adapter. Live evaluation must select `--backend vertex-qdrant-v3` explicitly and records requested/effective backend plus ranking mode. Optional runtime shadowing is default-off and cannot replace production evidence.
-- Online `/chat` never runs Ragas. Optional offline Ragas uses Vertex AI `gemini-3.5-flash` through ADC as its primary judge; legacy APIs remain best-effort fallbacks.
+- `gemini-embedding-2` supplies the 1024d query vectors for the v3 primary path. It is never used against the 384d Pinecone or Qdrant-v2 indexes.
+- Evaluation may still select an explicit backend, but `--backend production` now records the boolean-selected effective backend. V3 failures are typed and never silently replace evidence with Pinecone results.
+- Online `/chat` never runs Ragas. Optional offline Ragas uses Vertex AI first only when the boolean is `false`; free mode removes Vertex from the judge chain and uses configured direct APIs.
 
 ## Opt-in Qdrant structural pilot
 

@@ -10,14 +10,15 @@ Use this source order: current code/tests → `app/config.py` → `docs/PROJECT_
 
 ## Pinned architecture
 
-- Durable corpus: Pinecone `vietlex-legal-rag-v1`, namespace `legal-documents-v1`, one record per document; full text is local SQLite/Zstandard.
-- Qdrant is inference/staging only unless a separately approved migration changes that contract.
-- Dense model: `intfloat/multilingual-e5-small`, dimension 384; query inference uses Qdrant Cloud staging and persistent vectors use Pinecone.
+- Durable full-corpus fallback: Pinecone `vietlex-legal-rag-v1`, namespace `legal-documents-v1`, one record per document; full text is local SQLite/Zstandard.
+- Runtime selection is one boolean: `USE_LEGACY_FREE_PIPELINE=false` selects Vertex/Qdrant v3 (default); `true` selects Pinecone v1 and must block every Google Cloud/Vertex call before client creation. Never silently cross-fallback between these retrieval contracts.
+- V3 uses Qdrant collection `vietlex-legal-rag-v3-vertex-1024`, 1024d `gemini-embedding-2` dense vectors plus sparse IDF/RRF. A read-only remote audit found 51,801 points covering exactly 4,969 unique document IDs (SHA-256 `80de346918d4ffc00988a2ea0ef27c934bb24b3c03399065d591bed7dd5dfb0c`), not the full corpus.
+- Legacy/free dense retrieval uses `intfloat/multilingual-e5-small`, dimension 384; query inference uses Qdrant Cloud staging and persistent vectors use Pinecone.
 - Sparse retrieval is local `FastSparseEncoder`, max 64 nonzero terms. Do not call it full BM25 without corpus-level IDF.
 - SQLite FTS supports normalized document-number lookup and title search, not verified article/body search.
 - Original query feeds sparse/exact retrieval; rewritten query may feed dense retrieval. Pinecone hybrid and local FTS run concurrently.
 - Resolved documents are structurally chunked at 220 approximate whitespace tokens with overlap 24; final evidence is up to 3 chunks / 720 context tokens.
-- Primary reranker is Qdrant `answerdotai/answerai-colbert-small-v1`; fallback is Pinecone `bge-reranker-v2-m3`. Provider changes require an A/B benchmark on identical inputs.
+- Legacy/free primary reranker is Qdrant `answerdotai/answerai-colbert-small-v1`; fallback is Pinecone `bge-reranker-v2-m3`. V3 currently uses raw RRF because its identical-input ColBERT A/B was worse. Provider changes require an A/B benchmark on identical inputs.
 - Guardrails must support `off`, `shadow`, and `enforce`; technical guardrail failures are never hallucination blocks.
 - A config declaration is not runtime proof. Dirty-tree evaluation manifests require `git_dirty=true` and the Git diff SHA-256.
 

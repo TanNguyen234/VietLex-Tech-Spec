@@ -79,7 +79,7 @@ This report documents the systematic repair of evaluator framework wiring, git p
 
 ## 4. Historical Baseline Invalidation Notice
 
-As documented in [INVALID_BASELINE_NOTICE.md](file:///d:/Download/ProfessionalLegalRAG/docs/evaluation/INVALID_BASELINE_NOTICE.md) and appended to [evaluation_correctness_and_baseline_report.md](file:///d:/Download/ProfessionalLegalRAG/docs/evaluation/evaluation_correctness_and_baseline_report.md), all pre-existing baseline profile comparison runs executed on 2026-08-03 were marked invalid due to evaluator profile-passing and limit-coupling defects.
+As documented in [INVALID_BASELINE_NOTICE.md](INVALID_BASELINE_NOTICE.md) and appended to [evaluation_correctness_and_baseline_report.md](evaluation_correctness_and_baseline_report.md), all pre-existing baseline profile comparison runs executed on 2026-08-03 were marked invalid due to evaluator profile-passing and limit-coupling defects.
 
 ---
 

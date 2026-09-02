@@ -11,7 +11,7 @@ không xác nhận hiệu lực hiện hành và không thay thế tư vấn ph�
 
 ## Điều kiện
 
-1. Python 3.10+ và dependencies đã được cài.
+1. Python 3.12 và dependencies đã được cài (`pyproject.toml` yêu cầu `>=3.12,<3.13`).
 2. `.env` có `PIPECONE_API` hoặc `PINECONE_API_KEY`.
 3. `.env` có URL/key của cluster Qdrant Cloud đang ở trạng thái Ready.
 4. Snapshot và content store nằm trên ổ D; không chạy hai full process chung

@@ -1,6 +1,17 @@
 # VietLex Production Operations
 
-VietLex supports one persistent FastAPI instance. Vercel is only the public proxy; the backend owns MongoDB access and a persistent `/data` volume.
+Updated: 2026-09-01.
+
+VietLex supports two explicit deployment topologies:
+
+- direct Vercel FastAPI/Jinja SSR with `SERVERLESS_ONLINE_ONLY=true`, online
+  MongoDB/Qdrant/Vertex dependencies, and no packaged local corpus;
+- a persistent FastAPI/Docker host with `SERVERLESS_ONLINE_ONLY=false` and the
+  matching SQLite/Zstandard content and FTS stores.
+
+Do not mix readiness expectations between the two. Vercel is the active public
+SSR host, not only a proxy. The persistent topology remains necessary for local
+full-document search and document-detail pages.
 
 ## Data classes
 
@@ -8,7 +19,9 @@ VietLex supports one persistent FastAPI instance. Vercel is only the public prox
 - `content_store.sqlite3` is the pinned local legal-content source/cache. Copy it only from a stopped instance or a verified SQLite snapshot and retain its SHA-256.
 - `legal_fts.sqlite3` is derived and rebuildable from the pinned content store and dataset revision.
 - Pinecone vectors are derived from the pinned corpus and immutable ingestion manifests. Pinecone is not the backup for user or full-text data.
-- Qdrant collections are inference/staging or isolated pilots and are rebuildable unless a separately approved migration changes that contract.
+- Qdrant collections include active v3 runtime evidence, inference/rerank
+  staging, and retained pilots. Never infer ownership or deletion safety from a
+  low point count.
 
 Current Qdrant ownership:
 
@@ -17,7 +30,7 @@ Current Qdrant ownership:
 | `vietlex-embedding-staging` | E5 query inference staging | Active runtime dependency; never classify as garbage from point count alone. |
 | `vietlex-rerank-staging` | ColBERT rerank staging | Active runtime dependency; zero points is normal after cleanup. |
 | `vietlex-legal-rag-v2-pilot-384` | Existing 384d structural pilot | Retain until its evaluation history is formally retired. |
-| `vietlex-legal-rag-v3-vertex-1024` | Isolated Vertex AI migration pilot | Do not route production traffic until A/B acceptance and coverage gates pass. |
+| `vietlex-legal-rag-v3-vertex-1024` | Active default v3 runtime; 51,801 points over 4,969 audited document IDs | Never delete/recreate without explicit authorization and a migration plan; it is not full-corpus coverage. |
 
 Before deleting a Qdrant collection, verify its exact name, point count, aliases, current config references, runtime role, and checkpoint/report provenance. Deletion is irreversible and requires explicit authorization for the named collection.
 
@@ -30,19 +43,29 @@ The pilot uses balanced legal types and an even structural sampling budget per l
 ## Backup check
 
 1. Confirm the managed MongoDB backup completed and record its timestamp.
-2. Snapshot `content_store.sqlite3` on the persistent volume and verify SQLite integrity plus SHA-256.
+2. For persistent hosts, snapshot `content_store.sqlite3` on the persistent
+   volume and verify SQLite integrity plus SHA-256. This step is not applicable
+   to online-only Vercel functions because the corpus is not packaged there.
 3. Retain the dataset revision, ingestion report, vector manifests, application Git SHA, and production environment-variable names without secret values.
 4. Do not copy `.env`, service-account JSON, raw cookies, or account tokens into reports.
 
 ## Restore check
 
 1. Restore MongoDB into an isolated database and verify required indexes and TTL policies.
-2. Restore `content_store.sqlite3` to an isolated volume and verify its stored build report and integrity.
+2. For the persistent topology, restore `content_store.sqlite3` to an isolated
+   volume and verify its stored build report and integrity.
 3. Rebuild `legal_fts.sqlite3` from that content store when necessary; do not treat a stale FTS file as source data.
 4. Point a non-public backend at the restored stores, set fresh secrets, and require `GET /healthz` plus `GET /readyz` to pass.
 5. Run provider-free smoke tests first. Provider calls and vector writes require separate authorization.
-6. Switch traffic only after account login, search, document detail, chat ownership, export, and deletion smoke checks pass.
+6. For online-only Vercel, require health/readiness/root/chat checks and treat
+   local search/document detail as not applicable. For persistent hosts, also
+   require search and document-detail smoke checks. Switch traffic only after
+   the topology-specific checks pass.
 
 ## Minimum alerts
 
-Monitor backend uptime, `/readyz`, request error rate, P95 chat latency, MongoDB availability, provider failures, persistent-volume capacity, and email-delivery failures. Never include legal queries, passwords, cookies, or tokens in alert payloads.
+Monitor backend uptime, `/readyz`, request error rate, P95 chat latency, MongoDB
+availability, and provider failures. Add persistent-volume capacity for the
+persistent topology and Vercel function duration/cold-start behavior for the
+serverless topology. Never include legal queries, passwords, cookies, or tokens
+in alert payloads.

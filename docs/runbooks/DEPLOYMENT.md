@@ -1,14 +1,31 @@
 # Deployment contract
 
-Vercel is only the public HTTP gateway. `api/proxy.py` requires `BACKEND_ORIGIN` and forwards traffic to a persistent FastAPI origin; it does not contain the legal corpus or run persistent RAG workers.
+Updated: 2026-09-01.
 
-The FastAPI origin requires:
+The active Vercel contract runs `app/server.py` directly as an online-only FastAPI/Jinja SSR function. Set `SERVERLESS_ONLINE_ONLY=true` and `USE_LEGACY_FREE_PIPELINE=false`; the function uses Qdrant v3 payload evidence and never packages the local legal corpus. The verified public alias is <https://vietlex-legal-rag.vercel.app>.
 
-- the local SQLite/Zstandard content store and SQLite FTS files mounted at `CONTENT_STORE_PATH` and `LEGAL_FTS_PATH`, until a separately verified remote full-text adapter is approved;
-- Pinecone and Qdrant credentials for the configured production retrieval path;
-- Google Cloud ADC or a configured generation fallback for live answers;
-- MongoDB when session/history persistence is required.
+The online-only function requires:
 
-Deploy in this order: build the Docker image, mount/verify the two SQLite files, start the persistent origin, verify `/health/ready`, then set Vercel `BACKEND_ORIGIN`. Provider connectivity belongs in a bounded administrative diagnostic, not a paid call on every readiness probe.
+- Qdrant credentials for collection `vietlex-legal-rag-v3-vertex-1024`;
+- Google Cloud project and ADC for v3 query embeddings and primary generation;
+- an optional configured direct-API fallback for generation only;
+- MongoDB for readiness, session/history, and interaction persistence;
+- a stable `WEB_SESSION_SECRET` and HTTPS `FRONTEND_URL`/`PUBLIC_BASE_URL`.
 
-The default production backend remains Pinecone v1 plus local FTS. Vertex/Qdrant v3 can be selected explicitly by offline evaluation and can run as `VERTEX_QDRANT_SHADOW_ENABLED=true`; shadow results never replace production evidence.
+Local `CONTENT_STORE_PATH` and `LEGAL_FTS_PATH` are deliberately not required in
+online-only mode. `/search` and `/documents/{id}` are therefore outside this
+deployment contract. The persistent Docker topology still requires its matching
+local stores.
+
+Deploy in this order: configure MongoDB, Qdrant, and Vertex credentials in
+Vercel; configure optional fallback credentials only when intentionally used;
+deploy the FastAPI function; verify `/healthz`, `/readyz`, and `/`; then submit a
+CSRF-protected bounded `/chat` request. Readiness checks configuration and
+MongoDB without making paid provider calls.
+
+The 2026-09-01 deployment passed health, readiness, SSR-root, and live chat smoke
+checks. That proves the deployment contract, not whole-corpus coverage or legal
+answer correctness. The separately executed Golden-50 artifacts are linked from
+[`../evaluation/CURRENT_STATUS.md`](../evaluation/CURRENT_STATUS.md).
+
+`USE_LEGACY_FREE_PIPELINE=false` selects Vertex/Qdrant v3 for production. The persistent Docker topology remains supported with `SERVERLESS_ONLINE_ONLY=false` and its matching SQLite stores.

@@ -1,32 +1,37 @@
-# Vercel public gateway
+# Vercel online-only SSR
 
-Vercel chỉ làm cổng HTTPS mỏng. FastAPI, MongoDB và hai SQLite corpus phải chạy ở một backend luôn online có persistent disk. Không upload corpus local lên Vercel và không đưa corpus vào MongoDB.
+The directory name is retained for compatibility with older links. Vercel is
+no longer only a proxy: it runs the FastAPI/Jinja application directly through
+`app/server.py`.
 
-## Triển khai
+Vercel chạy trực tiếp ứng dụng FastAPI/Jinja SSR qua `app/server.py`. Chế độ
+`SERVERLESS_ONLINE_ONLY=true` dùng Qdrant v3, Vertex AI và MongoDB
+online; không đóng gói hoặc đọc SQLite corpus từ máy local.
 
-1. Build `Dockerfile` trên Render, Railway, Fly.io hoặc VPS có persistent volume.
-2. Gắn volume vào `/data` và đặt `content_store.sqlite3`, `legal_fts.sqlite3` tại đó. Có thể đổi đường dẫn bằng biến môi trường.
-3. Cấu hình toàn bộ secret ở backend, đặc biệt `MONGO_URL`, provider keys, `WEB_SESSION_SECRET`, `ADMIN_USERNAME` và `ADMIN_PASSWORD`. Đặt `APP_ENV=production`, `FRONTEND_URL=https://<domain-vercel>` và `PUBLIC_BASE_URL=https://<domain-vercel>`; nếu bật email thì thêm `ACCOUNT_EMAIL_ENABLED=true`, `EMAIL_USER`, `EMAIL_PASS`, `EMAIL_FROM`.
-4. Kiểm tra `GET /readyz` trả HTTP 200 trước khi mở public.
-5. Import repository vào Vercel và đặt `BACKEND_ORIGIN=https://<backend-cua-ban>` trong Project Environment Variables.
-6. Deploy Vercel. `vercel.json` chuyển mọi request qua function `api/proxy.py`, nên cookie ẩn danh, HTML và static assets vẫn cùng origin đối với trình duyệt.
+## Cấu hình production
 
-Vercel project không cần Install Command hay Build Command. `.vercelignore` dùng allowlist chỉ đưa `api/` và `vercel.json` lên deployment, vì proxy chỉ dùng Python standard library; không đưa `requirements.txt`, `app/`, tests, corpus hoặc model dependencies vào function bundle. Function timeout được đặt 60 giây và origin timeout 55 giây.
+- `APP_ENV=production`
+- `SERVERLESS_ONLINE_ONLY=true`
+- `USE_LEGACY_FREE_PIPELINE=false`
+- `FRONTEND_URL=https://<domain-vercel>`
+- `PUBLIC_BASE_URL=https://<domain-vercel>`
+- `WEB_SESSION_SECRET=<ít nhất 32 ký tự>`
+- `MONGO_URL`, `QDRANT_URL`, `QDRANT_API_KEY`
+- `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION`
+- `GOOGLE_SERVICE_ACCOUNT_JSON` chứa JSON service account đầy đủ
 
-Kiểm tra sau deploy:
+Pinecone credentials chỉ cần nếu chủ động cấu hình contract legacy/free hoặc
+fallback liên quan; chúng không phải dependency retrieval của v3 online-only.
 
-```text
-GET https://<domain-vercel>/healthz  -> 200
-GET https://<domain-vercel>/readyz   -> 200, MongoDB/content_store/legal_fts ready
-GET https://<domain-vercel>/          -> HTML có data-progress-transport="polling"
-```
+Không upload `.env`, service-account file, `data/`, tests, reports hoặc corpus.
+`/healthz` chỉ chứng minh process phục vụ HTTP; `/readyz` kiểm tra MongoDB và
+cấu hình retrieval online mà không phát sinh provider call trả phí.
 
-## Ranh giới vận hành
+Các trang `/search` và `/documents/{id}` vẫn là trình duyệt corpus local và
+không phải contract của deployment online-only. Chat lấy evidence trực tiếp từ
+Qdrant v3 payload.
 
-- `PUBLIC_RAGAS_ENABLED=false` là mặc định. Chỉ bật khi backend đã có judge provider và ngân sách phù hợp.
-- Quota Ragas trong process phù hợp demo một instance. Nếu scale nhiều instance, cần quota store dùng chung như Redis trước khi tăng traffic.
-- NeMo do từng người dùng bật cho từng câu hỏi; mặc định tắt.
-- Vercel proxy có timeout nền tảng. Backend vẫn phải giới hạn thời gian xử lý và rate limit.
-- Vercel Python proxy buffer upstream responses, nên gateway đánh dấu request bằng `gateway=vercel` và UI dùng polling progress 1 giây. Chỉ client truy cập FastAPI trực tiếp mới dùng SSE.
-- Không commit secret, service-account JSON, corpus hoặc file `.env`.
-- Cấu hình này là gói sẵn sàng triển khai; repository không tuyên bố đã deploy nếu chưa có URL và kiểm tra live.
+Production alias đã kiểm tra ngày 2026-09-01:
+<https://vietlex-legal-rag.vercel.app>. Health/readiness/chat smoke không phải
+bằng chứng production-readiness; xem `docs/evaluation/CURRENT_STATUS.md` để biết
+benchmark và giới hạn hiện tại.

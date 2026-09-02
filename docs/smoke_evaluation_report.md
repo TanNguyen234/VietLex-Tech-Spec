@@ -1,3 +1,8 @@
+> [!NOTE]
+> **HISTORICAL SMOKE SNAPSHOT (2026-08-02).** Giữ nguyên số liệu cũ; current
+> benchmark và denominator nằm tại
+> [`evaluation/CURRENT_STATUS.md`](evaluation/CURRENT_STATUS.md).
+
 # SYSTEM EVALUATION REPORT - VIETLEX LEGAL RAG
 
 **Evaluation Timestamp**: `2026-08-02 19:52:32`  

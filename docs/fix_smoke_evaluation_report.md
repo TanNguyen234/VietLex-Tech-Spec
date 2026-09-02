@@ -1,3 +1,8 @@
+> [!NOTE]
+> **HISTORICAL FIX-SMOKE SNAPSHOT (2026-08-02).** Đây là run 2-case cũ, không
+> phải current quality evidence. Xem
+> [`evaluation/CURRENT_STATUS.md`](evaluation/CURRENT_STATUS.md).
+
 # SYSTEM EVALUATION REPORT - VIETLEX LEGAL RAG
 
 **Evaluation Timestamp**: `2026-08-02 20:02:03`  

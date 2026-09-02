@@ -1,3 +1,10 @@
+> [!WARNING]
+> **HISTORICAL SPECIFICATION.** Tài liệu này mô tả kiến trúc Cohere/OmniGate
+> giai đoạn tháng 7/2026 và không còn là source of truth. Giữ nguyên nội dung
+> bên dưới để truy vết lịch sử. Trạng thái hiện tại nằm tại
+> [`docs/CURRENT_ARCHITECTURE.md`](docs/CURRENT_ARCHITECTURE.md) và
+> [`docs/DOCUMENTATION_INDEX.md`](docs/DOCUMENTATION_INDEX.md).
+
 # TECHNICAL SPECIFICATION: VIETLEX (ADVANCED LEGAL RAG)
 
 Tài liệu thiết kế kỹ thuật và trạng thái triển khai dự án Vietlex Legal RAG.
@@ -51,20 +58,20 @@ Tài liệu thiết kế kỹ thuật và trạng thái triển khai dự án Vi
 
 | Module | Nhiệm vụ | Trạng thái | Ngày verify | Cách verify (lệnh / log) |
 |---|---|---|---|---|
-| Ingestion | Parser tách Chương/Mục/Điều | `ĐÃ LÀM` | 16/07/2026 | Log chạy và output của [parser.py](file:///d:/Download/ProfessionalLegalRAG/app/ingestion/parser.py) khi phân tách dữ liệu `datht/vlegal` |
+| Ingestion | Parser tách Chương/Mục/Điều | `ĐÃ LÀM` | 16/07/2026 | Log chạy và output của `app/ingestion/parser.py` khi phân tách dữ liệu `datht/vlegal` |
 | Ingestion | PyVi segment + upsert Qdrant | `ĐANG CHẠY` | 18/07/2026 | Ingestion of `datht/vlegal` dataset is partially complete (850 points indexed in Qdrant). Need to resume and verify points count. |
 | Semantic Cache | Embedding + hit/miss ≥0.96 | `ĐÃ LÀM` | 16/07/2026 | Lịch sử log của `run_eval_suite.py` nhận diện chính xác `Cache Hit` cho câu hỏi trùng lặp |
-| Semantic Cache | Ghi cặp Q-A mới vào cache | `ĐÃ LÀM` | 16/07/2026 | [semantic_cache.py](file:///d:/Download/ProfessionalLegalRAG/app/services/semantic_cache.py) thực thi hàm `save_to_semantic_cache` sau khi sinh kết quả |
+| Semantic Cache | Ghi cặp Q-A mới vào cache | `ĐÃ LÀM` | 16/07/2026 | [`semantic_cache.py`](app/services/semantic_cache.py) thực thi hàm `save_to_semantic_cache` sau khi sinh kết quả |
 | RAG Pipeline | Query rewrite qua OmniGate | `ĐÃ LÀM` | 16/07/2026 | Log của `run_eval_suite.py` ghi nhận các câu truy vấn được viết lại thông qua LLM Gateway |
-| RAG Pipeline | Dense search thực (Qdrant) | `ĐÃ LÀM` | 16/07/2026 | [rag_pipeline.py](file:///d:/Download/ProfessionalLegalRAG/app/services/rag_pipeline.py) -> `dense_search` kết nối Qdrant Cloud thực tế |
-| RAG Pipeline | Sparse search thực (BM25+PyVi) | `ĐÃ LÀM` | 16/07/2026 | [rag_pipeline.py](file:///d:/Download/ProfessionalLegalRAG/app/services/rag_pipeline.py) -> `sparse_search` kết hợp tách từ PyVi và lưu index băm |
+| RAG Pipeline | Dense search thực (Qdrant) | `ĐÃ LÀM` | 16/07/2026 | [`rag_pipeline.py`](app/services/rag_pipeline.py) -> `dense_search` kết nối Qdrant Cloud thực tế |
+| RAG Pipeline | Sparse search thực (BM25+PyVi) | `ĐÃ LÀM` | 16/07/2026 | [`rag_pipeline.py`](app/services/rag_pipeline.py) -> `sparse_search` kết hợp tách từ PyVi và lưu index băm |
 | RAG Pipeline | RRF fusion | `ĐÃ LÀM` | 16/07/2026 | Hợp nhất thứ hạng Dense và Sparse thành công theo công thức RRF trong `rag_pipeline.py` |
 | RAG Pipeline | Cohere rerank v3.0 | `ĐÃ LÀM` | 16/07/2026 | Log của `run_advanced_rag` và Logfire cho thấy kết quả rerank thông qua Cohere API |
 | RAG Pipeline | LLM generation (legal-core-model) | `ĐÃ LÀM` | 16/07/2026 | Trả về câu trả lời sinh ra từ `legal-core-model` (OmniGate) chính xác trong log đánh giá |
 | Guardrails | Input rails (jailbreak/off-topic) | `ĐÃ LÀM` | 16/07/2026 | Lọc và chặn đúng các câu hỏi off-topic (nấu ăn, code) và jailbreak trong `run_eval_suite.py` |
-| Guardrails | Output rails (hallucination check) | `ĐÃ LÀM` | 16/07/2026 | [guardrails.py](file:///d:/Download/ProfessionalLegalRAG/app/services/guardrails.py) -> `check_output_guardrails` so sánh câu trả lời với context |
-| PII Redaction | SĐT / email / CCCD | `ĐÃ LÀM` | 16/07/2026 | Hàm `redact_pii` trong [guardrails.py](file:///d:/Download/ProfessionalLegalRAG/app/services/guardrails.py) tự động che ẩn email, SĐT, CCCD ở routes |
+| Guardrails | Output rails (hallucination check) | `ĐÃ LÀM` | 16/07/2026 | [`guardrails.py`](app/services/guardrails.py) -> `check_output_guardrails` so sánh câu trả lời với context |
+| PII Redaction | SĐT / email / CCCD | `ĐÃ LÀM` | 16/07/2026 | Hàm `redact_pii` trong [`guardrails.py`](app/services/guardrails.py) tự động che ẩn email, SĐT, CCCD ở routes |
 | Evaluator | Ragas evaluation suite (4 metrics) | `ĐANG CHẠY` | 18/07/2026 | Upgraded `run_eval_suite.py` with custom `OmniGateEmbeddings` to measure 4 Ragas metrics with ground truths. Need to run to completion. |
-| Observability | Logfire trace toàn bộ request | `ĐÃ LÀM` | 16/07/2026 | Khởi tạo cấu hình logfire trong [main.py](file:///d:/Download/ProfessionalLegalRAG/app/main.py) và decorator `@logfire.instrument` cho service |
-| Frontend | Chat UI + feedback thumbs | `ĐÃ LÀM` | 16/07/2026 | [index.html](file:///d:/Download/ProfessionalLegalRAG/app/templates/index.html) cung cấp khung chat và nút feedback gửi dữ liệu qua HTMX |
-| Frontend | Admin dashboard | `ĐÃ LÀM` | 16/07/2026 | Trang quản trị tại [admin.html](file:///d:/Download/ProfessionalLegalRAG/app/templates/admin.html) hiển thị biểu đồ thống kê và chi tiết logs |
+| Observability | Logfire trace toàn bộ request | `ĐÃ LÀM` | 16/07/2026 | Khởi tạo cấu hình logfire trong [`main.py`](app/main.py) và decorator `@logfire.instrument` cho service |
+| Frontend | Chat UI + feedback thumbs | `ĐÃ LÀM` | [`index.html`](app/templates/index.html) cung cấp khung chat và nút feedback gửi dữ liệu qua HTMX |
+| Frontend | Admin dashboard | `ĐÃ LÀM` | Trang quản trị tại [`admin.html`](app/templates/admin.html) hiển thị biểu đồ thống kê và chi tiết logs |

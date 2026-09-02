@@ -1,3 +1,9 @@
+> [!NOTE]
+> **HISTORICAL RESEARCH NOTE.** Đây là phân tích tính năng ban đầu, không phải
+> mô tả runtime guardrail hiện hành. VietLex hiện hỗ trợ `off`, `shadow`, và
+> `enforce`; technical failure không được biến thành hallucination block. Xem
+> [`docs/CURRENT_ARCHITECTURE.md`](docs/CURRENT_ARCHITECTURE.md) và current code.
+
 # PHÂN TÍCH VÀ ĐÁNH GIÁ CÁC TÍNH NĂNG CỦA NVIDIA NEMO GUARDRAILS
 
 Tài liệu này tổng hợp toàn bộ các tính năng bảo mật và kiểm duyệt mà thư viện **NVIDIA NeMo Guardrails** cung cấp (dựa trên tài liệu chính thức từ NVIDIA), kèm theo đánh giá chi tiết về khả năng áp dụng và mức độ cần thiết đối với dự án **Vietlex Legal RAG** (Trợ lý Pháp luật Việt Nam).

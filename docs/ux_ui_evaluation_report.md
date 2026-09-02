@@ -1,3 +1,10 @@
+> [!WARNING]
+> **HISTORICAL UX AUDIT.** Báo cáo này được viết trước giao diện session,
+> evidence drawer, progress transport và Vercel SSR hiện tại. Các nhận xét bên
+> dưới được giữ để theo dõi lịch sử, không phải current-state assessment. Xem
+> [`DOCUMENTATION_INDEX.md`](DOCUMENTATION_INDEX.md) và chạy một UX audit mới
+> trước khi dùng các đề xuất này cho quyết định hiện tại.
+
 # BÁO CÁO ĐÁNH GIÁ UX/UI & ĐỀ XUẤT NÂNG CẤP LÊN PRODUCTION (VIETLEX LEGAL RAG)
 
 Báo cáo này tập trung phân tích sâu các điểm hạn chế về mặt Trải nghiệm Người dùng (UX) và Giao diện Đồ họa (UI) hiện tại của hệ thống **VietLex Legal RAG**, đồng thời đề xuất lộ trình cải tiến chi tiết để đưa sản phẩm đạt tiêu chuẩn vận hành thực tế (Production-Ready).
@@ -10,10 +17,10 @@ Hiện tại, hệ thống VietLex sở hữu một backend RAG tiên tiến (Hy
 
 ### 1.1 Khía cạnh Giao diện (UI Aesthetics) - "Thiết kế rập khuôn & Thiếu bản sắc pháp lý"
 *   **Bảng màu generic (AI template style):** Sử dụng tông nền xám tối (`bg-slate-950`) kết hợp với màu nhấn vàng hổ phách (`amber-500`). Đây là bảng màu quá phổ biến trong các template chatbot AI phổ thông, tạo cảm giác công nghệ giả tưởng (cyberpunk/tech-heavy) hơn là một **hệ thống tra cứu pháp lý trang trọng, đáng tin cậy**.
-*   **Không hỗ trợ định dạng văn bản (Raw Markdown Text):** Bot trả về câu trả lời ở dạng văn bản thuần (`whitespace-pre-wrap` tại [chat_message.html](file:///d:/Download/ProfessionalLegalRAG/app/templates/chat_message.html#L19)). Các điều khoản luật pháp Việt Nam thường có cấu trúc phân cấp phức tạp (Chương, Mục, Điều, Khoản, Điểm) kèm bảng biểu. Việc hiển thị thô các ký tự markdown như `**`, `-`, `|` làm giao diện cực kỳ lộn xộn và rất khó đọc.
+*   **Không hỗ trợ định dạng văn bản (Raw Markdown Text):** Bot trả về câu trả lời ở dạng văn bản thuần (`whitespace-pre-wrap` tại [`chat_message.html`](../app/templates/chat_message.html)). Các điều khoản luật pháp Việt Nam thường có cấu trúc phân cấp phức tạp (Chương, Mục, Điều, Khoản, Điểm) kèm bảng biểu. Việc hiển thị thô các ký tự markdown như `**`, `-`, `|` làm giao diện cực kỳ lộn xộn và rất khó đọc.
 *   **Typography chưa tối ưu:** Toàn bộ trang sử dụng font sans-serif (`Outfit`). Kiểu chữ này hiện đại nhưng không phù hợp cho việc đọc các đoạn văn bản luật dài. Độ rộng dòng (line-length) và chiều cao dòng (line-height) chưa được tinh chỉnh tốt cho việc đọc tài liệu.
 *   **Thiếu các hiệu ứng chuyển động vi mô (Micro-animations):** Các tương tác như hover vào các nút phản hồi (Thumbs up/down), nút gửi tin nhắn, hoặc click vào Admin Dashboard diễn ra khá thô cứng, thiếu độ mượt mà của một ứng dụng SaaS cao cấp.
-*   **Bố cục Bento Grid chưa được khai thác sâu:** Giao diện Dashboard Admin ở [admin.html](file:///d:/Download/ProfessionalLegalRAG/app/templates/admin.html) xếp chồng các hộp thông tin tĩnh, tạo cảm giác chật chội và không có phân cấp thị giác rõ ràng.
+*   **Bố cục Bento Grid chưa được khai thác sâu:** Giao diện Dashboard Admin ở [`admin.html`](../app/templates/admin.html) xếp chồng các hộp thông tin tĩnh, tạo cảm giác chật chội và không có phân cấp thị giác rõ ràng.
 
 ### 1.2 Khía cạnh Trải nghiệm (UX Capabilities) - "Thiếu tính năng Production"
 *   **Không có lịch sử hội thoại (Chat History / Session Management):** Giao diện chat hoàn toàn trống trải khi tải lại trang. Người dùng không có thanh sidebar bên trái để quản lý, tìm kiếm hoặc chuyển đổi qua lại giữa các phiên chat cũ.
@@ -106,7 +113,7 @@ graph TD
 ### 3.2 Nâng cấp Bảng quản trị Admin (Admin Dashboard Monitoring UI/UX)
 
 #### 📌 Tính năng 7: Biểu đồ trực quan hóa dữ liệu giám sát (Visual Analytics Charts)
-*   **Mô tả:** Thay thế các ô số liệu tĩnh tại [admin.html](file:///d:/Download/ProfessionalLegalRAG/app/templates/admin.html) bằng các biểu đồ đường và cột thể hiện:
+*   **Mô tả:** Thay thế các ô số liệu tĩnh tại [`admin.html`](../app/templates/admin.html) bằng các biểu đồ đường và cột thể hiện:
     *   *Tần suất truy vấn:* Biểu đồ cột theo giờ/ngày.
     *   *Độ hiệu quả Cache:* Tỉ lệ phần trăm Cache Hit vs Cache Miss.
     *   *Phân bố điểm chất lượng:* Biểu đồ phân bổ điểm Faithfulness và Answer Relevance từ Ragas.
@@ -134,8 +141,8 @@ graph TD
 Để thực hiện nâng cấp mà không phá vỡ cấu trúc Clean Architecture hiện tại, lộ trình được chia thành 3 giai đoạn tinh gọn:
 
 ### Giai đoạn 1: Nâng cấp Nền tảng Đọc & Thẩm mỹ UI (Trọng tâm: UI & Markdown)
-1.  **Tích hợp CSS Typography & Font chữ mới:** Cấu hình Tailwind trong [index.html](file:///d:/Download/ProfessionalLegalRAG/app/templates/index.html) để tải font chữ serif (Playfair Display) và sans-serif (Inter).
-2.  **Triển khai Markdown Rendering:** Thêm filter hoặc JS script để render mã nguồn markdown trong [chat_message.html](file:///d:/Download/ProfessionalLegalRAG/app/templates/chat_message.html) thành định dạng văn bản luật phân cấp trực quan.
+1.  **Tích hợp CSS Typography & Font chữ mới:** Cấu hình Tailwind trong [`index.html`](../app/templates/index.html) để tải font chữ serif (Playfair Display) và sans-serif (Inter).
+2.  **Triển khai Markdown Rendering:** Thêm filter hoặc JS script để render mã nguồn markdown trong [`chat_message.html`](../app/templates/chat_message.html) thành định dạng văn bản luật phân cấp trực quan.
 3.  **Tối ưu hóa bảng màu:** Điều chỉnh CSS tokens để chuyển đổi sang phong cách Royal Navy & Gold trang trọng.
 
 ### Giai đoạn 2: Nâng cấp Tính năng Tương tác Pháp lý (Trọng tâm: UX & Citations)
@@ -144,6 +151,6 @@ graph TD
 3.  **Bổ sung Action Toolbar:** Viết JS sao chép nhanh văn bản và tích hợp API sinh file tài liệu PDF từ backend.
 
 ### Giai đoạn 3: Giám sát Nâng cao & Cấu hình Động (Trọng tâm: Admin Dashboard)
-1.  **Vẽ biểu đồ số liệu:** Sử dụng SVG hoặc Chart.js hiển thị hiệu năng RAG trong [admin.html](file:///d:/Download/ProfessionalLegalRAG/app/templates/admin.html).
+1.  **Vẽ biểu đồ số liệu:** Sử dụng SVG hoặc Chart.js hiển thị hiệu năng RAG trong [`admin.html`](../app/templates/admin.html).
 2.  **Mở rộng bộ lọc logs:** Cập nhật API lọc nâng cao cho logs pháp luật.
 3.  **Xây dựng giao diện cấu hình tham số RAG:** Triển khai form cập nhật tham số hệ thống động.

@@ -1,8 +1,50 @@
 # VietLex Evaluation Current Status
 
-**Status (2026-08-22):** Answer-evaluation evidence is `COMPLETED` for Representative-10 and Balanced-50; production readiness remains **NOT DEMONSTRATED**.
+**Status (2026-09-01):** Direct Vercel FastAPI/Jinja SSR deployment and the
+current v3 Golden-50 retrieval/answer audits are `COMPLETED`. Production
+readiness remains **NOT DEMONSTRATED**: Qdrant v3 covers only 4,969 of 518,255
+corpus documents, verified retrieval gold covers 40/50 cases, and deterministic
+answer exact match/token F1 are `0.0000 / 0.2336`.
 
-The latest answer run is `docs/evaluation/runs/answer-balanced50-v2-live-20260822/`. It completed 50/50 generations with `STOP`, passed NeMo input/output rails on 50/50, produced all four Ragas metrics for 50/50, and recorded zero technical errors. Mean Ragas scores are Faithfulness `0.9158`, Answer Accuracy `0.8950`, Context Precision `0.8757`, and Context Recall `0.9333`. The set contains all 40 `all-required-verified` cases plus 10 deterministic reference-only cases; verified retrieval claims therefore use a 40-case denominator. On that denominator, Document Recall@3 is macro `0.9250` and micro `50/53 = 0.9434`. This is bounded portfolio evidence, not proof of whole-corpus or production legal accuracy.
+Current immutable runs:
+
+- `docs/evaluation/runs/retrieval-v3-golden50-online-vercel-20260901/`:
+  50/50 completed, zero retrieval/reranker technical errors, and zero
+  no-candidate cases. The verified denominator is 40 cases / 53 evidence items;
+  10 skip with `no_verified_gold_label`. Document Recall@3 is `53/53`, Article
+  Recall@3 `30/30`, Clause Recall@3 `13/14`, and all-required coverage `39/40`.
+  Retrieval P50/P95 is `0.6842s / 1.6051s`; the configured quality gate passed.
+- `docs/evaluation/runs/answer-v3-golden50-online-vercel-20260901/`:
+  generation STOP, NeMo input safe, NeMo output safe, and Ragas coverage are
+  each `50/50`, with zero technical/judge errors. Deterministic exact match,
+  token F1, and character F1 are `0.0000`, `0.2336`, and `0.2250`; citation
+  precision/invalid rate are `0.9567 / 0.0433`. Ragas Faithfulness, Answer
+  Accuracy, Context Precision, and Context Recall are `0.9197`, `0.9150`,
+  `0.8733`, and `0.9367`. End-to-end P50/P95 is `5.3818s / 6.7163s`.
+- Production alias `https://vietlex-legal-rag.vercel.app`: `/healthz`,
+  `/readyz`, `/`, and a CSRF-protected `/chat` smoke request returned HTTP 200.
+  This is deployment evidence, not an answer-quality or whole-corpus gate.
+
+Both current runs bind Git
+`c5fa8121d3080ac401d5a79e1beedaa1ffa2241f`, `git_dirty=true`, provenance
+status `ok`, source-state SHA-256
+`7fb04d6a3b5ae33eb0b77f95ed31789ba75a5c5bf073ab7e10a874cdfb62f252`,
+and dataset SHA-256
+`caa3fc19cd22bcce4b87e96adf13544d0c3cc174cca2d0e365a848e0da9a981f`.
+The retrieval and answer configuration files are byte-identical to the
+2026-08-27 comparable run pair, but live candidate ordering and generated
+answers are not deterministic. Generation and the observed Ragas judge both
+used Vertex `gemini-3.5-flash`; Ragas is secondary evidence, not independent
+legal review.
+
+## Historical status
+
+Everything below this heading is a retained chronological log. Statements such
+as “Pinecone remains the production backend” or “Qdrant is not wired into
+production” describe an earlier contract and must not be read as current. Use
+the dated status above and [`../CURRENT_ARCHITECTURE.md`](../CURRENT_ARCHITECTURE.md).
+
+The earlier answer run is `docs/evaluation/runs/answer-balanced50-v2-live-20260822/`. It completed 50/50 generations with `STOP`, passed NeMo input/output rails on 50/50, produced all four Ragas metrics for 50/50, and recorded zero technical errors. Mean Ragas scores are Faithfulness `0.9158`, Answer Accuracy `0.8950`, Context Precision `0.8757`, and Context Recall `0.9333`. It is retained as historical evidence, not the current v3 result.
 
 The preceding Representative-10 gate is `docs/evaluation/runs/answer-representative10-v6-live-20260822/`: generation, NeMo, and Ragas coverage are all 10/10 with zero technical errors; Ragas means are `0.9857`, `0.9750`, `0.9400`, and `1.0000` respectively. Both runs preserve Git/source-state provenance and use Vertex AI `gemini-3.5-flash`, `MINIMAL` thinking, guardrails `enforce`, and rewrite `off`.
 
