@@ -43,6 +43,11 @@ env/
 app/data/*.json
 app/data/*.json.gz
 data/huggingface/
+.tmp/
+null/
+output/
+tmp/
+data/v3/
 data/.tmp/
 data/tmp/
 data/migration/

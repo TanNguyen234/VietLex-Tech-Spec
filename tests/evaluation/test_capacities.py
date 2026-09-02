@@ -29,3 +29,28 @@ def test_structural_backend_reports_actual_stage_capacities() -> None:
     assert capacities.rerank_input_limit == 64
     assert capacities.rerank_return_limit == 6
     assert capacities.final_evidence_limit == 5
+
+
+def test_production_capacities_follow_boolean_pipeline_switch() -> None:
+    profile = get_evaluation_profile("separated_intent")
+    v3 = build_stage_capacities(
+        profile,
+        SimpleNamespace(
+            USE_LEGACY_FREE_PIPELINE=False,
+            STRUCTURAL_BACKEND_ENABLED=True,
+        ),
+    )
+    free = build_stage_capacities(
+        profile,
+        SimpleNamespace(
+            USE_LEGACY_FREE_PIPELINE=True,
+            STRUCTURAL_BACKEND_ENABLED=True,
+            LEGAL_FTS_RESULT_LIMIT=24,
+        ),
+    )
+
+    assert v3.pinecone_document_limit is None
+    assert v3.structural_chunk_limit == profile.rerank_input_limit
+    assert free.pinecone_document_limit == profile.retrieval_document_limit
+    assert free.fts_document_limit == 24
+    assert free.structural_chunk_limit is None

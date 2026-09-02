@@ -8,7 +8,9 @@ def build_stage_capacities(
     *,
     backend: str = "production",
 ) -> RetrievalStageCapacities:
-    if backend == "vertex-qdrant-v3":
+    pipeline_switch = getattr(settings, "USE_LEGACY_FREE_PIPELINE", None)
+    production_v3 = backend == "production" and pipeline_switch is False
+    if backend == "vertex-qdrant-v3" or production_v3:
         return RetrievalStageCapacities(
             pinecone_document_limit=None,
             fts_document_limit=None,
@@ -22,6 +24,7 @@ def build_stage_capacities(
         )
     if backend == "qdrant-v2-parallel" or (
         backend == "production"
+        and pipeline_switch is None
         and getattr(settings, "STRUCTURAL_BACKEND_ENABLED", False)
     ):
         fused_limit = settings.STRUCTURAL_FUSED_LIMIT

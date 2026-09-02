@@ -25,12 +25,23 @@ class LegalBrowser:
 
     @classmethod
     def from_settings(cls, settings: Any) -> "LegalBrowser":
-        store = ContentStore(settings.CONTENT_STORE_PATH)
+        use_v3 = getattr(settings, "USE_LEGACY_FREE_PIPELINE", None) is False
+        content_path = (
+            settings.V3_CONTENT_STORE_PATH
+            if use_v3
+            else settings.CONTENT_STORE_PATH
+        )
+        fts_path = (
+            settings.V3_LEGAL_FTS_PATH
+            if use_v3
+            else settings.LEGAL_FTS_PATH
+        )
+        store = ContentStore(content_path)
         return cls(
             store=store,
             index=LegalFtsIndex(
                 store=store,
-                path=settings.LEGAL_FTS_PATH,
+                path=fts_path,
                 dataset_revision=settings.DATASET_REVISION,
             ),
         )

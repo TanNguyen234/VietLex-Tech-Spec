@@ -4,6 +4,40 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 
+def test_v3_browser_uses_packaged_v3_data_paths(monkeypatch) -> None:
+    from pathlib import Path
+
+    from app.services import legal_browser
+
+    captured = {}
+
+    def store(path):
+        captured["content"] = path
+        return object()
+
+    def index(*, store, path, dataset_revision):
+        captured["fts"] = path
+        return object()
+
+    monkeypatch.setattr(legal_browser, "ContentStore", store)
+    monkeypatch.setattr(legal_browser, "LegalFtsIndex", index)
+    legal_browser.LegalBrowser.from_settings(
+        SimpleNamespace(
+            USE_LEGACY_FREE_PIPELINE=False,
+            CONTENT_STORE_PATH=Path("full.sqlite3"),
+            LEGAL_FTS_PATH=Path("full-fts.sqlite3"),
+            V3_CONTENT_STORE_PATH=Path("data/v3/content_store.sqlite3"),
+            V3_LEGAL_FTS_PATH=Path("data/v3/legal_fts.sqlite3"),
+            DATASET_REVISION="rev",
+        )
+    )
+
+    assert captured == {
+        "content": Path("data/v3/content_store.sqlite3"),
+        "fts": Path("data/v3/legal_fts.sqlite3"),
+    }
+
+
 def _client(monkeypatch, *, source_url="https://example.gov.vn/7"):
     import app.api.legal_routes as routes
 

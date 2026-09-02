@@ -46,6 +46,95 @@ def test_run_configuration_binds_requested_and_effective_backend() -> None:
     )
 
 
+def test_production_manifest_follows_boolean_pipeline_switch() -> None:
+    from app.config import Settings
+    from app.evaluation.run_manifest import build_run_configuration
+
+    common = {
+        "profile_name": "test",
+        "profile": {},
+        "eval_mode": "answer",
+        "judge_mode": "ragas",
+        "guardrail_mode": "off",
+        "rewrite_mode": "off",
+        "reranker_provider": "current",
+        "gold_policy": "none",
+        "selected_case_ids": [],
+        "selected_case_ids_sha256": (
+            "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        ),
+        "requested_backend": "production",
+    }
+
+    v3 = build_run_configuration(
+        **common,
+        settings=Settings(_env_file=None, USE_LEGACY_FREE_PIPELINE=False),
+    )
+    free = build_run_configuration(
+        **common,
+        settings=Settings(_env_file=None, USE_LEGACY_FREE_PIPELINE=True),
+    )
+
+    assert v3["effective_backend"] == "vertex-qdrant-v3"
+    assert v3["retrieval_runtime"]["google_cloud_calls_enabled"] is True
+    assert v3["configured_provider_models"]["generation"]["candidates"][0][
+        "provider"
+    ] == "Google Vertex AI"
+    assert v3["configured_provider_models"]["reranker_primary"] == {
+        "provider": "none",
+        "model": "raw-rrf",
+    }
+    assert v3["configured_provider_models"]["reranker_fallback"] is None
+    assert free["effective_backend"] == "pinecone_v1"
+    assert free["retrieval_runtime"]["google_cloud_calls_enabled"] is False
+    assert all(
+        item["provider"] != "Google Vertex AI"
+        for kind in ("generation", "judge")
+        for item in free["configured_provider_models"][kind]["candidates"]
+    )
+
+
+def test_online_only_vertex_retriever_does_not_open_local_store(monkeypatch) -> None:
+    from app.evaluation import retrieval_backends
+
+    settings = SimpleNamespace(
+        SERVERLESS_ONLINE_ONLY=True,
+        V3_AVERAGE_SPARSE_DOCUMENT_LENGTH=979.1241640033913,
+        V3_CONTENT_STORE_PATH="missing.sqlite3",
+        QDRANT_URL="https://qdrant.example",
+        QDRANT_API_KEY="key",
+        STRUCTURAL_QDRANT_TIMEOUT_SECONDS=10.0,
+        PINECONE_SPARSE_MAX_NONZERO=64,
+        VERTEX_QDRANT_COLLECTION_NAME="collection",
+        VERTEX_EMBEDDING_MODEL="model",
+        VERTEX_QDRANT_VECTOR_SIZE=1024,
+        DATASET_REVISION="revision",
+    )
+    captured = {}
+
+    monkeypatch.setattr(retrieval_backends, "get_settings", lambda: settings)
+    monkeypatch.setattr(
+        retrieval_backends,
+        "ContentStore",
+        lambda _path: (_ for _ in ()).throw(AssertionError("local store opened")),
+    )
+    monkeypatch.setattr(retrieval_backends, "get_vertex_provider", object)
+    monkeypatch.setattr(retrieval_backends, "AsyncQdrantClient", lambda **kw: object())
+
+    class Retriever:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    monkeypatch.setattr(retrieval_backends, "VertexQdrantRetriever", Retriever)
+    retrieval_backends.get_vertex_qdrant_retriever.cache_clear()
+    retrieval_backends.get_vertex_qdrant_retriever()
+
+    assert captured["sparse_encoder"].average_document_length == pytest.approx(
+        979.1241640033913
+    )
+    retrieval_backends.get_vertex_qdrant_retriever.cache_clear()
+
+
 @pytest.mark.asyncio
 async def test_explicit_vertex_backend_calls_only_vertex_adapter(monkeypatch) -> None:
     from app.evaluation.retrieval_backends import retrieve_for_evaluation

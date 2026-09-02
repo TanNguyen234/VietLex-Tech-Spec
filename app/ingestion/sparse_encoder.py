@@ -5,11 +5,12 @@ import math
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 
-from pyvi import ViTokenizer
 from qdrant_client.models import SparseVector
 
 
 def normalized_terms(text: str) -> list[str]:
+    from pyvi import ViTokenizer
+
     segmented = ViTokenizer.tokenize((text or "").lower())
     return [
         term

@@ -197,3 +197,43 @@ async def test_generate_llm_response_uses_gemini_api_after_vertex_failure(
     assert result.provider_latency_ms is not None
     assert result.provider_latency_ms >= 0
     assert events == ["vertex", "gemini_api"]
+
+
+@pytest.mark.asyncio
+async def test_legacy_free_mode_uses_api_fallback_after_vertex_is_disabled(
+    monkeypatch,
+) -> None:
+    from app.services.vertex_ai import VertexDisabledError
+
+    monkeypatch.setattr(
+        direct_llm,
+        "settings",
+        SimpleNamespace(
+            OPENROUTER_API_KEY="free-key",
+            GEMINI_API_KEY=None,
+            NVIDIA_API_KEY=None,
+            GROQ_API_KEY=None,
+            VERTEX_LLM_MODEL="gemini-3.5-flash",
+            GOOGLE_CLOUD_PROJECT=None,
+            GOOGLE_CLOUD_LOCATION="global",
+        ),
+    )
+
+    def disabled_vertex():
+        raise VertexDisabledError("disabled by free pipeline")
+
+    async def free_fallback(*_args, **_kwargs):
+        return "Kết quả miễn phí"
+
+    monkeypatch.setattr(direct_llm, "get_vertex_provider", disabled_vertex)
+    monkeypatch.setattr(
+        direct_llm,
+        "call_openrouter_api",
+        free_fallback,
+    )
+
+    result = await direct_llm.generate_llm_response_with_metadata("Câu hỏi")
+
+    assert result.text == "Kết quả miễn phí"
+    assert result.observed_provider == "openrouter"
+    assert result.primary_error_kind == "disabled"

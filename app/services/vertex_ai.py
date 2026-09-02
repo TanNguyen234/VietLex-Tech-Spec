@@ -51,6 +51,10 @@ class VertexAIError(RuntimeError):
         super().__init__(message)
 
 
+class VertexDisabledError(VertexAIError):
+    kind = "disabled"
+
+
 class VertexAuthenticationError(VertexAIError):
     kind = "authentication"
 
@@ -405,6 +409,10 @@ _provider: VertexAIProvider | None = None
 
 def get_vertex_provider() -> VertexAIProvider:
     global _provider
+    if get_settings().USE_LEGACY_FREE_PIPELINE:
+        raise VertexDisabledError(
+            "Google Cloud is disabled by USE_LEGACY_FREE_PIPELINE."
+        )
     if _provider is None:
         _provider = VertexAIProvider()
     return _provider

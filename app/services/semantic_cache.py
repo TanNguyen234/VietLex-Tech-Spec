@@ -49,6 +49,7 @@ def semantic_cache_point_id(
 def semantic_cache_pipeline_revision() -> str:
     contract = {
         "schema": CACHE_SCHEMA_VERSION,
+        "legacy_free_pipeline": settings.USE_LEGACY_FREE_PIPELINE,
         "dense_model": settings.DENSE_INFERENCE_MODEL,
         "dense_backend": settings.DENSE_EMBEDDING_BACKEND,
         "structural_enabled": settings.STRUCTURAL_BACKEND_ENABLED,
@@ -59,6 +60,9 @@ def semantic_cache_pipeline_revision() -> str:
         "structural_text_version": settings.STRUCTURAL_DOCUMENT_TEXT_VERSION,
         "structural_query_version": settings.STRUCTURAL_QUERY_INSTRUCTION_VERSION,
         "structural_reranker": settings.STRUCTURAL_RERANKER_MODE,
+        "vertex_qdrant_collection": settings.VERTEX_QDRANT_COLLECTION_NAME,
+        "vertex_embedding_model": settings.VERTEX_EMBEDDING_MODEL,
+        "vertex_embedding_dimension": settings.VERTEX_QDRANT_VECTOR_SIZE,
         "legacy_reranker": settings.QDRANT_RERANK_MODEL,
         "fallback_reranker": settings.PINECONE_RERANK_MODEL,
         "answer_model": settings.VERTEX_LLM_MODEL,

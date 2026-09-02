@@ -21,7 +21,13 @@ RetrievalBackend = Literal[
 @lru_cache(maxsize=1)
 def get_vertex_qdrant_retriever() -> VertexQdrantRetriever:
     settings = get_settings()
-    store = ContentStore(settings.CONTENT_STORE_PATH)
+    average_sparse_document_length = (
+        settings.V3_AVERAGE_SPARSE_DOCUMENT_LENGTH
+        if settings.SERVERLESS_ONLINE_ONLY
+        else ContentStore(
+            settings.V3_CONTENT_STORE_PATH
+        ).build_report().average_sparse_document_length
+    )
     return VertexQdrantRetriever(
         provider=get_vertex_provider(),
         client=AsyncQdrantClient(
@@ -32,7 +38,7 @@ def get_vertex_qdrant_retriever() -> VertexQdrantRetriever:
             check_compatibility=False,
         ),
         sparse_encoder=FastSparseEncoder(
-            average_document_length=store.build_report().average_sparse_document_length,
+            average_document_length=average_sparse_document_length,
             max_nonzero_terms=settings.PINECONE_SPARSE_MAX_NONZERO,
         ),
         contract=VertexQdrantContract(

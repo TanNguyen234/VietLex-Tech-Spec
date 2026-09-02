@@ -338,6 +338,31 @@ async def retrieve_configured_legal_evidence(
     profile: Any,
 ) -> RetrievalOutcome:
     settings = get_settings()
+    legacy_free = getattr(settings, "USE_LEGACY_FREE_PIPELINE", None)
+    if legacy_free is True:
+        return await _legacy_retrieval_outcome(
+            rewritten_query,
+            user_query,
+            profile,
+        )
+    if legacy_free is False:
+        try:
+            return await _run_vertex_shadow(
+                rewritten_query,
+                user_query,
+                profile,
+            )
+        except Exception as error:
+            return RetrievalOutcome(
+                evidence=[],
+                latency={},
+                status="retrieval_error",
+                diagnostics={
+                    "retrieval_backend": "vertex-qdrant-v3",
+                    "error_type": type(error).__name__,
+                },
+                error="Vertex/Qdrant v3 retrieval initialization failed.",
+            )
     if not settings.STRUCTURAL_BACKEND_ENABLED:
         production = await _legacy_retrieval_outcome(
             rewritten_query,
@@ -417,12 +442,17 @@ async def _run_vertex_shadow(
     profile: Any,
 ) -> RetrievalOutcome:
     from app.evaluation.retrieval_backends import retrieve_for_evaluation
+    from app.evaluation.profiles import get_evaluation_profile
+
+    effective_profile = profile or get_evaluation_profile(
+        "separated_intent"
+    )
 
     return await retrieve_for_evaluation(
         "vertex-qdrant-v3",
         dense_query=rewritten_query,
         sparse_query=user_query,
-        profile=profile,
+        profile=effective_profile,
         ranking="raw-rrf",
         case_id="runtime-shadow",
     )

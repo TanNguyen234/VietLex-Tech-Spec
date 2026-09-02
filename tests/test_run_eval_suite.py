@@ -106,6 +106,24 @@ def test_judge_provider_uses_vertex_primary_before_api_fallbacks() -> None:
     }
 
 
+def test_legacy_free_pipeline_excludes_vertex_judge() -> None:
+    provider = run_eval_suite.select_judge_provider(
+        SimpleNamespace(
+            USE_LEGACY_FREE_PIPELINE=True,
+            VERTEX_LLM_MODEL="gemini-3.5-flash",
+            OPENROUTER_API_KEY="openrouter-key",
+            GEMINI_API_KEY=None,
+            NVIDIA_API_KEY=None,
+            GROQ_API_KEY=None,
+            LITELLM_MASTER_KEY=None,
+            OMNIGATE_BASE_URL="https://gateway.invalid",
+        )
+    )
+
+    assert provider["name"] == "OpenRouter"
+    assert provider.get("transport") != "vertex_adc"
+
+
 @pytest.mark.asyncio
 async def test_vertex_ragas_adapter_uses_modern_structured_llm(monkeypatch) -> None:
     run_eval_suite._install_ragas_vertex_shim()

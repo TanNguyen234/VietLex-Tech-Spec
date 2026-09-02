@@ -34,6 +34,19 @@ def test_pipeline_revision_changes_with_answer_prompt_version(monkeypatch) -> No
     assert cache.semantic_cache_pipeline_revision() != original
 
 
+def test_pipeline_revision_changes_with_retrieval_backend(monkeypatch) -> None:
+    cache = _cache_module()
+    original = cache.semantic_cache_pipeline_revision()
+
+    monkeypatch.setattr(
+        cache.settings,
+        "USE_LEGACY_FREE_PIPELINE",
+        not cache.settings.USE_LEGACY_FREE_PIPELINE,
+    )
+
+    assert cache.semantic_cache_pipeline_revision() != original
+
+
 def test_cache_filter_requires_exact_corpus_revision() -> None:
     cache = _cache_module()
 

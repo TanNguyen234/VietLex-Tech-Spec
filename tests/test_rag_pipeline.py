@@ -111,6 +111,20 @@ class FakeRetriever:
         )
 
 
+def _patch_configured_retrieval(monkeypatch, retriever: FakeRetriever) -> None:
+    async def configured(dense_query: str, sparse_query: str, _profile):
+        return await retriever.retrieve_detailed(
+            dense_query,
+            sparse_query=sparse_query,
+        )
+
+    monkeypatch.setattr(
+        rag_pipeline,
+        "retrieve_configured_legal_evidence",
+        configured,
+    )
+
+
 @pytest.mark.asyncio
 async def test_pipeline_fails_closed_without_calling_answer_model(
     monkeypatch,
@@ -170,11 +184,7 @@ async def test_pipeline_does_not_turn_retrieval_error_into_honest_refusal(
     async def fake_rewrite(query: str, *, raise_on_error: bool = False) -> tuple[str, dict]:
         return query, {"provider": "none", "model": "none", "observed": False}
 
-    monkeypatch.setattr(
-        rag_pipeline,
-        "get_legal_retriever",
-        lambda: retriever,
-    )
+    _patch_configured_retrieval(monkeypatch, retriever)
     monkeypatch.setattr(rag_pipeline, "rewrite_query_with_metadata", fake_rewrite)
 
     with pytest.raises(rag_pipeline.RetrievalPipelineError) as captured:
@@ -214,11 +224,7 @@ async def test_pipeline_formats_ranked_evidence_for_existing_contract(
             primary_error_kind="quota",
         )
 
-    monkeypatch.setattr(
-        rag_pipeline,
-        "get_legal_retriever",
-        lambda: retriever,
-    )
+    _patch_configured_retrieval(monkeypatch, retriever)
     monkeypatch.setattr(rag_pipeline, "rewrite_query_with_metadata", fake_rewrite)
     monkeypatch.setattr(
         rag_pipeline,
@@ -636,6 +642,108 @@ async def test_vertex_shadow_never_changes_production_evidence(monkeypatch) -> N
 
 
 @pytest.mark.asyncio
+async def test_runtime_backend_switch_uses_vertex_v3_as_primary(monkeypatch) -> None:
+    expected = rag_pipeline.RetrievalOutcome(
+        evidence=[_evidence()],
+        latency={"vertex_qdrant": 0.2},
+        status="ok",
+        diagnostics={"backend": "vertex-qdrant-v3"},
+    )
+    monkeypatch.setattr(
+        rag_pipeline,
+        "get_settings",
+        lambda: type(
+            "RuntimeSettings",
+            (),
+            {"USE_LEGACY_FREE_PIPELINE": False},
+        )(),
+    )
+
+    async def vertex(*_args, **_kwargs):
+        return expected
+
+    monkeypatch.setattr(rag_pipeline, "_run_vertex_shadow", vertex)
+    monkeypatch.setattr(
+        rag_pipeline,
+        "get_legal_retriever",
+        lambda: pytest.fail("pinecone-v1 must not run"),
+    )
+
+    outcome = await rag_pipeline.retrieve_configured_legal_evidence(
+        "dense", "original", object()
+    )
+
+    assert outcome is expected
+
+
+@pytest.mark.asyncio
+async def test_vertex_v3_primary_failure_is_typed_and_does_not_fallback(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        rag_pipeline,
+        "get_settings",
+        lambda: type(
+            "RuntimeSettings",
+            (),
+            {"USE_LEGACY_FREE_PIPELINE": False},
+        )(),
+    )
+
+    async def failed_vertex(*_args, **_kwargs):
+        raise RuntimeError("v3 unavailable")
+
+    monkeypatch.setattr(
+        rag_pipeline,
+        "_run_vertex_shadow",
+        failed_vertex,
+    )
+    monkeypatch.setattr(
+        rag_pipeline,
+        "get_legal_retriever",
+        lambda: pytest.fail("must not silently fall back to pinecone-v1"),
+    )
+
+    outcome = await rag_pipeline.retrieve_configured_legal_evidence(
+        "dense", "original", object()
+    )
+
+    assert outcome.status == "retrieval_error"
+    assert outcome.evidence == []
+    assert outcome.diagnostics == {
+        "retrieval_backend": "vertex-qdrant-v3",
+        "error_type": "RuntimeError",
+    }
+
+
+@pytest.mark.asyncio
+async def test_runtime_backend_switch_can_restore_pinecone_v1(monkeypatch) -> None:
+    expected = _evidence()
+    legacy = FakeRetriever([expected])
+    monkeypatch.setattr(
+        rag_pipeline,
+        "get_settings",
+        lambda: type(
+            "RuntimeSettings",
+            (),
+            {
+                "USE_LEGACY_FREE_PIPELINE": True,
+                "STRUCTURAL_BACKEND_ENABLED": False,
+                "VERTEX_QDRANT_SHADOW_ENABLED": False,
+            },
+        )(),
+    )
+    monkeypatch.setattr(rag_pipeline, "get_legal_retriever", lambda: legacy)
+
+    outcome = await rag_pipeline.retrieve_configured_legal_evidence(
+        "dense", "original", None
+    )
+
+    assert outcome.evidence == [expected]
+    assert legacy.queries == [("dense", "original")]
+
+
+@pytest.mark.asyncio
 async def test_pipeline_uses_original_query_when_rewrite_is_not_requested(
     monkeypatch,
 ) -> None:
@@ -659,7 +767,7 @@ async def test_pipeline_uses_original_query_when_rewrite_is_not_requested(
             observed=True,
         )
 
-    monkeypatch.setattr(rag_pipeline, "get_legal_retriever", lambda: retriever)
+    _patch_configured_retrieval(monkeypatch, retriever)
     monkeypatch.setattr(rag_pipeline, "rewrite_query_with_metadata", forbidden_rewrite)
     monkeypatch.setattr(rag_pipeline, "generate_response_with_metadata", fake_answer)
 

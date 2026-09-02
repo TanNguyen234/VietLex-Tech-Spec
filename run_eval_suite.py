@@ -669,13 +669,19 @@ def configured_judge_providers(settings) -> list[dict[str, str]]:
             "https://openrouter.ai/api/v1",
         ),
     )
-    providers: list[dict[str, str]] = [
-        {
-            "name": "Google Vertex AI",
-            "model": getattr(settings, "VERTEX_LLM_MODEL", "gemini-3.5-flash"),
-            "transport": "vertex_adc",
-        }
-    ]
+    providers: list[dict[str, str]] = []
+    if not getattr(settings, "USE_LEGACY_FREE_PIPELINE", False):
+        providers.append(
+            {
+                "name": "Google Vertex AI",
+                "model": getattr(
+                    settings,
+                    "VERTEX_LLM_MODEL",
+                    "gemini-3.5-flash",
+                ),
+                "transport": "vertex_adc",
+            }
+        )
     for (field, base_url), provider_model in zip(
         runtime_mapping,
         JUDGE_PROVIDER_MODELS[:4],

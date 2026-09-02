@@ -77,16 +77,23 @@ def build_configured_provider_models(
     judge_mode: str,
     requested_backend: str = "production",
 ) -> Dict[str, Any]:
+    pipeline_switch = getattr(settings, "USE_LEGACY_FREE_PIPELINE", None)
+    production_v3 = (
+        requested_backend == "production" and pipeline_switch is False
+    )
+    vertex_for_run = requested_backend == "vertex-qdrant-v3" or production_v3
     structural_enabled = getattr(
         settings,
         "STRUCTURAL_BACKEND_ENABLED",
         False,
     )
     structural_for_run = requested_backend == "qdrant-v2-parallel" or (
-        requested_backend == "production" and structural_enabled
+        requested_backend == "production"
+        and pipeline_switch is None
+        and structural_enabled
     )
     reranker_mode = getattr(settings, "STRUCTURAL_RERANKER_MODE", "current")
-    if requested_backend == "vertex-qdrant-v3":
+    if vertex_for_run:
         dense = {
             "provider": "Google Vertex AI",
             "model": settings.VERTEX_EMBEDDING_MODEL,
@@ -101,7 +108,13 @@ def build_configured_provider_models(
             "provider": "qdrant-cloud-staging",
             "model": settings.DENSE_INFERENCE_MODEL,
         }
-    if structural_for_run and reranker_mode == "pinecone-only":
+    if vertex_for_run:
+        reranker_primary = {
+            "provider": "none",
+            "model": "raw-rrf",
+        }
+        reranker_fallback = None
+    elif structural_for_run and reranker_mode == "pinecone-only":
         reranker_primary = {
             "provider": "pinecone",
             "model": settings.PINECONE_RERANK_MODEL,
@@ -119,6 +132,15 @@ def build_configured_provider_models(
             "provider": "pinecone",
             "model": settings.PINECONE_RERANK_MODEL,
         }
+    generation_candidates = _public_candidates(GENERATION_PROVIDER_MODELS)
+    judge_candidates = _public_candidates(JUDGE_PROVIDER_MODELS)
+    if pipeline_switch is not True:
+        vertex_candidate = {
+            "provider": "Google Vertex AI",
+            "model": settings.VERTEX_LLM_MODEL,
+        }
+        generation_candidates.insert(0, vertex_candidate)
+        judge_candidates.insert(0, vertex_candidate)
     return {
         "dense": dense,
         "reranker_primary": reranker_primary,
@@ -130,13 +152,7 @@ def build_configured_provider_models(
                 else "not_applicable"
             ),
             "candidates": (
-                [
-                    {
-                        "provider": "Google Vertex AI",
-                        "model": settings.VERTEX_LLM_MODEL,
-                    },
-                    *_public_candidates(GENERATION_PROVIDER_MODELS),
-                ]
+                generation_candidates
                 if eval_mode == "answer"
                 else []
             ),
@@ -144,13 +160,7 @@ def build_configured_provider_models(
         "judge": {
             "mode": judge_mode,
             "candidates": (
-                [
-                    {
-                        "provider": "Google Vertex AI",
-                        "model": settings.VERTEX_LLM_MODEL,
-                    },
-                    *_public_candidates(JUDGE_PROVIDER_MODELS),
-                ]
+                judge_candidates
                 if judge_mode == "ragas"
                 else []
             ),
@@ -191,7 +201,11 @@ def build_run_configuration(
         judge_mode=judge_mode,
         requested_backend=requested_backend,
     )
-    if requested_backend == "vertex-qdrant-v3":
+    pipeline_switch = getattr(settings, "USE_LEGACY_FREE_PIPELINE", None)
+    production_v3 = (
+        requested_backend == "production" and pipeline_switch is False
+    )
+    if requested_backend == "vertex-qdrant-v3" or production_v3:
         retrieval_runtime = {
             "backend": "vertex-qdrant-v3",
             "collection": settings.VERTEX_QDRANT_COLLECTION_NAME,
@@ -202,6 +216,7 @@ def build_run_configuration(
         }
     elif requested_backend == "qdrant-v2-parallel" or (
         requested_backend == "production"
+        and pipeline_switch is None
         and getattr(settings, "STRUCTURAL_BACKEND_ENABLED", False)
     ):
         retrieval_runtime = {
@@ -233,6 +248,10 @@ def build_run_configuration(
             "backend": "pinecone_v1",
             "fallback_backend": "sqlite_fts",
         }
+    if pipeline_switch is not None:
+        retrieval_runtime["google_cloud_calls_enabled"] = (
+            pipeline_switch is False
+        )
     return {
         "requested_backend": requested_backend,
         "effective_backend": retrieval_runtime["backend"],

@@ -118,6 +118,8 @@ class Settings(BaseSettings):
     # not modeled or serialized by application settings.
     GOOGLE_CLOUD_PROJECT: Optional[str] = None
     GOOGLE_CLOUD_LOCATION: str = "global"
+    USE_LEGACY_FREE_PIPELINE: bool = False
+    SERVERLESS_ONLINE_ONLY: bool = False
     VERTEX_LLM_MODEL: str = "gemini-3.5-flash"
     ANSWER_PROMPT_VERSION: str = "legal-grounded-v3"
     VERTEX_EMBEDDING_MODEL: str = "gemini-embedding-2"
@@ -125,6 +127,9 @@ class Settings(BaseSettings):
         "vietlex-legal-rag-v3-vertex-1024"
     )
     VERTEX_QDRANT_VECTOR_SIZE: int = Field(default=1024, ge=768, le=3072)
+    V3_AVERAGE_SPARSE_DOCUMENT_LENGTH: float = Field(
+        default=979.1241640033913, gt=0
+    )
     VERTEX_QDRANT_MAX_CHUNKS_PER_DOCUMENT: int = Field(
         default=16, ge=1, le=256
     )
@@ -179,6 +184,7 @@ class Settings(BaseSettings):
     EXPECTED_DOCUMENT_COUNT: int = 518_255
     DATASET_ROOT: Path = Path("data/huggingface")
     CONTENT_STORE_PATH: Path = Path("data/huggingface/content_store.sqlite3")
+    V3_CONTENT_STORE_PATH: Path = Path("data/v3/content_store.sqlite3")
     INGESTION_STATE_PATH: Path = Path("data/huggingface/ingestion_state.sqlite3")
     INGESTION_REPORT_PATH: Path = Path("data/huggingface/ingestion_report.json")
     PINECONE_INGESTION_STATE_PATH: Path = Path(
@@ -188,6 +194,7 @@ class Settings(BaseSettings):
         "data/huggingface/pinecone_ingestion_report.json"
     )
     LEGAL_FTS_PATH: Path = Path("data/huggingface/legal_fts.sqlite3")
+    V3_LEGAL_FTS_PATH: Path = Path("data/v3/legal_fts.sqlite3")
     LEGAL_FTS_RESULT_LIMIT: int = 12
 
     # Capacity-bounded Pinecone schema and ingestion tuning

@@ -1,11 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "python -m pip install .",
   "functions": {
-    "api/proxy.py": {
-      "maxDuration": 60
+    "app/server.py": {
+      "maxDuration": 300,
+      "excludeFiles": "{data/**,tests/**,docs/**,output/**,tmp/**,.env,.env.*,requirements.txt,Dockerfile,guardrails_config/**,**/__pycache__/**,**/*.pyc}"
     }
-  },
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/api/proxy?path=$1&gateway=vercel" }
-  ]
+  }
 }

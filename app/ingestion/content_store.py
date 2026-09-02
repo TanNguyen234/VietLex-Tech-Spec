@@ -12,7 +12,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Iterable, Sequence
 
-import pyarrow.parquet as parquet
 import zstandard
 
 from app.ingestion.legal_text import (
@@ -320,6 +319,8 @@ def _import_metadata(
     metadata_path: Path,
     batch_size: int,
 ) -> int:
+    import pyarrow.parquet as parquet
+
     source = parquet.ParquetFile(metadata_path)
     count = 0
     try:
@@ -344,6 +345,8 @@ def _import_contents(
     content_batch_size: int,
     workers: int,
 ) -> tuple[int, int, int, int, int, int, dict[str, int]]:
+    import pyarrow.parquet as parquet
+
     content_count = 0
     compressed_bytes = 0
     uncompressed_bytes = 0

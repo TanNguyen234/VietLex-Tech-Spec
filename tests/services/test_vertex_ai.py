@@ -386,3 +386,25 @@ def test_service_account_json_env_avoids_filesystem_adc(monkeypatch) -> None:
         "payload": info,
         "scopes": ["https://www.googleapis.com/auth/cloud-platform"],
     }
+
+
+def test_legacy_free_pipeline_blocks_vertex_before_client_creation(
+    monkeypatch,
+) -> None:
+    from types import SimpleNamespace
+
+    vertex_ai = _module()
+    monkeypatch.setattr(
+        vertex_ai,
+        "get_settings",
+        lambda: SimpleNamespace(USE_LEGACY_FREE_PIPELINE=True),
+    )
+    monkeypatch.setattr(vertex_ai, "_provider", None)
+    monkeypatch.setattr(
+        vertex_ai,
+        "VertexAIProvider",
+        lambda: pytest.fail("Vertex client must not be constructed"),
+    )
+
+    with pytest.raises(vertex_ai.VertexDisabledError):
+        vertex_ai.get_vertex_provider()

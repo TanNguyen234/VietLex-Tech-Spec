@@ -39,6 +39,12 @@ def test_migration_defaults_are_pinned_and_capacity_bounded() -> None:
     assert settings.CONTENT_STORE_PATH == Path(
         "data/huggingface/content_store.sqlite3"
     )
+    assert settings.V3_CONTENT_STORE_PATH == Path(
+        "data/v3/content_store.sqlite3"
+    )
+    assert settings.V3_LEGAL_FTS_PATH == Path(
+        "data/v3/legal_fts.sqlite3"
+    )
     assert settings.INGESTION_STATE_PATH == Path(
         "data/huggingface/ingestion_state.sqlite3"
     )
@@ -225,6 +231,7 @@ def test_ragas_evaluation_mode_accepted_values() -> None:
 def test_vertex_defaults_are_narrow_and_do_not_model_adc_credentials() -> None:
     settings = Settings(_env_file=None)
 
+    assert settings.USE_LEGACY_FREE_PIPELINE is False
     assert settings.GOOGLE_CLOUD_PROJECT is None
     assert settings.GOOGLE_CLOUD_LOCATION == "global"
     assert settings.VERTEX_LLM_MODEL == "gemini-3.5-flash"
@@ -238,3 +245,16 @@ def test_vertex_defaults_are_narrow_and_do_not_model_adc_credentials() -> None:
     assert settings.VERTEX_MAX_RETRIES == 2
     assert "GOOGLE_APPLICATION_CREDENTIALS" not in Settings.model_fields
     assert "GOOGLE_SERVICE_ACCOUNT_JSON" not in Settings.model_fields
+
+
+def test_legacy_free_pipeline_switch_is_boolean() -> None:
+    import pytest
+    from pydantic import ValidationError
+
+    assert (
+        Settings(_env_file=None, USE_LEGACY_FREE_PIPELINE=True)
+        .USE_LEGACY_FREE_PIPELINE
+        is True
+    )
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, USE_LEGACY_FREE_PIPELINE="unknown")
