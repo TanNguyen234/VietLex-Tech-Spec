@@ -48,7 +48,7 @@ Hai ảnh được chụp ngày **2026-08-26** từ web FastAPI/Jinja2 chạy th
 
 - **V3 hybrid retrieval mặc định:** Qdrant dense 1024d + sparse IDF hợp nhất bằng raw RRF trên **51.801** structural point.
 - **Evidence v3:** chat đọc trực tiếp trường `body` trong Qdrant payload; không gọi Supabase để resolve full text.
-- **Local v3 bundle:** SQLite/Zstandard + FTS5 chứa đúng **4.969** văn bản đã audit, dùng cho trang toàn văn, tìm số hiệu/tiêu đề và sparse-length calibration.
+- **Full-document v3:** Supabase phục vụ trang toàn văn và tìm số hiệu/tiêu đề trên Vercel; SQLite/Zstandard + FTS5 giữ cùng **4.969** văn bản cho persistent/local và sparse-length calibration.
 - **Reranking:** v3 giữ raw RRF; Qdrant ColBERT không được bật vì A/B identical-input làm giảm verified recall.
 - **Grounded generation:** Vertex AI `gemini-3.5-flash` qua ADC, với citations và typed provider diagnostics.
 - **Evaluation:** deterministic retrieval/answer metrics là mặc định; Ragas/LLM judge chỉ chạy opt-in offline.
@@ -264,15 +264,16 @@ Kết quả lịch sử này loại phương án ép ColBERT vào pipeline. V3 r
 
 ---
 
-## Supabase không nằm trong runtime retrieval
+## Supabase cho legal browser online-only
 
-Code hiện tại **không có Supabase read client**. V3 chat lấy evidence từ Qdrant payload; trang toàn văn và tìm số hiệu/tiêu đề đọc [`data/v3`](data/v3/README.md). Script [`run_supabase_full_doc_upload.py`](run_supabase_full_doc_upload.py) chỉ là exporter một chiều tùy chọn, không phải dependency production.
+V3 chat vẫn lấy evidence trực tiếp từ Qdrant payload. Riêng Vercel online-only dùng Supabase `public.legal_documents` cho `/search` và `/documents/{id}`; persistent/local tiếp tục đọc [`data/v3`](data/v3/README.md).
 
-Trạng thái 2026-08-27: exporter và checkpoint đã sẵn sàng, nhưng project trả `404 PGRST205` vì bảng `public.legal_documents` chưa tồn tại. Chỉ có publishable key nên upload đang **BLOCKED_SECURITY**; không mở anonymous write/RLS chỉ để hoàn tất migration. Cần tạo schema bằng quyền admin và cung cấp service-role hoặc một ingestion credential/policy giới hạn trước khi chạy 50.000 dòng.
+Trạng thái xác minh 2026-09-02: bảng, index và RLS đã tồn tại; đúng **4.969** văn bản trùng bộ ID v3 đã được upload. Publishable key chỉ có quyền `SELECT`; không có anonymous write policy. Ba mẫu `content_sha256` và tổng số dòng đã đối chiếu với nguồn local.
 
 ### 1. Cấu hình biến môi trường (`.env`)
 ```env
 SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
 SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVER_SIDE_SERVICE_ROLE_KEY
 ```
 
@@ -306,13 +307,13 @@ alter table public.legal_documents enable row level security;
 
 `SUPABASE_SERVICE_ROLE_KEY` chỉ được đặt ở backend/CLI, không đưa vào Vercel client hoặc biến `NEXT_PUBLIC_*`. Uploader chủ động từ chối publishable key.
 
-### 3. Kiểm tra kết nối & Thực hiện Upload 50.000 văn bản
+### 3. Kiểm tra kết nối & upload có chủ đích
 ```powershell
 # Kiểm tra kết nối và bảng
 python run_supabase_full_doc_upload.py --check-connection
 
-# Thực hiện upload với streaming batch và checkpoint resumable
-python run_supabase_full_doc_upload.py --max-documents 50000 --batch-size 50 --allow-remote-write
+# Ví dụ upload đúng tập v3 hiện tại với streaming batch và checkpoint resumable
+python run_supabase_full_doc_upload.py --max-documents 4969 --batch-size 50 --allow-remote-write
 ```
 
 ## Tech stack
@@ -321,10 +322,10 @@ python run_supabase_full_doc_upload.py --max-documents 50000 --batch-size 50 --a
 | :--- | :--- |
 | API & UI | Python 3.12 (runtime package), FastAPI, Uvicorn, Jinja2, HTMX |
 | Vector retrieval mặc định | Qdrant v3, Vertex dense 1024d + sparse IDF + raw RRF |
-| Full-doc v3 | SQLite/Zstandard + FTS5 bundle đúng 4.969 văn bản đã audit |
+| Full-doc v3 | Supabase online-only; SQLite/Zstandard + FTS5 cho persistent/local, cùng đúng 4.969 văn bản đã audit |
 | Legacy/free | Pinecone toàn corpus + Qdrant E5 384d/ColBERT staging |
 | Generation | Google Vertex AI `gemini-3.5-flash` qua Application Default Credentials |
-| Runtime data | MongoDB cho session, interaction log, feedback và admin data; không lưu corpus pháp luật |
+| Runtime data | Supabase cho legal browser; MongoDB cho session, interaction log, feedback và admin data |
 | Evaluation & safety | Pytest, deterministic metrics, optional Ragas, NeMo Guardrails |
 | Delivery | Docker hoặc Vercel FastAPI SSR online-only, GitHub Actions |
 
@@ -470,7 +471,7 @@ git diff --check
 
 ### Deployment topology
 
-- **Vercel online-only SSR:** `app/server.py` chạy FastAPI/Jinja trực tiếp; Qdrant v3 cung cấp payload evidence và local corpus bị loại khỏi bundle.
+- **Vercel online-only SSR:** `app/server.py` chạy FastAPI/Jinja trực tiếp; Qdrant v3 cung cấp chat evidence, Supabase cung cấp legal-browser documents và local corpus bị loại khỏi bundle.
 - **Persistent alternative:** `Dockerfile` vẫn hỗ trợ host có `/data` cho `content_store.sqlite3` và `legal_fts.sqlite3` khi `SERVERLESS_ONLINE_ONLY=false`.
 - FastAPI trực tiếp dùng SSE; deployment live chỉ được tuyên bố sau kiểm tra HTTP và benchmark có manifest.
 

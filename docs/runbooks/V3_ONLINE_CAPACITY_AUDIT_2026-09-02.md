@@ -4,11 +4,13 @@ Read-only audit time: `2026-09-02T00:39:33+07:00`.
 
 ## Scope and authority
 
-This audit queried Qdrant collection metadata, cluster telemetry, collection
-memory endpoints, MongoDB `dbStats`/`collStats`, and the supplied Supabase
-PostgREST endpoint with a publishable key. It did not upload, delete, optimize,
-resize, snapshot, or modify any provider resource. No credentials or document
-contents were recorded.
+The initial audit queried Qdrant collection metadata, cluster telemetry,
+collection memory endpoints, MongoDB `dbStats`/`collStats`, and the supplied
+Supabase PostgREST endpoint with a publishable key without mutations. After
+explicit authorization, the same workstream created the Supabase schema/RLS
+policy and uploaded the exact 4,969-document v3 set. It did not delete, optimize,
+resize, or snapshot provider resources. No credentials or document contents
+were recorded in this report.
 
 V3 legal evidence is stored in Qdrant. MongoDB stores application/session data
 and is not a v3 legal-corpus store. Vercel runs the online-only SSR function and
@@ -138,15 +140,17 @@ The initial read-only audit returned `404 PGRST205` for
 `public.legal_documents`. Later on 2026-09-02, the repository-generated schema
 was executed through the authenticated Supabase SQL Editor. The table, its
 document-number and content-hash indexes, and RLS now exist. A server-side REST
-connection check returned HTTP 200, and an exact count returned **0 rows**
-(`content-range: */0`). No document upload has occurred and the repository still
-has no Supabase upload checkpoint. Supabase therefore remains unwired from v3
-reads and contains no relational legal-document rows yet.
+connection check returned HTTP 200. The exact 4,969-document bundle represented
+by Qdrant v3 was then uploaded with a resumable checkpoint. Server-side and
+publishable-key exact counts both returned **4,969 rows**; sampled IDs `2143`,
+`14288`, and `431147` matched their local `content_sha256` values. The online-only
+application now uses this table for legal search and full-document pages; chat
+retrieval remains independent and reads evidence directly from Qdrant payloads.
 
 The publishable and server-only service-role credentials are stored under their
 distinct names in the Git-ignored local environment. RLS policy
 `legal_documents_public_read` grants `SELECT` to `anon` and `authenticated`, and
-a publishable-key REST request returned HTTP 200 with the expected empty array.
+a publishable-key REST request returned HTTP 206 with the exact 4,969-row count.
 No anonymous write policy exists; backend ingestion continues to require
 server-only authority.
 
@@ -154,13 +158,19 @@ Current Supabase Free Plan documentation specifies 500 MB database size per
 project and read-only mode after exceeding that quota. The pinned corpus contains
 10,672,662,244 uncompressed content bytes (2,507,228,225 bytes in the local
 Zstandard store) before PostgreSQL row/index overhead. Consequently the full
-518,255-document relational corpus cannot fit a Free project. A separate bounded
-capacity proof is required after the actual plan and baseline database size can
-be queried with server-side authority.
+518,255-document relational corpus cannot fit a Free project. After the 4,969-row
+upload, `pg_database_size` was **58,895,507 bytes** and
+`pg_total_relation_size('public.legal_documents')` was **48,340,992 bytes**,
+including **983,040 bytes** of indexes. The observed relation cost is about
+9,729 bytes per document. A linear estimate leaves room for roughly 29,900 more
+documents at a conservative 350 MB database soft ceiling, but Qdrant capacity
+remains the tighter preserve-all constraint and the estimate must be remeasured
+after every batch.
 
 ## Approval boundaries
 
-No remote change is approved by this report. A later approval must specify:
+This audit records the completed schema/RLS setup and 4,969-document upload. A
+later expansion approval must specify:
 
 1. the maximum additional document count;
 2. whether all current collections must be preserved;

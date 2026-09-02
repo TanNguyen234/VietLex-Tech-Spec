@@ -8,7 +8,7 @@ VietLex is an enterprise-grade Vietnamese legal Retrieval-Augmented Generation (
 
 The current priority is to establish a verified, measurable, reproducible, and deterministic evaluation framework before modifying core retrieval models or persistent vector indices.
 
-## Latest verified state (2026-09-01)
+## Latest verified state (2026-09-02)
 
 - Direct FastAPI/Jinja SSR is deployed at
   <https://vietlex-legal-rag.vercel.app>. Health, readiness, root, and one
@@ -29,7 +29,7 @@ The current priority is to establish a verified, measurable, reproducible, and d
 
 ## System Boundaries & Stores
 
-- **Vercel online-only SSR:** `SERVERLESS_ONLINE_ONLY=true` runs the existing FastAPI/Jinja app directly on Vercel, omits local corpus files, and uses Qdrant v3 payload evidence. `/search` and `/documents/{id}` remain local-corpus features and are outside this deployment contract.
+- **Vercel online-only SSR:** `SERVERLESS_ONLINE_ONLY=true` runs the existing FastAPI/Jinja app directly on Vercel, omits local corpus files, uses Qdrant v3 payload evidence for chat, and uses Supabase for `/search` and `/documents/{id}`.
 
 - **Runtime selector**: `USE_LEGACY_FREE_PIPELINE=false` (default) selects Vertex/Qdrant v3; `true` selects the Pinecone-v1 legacy/free path and blocks Google Cloud before client construction.
 - **Durable full-corpus fallback**: Pinecone index `vietlex-legal-rag-v1` (namespace `legal-documents-v1`).
@@ -38,7 +38,7 @@ The current priority is to establish a verified, measurable, reproducible, and d
 - **Full-corpus local fallback store**: `data/huggingface/content_store.sqlite3` and `data/huggingface/legal_fts.sqlite3` remain the 518,255-document legacy/free stores.
 - **Dense inference**: V3 uses Vertex `gemini-embedding-2` at 1024 dimensions. Legacy/free uses Qdrant Cloud staging `intfloat/multilingual-e5-small` at 384 dimensions.
 - **Reranker**: V3 uses raw RRF because identical-input Qdrant ColBERT A/B reduced verified recall. Legacy/free uses Qdrant ColBERT with Pinecone BGE fallback.
-- **Supabase**: optional one-way export code only; no runtime read client exists.
+- **Supabase**: `public.legal_documents` contains the exact 4,969-document v3 set. Online-only legal browsing uses a publishable-key read client under RLS; remote writes remain restricted to the server-only uploader.
 
 ## Evaluation Integrity Policy
 

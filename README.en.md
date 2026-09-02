@@ -41,8 +41,8 @@ The repository includes a real FastAPI/Jinja2 chat interface. The screenshot is 
 ## Core capabilities
 
 - **Default v3 hybrid retrieval:** Qdrant 1024d dense plus sparse IDF fused with raw RRF over **51,801** structural points.
-- **v3 evidence:** chat reads `body` directly from Qdrant payloads; Supabase is not queried.
-- **Local v3 bundle:** matching SQLite/Zstandard and FTS5 files contain exactly **4,969** audited documents for full-document pages, number/title search, and sparse-length calibration.
+- **v3 evidence:** chat reads `body` directly from Qdrant payloads; Supabase is not queried by chat retrieval.
+- **v3 full documents:** Supabase serves Vercel document pages and number/title search; matching SQLite/Zstandard and FTS5 files retain the same **4,969** audited documents for persistent/local operation and sparse-length calibration.
 - **Reranking:** v3 retains raw RRF; identical-input A/B rejected Qdrant ColBERT after verified recall fell.
 - **Grounded generation:** Vertex AI `gemini-3.5-flash` through ADC, with citations and typed provider diagnostics.
 - **Evaluation:** deterministic retrieval/answer metrics by default; Ragas/LLM judges are opt-in offline audits.
@@ -184,15 +184,16 @@ This historical run rejects forcing ColBERT into the pipeline. V3 raw-RRF is now
 
 ---
 
-## Supabase is not a runtime retrieval dependency
+## Supabase for the online-only legal browser
 
-There is currently **no Supabase read client**. V3 chat consumes Qdrant payload evidence; full-document pages and number/title search read the packaged [`data/v3`](data/v3/README.md) bundle. [`run_supabase_full_doc_upload.py`](run_supabase_full_doc_upload.py) is an optional one-way exporter, not a production dependency.
+V3 chat still consumes Qdrant payload evidence directly. The online-only Vercel runtime uses Supabase `public.legal_documents` for `/search` and `/documents/{id}`; persistent/local operation continues to read the packaged [`data/v3`](data/v3/README.md) bundle.
 
-Status on 2026-08-27: the exporter and checkpoint are ready, but the project returns `404 PGRST205` because `public.legal_documents` does not exist. Only a publishable key is available, so upload is **BLOCKED_SECURITY**; anonymous write/RLS will not be opened merely to finish the migration. Create the schema with admin authority and use a service-role or another tightly scoped ingestion credential/policy.
+Verified status on 2026-09-02: the table, indexes, and RLS exist; exactly **4,969** documents matching the v3 ID set are uploaded. The publishable key has `SELECT` access only and no anonymous write policy exists. Three sampled `content_sha256` values and the exact row count matched the local source.
 
 ### 1. Environment Configuration (`.env`)
 ```env
 SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
 SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVER_SIDE_SERVICE_ROLE_KEY
 ```
 
@@ -231,8 +232,8 @@ Keep `SUPABASE_SERVICE_ROLE_KEY` on the backend/CLI only. Never expose it throug
 # Verify connection and table existence
 python run_supabase_full_doc_upload.py --check-connection
 
-# Execute batch upload with resumable checkpointing
-python run_supabase_full_doc_upload.py --max-documents 50000 --batch-size 50 --allow-remote-write
+# Example: upload the current exact v3 set with resumable checkpointing
+python run_supabase_full_doc_upload.py --max-documents 4969 --batch-size 50 --allow-remote-write
 ```
 
 ## Setup and usage
@@ -242,7 +243,7 @@ python run_supabase_full_doc_upload.py --max-documents 50000 --batch-size 50 --a
 - Python 3.12. CI retains a Python 3.10 dependency-compatibility lane, while the runtime package in `pyproject.toml` requires `>=3.12,<3.13`.
 - Local MongoDB or MongoDB Atlas
 - Qdrant Cloud plus Google Cloud credentials for default v3, or Pinecone + Qdrant credentials and one direct generation API key for no-GCloud mode
-- The packaged 4,969-document v3 bundle is ready after clone; full 518,255-document local stores are needed only for the full-corpus path
+- The 4,969-document v3 local bundle must be provisioned for persistent/local operation; the online-only runtime reads the matching rows from Supabase
 
 ```powershell
 python -m venv .venv
@@ -269,7 +270,7 @@ git diff --check
 
 ### Deployment topology
 
-- **Vercel online-only SSR:** `app/server.py` runs FastAPI/Jinja directly; Qdrant v3 supplies payload evidence and the local corpus is excluded from the bundle.
+- **Vercel online-only SSR:** `app/server.py` runs FastAPI/Jinja directly; Qdrant v3 supplies chat evidence, Supabase supplies legal-browser documents, and the local corpus is excluded from the bundle.
 - **Persistent alternative:** the `Dockerfile` still supports `/data` stores when `SERVERLESS_ONLINE_ONLY=false`.
 - Direct FastAPI uses SSE; a live deployment is claimed only after HTTP checks and a manifest-backed benchmark.
 

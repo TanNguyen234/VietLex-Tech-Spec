@@ -1,17 +1,17 @@
 # VietLex Production Operations
 
-Updated: 2026-09-01.
+Updated: 2026-09-02.
 
 VietLex supports two explicit deployment topologies:
 
 - direct Vercel FastAPI/Jinja SSR with `SERVERLESS_ONLINE_ONLY=true`, online
-  MongoDB/Qdrant/Vertex dependencies, and no packaged local corpus;
+  MongoDB/Qdrant/Vertex/Supabase dependencies, and no packaged local corpus;
 - a persistent FastAPI/Docker host with `SERVERLESS_ONLINE_ONLY=false` and the
   matching SQLite/Zstandard content and FTS stores.
 
 Do not mix readiness expectations between the two. Vercel is the active public
-SSR host, not only a proxy. The persistent topology remains necessary for local
-full-document search and document-detail pages.
+SSR host, not only a proxy. Its legal-browser pages read Supabase; the persistent
+topology reads matching local stores instead.
 
 ## Data classes
 
@@ -57,15 +57,15 @@ The pilot uses balanced legal types and an even structural sampling budget per l
 3. Rebuild `legal_fts.sqlite3` from that content store when necessary; do not treat a stale FTS file as source data.
 4. Point a non-public backend at the restored stores, set fresh secrets, and require `GET /healthz` plus `GET /readyz` to pass.
 5. Run provider-free smoke tests first. Provider calls and vector writes require separate authorization.
-6. For online-only Vercel, require health/readiness/root/chat checks and treat
-   local search/document detail as not applicable. For persistent hosts, also
-   require search and document-detail smoke checks. Switch traffic only after
-   the topology-specific checks pass.
+6. For online-only Vercel, require health/readiness/root/chat plus Supabase-backed
+   search and document-detail checks. For persistent hosts, run the same page
+   checks against the local stores. Switch traffic only after the
+   topology-specific checks pass.
 
 ## Minimum alerts
 
 Monitor backend uptime, `/readyz`, request error rate, P95 chat latency, MongoDB
-availability, and provider failures. Add persistent-volume capacity for the
+and Supabase availability, and provider failures. Add persistent-volume capacity for the
 persistent topology and Vercel function duration/cold-start behavior for the
 serverless topology. Never include legal queries, passwords, cookies, or tokens
 in alert payloads.
