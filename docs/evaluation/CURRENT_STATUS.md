@@ -24,8 +24,9 @@ Current immutable runs:
   rate are `0.9470 / 0.0530`. Ragas Faithfulness, Answer Accuracy, Context
   Precision, and Context Recall over the 49 scored cases are `0.8887`, `0.9184`,
   `0.8878`, and `0.9354`. End-to-end P50/P95 is `5.2812s / 6.4429s`.
-- Vercel Production deployment `8tmzccuMtQM9Y6yE4ZfExd1irmQU` is `Ready` and
-  `Current` at Git `73cd7ca`. Browser smoke checks observed the SSR root,
+- Vercel Production deployment `8tmzccuMtQM9Y6yE4ZfExd1irmQU` was the
+  source-bearing `Ready` deployment at Git `73cd7ca` used for the browser smoke.
+  Checks observed the SSR root,
   readiness label `Hệ thống sẵn sàng`, Supabase search results for `lao động`,
   and the full body of `/documents/2164`. This is deployment evidence, not an
   answer-quality or whole-corpus gate.
