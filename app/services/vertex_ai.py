@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 import re
 import time
-from typing import Any, Callable
+from typing import Any, Callable, Sequence
 
 import httpx
 import requests
@@ -358,6 +358,65 @@ class VertexAIProvider:
     ) -> EmbeddingResult:
         content = f"title: {title or 'none'} | text: {text}"
         return await self._embed(content, output_dimensionality)
+
+    async def embed_documents(
+        self,
+        documents: Sequence[tuple[str, str | None]],
+        *,
+        output_dimensionality: int,
+    ) -> list[EmbeddingResult]:
+        """Embed multiple titled documents in one Vertex request."""
+        if not documents:
+            return []
+        if not 128 <= output_dimensionality <= 3072:
+            raise ValueError("output_dimensionality must be between 128 and 3072")
+        started = time.perf_counter()
+        client = self._get_client()
+        contents = [
+            f"title: {title or 'none'} | text: {text}"
+            for text, title in documents
+        ]
+        try:
+            response = await client.aio.models.embed_content(
+                model=self.settings.VERTEX_EMBEDDING_MODEL,
+                contents=contents,
+                config=types.EmbedContentConfig(
+                    output_dimensionality=output_dimensionality,
+                ),
+            )
+        except Exception as error:
+            raise _mapped_error(error) from None
+        embeddings = getattr(response, "embeddings", None) or []
+        if len(embeddings) != len(documents):
+            raise VertexInvalidResponseError(
+                "Vertex AI returned an unexpected number of embeddings."
+            )
+        metadata = self._metadata(self.settings.VERTEX_EMBEDDING_MODEL, started)
+        results: list[EmbeddingResult] = []
+        for embedding in embeddings:
+            values = tuple(float(value) for value in (
+                getattr(embedding, "values", None) or []
+            ))
+            if len(values) != output_dimensionality or not all(
+                math.isfinite(value) for value in values
+            ):
+                raise VertexInvalidResponseError(
+                    "Vertex AI returned an invalid embedding vector."
+                )
+            norm = math.sqrt(sum(value * value for value in values))
+            if not math.isclose(norm, 1.0, rel_tol=0.02, abs_tol=0.02):
+                raise VertexInvalidResponseError(
+                    "Vertex AI embedding vector is not L2 normalized."
+                )
+            results.append(
+                EmbeddingResult(
+                    values=values,
+                    output_dimensionality=output_dimensionality,
+                    l2_norm=norm,
+                    metadata=metadata,
+                )
+            )
+        return results
 
     async def _embed(
         self,

@@ -396,9 +396,38 @@ async def upload_vertex_records(
             contract=contract,
         )
 
+    async def build_batch_points(
+        batch: Sequence[StructuralRecord],
+    ) -> list[models.PointStruct]:
+        batch_embedder = getattr(provider, "embed_documents", None)
+        if not callable(batch_embedder):
+            return list(await asyncio.gather(*(build_point(record) for record in batch)))
+        inputs = [
+            (build_structural_inference_text(record), record.title)
+            for record in batch
+        ]
+        async with semaphore:
+            embeddings = await batch_embedder(
+                inputs,
+                output_dimensionality=contract.vector_size,
+            )
+        if len(embeddings) != len(batch):
+            raise RuntimeError("batch embedding count does not match records")
+        return [
+            build_vertex_point(
+                record,
+                dense_vector=embedding.values,
+                sparse_vector=sparse_encoder.encode_document(text),
+                contract=contract,
+            )
+            for record, (text, _title), embedding in zip(
+                batch, inputs, embeddings, strict=True
+            )
+        ]
+
     for offset in range(0, len(pending), batch_size):
         batch = pending[offset : offset + batch_size]
-        points = await asyncio.gather(*(build_point(record) for record in batch))
+        points = await build_batch_points(batch)
         await client.upsert(
             collection_name=contract.collection_name,
             points=points,
