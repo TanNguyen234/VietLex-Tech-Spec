@@ -11,21 +11,24 @@ The current priority is to establish a verified, measurable, reproducible, and d
 ## Latest verified state (2026-09-02)
 
 - Direct FastAPI/Jinja SSR is deployed at
-  <https://vietlex-legal-rag.vercel.app>. Health, readiness, root, and one
-  CSRF-protected chat smoke request returned HTTP 200.
+  <https://vietlex-legal-rag.vercel.app>. The 2026-09-02 browser smoke observed
+  the SSR root, ready status, Supabase-backed search, and a full-document page.
+  Direct `/healthz` was blocked by the browser client and is not claimed.
 - The current Golden-50 v3 retrieval run completed 50/50 with zero
   retrieval/reranker technical errors and passed its gate: Document Recall@3
   `53/53`, Article Recall@3 `30/30`, Clause Recall@3 `13/14`, and all-required
   coverage `39/40` on the 40-case verified denominator.
-- The answer run completed 50/50 without technical errors, but deterministic
-  exact match was `0.0000` and token F1 `0.2336`. Opt-in Ragas means are
-  secondary because generation and the observed judge both used Vertex
+- The answer run completed 50/50 generations and guardrail checks, but
+  deterministic exact match was `0.0000` and token F1 `0.2304`. Opt-in Ragas
+  covered 49/50 because `case_037` had one typed Vertex judge error; its means
+  are secondary because generation and the observed judge both used Vertex
   `gemini-3.5-flash`.
 - Final provider-free verification after the stable deployment source state was
-  `917 passed, 2 skipped` with 10 deprecation warnings.
-- These runs record `git_dirty=true` and source/diff hashes. They are not
-  reproducible from commit SHA alone and do not demonstrate production
-  readiness or whole-corpus legal accuracy.
+  `921 passed, 2 skipped` with 10 deprecation warnings.
+- The retrieval run records a clean Git state at `73cd7ca`. The answer run
+  records `git_dirty=true` because its bound retrieval artifact was newly
+  generated and untracked, while both retain the same source-state hash. They
+  do not demonstrate production readiness or whole-corpus legal accuracy.
 
 ## System Boundaries & Stores
 

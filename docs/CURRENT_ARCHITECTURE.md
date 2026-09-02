@@ -60,16 +60,19 @@ The v3 lane exposes typed hybrid/RRF runtime and evaluation adapters. With `USE_
 
 - Configuration declarations in `app/config.py` do not prove runtime usage until verified by code execution.
 - Evaluation runs from dirty working trees are marked with `git_dirty=true` and `git_diff_sha256`.
-- The 2026-09-01 Vercel deployment at
-  <https://vietlex-legal-rag.vercel.app> passed health, readiness, SSR-root, and
-  CSRF-protected chat smoke checks. The bound Golden-50 retrieval gate passed,
-  while deterministic answer exact match/token F1 remained
-  `0.0000 / 0.2336`; deployment success therefore does not authorize a
-  production-readiness claim.
+- The 2026-09-02 Vercel deployment at
+  <https://vietlex-legal-rag.vercel.app> loaded the SSR root, reported ready,
+  returned Supabase-backed search results, and rendered a full legal document.
+  Direct `/healthz` navigation was blocked by the browser client during this
+  smoke and is not claimed as observed evidence.
+- The bound Golden-50 retrieval gate passed, while deterministic answer exact
+  match/token F1 remained `0.0000 / 0.2304`; deployment success therefore does
+  not authorize a production-readiness claim.
 - Current immutable evidence lives under
-  `docs/evaluation/runs/*-golden50-online-vercel-20260901/`. Both manifests
-  record a dirty source state; use their source-state/diff hashes rather than
-  the shared Git SHA alone.
+  `docs/evaluation/runs/*-golden50-production-20260902/`. The retrieval manifest
+  records a clean Git state at `73cd7ca`; the answer manifest honestly records
+  an untracked dirty state because the newly generated retrieval artifact was
+  its bound input. Both record the same source-state hash.
 
 ## Opt-in structural v2 parallel path
 

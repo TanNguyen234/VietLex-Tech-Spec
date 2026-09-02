@@ -22,13 +22,13 @@ VietLex là dự án portfolio AI/ML xây dựng hệ thống hỏi đáp pháp 
 
 | Bằng chứng portfolio | Kết quả đã lưu trong artifact |
 | :--- | :--- |
-| Golden-50 answer evaluation v3 raw-RRF, 2026-09-01 | Deterministic exact match **0,0000** · Token F1 **0,2336** · Citation precision **0,9567** |
-| Ragas opt-in, secondary evidence | Faithfulness **0,9197** · Answer Accuracy **0,9150** · Context Precision **0,8733** · Context Recall **0,9367** |
-| Hoàn tất pipeline | **50/50** generation `STOP` · **50/50** NeMo input/output safe · **0** lỗi kỹ thuật trong run |
+| Golden-50 answer evaluation v3 raw-RRF, 2026-09-02 | Deterministic exact match **0,0000** · Token F1 **0,2304** · Citation precision **0,9470** |
+| Ragas opt-in, secondary evidence | Faithfulness **0,8887** · Answer Accuracy **0,9184** · Context Precision **0,8878** · Context Recall **0,9354** trên 49/50 case |
+| Hoàn tất pipeline | **50/50** generation `STOP` · **50/50** NeMo input/output safe · **49/50** Ragas, 1 lỗi judge có kiểu |
 | Verified retrieval subset | **40** case có toàn bộ required evidence đã xác minh · Document Recall@3 **1,0000**, micro **53/53** |
 | Dữ liệu v3 đã kiểm kê | **51.801** point remote · **4.969** document ID duy nhất · local full-doc/FTS bundle cùng tập |
-| Automated verification | **917 passed, 2 skipped**; live-provider tests vẫn là opt-in |
-| Public SSR smoke | Vercel FastAPI/Jinja tại <https://vietlex-legal-rag.vercel.app>: health, readiness, root và `/chat` đều HTTP 200 |
+| Automated verification | **921 passed, 2 skipped**; live-provider tests vẫn là opt-in |
+| Public SSR smoke | Vercel FastAPI/Jinja tại <https://vietlex-legal-rag.vercel.app>: SSR và readiness sẵn sàng; tìm kiếm Supabase và trang toàn văn đã được kiểm tra trực tiếp |
 
 Golden-50 v3 được tách từ Balanced-50, gồm 40 case có fully verified required retrieval evidence và 10 deterministic reference-only case. Các metric trên là bằng chứng cho một lát cắt đánh giá có giới hạn, không chứng minh độ chính xác pháp lý trên toàn corpus hoặc production readiness. Xem [`PORTFOLIO_EVIDENCE.md`](docs/evaluation/PORTFOLIO_EVIDENCE.md) để biết provenance và evidence boundary đầy đủ.
 
@@ -42,7 +42,7 @@ Golden-50 v3 được tách từ Balanced-50, gồm 40 case có fully verified r
 
 ![Giao diện tra cứu Bộ luật Lao động 2019](docs/images/vietlex_legal_search_latest.png)
 
-Hai ảnh được chụp ngày **2026-08-26** từ web FastAPI/Jinja2 chạy thật với local corpus và MongoDB online; đây không phải mockup. Deployment công khai online-only hiện ở <https://vietlex-legal-rag.vercel.app>, nhưng không có các trang corpus-local trong hai ảnh.
+Hai ảnh được chụp ngày **2026-08-26** từ web FastAPI/Jinja2 chạy thật với local corpus và MongoDB online; đây không phải mockup. Deployment công khai online-only hiện ở <https://vietlex-legal-rag.vercel.app>; trang tìm kiếm và toàn văn dùng tập Supabase 4.969 văn bản tương ứng v3.
 
 ## Năng lực cốt lõi
 
@@ -54,7 +54,7 @@ Hai ảnh được chụp ngày **2026-08-26** từ web FastAPI/Jinja2 chạy th
 - **Evaluation:** deterministic retrieval/answer metrics là mặc định; Ragas/LLM judge chỉ chạy opt-in offline.
 - **Web backend:** FastAPI, Jinja2/HTMX, MongoDB cho session/log/feedback, rate limiting và guardrail modes `off`/`shadow`/`enforce`.
 - **Tài khoản:** đăng ký/đăng nhập, Gmail verification/reset, lịch sử theo chủ sở hữu, export và xóa dữ liệu.
-- **Tra cứu văn bản:** tìm theo số hiệu/tiêu đề và xem toàn văn từ SQLite cục bộ, kèm cảnh báo chưa xác minh hiệu lực.
+- **Tra cứu văn bản:** tìm theo số hiệu/tiêu đề và xem toàn văn từ Supabase ở online-only hoặc SQLite ở persistent/local, kèm cảnh báo chưa xác minh hiệu lực.
 
 ## Kiến trúc
 
@@ -62,6 +62,7 @@ Hai ảnh được chụp ngày **2026-08-26** từ web FastAPI/Jinja2 chạy th
 flowchart TB
     User["Browser"] --> Web["Vercel FastAPI · Jinja2/HTMX SSR"]
     Web --> Mongo["MongoDB online<br/>accounts · sessions · logs · feedback"]
+    Web --> Supabase["Supabase online<br/>4,969 full documents · title/number search"]
 
     subgraph Ingest["Pinned ingestion contract"]
         Corpus["Hugging Face snapshot<br/>518,255 documents"] --> Store["SQLite + Zstandard<br/>518,255 full texts · 3.08 GiB"]
@@ -195,28 +196,28 @@ Khuyến nghị thực tế: **không full-migrate hàng triệu point chỉ đ�
 | **Độ tin cậy & An toàn** | **Generation Finish** | **100,0%** | 50/50 | 100% phản hồi kết thúc trạng thái `STOP` sạch sẽ |
 | | **NeMo Input Guardrail Safe** | **100,0%** | 50/50 | 0 vi phạm prompt injection / off-topic |
 | | **NeMo Output Guardrail Safe** | **100,0%** | 50/50 | 0 output bị rail chặn; không đồng nghĩa đã chứng minh không ảo giác |
-| | **Technical Error Rate** | **0,0%** | 0/50 | Không có lỗi timeout, 5xx hoặc exception |
+| | **Retrieval Technical Error Rate** | **0,0%** | 0/50 | Không có lỗi retrieval/reranker |
 | | **No-Candidate Rate** | **0,0%** | 0/50 | Mọi câu hỏi đều truy xuất được ngữ cảnh hợp lệ |
 | **Chất lượng Truy xuất (40/50 case có verified gold; 10 skip)** | **Document Recall @ 3** | **100,0%** | 53/53 | Văn bản chứa căn cứ nằm trong Top 3 |
 | | **Document Recall @ 24** | **100,0%** | 53/53 | Toàn bộ văn bản căn cứ được tìm thấy ở Top 24 |
 | | **Article Recall @ 3** | **100,0%** | 30/30 | Tỷ lệ trúng chính xác Điều luật cụ thể |
 | | **Clause Recall @ 3** | **92,86%** | 13/14 | Tỷ lệ trúng chính xác Khoản luật cụ thể |
-| | **Document MRR** | **0,9750** | 39/40 | Mean Reciprocal Rank cấp văn bản |
-| | **Article MRR** | **0,9074** | 24,5/27 | Mean Reciprocal Rank cấp Điều luật |
+| | **Document MRR** | **0,9875** | 39,5/40 | Mean Reciprocal Rank cấp văn bản |
+| | **Article MRR** | **0,9259** | 25/27 | Mean Reciprocal Rank cấp Điều luật |
 | | **Clause MRR** | **0,7949** | 10,33/13 | Mean Reciprocal Rank cấp Khoản luật |
-| | **nDCG @ 10** | **0,9218 macro / 0,9007 micro** | 43,4165/48,2021 | Normalized Discounted Cumulative Gain |
+| | **nDCG @ 10** | **0,9275 macro / 0,9084 micro** | 43,6867/48,0918 | Normalized Discounted Cumulative Gain |
 | | **Exact Reference Hit** | **100,0%** | 40/40 | Trúng dẫn chiếu pháp lý đã xác minh |
 | | **Multi-hop All-Required** | **97,50%** | 39/40 | Thu hồi đủ 100% căn cứ trong câu hỏi đa bước |
-| **Câu trả lời deterministic (50/50)** | **Exact match / Token F1 / Character F1** | **0,0000 / 0,2336 / 0,2250** | 50/50 | Lexical overlap thấp; không được diễn giải thành đúng/sai pháp lý |
-| | **Citation precision / invalid rate** | **0,9567 / 0,0433** | 50/50 | Citation recall/coverage chỉ applicable ở 1/50 case |
-| **Ragas opt-in (50/50, 0 judge error)** | **Faithfulness (Tính trung thực)** | **0,9197** | 50/50 | Judge và generator cùng model identity; không phải review pháp lý độc lập |
-| | **Answer Accuracy (Độ chuẩn xác)** | **0,9150** | 50/50 | Mức độ trùng khớp ngữ nghĩa với ground truth |
-| | **Context Precision (Độ chuẩn ngữ cảnh)** | **0,8733** | 50/50 | Mức độ tập trung của tài liệu được trích dẫn |
-| | **Context Recall (Độ phủ ngữ cảnh)** | **0,9367** | 50/50 | Độ bao phủ thông tin cần thiết để giải đáp |
-| **Thời gian Phản hồi (50/50)** | **t_input_guardrail** | **1,0061 s** | P50 (P95: 1,2432s) | Kiểm duyệt an toàn đầu vào |
-| | **t_retrieval** | **0,6842 s** | P50 (P95: 1,6051s) | Lấy từ retrieval artifact đã bind |
-| | **t_output_guardrail** | **1,1252 s** | P50 (P95: 1,4889s) | Kiểm duyệt an toàn đầu ra |
-| | **t_total (End-to-End)** | **5,3818 s** | P50 (P95: 6,7163s) | Generation/guardrail trên evidence đã persist |
+| **Câu trả lời deterministic (50/50)** | **Exact match / Token F1 / Character F1** | **0,0000 / 0,2304 / 0,2226** | 50/50 | Lexical overlap thấp; không được diễn giải thành đúng/sai pháp lý |
+| | **Citation precision / invalid rate** | **0,9470 / 0,0530** | 50/50 | Citation recall/coverage chỉ applicable ở 1/50 case |
+| **Ragas opt-in (49/50, 1 judge error)** | **Faithfulness (Tính trung thực)** | **0,8887** | 49/50 | Judge và generator cùng model identity; không phải review pháp lý độc lập |
+| | **Answer Accuracy (Độ chuẩn xác)** | **0,9184** | 49/50 | Mức độ trùng khớp ngữ nghĩa với ground truth |
+| | **Context Precision (Độ chuẩn ngữ cảnh)** | **0,8878** | 49/50 | Mức độ tập trung của tài liệu được trích dẫn |
+| | **Context Recall (Độ phủ ngữ cảnh)** | **0,9354** | 49/50 | Độ bao phủ thông tin cần thiết để giải đáp |
+| **Thời gian Phản hồi (50/50)** | **t_input_guardrail** | **1,1212 s** | P50 (P95: 1,3067s) | Kiểm duyệt an toàn đầu vào |
+| | **t_retrieval** | **0,8146 s** | P50 (P95: 1,1693s) | Có một cold start 13,5977 s |
+| | **t_output_guardrail** | **1,1379 s** | P50 (P95: 1,3983s) | Kiểm duyệt an toàn đầu ra |
+| | **t_total (End-to-End)** | **5,2812 s** | P50 (P95: 6,4429s) | Generation/guardrail trên evidence đã persist |
 
 ### 2. Đánh giá So sánh Reranker lần cuối (Qdrant ColBERT vs Pinecone BGE vs Raw RRF)
 
@@ -248,8 +249,8 @@ Run lịch sử ngày 2026-08-27 thực thi đủ 50/50 câu với Qdrant ColBER
 Kết quả lịch sử này loại phương án ép ColBERT vào pipeline. V3 raw-RRF hiện là runtime mặc định và tốt hơn trong audit mới, nhưng 40 case có verified retrieval gold vẫn là lát cắt hẹp nên chưa chứng minh production readiness toàn corpus.
 
 ### 4. Nguồn Bằng chứng Bất biến (Artifacts)
-- [`Golden-50 v3 answer + NeMo + Ragas, 2026-09-01`](docs/evaluation/runs/answer-v3-golden50-online-vercel-20260901/report.md)
-- [`Golden-50 v3 retrieval, 2026-09-01`](docs/evaluation/runs/retrieval-v3-golden50-online-vercel-20260901/report.md)
+- [`Golden-50 v3 answer + NeMo + Ragas, 2026-09-02`](docs/evaluation/runs/answer-v3-golden50-production-20260902/report.md)
+- [`Golden-50 v3 retrieval, 2026-09-02`](docs/evaluation/runs/retrieval-v3-golden50-production-20260902/report.md)
 - [`Golden-50 dataset và nhãn đã tách`](docs/evaluation/golden50-v3/README.md)
 - [`Balanced-50 v3 raw-RRF answer + Ragas`](docs/evaluation/runs/answer-v3-raw-balanced50-20260827-final2/report.md)
 - [`Balanced-50 v3 raw-RRF retrieval gate`](docs/evaluation/runs/retrieval-v3-raw-balanced50-20260827-final/report.md)
@@ -335,11 +336,11 @@ python run_supabase_full_doc_upload.py --max-documents 4969 --batch-size 50 --al
 | Tập đánh giá | Generation `STOP` | NeMo safe | Ragas coverage | Faithfulness | Answer accuracy | Context precision | Context recall | Technical errors |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | Representative-10, `all-required-verified` | 10/10 | 10/10 | 10/10 | 0,9857 | 0,9750 | 0,9400 | 1,0000 | 0 |
-| Golden-50 v3 raw-RRF, 26 factoid + 24 multi-hop | 50/50 | 50/50 | 50/50 | 0,9197 | 0,9150 | 0,8733 | 0,9367 | 0 |
+| Golden-50 v3 raw-RRF, 26 factoid + 24 multi-hop | 50/50 | 50/50 | 49/50 | 0,8887 | 0,9184 | 0,8878 | 0,9354 | 1 judge error |
 
 Nguồn bất biến:
 
-- [`Golden-50 v3 current report`](docs/evaluation/runs/answer-v3-golden50-online-vercel-20260901/report.md)
+- [`Golden-50 v3 current report`](docs/evaluation/runs/answer-v3-golden50-production-20260902/report.md)
 - [`Representative-10 report`](docs/evaluation/runs/answer-representative10-v6-live-20260822/report.md)
 - [`Portfolio evidence`](docs/evaluation/PORTFOLIO_EVIDENCE.md)
 - [`Current evaluation status`](docs/evaluation/CURRENT_STATUS.md)
@@ -351,7 +352,7 @@ Metric deterministic trong code là mặc định. Retrieval metrics bao gồm D
 ### 1. Yêu cầu và tài nguyên
 
 - Python 3.12 và Git. CI vẫn giữ một lane tương thích dependency trên Python 3.10, nhưng package runtime trong `pyproject.toml` yêu cầu `>=3.12,<3.13`.
-- MongoDB local hoặc MongoDB Atlas.
+- MongoDB local hoặc MongoDB Atlas; Supabase cho tra cứu toàn văn ở online-only.
 - Qdrant Cloud và Google Cloud ADC để chạy v3 live. Pinecone chỉ cần cho đường legacy/free.
 - Bundle v3 đã có trong repository (khoảng 41,3 MB). Chỉ cần khoảng **8 GiB disk trống** nếu tự dựng full corpus 518.255 văn bản; build hiện tại khoảng 3,08 GiB content + 0,21 GiB FTS, chưa tính file tải và file tạm.
 

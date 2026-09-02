@@ -1,41 +1,58 @@
 # VietLex Evaluation Current Status
 
-**Status (2026-09-01):** Direct Vercel FastAPI/Jinja SSR deployment and the
-current v3 Golden-50 retrieval/answer audits are `COMPLETED`. Production
-readiness remains **NOT DEMONSTRATED**: Qdrant v3 covers only 4,969 of 518,255
-corpus documents, verified retrieval gold covers 40/50 cases, and deterministic
-answer exact match/token F1 are `0.0000 / 0.2336`.
+**Status (2026-09-02):** Direct Vercel FastAPI/Jinja SSR deployment with
+Supabase-backed legal browsing and the current v3 Golden-50 retrieval/answer
+audits are `COMPLETED`. Production readiness remains **NOT DEMONSTRATED**:
+Qdrant v3 and Supabase cover only 4,969 of 518,255 corpus documents, verified
+retrieval gold covers 40/50 cases, and deterministic answer exact match/token
+F1 are `0.0000 / 0.2304`.
 
 Current immutable runs:
 
-- `docs/evaluation/runs/retrieval-v3-golden50-online-vercel-20260901/`:
+- `docs/evaluation/runs/retrieval-v3-golden50-production-20260902/`:
   50/50 completed, zero retrieval/reranker technical errors, and zero
   no-candidate cases. The verified denominator is 40 cases / 53 evidence items;
   10 skip with `no_verified_gold_label`. Document Recall@3 is `53/53`, Article
   Recall@3 `30/30`, Clause Recall@3 `13/14`, and all-required coverage `39/40`.
-  Retrieval P50/P95 is `0.6842s / 1.6051s`; the configured quality gate passed.
-- `docs/evaluation/runs/answer-v3-golden50-online-vercel-20260901/`:
-  generation STOP, NeMo input safe, NeMo output safe, and Ragas coverage are
-  each `50/50`, with zero technical/judge errors. Deterministic exact match,
-  token F1, and character F1 are `0.0000`, `0.2336`, and `0.2250`; citation
-  precision/invalid rate are `0.9567 / 0.0433`. Ragas Faithfulness, Answer
-  Accuracy, Context Precision, and Context Recall are `0.9197`, `0.9150`,
-  `0.8733`, and `0.9367`. End-to-end P50/P95 is `5.3818s / 6.7163s`.
-- Production alias `https://vietlex-legal-rag.vercel.app`: `/healthz`,
-  `/readyz`, `/`, and a CSRF-protected `/chat` smoke request returned HTTP 200.
-  This is deployment evidence, not an answer-quality or whole-corpus gate.
+  Retrieval P50/P95 is `0.8146s / 1.1693s`; the configured quality gate passed.
+  One cold-start outlier was `13.5977s` and is retained in the mean/max evidence.
+- `docs/evaluation/runs/answer-v3-golden50-production-20260902/`:
+  generation STOP and NeMo input/output safe are each `50/50`. Ragas coverage is
+  `49/50`, with one judge technical error on `case_037` (`VertexInvalidResponseError`:
+  no structured generation response). Deterministic exact match, token F1, and
+  character F1 are `0.0000`, `0.2304`, and `0.2226`; citation precision/invalid
+  rate are `0.9470 / 0.0530`. Ragas Faithfulness, Answer Accuracy, Context
+  Precision, and Context Recall over the 49 scored cases are `0.8887`, `0.9184`,
+  `0.8878`, and `0.9354`. End-to-end P50/P95 is `5.2812s / 6.4429s`.
+- Vercel Production deployment `8tmzccuMtQM9Y6yE4ZfExd1irmQU` is `Ready` and
+  `Current` at Git `73cd7ca`. Browser smoke checks observed the SSR root,
+  readiness label `Hệ thống sẵn sàng`, Supabase search results for `lao động`,
+  and the full body of `/documents/2164`. This is deployment evidence, not an
+  answer-quality or whole-corpus gate.
 
-Both current runs bind Git
-`c5fa8121d3080ac401d5a79e1beedaa1ffa2241f`, `git_dirty=true`, provenance
-status `ok`, source-state SHA-256
-`7fb04d6a3b5ae33eb0b77f95ed31789ba75a5c5bf073ab7e10a874cdfb62f252`,
+Both current runs bind Git `73cd7ca`, source-state SHA-256
+`3d9904dbd304feb353e8ac76be7f586e0698f4a1745af4e4537f8b09f3b46394`,
 and dataset SHA-256
 `caa3fc19cd22bcce4b87e96adf13544d0c3cc174cca2d0e365a848e0da9a981f`.
-The retrieval and answer configuration files are byte-identical to the
-2026-08-27 comparable run pair, but live candidate ordering and generated
-answers are not deterministic. Generation and the observed Ragas judge both
-used Vertex `gemini-3.5-flash`; Ragas is secondary evidence, not independent
+The retrieval run started clean. The answer manifest honestly records
+`git_dirty=true`, `git_tracked_dirty=false`, and `git_untracked_dirty=true`
+because the newly generated retrieval artifact was its bound input and was not
+yet committed; provenance remains `ok` and the source-state hash is identical.
+All 50 generations observed Vertex `gemini-3.5-flash`. Ragas uses the same
+model identity as its first judge and is secondary evidence, not independent
 legal review.
+
+Compared with the 2026-09-01 run, verified Document Recall@1 macro improved
+`0.9500 -> 0.9750`, Article Recall@1 macro `0.7778 -> 0.8148`, Document MRR
+`0.9750 -> 0.9875`, and nDCG@10 macro `0.9218 -> 0.9275`; Recall@3 and
+all-required coverage were unchanged. Four cases changed final evidence order
+(`case_009`, `case_011`, `case_014`, `case_049`) while retaining the same
+Recall@3 gate. The stochastic generator changed 48/50 answer strings. Token F1
+fell `0.2336 -> 0.2304`, citation precision fell `0.9567 -> 0.9470`, and
+Faithfulness fell `0.9197 -> 0.8887` on a smaller 49-case judge denominator.
+These movements are run variance and candidate ordering/generation differences;
+the Supabase legal-browser change is not part of chat retrieval or answer
+generation and is not claimed as their cause.
 
 ## Historical status
 

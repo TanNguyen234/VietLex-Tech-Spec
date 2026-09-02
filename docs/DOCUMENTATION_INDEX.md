@@ -1,6 +1,6 @@
 # VietLex documentation index
 
-Updated: 2026-09-01.
+Updated: 2026-09-02.
 
 This page routes readers to the correct source. A filename containing
 `architecture`, `plan`, `report`, or `current` does not by itself make that
@@ -65,7 +65,8 @@ slice of 51,801 points over exactly 4,969 document IDs. That is not the pinned
 518,255-document corpus. The full-corpus Pinecone v1 path remains the explicit
 legacy/free runtime selected by `USE_LEGACY_FREE_PIPELINE=true`.
 
-The latest Golden-50 evidence is dated 2026-09-01. Retrieval passed its bounded
+The latest Golden-50 evidence is dated 2026-09-02. Retrieval passed its bounded
 quality gate, but deterministic answer exact match remained `0.0000` and token
-F1 was `0.2336`; therefore neither deployment success nor opt-in Ragas scores
+F1 was `0.2304`; optional Ragas covered 49/50 with one typed judge error.
+Therefore neither deployment success nor opt-in Ragas scores
 authorize a production-readiness or whole-corpus legal-accuracy claim.

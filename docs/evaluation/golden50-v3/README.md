@@ -1,6 +1,6 @@
 # VietLex v3 Golden-50 evaluation bundle
 
-Updated: 2026-09-01.
+Updated: 2026-09-02.
 
 This directory is the readable, self-contained input used for the current v3
 bounded evaluation. It is not a 50-case sample of all 518,255 documents: its
@@ -39,11 +39,15 @@ evaluation make zero Ragas calls.
 
 The latest comparable run pair is:
 
-- `retrieval-v3-golden50-online-vercel-20260901`
-- `answer-v3-golden50-online-vercel-20260901`
+- `retrieval-v3-golden50-production-20260902`
+- `answer-v3-golden50-production-20260902`
 
 Retrieval passed its configured gate with zero technical errors. The answer run
-also completed 50/50, but deterministic exact match was `0.0000` and token F1
-was `0.2336`. Opt-in Ragas used Google Vertex AI `gemini-3.5-flash`, the same
-model identity observed for generation, so those judge means are secondary
-evidence rather than independent legal review.
+completed 50/50 generations and guardrail checks, but deterministic exact match
+was `0.0000` and token F1 was `0.2304`. Opt-in Ragas covered 49/50; `case_037`
+recorded one typed Vertex judge error. Ragas used Google Vertex AI
+`gemini-3.5-flash`, the same model identity observed for generation, so those
+judge means are secondary evidence rather than independent legal review. The
+retrieval manifest is clean at Git `73cd7ca`; the answer manifest records the
+new retrieval artifact as an untracked input and therefore honestly remains
+dirty while retaining the same source-state hash.
