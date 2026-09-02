@@ -92,6 +92,7 @@ def test_supabase_defaults_are_optional_for_full_doc_export() -> None:
     settings = Settings(_env_file=None)
 
     assert settings.SUPABASE_URL is None
+    assert settings.SUPABASE_PUBLISHABLE_KEY is None
     assert settings.SUPABASE_SERVICE_ROLE_KEY is None
 
 

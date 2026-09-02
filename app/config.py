@@ -149,6 +149,7 @@ class Settings(BaseSettings):
 
     # Server-only Supabase target for explicit full-document export jobs.
     SUPABASE_URL: Optional[str] = None
+    SUPABASE_PUBLISHABLE_KEY: Optional[str] = None
     SUPABASE_SERVICE_ROLE_KEY: Optional[str] = None
 
     # Public web application security and opt-in evaluation controls.

@@ -35,6 +35,12 @@ async def build_readiness(
             and getattr(settings, "GOOGLE_CLOUD_PROJECT", None)
             else "not_configured"
         )
+        checks["supabase_documents"] = (
+            "ready"
+            if getattr(settings, "SUPABASE_URL", None)
+            and getattr(settings, "SUPABASE_PUBLISHABLE_KEY", None)
+            else "not_configured"
+        )
     if getattr(settings, "MONGO_URL", None):
         try:
             checks["mongodb"] = "ready" if await mongo_ping() else "unavailable"

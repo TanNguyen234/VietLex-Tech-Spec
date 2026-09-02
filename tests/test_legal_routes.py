@@ -38,6 +38,34 @@ def test_v3_browser_uses_packaged_v3_data_paths(monkeypatch) -> None:
     }
 
 
+def test_serverless_browser_uses_supabase_instead_of_local_files(monkeypatch) -> None:
+    from app.services import legal_browser
+
+    captured = {}
+    remote_store = object()
+
+    def supabase_store(*, url, publishable_key):
+        captured.update(url=url, publishable_key=publishable_key)
+        return remote_store
+
+    monkeypatch.setattr(legal_browser, "SupabaseLegalStore", supabase_store)
+    browser = legal_browser.LegalBrowser.from_settings(
+        SimpleNamespace(
+            SERVERLESS_ONLINE_ONLY=True,
+            SUPABASE_URL="https://project.supabase.co",
+            SUPABASE_PUBLISHABLE_KEY="publishable-test",
+            USE_LEGACY_FREE_PIPELINE=False,
+        )
+    )
+
+    assert captured == {
+        "url": "https://project.supabase.co",
+        "publishable_key": "publishable-test",
+    }
+    assert browser._store is remote_store
+    assert browser._index is remote_store
+
+
 def _client(monkeypatch, *, source_url="https://example.gov.vn/7"):
     import app.api.legal_routes as routes
 

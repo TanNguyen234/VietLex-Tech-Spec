@@ -116,6 +116,8 @@ async def test_online_only_readiness_does_not_require_local_corpus(tmp_path: Pat
             SERVERLESS_ONLINE_ONLY=True,
             QDRANT_URL="https://qdrant.example",
             GOOGLE_CLOUD_PROJECT="project-id",
+            SUPABASE_URL="https://project.supabase.co",
+            SUPABASE_PUBLISHABLE_KEY="publishable-test",
         ),
         mongo_ping=lambda: _async_value(True),
     )
@@ -125,8 +127,34 @@ async def test_online_only_readiness_does_not_require_local_corpus(tmp_path: Pat
         "content_store": "not_required",
         "legal_fts": "not_required",
         "online_retrieval": "ready",
+        "supabase_documents": "ready",
         "mongodb": "ready",
     }
+
+
+@pytest.mark.asyncio
+async def test_online_only_readiness_requires_supabase_document_store(tmp_path: Path) -> None:
+    from app.services.readiness import build_readiness
+
+    result = await build_readiness(
+        SimpleNamespace(
+            CONTENT_STORE_PATH=tmp_path / "missing.sqlite3",
+            LEGAL_FTS_PATH=tmp_path / "missing-fts.sqlite3",
+            V3_CONTENT_STORE_PATH=tmp_path / "missing-v3.sqlite3",
+            V3_LEGAL_FTS_PATH=tmp_path / "missing-v3-fts.sqlite3",
+            MONGO_URL=None,
+            USE_LEGACY_FREE_PIPELINE=False,
+            SERVERLESS_ONLINE_ONLY=True,
+            QDRANT_URL="https://qdrant.example",
+            GOOGLE_CLOUD_PROJECT="project-id",
+            SUPABASE_URL=None,
+            SUPABASE_PUBLISHABLE_KEY=None,
+        ),
+        mongo_ping=lambda: _async_value(False),
+    )
+
+    assert result["status"] == "not_ready"
+    assert result["checks"]["supabase_documents"] == "not_configured"
 
 
 async def _async_value(value: bool) -> bool:
