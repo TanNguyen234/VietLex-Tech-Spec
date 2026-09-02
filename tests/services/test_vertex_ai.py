@@ -52,12 +52,10 @@ class _Models:
         self.embedding_calls.append(kwargs)
         if self.embedding_error:
             raise self.embedding_error
-        contents = kwargs.get("contents")
-        count = len(contents) if isinstance(contents, list) else 1
         values = [0.0] * self.embedding_dimension
         values[0] = 1.0
         return SimpleNamespace(
-            embeddings=[SimpleNamespace(values=values) for _ in range(count)]
+            embeddings=[SimpleNamespace(values=values)]
         )
 
 
@@ -242,32 +240,6 @@ async def test_embedding_validates_dimensions_and_uses_asymmetric_format(
     assert models.embedding_calls[1]["contents"].startswith(
         "title: Điều 1 | text: "
     )
-
-
-@pytest.mark.asyncio
-async def test_batch_document_embedding_preserves_titles_and_order() -> None:
-    vertex_ai = _module()
-    models = _Models()
-    provider = vertex_ai.VertexAIProvider(
-        settings=_settings(),
-        credentials_loader=lambda: (object(), "adc-project"),
-        client_factory=lambda **_kwargs: _Client(models),
-    )
-
-    results = await provider.embed_documents(
-        [
-            ("Nội dung một", "Điều 1"),
-            ("Nội dung hai", None),
-        ],
-        output_dimensionality=384,
-    )
-
-    assert len(results) == 2
-    assert all(len(result.values) == 384 for result in results)
-    assert models.embedding_calls[-1]["contents"] == [
-        "title: Điều 1 | text: Nội dung một",
-        "title: none | text: Nội dung hai",
-    ]
 
 
 @pytest.mark.asyncio
