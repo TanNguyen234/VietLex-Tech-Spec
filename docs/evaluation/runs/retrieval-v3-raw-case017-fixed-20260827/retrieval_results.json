@@ -1,0 +1,2271 @@
+[
+  {
+    "case_id": "case_017",
+    "question": "Theo quy định tại Điều 16, khu vực ô nhiễm môi trường đất được phân loại dựa trên những tiêu chí nào?",
+    "question_type": "factoid",
+    "answerable": true,
+    "query_used": "Theo quy định tại Điều 16, khu vực ô nhiễm môi trường đất được phân loại dựa trên những tiêu chí nào?",
+    "original_query": "Theo quy định tại Điều 16, khu vực ô nhiễm môi trường đất được phân loại dựa trên những tiêu chí nào?",
+    "rewritten_query": null,
+    "status": "ok",
+    "retrieved_evidence": [
+      {
+        "document_id": 431147,
+        "document_number": "72/2020/QH14",
+        "title": "Luật Bảo vệ môi trường 2020",
+        "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+        "citation": "72/2020/QH14, Điều 16, Khoản 2",
+        "article": "Điều 16",
+        "clause": "2",
+        "text": "Điều 16. Phân loại khu vực ô nhiễm môi trường đất 2. Khu vực ô nhiễm môi trường đất được phân loại theo tiêu chí nguồn gây ô nhiễm, khả năng lan truyền, đối tượng chịu tác động.",
+        "token_count": 38,
+        "score": null
+      },
+      {
+        "document_id": 431147,
+        "document_number": "72/2020/QH14",
+        "title": "Luật Bảo vệ môi trường 2020",
+        "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+        "citation": "72/2020/QH14, Điều 16, Khoản 3",
+        "article": "Điều 16",
+        "clause": "3",
+        "text": "Điều 16. Phân loại khu vực ô nhiễm môi trường đất 3. Khu vực ô nhiễm môi trường đất được phân loại theo mức độ ô nhiễm, gồm khu vực ô nhiễm, khu vực ô nhiễm nghiêm trọng và khu vực ô nhiễm đặc biệt nghiêm trọng.",
+        "token_count": 47,
+        "score": null
+      },
+      {
+        "document_id": 431147,
+        "document_number": "72/2020/QH14",
+        "title": "Luật Bảo vệ môi trường 2020",
+        "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+        "citation": "72/2020/QH14, Điều 16, Khoản 1",
+        "article": "Điều 16",
+        "clause": "1",
+        "text": "Điều 16. Phân loại khu vực ô nhiễm môi trường đất 1. Khu vực ô nhiễm môi trường đất là khu vực đất có chất ô nhiễm vượt mức cho phép theo quy chuẩn kỹ thuật môi trường, gây ảnh hưởng xấu đến môi trường và sức khỏe cộng đồng.",
+        "token_count": 50,
+        "score": null
+      }
+    ],
+    "stage_trace": {
+      "pinecone_hits": [],
+      "fts_hits": [],
+      "merged_document_candidates": [],
+      "resolved_document_candidates": [],
+      "structural_chunks_generated": [
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 16, Khoản 2",
+          "article": "Điều 16",
+          "clause": "2",
+          "text": "Điều 16. Phân loại khu vực ô nhiễm môi trường đất 2. Khu vực ô nhiễm môi trường đất được phân loại theo tiêu chí nguồn gây ô nhiễm, khả năng lan truyền, đối tượng chịu tác động.",
+          "score": 1.0,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 16, Khoản 3",
+          "article": "Điều 16",
+          "clause": "3",
+          "text": "Điều 16. Phân loại khu vực ô nhiễm môi trường đất 3. Khu vực ô nhiễm môi trường đất được phân loại theo mức độ ô nhiễm, gồm khu vực ô nhiễm, khu vực ô nhiễm nghiêm trọng và khu vực ô nhiễm đặc biệt nghiêm trọng.",
+          "score": 0.6666667,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 16, Khoản 1",
+          "article": "Điều 16",
+          "clause": "1",
+          "text": "Điều 16. Phân loại khu vực ô nhiễm môi trường đất 1. Khu vực ô nhiễm môi trường đất là khu vực đất có chất ô nhiễm vượt mức cho phép theo quy chuẩn kỹ thuật môi trường, gây ảnh hưởng xấu đến môi trường và sức khỏe cộng đồng.",
+          "score": 0.5,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 16, Khoản 1",
+          "article": "Điều 16",
+          "clause": "1",
+          "text": "Điều 16. Phân loại khu vực ô nhiễm môi trường đất 1. Khu vực ô nhiễm môi trường đất là khu vực đất có chất ô nhiễm vượt mức cho phép theo quy chuẩn kỹ thuật môi trường, gây ảnh hưởng xấu đến môi trường và sức khỏe cộng đồng.",
+          "score": 0.4,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 19, Khoản 1",
+          "article": "Điều 19",
+          "clause": "1",
+          "text": "Điều 19. Trách nhiệm bảo vệ môi trường đất 1. Bộ Tài nguyên và Môi trường có trách nhiệm sau đây: a) Quy định chi tiết tiêu chí xác định, phân loại khu vực ô nhiễm môi trường đất theo mức độ ô nhiễm; b) Chủ trì, phối hợp với các Bộ, cơ quan ngang Bộ, cơ quan có liên quan trong việc xây dựng và chỉ đạo thực hiện kế hoạch xử lý, cải tạo và phục hồi ô nhiễm môi trường đất đặc biệt nghiêm trọng thuộc trường hợp quy định tại khoản 3 Điều 15 của Luật này; tổ chức điều tra, đánh giá và công khai thông tin về chất lượng môi trường đất; c) Trình Thủ tướng Chính phủ ban hành kế hoạch xử lý, cải tạo và phục hồi khu vực ô nhiễm môi trường đất đặc biệt nghiêm trọng thuộc trường hợp quy định tại khoản 3 Điều 15 của Luật này; d) Tổng hợp danh mục các khu vực ô nhiễm môi trường đất; xây dựng, cập nhật vào hệ thống thông tin, cơ sở dữ liệu môi trường quốc gia và công bố thông tin về các khu vực ô nhiễm môi trường đất trên phạm vi cả nước.",
+          "score": 0.26785713,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 18, Khoản 1",
+          "article": "Điều 18",
+          "clause": "1",
+          "text": "Điều 18. Xử lý, cải tạo và phục hồi môi trường đất 1. Điều tra, đánh giá, phân loại khu vực ô nhiễm môi trường đất, xác định nguyên nhân, phạm vi và mức độ ô nhiễm, xử lý, cải tạo và phục hồi môi trường đất.",
+          "score": 0.2361111,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 19, Khoản 3",
+          "article": "Điều 19",
+          "clause": "3",
+          "text": "Điều 19. Trách nhiệm bảo vệ môi trường đất 3. Ủy ban nhân dân cấp tỉnh có trách nhiệm sau đây: a) Thực hiện điều tra, đánh giá, xác định và khoanh vùng các khu vực có nguy cơ ô nhiễm môi trường đất, khu vực ô nhiễm môi trường đất trên địa bàn và xác định trách nhiệm của tổ chức, cá nhân gây ô nhiễm; b) Xử lý khu vực ô nhiễm môi trường đất, khu vực ô nhiễm môi trường đất nghiêm trọng thuộc trường hợp quy định tại khoản 3 Điều 15 của Luật này; c) Báo cáo Bộ Tài nguyên và Môi trường về các khu vực có dấu hiệu ô nhiễm môi trường đất liên tỉnh, khu vực ô nhiễm môi trường đất đặc biệt nghiêm trọng; d) Cập nhật thông tin về khu vực ô nhiễm môi trường đất trên địa bàn vào hệ thống thông tin, cơ sở dữ liệu môi trường theo quy định.",
+          "score": 0.22916667,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 17, Khoản 3",
+          "article": "Điều 17",
+          "clause": "3",
+          "text": "Điều 17. Quản lý chất lượng môi trường đất 3. Khu vực ô nhiễm môi trường đất phải được điều tra, đánh giá, khoanh vùng, xử lý, cải tạo và phục hồi môi trường đất.",
+          "score": 0.22222222,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 18, Khoản 2",
+          "article": "Điều 18",
+          "clause": "2",
+          "text": "Điều 18. Xử lý, cải tạo và phục hồi môi trường đất 2. Thực hiện biện pháp kiểm soát khu vực ô nhiễm môi trường đất gồm khoanh vùng, cảnh báo, không cho phép hoặc hạn chế hoạt động nhằm giảm thiểu tác động đến sức khỏe con người.",
+          "score": 0.17619048,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 15, Khoản 3",
+          "article": "Điều 15",
+          "clause": "3",
+          "text": "Điều 15. Quy định chung về bảo vệ môi trường đất 3. Nhà nước xử lý, cải tạo và phục hồi môi trường đất ở khu vực ô nhiễm môi trường đất do lịch sử để lại hoặc không xác định được tổ chức, cá nhân gây ô nhiễm.",
+          "score": 0.17142858,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 18, Khoản 3",
+          "article": "Điều 18",
+          "clause": "3",
+          "text": "Điều 18. Xử lý, cải tạo và phục hồi môi trường đất 3. Lập, thực hiện phương án xử lý, cải tạo và phục hồi môi trường đất; ưu tiên xử lý các khu vực có mức độ ô nhiễm nghiêm trọng, ô nhiễm đặc biệt nghiêm trọng.",
+          "score": 0.1534091,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 19, Khoản 2",
+          "article": "Điều 19",
+          "clause": "2",
+          "text": "Điều 19. Trách nhiệm bảo vệ môi trường đất 2. Bộ Quốc phòng, Bộ Công an chủ trì, phối hợp với Ủy ban nhân dân cấp tỉnh tổ chức thực hiện việc xử lý, cải tạo và phục hồi khu vực ô nhiễm môi trường đất quốc phòng, đất an ninh và khu vực khác theo quy định của pháp luật.",
+          "score": 0.15,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 17, Khoản 2",
+          "article": "Điều 17",
+          "clause": "2",
+          "text": "Điều 17. Quản lý chất lượng môi trường đất 2. Khu vực đất có nguy cơ ô nhiễm phải được theo dõi và giám sát.",
+          "score": 0.12878788,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 15, Khoản 2",
+          "article": "Điều 15",
+          "clause": "2",
+          "text": "Điều 15. Quy định chung về bảo vệ môi trường đất 2. Cơ quan, tổ chức, cộng đồng dân cư, hộ gia đình và cá nhân sử dụng đất có trách nhiệm bảo vệ môi trường đất; xử lý, cải tạo và phục hồi môi trường đất đối với khu vực ô nhiễm môi trường đất do mình gây ra.",
+          "score": 0.12142858,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 9, Khoản 2",
+          "article": "Điều 9",
+          "clause": "2",
+          "text": "Điều 9. Kế hoạch quản lý chất lượng môi trường nước mặt 2. Nội dung chính của kế hoạch quản lý chất lượng môi trường nước mặt bao gồm: a) Đánh giá, dự báo xu hướng thay đổi chất lượng môi trường nước mặt; mục tiêu, chỉ tiêu của kế hoạch; xác định vùng bảo hộ vệ sinh khu vực lấy nước sinh hoạt, hành lang bảo vệ nguồn nước mặt; xác định khu vực sinh thủy; b) Thực trạng phân bố các nguồn ô nhiễm điểm và nguồn ô nhiễm diện phát sinh chất ô nhiễm môi trường nước trong vùng tác động; nguy cơ ô nhiễm nước mặt xuyên biên giới; c) Loại và tổng lượng chất ô nhiễm thải vào môi trường nước mặt; d) Đánh giá khả năng chịu tải, phân vùng xả thải, hạn ngạch xả nước thải; xác định mục tiêu và lộ trình giảm xả thải vào môi trường nước mặt không còn khả năng chịu tải; đ) Biện pháp phòng ngừa và giảm thiểu ô nhiễm môi trường nước mặt; giải pháp hợp tác, chia sẻ thông tin và quản lý ô nhiễm nước mặt xuyên biên giới; e) Giải pháp bảo vệ, cải thiện chất lượng nước mặt; g) Tổ chức thực hiện.",
+          "score": 0.11111111,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 17, Khoản 4",
+          "article": "Điều 17",
+          "clause": "4",
+          "text": "Điều 17. Quản lý chất lượng môi trường đất 4. Vùng đất bị ô nhiễm dioxin có nguồn gốc từ chất diệt cỏ dùng trong chiến tranh, thuốc bảo vệ thực vật tồn lưu và chất độc hại khác phải được điều tra, đánh giá, khoanh vùng và xử lý bảo đảm yêu cầu về bảo vệ môi trường.",
+          "score": 0.1,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 8, Khoản 3",
+          "article": "Điều 8",
+          "clause": "3",
+          "text": "Điều 8. Hoạt động bảo vệ môi trường nước mặt 3. Ủy ban nhân dân cấp tỉnh có trách nhiệm sau đây: a) Xác định các sông, hồ nội tỉnh và nguồn nước mặt khác trên địa bàn có vai trò quan trọng đối với phát triển kinh tế - xã hội, bảo vệ môi trường; xác định vùng bảo hộ vệ sinh khu vực lấy nước sinh hoạt, lập hành lang bảo vệ nguồn nước mặt trên địa bàn; xác định khu vực sinh thủy; b) Công khai thông tin các nguồn thải vào môi trường nước mặt trên địa bàn; thu thập thông tin, dữ liệu về hiện trạng môi trường nước mặt, nguồn thải và tổng lượng thải vào môi trường nước mặt thuộc sông, hồ liên tỉnh trên địa bàn quản lý theo hướng dẫn của Bộ Tài nguyên và Môi trường; chỉ đạo tổ chức đánh giá thiệt hại do ô nhiễm và xử lý ô nhiễm môi trường nước mặt trên địa bàn theo quy định; c) Tổ chức hoạt động phòng ngừa và kiểm soát các nguồn thải vào nguồn nước mặt trên địa bàn; thực hiện các giải pháp phòng ngừa, giảm thiểu ô nhiễm môi trường nước mặt, cải thiện chất lượng nước mặt trên địa bàn theo kế hoạch quản lý chất lượng môi trường nước mặt; d) Tổ chức đánh giá chất lượng môi trường nước mặt, trầm tích, đánh giá khả năng chịu tải, hạn ngạch xả nước thải đối với nguồn nước mặt thuộc đối tượng quy định tại điểm a khoản này; công bố thông tin về môi trường nước mặt trên địa bàn không còn khả năng chịu tải; đ) Ban hành, tổ chức thực hiện kế hoạch quản lý chất lượng môi trường nước mặt thuộc đối tượng quy định tại điểm a khoản này; tổ chức thực hiện kế hoạch quản lý chất",
+          "score": 0.09090909,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 3, Khoản 16",
+          "article": "Điều 3",
+          "clause": "16",
+          "text": "Điều 3. Giải thích từ ngữ 16. Chất ô nhiễm khó phân hủy là chất ô nhiễm có độc tính cao, khó phân hủy, có khả năng tích lũy sinh học và lan truyền trong môi trường, tác động xấu đến môi trường và sức khỏe con người.",
+          "score": 0.08928572,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 123, Khoản 1",
+          "article": "Điều 123",
+          "clause": "1",
+          "text": "Điều 123. Phân cấp sự cố môi trường và các giai đoạn ứng phó sự cố môi trường 1. Việc phân cấp sự cố môi trường được căn cứ vào phạm vi ô nhiễm, suy thoái môi trường tại thời điểm phát hiện sự cố để xác định cơ quan có trách nhiệm chỉ đạo ứng phó, bao gồm các cấp sau đây: a) Sự cố môi trường cấp cơ sở là sự cố môi trường có phạm vi ô nhiễm, suy thoái môi trường trong cơ sở sản xuất, kinh doanh, dịch vụ; b) Sự cố môi trường cấp huyện là sự cố môi trường vượt quá phạm vi sự cố cấp cơ sở và có phạm vi ô nhiễm, suy thoái môi trường trong địa bàn của một đơn vị hành chính cấp huyện; c) Sự cố môi trường cấp tỉnh là sự cố môi trường vượt quá phạm vi sự cố môi trường cấp huyện và có phạm vi ô nhiễm, suy thoái môi trường trong địa bàn của một đơn vị hành chính cấp tỉnh; d) Sự cố môi trường cấp quốc gia là sự cố môi trường có phạm vi ô nhiễm, suy thoái môi trường trên địa bàn từ 02 đơn vị hành chính cấp tỉnh trở lên hoặc có phạm vi ô nhiễm, suy thoái môi trường xuyên quốc gia.",
+          "score": 0.08012821,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 17, Khoản 1",
+          "article": "Điều 17",
+          "clause": "1",
+          "text": "Điều 17. Quản lý chất lượng môi trường đất 1. Chất lượng môi trường đất phải được điều tra, đánh giá, phân loại và công khai thông tin theo quy định của pháp luật.",
+          "score": 0.07692308,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 19669,
+          "document_number": "16-LB-TT",
+          "title": "Thông tư liên bộ 16-LB-TT năm 1963 hướng dẫn các địa phương điều chỉnh nhiệm vụ và quy định rõ trách nhiệm về công tác tiền lương giữa cơ quan lao động và ban tổ chức dân chính do Bộ Lao động - Bộ Nội vụ ban hành",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Lao-dong-Tien-luong/Thong-tu-lien-bo-16-LB-TT-dia-phuong-dieu-chinh-nhiem-vu-quy-dinh-trach-nhiem-cong-tac-tien-luong-giua-co-quan-lao-dong-ban-to-chuc-dan-chinh-19669.aspx",
+          "citation": "16-LB-TT",
+          "article": null,
+          "clause": null,
+          "text": "quyết định việc phân bổ quỹ lương và chỉ tiêu lương bình quân thuộc khu vực sản xuất cho các ngành quản lý sản xuất ở địa phương và giúp các ngành quản lý sản xuất trong việc phân bổ quỹ lương và chỉ tiêu lương bình quân cho các cơ sở sản xuất: xí nghiệp, công trường, nông trường, lâm trường thuộc địa phương quản lý. 4. Việc xếp lương cho cán bộ, công nhân, viên chức của các sở, ty, phòng; của các cơ quan huyện, thị xã, khu phố; của các cơ sở xí nghiệp và sự nghiệp vào các thang lương, bậc lương thì do các cơ quan trực tiếp quản lý cán bộ, công nhân, viên chức, dựa vào chính sách, chế độ đã quy định, vào sự hướng dẫn của cơ quan lao động mà tiến hành. Ban tổ chức dân chính giúp ủy ban hành chính xét duyệt dự kiến xếp lương của cơ quan hành chính sự nghiệp của bộ máy tổ chức quản lý xí nghiệp. Ban tổ chức dân chính nghiên cứu dự kiến sắp xếp lương cho những cán bộ thuộc phần mình được phân công giúp ủy ban quản lý. Trong khi làm các việc trên cần trao đổi với cơ quan lao động để cân đối tương quan chung giữa các ngành về mặt chính sách, về quỹ lương và chi tiêu lương bình quân. Sở, ty (hoặc phòng) lao động có trách nhiệm giúp ủy ban hành chính xét các dự kiến xếp lương của các ngành, các cơ sở thuộc khu vực sản xuất. Bị chú: việc phân chia khu vực sản xuất và hành chính sự nghiệp tạm thời dựa theo Nghị định số 82-CP ngày 03-6-1963 của Hội đồng Chính phủ về phân ngành kinh tế quốc dân. Quy định trên đây phân rõ ranh giới trách nhiệm của mỗi cơ quan về",
+          "score": 0.07692308,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 15, Khoản 1",
+          "article": "Điều 15",
+          "clause": "1",
+          "text": "Điều 15. Quy định chung về bảo vệ môi trường đất 1. Quy hoạch, kế hoạch, dự án và hoạt động có sử dụng đất phải xem xét tác động đến môi trường đất, có giải pháp phòng ngừa ô nhiễm, suy thoái môi trường, bảo vệ môi trường đất.",
+          "score": 0.07469655,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 28, Khoản 1",
+          "article": "Điều 28",
+          "clause": "1",
+          "text": "Điều 28. Tiêu chí về môi trường để phân loại dự án đầu tư 1. Tiêu chí về môi trường để phân loại dự án đầu tư bao gồm: a) Quy mô, công suất, loại hình sản xuất, kinh doanh, dịch vụ; b) Diện tích sử dụng đất, đất có mặt nước, khu vực biển; quy mô khai thác tài nguyên thiên nhiên; c) Yếu tố nhạy cảm về môi trường gồm khu dân cư tập trung; nguồn nước được dùng cho mục đích cấp nước sinh hoạt; khu bảo tồn thiên nhiên theo quy định của pháp luật về đa dạng sinh học, thủy sản; các loại rừng theo quy định của pháp luật về lâm nghiệp; di sản văn hóa vật thể, di sản thiên nhiên khác; đất trồng lúa nước từ 02 vụ trở lên; vùng đất ngập nước quan trọng; yêu cầu di dân, tái định cư và yếu tố nhạy cảm khác về môi trường.",
+          "score": 0.06703297,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 2868,
+          "document_number": "162/2005/QĐ-UBND",
+          "title": "Quyết định 162/2005/QĐ-UBND về trình tự thủ tục và phân cấp thực hiện chính sách tài chính cho việc di dời các cơ sở sản xuất gây ô nhiễm môi trường vào các khu công nghiệp tập trung và cụm công nghiệp do Ủy ban nhân dân thành phố Hồ Chí Minh ban hành",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Doanh-nghiep/Quyet-dinh-162-2005-QD-UBND-trinh-tu-thu-tuc-phan-cap-thuc-hien-chinh-sach-tai-chinh-cho-di-doi-co-so-san-xuat-gay-o-nhiem-2868.aspx",
+          "citation": "162/2005/QĐ-UBND, Điều 1",
+          "article": "Điều 1",
+          "clause": null,
+          "text": "Điều 1. Nay ban hành quy định trình tự thủ tục và phân cấp thực hiện chích sách tài chính cho việc di dời các cơ sở sản xuất gây ô nhiễm vào các khu công nghiệp tập trung và cụm công nghiệp (đính kèm).",
+          "score": 0.06666667,
+          "source": "vertex-qdrant-v3"
+        }
+      ],
+      "locally_selected_chunks": [],
+      "reranker_input_chunks": [
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 16, Khoản 2",
+          "article": "Điều 16",
+          "clause": "2",
+          "text": "Điều 16. Phân loại khu vực ô nhiễm môi trường đất 2. Khu vực ô nhiễm môi trường đất được phân loại theo tiêu chí nguồn gây ô nhiễm, khả năng lan truyền, đối tượng chịu tác động.",
+          "score": 1.0,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 16, Khoản 3",
+          "article": "Điều 16",
+          "clause": "3",
+          "text": "Điều 16. Phân loại khu vực ô nhiễm môi trường đất 3. Khu vực ô nhiễm môi trường đất được phân loại theo mức độ ô nhiễm, gồm khu vực ô nhiễm, khu vực ô nhiễm nghiêm trọng và khu vực ô nhiễm đặc biệt nghiêm trọng.",
+          "score": 0.6666667,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 16, Khoản 1",
+          "article": "Điều 16",
+          "clause": "1",
+          "text": "Điều 16. Phân loại khu vực ô nhiễm môi trường đất 1. Khu vực ô nhiễm môi trường đất là khu vực đất có chất ô nhiễm vượt mức cho phép theo quy chuẩn kỹ thuật môi trường, gây ảnh hưởng xấu đến môi trường và sức khỏe cộng đồng.",
+          "score": 0.5,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 16, Khoản 1",
+          "article": "Điều 16",
+          "clause": "1",
+          "text": "Điều 16. Phân loại khu vực ô nhiễm môi trường đất 1. Khu vực ô nhiễm môi trường đất là khu vực đất có chất ô nhiễm vượt mức cho phép theo quy chuẩn kỹ thuật môi trường, gây ảnh hưởng xấu đến môi trường và sức khỏe cộng đồng.",
+          "score": 0.4,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 19, Khoản 1",
+          "article": "Điều 19",
+          "clause": "1",
+          "text": "Điều 19. Trách nhiệm bảo vệ môi trường đất 1. Bộ Tài nguyên và Môi trường có trách nhiệm sau đây: a) Quy định chi tiết tiêu chí xác định, phân loại khu vực ô nhiễm môi trường đất theo mức độ ô nhiễm; b) Chủ trì, phối hợp với các Bộ, cơ quan ngang Bộ, cơ quan có liên quan trong việc xây dựng và chỉ đạo thực hiện kế hoạch xử lý, cải tạo và phục hồi ô nhiễm môi trường đất đặc biệt nghiêm trọng thuộc trường hợp quy định tại khoản 3 Điều 15 của Luật này; tổ chức điều tra, đánh giá và công khai thông tin về chất lượng môi trường đất; c) Trình Thủ tướng Chính phủ ban hành kế hoạch xử lý, cải tạo và phục hồi khu vực ô nhiễm môi trường đất đặc biệt nghiêm trọng thuộc trường hợp quy định tại khoản 3 Điều 15 của Luật này; d) Tổng hợp danh mục các khu vực ô nhiễm môi trường đất; xây dựng, cập nhật vào hệ thống thông tin, cơ sở dữ liệu môi trường quốc gia và công bố thông tin về các khu vực ô nhiễm môi trường đất trên phạm vi cả nước.",
+          "score": 0.26785713,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 18, Khoản 1",
+          "article": "Điều 18",
+          "clause": "1",
+          "text": "Điều 18. Xử lý, cải tạo và phục hồi môi trường đất 1. Điều tra, đánh giá, phân loại khu vực ô nhiễm môi trường đất, xác định nguyên nhân, phạm vi và mức độ ô nhiễm, xử lý, cải tạo và phục hồi môi trường đất.",
+          "score": 0.2361111,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 19, Khoản 3",
+          "article": "Điều 19",
+          "clause": "3",
+          "text": "Điều 19. Trách nhiệm bảo vệ môi trường đất 3. Ủy ban nhân dân cấp tỉnh có trách nhiệm sau đây: a) Thực hiện điều tra, đánh giá, xác định và khoanh vùng các khu vực có nguy cơ ô nhiễm môi trường đất, khu vực ô nhiễm môi trường đất trên địa bàn và xác định trách nhiệm của tổ chức, cá nhân gây ô nhiễm; b) Xử lý khu vực ô nhiễm môi trường đất, khu vực ô nhiễm môi trường đất nghiêm trọng thuộc trường hợp quy định tại khoản 3 Điều 15 của Luật này; c) Báo cáo Bộ Tài nguyên và Môi trường về các khu vực có dấu hiệu ô nhiễm môi trường đất liên tỉnh, khu vực ô nhiễm môi trường đất đặc biệt nghiêm trọng; d) Cập nhật thông tin về khu vực ô nhiễm môi trường đất trên địa bàn vào hệ thống thông tin, cơ sở dữ liệu môi trường theo quy định.",
+          "score": 0.22916667,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 17, Khoản 3",
+          "article": "Điều 17",
+          "clause": "3",
+          "text": "Điều 17. Quản lý chất lượng môi trường đất 3. Khu vực ô nhiễm môi trường đất phải được điều tra, đánh giá, khoanh vùng, xử lý, cải tạo và phục hồi môi trường đất.",
+          "score": 0.22222222,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 18, Khoản 2",
+          "article": "Điều 18",
+          "clause": "2",
+          "text": "Điều 18. Xử lý, cải tạo và phục hồi môi trường đất 2. Thực hiện biện pháp kiểm soát khu vực ô nhiễm môi trường đất gồm khoanh vùng, cảnh báo, không cho phép hoặc hạn chế hoạt động nhằm giảm thiểu tác động đến sức khỏe con người.",
+          "score": 0.17619048,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 15, Khoản 3",
+          "article": "Điều 15",
+          "clause": "3",
+          "text": "Điều 15. Quy định chung về bảo vệ môi trường đất 3. Nhà nước xử lý, cải tạo và phục hồi môi trường đất ở khu vực ô nhiễm môi trường đất do lịch sử để lại hoặc không xác định được tổ chức, cá nhân gây ô nhiễm.",
+          "score": 0.17142858,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 18, Khoản 3",
+          "article": "Điều 18",
+          "clause": "3",
+          "text": "Điều 18. Xử lý, cải tạo và phục hồi môi trường đất 3. Lập, thực hiện phương án xử lý, cải tạo và phục hồi môi trường đất; ưu tiên xử lý các khu vực có mức độ ô nhiễm nghiêm trọng, ô nhiễm đặc biệt nghiêm trọng.",
+          "score": 0.1534091,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 19, Khoản 2",
+          "article": "Điều 19",
+          "clause": "2",
+          "text": "Điều 19. Trách nhiệm bảo vệ môi trường đất 2. Bộ Quốc phòng, Bộ Công an chủ trì, phối hợp với Ủy ban nhân dân cấp tỉnh tổ chức thực hiện việc xử lý, cải tạo và phục hồi khu vực ô nhiễm môi trường đất quốc phòng, đất an ninh và khu vực khác theo quy định của pháp luật.",
+          "score": 0.15,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 17, Khoản 2",
+          "article": "Điều 17",
+          "clause": "2",
+          "text": "Điều 17. Quản lý chất lượng môi trường đất 2. Khu vực đất có nguy cơ ô nhiễm phải được theo dõi và giám sát.",
+          "score": 0.12878788,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 15, Khoản 2",
+          "article": "Điều 15",
+          "clause": "2",
+          "text": "Điều 15. Quy định chung về bảo vệ môi trường đất 2. Cơ quan, tổ chức, cộng đồng dân cư, hộ gia đình và cá nhân sử dụng đất có trách nhiệm bảo vệ môi trường đất; xử lý, cải tạo và phục hồi môi trường đất đối với khu vực ô nhiễm môi trường đất do mình gây ra.",
+          "score": 0.12142858,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 9, Khoản 2",
+          "article": "Điều 9",
+          "clause": "2",
+          "text": "Điều 9. Kế hoạch quản lý chất lượng môi trường nước mặt 2. Nội dung chính của kế hoạch quản lý chất lượng môi trường nước mặt bao gồm: a) Đánh giá, dự báo xu hướng thay đổi chất lượng môi trường nước mặt; mục tiêu, chỉ tiêu của kế hoạch; xác định vùng bảo hộ vệ sinh khu vực lấy nước sinh hoạt, hành lang bảo vệ nguồn nước mặt; xác định khu vực sinh thủy; b) Thực trạng phân bố các nguồn ô nhiễm điểm và nguồn ô nhiễm diện phát sinh chất ô nhiễm môi trường nước trong vùng tác động; nguy cơ ô nhiễm nước mặt xuyên biên giới; c) Loại và tổng lượng chất ô nhiễm thải vào môi trường nước mặt; d) Đánh giá khả năng chịu tải, phân vùng xả thải, hạn ngạch xả nước thải; xác định mục tiêu và lộ trình giảm xả thải vào môi trường nước mặt không còn khả năng chịu tải; đ) Biện pháp phòng ngừa và giảm thiểu ô nhiễm môi trường nước mặt; giải pháp hợp tác, chia sẻ thông tin và quản lý ô nhiễm nước mặt xuyên biên giới; e) Giải pháp bảo vệ, cải thiện chất lượng nước mặt; g) Tổ chức thực hiện.",
+          "score": 0.11111111,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 17, Khoản 4",
+          "article": "Điều 17",
+          "clause": "4",
+          "text": "Điều 17. Quản lý chất lượng môi trường đất 4. Vùng đất bị ô nhiễm dioxin có nguồn gốc từ chất diệt cỏ dùng trong chiến tranh, thuốc bảo vệ thực vật tồn lưu và chất độc hại khác phải được điều tra, đánh giá, khoanh vùng và xử lý bảo đảm yêu cầu về bảo vệ môi trường.",
+          "score": 0.1,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 8, Khoản 3",
+          "article": "Điều 8",
+          "clause": "3",
+          "text": "Điều 8. Hoạt động bảo vệ môi trường nước mặt 3. Ủy ban nhân dân cấp tỉnh có trách nhiệm sau đây: a) Xác định các sông, hồ nội tỉnh và nguồn nước mặt khác trên địa bàn có vai trò quan trọng đối với phát triển kinh tế - xã hội, bảo vệ môi trường; xác định vùng bảo hộ vệ sinh khu vực lấy nước sinh hoạt, lập hành lang bảo vệ nguồn nước mặt trên địa bàn; xác định khu vực sinh thủy; b) Công khai thông tin các nguồn thải vào môi trường nước mặt trên địa bàn; thu thập thông tin, dữ liệu về hiện trạng môi trường nước mặt, nguồn thải và tổng lượng thải vào môi trường nước mặt thuộc sông, hồ liên tỉnh trên địa bàn quản lý theo hướng dẫn của Bộ Tài nguyên và Môi trường; chỉ đạo tổ chức đánh giá thiệt hại do ô nhiễm và xử lý ô nhiễm môi trường nước mặt trên địa bàn theo quy định; c) Tổ chức hoạt động phòng ngừa và kiểm soát các nguồn thải vào nguồn nước mặt trên địa bàn; thực hiện các giải pháp phòng ngừa, giảm thiểu ô nhiễm môi trường nước mặt, cải thiện chất lượng nước mặt trên địa bàn theo kế hoạch quản lý chất lượng môi trường nước mặt; d) Tổ chức đánh giá chất lượng môi trường nước mặt, trầm tích, đánh giá khả năng chịu tải, hạn ngạch xả nước thải đối với nguồn nước mặt thuộc đối tượng quy định tại điểm a khoản này; công bố thông tin về môi trường nước mặt trên địa bàn không còn khả năng chịu tải; đ) Ban hành, tổ chức thực hiện kế hoạch quản lý chất lượng môi trường nước mặt thuộc đối tượng quy định tại điểm a khoản này; tổ chức thực hiện kế hoạch quản lý chất",
+          "score": 0.09090909,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 3, Khoản 16",
+          "article": "Điều 3",
+          "clause": "16",
+          "text": "Điều 3. Giải thích từ ngữ 16. Chất ô nhiễm khó phân hủy là chất ô nhiễm có độc tính cao, khó phân hủy, có khả năng tích lũy sinh học và lan truyền trong môi trường, tác động xấu đến môi trường và sức khỏe con người.",
+          "score": 0.08928572,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 123, Khoản 1",
+          "article": "Điều 123",
+          "clause": "1",
+          "text": "Điều 123. Phân cấp sự cố môi trường và các giai đoạn ứng phó sự cố môi trường 1. Việc phân cấp sự cố môi trường được căn cứ vào phạm vi ô nhiễm, suy thoái môi trường tại thời điểm phát hiện sự cố để xác định cơ quan có trách nhiệm chỉ đạo ứng phó, bao gồm các cấp sau đây: a) Sự cố môi trường cấp cơ sở là sự cố môi trường có phạm vi ô nhiễm, suy thoái môi trường trong cơ sở sản xuất, kinh doanh, dịch vụ; b) Sự cố môi trường cấp huyện là sự cố môi trường vượt quá phạm vi sự cố cấp cơ sở và có phạm vi ô nhiễm, suy thoái môi trường trong địa bàn của một đơn vị hành chính cấp huyện; c) Sự cố môi trường cấp tỉnh là sự cố môi trường vượt quá phạm vi sự cố môi trường cấp huyện và có phạm vi ô nhiễm, suy thoái môi trường trong địa bàn của một đơn vị hành chính cấp tỉnh; d) Sự cố môi trường cấp quốc gia là sự cố môi trường có phạm vi ô nhiễm, suy thoái môi trường trên địa bàn từ 02 đơn vị hành chính cấp tỉnh trở lên hoặc có phạm vi ô nhiễm, suy thoái môi trường xuyên quốc gia.",
+          "score": 0.08012821,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 17, Khoản 1",
+          "article": "Điều 17",
+          "clause": "1",
+          "text": "Điều 17. Quản lý chất lượng môi trường đất 1. Chất lượng môi trường đất phải được điều tra, đánh giá, phân loại và công khai thông tin theo quy định của pháp luật.",
+          "score": 0.07692308,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 19669,
+          "document_number": "16-LB-TT",
+          "title": "Thông tư liên bộ 16-LB-TT năm 1963 hướng dẫn các địa phương điều chỉnh nhiệm vụ và quy định rõ trách nhiệm về công tác tiền lương giữa cơ quan lao động và ban tổ chức dân chính do Bộ Lao động - Bộ Nội vụ ban hành",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Lao-dong-Tien-luong/Thong-tu-lien-bo-16-LB-TT-dia-phuong-dieu-chinh-nhiem-vu-quy-dinh-trach-nhiem-cong-tac-tien-luong-giua-co-quan-lao-dong-ban-to-chuc-dan-chinh-19669.aspx",
+          "citation": "16-LB-TT",
+          "article": null,
+          "clause": null,
+          "text": "quyết định việc phân bổ quỹ lương và chỉ tiêu lương bình quân thuộc khu vực sản xuất cho các ngành quản lý sản xuất ở địa phương và giúp các ngành quản lý sản xuất trong việc phân bổ quỹ lương và chỉ tiêu lương bình quân cho các cơ sở sản xuất: xí nghiệp, công trường, nông trường, lâm trường thuộc địa phương quản lý. 4. Việc xếp lương cho cán bộ, công nhân, viên chức của các sở, ty, phòng; của các cơ quan huyện, thị xã, khu phố; của các cơ sở xí nghiệp và sự nghiệp vào các thang lương, bậc lương thì do các cơ quan trực tiếp quản lý cán bộ, công nhân, viên chức, dựa vào chính sách, chế độ đã quy định, vào sự hướng dẫn của cơ quan lao động mà tiến hành. Ban tổ chức dân chính giúp ủy ban hành chính xét duyệt dự kiến xếp lương của cơ quan hành chính sự nghiệp của bộ máy tổ chức quản lý xí nghiệp. Ban tổ chức dân chính nghiên cứu dự kiến sắp xếp lương cho những cán bộ thuộc phần mình được phân công giúp ủy ban quản lý. Trong khi làm các việc trên cần trao đổi với cơ quan lao động để cân đối tương quan chung giữa các ngành về mặt chính sách, về quỹ lương và chi tiêu lương bình quân. Sở, ty (hoặc phòng) lao động có trách nhiệm giúp ủy ban hành chính xét các dự kiến xếp lương của các ngành, các cơ sở thuộc khu vực sản xuất. Bị chú: việc phân chia khu vực sản xuất và hành chính sự nghiệp tạm thời dựa theo Nghị định số 82-CP ngày 03-6-1963 của Hội đồng Chính phủ về phân ngành kinh tế quốc dân. Quy định trên đây phân rõ ranh giới trách nhiệm của mỗi cơ quan về",
+          "score": 0.07692308,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 15, Khoản 1",
+          "article": "Điều 15",
+          "clause": "1",
+          "text": "Điều 15. Quy định chung về bảo vệ môi trường đất 1. Quy hoạch, kế hoạch, dự án và hoạt động có sử dụng đất phải xem xét tác động đến môi trường đất, có giải pháp phòng ngừa ô nhiễm, suy thoái môi trường, bảo vệ môi trường đất.",
+          "score": 0.07469655,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 28, Khoản 1",
+          "article": "Điều 28",
+          "clause": "1",
+          "text": "Điều 28. Tiêu chí về môi trường để phân loại dự án đầu tư 1. Tiêu chí về môi trường để phân loại dự án đầu tư bao gồm: a) Quy mô, công suất, loại hình sản xuất, kinh doanh, dịch vụ; b) Diện tích sử dụng đất, đất có mặt nước, khu vực biển; quy mô khai thác tài nguyên thiên nhiên; c) Yếu tố nhạy cảm về môi trường gồm khu dân cư tập trung; nguồn nước được dùng cho mục đích cấp nước sinh hoạt; khu bảo tồn thiên nhiên theo quy định của pháp luật về đa dạng sinh học, thủy sản; các loại rừng theo quy định của pháp luật về lâm nghiệp; di sản văn hóa vật thể, di sản thiên nhiên khác; đất trồng lúa nước từ 02 vụ trở lên; vùng đất ngập nước quan trọng; yêu cầu di dân, tái định cư và yếu tố nhạy cảm khác về môi trường.",
+          "score": 0.06703297,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 2868,
+          "document_number": "162/2005/QĐ-UBND",
+          "title": "Quyết định 162/2005/QĐ-UBND về trình tự thủ tục và phân cấp thực hiện chính sách tài chính cho việc di dời các cơ sở sản xuất gây ô nhiễm môi trường vào các khu công nghiệp tập trung và cụm công nghiệp do Ủy ban nhân dân thành phố Hồ Chí Minh ban hành",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Doanh-nghiep/Quyet-dinh-162-2005-QD-UBND-trinh-tu-thu-tuc-phan-cap-thuc-hien-chinh-sach-tai-chinh-cho-di-doi-co-so-san-xuat-gay-o-nhiem-2868.aspx",
+          "citation": "162/2005/QĐ-UBND, Điều 1",
+          "article": "Điều 1",
+          "clause": null,
+          "text": "Điều 1. Nay ban hành quy định trình tự thủ tục và phân cấp thực hiện chích sách tài chính cho việc di dời các cơ sở sản xuất gây ô nhiễm vào các khu công nghiệp tập trung và cụm công nghiệp (đính kèm).",
+          "score": 0.06666667,
+          "source": "vertex-qdrant-v3"
+        }
+      ],
+      "reranker_output_chunks": [
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 16, Khoản 2",
+          "article": "Điều 16",
+          "clause": "2",
+          "text": "Điều 16. Phân loại khu vực ô nhiễm môi trường đất 2. Khu vực ô nhiễm môi trường đất được phân loại theo tiêu chí nguồn gây ô nhiễm, khả năng lan truyền, đối tượng chịu tác động.",
+          "score": 1.0,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 16, Khoản 3",
+          "article": "Điều 16",
+          "clause": "3",
+          "text": "Điều 16. Phân loại khu vực ô nhiễm môi trường đất 3. Khu vực ô nhiễm môi trường đất được phân loại theo mức độ ô nhiễm, gồm khu vực ô nhiễm, khu vực ô nhiễm nghiêm trọng và khu vực ô nhiễm đặc biệt nghiêm trọng.",
+          "score": 0.6666667,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 16, Khoản 1",
+          "article": "Điều 16",
+          "clause": "1",
+          "text": "Điều 16. Phân loại khu vực ô nhiễm môi trường đất 1. Khu vực ô nhiễm môi trường đất là khu vực đất có chất ô nhiễm vượt mức cho phép theo quy chuẩn kỹ thuật môi trường, gây ảnh hưởng xấu đến môi trường và sức khỏe cộng đồng.",
+          "score": 0.5,
+          "source": "vertex-qdrant-v3"
+        }
+      ],
+      "final_evidence_chunks": [
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 16, Khoản 2",
+          "article": "Điều 16",
+          "clause": "2",
+          "text": "Điều 16. Phân loại khu vực ô nhiễm môi trường đất 2. Khu vực ô nhiễm môi trường đất được phân loại theo tiêu chí nguồn gây ô nhiễm, khả năng lan truyền, đối tượng chịu tác động.",
+          "score": 1.0,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 16, Khoản 3",
+          "article": "Điều 16",
+          "clause": "3",
+          "text": "Điều 16. Phân loại khu vực ô nhiễm môi trường đất 3. Khu vực ô nhiễm môi trường đất được phân loại theo mức độ ô nhiễm, gồm khu vực ô nhiễm, khu vực ô nhiễm nghiêm trọng và khu vực ô nhiễm đặc biệt nghiêm trọng.",
+          "score": 0.6666667,
+          "source": "vertex-qdrant-v3"
+        },
+        {
+          "document_id": 431147,
+          "document_number": "72/2020/QH14",
+          "title": "Luật Bảo vệ môi trường 2020",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx",
+          "citation": "72/2020/QH14, Điều 16, Khoản 1",
+          "article": "Điều 16",
+          "clause": "1",
+          "text": "Điều 16. Phân loại khu vực ô nhiễm môi trường đất 1. Khu vực ô nhiễm môi trường đất là khu vực đất có chất ô nhiễm vượt mức cho phép theo quy chuẩn kỹ thuật môi trường, gây ảnh hưởng xấu đến môi trường và sức khỏe cộng đồng.",
+          "score": 0.5,
+          "source": "vertex-qdrant-v3"
+        }
+      ]
+    },
+    "latency": {
+      "t_rewrite": 0.0,
+      "t_retrieval": 23.3291,
+      "t_total": 23.3292
+    },
+    "metrics": {
+      "metric_version": "3.0.0",
+      "relevance_definition": "binary_unique_required_evidence_v1",
+      "status": "ok",
+      "applicable": true,
+      "skip_reason": null,
+      "applicable_gold_counts": {
+        "document": 1,
+        "article": 1,
+        "clause": 0
+      },
+      "matched_gold_counts": {
+        "document": 1,
+        "article": 1,
+        "clause": 0
+      },
+      "document_recall": {
+        "1": {
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "value": null,
+          "reason": "configured_capacity_unknown"
+        },
+        "3": {
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "value": null,
+          "reason": "configured_capacity_unknown"
+        },
+        "5": {
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "value": null,
+          "reason": "configured_capacity_unknown"
+        },
+        "10": {
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "value": null,
+          "reason": "configured_capacity_unknown"
+        },
+        "24": {
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "value": null,
+          "reason": "configured_capacity_unknown"
+        }
+      },
+      "article_recall": {
+        "1": {
+          "numerator": 1.0,
+          "denominator": 1.0,
+          "value": 1.0,
+          "reason": null
+        },
+        "3": {
+          "numerator": 1.0,
+          "denominator": 1.0,
+          "value": 1.0,
+          "reason": null
+        },
+        "6": {
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "value": null,
+          "reason": "k_exceeds_configured_capacity"
+        }
+      },
+      "clause_recall": {
+        "1": {
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "value": null,
+          "reason": "no_applicable_gold"
+        },
+        "3": {
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "value": null,
+          "reason": "no_applicable_gold"
+        },
+        "6": {
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "value": null,
+          "reason": "k_exceeds_configured_capacity"
+        }
+      },
+      "mrr": {
+        "document": {
+          "numerator": 0.0,
+          "denominator": 1.0,
+          "value": 0.0,
+          "reason": null
+        },
+        "article": {
+          "numerator": 1.0,
+          "denominator": 1.0,
+          "value": 1.0,
+          "reason": null
+        },
+        "clause": {
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "value": null,
+          "reason": "no_applicable_gold"
+        }
+      },
+      "ndcg_at_10": {
+        "numerator": 1.0,
+        "denominator": 1.0,
+        "value": 1.0,
+        "reason": null
+      },
+      "exact_reference_hit": {
+        "numerator": 1.0,
+        "denominator": 1.0,
+        "value": 1.0,
+        "reason": null
+      },
+      "multi_hop": {
+        "all_required": true,
+        "matched_required_items": 1,
+        "required_items": 1,
+        "all_required_metric": {
+          "numerator": 1.0,
+          "denominator": 1.0,
+          "value": 1.0,
+          "reason": null
+        },
+        "partial_metric": {
+          "numerator": 1.0,
+          "denominator": 1.0,
+          "value": 1.0,
+          "reason": null
+        }
+      },
+      "no_candidate": false,
+      "retrieval_technical_error": false,
+      "reranker_technical_error": false,
+      "stages": {
+        "pinecone_document_metrics": {
+          "configured_capacity": null,
+          "candidate_count": 0,
+          "scored_case_count": 1,
+          "applicable_gold_counts": {
+            "document": 1,
+            "article": 0,
+            "clause": 0
+          },
+          "matched_gold_counts": {
+            "document": 0,
+            "article": 0,
+            "clause": 0
+          },
+          "recall": {
+            "document": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              },
+              "5": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              },
+              "10": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              },
+              "24": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              }
+            },
+            "article": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "stage_does_not_expose_structural_locators"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "stage_does_not_expose_structural_locators"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "stage_does_not_expose_structural_locators"
+              }
+            },
+            "clause": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "stage_does_not_expose_structural_locators"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "stage_does_not_expose_structural_locators"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "stage_does_not_expose_structural_locators"
+              }
+            }
+          },
+          "mrr": {
+            "document": {
+              "numerator": 0.0,
+              "denominator": 1.0,
+              "value": 0.0,
+              "reason": null
+            },
+            "article": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "stage_does_not_expose_structural_locators"
+            },
+            "clause": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "stage_does_not_expose_structural_locators"
+            }
+          },
+          "null_reason_counts": {
+            "configured_capacity_unknown": 5,
+            "stage_does_not_expose_structural_locators": 8
+          }
+        },
+        "fts_document_metrics": {
+          "configured_capacity": null,
+          "candidate_count": 0,
+          "scored_case_count": 1,
+          "applicable_gold_counts": {
+            "document": 1,
+            "article": 0,
+            "clause": 0
+          },
+          "matched_gold_counts": {
+            "document": 0,
+            "article": 0,
+            "clause": 0
+          },
+          "recall": {
+            "document": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              },
+              "5": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              },
+              "10": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              },
+              "24": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              }
+            },
+            "article": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "stage_does_not_expose_structural_locators"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "stage_does_not_expose_structural_locators"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "stage_does_not_expose_structural_locators"
+              }
+            },
+            "clause": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "stage_does_not_expose_structural_locators"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "stage_does_not_expose_structural_locators"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "stage_does_not_expose_structural_locators"
+              }
+            }
+          },
+          "mrr": {
+            "document": {
+              "numerator": 0.0,
+              "denominator": 1.0,
+              "value": 0.0,
+              "reason": null
+            },
+            "article": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "stage_does_not_expose_structural_locators"
+            },
+            "clause": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "stage_does_not_expose_structural_locators"
+            }
+          },
+          "null_reason_counts": {
+            "configured_capacity_unknown": 5,
+            "stage_does_not_expose_structural_locators": 8
+          }
+        },
+        "source_retrieval_metrics": {
+          "configured_capacity": null,
+          "candidate_count": 0,
+          "scored_case_count": 1,
+          "applicable_gold_counts": {
+            "document": 1,
+            "article": 0,
+            "clause": 0
+          },
+          "matched_gold_counts": {
+            "document": 0,
+            "article": 0,
+            "clause": 0
+          },
+          "recall": {
+            "document": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              },
+              "5": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              },
+              "10": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              },
+              "24": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              }
+            },
+            "article": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "stage_does_not_expose_structural_locators"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "stage_does_not_expose_structural_locators"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "stage_does_not_expose_structural_locators"
+              }
+            },
+            "clause": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "stage_does_not_expose_structural_locators"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "stage_does_not_expose_structural_locators"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "stage_does_not_expose_structural_locators"
+              }
+            }
+          },
+          "mrr": {
+            "document": {
+              "numerator": 0.0,
+              "denominator": 1.0,
+              "value": 0.0,
+              "reason": null
+            },
+            "article": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "stage_does_not_expose_structural_locators"
+            },
+            "clause": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "stage_does_not_expose_structural_locators"
+            }
+          },
+          "null_reason_counts": {
+            "configured_capacity_unknown": 5,
+            "stage_does_not_expose_structural_locators": 8
+          }
+        },
+        "merged_document_metrics": {
+          "configured_capacity": null,
+          "candidate_count": 0,
+          "scored_case_count": 1,
+          "applicable_gold_counts": {
+            "document": 1,
+            "article": 0,
+            "clause": 0
+          },
+          "matched_gold_counts": {
+            "document": 0,
+            "article": 0,
+            "clause": 0
+          },
+          "recall": {
+            "document": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              },
+              "5": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              },
+              "10": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              },
+              "24": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              }
+            },
+            "article": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "stage_does_not_expose_structural_locators"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "stage_does_not_expose_structural_locators"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "stage_does_not_expose_structural_locators"
+              }
+            },
+            "clause": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "stage_does_not_expose_structural_locators"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "stage_does_not_expose_structural_locators"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "stage_does_not_expose_structural_locators"
+              }
+            }
+          },
+          "mrr": {
+            "document": {
+              "numerator": 0.0,
+              "denominator": 1.0,
+              "value": 0.0,
+              "reason": null
+            },
+            "article": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "stage_does_not_expose_structural_locators"
+            },
+            "clause": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "stage_does_not_expose_structural_locators"
+            }
+          },
+          "null_reason_counts": {
+            "configured_capacity_unknown": 5,
+            "stage_does_not_expose_structural_locators": 8
+          }
+        },
+        "resolved_document_metrics": {
+          "configured_capacity": null,
+          "candidate_count": 0,
+          "scored_case_count": 1,
+          "applicable_gold_counts": {
+            "document": 1,
+            "article": 0,
+            "clause": 0
+          },
+          "matched_gold_counts": {
+            "document": 0,
+            "article": 0,
+            "clause": 0
+          },
+          "recall": {
+            "document": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              },
+              "5": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              },
+              "10": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              },
+              "24": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              }
+            },
+            "article": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "stage_does_not_expose_structural_locators"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "stage_does_not_expose_structural_locators"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "stage_does_not_expose_structural_locators"
+              }
+            },
+            "clause": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "stage_does_not_expose_structural_locators"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "stage_does_not_expose_structural_locators"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "stage_does_not_expose_structural_locators"
+              }
+            }
+          },
+          "mrr": {
+            "document": {
+              "numerator": 0.0,
+              "denominator": 1.0,
+              "value": 0.0,
+              "reason": null
+            },
+            "article": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "stage_does_not_expose_structural_locators"
+            },
+            "clause": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "stage_does_not_expose_structural_locators"
+            }
+          },
+          "null_reason_counts": {
+            "configured_capacity_unknown": 5,
+            "stage_does_not_expose_structural_locators": 8
+          }
+        },
+        "structural_chunk_metrics": {
+          "configured_capacity": 24,
+          "candidate_count": 24,
+          "scored_case_count": 1,
+          "applicable_gold_counts": {
+            "document": 1,
+            "article": 1,
+            "clause": 0
+          },
+          "matched_gold_counts": {
+            "document": 1,
+            "article": 1,
+            "clause": 0
+          },
+          "recall": {
+            "document": {
+              "1": {
+                "numerator": 1.0,
+                "denominator": 1.0,
+                "value": 1.0,
+                "reason": null
+              },
+              "3": {
+                "numerator": 1.0,
+                "denominator": 1.0,
+                "value": 1.0,
+                "reason": null
+              },
+              "5": {
+                "numerator": 1.0,
+                "denominator": 1.0,
+                "value": 1.0,
+                "reason": null
+              },
+              "10": {
+                "numerator": 1.0,
+                "denominator": 1.0,
+                "value": 1.0,
+                "reason": null
+              },
+              "24": {
+                "numerator": 1.0,
+                "denominator": 1.0,
+                "value": 1.0,
+                "reason": null
+              }
+            },
+            "article": {
+              "1": {
+                "numerator": 1.0,
+                "denominator": 1.0,
+                "value": 1.0,
+                "reason": null
+              },
+              "3": {
+                "numerator": 1.0,
+                "denominator": 1.0,
+                "value": 1.0,
+                "reason": null
+              },
+              "6": {
+                "numerator": 1.0,
+                "denominator": 1.0,
+                "value": 1.0,
+                "reason": null
+              }
+            },
+            "clause": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "no_applicable_gold"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "no_applicable_gold"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "no_applicable_gold"
+              }
+            }
+          },
+          "mrr": {
+            "document": {
+              "numerator": 1.0,
+              "denominator": 1.0,
+              "value": 1.0,
+              "reason": null
+            },
+            "article": {
+              "numerator": 1.0,
+              "denominator": 1.0,
+              "value": 1.0,
+              "reason": null
+            },
+            "clause": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "no_applicable_gold"
+            }
+          },
+          "null_reason_counts": {
+            "no_applicable_gold": 4
+          }
+        },
+        "local_selection_metrics": {
+          "configured_capacity": null,
+          "candidate_count": 0,
+          "scored_case_count": 1,
+          "applicable_gold_counts": {
+            "document": 1,
+            "article": 1,
+            "clause": 0
+          },
+          "matched_gold_counts": {
+            "document": 0,
+            "article": 0,
+            "clause": 0
+          },
+          "recall": {
+            "document": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              },
+              "5": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              },
+              "10": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              },
+              "24": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              }
+            },
+            "article": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              }
+            },
+            "clause": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "configured_capacity_unknown"
+              }
+            }
+          },
+          "mrr": {
+            "document": {
+              "numerator": 0.0,
+              "denominator": 1.0,
+              "value": 0.0,
+              "reason": null
+            },
+            "article": {
+              "numerator": 0.0,
+              "denominator": 1.0,
+              "value": 0.0,
+              "reason": null
+            },
+            "clause": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "no_applicable_gold"
+            }
+          },
+          "null_reason_counts": {
+            "configured_capacity_unknown": 11,
+            "no_applicable_gold": 1
+          }
+        },
+        "reranker_input_metrics": {
+          "configured_capacity": 24,
+          "candidate_count": 24,
+          "scored_case_count": 1,
+          "applicable_gold_counts": {
+            "document": 1,
+            "article": 1,
+            "clause": 0
+          },
+          "matched_gold_counts": {
+            "document": 1,
+            "article": 1,
+            "clause": 0
+          },
+          "recall": {
+            "document": {
+              "1": {
+                "numerator": 1.0,
+                "denominator": 1.0,
+                "value": 1.0,
+                "reason": null
+              },
+              "3": {
+                "numerator": 1.0,
+                "denominator": 1.0,
+                "value": 1.0,
+                "reason": null
+              },
+              "5": {
+                "numerator": 1.0,
+                "denominator": 1.0,
+                "value": 1.0,
+                "reason": null
+              },
+              "10": {
+                "numerator": 1.0,
+                "denominator": 1.0,
+                "value": 1.0,
+                "reason": null
+              },
+              "24": {
+                "numerator": 1.0,
+                "denominator": 1.0,
+                "value": 1.0,
+                "reason": null
+              }
+            },
+            "article": {
+              "1": {
+                "numerator": 1.0,
+                "denominator": 1.0,
+                "value": 1.0,
+                "reason": null
+              },
+              "3": {
+                "numerator": 1.0,
+                "denominator": 1.0,
+                "value": 1.0,
+                "reason": null
+              },
+              "6": {
+                "numerator": 1.0,
+                "denominator": 1.0,
+                "value": 1.0,
+                "reason": null
+              }
+            },
+            "clause": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "no_applicable_gold"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "no_applicable_gold"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "no_applicable_gold"
+              }
+            }
+          },
+          "mrr": {
+            "document": {
+              "numerator": 1.0,
+              "denominator": 1.0,
+              "value": 1.0,
+              "reason": null
+            },
+            "article": {
+              "numerator": 1.0,
+              "denominator": 1.0,
+              "value": 1.0,
+              "reason": null
+            },
+            "clause": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "no_applicable_gold"
+            }
+          },
+          "null_reason_counts": {
+            "no_applicable_gold": 4
+          }
+        },
+        "reranker_output_metrics": {
+          "configured_capacity": 3,
+          "candidate_count": 3,
+          "scored_case_count": 1,
+          "applicable_gold_counts": {
+            "document": 1,
+            "article": 1,
+            "clause": 0
+          },
+          "matched_gold_counts": {
+            "document": 1,
+            "article": 1,
+            "clause": 0
+          },
+          "recall": {
+            "document": {
+              "1": {
+                "numerator": 1.0,
+                "denominator": 1.0,
+                "value": 1.0,
+                "reason": null
+              },
+              "3": {
+                "numerator": 1.0,
+                "denominator": 1.0,
+                "value": 1.0,
+                "reason": null
+              },
+              "5": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "k_exceeds_configured_capacity"
+              },
+              "10": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "k_exceeds_configured_capacity"
+              },
+              "24": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "k_exceeds_configured_capacity"
+              }
+            },
+            "article": {
+              "1": {
+                "numerator": 1.0,
+                "denominator": 1.0,
+                "value": 1.0,
+                "reason": null
+              },
+              "3": {
+                "numerator": 1.0,
+                "denominator": 1.0,
+                "value": 1.0,
+                "reason": null
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "k_exceeds_configured_capacity"
+              }
+            },
+            "clause": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "no_applicable_gold"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "no_applicable_gold"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "k_exceeds_configured_capacity"
+              }
+            }
+          },
+          "mrr": {
+            "document": {
+              "numerator": 1.0,
+              "denominator": 1.0,
+              "value": 1.0,
+              "reason": null
+            },
+            "article": {
+              "numerator": 1.0,
+              "denominator": 1.0,
+              "value": 1.0,
+              "reason": null
+            },
+            "clause": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "no_applicable_gold"
+            }
+          },
+          "null_reason_counts": {
+            "k_exceeds_configured_capacity": 5,
+            "no_applicable_gold": 3
+          }
+        },
+        "final_evidence_metrics": {
+          "configured_capacity": 3,
+          "candidate_count": 3,
+          "scored_case_count": 1,
+          "applicable_gold_counts": {
+            "document": 1,
+            "article": 1,
+            "clause": 0
+          },
+          "matched_gold_counts": {
+            "document": 1,
+            "article": 1,
+            "clause": 0
+          },
+          "recall": {
+            "document": {
+              "1": {
+                "numerator": 1.0,
+                "denominator": 1.0,
+                "value": 1.0,
+                "reason": null
+              },
+              "3": {
+                "numerator": 1.0,
+                "denominator": 1.0,
+                "value": 1.0,
+                "reason": null
+              },
+              "5": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "k_exceeds_configured_capacity"
+              },
+              "10": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "k_exceeds_configured_capacity"
+              },
+              "24": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "k_exceeds_configured_capacity"
+              }
+            },
+            "article": {
+              "1": {
+                "numerator": 1.0,
+                "denominator": 1.0,
+                "value": 1.0,
+                "reason": null
+              },
+              "3": {
+                "numerator": 1.0,
+                "denominator": 1.0,
+                "value": 1.0,
+                "reason": null
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "k_exceeds_configured_capacity"
+              }
+            },
+            "clause": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "no_applicable_gold"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "no_applicable_gold"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "k_exceeds_configured_capacity"
+              }
+            }
+          },
+          "mrr": {
+            "document": {
+              "numerator": 1.0,
+              "denominator": 1.0,
+              "value": 1.0,
+              "reason": null
+            },
+            "article": {
+              "numerator": 1.0,
+              "denominator": 1.0,
+              "value": 1.0,
+              "reason": null
+            },
+            "clause": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "no_applicable_gold"
+            }
+          },
+          "null_reason_counts": {
+            "k_exceeds_configured_capacity": 5,
+            "no_applicable_gold": 3
+          }
+        }
+      },
+      "first_loss_by_evidence": {
+        "case_017_ctx01_cit01": "source_retrieval_metrics"
+      }
+    },
+    "error": null,
+    "technical_errors": {},
+    "retrieval_diagnostics": {
+      "backend": "vertex-qdrant-v3",
+      "collection": "vietlex-legal-rag-v3-vertex-1024",
+      "candidate_pool": {
+        "case_id": "case_017",
+        "backend_contract_sha256": "f89ddcf8f17c1a76133fdbbd37c2bb2dac38da11667e77faeca2330f40ef7b4c",
+        "candidates": [
+          {
+            "candidate_id": "9e8400c08a4a52064e420dca9beb4ab8453fab366d7e0950dc41ca791dfc406a",
+            "document_id": 431147,
+            "document_number": "72/2020/QH14",
+            "article": "Điều 16",
+            "clause": "2",
+            "citation": "72/2020/QH14, Điều 16, Khoản 2",
+            "text_sha256": "1063c10a23ec1ed5a00f85af4d39ca7cf7f086967e3cf2f8eeadbb8bc4a95f67",
+            "rank": 1,
+            "score": 1.0
+          },
+          {
+            "candidate_id": "4919aeda24356890a1e28293cc95e2fe1a30c836af2a1a16656fa1935128fa7b",
+            "document_id": 431147,
+            "document_number": "72/2020/QH14",
+            "article": "Điều 16",
+            "clause": "3",
+            "citation": "72/2020/QH14, Điều 16, Khoản 3",
+            "text_sha256": "4287139854c3549b9f14d8e5bcc72ac225d3615406bc3f5a4ee118114ee8b18c",
+            "rank": 2,
+            "score": 0.6666667
+          },
+          {
+            "candidate_id": "a5e03e5fa3529306827e4ba4f9c21d76a789a9ff6006b5bb5e60c027c9d6a9a4",
+            "document_id": 431147,
+            "document_number": "72/2020/QH14",
+            "article": "Điều 16",
+            "clause": "1",
+            "citation": "72/2020/QH14, Điều 16, Khoản 1",
+            "text_sha256": "2fe153b5513a1b0adb7ef439136b77d4de2f4e769ac26b7c24772079a5d60fa8",
+            "rank": 3,
+            "score": 0.5
+          },
+          {
+            "candidate_id": "a5e03e5fa3529306827e4ba4f9c21d76a789a9ff6006b5bb5e60c027c9d6a9a4",
+            "document_id": 431147,
+            "document_number": "72/2020/QH14",
+            "article": "Điều 16",
+            "clause": "1",
+            "citation": "72/2020/QH14, Điều 16, Khoản 1",
+            "text_sha256": "2fe153b5513a1b0adb7ef439136b77d4de2f4e769ac26b7c24772079a5d60fa8",
+            "rank": 4,
+            "score": 0.4
+          },
+          {
+            "candidate_id": "7a570dd6b8ffe1b76b15e02ebb8bd7862d374b4090bc125bf6c2341a52476815",
+            "document_id": 431147,
+            "document_number": "72/2020/QH14",
+            "article": "Điều 19",
+            "clause": "1",
+            "citation": "72/2020/QH14, Điều 19, Khoản 1",
+            "text_sha256": "f3d4b43057c6c6a0398036c5394c9632ef9b00231a13bc80a0e7e1a0486fd7cb",
+            "rank": 5,
+            "score": 0.26785713
+          },
+          {
+            "candidate_id": "78d7fe6e3654c396e5b63cc5663775c12d05de33607db9dc17d97f404e443a76",
+            "document_id": 431147,
+            "document_number": "72/2020/QH14",
+            "article": "Điều 18",
+            "clause": "1",
+            "citation": "72/2020/QH14, Điều 18, Khoản 1",
+            "text_sha256": "6b4225de6654970810a9eb7d5b16892162784ab35c850a25dd5ac4d7c8d60ebe",
+            "rank": 6,
+            "score": 0.2361111
+          },
+          {
+            "candidate_id": "6067d90f12103453cf9f3ff9b3639e59f2f22bd8424c6284ceba767402db86e3",
+            "document_id": 431147,
+            "document_number": "72/2020/QH14",
+            "article": "Điều 19",
+            "clause": "3",
+            "citation": "72/2020/QH14, Điều 19, Khoản 3",
+            "text_sha256": "d5e526b445e099983b3bdd5a0331be0559d16ba231b63e77c50ab94b2f631289",
+            "rank": 7,
+            "score": 0.22916667
+          },
+          {
+            "candidate_id": "5b927a82e4277e1265ecb5d61cd81c0e844899a4b2562eee1a1255f65870b094",
+            "document_id": 431147,
+            "document_number": "72/2020/QH14",
+            "article": "Điều 17",
+            "clause": "3",
+            "citation": "72/2020/QH14, Điều 17, Khoản 3",
+            "text_sha256": "50b68aba0b60eed41357163fcaaa2e00ce006b27b37c99edf560fff3845f4524",
+            "rank": 8,
+            "score": 0.22222222
+          },
+          {
+            "candidate_id": "f89ae3166edb29ebbe39243f032229b531144c8af8a2e17c70cc93e29c68fc02",
+            "document_id": 431147,
+            "document_number": "72/2020/QH14",
+            "article": "Điều 18",
+            "clause": "2",
+            "citation": "72/2020/QH14, Điều 18, Khoản 2",
+            "text_sha256": "59bd3b5d49a20a152968b3f5d265550fc800589c2e94a2403136e80c65490c50",
+            "rank": 9,
+            "score": 0.17619048
+          },
+          {
+            "candidate_id": "3ad43c08bc37cc4cbebed5893ef2b8d14d0ef79568251d9cd2c59d93b223a6f8",
+            "document_id": 431147,
+            "document_number": "72/2020/QH14",
+            "article": "Điều 15",
+            "clause": "3",
+            "citation": "72/2020/QH14, Điều 15, Khoản 3",
+            "text_sha256": "de6df3d220efb2a520ef1360acd4bfba0a49df5294e5ad5fb1f2113ffde2dfea",
+            "rank": 10,
+            "score": 0.17142858
+          },
+          {
+            "candidate_id": "e6dc2664ae7ff7d254e76511a4e0a621e1c46f9f7f0179f93af6b7c231a13e4d",
+            "document_id": 431147,
+            "document_number": "72/2020/QH14",
+            "article": "Điều 18",
+            "clause": "3",
+            "citation": "72/2020/QH14, Điều 18, Khoản 3",
+            "text_sha256": "b2a4dfa01654e8fba21d5789c163ddb0dbc5921b0355f241138c06d4cb403315",
+            "rank": 11,
+            "score": 0.1534091
+          },
+          {
+            "candidate_id": "d86e7c221641677f3e816eac46f165ff60aaf55357f5b996aa73529f485ee89f",
+            "document_id": 431147,
+            "document_number": "72/2020/QH14",
+            "article": "Điều 19",
+            "clause": "2",
+            "citation": "72/2020/QH14, Điều 19, Khoản 2",
+            "text_sha256": "e39089e74db7180193a198cc6cc7d9ac6d0183de01ed6007e9b2b3e7bc41c21c",
+            "rank": 12,
+            "score": 0.15
+          },
+          {
+            "candidate_id": "bacd8378786ca6f33311b8c7bf7becb38623fcfa1dc248038df42ca2f9f51c93",
+            "document_id": 431147,
+            "document_number": "72/2020/QH14",
+            "article": "Điều 17",
+            "clause": "2",
+            "citation": "72/2020/QH14, Điều 17, Khoản 2",
+            "text_sha256": "5cf1b0e9fe4be579986ca9bba3dfdba6f282134cd3fcfa1018e8a484f8647282",
+            "rank": 13,
+            "score": 0.12878788
+          },
+          {
+            "candidate_id": "5e7037e8c107168886334ff0b83ade4f8471ae1518faca46747af4d6eadc5673",
+            "document_id": 431147,
+            "document_number": "72/2020/QH14",
+            "article": "Điều 15",
+            "clause": "2",
+            "citation": "72/2020/QH14, Điều 15, Khoản 2",
+            "text_sha256": "c816eb118082b7aeb62bb1ba0e184e6595f98264ba44faa0ac52c944a7a2150b",
+            "rank": 14,
+            "score": 0.12142858
+          },
+          {
+            "candidate_id": "33bcda99f6a19abab979a18318d7888d1f4c74d42837f44055f193615108020e",
+            "document_id": 431147,
+            "document_number": "72/2020/QH14",
+            "article": "Điều 9",
+            "clause": "2",
+            "citation": "72/2020/QH14, Điều 9, Khoản 2",
+            "text_sha256": "4e16f27e3c81f59f73777b783b04c15dd9ab35bcc36c0655e01a4bd5aa9e92a6",
+            "rank": 15,
+            "score": 0.11111111
+          },
+          {
+            "candidate_id": "cd5102afd1225677545ed286d4b6061eabe77b57b759a559cd5f2b064f161a4a",
+            "document_id": 431147,
+            "document_number": "72/2020/QH14",
+            "article": "Điều 17",
+            "clause": "4",
+            "citation": "72/2020/QH14, Điều 17, Khoản 4",
+            "text_sha256": "9b1edcd48cc60e3feb2045825f37520be1abd61fbd8fa7dfd112084b74bb94c0",
+            "rank": 16,
+            "score": 0.1
+          },
+          {
+            "candidate_id": "0b52f1c2d461bb8bb1625d2619b9d0395b413b5c191cd543ed1da0ebb65caa98",
+            "document_id": 431147,
+            "document_number": "72/2020/QH14",
+            "article": "Điều 8",
+            "clause": "3",
+            "citation": "72/2020/QH14, Điều 8, Khoản 3",
+            "text_sha256": "f2960b5cfb5d7cc15b9e18ba6eb833dfe08cc80be2b12d601891edf0cd59a323",
+            "rank": 17,
+            "score": 0.09090909
+          },
+          {
+            "candidate_id": "738980cb3910d600500ccbefee27c5674a4897ad0f2e9f9778347cce0cf043d8",
+            "document_id": 431147,
+            "document_number": "72/2020/QH14",
+            "article": "Điều 3",
+            "clause": "16",
+            "citation": "72/2020/QH14, Điều 3, Khoản 16",
+            "text_sha256": "b359d86736917047a6f2ea920a8d0147a56ce421d96e8069dfdc60e518763d14",
+            "rank": 18,
+            "score": 0.08928572
+          },
+          {
+            "candidate_id": "578cfc96c28ffbe6d3de96f96eb89ca1f38cd78feb090ed9019ad3838e5ce221",
+            "document_id": 431147,
+            "document_number": "72/2020/QH14",
+            "article": "Điều 123",
+            "clause": "1",
+            "citation": "72/2020/QH14, Điều 123, Khoản 1",
+            "text_sha256": "a9f77e063fb0485e4b0a278b6c6022519228a6c77feae839939a71068127ab48",
+            "rank": 19,
+            "score": 0.08012821
+          },
+          {
+            "candidate_id": "6a43b632a5dfbce608c030437e3e5be47ca822370293ac3b8a18be600d1c6392",
+            "document_id": 431147,
+            "document_number": "72/2020/QH14",
+            "article": "Điều 17",
+            "clause": "1",
+            "citation": "72/2020/QH14, Điều 17, Khoản 1",
+            "text_sha256": "5a0d94d47414d048fe9c2192124ee893e68d8566c29e02975a72bbe774e2c523",
+            "rank": 20,
+            "score": 0.07692308
+          },
+          {
+            "candidate_id": "03e7491c1b32b492b4965e6f2c2b650f65a629cc6662eb010d63aab7b785646e",
+            "document_id": 19669,
+            "document_number": "16-LB-TT",
+            "article": null,
+            "clause": null,
+            "citation": "16-LB-TT",
+            "text_sha256": "4031af40b2a1d828d63a8991cb744efa64fabcaf2ff91da0ef2284355f495164",
+            "rank": 21,
+            "score": 0.07692308
+          },
+          {
+            "candidate_id": "38b3d80185479927d08585d776569bb6bfe8e78748d942613eb870a8431f7234",
+            "document_id": 431147,
+            "document_number": "72/2020/QH14",
+            "article": "Điều 15",
+            "clause": "1",
+            "citation": "72/2020/QH14, Điều 15, Khoản 1",
+            "text_sha256": "fd4b5dc6eee7e60d55ad62c70f2d8dbbae298a21ec2a77955412e5f36636b7a6",
+            "rank": 22,
+            "score": 0.07469655
+          },
+          {
+            "candidate_id": "72e5792ae9e379f9982c3cdd7d40a83608eda1d5bc0d7cbb211ec60e391f6361",
+            "document_id": 431147,
+            "document_number": "72/2020/QH14",
+            "article": "Điều 28",
+            "clause": "1",
+            "citation": "72/2020/QH14, Điều 28, Khoản 1",
+            "text_sha256": "c32d83e0dc0056419752f0caa7db9367c1ebbf1990f52ddfb805f6f2197e8621",
+            "rank": 23,
+            "score": 0.06703297
+          },
+          {
+            "candidate_id": "2b2cb9599e0fb379fbf53f55442f88f40e811d6d5233d9ceaf8bccaed764c8b4",
+            "document_id": 2868,
+            "document_number": "162/2005/QĐ-UBND",
+            "article": "Điều 1",
+            "clause": null,
+            "citation": "162/2005/QĐ-UBND, Điều 1",
+            "text_sha256": "0c196c9197fec2bc9f2688da240cbaeacfefeb7e6c4a5f958b6b40bb476afc44",
+            "rank": 24,
+            "score": 0.06666667
+          }
+        ],
+        "candidate_ids_sha256": "b8e0cfea145ab700d4ddb0f9a2859ce0e8ce2d165a8b78a6fbc7f8f0f7ba3193",
+        "candidate_payload_sha256": "7838d6910bd244f24116a04ceb535f8fd2b760ab99dc2ff231aa00d2eda0b439"
+      },
+      "ranking": "raw-rrf"
+    }
+  }
+]

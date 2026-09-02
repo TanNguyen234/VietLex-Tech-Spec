@@ -1,0 +1,20 @@
+{
+  "passed": true,
+  "k": 3,
+  "thresholds": {
+    "document_recall@3": 1.0,
+    "article_recall@3": 0.95,
+    "clause_recall@3": 0.9,
+    "multi_hop_all_required": 0.95
+  },
+  "observed": {
+    "document_recall@3": 1.0,
+    "article_recall@3": 1.0,
+    "clause_recall@3": 0.9286,
+    "multi_hop_all_required": 0.975,
+    "no_candidate_rate": 0.0,
+    "retrieval_technical_error_rate": 0.0,
+    "reranker_technical_error_rate": 0.0
+  },
+  "failures": []
+}

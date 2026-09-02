@@ -1,0 +1,146 @@
+{
+  "run_id": "retrieval-v3-raw-case017-diagnostic-20260827",
+  "utc_timestamp": "2026-08-27T10:37:21.662844+00:00",
+  "git_sha": "unknown_git_sha",
+  "git_dirty": false,
+  "git_tracked_dirty": false,
+  "git_staged_dirty": false,
+  "git_untracked_dirty": false,
+  "git_diff_sha256": null,
+  "git_diff_status": "unavailable",
+  "git_diff_reason": "git_command_failed",
+  "source_state_sha256": null,
+  "provenance_status": "unavailable",
+  "provenance_error": "RuntimeError: fatal: detected dubious ownership in repository at 'D:/Download/ProfessionalLegalRAG'\n'D:/Download/ProfessionalLegalRAG' is owned by:\n\tDESKTOP-HNF4ES8/VI TINH THANH AN (S-1-5-21-369873249-3495641292-2045141022-1001)\nbut the current user is:\n\tDESKTOP-HNF4ES8/CodexSandboxOffline (S-1-5-21-369873249-3495641292-2045141022-1021)\nTo add an exception for this directory, call:\n\n\tgit config --global --add safe.directory D:/Download/ProfessionalLegalRAG",
+  "repository_root": "D:\\Download\\ProfessionalLegalRAG",
+  "dataset_revision": "4d4e10b201544e8a4c49a1d3fa496595a7d486d0",
+  "dataset_sha256": "d6e125030e8dda700667ba00f25162fac76472a9bfa2d087f54e2b5bc73a1fee",
+  "evaluation_dataset_sha256": "d6e125030e8dda700667ba00f25162fac76472a9bfa2d087f54e2b5bc73a1fee",
+  "gold_label_sidecar_sha256": "f6dfe09a6f32697b468d43c36bd9fd82d5fe5c0c4b0e5d9684ca3e4d0c1f5b67",
+  "gold_policy": "none",
+  "selected_case_count": 1,
+  "selected_case_ids": [
+    "case_017"
+  ],
+  "selected_case_ids_sha256": "9cb923421beb86420d225754762138626a52f5a99a51d7eafc05ea205bd9b740",
+  "configuration_fingerprint": "dedbbbf0aa66844ba8a290c444a7f215f90d2adf64d55fe67f7f1a29443cdddb",
+  "command": "run_retrieval_eval.py --case-ids case_017 --backend vertex-qdrant-v3 --ranking raw-rrf --profile separated_intent --rewrite off --reranker current --concurrency 1 --gold-policy none --run-id retrieval-v3-raw-case017-diagnostic-20260827",
+  "eval_mode": "retrieval-only",
+  "judge_mode": "none",
+  "guardrail_mode": "off",
+  "rewrite_mode": "off",
+  "reranker_provider": "current",
+  "profile_name": "separated_intent",
+  "configuration": {
+    "requested_backend": "vertex-qdrant-v3",
+    "effective_backend": "vertex-qdrant-v3",
+    "ranking_mode": "raw-rrf",
+    "profile_name": "separated_intent",
+    "profile": {
+      "name": "separated_intent",
+      "retrieval_document_limit": 24,
+      "resolved_document_limit": 16,
+      "local_chunks_per_document": 4,
+      "rerank_input_limit": 24,
+      "rerank_return_limit": 3,
+      "final_evidence_limit": 3,
+      "final_context_token_limit": 720,
+      "intent_scoring_enabled": true,
+      "rewrite_mode": "off",
+      "reranker_mode": "current"
+    },
+    "eval_mode": "retrieval-only",
+    "judge_mode": "none",
+    "guardrail_mode": "off",
+    "rewrite_mode": "off",
+    "reranker_provider": "current",
+    "gold_policy": "none",
+    "selected_case_count": 1,
+    "selected_case_ids_sha256": "9cb923421beb86420d225754762138626a52f5a99a51d7eafc05ea205bd9b740",
+    "retrieval_runtime": {
+      "backend": "vertex-qdrant-v3",
+      "collection": "vietlex-legal-rag-v3-vertex-1024",
+      "dense_model": "gemini-embedding-2",
+      "dense_dimension": 1024,
+      "sparse_model": "FastSparseEncoder",
+      "fallback_backend": null
+    },
+    "configured_provider_models": {
+      "dense": {
+        "provider": "Google Vertex AI",
+        "model": "gemini-embedding-2"
+      },
+      "reranker_primary": {
+        "provider": "qdrant",
+        "model": "answerdotai/answerai-colbert-small-v1"
+      },
+      "reranker_fallback": {
+        "provider": "pinecone",
+        "model": "bge-reranker-v2-m3"
+      },
+      "generation": {
+        "mode": "not_applicable",
+        "candidates": []
+      },
+      "judge": {
+        "mode": "none",
+        "candidates": []
+      }
+    }
+  },
+  "configured_provider_models": {
+    "dense": {
+      "provider": "Google Vertex AI",
+      "model": "gemini-embedding-2"
+    },
+    "reranker_primary": {
+      "provider": "qdrant",
+      "model": "answerdotai/answerai-colbert-small-v1"
+    },
+    "reranker_fallback": {
+      "provider": "pinecone",
+      "model": "bge-reranker-v2-m3"
+    },
+    "generation": {
+      "mode": "not_applicable",
+      "candidates": []
+    },
+    "judge": {
+      "mode": "none",
+      "candidates": []
+    }
+  },
+  "artifact_files": [
+    {
+      "path": "configuration.json",
+      "sha256": "70429440ed57dc87bd09cc7d0eeee1699a08e8a9b436848c5bd49d79caf7dcd9",
+      "bytes": 1645,
+      "storage": "git"
+    },
+    {
+      "path": "evaluation_case_set.json",
+      "sha256": "5b491f96f13cc4c7c71065c1d1054b439ce2916b50fadbfc1e3f4480e1401e25",
+      "bytes": 179,
+      "storage": "git"
+    },
+    {
+      "path": "quality_gate.json",
+      "sha256": "fd26ff5669cf29950faf4d9133331d2f1ff8ff8e823bd69ee716e2688d6b46f2",
+      "bytes": 623,
+      "storage": "git"
+    },
+    {
+      "path": "report.md",
+      "sha256": "da644f5ef72b489da34949cb1efcf9babe633e519ca6ad83db86cd08cd775fa8",
+      "bytes": 5867,
+      "storage": "git"
+    },
+    {
+      "path": "retrieval_results.json",
+      "sha256": "46d337d2e8fe1b732acde31e71af57764f1bf162bcfa8763b62c024d9cf06f9a",
+      "bytes": 38781,
+      "storage": "git"
+    }
+  ],
+  "code_metric_version": "3.0.0"
+}

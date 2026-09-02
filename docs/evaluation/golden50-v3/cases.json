@@ -1,0 +1,516 @@
+[
+  {
+    "case_id": "case_001",
+    "source_case_id": "case_017",
+    "question": "Theo quy định tại Điều 16, khu vực ô nhiễm môi trường đất được phân loại dựa trên những tiêu chí nào?",
+    "ground_truth_context": [
+      "2. Khu vực ô nhiễm môi trường đất được phân loại theo tiêu chí nguồn gây ô nhiễm, khả năng lan truyền, đối tượng chịu tác động."
+    ],
+    "ground_truth_answer": "Tiêu chí nguồn gây ô nhiễm, khả năng lan truyền, đối tượng chịu tác động.",
+    "question_type": "factoid"
+  },
+  {
+    "case_id": "case_002",
+    "source_case_id": "case_019",
+    "question": "Theo Điều 20, di sản thiên nhiên bao gồm những loại hình nào?",
+    "ground_truth_context": [
+      "Di sản thiên nhiên bao gồm: a) Vườn quốc gia, khu dự trữ thiên nhiên, khu bảo tồn loài - sinh cảnh, khu bảo vệ cảnh quan được xác lập theo quy định của pháp luật về đa dạng sinh học, lâm nghiệp và thủy sản; danh lam thắng cảnh được công nhận là di sản văn hóa được xác lập theo quy định của pháp luật về di sản văn hóa; b) Di sản thiên nhiên được tổ chức quốc tế công nhận; c) Di sản thiên nhiên khác được xác lập, công nhận theo quy định của Luật này."
+    ],
+    "ground_truth_answer": "Di sản thiên nhiên bao gồm: vườn quốc gia, khu dự trữ thiên nhiên, khu bảo tồn loài - sinh cảnh, khu bảo vệ cảnh quan; danh lam thắng cảnh được công nhận là di sản văn hóa; di sản thiên nhiên được tổ chức quốc tế công nhận và các di sản thiên nhiên khác được xác lập theo quy định của Luật này.",
+    "question_type": "factoid"
+  },
+  {
+    "case_id": "case_003",
+    "source_case_id": "case_021",
+    "question": "Chiến lược bảo vệ môi trường quốc gia được xây dựng cho giai đoạn bao nhiêu năm và kịch bản biến đổi khí hậu là căn cứ để lập loại quy hoạch nào?",
+    "ground_truth_context": [
+      "3. Chiến lược bảo vệ môi trường quốc gia được xây dựng cho giai đoạn 10 năm, tầm nhìn 30 năm.",
+      "Điều 23. Quy hoạch bảo vệ môi trường quốc gia 1. Căn cứ lập Quy hoạch bảo vệ môi trường quốc gia được thực hiện theo quy định của pháp luật về quy hoạch và các căn cứ sau đây: a) Chiến lược bảo vệ môi trường quốc gia trong cùng giai đoạn phát triển; b) Kịch bản biến đổi khí hậu trong cùng giai đoạn phát triển."
+    ],
+    "ground_truth_answer": "Chiến lược bảo vệ môi trường quốc gia được xây dựng cho giai đoạn 10 năm (tầm nhìn 30 năm) và kịch bản biến đổi khí hậu là căn cứ để lập Quy hoạch bảo vệ môi trường quốc gia.",
+    "question_type": "multi-hop"
+  },
+  {
+    "case_id": "case_004",
+    "source_case_id": "case_031",
+    "question": "Hồ sơ đề nghị thẩm định báo cáo đánh giá tác động môi trường bao gồm những tài liệu gì?",
+    "ground_truth_context": [
+      "Hồ sơ đề nghị thẩm định báo cáo đánh giá tác động môi trường bao gồm: a) Văn bản đề nghị thẩm định báo cáo đánh giá tác động môi trường; b) Báo cáo đánh giá tác động môi trường; c) Báo cáo nghiên cứu khả thi hoặc tài liệu tương đương với báo cáo nghiên cứu khả thi của dự án đầu tư."
+    ],
+    "ground_truth_answer": "Hồ sơ bao gồm: văn bản đề nghị thẩm định báo cáo đánh giá tác động môi trường, báo cáo đánh giá tác động môi trường, và báo cáo nghiên cứu khả thi hoặc tài liệu tương đương.",
+    "question_type": "factoid"
+  },
+  {
+    "case_id": "case_005",
+    "source_case_id": "case_036",
+    "question": "Khi có yêu cầu chỉnh sửa báo cáo đánh giá tác động môi trường, cơ quan thẩm định phải thực hiện thủ tục gì và thời gian này có được tính vào thời hạn thẩm định không?",
+    "ground_truth_context": [
+      "Trong thời gian thẩm định, trường hợp có yêu cầu chỉnh sửa, bổ sung báo cáo đánh giá tác động môi trường, cơ quan thẩm định có trách nhiệm thông báo bằng văn bản cho chủ dự án đầu tư để thực hiện.",
+      "Thời gian chủ dự án đầu tư chỉnh sửa, bổ sung báo cáo đánh giá tác động môi trường theo yêu cầu của cơ quan thẩm định và thời gian xem xét, ra quyết định phê duyệt quy định tại khoản 9 Điều này không tính vào thời hạn thẩm định;"
+    ],
+    "ground_truth_answer": "Cơ quan thẩm định thông báo bằng văn bản cho chủ dự án đầu tư; thời gian chỉnh sửa, bổ sung không tính vào thời hạn thẩm định.",
+    "question_type": "multi-hop"
+  },
+  {
+    "case_id": "case_006",
+    "source_case_id": "case_039",
+    "question": "Đối với dự án không thuộc bí mật nhà nước do Bộ Tài nguyên và Môi trường thẩm định, các cơ quan hành chính địa phương nào sẽ nhận được quyết định phê duyệt kết quả thẩm định báo cáo đánh giá tác động môi trường?",
+    "ground_truth_context": [
+      "Bộ Tài nguyên và Môi trường gửi đến Ủy ban nhân dân cấp tỉnh nơi thực hiện dự án đầu tư và cơ quan khác theo quy định của pháp luật có liên quan. Ủy ban nhân dân cấp tỉnh gửi đến cơ quan chuyên môn về bảo vệ môi trường cấp tỉnh, Ủy ban nhân dân cấp huyện, Ủy ban nhân dân cấp xã nơi thực hiện dự án đầu tư và Ban quản lý khu công nghiệp, khu chế xuất, khu công nghệ cao, khu kinh tế của tỉnh, thành phố trực thuộc Trung ương đối với dự án đầu tư thực hiện trong khu sản xuất, kinh doanh, dịch vụ tập trung"
+    ],
+    "ground_truth_answer": "Ủy ban nhân dân cấp tỉnh; cơ quan chuyên môn về bảo vệ môi trường cấp tỉnh; Ủy ban nhân dân cấp huyện; Ủy ban nhân dân cấp xã nơi thực hiện dự án đầu tư; và Ban quản lý khu công nghiệp, khu chế xuất, khu công nghệ cao, khu kinh tế (đối với dự án trong khu sản xuất, kinh doanh, dịch vụ tập trung).",
+    "question_type": "multi-hop"
+  },
+  {
+    "case_id": "case_007",
+    "source_case_id": "case_043",
+    "question": "Cơ quan nào có thẩm quyền cấp giấy phép môi trường cho cơ sở có nhập khẩu phế liệu từ nước ngoài và dự án này cần có những phương án xử lý cụ thể gì?",
+    "ground_truth_context": [
+      "b) Đối tượng quy định tại Điều 39 của Luật này nằm trên địa bàn từ 02 đơn vị hành chính cấp tỉnh trở lên hoặc nằm trên vùng biển chưa xác định trách nhiệm quản lý hành chính của Ủy ban nhân dân cấp tỉnh; cơ sở có nhập khẩu phế liệu từ nước ngoài làm nguyên liệu sản xuất, cơ sở thực hiện dịch vụ xử lý chất thải nguy hại.",
+      "c) Có kho, bãi lưu giữ phế liệu đáp ứng quy định; hệ thống thiết bị tái chế; phương án xử lý tạp chất; phương án tái xuất đối với dự án đầu tư, cơ sở có nhập khẩu phế liệu từ nước ngoài làm nguyên liệu sản xuất;"
+    ],
+    "ground_truth_answer": "Thẩm quyền cấp là Bộ Tài nguyên và Môi trường. Dự án cần có phương án xử lý tạp chất và phương án tái xuất.",
+    "question_type": "multi-hop"
+  },
+  {
+    "case_id": "case_008",
+    "source_case_id": "case_061",
+    "question": "Các cụm công nghiệp đang hoạt động phải hoàn thành công trình hạ tầng bảo vệ môi trường trong thời hạn bao lâu kể từ ngày Luật này có hiệu lực?",
+    "ground_truth_context": [
+      "a) Hoàn thành công trình hạ tầng bảo vệ môi trường quy định tại khoản 1 Điều 51 của Luật này trong thời hạn 24 tháng kể từ ngày Luật này có hiệu lực thi hành;"
+    ],
+    "ground_truth_answer": "Trong thời hạn 24 tháng kể từ ngày Luật này có hiệu lực thi hành.",
+    "question_type": "factoid"
+  },
+  {
+    "case_id": "case_009",
+    "source_case_id": "case_065",
+    "question": "Tổ chức, cá nhân sản xuất, nhập khẩu sản phẩm có giá trị tái chế có những lựa chọn nào để thực hiện trách nhiệm tái chế và nghĩa vụ báo cáo tương ứng là gì?",
+    "ground_truth_context": [
+      "Tổ chức, cá nhân quy định tại khoản 1 Điều này được lựa chọn thực hiện tái chế sản phẩm, bao bì theo một trong các hình thức sau đây: a) Tổ chức tái chế sản phẩm, bao bì; b) Đóng góp tài chính vào Quỹ Bảo vệ môi trường Việt Nam để hỗ trợ tái chế sản phẩm, bao bì. 3. Tổ chức, cá nhân quy định tại khoản 1 Điều này phải đăng ký kế hoạch tái chế và báo cáo kết quả tái chế hằng năm đến Bộ Tài nguyên và Môi trường, trừ trường hợp quy định tại điểm b khoản 2 Điều này."
+    ],
+    "ground_truth_answer": "Có hai hình thức lựa chọn: tự tổ chức tái chế hoặc đóng góp tài chính vào Quỹ Bảo vệ môi trường Việt Nam. Về báo cáo, phải đăng ký kế hoạch và báo cáo kết quả tái chế hằng năm đến Bộ Tài nguyên và Môi trường, trừ trường hợp đã đóng góp tài chính vào Quỹ Bảo vệ môi trường Việt Nam.",
+    "question_type": "multi-hop"
+  },
+  {
+    "case_id": "case_010",
+    "source_case_id": "case_069",
+    "question": "Ủy ban nhân dân cấp tỉnh có trách nhiệm gì đối với các cơ sở gây ô nhiễm môi trường nghiêm trọng và kéo dài tại làng nghề?",
+    "ground_truth_context": [
+      "6. Ủy ban nhân dân cấp tỉnh có trách nhiệm sau đây: a) Quy hoạch, xây dựng, cải tạo và phát triển làng nghề, cụm công nghiệp làng nghề gắn với bảo vệ môi trường; b) Bố trí ngân sách cho hoạt động bảo vệ môi trường làng nghề; c) Chỉ đạo, tổ chức đánh giá mức độ ô nhiễm và xử lý ô nhiễm môi trường làng nghề trên địa bàn; d) Chỉ đạo xây dựng hệ thống thu gom, xử lý nước thải; khu tập kết, xử lý chất thải rắn thông thường, chất thải nguy hại cho làng nghề; đ) Có kế hoạch di dời cơ sở gây ô nhiễm môi trường nghiêm trọng, gây ô nhiễm môi trường kéo dài ra khỏi khu dân cư, làng nghề."
+    ],
+    "ground_truth_answer": "Có kế hoạch di dời cơ sở gây ô nhiễm môi trường nghiêm trọng, gây ô nhiễm môi trường kéo dài ra khỏi khu dân cư, làng nghề.",
+    "question_type": "factoid"
+  },
+  {
+    "case_id": "case_011",
+    "source_case_id": "case_075",
+    "question": "Việc quản lý bùn nạo vét từ kênh mương và xác vật nuôi chết do dịch bệnh được quy định như thế nào, và cơ quan nào có trách nhiệm chỉ đạo quản lý bùn này?",
+    "ground_truth_context": [
+      "phải được quản lý theo quy định của pháp luật có liên quan. Bao bì đựng phân bón, thức ăn chăn nuôi, thức ăn thủy sản, thuốc bảo vệ thực vật, thuốc thú y, sản phẩm xử lý môi trường trong nuôi trồng thủy sản, sản phẩm xử lý chất thải chăn nuôi sau khi sử dụng, bùn đất và thức ăn lắng đọng khi làm vệ sinh trong ao nuôi thủy sản phải được quản lý theo quy định về quản lý chất thải. Bùn nạo vét từ kênh, mương, công trình thủy lợi phải được thu gom, tái sử dụng, tái chế và quản lý theo quy định của pháp luật. Xác vật nuôi bị chết do dịch bệnh phải được thu gom, xử lý theo quy định của pháp luật về quản lý chất thải nguy hại và vệ sinh phòng bệnh. 4. Phụ phẩm nông nghiệp phải được thu gom để sản xuất ra sản phẩm hàng hóa, sử dụng làm nguyên liệu, nhiên liệu, sản xuất phân bón, sản xuất năng lượng hoặc phải được xử lý theo quy định; không đốt ngoài trời phụ phẩm từ cây trồng gây ô nhiễm môi trường. 5.",
+      "Điều 61. Bảo vệ môi trường trong sản xuất nông nghiệp 7. Bộ Nông nghiệp và Phát triển nông thôn có trách nhiệm chỉ đạo, tổ chức quản lý bùn nạo vét từ kênh, mương và công trình thủy lợi đáp ứng yêu cầu về bảo vệ môi trường."
+    ],
+    "ground_truth_answer": "Bùn nạo vét từ kênh, mương, công trình thủy lợi phải được thu gom, tái sử dụng, tái chế và quản lý theo quy định của pháp luật. Xác vật nuôi bị chết do dịch bệnh phải được thu gom, xử lý theo quy định của pháp luật về quản lý chất thải nguy hại và vệ sinh phòng bệnh. Bộ Nông nghiệp và Phát triển nông thôn có trách nhiệm chỉ đạo, tổ chức quản lý bùn nạo vét từ kênh, mương và công trình thủy lợi đáp ứng yêu cầu về bảo vệ môi trường.",
+    "question_type": "multi-hop"
+  },
+  {
+    "case_id": "case_012",
+    "source_case_id": "case_101",
+    "question": "Chất thải rắn công nghiệp thông thường được phân loại thành các nhóm cụ thể nào?",
+    "ground_truth_context": [
+      "1. Chất thải rắn công nghiệp thông thường được phân loại thành các nhóm sau đây: a) Nhóm chất thải rắn công nghiệp thông thường được tái sử dụng, tái chế làm nguyên liệu sản xuất; b) Nhóm chất thải rắn công nghiệp thông thường đáp ứng tiêu chuẩn, quy chuẩn kỹ thuật, hướng dẫn kỹ thuật được sử dụng trong sản xuất vật liệu xây dựng và san lấp mặt bằng; c) Nhóm chất thải rắn công nghiệp thông thường phải xử lý."
+    ],
+    "ground_truth_answer": "Chất thải rắn công nghiệp thông thường được phân loại thành 03 nhóm: a) Nhóm được tái sử dụng, tái chế làm nguyên liệu sản xuất; b) Nhóm đáp ứng tiêu chuẩn, quy chuẩn kỹ thuật, hướng dẫn kỹ thuật được sử dụng trong sản xuất vật liệu xây dựng và san lấp mặt bằng; c) Nhóm phải xử lý.",
+    "question_type": "factoid"
+  },
+  {
+    "case_id": "case_013",
+    "source_case_id": "case_105",
+    "question": "Chủ nguồn thải chất thải nguy hại phải thực hiện việc khai báo khối lượng và loại chất thải này ở đâu?",
+    "ground_truth_context": [
+      "Chủ nguồn thải chất thải nguy hại có trách nhiệm sau đây: a) Khai báo khối lượng, loại chất thải nguy hại trong hồ sơ đề nghị cấp giấy phép môi trường hoặc nội dung đăng ký môi trường;"
+    ],
+    "ground_truth_answer": "Trong hồ sơ đề nghị cấp giấy phép môi trường hoặc nội dung đăng ký môi trường.",
+    "question_type": "factoid"
+  },
+  {
+    "case_id": "case_014",
+    "source_case_id": "case_115",
+    "question": "Theo quy định tại Điều 91, các loại khí nhà kính chính bao gồm những loại nào?",
+    "ground_truth_context": [
+      "Điều 91. Giảm nhẹ phát thải khí nhà kính 1. Các khí nhà kính chính là carbon dioxide (CO2), methane (CH4) và nitrous oxide (N2O)."
+    ],
+    "ground_truth_answer": "Các khí nhà kính chính bao gồm carbon dioxide (CO2), methane (CH4) và nitrous oxide (N2O).",
+    "question_type": "factoid"
+  },
+  {
+    "case_id": "case_015",
+    "source_case_id": "case_116",
+    "question": "Trách nhiệm xây dựng và tần suất cập nhật danh mục các cơ sở phải thực hiện kiểm kê khí nhà kính được quy định như thế nào?",
+    "ground_truth_context": [
+      "3. Thủ tướng Chính phủ ban hành danh mục lĩnh vực, cơ sở phát thải khí nhà kính phải thực hiện kiểm kê khí nhà kính, cập nhật 02 năm một lần trên cơ sở tỷ trọng phát thải khí nhà kính trên tổng phát thải khí nhà kính quốc gia; điều kiện và tình hình phát triển kinh tế - xã hội; tiêu thụ nhiên liệu, năng lượng trên đơn vị sản phẩm, dịch vụ đối với các cơ sở sản xuất, kinh doanh, dịch vụ.",
+      "4. Bộ Tài nguyên và Môi trường có trách nhiệm sau đây: a) Xây dựng, trình Thủ tướng Chính phủ phê duyệt danh mục lĩnh vực, cơ sở phát thải khí nhà kính phải thực hiện kiểm kê khí nhà kính; ban hành hệ thống quốc gia kiểm kê khí nhà kính; hệ thống đo đạc, báo cáo, thẩm định giảm nhẹ phát thải khí nhà kính;"
+    ],
+    "ground_truth_answer": "Bộ Tài nguyên và Môi trường có trách nhiệm xây dựng và trình Thủ tướng Chính phủ phê duyệt danh mục; danh mục này sẽ được cập nhật 02 năm một lần.",
+    "question_type": "multi-hop"
+  },
+  {
+    "case_id": "case_016",
+    "source_case_id": "case_121",
+    "question": "Cơ quan nào có trách nhiệm tổ chức xây dựng, cập nhật và hướng dẫn khai thác cơ sở dữ liệu quốc gia về biến đổi khí hậu?",
+    "ground_truth_context": [
+      "Bộ Tài nguyên và Môi trường tổ chức xây dựng, cập nhật và hướng dẫn khai thác, sử dụng cơ sở dữ liệu quốc gia về biến đổi khí hậu."
+    ],
+    "ground_truth_answer": "Bộ Tài nguyên và Môi trường",
+    "question_type": "factoid"
+  },
+  {
+    "case_id": "case_017",
+    "source_case_id": "case_127",
+    "question": "Định kỳ bao lâu thì các quy chuẩn kỹ thuật môi trường về chất thải và quản lý chất thải phải được rà soát, cập nhật và điều chỉnh?",
+    "ground_truth_context": [
+      "đ) Quy chuẩn kỹ thuật môi trường về chất thải, quản lý chất thải, quản lý phế liệu nhập khẩu từ nước ngoài làm nguyên liệu sản xuất phải được rà soát, cập nhật, điều chỉnh định kỳ 05 năm một lần hoặc khi cần thiết, theo hướng nghiêm ngặt hơn trong trường hợp chất lượng môi trường không bảo đảm duy trì mục đích quản lý chất lượng môi trường;"
+    ],
+    "ground_truth_answer": "Định kỳ 05 năm một lần hoặc khi cần thiết.",
+    "question_type": "factoid"
+  },
+  {
+    "case_id": "case_018",
+    "source_case_id": "case_133",
+    "question": "Hệ thống quan trắc môi trường bao gồm những thành phần cụ thể nào theo quy định tại Điều 107?",
+    "ground_truth_context": [
+      "Điều 107. Hệ thống quan trắc môi trường 1. Hệ thống quan trắc môi trường bao gồm: a) Quan trắc môi trường quốc gia là mạng lưới các trạm, vị trí quan trắc môi trường nền và môi trường tác động phục vụ việc quan trắc, cung cấp thông tin chất lượng môi trường nền và môi trường tác động tại các khu vực có tính chất liên vùng, liên tỉnh, xuyên biên giới; b) Quan trắc môi trường cấp tỉnh là mạng lưới các trạm, vị trí quan trắc môi trường nền và môi trường tác động phục vụ việc quan trắc, cung cấp thông tin chất lượng môi trường nền và môi trường tác động tại các khu vực trên địa bàn; c) Quan trắc môi trường phục vụ quản lý ngành, lĩnh vực quy định tại Điều 109 của Luật này; d) Quan trắc môi trường tại dự án đầu tư, cơ sở, khu sản xuất, kinh doanh, dịch vụ tập trung, cụm công nghiệp; đ) Quan trắc đa dạng sinh học tại khu bảo tồn thiên nhiên."
+    ],
+    "ground_truth_answer": "Hệ thống quan trắc môi trường bao gồm: quan trắc môi trường quốc gia; quan trắc môi trường cấp tỉnh; quan trắc môi trường phục vụ quản lý ngành, lĩnh vực; quan trắc môi trường tại dự án đầu tư, cơ sở, khu sản xuất, kinh doanh, dịch vụ tập trung, cụm công nghiệp; và quan trắc đa dạng sinh học tại khu bảo tồn thiên nhiên.",
+    "question_type": "factoid"
+  },
+  {
+    "case_id": "case_019",
+    "source_case_id": "case_135",
+    "question": "Hệ thống quan trắc môi trường bao gồm những thành phần cụ thể nào theo quy định?",
+    "ground_truth_context": [
+      "Hệ thống quan trắc môi trường bao gồm: a) Quan trắc môi trường quốc gia là mạng lưới các trạm, vị trí quan trắc môi trường nền và môi trường tác động phục vụ việc quan trắc, cung cấp thông tin chất lượng môi trường nền và môi trường tác động tại các khu vực có tính chất liên vùng, liên tỉnh, xuyên biên giới; b) Quan trắc môi trường cấp tỉnh là mạng lưới các trạm, vị trí quan trắc môi trường nền và môi trường tác động phục vụ việc quan trắc, cung cấp thông tin chất lượng môi trường nền và môi trường tác động tại các khu vực trên địa bàn; c) Quan trắc môi trường phục vụ quản lý ngành, lĩnh vực quy định tại Điều 109 của Luật này; d) Quan trắc môi trường tại dự án đầu tư, cơ sở, khu sản xuất, kinh doanh, dịch vụ tập trung, cụm công nghiệp; đ) Quan trắc đa dạng sinh học tại khu bảo tồn thiên nhiên."
+    ],
+    "ground_truth_answer": "Hệ thống quan trắc môi trường bao gồm: quan trắc môi trường quốc gia; quan trắc môi trường cấp tỉnh; quan trắc môi trường phục vụ quản lý ngành, lĩnh vực; quan trắc môi trường tại dự án đầu tư, cơ sở, khu sản xuất, kinh doanh, dịch vụ tập trung, cụm công nghiệp; quan trắc đa dạng sinh học tại khu bảo tồn thiên nhiên.",
+    "question_type": "factoid"
+  },
+  {
+    "case_id": "case_020",
+    "source_case_id": "case_165",
+    "question": "Khi có từ 02 tổ chức, cá nhân trở lên gây thiệt hại về môi trường, trách nhiệm bồi thường và chi trả chi phí được xác định dựa trên những yếu tố nào, và ai sẽ quyết định nếu không xác định được tỷ lệ trách nhiệm?",
+    "ground_truth_context": [
+      "Trường hợp có từ 02 tổ chức, cá nhân trở lên gây thiệt hại về môi trường, việc bồi thường thiệt hại được quy định như sau: a) Trách nhiệm bồi thường thiệt hại về môi trường của từng đối tượng được xác định theo loại chất ô nhiễm, lượng phát thải và các yếu tố khác; b) Trách nhiệm bồi thường thiệt hại về môi trường, chi trả chi phí xác định thiệt hại và thực hiện thủ tục yêu cầu bồi thường thiệt hại đối với từng đối tượng được xác định tương ứng với tỷ lệ gây thiệt hại trong tổng thiệt hại về môi trường; trường hợp các bên liên quan hoặc cơ quan quản lý nhà nước về môi trường không xác định được tỷ lệ chịu trách nhiệm thì cơ quan trọng tài hoặc Tòa án quyết định theo thẩm quyền."
+    ],
+    "ground_truth_answer": "Trách nhiệm bồi thường được xác định dựa trên loại chất ô nhiễm, lượng phát thải, các yếu tố khác và tỷ lệ gây thiệt hại trong tổng thiệt hại; nếu không xác định được tỷ lệ thì cơ quan trọng tài hoặc Tòa án quyết định.",
+    "question_type": "multi-hop"
+  },
+  {
+    "case_id": "case_021",
+    "source_case_id": "case_171",
+    "question": "Chi phí bồi thường thiệt hại về môi trường bao gồm những nội dung cụ thể nào?",
+    "ground_truth_context": [
+      "Điều 134. Chi phí bồi thường thiệt hại về môi trường 1. Chi phí bồi thường thiệt hại về môi trường quy định tại điểm a khoản 1 Điều 130 của Luật này được tính căn cứ vào các nội dung sau đây: a) Chi phí thiệt hại trước mắt và lâu dài do sự suy giảm chức năng, tính hữu ích của môi trường; b) Chi phí xử lý, cải tạo môi trường; c) Chi phí giảm thiểu, triệt tiêu nguồn gây thiệt hại hoặc tổ chức ứng phó sự cố môi trường; d) Chi phí xác định thiệt hại và thực hiện thủ tục bồi thường thiệt hại về môi trường;"
+    ],
+    "ground_truth_answer": "Chi phí bồi thường thiệt hại về môi trường bao gồm: chi phí thiệt hại trước mắt và lâu dài do suy giảm chức năng môi trường; chi phí xử lý, cải tạo môi trường; chi phí giảm thiểu, triệt tiêu nguồn gây thiệt hại hoặc ứng phó sự cố; và chi phí xác định thiệt hại, thực hiện thủ tục bồi thường.",
+    "question_type": "factoid"
+  },
+  {
+    "case_id": "case_022",
+    "source_case_id": "case_177",
+    "question": "Theo Điều 142, kinh tế tuần hoàn được định nghĩa là gì?",
+    "ground_truth_context": [
+      "Kinh tế tuần hoàn là mô hình kinh tế trong đó các hoạt động thiết kế, sản xuất, tiêu dùng và dịch vụ nhằm giảm khai thác nguyên liệu, vật liệu, kéo dài vòng đời sản phẩm, hạn chế chất thải phát sinh và giảm thiểu tác động xấu đến môi trường."
+    ],
+    "ground_truth_answer": "Kinh tế tuần hoàn là mô hình kinh tế trong đó các hoạt động thiết kế, sản xuất, tiêu dùng và dịch vụ nhằm giảm khai thác nguyên liệu, vật liệu, kéo dài vòng đời sản phẩm, hạn chế chất thải phát sinh và giảm thiểu tác động xấu đến môi trường.",
+    "question_type": "factoid"
+  },
+  {
+    "case_id": "case_023",
+    "source_case_id": "case_183",
+    "question": "Chủ dự án đầu tư có trách nhiệm bảo đảm kinh phí cho các hoạt động bảo vệ môi trường nào và việc quản lý kinh phí đó được quy định ra sao?",
+    "ground_truth_context": [
+      "4. Chủ dự án đầu tư, cơ sở có trách nhiệm bảo đảm kinh phí cho các hoạt động bảo vệ môi trường sau đây: a) Đầu tư đổi mới công nghệ xử lý chất thải theo quy định của pháp luật; b) Đầu tư xây dựng, vận hành công trình bảo vệ môi trường theo quy định của pháp luật; c) Thực hiện chương trình quan trắc, giám sát môi trường (nếu có); d) Thực hiện kế hoạch phòng ngừa, ứng phó sự cố môi trường (nếu có); đ) Các hoạt động bảo vệ môi trường khác theo quy định của pháp luật. 5. Kinh phí cho hoạt động bảo vệ môi trường quy định tại khoản 4 Điều này phải được thống kê, hạch toán và công khai trên hệ thống kế toán của cơ sở và báo cáo theo quy định của pháp luật."
+    ],
+    "ground_truth_answer": "Chủ dự án có trách nhiệm bảo đảm kinh phí cho đổi mới công nghệ, xây dựng/vận hành công trình bảo vệ môi trường, quan trắc, phòng ngừa sự cố; kinh phí này phải được thống kê, hạch toán, công khai trên hệ thống kế toán và báo cáo theo quy định.",
+    "question_type": "multi-hop"
+  },
+  {
+    "case_id": "case_024",
+    "source_case_id": "case_187",
+    "question": "Cơ quan nào chịu trách nhiệm làm đầu mối tổng hợp các hoạt động hội nhập và hợp tác quốc tế về bảo vệ môi trường?",
+    "ground_truth_context": [
+      "4. Bộ Tài nguyên và Môi trường là cơ quan đầu mối tổng hợp các hoạt động hội nhập và hợp tác quốc tế về bảo vệ môi trường. Bộ, cơ quan ngang Bộ, Ủy ban nhân dân cấp tỉnh tổ chức thực hiện hội nhập và hợp tác quốc tế về bảo vệ môi trường trong phạm vi quản lý."
+    ],
+    "ground_truth_answer": "Bộ Tài nguyên và Môi trường.",
+    "question_type": "factoid"
+  },
+  {
+    "case_id": "case_025",
+    "source_case_id": "case_194",
+    "question": "Trong trường hợp cán bộ phụ trách bảo vệ môi trường lợi dụng chức vụ để bao che cho một tổ chức vi phạm pháp luật dẫn đến sự cố môi trường, người này sẽ phải chịu những hình thức xử lý nào?",
+    "ground_truth_context": [
+      "Điều 161. Xử lý vi phạm 1. Tổ chức, cá nhân vi phạm pháp luật về bảo vệ môi trường, gây ô nhiễm, suy thoái, sự cố môi trường, gây thiệt hại cho Nhà nước, tổ chức và cá nhân phải có trách nhiệm khắc phục ô nhiễm, phục hồi môi trường, bồi thường thiệt hại và bị xử lý theo quy định của Luật này và quy định khác của pháp luật có liên quan. 2. Người đứng đầu cơ quan, tổ chức, cán bộ, công chức, viên chức, nhân sự phụ trách về bảo vệ môi trường lợi dụng chức vụ, quyền hạn gây phiền hà, nhũng nhiễu cho tổ chức, cá nhân, bao che cho tổ chức, cá nhân vi phạm pháp luật về bảo vệ môi trường hoặc thiếu trách nhiệm để xảy ra ô nhiễm, sự cố môi trường thì tùy tính chất, mức độ vi phạm mà bị xử lý kỷ luật, xử phạt vi phạm hành chính hoặc bị truy cứu trách nhiệm hình sự; trường hợp gây thiệt hại thì phải bồi thường theo quy định của pháp luật. Điều 162. Tranh chấp về môi trường 1."
+    ],
+    "ground_truth_answer": "Tùy tính chất, mức độ vi phạm mà bị xử lý kỷ luật, xử phạt vi phạm hành chính hoặc bị truy cứu trách nhiệm hình sự; trường hợp gây thiệt hại thì phải bồi thường theo quy định của pháp luật.",
+    "question_type": "multi-hop"
+  },
+  {
+    "case_id": "case_026",
+    "source_case_id": "case_204",
+    "question": "Trong công tác quản lý nguồn thải và chất thải, chính quyền địa phương có những trách nhiệm cụ thể nào và phải chịu trách nhiệm trước cơ quan nào nếu để xảy ra ô nhiễm?",
+    "ground_truth_context": [
+      "b) Chỉ đạo, hướng dẫn, kiểm tra và tổ chức thực hiện kiểm soát nguồn ô nhiễm; tiếp nhận đăng ký môi trường; phòng ngừa, ứng phó sự cố môi trường trên địa bàn theo quy định của pháp luật; tổ chức quản lý các nguồn thải trên địa bàn theo phân công, phân cấp; chịu trách nhiệm trước Ủy ban nhân dân cấp huyện về việc để xảy ra ô nhiễm môi trường trên địa bàn; c) Tổ chức theo dõi, giám sát, cảnh báo, quản lý chất lượng môi trường và quản lý chất thải trên địa bàn theo thẩm quyền hoặc theo phân cấp của Ủy ban nhân dân cấp huyện; cải tạo, phục hồi môi trường; bảo tồn thiên nhiên và đa dạng sinh học;"
+    ],
+    "ground_truth_answer": "Chính quyền địa phương có trách nhiệm tổ chức quản lý các nguồn thải trên địa bàn theo phân công, phân cấp; tổ chức theo dõi, giám sát, cảnh báo, quản lý chất lượng môi trường và quản lý chất thải trên địa bàn theo thẩm quyền hoặc phân cấp; và phải chịu trách nhiệm trước Ủy ban nhân dân cấp huyện nếu để xảy ra ô nhiễm môi trường trên địa bàn.",
+    "question_type": "multi-hop"
+  },
+  {
+    "case_id": "case_027",
+    "source_case_id": "case_227",
+    "question": "Nếu doanh nghiệp không được cấp Giấy chứng nhận đăng ký doanh nghiệp thì trách nhiệm đối với các hợp đồng đã ký trước khi đăng ký thuộc về ai?",
+    "ground_truth_context": [
+      "Trường hợp doanh nghiệp không được cấp Giấy chứng nhận đăng ký doanh nghiệp, người ký kết hợp đồng theo quy định tại khoản 1 Điều này chịu trách nhiệm thực hiện hợp đồng; trường hợp có người khác tham gia thành lập doanh nghiệp thì cùng liên đới chịu trách nhiệm thực hiện hợp đồng đó."
+    ],
+    "ground_truth_answer": "Người ký kết hợp đồng chịu trách nhiệm thực hiện; trường hợp có người khác tham gia thành lập doanh nghiệp thì cùng liên đới chịu trách nhiệm thực hiện hợp đồng đó.",
+    "question_type": "multi-hop"
+  },
+  {
+    "case_id": "case_028",
+    "source_case_id": "case_243",
+    "question": "Tên bằng tiếng nước ngoài của doanh nghiệp phải tuân thủ quy định gì về hệ chữ cái và cách trình bày so với tên tiếng Việt tại trụ sở chính?",
+    "ground_truth_context": [
+      "Điều 39. Tên doanh nghiệp bằng tiếng nước ngoài và tên viết tắt của doanh nghiệp 1. Tên doanh nghiệp bằng tiếng nước ngoài là tên được dịch từ tên tiếng Việt sang một trong những tiếng nước ngoài hệ chữ La-tinh. Khi dịch sang tiếng nước ngoài, tên riêng của doanh nghiệp có thể giữ nguyên hoặc dịch theo nghĩa tương ứng sang tiếng nước ngoài.",
+      "Trường hợp doanh nghiệp có tên bằng tiếng nước ngoài, tên bằng tiếng nước ngoài của doanh nghiệp được in hoặc viết với khổ chữ nhỏ hơn tên tiếng Việt của doanh nghiệp tại trụ sở chính, chi nhánh, văn phòng đại diện, địa điểm kinh doanh của doanh nghiệp hoặc trên các giấy tờ giao dịch, hồ sơ tài liệu và ấn phẩm do doanh nghiệp phát hành."
+    ],
+    "ground_truth_answer": "Tên bằng tiếng nước ngoài phải được dịch sang hệ chữ La-tinh và phải được in hoặc viết với khổ chữ nhỏ hơn tên tiếng Việt của doanh nghiệp tại trụ sở chính.",
+    "question_type": "multi-hop"
+  },
+  {
+    "case_id": "case_029",
+    "source_case_id": "case_253",
+    "question": "Để một thành viên có thể chuyển nhượng phần vốn góp cho người không phải là thành viên công ty, họ cần thực hiện các bước chào bán cho các thành viên còn lại như thế nào và sau thời gian bao lâu mới được bán cho người ngoài?",
+    "ground_truth_context": [
+      "Điều 52. Chuyển nhượng phần vốn góp 1. Trừ trường hợp quy định tại khoản 4 Điều 51, khoản 6 và khoản 7 Điều 53 của Luật này, thành viên công ty trách nhiệm hữu hạn hai thành viên trở lên có quyền chuyển nhượng một phần hoặc toàn bộ phần vốn góp của mình cho người khác theo quy định sau đây: a) Chào bán phần vốn góp đó cho các thành viên còn lại theo tỷ lệ tương ứng với phần vốn góp của họ trong công ty với cùng điều kiện chào bán;",
+      "b) Chuyển nhượng với cùng điều kiện chào bán đối với các thành viên còn lại quy định tại điểm a khoản này cho người không phải là thành viên nếu các thành viên còn lại của công ty không mua hoặc không mua hết trong thời hạn 30 ngày kể từ ngày chào bán."
+    ],
+    "ground_truth_answer": "Thành viên phải chào bán phần vốn góp cho các thành viên còn lại theo tỷ lệ tương ứng với phần vốn góp của họ với cùng điều kiện chào bán. Nếu các thành viên còn lại không mua hoặc không mua hết trong thời hạn 30 ngày kể từ ngày chào bán thì mới được chuyển nhượng cho người không phải là thành viên.",
+    "question_type": "multi-hop"
+  },
+  {
+    "case_id": "case_030",
+    "source_case_id": "case_257",
+    "question": "Ai là người có thẩm quyền ký nghị quyết của Hội đồng thành viên và người này có thể đồng thời giữ chức vụ Giám đốc công ty hay không?",
+    "ground_truth_context": [
+      "Chủ tịch Hội đồng thành viên có thể kiêm Giám đốc hoặc Tổng giám đốc công ty. 2.",
+      "đ) Thay mặt Hội đồng thành viên ký nghị quyết, quyết định của Hội đồng thành viên;"
+    ],
+    "ground_truth_answer": "Chủ tịch Hội đồng thành viên là người thay mặt Hội đồng thành viên ký nghị quyết và Chủ tịch Hội đồng thành viên có thể kiêm Giám đốc hoặc Tổng giám đốc công ty.",
+    "question_type": "multi-hop"
+  },
+  {
+    "case_id": "case_031",
+    "source_case_id": "case_261",
+    "question": "Trong trường hợp Điều lệ công ty không quy định, một yêu cầu triệu tập họp Hội đồng thành viên của thành viên là cá nhân phải bao gồm những thông tin định danh nào?",
+    "ground_truth_context": [
+      "Trường hợp Điều lệ công ty không quy định thì yêu cầu triệu tập họp Hội đồng thành viên theo quy định tại khoản 1 Điều này phải bằng văn bản và bao gồm các nội dung chủ yếu sau đây: a) Họ, tên, địa chỉ liên lạc, quốc tịch, số giấy tờ pháp lý của cá nhân đối với thành viên là cá nhân; tên, mã số doanh nghiệp hoặc số giấy tờ pháp lý của tổ chức, địa chỉ trụ sở chính đối với thành viên là tổ chức; tỷ lệ phần vốn góp, số và ngày cấp giấy chứng nhận phần vốn góp của từng thành viên yêu cầu;"
+    ],
+    "ground_truth_answer": "Họ, tên, địa chỉ liên lạc, quốc tịch, số giấy tờ pháp lý của cá nhân, tỷ lệ phần vốn góp, số và ngày cấp giấy chứng nhận phần vốn góp.",
+    "question_type": "factoid"
+  },
+  {
+    "case_id": "case_032",
+    "source_case_id": "case_263",
+    "question": "Trong trường hợp cuộc họp Hội đồng thành viên không hoàn thành chương trình họp đúng hạn, thời gian kéo dài tối đa là bao lâu và nghị quyết về việc bổ nhiệm Giám đốc phải được thông qua bằng hình thức nào nếu Điều lệ không có quy định khác?",
+    "ground_truth_context": [
+      "Điều 58. Điều kiện và thể thức tiến hành họp Hội đồng thành viên 4. Trường hợp cuộc họp đủ điều kiện quy định tại Điều này không hoàn thành chương trình họp trong thời hạn dự kiến thì có thể kéo dài nhưng không được quá 30 ngày kể từ ngày khai mạc cuộc họp đó.",
+      "Điều 59. Nghị quyết, quyết định của Hội đồng thành viên 2. Trường hợp Điều lệ công ty không có quy định khác thì nghị quyết, quyết định về các vấn đề sau đây phải được thông qua bằng biểu quyết tại cuộc họp Hội đồng thành viên: a) Sửa đổi, bổ sung nội dung Điều lệ công ty; b) Quyết định phương hướng phát triển công ty; c) Bầu, miễn nhiệm, bãi nhiệm Chủ tịch Hội đồng thành viên; bổ nhiệm, miễn nhiệm, bãi nhiệm Giám đốc hoặc Tổng giám đốc; d) Thông qua báo cáo tài chính hằng năm; đ) Tổ chức lại, giải thể công ty."
+    ],
+    "ground_truth_answer": "Cuộc họp có thể kéo dài nhưng không được quá 30 ngày kể từ ngày khai mạc cuộc họp đó; nghị quyết về việc bổ nhiệm Giám đốc phải được thông qua bằng biểu quyết tại cuộc họp Hội đồng thành viên.",
+    "question_type": "multi-hop"
+  },
+  {
+    "case_id": "case_033",
+    "source_case_id": "case_285",
+    "question": "Nếu một công ty trách nhiệm hữu hạn một thành viên thực hiện tăng vốn điều lệ bằng cách huy động vốn từ người khác và muốn chuyển đổi sang loại hình công ty cổ phần thì việc tổ chức quản lý được quy định như thế nào?",
+    "ground_truth_context": [
+      "Trường hợp tăng vốn điều lệ bằng việc huy động thêm phần vốn góp của người khác, công ty phải tổ chức quản lý theo loại hình công ty trách nhiệm hữu hạn hai thành viên trở lên hoặc công ty cổ phần. Việc tổ chức quản lý công ty được thực hiện như sau:",
+      "Trường hợp chuyển đổi thành công ty cổ phần thì công ty thực hiện theo quy định tại Điều 202 của Luật này."
+    ],
+    "ground_truth_answer": "Công ty phải tổ chức quản lý theo loại hình công ty cổ phần và thực hiện theo quy định tại Điều 202 của Luật này.",
+    "question_type": "multi-hop"
+  },
+  {
+    "case_id": "case_034",
+    "source_case_id": "case_309",
+    "question": "Trong thời hạn bao nhiêu ngày kể từ ngày kết thúc năm tài chính thì báo cáo tài chính hằng năm đã được kiểm toán phải được báo cáo?",
+    "ground_truth_context": [
+      "c) Báo cáo và tóm tắt báo cáo tài chính hằng năm đã được kiểm toán bởi tổ chức kiểm toán độc lập trong thời hạn 150 ngày kể từ ngày kết thúc năm tài chính; bao gồm cả báo cáo tài chính của công ty mẹ và báo cáo tài chính hợp nhất (nếu có);"
+    ],
+    "ground_truth_answer": "Trong thời hạn 150 ngày kể từ ngày kết thúc năm tài chính.",
+    "question_type": "factoid"
+  },
+  {
+    "case_id": "case_035",
+    "source_case_id": "case_323",
+    "question": "Công ty cổ phần phải thực hiện đăng ký thay đổi vốn điều lệ trong thời hạn bao lâu kể từ ngày hoàn thành đợt bán cổ phần?",
+    "ground_truth_context": [
+      "4. Công ty thực hiện đăng ký thay đổi vốn điều lệ trong thời hạn 10 ngày kể từ ngày hoàn thành đợt bán cổ phần. Điều 124. Chào bán cổ phần cho cổ đông hiện hữu 1. Chào bán cổ phần cho cổ đông hiện hữu là trường hợp công ty tăng thêm số lượng cổ phần, loại cổ phần được quyền chào bán và bán toàn bộ số cổ phần đó cho tất cả cổ đông theo tỷ lệ sở hữu cổ phần hiện có của họ tại công ty."
+    ],
+    "ground_truth_answer": "Trong thời hạn 10 ngày kể từ ngày hoàn thành đợt bán cổ phần.",
+    "question_type": "factoid"
+  },
+  {
+    "case_id": "case_036",
+    "source_case_id": "case_325",
+    "question": "Trong công ty cổ phần không phải là công ty đại chúng, thông báo chào bán cổ phần cho cổ đông hiện hữu phải được gửi chậm nhất là bao lâu trước ngày kết thúc thời hạn đăng ký mua?",
+    "ground_truth_context": [
+      "2. Chào bán cổ phần cho cổ đông hiện hữu của công ty cổ phần không phải là công ty đại chúng được thực hiện như sau: a) Công ty phải thông báo bằng văn bản đến cổ đông theo phương thức để bảo đảm đến được địa chỉ liên lạc của họ trong sổ đăng ký cổ đông chậm nhất là 15 ngày trước ngày kết thúc thời hạn đăng ký mua cổ phần;"
+    ],
+    "ground_truth_answer": "Chậm nhất là 15 ngày trước ngày kết thúc thời hạn đăng ký mua cổ phần.",
+    "question_type": "factoid"
+  },
+  {
+    "case_id": "case_037",
+    "source_case_id": "case_329",
+    "question": "Ai có thẩm quyền quyết định việc chào bán trái phiếu chuyển đổi riêng lẻ và công ty cần đáp ứng điều kiện gì về thanh toán nợ trước khi chào bán?",
+    "ground_truth_context": [
+      "3. Công ty cổ phần không phải là công ty đại chúng chào bán trái phiếu riêng lẻ phải đáp ứng các điều kiện sau đây: a) Công ty đã thanh toán đủ cả gốc và lãi của trái phiếu đã chào bán và đã đến hạn thanh toán hoặc thanh toán đủ các khoản nợ đến hạn trong 03 năm liên tiếp trước đợt chào bán trái phiếu (nếu có), trừ trường hợp chào bán trái phiếu cho các chủ nợ là tổ chức tài chính được lựa chọn;",
+      "1. Công ty quyết định chào bán trái phiếu riêng lẻ theo quy định sau đây: a) Đại hội đồng cổ đông quyết định về loại, tổng giá trị trái phiếu và thời điểm chào bán đối với trái phiếu chuyển đổi và trái phiếu kèm theo chứng quyền."
+    ],
+    "ground_truth_answer": "Đại hội đồng cổ đông là cơ quan quyết định về loại, tổng giá trị trái phiếu và thời điểm chào bán đối với trái phiếu chuyển đổi. Về điều kiện thanh toán nợ, công ty phải đã thanh toán đủ cả gốc và lãi của trái phiếu đã chào bán và đã đến hạn thanh toán hoặc thanh toán đủ các khoản nợ đến hạn trong 03 năm liên tiếp trước đợt chào bán (trừ trường hợp chào bán cho các chủ nợ là tổ chức tài chính được lựa chọn).",
+    "question_type": "multi-hop"
+  },
+  {
+    "case_id": "case_038",
+    "source_case_id": "case_331",
+    "question": "Cổ phần và trái phiếu của công ty cổ phần có thể được thanh toán bằng những loại tài sản nào theo quy định tại Điều 131?",
+    "ground_truth_context": [
+      "Cổ phần, trái phiếu của công ty cổ phần có thể được mua bằng Đồng Việt Nam, ngoại tệ tự do chuyển đổi, vàng, quyền sử dụng đất, quyền sở hữu trí tuệ, công nghệ, bí quyết kỹ thuật, tài sản khác quy định tại Điều lệ công ty và phải được thanh toán đủ một lần."
+    ],
+    "ground_truth_answer": "Đồng Việt Nam, ngoại tệ tự do chuyển đổi, vàng, quyền sử dụng đất, quyền sở hữu trí tuệ, công nghệ, bí quyết kỹ thuật, tài sản khác quy định tại Điều lệ công ty.",
+    "question_type": "factoid"
+  },
+  {
+    "case_id": "case_039",
+    "source_case_id": "case_339",
+    "question": "Đại hội đồng cổ đông thường niên phải được tổ chức trong thời hạn bao lâu kể từ ngày kết thúc năm tài chính?",
+    "ground_truth_context": [
+      "2. Đại hội đồng cổ đông phải họp thường niên trong thời hạn 04 tháng kể từ ngày kết thúc năm tài chính. Trừ trường hợp Điều lệ công ty có quy định khác, Hội đồng quản trị quyết định gia hạn họp Đại hội đồng cổ đông thường niên trong trường hợp cần thiết, nhưng không quá 06 tháng kể từ ngày kết thúc năm tài chính."
+    ],
+    "ground_truth_answer": "Trong thời hạn 04 tháng kể từ ngày kết thúc năm tài chính; trường hợp gia hạn thì không quá 06 tháng kể từ ngày kết thúc năm tài chính.",
+    "question_type": "factoid"
+  },
+  {
+    "case_id": "case_040",
+    "source_case_id": "case_355",
+    "question": "Thời hạn để cổ đông yêu cầu Tòa án hoặc Trọng tài xem xét hủy bỏ nghị quyết Đại hội đồng cổ đông là bao lâu?",
+    "ground_truth_context": [
+      "Trong thời hạn 90 ngày kể từ ngày nhận được nghị quyết hoặc biên bản họp Đại hội đồng cổ đông hoặc biên bản kết quả kiểm phiếu lấy ý kiến Đại hội đồng cổ đông, cổ đông, nhóm cổ đông quy định tại khoản 2 Điều 115 của Luật này có quyền yêu cầu Tòa án hoặc Trọng tài xem xét, hủy bỏ nghị quyết hoặc một phần nội dung nghị quyết Đại hội đồng cổ đông trong các trường hợp sau đây:"
+    ],
+    "ground_truth_answer": "Trong thời hạn 90 ngày kể từ ngày nhận được nghị quyết hoặc biên bản họp Đại hội đồng cổ đông hoặc biên bản kết quả kiểm phiếu lấy ý kiến Đại hội đồng cổ đông.",
+    "question_type": "factoid"
+  },
+  {
+    "case_id": "case_041",
+    "source_case_id": "case_361",
+    "question": "Chủ tịch Hội đồng quản trị của công ty đại chúng có được đồng thời giữ chức vụ Giám đốc hay không?",
+    "ground_truth_context": [
+      "Chủ tịch Hội đồng quản trị công ty đại chúng và công ty cổ phần quy định tại điểm b khoản 1 Điều 88 của Luật này không được kiêm Giám đốc hoặc Tổng giám đốc."
+    ],
+    "ground_truth_answer": "Không được kiêm Giám đốc hoặc Tổng giám đốc.",
+    "question_type": "factoid"
+  },
+  {
+    "case_id": "case_042",
+    "source_case_id": "case_362",
+    "question": "Trong trường hợp thành viên độc lập Hội đồng quản trị không còn đáp ứng đủ tiêu chuẩn và đã thông báo, Hội đồng quản trị phải tổ chức bầu bổ sung thành viên thay thế trong thời gian bao lâu?",
+    "ground_truth_context": [
+      "Hội đồng quản trị phải thông báo trường hợp thành viên độc lập Hội đồng quản trị không còn đáp ứng đủ các tiêu chuẩn và điều kiện tại cuộc họp Đại hội đồng cổ đông gần nhất hoặc triệu tập họp Đại hội đồng cổ đông để bầu bổ sung hoặc thay thế thành viên độc lập Hội đồng quản trị trong thời hạn 06 tháng kể từ ngày nhận được thông báo của thành viên độc lập Hội đồng quản trị có liên quan."
+    ],
+    "ground_truth_answer": "Trong thời hạn 06 tháng kể từ ngày nhận được thông báo của thành viên độc lập Hội đồng quản trị có liên quan.",
+    "question_type": "multi-hop"
+  },
+  {
+    "case_id": "case_043",
+    "source_case_id": "case_371",
+    "question": "Trong trường hợp một thành viên Hội đồng quản trị trở thành chủ sở hữu của một doanh nghiệp mới, người này phải thực hiện nghĩa vụ gì đối với công ty và trong thời gian bao lâu?",
+    "ground_truth_context": [
+      "Thành viên Hội đồng quản trị, Kiểm soát viên, Giám đốc hoặc Tổng giám đốc và người quản lý khác của công ty phải kê khai cho công ty về các lợi ích liên quan của mình, bao gồm: a) Tên, mã số doanh nghiệp, địa chỉ trụ sở chính, ngành, nghề kinh doanh của doanh nghiệp mà họ làm chủ hoặc sở hữu phần vốn góp hoặc cổ phần; tỷ lệ và thời điểm làm chủ, sở hữu phần vốn góp hoặc cổ phần đó;",
+      "Việc kê khai quy định tại khoản 2 Điều này phải được thực hiện trong thời hạn 07 ngày làm việc kể từ ngày phát sinh lợi ích liên quan;"
+    ],
+    "ground_truth_answer": "Thành viên Hội đồng quản trị phải kê khai cho công ty về các lợi ích liên quan (bao gồm tên, mã số doanh nghiệp, địa chỉ trụ sở chính, ngành, nghề kinh doanh của doanh nghiệp mà họ làm chủ) trong thời hạn 07 ngày làm việc kể từ ngày phát sinh lợi ích liên quan.",
+    "question_type": "multi-hop"
+  },
+  {
+    "case_id": "case_044",
+    "source_case_id": "case_374",
+    "question": "Để có quyền tự mình khởi kiện thành viên Hội đồng quản trị do vi phạm trách nhiệm người quản lý, cổ đông hoặc nhóm cổ đông cần đáp ứng điều kiện gì về tỷ lệ sở hữu cổ phần?",
+    "ground_truth_context": [
+      "1. Cổ đông, nhóm cổ đông sở hữu ít nhất 01% tổng số cổ phần phổ thông có quyền tự mình hoặc nhân danh công ty khởi kiện trách nhiệm cá nhân, trách nhiệm liên đới đối với các thành viên Hội đồng quản trị, Giám đốc hoặc Tổng giám đốc để yêu cầu hoàn trả lợi ích hoặc bồi thường thiệt hại cho công ty hoặc người khác trong trường hợp sau đây: a) Vi phạm trách nhiệm của người quản lý công ty theo quy định tại Điều 165 của Luật này;"
+    ],
+    "ground_truth_answer": "Cổ đông hoặc nhóm cổ đông phải sở hữu ít nhất 01% tổng số cổ phần phổ thông.",
+    "question_type": "multi-hop"
+  },
+  {
+    "case_id": "case_045",
+    "source_case_id": "case_375",
+    "question": "Hội đồng quản trị có thẩm quyền chấp thuận các hợp đồng, giao dịch với người có liên quan trong trường hợp nào về giới hạn giá trị tài sản?",
+    "ground_truth_context": [
+      "2. Hội đồng quản trị chấp thuận các hợp đồng, giao dịch theo quy định khoản 1 Điều này và có giá trị nhỏ hơn 35% tổng giá trị tài sản của doanh nghiệp ghi trong báo cáo tài chính gần nhất hoặc một tỷ lệ hoặc giá trị khác nhỏ hơn theo quy định tại Điều lệ công ty."
+    ],
+    "ground_truth_answer": "Hợp đồng, giao dịch có giá trị nhỏ hơn 35% tổng giá trị tài sản của doanh nghiệp ghi trong báo cáo tài chính gần nhất hoặc một tỷ lệ hoặc giá trị khác nhỏ hơn theo quy định tại Điều lệ công ty.",
+    "question_type": "factoid"
+  },
+  {
+    "case_id": "case_046",
+    "source_case_id": "case_379",
+    "question": "Sau khi kết thúc việc kiểm tra theo yêu cầu của cổ đông, Ban kiểm soát phải báo cáo kết quả trong thời hạn bao lâu và báo cáo cho những đối tượng nào?",
+    "ground_truth_context": [
+      "6. Khi có yêu cầu của cổ đông hoặc nhóm cổ đông quy định tại khoản 2 Điều 115 của Luật này, Ban kiểm soát thực hiện kiểm tra trong thời hạn 07 ngày làm việc kể từ ngày nhận được yêu cầu. Trong thời hạn 15 ngày kể từ ngày kết thúc kiểm tra, Ban kiểm soát phải báo cáo về những vấn đề được yêu cầu kiểm tra đến Hội đồng quản trị và cổ đông hoặc nhóm cổ đông có yêu cầu. Việc kiểm tra của Ban kiểm soát quy định tại khoản này không được cản trở hoạt động bình thường của Hội đồng quản trị, không gây gián đoạn điều hành hoạt động kinh doanh của công ty. 7. Kiến nghị Hội đồng quản trị hoặc Đại hội đồng cổ đông biện pháp sửa đổi, bổ sung, cải tiến cơ cấu tổ chức quản lý, giám sát và điều hành hoạt động kinh doanh của công ty. 8. Khi phát hiện có thành viên Hội đồng quản trị, Giám đốc hoặc Tổng giám đốc vi phạm quy định tại Điều 165 của Luật này phải thông báo ngay bằng văn bản cho Hội đồng quản"
+    ],
+    "ground_truth_answer": "Trong thời hạn 15 ngày kể từ ngày kết thúc kiểm tra, Ban kiểm soát phải báo cáo về những vấn đề được yêu cầu kiểm tra đến Hội đồng quản trị và cổ đông hoặc nhóm cổ đông có yêu cầu.",
+    "question_type": "factoid"
+  },
+  {
+    "case_id": "case_047",
+    "source_case_id": "case_397",
+    "question": "Vào cuối năm tài chính, công ty mẹ phải lập những loại báo cáo tổng hợp nào và trong trường hợp công ty mẹ gây thiệt hại cho công ty con mà không đền bù, cổ đông cần sở hữu tối thiểu bao nhiêu vốn điều lệ để có quyền yêu cầu bồi thường?",
+    "ground_truth_context": [
+      "Điều 196. Quyền, nghĩa vụ và trách nhiệm của công ty mẹ đối với công ty con 5. Trường hợp công ty mẹ không đền bù cho công ty con theo quy định tại khoản 3 Điều này thì chủ nợ hoặc thành viên, cổ đông có sở hữu ít nhất 01% vốn điều lệ của công ty con có quyền nhân danh chính mình hoặc nhân danh công ty con yêu cầu công ty mẹ đền bù thiệt hại cho công ty con.",
+      "Điều 197. Báo cáo tài chính của công ty mẹ, công ty con 1. Vào thời điểm kết thúc năm tài chính, ngoài báo cáo và tài liệu theo quy định của pháp luật, công ty mẹ còn phải lập các báo cáo sau đây: a) Báo cáo tài chính hợp nhất của công ty mẹ theo quy định của pháp luật về kế toán; b) Báo cáo tổng hợp kết quả kinh doanh hằng năm của công ty mẹ và công ty con; c) Báo cáo tổng hợp công tác quản lý, điều hành của công ty mẹ và công ty con."
+    ],
+    "ground_truth_answer": "Vào cuối năm tài chính, công ty mẹ phải lập Báo cáo tổng hợp kết quả kinh doanh hằng năm và Báo cáo tổng hợp công tác quản lý, điều hành của công ty mẹ và công ty con. Để yêu cầu bồi thường thiệt hại, cổ đông phải sở hữu ít nhất 01% vốn điều lệ của công ty con.",
+    "question_type": "multi-hop"
+  },
+  {
+    "case_id": "case_048",
+    "source_case_id": "case_411",
+    "question": "Một công ty cổ phần muốn giải thể do hết thời hạn hoạt động thì cần phải thông qua văn bản nào và gửi cho những cơ quan nào trong thời hạn bao lâu?",
+    "ground_truth_context": [
+      "1. Thông qua nghị quyết, quyết định giải thể doanh nghiệp. Nghị quyết, quyết định giải thể doanh nghiệp phải bao gồm các nội dung chủ yếu sau đây:",
+      "3. Trong thời hạn 07 ngày làm việc kể từ ngày thông qua, nghị quyết, quyết định giải thể và biên bản họp phải được gửi đến Cơ quan đăng ký kinh doanh, cơ quan thuế, người lao động trong doanh nghiệp."
+    ],
+    "ground_truth_answer": "Công ty phải thông qua nghị quyết, quyết định giải thể và gửi văn bản này cùng biên bản họp đến Cơ quan đăng ký kinh doanh, cơ quan thuế, người lao động trong thời hạn 07 ngày làm việc kể từ ngày thông qua.",
+    "question_type": "multi-hop"
+  },
+  {
+    "case_id": "case_049",
+    "source_case_id": "case_415",
+    "question": "Người đại diện theo pháp luật của doanh nghiệp phải gửi hồ sơ giải thể cho Cơ quan đăng ký kinh doanh trong thời hạn bao lâu?",
+    "ground_truth_context": [
+      "Người đại diện theo pháp luật của doanh nghiệp gửi hồ sơ giải thể doanh nghiệp cho Cơ quan đăng ký kinh doanh trong thời hạn 05 ngày làm việc kể từ ngày thanh toán hết các khoản nợ của doanh nghiệp;"
+    ],
+    "ground_truth_answer": "Trong thời hạn 05 ngày làm việc kể từ ngày thanh toán hết các khoản nợ của doanh nghiệp.",
+    "question_type": "factoid"
+  },
+  {
+    "case_id": "case_050",
+    "source_case_id": "case_417",
+    "question": "Khi chi nhánh của doanh nghiệp chấm dứt hoạt động, doanh nghiệp đó có những trách nhiệm gì liên quan đến nợ và người lao động của chi nhánh?",
+    "ground_truth_context": [
+      "Doanh nghiệp có chi nhánh đã chấm dứt hoạt động chịu trách nhiệm thực hiện các hợp đồng, thanh toán các khoản nợ, gồm cả nợ thuế của chi nhánh và tiếp tục sử dụng lao động hoặc giải quyết đủ quyền lợi hợp pháp cho người lao động đã làm việc tại chi nhánh theo quy định của pháp luật."
+    ],
+    "ground_truth_answer": "Doanh nghiệp có chi nhánh đã chấm dứt hoạt động phải thực hiện các hợp đồng, thanh toán các khoản nợ (bao gồm nợ thuế) của chi nhánh và tiếp tục sử dụng lao động hoặc giải quyết đủ quyền lợi hợp pháp cho người lao động theo quy định.",
+    "question_type": "multi-hop"
+  }
+]

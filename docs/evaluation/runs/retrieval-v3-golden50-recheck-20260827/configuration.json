@@ -1,0 +1,56 @@
+{
+  "requested_backend": "vertex-qdrant-v3",
+  "effective_backend": "vertex-qdrant-v3",
+  "ranking_mode": "raw-rrf",
+  "candidate_pool_source": null,
+  "profile_name": "separated_intent",
+  "profile": {
+    "name": "separated_intent",
+    "retrieval_document_limit": 24,
+    "resolved_document_limit": 16,
+    "local_chunks_per_document": 4,
+    "rerank_input_limit": 24,
+    "rerank_return_limit": 3,
+    "final_evidence_limit": 3,
+    "final_context_token_limit": 720,
+    "intent_scoring_enabled": true,
+    "rewrite_mode": "off",
+    "reranker_mode": "current"
+  },
+  "eval_mode": "retrieval-only",
+  "judge_mode": "none",
+  "guardrail_mode": "off",
+  "rewrite_mode": "off",
+  "reranker_provider": "current",
+  "gold_policy": "none",
+  "selected_case_count": 50,
+  "selected_case_ids_sha256": "be13608ad91b6a1e5d50660470798a9099049b59ad9e70cfd6b804e5397ccb3a",
+  "retrieval_runtime": {
+    "backend": "vertex-qdrant-v3",
+    "collection": "vietlex-legal-rag-v3-vertex-1024",
+    "dense_model": "gemini-embedding-2",
+    "dense_dimension": 1024,
+    "sparse_model": "FastSparseEncoder",
+    "fallback_backend": null,
+    "google_cloud_calls_enabled": true
+  },
+  "configured_provider_models": {
+    "dense": {
+      "provider": "Google Vertex AI",
+      "model": "gemini-embedding-2"
+    },
+    "reranker_primary": {
+      "provider": "none",
+      "model": "raw-rrf"
+    },
+    "reranker_fallback": null,
+    "generation": {
+      "mode": "not_applicable",
+      "candidates": []
+    },
+    "judge": {
+      "mode": "none",
+      "candidates": []
+    }
+  }
+}

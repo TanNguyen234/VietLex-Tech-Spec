@@ -1,0 +1,1308 @@
+[
+  {
+    "case_id": "case_017",
+    "question": "Theo quy định tại Điều 16, khu vực ô nhiễm môi trường đất được phân loại dựa trên những tiêu chí nào?",
+    "question_type": "factoid",
+    "answerable": true,
+    "query_used": "Theo quy định tại Điều 16, khu vực ô nhiễm môi trường đất được phân loại dựa trên những tiêu chí nào?",
+    "original_query": "Theo quy định tại Điều 16, khu vực ô nhiễm môi trường đất được phân loại dựa trên những tiêu chí nào?",
+    "rewritten_query": null,
+    "status": "retrieval_error",
+    "retrieved_evidence": [],
+    "stage_trace": {
+      "pinecone_hits": [],
+      "fts_hits": [],
+      "merged_document_candidates": [],
+      "resolved_document_candidates": [],
+      "structural_chunks_generated": [],
+      "locally_selected_chunks": [],
+      "reranker_input_chunks": [],
+      "reranker_output_chunks": [],
+      "final_evidence_chunks": []
+    },
+    "latency": {
+      "t_rewrite": 0.0,
+      "t_retrieval": 29.3891,
+      "t_total": 29.3892
+    },
+    "metrics": {
+      "metric_version": "3.0.0",
+      "relevance_definition": "binary_unique_required_evidence_v1",
+      "status": "retrieval_error",
+      "applicable": false,
+      "skip_reason": "retrieval_error",
+      "applicable_gold_counts": {
+        "document": 1,
+        "article": 1,
+        "clause": 0
+      },
+      "matched_gold_counts": {
+        "document": 0,
+        "article": 0,
+        "clause": 0
+      },
+      "document_recall": {
+        "1": {
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "value": null,
+          "reason": "retrieval_error"
+        },
+        "3": {
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "value": null,
+          "reason": "retrieval_error"
+        },
+        "5": {
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "value": null,
+          "reason": "retrieval_error"
+        },
+        "10": {
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "value": null,
+          "reason": "retrieval_error"
+        },
+        "24": {
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "value": null,
+          "reason": "retrieval_error"
+        }
+      },
+      "article_recall": {
+        "1": {
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "value": null,
+          "reason": "retrieval_error"
+        },
+        "3": {
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "value": null,
+          "reason": "retrieval_error"
+        },
+        "6": {
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "value": null,
+          "reason": "retrieval_error"
+        }
+      },
+      "clause_recall": {
+        "1": {
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "value": null,
+          "reason": "retrieval_error"
+        },
+        "3": {
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "value": null,
+          "reason": "retrieval_error"
+        },
+        "6": {
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "value": null,
+          "reason": "retrieval_error"
+        }
+      },
+      "mrr": {
+        "document": {
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "value": null,
+          "reason": "retrieval_error"
+        },
+        "article": {
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "value": null,
+          "reason": "retrieval_error"
+        },
+        "clause": {
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "value": null,
+          "reason": "retrieval_error"
+        }
+      },
+      "ndcg_at_10": {
+        "numerator": 0.0,
+        "denominator": 0.0,
+        "value": null,
+        "reason": "retrieval_error"
+      },
+      "exact_reference_hit": {
+        "numerator": 0.0,
+        "denominator": 0.0,
+        "value": null,
+        "reason": "retrieval_error"
+      },
+      "multi_hop": {
+        "all_required": false,
+        "matched_required_items": 0,
+        "required_items": 1,
+        "all_required_metric": {
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "value": null,
+          "reason": "retrieval_error"
+        },
+        "partial_metric": {
+          "numerator": 0.0,
+          "denominator": 0.0,
+          "value": null,
+          "reason": "retrieval_error"
+        }
+      },
+      "no_candidate": false,
+      "retrieval_technical_error": true,
+      "reranker_technical_error": false,
+      "stages": {
+        "pinecone_document_metrics": {
+          "configured_capacity": null,
+          "candidate_count": 0,
+          "scored_case_count": 0,
+          "applicable_gold_counts": {
+            "document": 0,
+            "article": 0,
+            "clause": 0
+          },
+          "matched_gold_counts": {
+            "document": 0,
+            "article": 0,
+            "clause": 0
+          },
+          "recall": {
+            "document": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "5": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "10": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "24": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              }
+            },
+            "article": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              }
+            },
+            "clause": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              }
+            }
+          },
+          "mrr": {
+            "document": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "retrieval_error"
+            },
+            "article": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "retrieval_error"
+            },
+            "clause": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "retrieval_error"
+            }
+          },
+          "null_reason_counts": {
+            "retrieval_error": 14
+          }
+        },
+        "fts_document_metrics": {
+          "configured_capacity": null,
+          "candidate_count": 0,
+          "scored_case_count": 0,
+          "applicable_gold_counts": {
+            "document": 0,
+            "article": 0,
+            "clause": 0
+          },
+          "matched_gold_counts": {
+            "document": 0,
+            "article": 0,
+            "clause": 0
+          },
+          "recall": {
+            "document": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "5": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "10": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "24": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              }
+            },
+            "article": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              }
+            },
+            "clause": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              }
+            }
+          },
+          "mrr": {
+            "document": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "retrieval_error"
+            },
+            "article": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "retrieval_error"
+            },
+            "clause": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "retrieval_error"
+            }
+          },
+          "null_reason_counts": {
+            "retrieval_error": 14
+          }
+        },
+        "source_retrieval_metrics": {
+          "configured_capacity": null,
+          "candidate_count": 0,
+          "scored_case_count": 0,
+          "applicable_gold_counts": {
+            "document": 0,
+            "article": 0,
+            "clause": 0
+          },
+          "matched_gold_counts": {
+            "document": 0,
+            "article": 0,
+            "clause": 0
+          },
+          "recall": {
+            "document": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "5": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "10": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "24": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              }
+            },
+            "article": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              }
+            },
+            "clause": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              }
+            }
+          },
+          "mrr": {
+            "document": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "retrieval_error"
+            },
+            "article": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "retrieval_error"
+            },
+            "clause": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "retrieval_error"
+            }
+          },
+          "null_reason_counts": {
+            "retrieval_error": 14
+          }
+        },
+        "merged_document_metrics": {
+          "configured_capacity": null,
+          "candidate_count": 0,
+          "scored_case_count": 0,
+          "applicable_gold_counts": {
+            "document": 0,
+            "article": 0,
+            "clause": 0
+          },
+          "matched_gold_counts": {
+            "document": 0,
+            "article": 0,
+            "clause": 0
+          },
+          "recall": {
+            "document": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "5": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "10": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "24": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              }
+            },
+            "article": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              }
+            },
+            "clause": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              }
+            }
+          },
+          "mrr": {
+            "document": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "retrieval_error"
+            },
+            "article": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "retrieval_error"
+            },
+            "clause": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "retrieval_error"
+            }
+          },
+          "null_reason_counts": {
+            "retrieval_error": 14
+          }
+        },
+        "resolved_document_metrics": {
+          "configured_capacity": null,
+          "candidate_count": 0,
+          "scored_case_count": 0,
+          "applicable_gold_counts": {
+            "document": 0,
+            "article": 0,
+            "clause": 0
+          },
+          "matched_gold_counts": {
+            "document": 0,
+            "article": 0,
+            "clause": 0
+          },
+          "recall": {
+            "document": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "5": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "10": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "24": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              }
+            },
+            "article": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              }
+            },
+            "clause": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              }
+            }
+          },
+          "mrr": {
+            "document": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "retrieval_error"
+            },
+            "article": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "retrieval_error"
+            },
+            "clause": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "retrieval_error"
+            }
+          },
+          "null_reason_counts": {
+            "retrieval_error": 14
+          }
+        },
+        "structural_chunk_metrics": {
+          "configured_capacity": 24,
+          "candidate_count": 0,
+          "scored_case_count": 0,
+          "applicable_gold_counts": {
+            "document": 0,
+            "article": 0,
+            "clause": 0
+          },
+          "matched_gold_counts": {
+            "document": 0,
+            "article": 0,
+            "clause": 0
+          },
+          "recall": {
+            "document": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "5": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "10": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "24": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              }
+            },
+            "article": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              }
+            },
+            "clause": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              }
+            }
+          },
+          "mrr": {
+            "document": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "retrieval_error"
+            },
+            "article": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "retrieval_error"
+            },
+            "clause": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "retrieval_error"
+            }
+          },
+          "null_reason_counts": {
+            "retrieval_error": 14
+          }
+        },
+        "local_selection_metrics": {
+          "configured_capacity": null,
+          "candidate_count": 0,
+          "scored_case_count": 0,
+          "applicable_gold_counts": {
+            "document": 0,
+            "article": 0,
+            "clause": 0
+          },
+          "matched_gold_counts": {
+            "document": 0,
+            "article": 0,
+            "clause": 0
+          },
+          "recall": {
+            "document": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "5": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "10": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "24": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              }
+            },
+            "article": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              }
+            },
+            "clause": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              }
+            }
+          },
+          "mrr": {
+            "document": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "retrieval_error"
+            },
+            "article": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "retrieval_error"
+            },
+            "clause": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "retrieval_error"
+            }
+          },
+          "null_reason_counts": {
+            "retrieval_error": 14
+          }
+        },
+        "reranker_input_metrics": {
+          "configured_capacity": 24,
+          "candidate_count": 0,
+          "scored_case_count": 0,
+          "applicable_gold_counts": {
+            "document": 0,
+            "article": 0,
+            "clause": 0
+          },
+          "matched_gold_counts": {
+            "document": 0,
+            "article": 0,
+            "clause": 0
+          },
+          "recall": {
+            "document": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "5": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "10": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "24": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              }
+            },
+            "article": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              }
+            },
+            "clause": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              }
+            }
+          },
+          "mrr": {
+            "document": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "retrieval_error"
+            },
+            "article": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "retrieval_error"
+            },
+            "clause": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "retrieval_error"
+            }
+          },
+          "null_reason_counts": {
+            "retrieval_error": 14
+          }
+        },
+        "reranker_output_metrics": {
+          "configured_capacity": 3,
+          "candidate_count": 0,
+          "scored_case_count": 0,
+          "applicable_gold_counts": {
+            "document": 0,
+            "article": 0,
+            "clause": 0
+          },
+          "matched_gold_counts": {
+            "document": 0,
+            "article": 0,
+            "clause": 0
+          },
+          "recall": {
+            "document": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "5": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "10": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "24": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              }
+            },
+            "article": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              }
+            },
+            "clause": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              }
+            }
+          },
+          "mrr": {
+            "document": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "retrieval_error"
+            },
+            "article": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "retrieval_error"
+            },
+            "clause": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "retrieval_error"
+            }
+          },
+          "null_reason_counts": {
+            "retrieval_error": 14
+          }
+        },
+        "final_evidence_metrics": {
+          "configured_capacity": 3,
+          "candidate_count": 0,
+          "scored_case_count": 0,
+          "applicable_gold_counts": {
+            "document": 0,
+            "article": 0,
+            "clause": 0
+          },
+          "matched_gold_counts": {
+            "document": 0,
+            "article": 0,
+            "clause": 0
+          },
+          "recall": {
+            "document": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "5": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "10": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "24": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              }
+            },
+            "article": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              }
+            },
+            "clause": {
+              "1": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "3": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              },
+              "6": {
+                "numerator": 0.0,
+                "denominator": 0.0,
+                "value": null,
+                "reason": "retrieval_error"
+              }
+            }
+          },
+          "mrr": {
+            "document": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "retrieval_error"
+            },
+            "article": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "retrieval_error"
+            },
+            "clause": {
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "value": null,
+              "reason": "retrieval_error"
+            }
+          },
+          "null_reason_counts": {
+            "retrieval_error": 14
+          }
+        }
+      },
+      "first_loss_by_evidence": {}
+    },
+    "error": "ValueError: missing v3 payload fields: heading_path",
+    "technical_errors": {
+      "retrieval": "ValueError: missing v3 payload fields: heading_path"
+    },
+    "retrieval_diagnostics": {
+      "backend": "vertex-qdrant-v3",
+      "candidate_pool": {
+        "case_id": "case_017",
+        "backend_contract_sha256": "f89ddcf8f17c1a76133fdbbd37c2bb2dac38da11667e77faeca2330f40ef7b4c",
+        "candidates": [],
+        "candidate_ids_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "candidate_payload_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "ranking": "raw-rrf"
+    }
+  }
+]
