@@ -100,6 +100,7 @@ def select_diverse_document_ids(
     *,
     legal_types: Sequence[str] = DEFAULT_MIGRATION_LEGAL_TYPES,
     limit: int,
+    exclude_document_ids: Sequence[int] = (),
 ) -> list[int]:
     """Select a deterministic, balanced prefix across legal document types."""
     if limit <= 0:
@@ -107,20 +108,28 @@ def select_diverse_document_ids(
     types = tuple(dict.fromkeys(item.strip() for item in legal_types if item.strip()))
     if not types:
         raise ValueError("at least one legal type is required")
+    excluded = {int(document_id) for document_id in exclude_document_ids}
+    page_limit = limit + len(excluded)
     pages = [
         store.iter_document_ids_by_legal_types(
             [legal_type],
             after_id=-1,
-            limit=limit,
+            limit=page_limit,
         )
         for legal_type in types
     ]
     selected: list[int] = []
+    seen: set[int] = set()
     for row in zip_longest(*pages):
         for document_id in row:
-            if document_id is None or document_id in selected:
+            if (
+                document_id is None
+                or document_id in excluded
+                or document_id in seen
+            ):
                 continue
             selected.append(document_id)
+            seen.add(document_id)
             if len(selected) >= limit:
                 return sorted(selected)
     return sorted(selected)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -44,6 +45,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Required confirmation before document upserts.",
     )
+    parser.add_argument(
+        "--document-ids-file",
+        type=Path,
+        help="JSON list or object containing document_ids for an exact bounded upload.",
+    )
     return parser
 
 
@@ -75,6 +81,19 @@ def main() -> int:
     if not args.allow_remote_write:
         raise PermissionError("--allow-remote-write is required for Supabase upserts")
 
+    document_ids = None
+    if args.document_ids_file is not None:
+        raw_selection = json.loads(
+            args.document_ids_file.read_text(encoding="utf-8")
+        )
+        document_ids = (
+            raw_selection.get("document_ids")
+            if isinstance(raw_selection, dict)
+            else raw_selection
+        )
+        if not isinstance(document_ids, list):
+            raise ValueError("document ID file must contain a JSON list")
+
     report = upload_full_documents(
         store=ContentStore(settings.CONTENT_STORE_PATH),
         uploader=uploader,
@@ -82,6 +101,7 @@ def main() -> int:
         max_documents=args.max_documents,
         batch_size=args.batch_size,
         checkpoint_path=args.checkpoint,
+        document_ids=document_ids,
     )
     print(report_to_json(report))
     return 0

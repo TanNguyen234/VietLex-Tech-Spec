@@ -8,6 +8,7 @@ import hashlib
 import json
 import sys
 from collections import Counter
+from pathlib import Path
 
 from qdrant_client import AsyncQdrantClient
 
@@ -59,7 +60,28 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--allow-create", action="store_true")
     parser.add_argument("--allow-remote-write", action="store_true")
+    parser.add_argument(
+        "--exclude-document-store",
+        type=Path,
+        help="Exclude every document ID present in this ContentStore.",
+    )
+    parser.add_argument(
+        "--document-ids-output",
+        type=Path,
+        help="Write the exact planned document-ID selection to a new JSON file.",
+    )
     return parser
+
+
+def _all_document_ids(store: ContentStore) -> list[int]:
+    document_ids: list[int] = []
+    after_id = 0
+    while True:
+        batch = store.iter_document_ids(after_id=after_id, limit=10_000)
+        if not batch:
+            return document_ids
+        document_ids.extend(batch)
+        after_id = batch[-1]
 
 
 async def _run(args: argparse.Namespace) -> dict[str, object]:
@@ -81,10 +103,17 @@ async def _run(args: argparse.Namespace) -> dict[str, object]:
     )
     store = ContentStore(settings.CONTENT_STORE_PATH)
     legal_types = tuple(args.legal_types or DEFAULT_MIGRATION_LEGAL_TYPES)
+    excluded_document_ids: list[int] = []
+    exclude_document_store = getattr(args, "exclude_document_store", None)
+    if exclude_document_store is not None:
+        excluded_document_ids = _all_document_ids(
+            ContentStore(exclude_document_store)
+        )
     document_ids = select_diverse_document_ids(
         store,
         legal_types=legal_types,
         limit=args.max_documents,
+        exclude_document_ids=excluded_document_ids,
     )
     print(
         f"[vertex-qdrant] selected_documents={len(document_ids)}",
@@ -101,6 +130,9 @@ async def _run(args: argparse.Namespace) -> dict[str, object]:
         max_chunks_per_document=max_chunks,
     )
     planned_records = records[: args.max_points]
+    planned_document_ids = sorted(
+        {record.document_id for record in planned_records}
+    )
     print(
         "[vertex-qdrant] "
         f"records_before_point_cap={len(records)} planned_points={len(planned_records)}",
@@ -114,6 +146,8 @@ async def _run(args: argparse.Namespace) -> dict[str, object]:
         "embedding_model": contract.embedding_model,
         "vector_size": contract.vector_size,
         "selected_documents": len(document_ids),
+        "excluded_documents": len(excluded_document_ids),
+        "planned_documents": len(planned_document_ids),
         "selected_legal_types": dict(
             sorted(Counter(record.legal_type for record in records).items())
         ),
@@ -126,6 +160,28 @@ async def _run(args: argparse.Namespace) -> dict[str, object]:
         "estimated_dense_bytes": len(planned_records) * contract.vector_size * 4,
         "production_retrieval_changed": False,
     }
+    document_ids_output = getattr(args, "document_ids_output", None)
+    if document_ids_output is not None:
+        if document_ids_output.exists():
+            raise FileExistsError(
+                f"document selection output already exists: {document_ids_output}"
+            )
+        document_ids_output.parent.mkdir(parents=True, exist_ok=True)
+        document_ids_output.write_text(
+            json.dumps(
+                {
+                    "mode": "vertex-qdrant-document-selection",
+                    "collection": contract.collection_name,
+                    "document_ids": planned_document_ids,
+                    "document_ids_sha256": _sha256(planned_document_ids),
+                    "planned_documents": len(planned_document_ids),
+                    "planned_points": len(planned_records),
+                },
+                ensure_ascii=False,
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
     if not args.allow_remote_write:
         return base
 

@@ -83,6 +83,29 @@ def test_document_selection_fills_limit_when_one_legal_type_is_sparse() -> None:
     assert selected == [1, 2, 3, 4, 5]
 
 
+def test_document_selection_excludes_existing_ids_and_still_fills_limit() -> None:
+    from app.ingestion.vertex_qdrant_migration import select_diverse_document_ids
+
+    class Store:
+        def iter_document_ids_by_legal_types(self, legal_types, *, after_id, limit):
+            assert after_id == -1
+            assert limit == 7
+            values = {
+                "Luật": [1, 3, 5, 7, 9],
+                "Nghị định": [2, 4, 6, 8, 10],
+            }
+            return values[legal_types[0]][:limit]
+
+    selected = select_diverse_document_ids(
+        Store(),
+        legal_types=("Luật", "Nghị định"),
+        limit=4,
+        exclude_document_ids={1, 2, 3},
+    )
+
+    assert selected == [4, 5, 6, 7]
+
+
 def test_build_records_applies_per_document_structural_budget() -> None:
     from app.ingestion.content_store import StoredDocument
     from app.ingestion.legal_text import DocumentMetadata

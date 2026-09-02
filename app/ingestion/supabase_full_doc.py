@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from dataclasses import dataclass
@@ -133,13 +134,18 @@ class SupabaseFullDocUploader:
         return SupabaseUpsertReport(uploaded_rows=len(rows))
 
 
-def load_checkpoint(path: Path) -> dict[str, int]:
+def load_checkpoint(path: Path) -> dict[str, int | str | None]:
     if not path.exists():
-        return {"last_document_id": 0, "uploaded_rows": 0}
+        return {
+            "last_document_id": 0,
+            "uploaded_rows": 0,
+            "selection_sha256": None,
+        }
     raw = json.loads(path.read_text(encoding="utf-8"))
     return {
         "last_document_id": int(raw.get("last_document_id", 0)),
         "uploaded_rows": int(raw.get("uploaded_rows", 0)),
+        "selection_sha256": raw.get("selection_sha256"),
     }
 
 
@@ -148,6 +154,7 @@ def save_checkpoint(
     *,
     last_document_id: int,
     uploaded_rows: int,
+    selection_sha256: str | None = None,
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
@@ -156,6 +163,11 @@ def save_checkpoint(
             {
                 "last_document_id": last_document_id,
                 "uploaded_rows": uploaded_rows,
+                **(
+                    {"selection_sha256": selection_sha256}
+                    if selection_sha256 is not None
+                    else {}
+                ),
             },
             ensure_ascii=False,
             indent=2,
@@ -182,24 +194,49 @@ def upload_full_documents(
     max_documents: int,
     batch_size: int,
     checkpoint_path: Path,
+    document_ids: Iterable[int] | None = None,
 ) -> dict[str, int | str]:
     if max_documents <= 0 or batch_size <= 0:
         raise ValueError("max_documents and batch_size must be positive")
 
+    checkpoint_exists = checkpoint_path.exists()
     checkpoint = load_checkpoint(checkpoint_path)
-    last_document_id = checkpoint["last_document_id"]
-    uploaded_total = checkpoint["uploaded_rows"]
+    last_document_id = int(checkpoint["last_document_id"])
+    uploaded_total = int(checkpoint["uploaded_rows"])
+    selected_ids: list[int] | None = None
+    selection_sha256: str | None = None
+    if document_ids is not None:
+        selected_ids = [int(document_id) for document_id in document_ids]
+        if (
+            selected_ids != sorted(set(selected_ids))
+            or any(document_id <= 0 for document_id in selected_ids)
+        ):
+            raise ValueError("document ID selection must be positive, unique, and sorted")
+        selected_ids = selected_ids[:max_documents]
+        selection_sha256 = hashlib.sha256(
+            json.dumps(selected_ids, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+        recorded_selection = checkpoint.get("selection_sha256")
+        if checkpoint_exists and recorded_selection != selection_sha256:
+            raise ValueError("checkpoint belongs to a different document selection")
     attempted = 0
 
     while attempted < max_documents:
         limit = min(batch_size, max_documents - attempted)
-        document_ids = store.iter_document_ids(
-            after_id=last_document_id,
-            limit=limit,
-        )
-        if not document_ids:
+        if selected_ids is None:
+            batch_ids = store.iter_document_ids(
+                after_id=last_document_id,
+                limit=limit,
+            )
+        else:
+            batch_ids = [
+                document_id
+                for document_id in selected_ids
+                if document_id > last_document_id
+            ][:limit]
+        if not batch_ids:
             break
-        documents = _ordered_documents(store, document_ids)
+        documents = _ordered_documents(store, batch_ids)
         rows = [
             build_supabase_row(document, dataset_revision=dataset_revision)
             for document in documents
@@ -207,11 +244,12 @@ def upload_full_documents(
         report = uploader.upsert_rows(rows)
         attempted += len(rows)
         uploaded_total += report.uploaded_rows
-        last_document_id = max(document_ids)
+        last_document_id = max(batch_ids)
         save_checkpoint(
             checkpoint_path,
             last_document_id=last_document_id,
             uploaded_rows=uploaded_total,
+            selection_sha256=selection_sha256,
         )
 
     return {
@@ -220,6 +258,14 @@ def upload_full_documents(
         "uploaded_rows": uploaded_total - checkpoint["uploaded_rows"],
         "total_uploaded_rows_with_checkpoint": uploaded_total,
         "last_document_id": last_document_id,
+        **(
+            {
+                "selected_document_count": len(selected_ids),
+                "selection_sha256": selection_sha256,
+            }
+            if selected_ids is not None and selection_sha256 is not None
+            else {}
+        ),
     }
 
 

@@ -192,3 +192,52 @@ def test_upload_documents_resumes_after_checkpoint(tmp_path: Path) -> None:
         "last_document_id": 4,
         "uploaded_rows": 4,
     }
+
+
+def test_upload_selected_documents_binds_checkpoint_to_exact_ids(tmp_path: Path) -> None:
+    from app.ingestion.supabase_full_doc import upload_full_documents
+
+    class Store:
+        def get_many(self, document_ids: list[int]):
+            return {document_id: _document(document_id) for document_id in document_ids}
+
+    class Uploader:
+        def __init__(self) -> None:
+            self.batches: list[list[int]] = []
+
+        def upsert_rows(self, rows):
+            self.batches.append([row["document_id"] for row in rows])
+            return SimpleNamespace(uploaded_rows=len(rows))
+
+    checkpoint = tmp_path / "selected-checkpoint.json"
+    uploader = Uploader()
+    report = upload_full_documents(
+        store=Store(),
+        uploader=uploader,
+        dataset_revision="rev",
+        max_documents=3,
+        batch_size=2,
+        checkpoint_path=checkpoint,
+        document_ids=[4, 9, 12],
+    )
+
+    assert uploader.batches == [[4, 9], [12]]
+    assert report["selected_document_count"] == 3
+    assert len(report["selection_sha256"]) == 64
+    saved = json.loads(checkpoint.read_text(encoding="utf-8"))
+    assert saved["selection_sha256"] == report["selection_sha256"]
+
+    try:
+        upload_full_documents(
+            store=Store(),
+            uploader=uploader,
+            dataset_revision="rev",
+            max_documents=3,
+            batch_size=2,
+            checkpoint_path=checkpoint,
+            document_ids=[4, 9, 13],
+        )
+    except ValueError as error:
+        assert "selection" in str(error)
+    else:
+        raise AssertionError("checkpoint selection drift must fail closed")
