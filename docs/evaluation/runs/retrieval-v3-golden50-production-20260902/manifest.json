@@ -1,0 +1,191 @@
+{
+  "run_id": "retrieval-v3-golden50-production-20260902",
+  "utc_timestamp": "2026-09-02T11:22:58.531663+00:00",
+  "git_sha": "73cd7ca519214f95d69aafb9a2464570d7d888c4",
+  "git_dirty": false,
+  "git_tracked_dirty": false,
+  "git_staged_dirty": false,
+  "git_untracked_dirty": false,
+  "git_diff_sha256": null,
+  "git_diff_status": "clean",
+  "git_diff_reason": null,
+  "source_state_sha256": "3d9904dbd304feb353e8ac76be7f586e0698f4a1745af4e4537f8b09f3b46394",
+  "provenance_status": "ok",
+  "provenance_error": null,
+  "repository_root": "D:\\Download\\ProfessionalLegalRAG",
+  "dataset_revision": "4d4e10b201544e8a4c49a1d3fa496595a7d486d0",
+  "dataset_sha256": "caa3fc19cd22bcce4b87e96adf13544d0c3cc174cca2d0e365a848e0da9a981f",
+  "evaluation_dataset_sha256": "caa3fc19cd22bcce4b87e96adf13544d0c3cc174cca2d0e365a848e0da9a981f",
+  "gold_label_sidecar_sha256": "31f834696388545f13820e90766569ba95e8a8ed5bafe79dec2b35c6ad7a9dbe",
+  "gold_policy": "none",
+  "selected_case_count": 50,
+  "selected_case_ids": [
+    "case_001",
+    "case_002",
+    "case_003",
+    "case_004",
+    "case_005",
+    "case_006",
+    "case_007",
+    "case_008",
+    "case_009",
+    "case_010",
+    "case_011",
+    "case_012",
+    "case_013",
+    "case_014",
+    "case_015",
+    "case_016",
+    "case_017",
+    "case_018",
+    "case_019",
+    "case_020",
+    "case_021",
+    "case_022",
+    "case_023",
+    "case_024",
+    "case_025",
+    "case_026",
+    "case_027",
+    "case_028",
+    "case_029",
+    "case_030",
+    "case_031",
+    "case_032",
+    "case_033",
+    "case_034",
+    "case_035",
+    "case_036",
+    "case_037",
+    "case_038",
+    "case_039",
+    "case_040",
+    "case_041",
+    "case_042",
+    "case_043",
+    "case_044",
+    "case_045",
+    "case_046",
+    "case_047",
+    "case_048",
+    "case_049",
+    "case_050"
+  ],
+  "selected_case_ids_sha256": "be13608ad91b6a1e5d50660470798a9099049b59ad9e70cfd6b804e5397ccb3a",
+  "configuration_fingerprint": "f4ab971f160537e71e0eb2ba8dce784b07904e8553452fab0dcb3ea40f72d87f",
+  "command": "run_retrieval_eval.py --dataset docs/evaluation/golden50-v3/cases.json --sidecar docs/evaluation/golden50-v3/labels.json --backend vertex-qdrant-v3 --ranking raw-rrf --profile separated_intent --rewrite off --reranker current --concurrency 1 --gold-policy none --run-id retrieval-v3-golden50-production-20260902",
+  "eval_mode": "retrieval-only",
+  "judge_mode": "none",
+  "guardrail_mode": "off",
+  "rewrite_mode": "off",
+  "reranker_provider": "current",
+  "profile_name": "separated_intent",
+  "configuration": {
+    "requested_backend": "vertex-qdrant-v3",
+    "effective_backend": "vertex-qdrant-v3",
+    "ranking_mode": "raw-rrf",
+    "candidate_pool_source": null,
+    "profile_name": "separated_intent",
+    "profile": {
+      "name": "separated_intent",
+      "retrieval_document_limit": 24,
+      "resolved_document_limit": 16,
+      "local_chunks_per_document": 4,
+      "rerank_input_limit": 24,
+      "rerank_return_limit": 3,
+      "final_evidence_limit": 3,
+      "final_context_token_limit": 720,
+      "intent_scoring_enabled": true,
+      "rewrite_mode": "off",
+      "reranker_mode": "current"
+    },
+    "eval_mode": "retrieval-only",
+    "judge_mode": "none",
+    "guardrail_mode": "off",
+    "rewrite_mode": "off",
+    "reranker_provider": "current",
+    "gold_policy": "none",
+    "selected_case_count": 50,
+    "selected_case_ids_sha256": "be13608ad91b6a1e5d50660470798a9099049b59ad9e70cfd6b804e5397ccb3a",
+    "retrieval_runtime": {
+      "backend": "vertex-qdrant-v3",
+      "collection": "vietlex-legal-rag-v3-vertex-1024",
+      "dense_model": "gemini-embedding-2",
+      "dense_dimension": 1024,
+      "sparse_model": "FastSparseEncoder",
+      "fallback_backend": null,
+      "google_cloud_calls_enabled": true
+    },
+    "configured_provider_models": {
+      "dense": {
+        "provider": "Google Vertex AI",
+        "model": "gemini-embedding-2"
+      },
+      "reranker_primary": {
+        "provider": "none",
+        "model": "raw-rrf"
+      },
+      "reranker_fallback": null,
+      "generation": {
+        "mode": "not_applicable",
+        "candidates": []
+      },
+      "judge": {
+        "mode": "none",
+        "candidates": []
+      }
+    }
+  },
+  "configured_provider_models": {
+    "dense": {
+      "provider": "Google Vertex AI",
+      "model": "gemini-embedding-2"
+    },
+    "reranker_primary": {
+      "provider": "none",
+      "model": "raw-rrf"
+    },
+    "reranker_fallback": null,
+    "generation": {
+      "mode": "not_applicable",
+      "candidates": []
+    },
+    "judge": {
+      "mode": "none",
+      "candidates": []
+    }
+  },
+  "artifact_files": [
+    {
+      "path": "configuration.json",
+      "sha256": "68aaf7f282a3402ef816a84cbff5ead3190a512c8b35cb7ac60824f035f93bce",
+      "bytes": 1617,
+      "storage": "git"
+    },
+    {
+      "path": "evaluation_case_set.json",
+      "sha256": "1c09bc24bf5c1fccc8833e0923c675ced8d48017397b882231ea18b7b8a43d4f",
+      "bytes": 1013,
+      "storage": "git"
+    },
+    {
+      "path": "quality_gate.json",
+      "sha256": "f6e36a5e4d744fa1db83680de7367346c0389432c2380d4c06da66743b039689",
+      "bytes": 475,
+      "storage": "git"
+    },
+    {
+      "path": "report.md",
+      "sha256": "91fc18d0bb9758d81c7b488b0fee518623781a3e8542dca29308167728240662",
+      "bytes": 9902,
+      "storage": "git"
+    },
+    {
+      "path": "retrieval_results.json",
+      "sha256": "f9cb6dbe9ee4266abecb18487ae60c8003daea5fa2f24a4813ea7f87bced6cf7",
+      "bytes": 6794947,
+      "storage": "git"
+    }
+  ],
+  "code_metric_version": "3.0.0"
+}
