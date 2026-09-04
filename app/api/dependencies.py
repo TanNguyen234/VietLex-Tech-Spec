@@ -5,7 +5,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from app.config import get_settings
 from app.services.web_security import AdminAuthState, verify_admin_credentials
-from app.account_database import resolve_auth_session
+from app.account_database import effective_role, effective_status, resolve_auth_session
 
 
 _admin_basic = HTTPBasic(auto_error=False)
@@ -39,9 +39,30 @@ async def verify_csrf_header(
 
 
 async def require_admin(
+    request: Request,
     credentials: HTTPBasicCredentials | None = Depends(_admin_basic),
 ):
     settings = get_settings()
+    user = await resolve_auth_session(
+        request.cookies.get(settings.AUTH_COOKIE_NAME)
+    )
+    if user is not None:
+        if effective_status(user) != "active":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Account is disabled.",
+            )
+        if effective_role(user) != "admin":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Administrator role required.",
+            )
+        return user
+    if not getattr(settings, "LEGACY_ADMIN_BASIC_ENABLED", False):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Administrator authentication required.",
+        )
     state = verify_admin_credentials(
         username=credentials.username if credentials else None,
         password=credentials.password if credentials else None,
@@ -58,7 +79,7 @@ async def require_admin(
             detail="Admin authentication required.",
             headers={"WWW-Authenticate": "Basic"},
         )
-    return credentials.username
+    return {"_id": f"legacy:{credentials.username}", "role": "admin", "status": "active"}
 
 
 async def optional_user(request: Request):
@@ -73,5 +94,10 @@ async def require_user(user=Depends(optional_user)):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required.",
+        )
+    if effective_status(user) != "active":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is disabled.",
         )
     return user

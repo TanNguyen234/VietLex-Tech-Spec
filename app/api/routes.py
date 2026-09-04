@@ -2,6 +2,7 @@ import asyncio
 import json
 import time
 import uuid
+import secrets
 from functools import partial
 from pathlib import Path
 from typing import Dict
@@ -9,7 +10,13 @@ import logfire
 
 from fastapi import APIRouter, Request, Depends, Form, BackgroundTasks, HTTPException
 
-from fastapi.responses import HTMLResponse, JSONResponse, Response, StreamingResponse
+from fastapi.responses import (
+    HTMLResponse,
+    JSONResponse,
+    RedirectResponse,
+    Response,
+    StreamingResponse,
+)
 from fastapi.templating import Jinja2Templates
 
 from app.evaluation.online_metrics import build_online_metrics, sanitize_error_message
@@ -30,6 +37,8 @@ from app.services.readiness import build_readiness
 from app.rate_limit import limiter
 from app.services.evidence_presenter import present_context
 from app.services.portfolio_evidence import load_portfolio_evidence
+from app.services.provider_runtime import provider_status_snapshot
+from app.services.direct_llm import provider_cooldown_snapshot
 from app.services.chat_progress import chat_progress
 
 from app.services.pii import redact_pii
@@ -41,7 +50,14 @@ from app.services.runtime_errors import (
 from app.database import (
     log_interaction, update_feedback, get_admin_logs, get_admin_stats, get_interaction,
     create_session, get_sessions, get_session_messages, delete_session, rename_session,
-    get_owned_interaction,
+    get_owned_interaction, get_admin_audit_logs,
+)
+from app.account_database import (
+    get_user_by_id,
+    list_users,
+    revoke_all_auth_sessions,
+    set_user_status,
+    write_admin_audit,
 )
 
 router = APIRouter()
@@ -52,6 +68,23 @@ _public_ragas_quota = DailyRagasQuota(
     global_limit=settings.PUBLIC_RAGAS_GLOBAL_DAILY_LIMIT,
 )
 _public_ragas_semaphore = asyncio.Semaphore(1)
+
+
+def _sanitize_admin_interaction(log: dict) -> dict:
+    def bounded(value: object, limit: int) -> str:
+        return redact_pii(sanitize_error_message(value))[:limit]
+
+    raw_contexts = log.get("contexts")
+    contexts = raw_contexts if isinstance(raw_contexts, list) else []
+    return {
+        **log,
+        "user_query": bounded(log.get("user_query", ""), 2_000),
+        "bot_response": bounded(log.get("bot_response", ""), 10_000),
+        "contexts": [
+            bounded(value, 4_000)
+            for value in contexts[:10]
+        ],
+    }
 
 
 async def check_input_guardrails(message: str):
@@ -1008,18 +1041,52 @@ async def export_session(
 async def admin_page(
     request: Request,
     search: str = "",
-    _admin: str = Depends(require_admin),
+    _admin: dict = Depends(require_admin),
 ):
     stats = await get_admin_stats()
     logs = await get_admin_logs(limit=25, skip=0, search_query=search.strip()[:100])
+    logs = [_sanitize_admin_interaction(log) for log in logs]
+    users = await list_users(limit=25)
+    audit_logs = await get_admin_audit_logs(limit=25)
+    async def admin_mongo_ping() -> bool:
+        from app.database import get_db
+
+        return (await get_db().command("ping")).get("ok") == 1.0
+
+    system_status = await build_readiness(settings, admin_mongo_ping)
+    csrf_token = secrets.token_hex(32)
     portfolio_evidence = load_portfolio_evidence(
         Path("docs/evaluation/runs/answer-balanced50-v2-live-20260822/report.md")
     )
-    return templates.TemplateResponse(
+    response = templates.TemplateResponse(
         request,
         "admin.html",
-        {"stats": stats, "logs": logs, "search": search, "skip": 0, "limit": 25, "portfolio_evidence": portfolio_evidence}
+        {
+            "stats": stats,
+            "logs": logs,
+            "users": users,
+            "audit_logs": audit_logs,
+            "provider_status": provider_status_snapshot(
+                settings, provider_cooldown_snapshot()
+            ),
+            "system_status": system_status,
+            "settings": settings,
+            "current_admin": _admin,
+            "csrf_token": csrf_token,
+            "search": search,
+            "skip": 0,
+            "limit": 25,
+            "portfolio_evidence": portfolio_evidence,
+        }
     )
+    response.set_cookie(
+        "csrf_token",
+        csrf_token,
+        httponly=True,
+        secure=settings.APP_ENV == "production" or request.url.scheme == "https",
+        samesite="strict",
+    )
+    return response
 
 @router.get("/admin/stats", response_class=HTMLResponse)
 async def admin_stats_partial(request: Request, _admin: str = Depends(require_admin)):
@@ -1035,10 +1102,21 @@ async def admin_logs_partial(
     request: Request,
     search: str = "",
     skip: int = 0,
-    limit: int = 15
-    , _admin: str = Depends(require_admin)
+    limit: int = 15,
+    request_status: str = "",
+    provider: str = "",
+    cache_hit: bool | None = None,
+    _admin: dict = Depends(require_admin),
 ):
-    logs = await get_admin_logs(limit=limit, skip=skip, search_query=search)
+    logs = await get_admin_logs(
+        limit=limit,
+        skip=skip,
+        search_query=search,
+        request_status=request_status or None,
+        provider=provider or None,
+        cache_hit=cache_hit,
+    )
+    logs = [_sanitize_admin_interaction(log) for log in logs]
     return templates.TemplateResponse(
         request,
         "admin_logs.html",
@@ -1052,8 +1130,95 @@ async def admin_details_partial(
     _admin: str = Depends(require_admin),
 ):
     log = await get_interaction(trace_id)
+    if log:
+        log = _sanitize_admin_interaction(log)
     return templates.TemplateResponse(
         request,
         "admin_details.html",
         {"log": log}
+    )
+
+
+@router.get("/admin/users", response_class=HTMLResponse)
+async def admin_users_partial(
+    request: Request,
+    search: str = "",
+    account_status: str = "",
+    role: str = "",
+    skip: int = 0,
+    limit: int = 25,
+    _admin: dict = Depends(require_admin),
+):
+    users = await list_users(
+        search=search.strip(),
+        status=account_status,
+        role=role,
+        skip=skip,
+        limit=limit,
+    )
+    return templates.TemplateResponse(
+        request,
+        "admin_users.html",
+        {"users": users, "csrf_token": request.cookies.get("csrf_token", "")},
+    )
+
+
+@router.post("/admin/users/{user_id}/status")
+@limiter.limit(settings.SESSION_RATE_LIMIT)
+async def admin_set_user_status(
+    request: Request,
+    user_id: str,
+    account_status: str = Form(...),
+    _csrf: str = Depends(verify_csrf),
+    admin: dict = Depends(require_admin),
+):
+    if account_status == "disabled" and str(admin["_id"]) == user_id:
+        raise HTTPException(status_code=409, detail="Administrators cannot disable themselves.")
+    try:
+        changed = await set_user_status(user_id[:100], account_status)
+    except ValueError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from None
+    if not changed:
+        raise HTTPException(status_code=404, detail="User not found.")
+    await write_admin_audit(
+        str(admin["_id"]),
+        f"account_{account_status}",
+        "user",
+        user_id,
+        request_id=request.headers.get("x-request-id"),
+    )
+    return RedirectResponse("/admin", status_code=303)
+
+
+@router.post("/admin/users/{user_id}/revoke-sessions")
+@limiter.limit(settings.SESSION_RATE_LIMIT)
+async def admin_revoke_user_sessions(
+    request: Request,
+    user_id: str,
+    _csrf: str = Depends(verify_csrf),
+    admin: dict = Depends(require_admin),
+):
+    if await get_user_by_id(user_id[:100]) is None:
+        raise HTTPException(status_code=404, detail="User not found.")
+    await revoke_all_auth_sessions(user_id[:100])
+    await write_admin_audit(
+        str(admin["_id"]),
+        "sessions_revoked",
+        "user",
+        user_id,
+        request_id=request.headers.get("x-request-id"),
+    )
+    return RedirectResponse("/admin", status_code=303)
+
+
+@router.get("/admin/audit", response_class=HTMLResponse)
+async def admin_audit_partial(
+    request: Request,
+    limit: int = 50,
+    _admin: dict = Depends(require_admin),
+):
+    return templates.TemplateResponse(
+        request,
+        "admin_audit.html",
+        {"audit_logs": await get_admin_audit_logs(limit=limit)},
     )

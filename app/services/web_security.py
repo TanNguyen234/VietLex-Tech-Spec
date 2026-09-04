@@ -85,6 +85,12 @@ def public_rate_limit_key(request: Any) -> str:
     return f"{ip_address}:{client_id}"
 
 
+def authentication_rate_limit_key(request: Any) -> str:
+    """Bind account-abuse limits to the network peer, not a replaceable cookie."""
+    client = getattr(request, "client", None)
+    return str(getattr(client, "host", None) or "unknown")
+
+
 class AnonymousClientMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,

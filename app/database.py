@@ -222,26 +222,55 @@ async def update_feedback(
         logfire.error("Failed to update feedback in MongoDB: {error}", error=str(e), trace_id=trace_id)
         return False
 
-async def get_admin_logs(limit: int = 50, skip: int = 0, search_query: Optional[str] = None) -> List[Dict[str, Any]]:
+async def get_admin_logs(
+    limit: int = 50,
+    skip: int = 0,
+    search_query: Optional[str] = None,
+    *,
+    request_status: Optional[str] = None,
+    provider: Optional[str] = None,
+    cache_hit: Optional[bool] = None,
+) -> List[Dict[str, Any]]:
     database = get_db()
     collection = database.evaluation_logs
     
-    query = {}
+    query: Dict[str, Any] = {}
     if search_query:
-        query = {
-            "$or": [
-                {"user_query": {"$regex": search_query, "$options": "i"}},
-                {"bot_response": {"$regex": search_query, "$options": "i"}},
-                {"trace_id": {"$regex": search_query, "$options": "i"}}
-            ]
-        }
+        bounded = re.escape(search_query[:100])
+        query["$or"] = [
+            {"user_query": {"$regex": bounded, "$options": "i"}},
+            {"bot_response": {"$regex": bounded, "$options": "i"}},
+            {"trace_id": {"$regex": bounded, "$options": "i"}},
+        ]
+    if request_status:
+        query["metrics.request_status"] = request_status[:50]
+    if provider:
+        query["metrics.observed_provider"] = provider[:100]
+    if cache_hit is not None:
+        query["cached"] = cache_hit
         
     try:
-        cursor = collection.find(query).sort("timestamp", -1).skip(skip).limit(limit)
-        logs = await cursor.to_list(length=limit)
+        bounded_limit = min(max(1, limit), 100)
+        cursor = collection.find(query).sort("timestamp", -1).skip(max(0, skip)).limit(bounded_limit)
+        logs = await cursor.to_list(length=bounded_limit)
         return logs
     except Exception as e:
         logfire.error("Failed to fetch admin logs from MongoDB: {error}", error=str(e))
+        return []
+
+
+async def get_admin_audit_logs(limit: int = 50) -> List[Dict[str, Any]]:
+    bounded_limit = min(max(1, limit), 100)
+    try:
+        cursor = get_db().admin_audit_logs.find({}).sort("timestamp", -1).limit(
+            bounded_limit
+        )
+        return await cursor.to_list(length=bounded_limit)
+    except Exception as error:
+        logfire.error(
+            "Failed to fetch administrative audit logs: {error_kind}",
+            error_kind=type(error).__name__,
+        )
         return []
 
 async def get_admin_stats() -> Dict[str, Any]:

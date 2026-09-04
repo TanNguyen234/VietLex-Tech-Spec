@@ -143,6 +143,7 @@ class Settings(BaseSettings):
     
     # Logfire Token
     LOGFIRE_TOKEN: Optional[str] = None
+    LOGFIRE_SERVICE_NAME: str = "vietlex"
     
     # MongoDB Connection URL
     MONGO_URL: Optional[str] = None
@@ -161,6 +162,7 @@ class Settings(BaseSettings):
     )
     ADMIN_USERNAME: Optional[str] = None
     ADMIN_PASSWORD: Optional[str] = None
+    LEGACY_ADMIN_BASIC_ENABLED: bool = False
     ACCOUNT_EMAIL_ENABLED: bool = False
     EMAIL_USER: Optional[str] = None
     EMAIL_PASS: Optional[str] = None
@@ -272,6 +274,12 @@ def validate_production_settings(settings: Settings) -> None:
             raise RuntimeError(
                 "PUBLIC_BASE_URL must be HTTPS when account email is enabled"
             )
+    if settings.LEGACY_ADMIN_BASIC_ENABLED and (
+        not settings.ADMIN_USERNAME or not settings.ADMIN_PASSWORD
+    ):
+        raise RuntimeError(
+            "ADMIN_USERNAME and ADMIN_PASSWORD are required when legacy Basic Auth is enabled"
+        )
 
 
 @lru_cache

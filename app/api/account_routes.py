@@ -19,8 +19,12 @@ from app.account_database import (
     delete_account_history,
     export_account,
     get_user_by_email,
+    list_auth_sessions,
+    mark_last_login,
     mark_user_verified,
     revoke_auth_session,
+    revoke_auth_session_by_id,
+    revoke_other_auth_sessions,
     update_password,
 )
 from app.api.dependencies import require_user, verify_csrf
@@ -32,6 +36,7 @@ from app.services.accounts import (
     verify_password,
 )
 from app.services.email_delivery import SmtpEmailSender
+from app.services.web_security import authentication_rate_limit_key
 from app.rate_limit import limiter
 
 
@@ -68,7 +73,11 @@ def _form_response(
         status_code=status_code,
     )
     response.set_cookie(
-        "csrf_token", csrf_token, httponly=True, samesite="strict"
+        "csrf_token",
+        csrf_token,
+        httponly=True,
+        secure=settings.APP_ENV == "production" or request.url.scheme == "https",
+        samesite="strict",
     )
     return response
 
@@ -83,7 +92,7 @@ async def register_page(request: Request):
 
 
 @router.post("/register", response_class=HTMLResponse)
-@limiter.limit(settings.SESSION_RATE_LIMIT)
+@limiter.limit(settings.SESSION_RATE_LIMIT, key_func=authentication_rate_limit_key)
 async def register(
     request: Request,
     email: str = Form(...),
@@ -137,7 +146,7 @@ async def login_page(request: Request):
 
 
 @router.post("/login")
-@limiter.limit(settings.SESSION_RATE_LIMIT)
+@limiter.limit(settings.SESSION_RATE_LIMIT, key_func=authentication_rate_limit_key)
 async def login(
     request: Request,
     email: str = Form(...),
@@ -151,6 +160,7 @@ async def login(
     if (
         not user
         or not user.get("email_verified")
+        or user.get("status", "active") != "active"
         or not verify_password(password, str(user.get("password_hash", "")))
     ):
         return _form_response(
@@ -162,6 +172,7 @@ async def login(
     token = new_token()
     user_id = str(user["_id"])
     await create_auth_session(user_id, token)
+    await mark_last_login(user_id)
     await claim_anonymous_history(
         user_id, getattr(request.state, "client_id", "legacy")
     )
@@ -204,7 +215,7 @@ async def forgot_password_page(request: Request):
 
 
 @router.post("/forgot-password", response_class=HTMLResponse)
-@limiter.limit(settings.SESSION_RATE_LIMIT)
+@limiter.limit(settings.SESSION_RATE_LIMIT, key_func=authentication_rate_limit_key)
 async def forgot_password(
     request: Request,
     email: str = Form(...),
@@ -236,7 +247,7 @@ async def reset_password_page(request: Request, token: str = ""):
 
 
 @router.post("/reset-password", response_class=HTMLResponse)
-@limiter.limit(settings.SESSION_RATE_LIMIT)
+@limiter.limit(settings.SESSION_RATE_LIMIT, key_func=authentication_rate_limit_key)
 async def reset_password(
     request: Request,
     token: str = Form(...),
@@ -262,15 +273,48 @@ async def reset_password(
 @router.get("/settings", response_class=HTMLResponse)
 async def account_settings(request: Request, user=Depends(require_user)):
     csrf_token = secrets.token_hex(32)
+    sessions = await list_auth_sessions(
+        str(user["_id"]),
+        current_token=request.cookies.get(settings.AUTH_COOKIE_NAME),
+    )
     response = templates.TemplateResponse(
         request,
         "settings.html",
-        {"user": user, "csrf_token": csrf_token},
+        {"user": user, "sessions": sessions, "csrf_token": csrf_token},
     )
     response.set_cookie(
-        "csrf_token", csrf_token, httponly=True, samesite="strict"
+        "csrf_token",
+        csrf_token,
+        httponly=True,
+        secure=settings.APP_ENV == "production" or request.url.scheme == "https",
+        samesite="strict",
     )
     return response
+
+
+@router.post("/account/sessions/{session_id}/revoke")
+@limiter.limit(settings.SESSION_RATE_LIMIT)
+async def account_session_revoke(
+    request: Request,
+    session_id: str,
+    _csrf: str = Depends(verify_csrf),
+    user=Depends(require_user),
+):
+    await revoke_auth_session_by_id(str(user["_id"]), session_id[:100])
+    return RedirectResponse("/settings", status_code=303)
+
+
+@router.post("/account/sessions/revoke-others")
+@limiter.limit(settings.SESSION_RATE_LIMIT)
+async def account_sessions_revoke_others(
+    request: Request,
+    _csrf: str = Depends(verify_csrf),
+    user=Depends(require_user),
+):
+    token = request.cookies.get(settings.AUTH_COOKIE_NAME)
+    if token:
+        await revoke_other_auth_sessions(str(user["_id"]), token)
+    return RedirectResponse("/settings", status_code=303)
 
 
 @router.get("/account/export")
