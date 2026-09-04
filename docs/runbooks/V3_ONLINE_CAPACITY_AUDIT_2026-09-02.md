@@ -2,6 +2,11 @@
 
 Read-only audit time: `2026-09-02T00:39:33+07:00`.
 
+> Historical snapshot: the v3 online stores were expanded on 2026-09-03 to
+> 141,798 Qdrant points over 14,962 document IDs and 14,962 matching Supabase
+> rows. See `docs/evaluation/CURRENT_STATUS.md` and `docs/PROJECT_CONTEXT.md`
+> for current state; counts below intentionally preserve this audit's evidence.
+
 ## Scope and authority
 
 The initial audit queried Qdrant collection metadata, cluster telemetry,

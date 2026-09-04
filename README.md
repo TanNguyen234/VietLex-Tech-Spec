@@ -22,12 +22,12 @@ VietLex là dự án portfolio AI/ML xây dựng hệ thống hỏi đáp pháp 
 
 | Bằng chứng portfolio | Kết quả đã lưu trong artifact |
 | :--- | :--- |
-| Golden-50 answer evaluation v3 raw-RRF, 2026-09-02 | Deterministic exact match **0,0000** · Token F1 **0,2304** · Citation precision **0,9470** |
-| Ragas opt-in, secondary evidence | Faithfulness **0,8887** · Answer Accuracy **0,9184** · Context Precision **0,8878** · Context Recall **0,9354** trên 49/50 case |
-| Hoàn tất pipeline | **50/50** generation `STOP` · **50/50** NeMo input/output safe · **49/50** Ragas, 1 lỗi judge có kiểu |
+| Golden-50 answer evaluation v3 RRF+DBSF, 2026-09-03 | Deterministic exact match **0,0000** · Token F1 **0,2305** · Citation precision **0,9183** |
+| Ragas opt-in, secondary evidence | Faithfulness **0,8221** · Answer Accuracy **0,9100** · Context Precision **0,8600** · Context Recall **0,9500** trên 50/50 case |
+| Hoàn tất pipeline | **50/50** generation `STOP` · **50/50** NeMo input/output safe · **50/50** Ragas · 0 lỗi kỹ thuật |
 | Verified retrieval subset | **40** case có toàn bộ required evidence đã xác minh · Document Recall@3 **1,0000**, micro **53/53** |
-| Dữ liệu v3 đã kiểm kê | **51.801** point remote · **4.969** document ID duy nhất · local full-doc/FTS bundle cùng tập |
-| Automated verification | **921 passed, 2 skipped**; live-provider tests vẫn là opt-in |
+| Dữ liệu v3 đã kiểm kê | **141.798** point remote · **14.962** document ID duy nhất · Supabase cùng **14.962** văn bản |
+| Automated verification | **925 passed, 2 skipped**; 2 deployment test pass khi chạy lại riêng sau timeout dưới tải full-suite |
 | Public SSR smoke | Vercel FastAPI/Jinja tại <https://vietlex-legal-rag.vercel.app>: SSR và readiness sẵn sàng; tìm kiếm Supabase và trang toàn văn đã được kiểm tra trực tiếp |
 
 Golden-50 v3 được tách từ Balanced-50, gồm 40 case có fully verified required retrieval evidence và 10 deterministic reference-only case. Các metric trên là bằng chứng cho một lát cắt đánh giá có giới hạn, không chứng minh độ chính xác pháp lý trên toàn corpus hoặc production readiness. Xem [`PORTFOLIO_EVIDENCE.md`](docs/evaluation/PORTFOLIO_EVIDENCE.md) để biết provenance và evidence boundary đầy đủ.
@@ -42,14 +42,14 @@ Golden-50 v3 được tách từ Balanced-50, gồm 40 case có fully verified r
 
 ![Giao diện tra cứu Bộ luật Lao động 2019](docs/images/vietlex_legal_search_latest.png)
 
-Hai ảnh được chụp ngày **2026-08-26** từ web FastAPI/Jinja2 chạy thật với local corpus và MongoDB online; đây không phải mockup. Deployment công khai online-only hiện ở <https://vietlex-legal-rag.vercel.app>; trang tìm kiếm và toàn văn dùng tập Supabase 4.969 văn bản tương ứng v3.
+Hai ảnh được chụp ngày **2026-08-26** từ web FastAPI/Jinja2 chạy thật với local corpus và MongoDB online; đây không phải mockup. Deployment công khai online-only hiện ở <https://vietlex-legal-rag.vercel.app>; trang tìm kiếm và toàn văn dùng tập Supabase 14.962 văn bản tương ứng v3 online.
 
 ## Năng lực cốt lõi
 
-- **V3 hybrid retrieval mặc định:** Qdrant dense 1024d + sparse IDF hợp nhất bằng raw RRF trên **51.801** structural point.
+- **V3 hybrid retrieval mặc định:** Qdrant dense 1024d + sparse IDF; hợp nhất RRF và DBSF bằng reciprocal-rank blend 50/50 trên **141.798** structural point.
 - **Evidence v3:** chat đọc trực tiếp trường `body` trong Qdrant payload; không gọi Supabase để resolve full text.
-- **Full-document v3:** Supabase phục vụ trang toàn văn và tìm số hiệu/tiêu đề trên Vercel; SQLite/Zstandard + FTS5 giữ cùng **4.969** văn bản cho persistent/local và sparse-length calibration.
-- **Reranking:** v3 giữ raw RRF; Qdrant ColBERT không được bật vì A/B identical-input làm giảm verified recall.
+- **Full-document v3:** Supabase phục vụ trang toàn văn và tìm số hiệu/tiêu đề trên Vercel cho **14.962** văn bản; bundle SQLite/Zstandard + FTS5 cũ vẫn chỉ là lát cắt local và không phải dữ liệu runtime online.
+- **Ranking:** v3 dùng blend RRF+DBSF đã vượt Golden-50 gate sau khi raw RRF hồi quy trên corpus mở rộng; Qdrant ColBERT không được bật vì làm giảm verified article/clause recall.
 - **Grounded generation:** Vertex AI `gemini-3.5-flash` qua ADC, với citations và typed provider diagnostics.
 - **Evaluation:** deterministic retrieval/answer metrics là mặc định; Ragas/LLM judge chỉ chạy opt-in offline.
 - **Web backend:** FastAPI, Jinja2/HTMX, MongoDB cho session/log/feedback, rate limiting và guardrail modes `off`/`shadow`/`enforce`.
@@ -62,7 +62,7 @@ Hai ảnh được chụp ngày **2026-08-26** từ web FastAPI/Jinja2 chạy th
 flowchart TB
     User["Browser"] --> Web["Vercel FastAPI · Jinja2/HTMX SSR"]
     Web --> Mongo["MongoDB online<br/>accounts · sessions · logs · feedback"]
-    Web --> Supabase["Supabase online<br/>4,969 full documents · title/number search"]
+    Web --> Supabase["Supabase online<br/>14,962 full documents · title/number search"]
 
     subgraph Ingest["Pinned ingestion contract"]
         Corpus["Hugging Face snapshot<br/>518,255 documents"] --> Store["SQLite + Zstandard<br/>518,255 full texts · 3.08 GiB"]
@@ -97,7 +97,7 @@ flowchart TB
         Query -. "STRUCTURAL_BACKEND_ENABLED" .-> QV2["Qdrant v2 structural pilot<br/>827 documents · 134,334 points · 384d + BM25"]
         QV2 -. "parallel evidence" .-> Rerank
         Store -. "resumable migration" .-> Embed2["Vertex gemini-embedding-2<br/>1024d"]
-        Embed2 -.-> QV3["Qdrant v3 primary<br/>51,801 points · 4,969 documents"]
+        Embed2 -.-> QV3["Qdrant v3 primary<br/>141,798 points · 14,962 documents"]
         Selector -- "false (mặc định)" --> QV3
         QV3 --> Evidence
         QV3 -. "explicit evaluation" .-> Audit["Deterministic retrieval benchmark"]
@@ -110,14 +110,14 @@ flowchart TB
 
 | Mặt so sánh | Legacy/free (`true`) | V3 mặc định (`false`) |
 | :--- | :--- | :--- |
-| Coverage | 518.255 văn bản | 51.801 point từ đúng 4.969 document ID đã audit |
+| Coverage | 518.255 văn bản | 141.798 point từ đúng 14.962 document ID đã audit |
 | Vector store | Pinecone `vietlex-legal-rag-v1/legal-documents-v1` | Qdrant `vietlex-legal-rag-v3-vertex-1024` |
 | Đơn vị index | 1 vector đại diện/văn bản | Structural chunk; tối đa 16 chunk phân bố đều/văn bản khi migration |
 | Dense embedding | E5-small 384d qua Qdrant inference | `gemini-embedding-2` 1024d qua Vertex |
 | Sparse | `FastSparseEncoder`, tối đa 64 term; không phải full BM25 | Sparse IDF theo point trong Qdrant |
-| Truy xuất | Pinecone hybrid chạy song song SQLite FTS số hiệu/tiêu đề | Qdrant dense+sparse fusion bằng RRF |
+| Truy xuất | Pinecone hybrid chạy song song SQLite FTS số hiệu/tiêu đề | Qdrant dense+sparse, blend thứ hạng RRF+DBSF 50/50 |
 | Full text/chunk runtime | Resolve SQLite/Zstandard rồi chunk 220/24 | Dùng structural text đã lưu trong payload; migration chunk 320/32 |
-| Rerank | Qdrant ColBERT; Pinecone BGE fallback | Raw RRF; ColBERT không được chọn vì A/B identical-input kém hơn |
+| Rerank | Qdrant ColBERT; Pinecone BGE fallback | Không dùng neural reranker; ColBERT bị loại vì làm giảm Article/Clause Recall |
 | Evidence cuối | Tối đa 3 chunk / 720 token | Tối đa 3 point / 720 token |
 | Khi lỗi backend | Có thể còn evidence từ FTS và báo partial error | Fail closed có typed error; không âm thầm nhảy sang Pinecone |
 | Google Cloud | Bị chặn trước khi tạo Vertex client; generation dùng direct-API fallback đã cấu hình | Vertex dùng cho query embedding và generation/guardrails mặc định |
@@ -130,7 +130,7 @@ Cross-lane Pinecone BGE final rerank đã được triển khai và đánh giá 
 
 ## Trạng thái dữ liệu và giới hạn hiện tại
 
-Số liệu dưới đây được đọc lại ngày **2026-08-27** bằng API chỉ-đọc của Pinecone/Qdrant và SQLite ở chế độ read-only.
+Số liệu Qdrant v3/Supabase được đọc lại ngày **2026-09-03**; các kho legacy/pilot giữ mốc audit lịch sử riêng.
 
 | Kho dữ liệu | Vai trò thực tế | Số lượng quan sát được | Trạng thái / giới hạn |
 | :--- | :--- | ---: | :--- |
@@ -142,7 +142,8 @@ Số liệu dưới đây được đọc lại ngày **2026-08-27** bằng API 
 | Qdrant `vietlex-embedding-staging` | E5 inference staging | **2.049** point 384d | Collection kỹ thuật, không phải corpus durable |
 | Qdrant `vietlex-rerank-staging` | ColBERT transient staging | **0** point thường trú | Point tạm được dọn sau rerank |
 | Qdrant `vietlex-legal-rag-v2-pilot-384` | Structural pilot opt-in | **134.334** point từ **827** văn bản | Dense 384d + sparse BM25/IDF; collection green nhưng coverage hẹp |
-| Qdrant `vietlex-legal-rag-v3-vertex-1024` | Runtime mặc định khi boolean `false` | **51.801** point trên đúng **4.969** document ID đã audit | Dense 1024d + sparse IDF; collection green nhưng coverage hẹp |
+| Qdrant `vietlex-legal-rag-v3-vertex-1024` | Runtime mặc định khi boolean `false` | **141.798** point trên đúng **14.962** document ID đã audit | Dense 1024d + sparse IDF; collection green nhưng coverage hẹp |
+| Supabase `public.legal_documents` | Full-document browser online | **14.962** văn bản | Cùng tập document ID online với Qdrant v3; publishable client chỉ đọc qua RLS |
 | MongoDB online | Tài khoản, phiên, interaction, feedback | Dữ liệu vận hành thay đổi theo người dùng | Không chứa corpus hoặc vector pháp luật |
 
 ### Usage limit nào đang áp dụng?
@@ -159,7 +160,7 @@ API database cho biết schema và số vector/point, nhưng **không trả về
 1. Pinecone v1 bao phủ đủ 518.255 văn bản nhưng chỉ có **một vector đại diện cho mỗi văn bản**. Một Điều/Khoản nằm sâu trong full text có thể không xuất hiện trong representation dùng để embedding.
 2. SQLite FTS5 giúp bắt số hiệu và tiêu đề, nhưng không phải article/body search. Các câu hỏi diễn đạt tự nhiên không nêu số hiệu vẫn phụ thuộc vào document-level semantic recall.
 3. Qdrant v2 có structural chunk tốt hơn nhưng chỉ phủ 827 văn bản. Bật nó không tự biến coverage thành toàn corpus.
-4. Qdrant v3 đã vượt mốc 50.000 point nhưng mới lấy từ 5.000/518.255 văn bản. Nó nay là runtime mặc định, nên có thể cải thiện câu hỏi thuộc vùng đã migrate; câu hỏi ngoài vùng đó vẫn có thể không có candidate. Canary 40 case cho thấy raw RRF tốt, còn Qdrant ColBERT làm giảm recall; coverage đại diện vẫn là bottleneck.
+4. Qdrant v3 hiện có 141.798 point từ 14.962/518.255 văn bản. Nó là runtime mặc định, nhưng câu hỏi ngoài vùng đã migrate vẫn có thể không có candidate. Golden-50 cho thấy blend RRF+DBSF qua gate, còn Qdrant ColBERT làm giảm recall; coverage đại diện vẫn là bottleneck.
 
 ## Migration sắp tới và mốc hết Google Cloud Trial
 
@@ -189,7 +190,7 @@ Khuyến nghị thực tế: **không full-migrate hàng triệu point chỉ đ�
 
 ### 1. Bảng chỉ số toàn diện Golden-50 v3 (Deterministic + Ragas + Latency + Safety)
 
-Đánh giá thực thi trên tập **Golden-50 v3** đã tách sẵn (26 câu hỏi Factoid + 24 câu hỏi Multi-hop) với Qdrant v3 raw-RRF, cấu hình `separated_intent`, `guardrails=enforce`, và Vertex AI `gemini-3.5-flash`. Retrieval metric chấm được 40 case đã xác minh; 10 case còn lại được ghi rõ `no_verified_gold_label`:
+Đánh giá ngày **2026-09-03** trên tập **Golden-50 v3** (26 Factoid + 24 Multi-hop) dùng Qdrant v3 **141.798 point / 14.962 văn bản**, ranking RRF+DBSF, `separated_intent`, `guardrails=enforce`, và Vertex AI `gemini-3.5-flash`. Retrieval metric chấm được 40 case đã xác minh; 10 case còn lại được ghi rõ `no_verified_gold_label`:
 
 | Nhóm chỉ số | Tên chỉ số | Giá trị đạt được | Mẫu số / Mẫu kiểm thử | Ghi chú kỹ thuật |
 | :--- | :--- | ---: | :---: | :--- |
@@ -200,24 +201,24 @@ Khuyến nghị thực tế: **không full-migrate hàng triệu point chỉ đ�
 | | **No-Candidate Rate** | **0,0%** | 0/50 | Mọi câu hỏi đều truy xuất được ngữ cảnh hợp lệ |
 | **Chất lượng Truy xuất (40/50 case có verified gold; 10 skip)** | **Document Recall @ 3** | **100,0%** | 53/53 | Văn bản chứa căn cứ nằm trong Top 3 |
 | | **Document Recall @ 24** | **100,0%** | 53/53 | Toàn bộ văn bản căn cứ được tìm thấy ở Top 24 |
-| | **Article Recall @ 3** | **100,0%** | 30/30 | Tỷ lệ trúng chính xác Điều luật cụ thể |
+| | **Article Recall @ 3** | **96,67%** | 29/30 | Tỷ lệ trúng chính xác Điều luật cụ thể |
 | | **Clause Recall @ 3** | **92,86%** | 13/14 | Tỷ lệ trúng chính xác Khoản luật cụ thể |
-| | **Document MRR** | **0,9875** | 39,5/40 | Mean Reciprocal Rank cấp văn bản |
-| | **Article MRR** | **0,9259** | 25/27 | Mean Reciprocal Rank cấp Điều luật |
-| | **Clause MRR** | **0,7949** | 10,33/13 | Mean Reciprocal Rank cấp Khoản luật |
-| | **nDCG @ 10** | **0,9275 macro / 0,9084 micro** | 43,6867/48,0918 | Normalized Discounted Cumulative Gain |
+| | **Document MRR** | **0,9500** | 38/40 | Mean Reciprocal Rank cấp văn bản |
+| | **Article MRR** | **0,9074** | 24,5/27 | Mean Reciprocal Rank cấp Điều luật |
+| | **Clause MRR** | **0,8462** | 11/13 | Mean Reciprocal Rank cấp Khoản luật |
+| | **nDCG @ 10** | **0,9025 macro / 0,8777 micro** | 42,3093/48,2021 | Normalized Discounted Cumulative Gain |
 | | **Exact Reference Hit** | **100,0%** | 40/40 | Trúng dẫn chiếu pháp lý đã xác minh |
 | | **Multi-hop All-Required** | **97,50%** | 39/40 | Thu hồi đủ 100% căn cứ trong câu hỏi đa bước |
-| **Câu trả lời deterministic (50/50)** | **Exact match / Token F1 / Character F1** | **0,0000 / 0,2304 / 0,2226** | 50/50 | Lexical overlap thấp; không được diễn giải thành đúng/sai pháp lý |
-| | **Citation precision / invalid rate** | **0,9470 / 0,0530** | 50/50 | Citation recall/coverage chỉ applicable ở 1/50 case |
-| **Ragas opt-in (49/50, 1 judge error)** | **Faithfulness (Tính trung thực)** | **0,8887** | 49/50 | Judge và generator cùng model identity; không phải review pháp lý độc lập |
-| | **Answer Accuracy (Độ chuẩn xác)** | **0,9184** | 49/50 | Mức độ trùng khớp ngữ nghĩa với ground truth |
-| | **Context Precision (Độ chuẩn ngữ cảnh)** | **0,8878** | 49/50 | Mức độ tập trung của tài liệu được trích dẫn |
-| | **Context Recall (Độ phủ ngữ cảnh)** | **0,9354** | 49/50 | Độ bao phủ thông tin cần thiết để giải đáp |
-| **Thời gian Phản hồi (50/50)** | **t_input_guardrail** | **1,1212 s** | P50 (P95: 1,3067s) | Kiểm duyệt an toàn đầu vào |
-| | **t_retrieval** | **0,8146 s** | P50 (P95: 1,1693s) | Có một cold start 13,5977 s |
-| | **t_output_guardrail** | **1,1379 s** | P50 (P95: 1,3983s) | Kiểm duyệt an toàn đầu ra |
-| | **t_total (End-to-End)** | **5,2812 s** | P50 (P95: 6,4429s) | Generation/guardrail trên evidence đã persist |
+| **Câu trả lời deterministic (50/50)** | **Exact match / Token F1 / Character F1** | **0,0000 / 0,2305 / 0,2230** | 50/50 | Lexical overlap thấp; không được diễn giải thành đúng/sai pháp lý |
+| | **Citation precision / invalid rate** | **0,9183 / 0,0817** | 50/50 | Citation recall/coverage chỉ applicable ở 1/50 case |
+| **Ragas opt-in (50/50, 0 judge error)** | **Faithfulness (Tính trung thực)** | **0,8221** | 50/50 | Judge và generator cùng model identity; không phải review pháp lý độc lập |
+| | **Answer Accuracy (Độ chuẩn xác)** | **0,9100** | 50/50 | Mức độ trùng khớp ngữ nghĩa với ground truth |
+| | **Context Precision (Độ chuẩn ngữ cảnh)** | **0,8600** | 50/50 | Mức độ tập trung của tài liệu được trích dẫn |
+| | **Context Recall (Độ phủ ngữ cảnh)** | **0,9500** | 50/50 | Độ bao phủ thông tin cần thiết để giải đáp |
+| **Thời gian Phản hồi (50/50)** | **t_input_guardrail** | **1,1634 s** | P50 (P95: 1,5169s) | Kiểm duyệt an toàn đầu vào |
+| | **t_retrieval** | **1,4103 s** | P50 (P95: 3,3656s) | Hai phép fusion Qdrant dùng chung embedding query |
+| | **t_output_guardrail** | **1,2050 s** | P50 (P95: 1,4412s) | Kiểm duyệt an toàn đầu ra |
+| | **t_total (End-to-End)** | **5,7999 s** | P50 (P95: 6,8331s) | Generation/guardrail trên evidence đã persist |
 
 ### 2. Đánh giá So sánh Reranker lần cuối (Qdrant ColBERT vs Pinecone BGE vs Raw RRF)
 
@@ -230,7 +231,7 @@ Thử nghiệm đối đầu trực tiếp trên cùng một tập 40 ca kiểm 
 | **Qdrant ColBERT (`answerai-colbert`)** | **100,0%** (53/53) | **90,00%** (27/30) | **78,57%** (11/14) | **87,50%** (35/40) | **2,97 s** | **Không đạt gate** trên chính candidate pool raw-RRF |
 | **Pinecone BGE (`bge-reranker-v2-m3`)** | NOT SCORED | NOT SCORED | NOT SCORED | NOT SCORED | 15,00 s timeout | Monthly rerank limit 500 đã hết; không biến lỗi kỹ thuật thành điểm chất lượng |
 
-**Kết luận**: Raw hybrid RRF của v3 là ứng viên tốt nhất trong canary hẹp. Qdrant ColBERT không nên bật bắt buộc vì tăng latency và loại nhầm Điều/Khoản; Pinecone BGE chưa có điểm A/B hợp lệ trong run này.
+**Kết luận hiện tại**: sau khi mở rộng corpus, raw RRF hụt `case_048` vì sparse lane kéo các văn bản nhiễu lên trên dense hit đúng. Blend 50/50 giữa thứ hạng RRF và DBSF phục hồi Document Recall@3 `53/53` và vượt toàn bộ gate; ColBERT vẫn bị loại vì làm giảm mạnh Article/Clause Recall. Đây vẫn chỉ là Golden-50 hẹp, không phải bằng chứng production-ready toàn corpus.
 
 ### 3. Final audit Balanced-50 với `qdrant-only` — không đạt cutover
 
@@ -246,11 +247,11 @@ Run lịch sử ngày 2026-08-27 thực thi đủ 50/50 câu với Qdrant ColBER
 | Deterministic token F1 / char F1 | **0,1585 / 0,1801** |
 | End-to-end latency P50 / P95 | **10,65 s / 14,09 s** |
 
-Kết quả lịch sử này loại phương án ép ColBERT vào pipeline. V3 raw-RRF hiện là runtime mặc định và tốt hơn trong audit mới, nhưng 40 case có verified retrieval gold vẫn là lát cắt hẹp nên chưa chứng minh production readiness toàn corpus.
+Kết quả lịch sử này loại phương án ép ColBERT vào pipeline. V3 RRF+DBSF hiện là runtime mặc định, nhưng 40 case có verified retrieval gold vẫn là lát cắt hẹp nên chưa chứng minh production readiness toàn corpus.
 
 ### 4. Nguồn Bằng chứng Bất biến (Artifacts)
-- [`Golden-50 v3 answer + NeMo + Ragas, 2026-09-02`](docs/evaluation/runs/answer-v3-golden50-production-20260902/report.md)
-- [`Golden-50 v3 retrieval, 2026-09-02`](docs/evaluation/runs/retrieval-v3-golden50-production-20260902/report.md)
+- [`Golden-50 v3 RRF+DBSF answer + NeMo + Ragas, 2026-09-03`](docs/evaluation/runs/answer-v3-golden50-expanded14962-rrf-dbsf-20260903/report.md)
+- [`Golden-50 v3 RRF+DBSF retrieval, 2026-09-03`](docs/evaluation/runs/retrieval-v3-golden50-expanded14962-rrf-dbsf-20260903/report.md)
 - [`Golden-50 dataset và nhãn đã tách`](docs/evaluation/golden50-v3/README.md)
 - [`Balanced-50 v3 raw-RRF answer + Ragas`](docs/evaluation/runs/answer-v3-raw-balanced50-20260827-final2/report.md)
 - [`Balanced-50 v3 raw-RRF retrieval gate`](docs/evaluation/runs/retrieval-v3-raw-balanced50-20260827-final/report.md)
@@ -269,7 +270,7 @@ Kết quả lịch sử này loại phương án ép ColBERT vào pipeline. V3 r
 
 V3 chat vẫn lấy evidence trực tiếp từ Qdrant payload. Riêng Vercel online-only dùng Supabase `public.legal_documents` cho `/search` và `/documents/{id}`; persistent/local tiếp tục đọc [`data/v3`](data/v3/README.md).
 
-Trạng thái xác minh 2026-09-02: bảng, index và RLS đã tồn tại; đúng **4.969** văn bản trùng bộ ID v3 đã được upload. Publishable key chỉ có quyền `SELECT`; không có anonymous write policy. Ba mẫu `content_sha256` và tổng số dòng đã đối chiếu với nguồn local.
+Trạng thái xác minh 2026-09-03: bảng, index và RLS đã tồn tại; đúng **14.962** văn bản trùng bộ ID v3 mở rộng đã được upload. Publishable key chỉ có quyền `SELECT`; không có anonymous write policy. Ba mẫu `content_sha256` và tổng số dòng đã đối chiếu với nguồn đã chọn.
 
 ### 1. Cấu hình biến môi trường (`.env`)
 ```env
@@ -314,7 +315,7 @@ alter table public.legal_documents enable row level security;
 python run_supabase_full_doc_upload.py --check-connection
 
 # Ví dụ upload đúng tập v3 hiện tại với streaming batch và checkpoint resumable
-python run_supabase_full_doc_upload.py --max-documents 4969 --batch-size 50 --allow-remote-write
+python run_supabase_full_doc_upload.py --document-ids-file data/migration/v3-expansion-10000-20260902-selection.json --max-documents 14962 --batch-size 50 --allow-remote-write
 ```
 
 ## Tech stack
@@ -322,8 +323,8 @@ python run_supabase_full_doc_upload.py --max-documents 4969 --batch-size 50 --al
 | Lớp | Công nghệ |
 | :--- | :--- |
 | API & UI | Python 3.12 (runtime package), FastAPI, Uvicorn, Jinja2, HTMX |
-| Vector retrieval mặc định | Qdrant v3, Vertex dense 1024d + sparse IDF + raw RRF |
-| Full-doc v3 | Supabase online-only; SQLite/Zstandard + FTS5 cho persistent/local, cùng đúng 4.969 văn bản đã audit |
+| Vector retrieval mặc định | Qdrant v3, Vertex dense 1024d + sparse IDF + RRF/DBSF rank blend |
+| Full-doc v3 | Supabase online-only với đúng 14.962 văn bản đã audit; local bundle cũ là lát cắt riêng |
 | Legacy/free | Pinecone toàn corpus + Qdrant E5 384d/ColBERT staging |
 | Generation | Google Vertex AI `gemini-3.5-flash` qua Application Default Credentials |
 | Runtime data | Supabase cho legal browser; MongoDB cho session, interaction log, feedback và admin data |
@@ -336,11 +337,11 @@ python run_supabase_full_doc_upload.py --max-documents 4969 --batch-size 50 --al
 | Tập đánh giá | Generation `STOP` | NeMo safe | Ragas coverage | Faithfulness | Answer accuracy | Context precision | Context recall | Technical errors |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | Representative-10, `all-required-verified` | 10/10 | 10/10 | 10/10 | 0,9857 | 0,9750 | 0,9400 | 1,0000 | 0 |
-| Golden-50 v3 raw-RRF, 26 factoid + 24 multi-hop | 50/50 | 50/50 | 49/50 | 0,8887 | 0,9184 | 0,8878 | 0,9354 | 1 judge error |
+| Golden-50 v3 RRF+DBSF, 26 factoid + 24 multi-hop | 50/50 | 50/50 | 50/50 | 0,8221 | 0,9100 | 0,8600 | 0,9500 | 0 |
 
 Nguồn bất biến:
 
-- [`Golden-50 v3 current report`](docs/evaluation/runs/answer-v3-golden50-production-20260902/report.md)
+- [`Golden-50 v3 current report`](docs/evaluation/runs/answer-v3-golden50-expanded14962-rrf-dbsf-20260903/report.md)
 - [`Representative-10 report`](docs/evaluation/runs/answer-representative10-v6-live-20260822/report.md)
 - [`Portfolio evidence`](docs/evaluation/PORTFOLIO_EVIDENCE.md)
 - [`Current evaluation status`](docs/evaluation/CURRENT_STATUS.md)
@@ -357,7 +358,7 @@ Metric deterministic trong code là mặc định. Retrieval metrics bao gồm D
 - Bundle v3 đã có trong repository (khoảng 41,3 MB). Chỉ cần khoảng **8 GiB disk trống** nếu tự dựng full corpus 518.255 văn bản; build hiện tại khoảng 3,08 GiB content + 0,21 GiB FTS, chưa tính file tải và file tạm.
 
 > [!IMPORTANT]
-> Repository chứa sẵn [`data/v3`](data/v3/README.md) cho đúng 4.969 văn bản thuộc collection v3, nên clone xong không cần dựng full local corpus để chạy v3. `data/huggingface/` vẫn bị ignore; chỉ cần dựng full store theo bước 3 nếu muốn đường toàn corpus 518.255 văn bản.
+> Repository chứa sẵn [`data/v3`](data/v3/README.md) cho lát cắt local cũ 4.969 văn bản; runtime v3 online đã mở rộng lên 14.962 văn bản và đọc evidence từ Qdrant/Supabase. `data/huggingface/` vẫn bị ignore; chỉ cần dựng full store theo bước 3 nếu muốn đường toàn corpus 518.255 văn bản.
 
 ### 2. Cài Python và cấu hình
 
@@ -412,7 +413,7 @@ data/huggingface/legal_fts.sqlite3       # number/title search index
 
 ### 4. Kết nối vector store
 
-Runtime mặc định dùng Qdrant v3 có **51.801 point** trên đúng **4.969 document ID** theo audit remote. Pinecone v1 có **518.255 record, một record/văn bản** và được chọn khi `USE_LEGACY_FREE_PIPELINE=true`. Con số **134.334** là số structural chunk của pilot v2 827 văn bản và không phải kích thước corpus production.
+Runtime mặc định dùng Qdrant v3 có **141.798 point** trên đúng **14.962 document ID** theo audit remote. Pinecone v1 có **518.255 record, một record/văn bản** và được chọn khi `USE_LEGACY_FREE_PIPELINE=true`. Con số **134.334** là số structural chunk của pilot v2 827 văn bản và không phải kích thước corpus production.
 
 - Nếu bạn được cấp quyền vào index hiện có: chỉ cấu hình đúng key/index/namespace trong `.env`; không ingestion lại.
 - Nếu dùng tài khoản Pinecone mới: phải tự dựng index bằng runbook. Lệnh full có thể xóa/recreate remote index, tốn quota/chi phí và không thuộc quickstart thông thường.
@@ -515,7 +516,7 @@ python -u -m app.ingestion.hf_pipeline full --delete-existing --yes
 ## Giới hạn đã công bố
 
 - Corpus của bên thứ ba không bảo đảm hiệu lực pháp luật hiện hành hoặc độc lập kiểm chứng toàn bộ dữ liệu.
-- V3 mặc định chỉ phủ đúng 4.969 document ID đã audit; pilot v2 riêng biệt phủ 827 văn bản luật chính. Không đường nào trong hai đường này đại diện toàn bộ 518.255 văn bản.
+- V3 mặc định chỉ phủ đúng 14.962 document ID đã audit; pilot v2 riêng biệt phủ 827 văn bản luật chính. Không đường nào trong hai đường này đại diện toàn bộ 518.255 văn bản.
 - Kết quả evaluation là bounded slice; không chứng minh whole-corpus legal accuracy hoặc production readiness.
 - Vercel FastAPI SSR dùng progress registry process-local; nhiều replica cần shared event backend hoặc sticky routing.
 - Cross-lane final rerank vẫn được chủ ý tắt theo quyết định `KEEP_DISABLED`.

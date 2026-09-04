@@ -1,6 +1,6 @@
 # VietLex documentation index
 
-Updated: 2026-09-02.
+Updated: 2026-09-03.
 
 This page routes readers to the correct source. A filename containing
 `architecture`, `plan`, `report`, or `current` does not by itself make that
@@ -61,12 +61,15 @@ run or update a current status document that links to both artifacts.
 
 The active public deployment is direct Vercel FastAPI/Jinja SSR at
 <https://vietlex-legal-rag.vercel.app>. It uses the audited online Qdrant v3
-slice of 51,801 points over exactly 4,969 document IDs. That is not the pinned
+slice of 141,798 points over exactly 14,962 document IDs. Supabase exposes the
+same 14,962 full documents for online title/number search and document pages.
+That is not the pinned
 518,255-document corpus. The full-corpus Pinecone v1 path remains the explicit
 legacy/free runtime selected by `USE_LEGACY_FREE_PIPELINE=true`.
 
-The latest Golden-50 evidence is dated 2026-09-02. Retrieval passed its bounded
-quality gate, but deterministic answer exact match remained `0.0000` and token
-F1 was `0.2304`; optional Ragas covered 49/50 with one typed judge error.
+The latest Golden-50 evidence is dated 2026-09-03. The RRF+DBSF retrieval run
+passed its bounded quality gate, but deterministic answer exact match remained
+`0.0000` and token F1 was `0.2305`; optional Ragas covered 50/50 while observed
+faithfulness fell from `0.8887` to `0.8221` versus the prior run.
 Therefore neither deployment success nor opt-in Ragas scores
 authorize a production-readiness or whole-corpus legal-accuracy claim.

@@ -1,6 +1,6 @@
 # VietLex Production Operations
 
-Updated: 2026-09-02.
+Updated: 2026-09-03.
 
 VietLex supports two explicit deployment topologies:
 
@@ -30,7 +30,7 @@ Current Qdrant ownership:
 | `vietlex-embedding-staging` | E5 query inference staging | Active runtime dependency; never classify as garbage from point count alone. |
 | `vietlex-rerank-staging` | ColBERT rerank staging | Active runtime dependency; zero points is normal after cleanup. |
 | `vietlex-legal-rag-v2-pilot-384` | Existing 384d structural pilot | Retain until its evaluation history is formally retired. |
-| `vietlex-legal-rag-v3-vertex-1024` | Active default v3 runtime; 51,801 points over 4,969 audited document IDs | Never delete/recreate without explicit authorization and a migration plan; it is not full-corpus coverage. |
+| `vietlex-legal-rag-v3-vertex-1024` | Active default v3 runtime; 141,798 points over 14,962 audited document IDs | Never delete/recreate without explicit authorization and a migration plan; it is not full-corpus coverage. |
 
 Before deleting a Qdrant collection, verify its exact name, point count, aliases, current config references, runtime role, and checkpoint/report provenance. Deletion is irreversible and requires explicit authorization for the named collection.
 

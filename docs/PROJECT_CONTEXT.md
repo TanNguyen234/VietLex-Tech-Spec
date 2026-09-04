@@ -8,27 +8,26 @@ VietLex is an enterprise-grade Vietnamese legal Retrieval-Augmented Generation (
 
 The current priority is to establish a verified, measurable, reproducible, and deterministic evaluation framework before modifying core retrieval models or persistent vector indices.
 
-## Latest verified state (2026-09-02)
+## Latest verified state (2026-09-03)
 
 - Direct FastAPI/Jinja SSR is deployed at
   <https://vietlex-legal-rag.vercel.app>. The 2026-09-02 browser smoke observed
   the SSR root, ready status, Supabase-backed search, and a full-document page.
   Direct `/healthz` was blocked by the browser client and is not claimed.
-- The current Golden-50 v3 retrieval run completed 50/50 with zero
+- The expanded Golden-50 v3 RRF+DBSF retrieval run completed 50/50 with zero
   retrieval/reranker technical errors and passed its gate: Document Recall@3
-  `53/53`, Article Recall@3 `30/30`, Clause Recall@3 `13/14`, and all-required
+  `53/53`, Article Recall@3 `29/30`, Clause Recall@3 `13/14`, and all-required
   coverage `39/40` on the 40-case verified denominator.
 - The answer run completed 50/50 generations and guardrail checks, but
-  deterministic exact match was `0.0000` and token F1 `0.2304`. Opt-in Ragas
-  covered 49/50 because `case_037` had one typed Vertex judge error; its means
-  are secondary because generation and the observed judge both used Vertex
-  `gemini-3.5-flash`.
+  deterministic exact match was `0.0000` and token F1 `0.2305`. Opt-in Ragas
+  covered 50/50 with no judge technical error; its means are secondary because
+  generation and the observed judge both used Vertex `gemini-3.5-flash`.
 - Final provider-free verification after the stable deployment source state was
-  `921 passed, 2 skipped` with 10 deprecation warnings.
-- The retrieval run records a clean Git state at `73cd7ca`. The answer run
-  records `git_dirty=true` because its bound retrieval artifact was newly
-  generated and untracked, while both retain the same source-state hash. They
-  do not demonstrate production readiness or whole-corpus legal accuracy.
+  `925 passed, 2 skipped` with 10 deprecation warnings; two deployment tests
+  timed out under the full-suite load and then passed when rerun independently.
+- Both 2026-09-03 manifests record `git_dirty=true`, the exact Git diff hash,
+  and provenance status `ok`. They do not demonstrate production readiness or
+  whole-corpus legal accuracy.
 
 ## System Boundaries & Stores
 
@@ -36,12 +35,12 @@ The current priority is to establish a verified, measurable, reproducible, and d
 
 - **Runtime selector**: `USE_LEGACY_FREE_PIPELINE=false` (default) selects Vertex/Qdrant v3; `true` selects the Pinecone-v1 legacy/free path and blocks Google Cloud before client construction.
 - **Durable full-corpus fallback**: Pinecone index `vietlex-legal-rag-v1` (namespace `legal-documents-v1`).
-- **V3 primary collection**: Qdrant `vietlex-legal-rag-v3-vertex-1024`, 51,801 structural points over exactly 4,969 unique document IDs in the audited remote collection.
-- **V3 local full-doc bundle**: `data/v3/content_store.sqlite3` and `data/v3/legal_fts.sqlite3` contain the exact same 4,969 audited document IDs for document pages, title/number search, and sparse-length calibration. V3 chat evidence itself comes from Qdrant point payload `body`.
+- **V3 primary collection**: Qdrant `vietlex-legal-rag-v3-vertex-1024`, 141,798 structural points over exactly 14,962 unique document IDs in the audited remote collection.
+- **V3 local full-doc bundle**: `data/v3/content_store.sqlite3` and `data/v3/legal_fts.sqlite3` are the older 4,969-document slice and no longer match the expanded online set. V3 chat evidence itself comes from Qdrant point payload `body`.
 - **Full-corpus local fallback store**: `data/huggingface/content_store.sqlite3` and `data/huggingface/legal_fts.sqlite3` remain the 518,255-document legacy/free stores.
 - **Dense inference**: V3 uses Vertex `gemini-embedding-2` at 1024 dimensions. Legacy/free uses Qdrant Cloud staging `intfloat/multilingual-e5-small` at 384 dimensions.
-- **Reranker**: V3 uses raw RRF because identical-input Qdrant ColBERT A/B reduced verified recall. Legacy/free uses Qdrant ColBERT with Pinecone BGE fallback.
-- **Supabase**: `public.legal_documents` contains the exact 4,969-document v3 set. Online-only legal browsing uses a publishable-key read client under RLS; remote writes remain restricted to the server-only uploader.
+- **Ranking/reranker**: V3 uses a 50/50 reciprocal-rank blend of Qdrant RRF and DBSF; Qdrant ColBERT remains rejected because it reduced verified article/clause recall. Legacy/free uses Qdrant ColBERT with Pinecone BGE fallback.
+- **Supabase**: `public.legal_documents` contains the exact 14,962-document online v3 set. Online-only legal browsing uses a publishable-key read client under RLS; remote writes remain restricted to the server-only uploader.
 
 ## Evaluation Integrity Policy
 

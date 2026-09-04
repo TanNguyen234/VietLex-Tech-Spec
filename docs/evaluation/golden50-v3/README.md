@@ -1,10 +1,11 @@
 # VietLex v3 Golden-50 evaluation bundle
 
-Updated: 2026-09-02.
+Updated: 2026-09-03.
 
 This directory is the readable, self-contained input used for the current v3
-bounded evaluation. It is not a 50-case sample of all 518,255 documents: its
-verified evidence belongs to the audited 4,969-document Qdrant v3 slice.
+bounded evaluation. It is not a 50-case sample of all 518,255 documents. Its
+verified evidence is present in the audited 14,962-document online Qdrant v3
+slice; the dataset selection itself predates and does not represent that expansion.
 
 | File | Contents |
 | --- | --- |
@@ -27,9 +28,9 @@ Run v3 retrieval and answer evaluation explicitly:
 $env:SERVERLESS_ONLINE_ONLY = "true"
 $env:USE_LEGACY_FREE_PIPELINE = "false"
 
-python run_retrieval_eval.py --dataset docs/evaluation/golden50-v3/cases.json --sidecar docs/evaluation/golden50-v3/labels.json --backend vertex-qdrant-v3 --ranking raw-rrf --profile separated_intent --rewrite off --reranker current --concurrency 1 --gold-policy none --run-id YOUR_UNIQUE_RETRIEVAL_RUN_ID
+python run_retrieval_eval.py --dataset docs/evaluation/golden50-v3/cases.json --sidecar docs/evaluation/golden50-v3/labels.json --backend vertex-qdrant-v3 --ranking rrf-dbsf --profile separated_intent --rewrite off --reranker current --concurrency 1 --gold-policy none --run-id YOUR_UNIQUE_RETRIEVAL_RUN_ID
 
-python run_answer_eval.py --dataset docs/evaluation/golden50-v3/cases.json --sidecar docs/evaluation/golden50-v3/labels.json --backend vertex-qdrant-v3 --ranking raw-rrf --retrieval-run docs/evaluation/runs/YOUR_UNIQUE_RETRIEVAL_RUN_ID --profile separated_intent --rewrite off --guardrails enforce --reranker current --concurrency 1 --gold-policy none --judge ragas --run-id YOUR_UNIQUE_ANSWER_RUN_ID
+python run_answer_eval.py --dataset docs/evaluation/golden50-v3/cases.json --sidecar docs/evaluation/golden50-v3/labels.json --backend vertex-qdrant-v3 --ranking rrf-dbsf --retrieval-run docs/evaluation/runs/YOUR_UNIQUE_RETRIEVAL_RUN_ID --profile separated_intent --rewrite off --guardrails enforce --reranker current --concurrency 1 --gold-policy none --judge ragas --run-id YOUR_UNIQUE_ANSWER_RUN_ID
 ```
 
 Use a unique run ID; evaluators reserve immutable
@@ -37,17 +38,16 @@ Use a unique run ID; evaluators reserve immutable
 run. These commands make paid/live provider calls. Default tests and default
 evaluation make zero Ragas calls.
 
-The latest comparable run pair is:
+The latest run pair is:
 
-- `retrieval-v3-golden50-production-20260902`
-- `answer-v3-golden50-production-20260902`
+- `retrieval-v3-golden50-expanded14962-rrf-dbsf-20260903`
+- `answer-v3-golden50-expanded14962-rrf-dbsf-20260903`
 
-Retrieval passed its configured gate with zero technical errors. The answer run
-completed 50/50 generations and guardrail checks, but deterministic exact match
-was `0.0000` and token F1 was `0.2304`. Opt-in Ragas covered 49/50; `case_037`
-recorded one typed Vertex judge error. Ragas used Google Vertex AI
+Retrieval passed its configured gate with zero technical errors: Document
+Recall@3 `53/53`, Article Recall@3 `29/30`, and Clause Recall@3 `13/14`. The
+answer run completed 50/50 generation, guardrail, and Ragas calls, but
+deterministic exact match was `0.0000`, token F1 was `0.2305`, and observed
+Ragas faithfulness was `0.8221`. Ragas used Google Vertex AI
 `gemini-3.5-flash`, the same model identity observed for generation, so those
-judge means are secondary evidence rather than independent legal review. The
-retrieval manifest is clean at Git `73cd7ca`; the answer manifest records the
-new retrieval artifact as an untracked input and therefore honestly remains
-dirty while retaining the same source-state hash.
+judge means are secondary evidence rather than independent legal review. Both
+manifests honestly record the dirty source state and its exact diff SHA-256.

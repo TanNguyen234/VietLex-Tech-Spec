@@ -5,7 +5,7 @@
 ```text
 USE_LEGACY_FREE_PIPELINE=false (default)
         +--> Vertex gemini-embedding-2, 1024d
-        +--> Qdrant v3, dense + sparse IDF + raw RRF
+        +--> Qdrant v3, dense + sparse IDF + 50/50 RRF-DBSF rank blend
         +--> up to 3 structural points / 720 context tokens
 
 USE_LEGACY_FREE_PIPELINE=true
@@ -54,7 +54,7 @@ USE_LEGACY_FREE_PIPELINE=true
 
 `run_vertex_qdrant_migration.py` prepares deterministic structural records from a balanced set of legal document types, bounds very long documents with evenly spaced structural coverage, embeds them with Vertex AI `gemini-embedding-2` at 1024 dimensions, and stores named dense plus sparse-IDF vectors in `vietlex-legal-rag-v3-vertex-1024`. The default invocation is provider-free and write-free. Creation and upload require explicit flags, and a SQLite acknowledgement ledger makes later batches resumable.
 
-The v3 lane exposes typed hybrid/RRF runtime and evaluation adapters. With `USE_LEGACY_FREE_PIPELINE=false`, `production` uses v3 as its primary retrieval path; initialization/provider failures are typed and do not silently fall back to Pinecone. Raw RRF is retained because the identical-input ColBERT comparison reduced verified recall. A read-only audit found 51,801 remote points over exactly 4,969 unique document IDs. Chat evidence comes directly from each Qdrant point payload (`body`); it does not fetch full text from Supabase. In serverless online-only mode, Supabase `public.legal_documents` supplies title/number search and full-document pages for the same 4,969-document set through a publishable-key, read-only RLS policy. The persistent topology instead uses the matching packaged `data/v3/content_store.sqlite3` and `data/v3/legal_fts.sqlite3`. This narrow slice is not whole-corpus production-readiness evidence. Set the boolean to `true` to restore Pinecone v1 and disable all Google Cloud calls.
+The v3 lane exposes typed hybrid runtime and evaluation adapters. With `USE_LEGACY_FREE_PIPELINE=false`, `production` uses v3 as its primary retrieval path; initialization/provider failures are typed and do not silently fall back to Pinecone. After expansion, raw RRF missed one required document at top 3 because sparse-only distractors outranked the correct dense hit. Production therefore uses an equal reciprocal-rank blend of the Qdrant RRF and DBSF result lists; the 2026-09-03 Golden-50 run passed every retrieval gate. Qdrant ColBERT remains rejected because the live comparison reduced verified article/clause recall. The audited remote collection has 141,798 points over exactly 14,962 unique document IDs. Chat evidence comes directly from each Qdrant point payload (`body`); it does not fetch full text from Supabase. In serverless online-only mode, Supabase `public.legal_documents` supplies title/number search and full-document pages for the same 14,962-document set through a publishable-key, read-only RLS policy. The packaged local v3 bundle is older and must not be presented as matching the expanded online set. This remains a narrow slice of the 518,255-document corpus, not whole-corpus production-readiness evidence. Set the boolean to `true` to restore Pinecone v1 and disable all Google Cloud calls.
 
 ## Verification & Provenance
 
@@ -65,14 +65,13 @@ The v3 lane exposes typed hybrid/RRF runtime and evaluation adapters. With `USE_
   returned Supabase-backed search results, and rendered a full legal document.
   Direct `/healthz` navigation was blocked by the browser client during this
   smoke and is not claimed as observed evidence.
-- The bound Golden-50 retrieval gate passed, while deterministic answer exact
-  match/token F1 remained `0.0000 / 0.2304`; deployment success therefore does
+- The 2026-09-03 bound Golden-50 RRF+DBSF retrieval gate passed, while
+  deterministic answer exact match/token F1 remained `0.0000 / 0.2305`;
+  deployment success therefore does
   not authorize a production-readiness claim.
 - Current immutable evidence lives under
-  `docs/evaluation/runs/*-golden50-production-20260902/`. The retrieval manifest
-  records a clean Git state at `73cd7ca`; the answer manifest honestly records
-  an untracked dirty state because the newly generated retrieval artifact was
-  its bound input. Both record the same source-state hash.
+  `docs/evaluation/runs/*-golden50-expanded14962-rrf-dbsf-20260903/`. Both
+  manifests honestly record the tested dirty source state and its diff hash.
 
 ## Opt-in structural v2 parallel path
 

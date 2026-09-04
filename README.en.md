@@ -22,12 +22,12 @@ VietLex is an AI/ML portfolio project for evidence-grounded Vietnamese legal que
 
 | Portfolio evidence | Result preserved in repository artifacts |
 | :--- | :--- |
-| Golden-50 v3 raw-RRF answer evaluation, 2026-09-02 | Deterministic exact match **0.0000** · Token F1 **0.2304** · Citation precision **0.9470** |
-| Ragas opt-in, secondary evidence | Faithfulness **0.8887** · Answer Accuracy **0.9184** · Context Precision **0.8878** · Context Recall **0.9354** |
-| Completed pipeline | **50/50** generation `STOP` · **50/50** NeMo input/output safe · **49/50** Ragas with **1** judge error |
+| Golden-50 v3 RRF+DBSF answer evaluation, 2026-09-03 | Deterministic exact match **0.0000** · Token F1 **0.2305** · Citation precision **0.9183** |
+| Ragas opt-in, secondary evidence | Faithfulness **0.8221** · Answer Accuracy **0.9100** · Context Precision **0.8600** · Context Recall **0.9500** |
+| Completed pipeline | **50/50** generation `STOP` · **50/50** NeMo input/output safe · **50/50** Ragas · zero technical errors |
 | Verified retrieval subset | **40** cases with all required evidence verified · Document Recall@3 **1.0000**, micro **53/53** |
-| Audited v3 data | **51,801** remote points · exactly **4,969** unique document IDs · matching local full-doc/FTS bundle |
-| Automated verification | **921 passed, 2 skipped**; live-provider tests remain opt-in |
+| Audited v3 data | **141,798** remote points · exactly **14,962** unique document IDs · matching Supabase rows |
+| Automated verification | **925 passed, 2 skipped**; two deployment tests passed independently after full-suite load timeouts |
 | Public SSR smoke | Current Vercel Production: SSR root, ready UI, Supabase search, and full-document page observed |
 
 Golden-50 v3 is the split, runnable Balanced-50 subset: 40 cases have fully verified required retrieval evidence and 10 are deterministic reference-only cases. These metrics demonstrate a bounded evaluation slice—not whole-corpus legal accuracy or production readiness. See [`PORTFOLIO_EVIDENCE.md`](docs/evaluation/PORTFOLIO_EVIDENCE.md) for full provenance and evidence boundaries.
@@ -36,14 +36,14 @@ Golden-50 v3 is the split, runnable Balanced-50 subset: 40 cases have fully veri
 
 ![VietLex legal question-answering interface](docs/images/chat_flow.png)
 
-The repository includes a real FastAPI/Jinja2 chat interface. The screenshot is not a mockup. The online-only public deployment is live at <https://vietlex-legal-rag.vercel.app>; its search and full-document pages use the matching 4,969-document Supabase v3 set.
+The repository includes a real FastAPI/Jinja2 chat interface. The screenshot is not a mockup. The online-only public deployment is live at <https://vietlex-legal-rag.vercel.app>; its search and full-document pages use the 14,962-document Supabase v3 set.
 
 ## Core capabilities
 
-- **Default v3 hybrid retrieval:** Qdrant 1024d dense plus sparse IDF fused with raw RRF over **51,801** structural points.
+- **Default v3 hybrid retrieval:** Qdrant 1024d dense plus sparse IDF, with a 50/50 reciprocal-rank blend of RRF and DBSF over **141,798** structural points.
 - **v3 evidence:** chat reads `body` directly from Qdrant payloads; Supabase is not queried by chat retrieval.
-- **v3 full documents:** Supabase serves Vercel document pages and number/title search; matching SQLite/Zstandard and FTS5 files retain the same **4,969** audited documents for persistent/local operation and sparse-length calibration.
-- **Reranking:** v3 retains raw RRF; identical-input A/B rejected Qdrant ColBERT after verified recall fell.
+- **v3 full documents:** Supabase serves Vercel document pages and number/title search for **14,962** audited documents; the older local bundle remains a separate 4,969-document slice.
+- **Ranking:** v3 uses the Golden-50-gated RRF+DBSF blend; Qdrant ColBERT remains rejected after verified article/clause recall fell.
 - **Grounded generation:** Vertex AI `gemini-3.5-flash` through ADC, with citations and typed provider diagnostics.
 - **Evaluation:** deterministic retrieval/answer metrics by default; Ragas/LLM judges are opt-in offline audits.
 - **Web backend:** FastAPI, Jinja2/HTMX, MongoDB session/log/feedback storage, rate limiting, and guardrail modes `off`/`shadow`/`enforce`.
@@ -55,8 +55,8 @@ flowchart LR
     User["Browser"] --> API["FastAPI · Jinja2/HTMX"]
     API --> Selector{"USE_LEGACY_FREE_PIPELINE"}
     Selector -- "false · default" --> Vertex["Vertex query embedding · 1024d"]
-    Vertex --> QV3["Qdrant v3<br/>51,801 structural points<br/>4,969 documents"]
-    QV3 --> RRF["Dense + sparse IDF · raw RRF"]
+    Vertex --> QV3["Qdrant v3<br/>141,798 structural points<br/>14,962 documents"]
+    QV3 --> RRF["Dense + sparse IDF · RRF/DBSF blend"]
     RRF --> Evidence["Up to 3 payload points · 720 tokens"]
     Selector -- "true" --> Legacy["Pinecone v1 + local FTS<br/>Google Cloud blocked"]
     Evidence --> Answer["Vertex grounded generation"]
@@ -68,13 +68,13 @@ flowchart LR
 
 `USE_LEGACY_FREE_PIPELINE=false` is the default and selects Qdrant v3. Set it to `true` to select exactly Pinecone-v1 + FTS and block Vertex for retrieval, rewrite, generation, guardrails, migration helpers, and judge selection. The boolean overrides the older structural selector.
 
-The Vertex/Qdrant v3 collection `vietlex-legal-rag-v3-vertex-1024` contains **51,801** green points over exactly **4,969** unique audited document IDs. It is the default runtime retrieval path, but remains a narrow slice rather than full-corpus production-readiness evidence.
+The Vertex/Qdrant v3 collection `vietlex-legal-rag-v3-vertex-1024` contains **141,798** green points over exactly **14,962** unique audited document IDs. It is the default runtime retrieval path, but remains a narrow slice rather than full-corpus production-readiness evidence.
 
 ### Complete old-pipeline vs v3 comparison
 
 | Concern | Legacy/free (`true`) | Default v3 (`false`) |
 | :--- | :--- | :--- |
-| Coverage | 518,255 documents | 51,801 points from exactly 4,969 audited document IDs |
+| Coverage | 518,255 documents | 141,798 points from exactly 14,962 audited document IDs |
 | Vector store | Pinecone `vietlex-legal-rag-v1/legal-documents-v1` | Qdrant `vietlex-legal-rag-v3-vertex-1024` |
 | Indexed unit | One representative vector per document | Structural chunks; migration caps at 16 evenly distributed chunks per document |
 | Dense embedding | E5-small 384d through Qdrant inference | `gemini-embedding-2` 1024d through Vertex |
@@ -97,7 +97,7 @@ Cross-lane Pinecone BGE final reranking was implemented and evaluated on identic
 | Layer | Technology |
 | :--- | :--- |
 | API & UI | Python 3.12 (runtime package), FastAPI, Uvicorn, Jinja2, HTMX |
-| Default vector retrieval | Qdrant v3, 1024d Vertex dense + sparse IDF + raw RRF |
+| Default vector retrieval | Qdrant v3, 1024d Vertex dense + sparse IDF + RRF/DBSF rank blend |
 | Legacy/free vector retrieval | Pinecone Serverless full corpus + Qdrant E5 384d/ColBERT staging |
 | Lexical & content storage | SQLite FTS5, SQLite/Zstandard, local `FastSparseEncoder` |
 | Generation | Vertex `gemini-3.5-flash` by default; direct-API fallback chain in no-GCloud mode |
@@ -109,7 +109,7 @@ Cross-lane Pinecone BGE final reranking was implemented and evaluated on identic
 
 ### 1. Comprehensive Golden-50 v3 Benchmark (Deterministic + Ragas + Latency + Safety)
 
-Evaluation results over the packaged **Golden-50 v3** dataset (26 Factoid + 24 Multi-hop questions) using Qdrant v3 raw-RRF, `separated_intent`, `guardrails=enforce`, and Google Cloud Vertex AI `gemini-3.5-flash`. Retrieval metrics score 40 verified cases; the other 10 are explicitly marked `no_verified_gold_label`:
+Current evaluation results over the packaged **Golden-50 v3** dataset (26 Factoid + 24 Multi-hop questions) use the expanded 14,962-document Qdrant v3 set, RRF+DBSF ranking, `separated_intent`, `guardrails=enforce`, and Google Cloud Vertex AI `gemini-3.5-flash`. Retrieval metrics score 40 verified cases; the other 10 are explicitly marked `no_verified_gold_label`. The authoritative current metrics are in the linked 2026-09-03 artifacts below.
 
 | Metric Category | Metric Name | Achieved Value | Numerator / Sample | Technical Notes |
 | :--- | :--- | ---: | :---: | :--- |
@@ -120,24 +120,24 @@ Evaluation results over the packaged **Golden-50 v3** dataset (26 Factoid + 24 M
 | | **No-Candidate Rate** | **0.0%** | 0/50 | All queries retrieved valid evidence contexts |
 | **Retrieval Quality (40/50 verified; 10 skipped)** | **Document Recall @ 3** | **100.0%** | 53/53 | Gold document present in Top 3 |
 | | **Document Recall @ 24** | **100.0%** | 53/53 | All required gold documents retrieved in Top 24 |
-| | **Article Recall @ 3** | **100.0%** | 30/30 | Exact legal article retrieval rate |
+| | **Article Recall @ 3** | **96.67%** | 29/30 | Exact legal article retrieval rate |
 | | **Clause Recall @ 3** | **92.86%** | 13/14 | Exact legal clause retrieval rate |
-| | **Document MRR** | **0.9875** | 39.5/40 | Mean Reciprocal Rank at document level |
-| | **Article MRR** | **0.9259** | 25/27 | Mean Reciprocal Rank at article level |
-| | **Clause MRR** | **0.7949** | 10.33/13 | Mean Reciprocal Rank at clause level |
-| | **nDCG @ 10** | **0.9275 macro / 0.9084 micro** | 43.6867/48.0918 | Normalized Discounted Cumulative Gain |
+| | **Document MRR** | **0.9500** | 38/40 | Mean Reciprocal Rank at document level |
+| | **Article MRR** | **0.9074** | 24.5/27 | Mean Reciprocal Rank at article level |
+| | **Clause MRR** | **0.8462** | 11/13 | Mean Reciprocal Rank at clause level |
+| | **nDCG @ 10** | **0.9025 macro / 0.8777 micro** | 42.3093/48.2021 | Normalized Discounted Cumulative Gain |
 | | **Exact Reference Hit** | **100.0%** | 40/40 | Verified legal-reference hit |
 | | **Multi-hop All-Required** | **97.50%** | 39/40 | Full retrieval coverage on multi-hop questions |
-| **Deterministic Answer (50/50)** | **Exact match / Token F1 / Character F1** | **0.0000 / 0.2304 / 0.2226** | 50/50 | Low lexical overlap; not a legal-correctness verdict |
-| | **Citation precision / invalid rate** | **0.9470 / 0.0530** | 50/50 | Citation recall/coverage is applicable to only 1/50 cases |
-| **Ragas opt-in (49/50; 1 judge error)** | **Faithfulness** | **0.8887** | 49/50 | Judge and generator share the same model identity; not independent legal review |
-| | **Answer Accuracy** | **0.9184** | 49/50 | Semantic alignment with human ground truth |
-| | **Context Precision** | **0.8878** | 49/50 | Density and relevance of retrieved contexts |
-| | **Context Recall** | **0.9354** | 49/50 | Information completeness for answers |
-| **Latency Profile (50/50)** | **t_input_guardrail** | **1.1212 s** | P50 (P95: 1.3067s) | Input safety check latency |
-| | **t_retrieval** | **0.8146 s** | P50 (P95: 1.1693s) | Bound persisted retrieval artifact; one 13.5977s cold-start outlier |
-| | **t_output_guardrail** | **1.1379 s** | P50 (P95: 1.3983s) | Output safety rail |
-| | **t_total (End-to-End)** | **5.2812 s** | P50 (P95: 6.4429s) | Generation/guardrails over persisted evidence |
+| **Deterministic Answer (50/50)** | **Exact match / Token F1 / Character F1** | **0.0000 / 0.2305 / 0.2230** | 50/50 | Low lexical overlap; not a legal-correctness verdict |
+| | **Citation precision / invalid rate** | **0.9183 / 0.0817** | 50/50 | Citation recall/coverage is applicable to only 1/50 cases |
+| **Ragas opt-in (50/50; 0 judge errors)** | **Faithfulness** | **0.8221** | 50/50 | Judge and generator share the same model identity; not independent legal review |
+| | **Answer Accuracy** | **0.9100** | 50/50 | Semantic alignment with human ground truth |
+| | **Context Precision** | **0.8600** | 50/50 | Density and relevance of retrieved contexts |
+| | **Context Recall** | **0.9500** | 50/50 | Information completeness for answers |
+| **Latency Profile (50/50)** | **t_input_guardrail** | **1.1634 s** | P50 (P95: 1.5169s) | Input safety check latency |
+| | **t_retrieval** | **1.4103 s** | P50 (P95: 3.3656s) | Two Qdrant fusion queries share one embedded query |
+| | **t_output_guardrail** | **1.2050 s** | P50 (P95: 1.4412s) | Output safety rail |
+| | **t_total (End-to-End)** | **5.7999 s** | P50 (P95: 6.8331s) | Generation/guardrails over persisted evidence |
 
 ### 2. Final Reranker Head-to-Head Comparison (Qdrant ColBERT vs Pinecone BGE vs Raw RRF)
 
@@ -150,7 +150,7 @@ Empirical comparison over the identical 40 human-verified cases (`all-required-v
 | **Qdrant ColBERT (`answerai-colbert`)** | **100.0%** (53/53) | **90.00%** (27/30) | **78.57%** (11/14) | **87.50%** (35/40) | **2.97 s** | **Failed the gate** on the exact raw-RRF candidate pools |
 | **Pinecone BGE (`bge-reranker-v2-m3`)** | NOT SCORED | NOT SCORED | NOT SCORED | NOT SCORED | 15.00 s timeout | Monthly 500-request rerank quota was exhausted; technical failures are not quality scores |
 
-Raw v3 hybrid RRF is the strongest candidate in this narrow canary. Qdrant ColBERT should not be forced into production because it increases latency and drops verified legal structure.
+On the expanded corpus, raw RRF missed `case_048` because sparse-only distractors displaced the correct dense result. The equal RRF+DBSF rank blend restores Document Recall@3 to `53/53` and passes all configured gates. Qdrant ColBERT should not be forced into production because it drops verified legal structure.
 
 ### 3. Final Balanced-50 `qdrant-only` audit — cutover rejected
 
@@ -166,11 +166,11 @@ This historical 2026-08-27 run completed all 50 cases with Qdrant ColBERT, enfor
 | Deterministic token F1 / char F1 | **0.1585 / 0.1801** |
 | End-to-end latency P50 / P95 | **10.65 s / 14.09 s** |
 
-This historical run rejects forcing ColBERT into the pipeline. V3 raw-RRF is now the default runtime and is stronger in the new audit, but the 40 cases with verified retrieval gold remain a narrow slice and do not establish whole-corpus production readiness.
+This historical run rejects forcing ColBERT into the pipeline. V3 RRF+DBSF is now the default runtime, but the 40 cases with verified retrieval gold remain a narrow slice and do not establish whole-corpus production readiness.
 
 ### 4. Immutable Verification Artifacts
-- [`Golden-50 v3 answer + NeMo + Ragas, 2026-09-02`](docs/evaluation/runs/answer-v3-golden50-production-20260902/report.md)
-- [`Golden-50 v3 retrieval, 2026-09-02`](docs/evaluation/runs/retrieval-v3-golden50-production-20260902/report.md)
+- [`Golden-50 v3 RRF+DBSF answer + NeMo + Ragas, 2026-09-03`](docs/evaluation/runs/answer-v3-golden50-expanded14962-rrf-dbsf-20260903/report.md)
+- [`Golden-50 v3 RRF+DBSF retrieval, 2026-09-03`](docs/evaluation/runs/retrieval-v3-golden50-expanded14962-rrf-dbsf-20260903/report.md)
 - [`Split Golden-50 dataset and labels`](docs/evaluation/golden50-v3/README.md)
 - [`Balanced-50 v3 raw-RRF answer + Ragas`](docs/evaluation/runs/answer-v3-raw-balanced50-20260827-final2/report.md)
 - [`Balanced-50 v3 raw-RRF retrieval gate`](docs/evaluation/runs/retrieval-v3-raw-balanced50-20260827-final/report.md)
@@ -189,7 +189,7 @@ This historical run rejects forcing ColBERT into the pipeline. V3 raw-RRF is now
 
 V3 chat still consumes Qdrant payload evidence directly. The online-only Vercel runtime uses Supabase `public.legal_documents` for `/search` and `/documents/{id}`; persistent/local operation continues to read the packaged [`data/v3`](data/v3/README.md) bundle.
 
-Verified status on 2026-09-02: the table, indexes, and RLS exist; exactly **4,969** documents matching the v3 ID set are uploaded. The publishable key has `SELECT` access only and no anonymous write policy exists. Three sampled `content_sha256` values and the exact row count matched the local source.
+Verified status on 2026-09-03: the table, indexes, and RLS exist; exactly **14,962** documents matching the expanded v3 ID set are uploaded. The publishable key has `SELECT` access only and no anonymous write policy exists. Three sampled `content_sha256` values and the exact row count matched the selected source documents.
 
 ### 1. Environment Configuration (`.env`)
 ```env
@@ -244,7 +244,7 @@ python run_supabase_full_doc_upload.py --max-documents 4969 --batch-size 50 --al
 - Python 3.12. CI retains a Python 3.10 dependency-compatibility lane, while the runtime package in `pyproject.toml` requires `>=3.12,<3.13`.
 - Local MongoDB or MongoDB Atlas; Supabase for online-only full-document browsing
 - Qdrant Cloud plus Google Cloud credentials for default v3, or Pinecone + Qdrant credentials and one direct generation API key for no-GCloud mode
-- The 4,969-document v3 local bundle must be provisioned for persistent/local operation; the online-only runtime reads the matching rows from Supabase
+- The older 4,969-document v3 local bundle can support persistent/local operation; the expanded online-only runtime reads 14,962 rows from Supabase
 
 ```powershell
 python -m venv .venv
@@ -322,7 +322,7 @@ python -u -m app.ingestion.legal_fts build --batch-size 256
 ## Declared limitations
 
 - The third-party corpus does not guarantee current legal validity or independent verification of every document.
-- Default v3 covers exactly 4,969 audited document IDs; the separate v2 pilot covers 827 primary-law documents. Neither represents all 518,255 documents.
+- Default v3 covers exactly 14,962 audited document IDs; the separate v2 pilot covers 827 primary-law documents. Neither represents all 518,255 documents.
 - Evaluation results are a bounded slice, not evidence of whole-corpus legal accuracy or production readiness.
 - Vercel FastAPI SSR retains a process-local progress registry; multiple replicas need sticky routing or a shared event backend.
 - Cross-lane final reranking intentionally remains disabled under the `KEEP_DISABLED` decision.
