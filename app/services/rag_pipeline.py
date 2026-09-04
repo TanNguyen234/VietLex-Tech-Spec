@@ -11,6 +11,7 @@ import logfire
 from app.config import get_settings
 from app.services.direct_llm import (
     LLMGenerationResult,
+    LLMUseCase,
     generate_llm_response_with_metadata,
 )
 from app.services.retrieval import (
@@ -695,6 +696,7 @@ async def rewrite_query_with_metadata(
                 max_output_tokens=(
                     get_settings().QUERY_REWRITE_MAX_OUTPUT_TOKENS
                 ),
+                use_case=LLMUseCase.STRUCTURED_ANALYSIS,
             ),
             timeout=get_settings().QUERY_REWRITE_TIMEOUT_SECONDS,
         )
@@ -796,6 +798,7 @@ async def generate_response_with_metadata(
         user_prompt,
         system_prompt,
         max_output_tokens=get_settings().LLM_MAX_OUTPUT_TOKENS,
+        use_case=LLMUseCase.ANSWER,
         thinking_level=thinking_level,
     )
 

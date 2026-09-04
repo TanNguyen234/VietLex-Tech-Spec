@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from typing import Any
 from urllib.parse import urlparse
 
 from fastapi import APIRouter, HTTPException, Request
@@ -8,12 +9,20 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from app.config import get_settings
-from app.services.legal_browser import LegalBrowser
 
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
-browser = LegalBrowser.from_settings(get_settings())
+browser: Any | None = None
+
+
+def _get_browser() -> Any:
+    global browser
+    if browser is None:
+        from app.services.legal_browser import LegalBrowser
+
+        browser = LegalBrowser.from_settings(get_settings())
+    return browser
 
 
 def _safe_source_url(value: str) -> str | None:
@@ -26,7 +35,7 @@ def _safe_source_url(value: str) -> str | None:
 @router.get("/search", response_class=HTMLResponse)
 async def legal_search(request: Request, q: str = ""):
     query = q.strip()[:200]
-    results = await asyncio.to_thread(browser.search, query, 20)
+    results = await asyncio.to_thread(_get_browser().search, query, 20)
     return templates.TemplateResponse(
         request,
         "legal_search.html",
@@ -38,7 +47,7 @@ async def legal_search(request: Request, q: str = ""):
 async def legal_document(request: Request, document_id: int):
     if document_id < 0:
         raise HTTPException(status_code=404, detail="Document not found")
-    document = await asyncio.to_thread(browser.get_document, document_id)
+    document = await asyncio.to_thread(_get_browser().get_document, document_id)
     if document is None:
         raise HTTPException(status_code=404, detail="Document not found")
     return templates.TemplateResponse(

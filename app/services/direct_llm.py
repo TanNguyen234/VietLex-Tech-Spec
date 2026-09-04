@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 import time
 from typing import Optional
 
@@ -18,6 +19,7 @@ from app.evaluation.provider_catalog import (
     OPENROUTER_PRIMARY_MODEL,
 )
 from app.services.vertex_ai import VertexAIError, get_vertex_provider
+from app.services.provider_runtime import record_generation_result
 
 
 settings = get_settings()
@@ -28,6 +30,31 @@ _cooldowns = {
     "groq": 0.0,
 }
 _http_client: Optional[httpx.AsyncClient] = None
+
+
+class LLMUseCase(str, Enum):
+    ANSWER = "answer"
+    GUARDRAIL = "guardrail"
+    EVALUATION = "evaluation"
+    STRUCTURED_ANALYSIS = "structured_analysis"
+
+
+@dataclass(frozen=True)
+class LLMRoutingPolicy:
+    use_case: LLMUseCase
+    providers: tuple[str, ...]
+
+
+def routing_policy_for(use_case: LLMUseCase) -> LLMRoutingPolicy:
+    if use_case is LLMUseCase.EVALUATION:
+        providers = ("google_vertex_ai", "gemini", "nvidia", "groq", "openrouter", "omnigate")
+    else:
+        providers = ("google_vertex_ai", "openrouter", "gemini", "nvidia", "groq")
+    return LLMRoutingPolicy(use_case=use_case, providers=providers)
+
+
+def provider_cooldown_snapshot() -> dict[str, float]:
+    return dict(_cooldowns)
 
 
 def get_direct_client() -> httpx.AsyncClient:
@@ -307,21 +334,21 @@ async def _run_secondary_fallbacks(
             OPENROUTER_PRIMARY_MODEL,
             settings.OPENROUTER_API_KEY,
             call_openrouter_api,
-            True,
+            now >= _cooldowns["openrouter"],
         ),
         (
             "gemini",
             GEMINI_SECONDARY_MODEL,
             settings.GEMINI_API_KEY,
             call_gemini_api,
-            True,
+            now >= _cooldowns["gemini"],
         ),
         (
             "groq",
             GROQ_SECONDARY_MODEL,
             settings.GROQ_API_KEY,
             call_groq_api,
-            True,
+            now >= _cooldowns["groq"],
         ),
     )
     for provider, model, api_key, operation, available in attempts:
@@ -356,6 +383,7 @@ async def generate_llm_response_with_metadata(
     *,
     max_output_tokens: int = 1024,
     thinking_level: types.ThinkingLevel | str | None = None,
+    use_case: LLMUseCase = LLMUseCase.ANSWER,
 ) -> LLMGenerationResult:
     """Use Vertex first, then the legacy direct APIs as secondary models."""
     started = time.perf_counter()
@@ -383,8 +411,9 @@ async def generate_llm_response_with_metadata(
                 started=started,
             )
             if fallback is not None:
+                record_generation_result(fallback, use_case.value)
                 return fallback
-            return LLMGenerationResult(
+            exhausted = LLMGenerationResult(
                 text=(
                     "Vertex AI và toàn bộ model API phụ đều tạm thời không khả dụng. "
                     "Vui lòng thử lại sau."
@@ -406,10 +435,14 @@ async def generate_llm_response_with_metadata(
                 fallback_used=True,
                 primary_error_kind=error.kind,
             )
-        return _vertex_failure_result(error, started=started)
+            record_generation_result(exhausted, use_case.value)
+            return exhausted
+        failure = _vertex_failure_result(error, started=started)
+        record_generation_result(failure, use_case.value)
+        return failure
 
     metadata = result.metadata
-    return LLMGenerationResult(
+    generation = LLMGenerationResult(
         text=result.text,
         observed_provider=metadata.provider,
         observed_model=metadata.model,
@@ -426,6 +459,8 @@ async def generate_llm_response_with_metadata(
         max_output_tokens=result.max_output_tokens,
         thinking_level=result.thinking_level,
     )
+    record_generation_result(generation, use_case.value)
+    return generation
 
 
 async def generate_llm_response(
@@ -434,11 +469,13 @@ async def generate_llm_response(
     *,
     max_output_tokens: int = 1024,
     thinking_level: types.ThinkingLevel | str | None = None,
+    use_case: LLMUseCase = LLMUseCase.ANSWER,
 ) -> str:
     result = await generate_llm_response_with_metadata(
         prompt,
         system_prompt,
         max_output_tokens=max_output_tokens,
         thinking_level=thinking_level,
+        use_case=use_case,
     )
     return result.text

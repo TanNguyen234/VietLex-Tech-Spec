@@ -11,6 +11,7 @@ from langchain_core.outputs import ChatGeneration, ChatResult
 from nemoguardrails import LLMRails, RailsConfig
 from app.config import get_settings, install_system_trust_store
 from app.services.direct_llm import (
+    LLMUseCase,
     generate_llm_response,
     generate_llm_response_with_metadata,
 )
@@ -44,7 +45,7 @@ def parse_json_safely(text: str) -> dict:
 
 async def call_llm_guard(prompt: str) -> str:
     try:
-        return await generate_llm_response(prompt)
+        return await generate_llm_response(prompt, use_case=LLMUseCase.GUARDRAIL)
     except Exception as e:
         logfire.warning("LLM Guard call failed: {err}", err=str(e))
         return ""
@@ -79,6 +80,7 @@ class VertexPrimaryGuardrailModel(BaseChatModel):
             self._prompt(messages),
             max_output_tokens=64,
             thinking_level="MINIMAL",
+            use_case=LLMUseCase.GUARDRAIL,
         )
         return ChatResult(
             generations=[

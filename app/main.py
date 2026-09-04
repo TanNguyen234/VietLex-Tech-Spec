@@ -1,6 +1,5 @@
 import secrets
 from dotenv import load_dotenv
-import logfire
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
@@ -21,12 +20,14 @@ from app.services.web_security import (
 )
 from app.services.http_security import SecurityHeadersMiddleware
 from app.rate_limit import limiter
+from app.services.observability import configure_observability
 
-# Load environment variables from .env before logfire/settings initialization
+# Load environment variables from .env before settings/observability initialization.
 load_dotenv()
 
 settings = get_settings()
 validate_production_settings(settings)
+configure_observability(settings)
 
 app = FastAPI(title="VietLex Advanced Legal RAG")
 
@@ -43,7 +44,6 @@ app.add_middleware(
 async def startup_event():
     from app.services.semantic_cache import ensure_semantic_cache_collection
 
-    logfire.configure()
     await init_db()
     await ensure_semantic_cache_collection()
     if settings.PUBLIC_NEMO_DEFAULT_ENABLED:
@@ -59,8 +59,12 @@ async def shutdown_event():
     await close_clients()
     reset_retriever()
 
-# Instrument FastAPI with Logfire
-logfire.instrument_fastapi(app)
+# Tests skip Logfire entirely so inherited credentials can never emit telemetry or
+# start its credential-validation thread. Other environments are configured above.
+if settings.APP_ENV != "test":
+    import logfire
+
+    logfire.instrument_fastapi(app, capture_headers=False)
 
 # Rate Limiting (Slowapi)
 app.state.limiter = limiter
@@ -109,5 +113,11 @@ async def get_index(request: Request, current_user=Depends(optional_user)):
         },
     )
     # Save token in cookie for validation
-    response.set_cookie(key="csrf_token", value=token, httponly=True, samesite="strict")
+    response.set_cookie(
+        key="csrf_token",
+        value=token,
+        httponly=True,
+        secure=settings.APP_ENV == "production" or request.url.scheme == "https",
+        samesite="strict",
+    )
     return response
