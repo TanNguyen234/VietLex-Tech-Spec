@@ -103,7 +103,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--ranking",
-        choices=["raw-rrf", "qdrant-colbert"],
+        choices=["raw-rrf", "dbsf", "rrf-dbsf", "qdrant-colbert"],
         default="raw-rrf",
         help="Vertex/Qdrant v3 ranking mode (default: raw-rrf)",
     )

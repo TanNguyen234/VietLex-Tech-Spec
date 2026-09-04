@@ -15,6 +15,40 @@ def test_evaluation_parsers_expose_explicit_backend() -> None:
         retrieval_parser().parse_args(["--backend", "vertex-qdrant-v3"]).backend
         == "vertex-qdrant-v3"
     )
+    assert retrieval_parser().parse_args(["--ranking", "dbsf"]).ranking == "dbsf"
+    assert answer_parser().parse_args(["--ranking", "dbsf"]).ranking == "dbsf"
+    assert retrieval_parser().parse_args(["--ranking", "rrf-dbsf"]).ranking == "rrf-dbsf"
+    assert answer_parser().parse_args(["--ranking", "rrf-dbsf"]).ranking == "rrf-dbsf"
+
+
+@pytest.mark.asyncio
+async def test_dbsf_ranking_selects_dbsf_fusion(monkeypatch) -> None:
+    from app.evaluation.retrieval_backends import retrieve_for_evaluation
+
+    calls = []
+
+    class Retriever:
+        async def retrieve_detailed(self, dense_query, *, sparse_query, limit, fusion):
+            from app.services.retrieval import RetrievalOutcome
+
+            calls.append((dense_query, sparse_query, limit, fusion))
+            return RetrievalOutcome(evidence=[], latency={}, status="no_candidate")
+
+    monkeypatch.setattr(
+        "app.evaluation.retrieval_backends.get_vertex_qdrant_retriever",
+        lambda: Retriever(),
+    )
+
+    result = await retrieve_for_evaluation(
+        "vertex-qdrant-v3",
+        dense_query="dense",
+        sparse_query="original",
+        profile=SimpleNamespace(final_evidence_limit=3),
+        ranking="dbsf",
+    )
+
+    assert result.status == "no_candidate"
+    assert calls == [("dense", "original", 3, "dbsf")]
 
 
 def test_run_configuration_binds_requested_and_effective_backend() -> None:

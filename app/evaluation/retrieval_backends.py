@@ -64,12 +64,17 @@ async def retrieve_for_evaluation(
         from app.services.clients import get_qdrant_only_reranker
         from app.services.retrieval import RetrievalOutcome
 
-        outcome = await get_vertex_qdrant_retriever().retrieve_detailed(
-            dense_query,
-            sparse_query=sparse_query,
-            limit=getattr(
+        retrieve_kwargs = {
+            "sparse_query": sparse_query,
+            "limit": getattr(
                 profile, "rerank_input_limit", profile.final_evidence_limit
             ),
+        }
+        if ranking in {"dbsf", "rrf-dbsf"}:
+            retrieve_kwargs["fusion"] = ranking
+        outcome = await get_vertex_qdrant_retriever().retrieve_detailed(
+            dense_query,
+            **retrieve_kwargs,
         )
         trace = outcome.diagnostics.get("stage_trace")
         scores = (
@@ -132,7 +137,7 @@ async def retrieve_for_evaluation(
                 status = "partial_retrieval_error"
                 error = f"{type(rerank_error).__name__}: {rerank_error}"
                 diagnostics["reranker_error_type"] = type(rerank_error).__name__
-        elif ranking != "raw-rrf":
+        elif ranking not in {"raw-rrf", "dbsf", "rrf-dbsf"}:
             raise ValueError(f"unsupported v3 ranking mode: {ranking}")
         trace = diagnostics.get("stage_trace")
         if trace is not None:

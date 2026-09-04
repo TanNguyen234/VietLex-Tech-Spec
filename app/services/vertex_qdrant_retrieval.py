@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import time
 from typing import Any
 
@@ -20,6 +21,7 @@ async def query_vertex_points(
     sparse_encoder: object,
     contract: VertexQdrantContract,
     limit: int,
+    fusion: str = "rrf",
 ) -> list[object]:
     dense_query = " ".join(dense_query.split())
     sparse_query = " ".join(sparse_query.split())
@@ -32,9 +34,14 @@ async def query_vertex_points(
     )
     sparse = sparse_encoder.encode_query(sparse_query)
     prefetch_limit = max(20, limit * 4)
-    response = await client.query_points(
-        collection_name=contract.collection_name,
-        prefetch=[
+    fusion_mode = {
+        "rrf": models.Fusion.RRF,
+        "dbsf": models.Fusion.DBSF,
+    }.get(fusion)
+    if fusion_mode is None and fusion != "rrf-dbsf":
+        raise ValueError(f"unsupported fusion mode: {fusion}")
+
+    prefetch = [
             models.Prefetch(
                 query=list(dense.values),
                 using=contract.dense_vector_name,
@@ -48,13 +55,48 @@ async def query_vertex_points(
                 using=contract.sparse_vector_name,
                 limit=prefetch_limit,
             ),
-        ],
-        query=models.FusionQuery(fusion=models.Fusion.RRF),
-        limit=limit,
-        with_payload=True,
-        with_vectors=False,
-    )
-    return list(response.points)
+        ]
+
+    async def query_with(mode: models.Fusion) -> list[object]:
+        response = await client.query_points(
+            collection_name=contract.collection_name,
+            prefetch=prefetch,
+            query=models.FusionQuery(fusion=mode),
+            limit=limit,
+            with_payload=True,
+            with_vectors=False,
+        )
+        return list(response.points)
+
+    if fusion_mode is not None:
+        return await query_with(fusion_mode)
+
+    rrf_points = await query_with(models.Fusion.RRF)
+    dbsf_points = await query_with(models.Fusion.DBSF)
+    point_by_id = {
+        str(getattr(point, "id")): point
+        for point in (*rrf_points, *dbsf_points)
+    }
+    missing_rank = limit + 1
+    rrf_rank = {
+        str(getattr(point, "id")): rank
+        for rank, point in enumerate(rrf_points, start=1)
+    }
+    dbsf_rank = {
+        str(getattr(point, "id")): rank
+        for rank, point in enumerate(dbsf_points, start=1)
+    }
+    blended = []
+    for point_id, point in point_by_id.items():
+        score = 0.5 / (60 + rrf_rank.get(point_id, missing_rank))
+        score += 0.5 / (60 + dbsf_rank.get(point_id, missing_rank))
+        ranked_point = copy.copy(point)
+        ranked_point.score = score
+        blended.append(ranked_point)
+    return sorted(
+        blended,
+        key=lambda point: (-float(getattr(point, "score")), str(getattr(point, "id"))),
+    )[:limit]
 
 
 class VertexQdrantRetriever:
@@ -134,6 +176,7 @@ class VertexQdrantRetriever:
         *,
         sparse_query: str,
         limit: int,
+        fusion: str = "rrf",
     ) -> RetrievalOutcome:
         started = time.perf_counter()
         trace = RetrievalStageTrace()
@@ -146,6 +189,7 @@ class VertexQdrantRetriever:
                 sparse_encoder=self.sparse_encoder,
                 contract=self.contract,
                 limit=limit,
+                fusion=fusion,
             )
             converted = [self._evidence(point) for point in points]
         except Exception as error:

@@ -453,7 +453,7 @@ async def _run_vertex_shadow(
         dense_query=rewritten_query,
         sparse_query=user_query,
         profile=effective_profile,
-        ranking="raw-rrf",
+        ranking="rrf-dbsf",
         case_id="runtime-shadow",
     )
 

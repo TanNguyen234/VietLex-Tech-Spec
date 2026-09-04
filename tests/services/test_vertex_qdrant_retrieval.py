@@ -3,6 +3,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import pytest
+from qdrant_client import models
 
 from app.ingestion.vertex_qdrant_migration import VertexQdrantContract
 
@@ -85,6 +86,73 @@ async def test_vertex_retriever_uses_separate_dense_and_sparse_queries() -> None
     assert outcome.evidence[0].document_id == 12
     assert outcome.diagnostics["stage_trace"].final_evidence_chunks[0].score == 0.8
     assert client.kwargs["collection_name"] == "vietlex-legal-rag-v3-vertex-1024"
+
+
+@pytest.mark.asyncio
+async def test_vertex_retriever_supports_dbsf_fusion() -> None:
+    from app.services.vertex_qdrant_retrieval import VertexQdrantRetriever
+
+    client = Client([_point()])
+    retriever = VertexQdrantRetriever(
+        provider=Provider(),
+        client=client,
+        sparse_encoder=Sparse(),
+        contract=VertexQdrantContract(),
+        dataset_revision="rev",
+    )
+
+    outcome = await retriever.retrieve_detailed(
+        "dense query", sparse_query="sparse query", limit=3, fusion="dbsf"
+    )
+
+    assert outcome.status == "ok"
+    assert client.kwargs["query"].fusion == models.Fusion.DBSF
+
+
+@pytest.mark.asyncio
+async def test_vertex_retriever_blends_rrf_and_dbsf_ranks() -> None:
+    from app.services.vertex_qdrant_retrieval import VertexQdrantRetriever
+
+    points = {
+        models.Fusion.RRF: [
+            _point(document_id=1),
+            _point(document_id=2),
+            _point(document_id=3),
+        ],
+        models.Fusion.DBSF: [
+            _point(document_id=3),
+            _point(document_id=1),
+            _point(document_id=2),
+        ],
+    }
+    for group in points.values():
+        for point in group:
+            point.id = f"point-{point.payload['document_id']}"
+
+    class BlendedClient:
+        def __init__(self) -> None:
+            self.fusions = []
+
+        async def query_points(self, **kwargs):
+            fusion = kwargs["query"].fusion
+            self.fusions.append(fusion)
+            return SimpleNamespace(points=points[fusion])
+
+    client = BlendedClient()
+    retriever = VertexQdrantRetriever(
+        provider=Provider(),
+        client=client,
+        sparse_encoder=Sparse(),
+        contract=VertexQdrantContract(),
+        dataset_revision="rev",
+    )
+
+    outcome = await retriever.retrieve_detailed(
+        "dense query", sparse_query="sparse query", limit=3, fusion="rrf-dbsf"
+    )
+
+    assert client.fusions == [models.Fusion.RRF, models.Fusion.DBSF]
+    assert [item.document_id for item in outcome.evidence] == [1, 3, 2]
 
 
 @pytest.mark.asyncio

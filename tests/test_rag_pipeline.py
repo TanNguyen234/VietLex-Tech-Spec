@@ -677,6 +677,25 @@ async def test_runtime_backend_switch_uses_vertex_v3_as_primary(monkeypatch) -> 
 
 
 @pytest.mark.asyncio
+async def test_vertex_v3_primary_uses_validated_rrf_dbsf_blend(monkeypatch) -> None:
+    from app.evaluation import retrieval_backends
+
+    captured = {}
+
+    async def retrieve(*args, **kwargs):
+        captured.update(kwargs)
+        return rag_pipeline.RetrievalOutcome(
+            evidence=[], latency={}, status="no_candidate"
+        )
+
+    monkeypatch.setattr(retrieval_backends, "retrieve_for_evaluation", retrieve)
+
+    await rag_pipeline._run_vertex_shadow("dense", "original", object())
+
+    assert captured["ranking"] == "rrf-dbsf"
+
+
+@pytest.mark.asyncio
 async def test_vertex_v3_primary_failure_is_typed_and_does_not_fallback(
     monkeypatch,
 ) -> None:
