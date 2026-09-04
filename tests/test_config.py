@@ -149,6 +149,25 @@ def test_production_web_configuration_fails_closed() -> None:
     )
 
 
+def test_legacy_admin_basic_is_off_and_requires_complete_credentials() -> None:
+    import pytest
+
+    from app.config import validate_production_settings
+
+    defaults = Settings(_env_file=None)
+    assert defaults.LEGACY_ADMIN_BASIC_ENABLED is False
+    with pytest.raises(RuntimeError, match="ADMIN_USERNAME"):
+        validate_production_settings(
+            Settings(
+                _env_file=None,
+                APP_ENV="production",
+                WEB_SESSION_SECRET="x" * 32,
+                FRONTEND_URL="https://vietlex.example",
+                LEGACY_ADMIN_BASIC_ENABLED=True,
+            )
+        )
+
+
 def test_pinecone_api_compatibility_name_is_resolved() -> None:
     settings = Settings(_env_file=None, PINECONE_API="compat-key")
 

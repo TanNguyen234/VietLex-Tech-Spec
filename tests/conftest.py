@@ -1,7 +1,12 @@
 from __future__ import annotations
 
 import socket
+import os
 import pytest
+
+
+# Import-time application initialization must never export test telemetry.
+os.environ["APP_ENV"] = "test"
 
 _real_connect = socket.socket.connect
 

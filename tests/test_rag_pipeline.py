@@ -822,11 +822,13 @@ async def test_answer_model_receives_external_corpus_reliability_rules(
         *,
         max_output_tokens: int,
         thinking_level: str | None = None,
+        use_case=None,
     ) -> rag_pipeline.LLMGenerationResult:
         nonlocal captured_system_prompt
         captured_system_prompt = system_prompt
         assert max_output_tokens == 1536
         assert thinking_level == "MINIMAL"
+        assert use_case is rag_pipeline.LLMUseCase.ANSWER
         return rag_pipeline.LLMGenerationResult(
             text="Câu trả lời.",
             observed_provider="test_provider",

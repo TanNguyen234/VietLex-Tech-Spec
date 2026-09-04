@@ -1,5 +1,6 @@
 from types import SimpleNamespace
 from datetime import datetime, timedelta, timezone
+import re
 
 import pytest
 
@@ -9,6 +10,14 @@ class _Cursor:
         self.rows = rows
 
     def sort(self, *_args):
+        return self
+
+    def skip(self, count):
+        self.rows = self.rows[count:]
+        return self
+
+    def limit(self, count):
+        self.rows = self.rows[:count]
         return self
 
     async def to_list(self, *, length):
@@ -50,8 +59,8 @@ class _Collection:
         for row in self.rows:
             if _matches(row, query):
                 row.update(update.get("$set", {}))
-                return SimpleNamespace(modified_count=1)
-        return SimpleNamespace(modified_count=0)
+                return SimpleNamespace(modified_count=1, matched_count=1)
+        return SimpleNamespace(modified_count=0, matched_count=0)
 
     async def update_many(self, query, update):
         self.updates.append((query, update))
@@ -64,13 +73,46 @@ class _Collection:
 
     async def delete_one(self, query):
         self.deletes.append(query)
+        before = len(self.rows)
+        self.rows = [row for row in self.rows if not _matches(row, query)]
+        return SimpleNamespace(deleted_count=before - len(self.rows))
 
     async def delete_many(self, query):
         self.deletes.append(query)
+        before = len(self.rows)
+        self.rows = [row for row in self.rows if not _matches(row, query)]
+        return SimpleNamespace(deleted_count=before - len(self.rows))
+
+    async def count_documents(self, query):
+        return sum(1 for row in self.rows if _matches(row, query))
 
 
 def _matches(row, query):
-    return all(row.get(key) == value for key, value in query.items())
+    for key, value in query.items():
+        if key == "$and":
+            if not all(_matches(row, item) for item in value):
+                return False
+            continue
+        if key == "$or":
+            if not any(_matches(row, item) for item in value):
+                return False
+            continue
+        actual = row.get(key)
+        if isinstance(value, dict) and "$ne" in value:
+            if actual == value["$ne"]:
+                return False
+        elif isinstance(value, dict) and "$exists" in value:
+            if (key in row) is not bool(value["$exists"]):
+                return False
+        elif isinstance(value, dict) and "$gt" in value:
+            if actual is None or actual <= value["$gt"]:
+                return False
+        elif isinstance(value, dict) and "$regex" in value:
+            if not re.search(value["$regex"], str(actual or ""), re.IGNORECASE):
+                return False
+        elif actual != value:
+            return False
+    return True
 
 
 def _database():
@@ -78,6 +120,7 @@ def _database():
         users=_Collection(),
         auth_sessions=_Collection(),
         account_tokens=_Collection(),
+        admin_audit_logs=_Collection(),
         chat_sessions=_Collection(),
         evaluation_logs=_Collection(),
     )
@@ -203,3 +246,143 @@ async def test_account_deletion_cascades_by_user_id(monkeypatch) -> None:
     assert database.account_tokens.deletes == [{"user_id": "user-1"}]
     assert database.chat_sessions.deletes == [{"user_id": "user-1"}]
     assert database.evaluation_logs.deletes == [{"user_id": "user-1"}]
+
+
+@pytest.mark.asyncio
+async def test_new_user_has_safe_role_and_status_defaults(monkeypatch) -> None:
+    import app.account_database as accounts
+
+    database = _database()
+    monkeypatch.setattr(accounts, "get_db", lambda: database)
+
+    user = await accounts.create_user("u@example.com", "hash")
+
+    assert user["role"] == "user"
+    assert user["status"] == "active"
+
+
+@pytest.mark.asyncio
+async def test_disabled_user_existing_session_is_rejected(monkeypatch) -> None:
+    import app.account_database as accounts
+
+    database = _database()
+    database.users.rows.append({
+        "_id": "user-1", "email": "u@example.com", "status": "disabled"
+    })
+    database.auth_sessions.rows.append({
+        "_id": "session-1",
+        "user_id": "user-1",
+        "token_hash": accounts.token_sha256("session-token"),
+        "expires_at": datetime.now(timezone.utc) + timedelta(hours=1),
+    })
+    monkeypatch.setattr(accounts, "get_db", lambda: database)
+
+    assert await accounts.resolve_auth_session("session-token") is None
+
+
+@pytest.mark.asyncio
+async def test_password_update_revokes_existing_sessions(monkeypatch) -> None:
+    import app.account_database as accounts
+
+    database = _database()
+    database.users.rows.append({"_id": "user-1", "password_hash": "old"})
+    monkeypatch.setattr(accounts, "get_db", lambda: database)
+
+    assert await accounts.update_password("user-1", "new") is True
+    assert database.auth_sessions.deletes == [{"user_id": "user-1"}]
+
+
+@pytest.mark.asyncio
+async def test_disabling_user_revokes_sessions_and_preserves_last_admin(monkeypatch) -> None:
+    import app.account_database as accounts
+
+    database = _database()
+    database.users.rows.extend([
+        {"_id": "admin-1", "role": "admin", "status": "active"},
+        {"_id": "user-1", "role": "user", "status": "active"},
+    ])
+    database.auth_sessions.rows.append({"_id": "s1", "user_id": "user-1"})
+    monkeypatch.setattr(accounts, "get_db", lambda: database)
+
+    assert await accounts.set_user_status("user-1", "disabled") is True
+    assert database.auth_sessions.rows == []
+    with pytest.raises(ValueError, match="management command"):
+        await accounts.set_user_status("admin-1", "disabled")
+
+
+@pytest.mark.asyncio
+async def test_admin_audit_metadata_drops_sensitive_fields(monkeypatch) -> None:
+    import app.account_database as accounts
+
+    database = _database()
+    monkeypatch.setattr(accounts, "get_db", lambda: database)
+
+    await accounts.write_admin_audit(
+        "admin-1", "sessions_revoked", "user", "user-1",
+        metadata={"reason": "support", "token": "secret"},
+    )
+
+    record = database.admin_audit_logs.rows[0]
+    assert record["metadata"] == {"reason": "support"}
+    assert "secret" not in repr(record)
+
+
+@pytest.mark.asyncio
+async def test_session_listing_never_returns_token_hash(monkeypatch) -> None:
+    import app.account_database as accounts
+
+    database = _database()
+    database.auth_sessions.rows.append({
+        "_id": "session-1",
+        "user_id": "user-1",
+        "token_hash": accounts.token_sha256("raw-token"),
+        "created_at": datetime.now(timezone.utc),
+        "expires_at": datetime.now(timezone.utc) + timedelta(hours=1),
+    })
+    monkeypatch.setattr(accounts, "get_db", lambda: database)
+
+    sessions = await accounts.list_auth_sessions(
+        "user-1", current_token="raw-token"
+    )
+
+    assert sessions[0]["current"] is True
+    assert "token_hash" not in sessions[0]
+    assert "raw-token" not in repr(sessions)
+
+
+@pytest.mark.asyncio
+async def test_user_listing_searches_and_resolves_legacy_defaults(monkeypatch) -> None:
+    import app.account_database as accounts
+
+    database = _database()
+    database.users.rows.extend([
+        {"_id": "legacy", "email": "legacy@example.com"},
+        {"_id": "disabled", "email": "other@example.com", "status": "disabled"},
+    ])
+    database.auth_sessions.rows.append({
+        "user_id": "legacy",
+        "expires_at": datetime.now(timezone.utc) + timedelta(hours=1),
+    })
+    monkeypatch.setattr(accounts, "get_db", lambda: database)
+
+    users = await accounts.list_users(
+        search="legacy", status="active", role="user", limit=25
+    )
+
+    assert len(users) == 1
+    assert users[0]["role"] == "user"
+    assert users[0]["status"] == "active"
+    assert users[0]["active_session_count"] == 1
+
+
+@pytest.mark.asyncio
+async def test_idempotent_user_role_does_not_revoke_sessions(monkeypatch) -> None:
+    import app.account_database as accounts
+
+    database = _database()
+    database.users.rows.append({"_id": "user-1", "role": "user"})
+    database.auth_sessions.rows.append({"_id": "session-1", "user_id": "user-1"})
+    monkeypatch.setattr(accounts, "get_db", lambda: database)
+
+    assert await accounts.set_user_role("user-1", "user") is True
+    assert database.auth_sessions.deletes == []

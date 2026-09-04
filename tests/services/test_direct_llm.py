@@ -12,6 +12,45 @@ from app.services.vertex_ai import (
 )
 
 
+def test_use_case_policies_keep_answer_and_judge_routing_separate() -> None:
+    answer = direct_llm.routing_policy_for(direct_llm.LLMUseCase.ANSWER)
+    judge = direct_llm.routing_policy_for(direct_llm.LLMUseCase.EVALUATION)
+
+    assert answer.providers[0] == "google_vertex_ai"
+    assert "omnigate" not in answer.providers
+    assert judge.providers[-1] == "omnigate"
+
+
+@pytest.mark.asyncio
+async def test_provider_in_cooldown_is_skipped(monkeypatch) -> None:
+    called = False
+
+    async def openrouter(*_args, **_kwargs):
+        nonlocal called
+        called = True
+        return "must not run"
+
+    monkeypatch.setattr(
+        direct_llm,
+        "settings",
+        SimpleNamespace(
+            OPENROUTER_API_KEY="configured",
+            GEMINI_API_KEY=None,
+            NVIDIA_API_KEY=None,
+            GROQ_API_KEY=None,
+        ),
+    )
+    monkeypatch.setattr(direct_llm, "call_openrouter_api", openrouter)
+    monkeypatch.setitem(direct_llm._cooldowns, "openrouter", direct_llm.time.time() + 60)
+
+    result = await direct_llm._run_secondary_fallbacks(
+        "prompt", "system", 100, primary_error_kind="quota", started=direct_llm.time.perf_counter()
+    )
+
+    assert result is None
+    assert called is False
+
+
 @pytest.mark.asyncio
 async def test_openrouter_fallback_honors_the_requested_output_budget(
     monkeypatch,

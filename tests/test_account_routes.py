@@ -60,6 +60,7 @@ def test_registration_creates_unverified_user_and_sends_token(
         data={
             "email": " Person@Example.com ",
             "password": "long-enough-password",
+            "role": "admin",
             "csrf_token": "valid",
         },
     )
@@ -67,6 +68,7 @@ def test_registration_creates_unverified_user_and_sends_token(
     assert response.status_code == 200
     assert "Nếu địa chỉ hợp lệ" in response.text
     routes.create_user.assert_awaited_once()
+    assert len(routes.create_user.await_args.args) == 2
     routes.create_account_token.assert_awaited_once_with(
         "user-1", "verify_email", "verification-token"
     )
@@ -95,6 +97,7 @@ def test_login_sets_opaque_cookie_and_claims_anonymous_history(
     monkeypatch.setattr(routes, "verify_password", lambda *_args: True)
     monkeypatch.setattr(routes, "new_token", lambda: "opaque-session-token")
     monkeypatch.setattr(routes, "create_auth_session", AsyncMock())
+    monkeypatch.setattr(routes, "mark_last_login", AsyncMock())
     monkeypatch.setattr(routes, "claim_anonymous_history", AsyncMock())
 
     response = client.post(
@@ -183,3 +186,29 @@ def test_login_is_rate_limited(client, monkeypatch) -> None:
     ]
 
     assert responses[-1].status_code == 429
+
+
+def test_disabled_user_cannot_login(client, monkeypatch) -> None:
+    import app.api.account_routes as routes
+
+    monkeypatch.setattr(
+        routes,
+        "get_user_by_email",
+        AsyncMock(return_value={
+            "_id": "user-1",
+            "email_verified": True,
+            "status": "disabled",
+            "password_hash": "password-envelope",
+        }),
+    )
+    monkeypatch.setattr(routes, "verify_password", lambda *_args: True)
+    create_session = AsyncMock()
+    monkeypatch.setattr(routes, "create_auth_session", create_session)
+
+    response = client.post(
+        "/login",
+        data={"email": "u@example.com", "password": "correct-password", "csrf_token": "valid"},
+    )
+
+    assert response.status_code == 401
+    create_session.assert_not_awaited()

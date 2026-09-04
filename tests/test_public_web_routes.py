@@ -56,10 +56,10 @@ def test_progress_endpoint_is_owner_scoped(client, monkeypatch) -> None:
     assert client.get("/api/progress/missing").status_code == 404
 
 
-def test_admin_is_unavailable_when_credentials_are_not_configured(client) -> None:
+def test_admin_requires_account_auth_when_legacy_basic_is_disabled(client) -> None:
     response = client.get("/admin")
 
-    assert response.status_code == 503
+    assert response.status_code == 401
 
 
 def test_chat_defaults_to_nemo_off(client, monkeypatch) -> None:
