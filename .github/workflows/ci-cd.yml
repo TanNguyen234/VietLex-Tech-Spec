@@ -21,11 +21,11 @@ jobs:
         with:
           fetch-depth: 2
 
-      # Bước 2: Cài Python
-      - name: Set up Python 3.10
+      # Bước 2: Cài Python theo contract trong pyproject.toml
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.12'
           cache: 'pip' # Cache lại thư viện để lần sau build nhanh hơn
 
       # Bước 3: Cài đặt dependencies
