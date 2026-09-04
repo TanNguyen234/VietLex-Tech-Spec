@@ -1,5 +1,31 @@
 # CURRENT_ARCHITECTURE.md — Technical Source of Truth
 
+## Production foundation state
+
+| Area | Classification | Current contract |
+| :--- | :--- | :--- |
+| Registration, verification, login, recovery, export/deletion | IMPLEMENTED | First-party MongoDB accounts; public registration always creates `role=user`, `status=active`. |
+| Account lifecycle and sessions | IMPLEMENTED | Opaque cookies, SHA-256 token hashes, TTL, last-used metadata, per-session/other-session revocation, password-reset revocation, and immediate disabled-account rejection. Missing legacy fields resolve to `user` and `active`. |
+| Administrator identity and user operations | IMPLEMENTED | Normal `/admin` access requires an active authenticated account with `role=admin`. Disable/enable and session revocation are bounded, CSRF-protected, and audited. Role changes are CLI-only and cannot remove the last active administrator. |
+| Admin interaction filtering | PARTIALLY IMPLEMENTED | Bounded search plus request-status, provider, and cache filters use persisted fields. Date-range and explicit fallback/guardrail filters remain future work. Detail views redact known secrets and common PII and bound displayed text/context. |
+| Provider/system operations view | PARTIALLY IMPLEMENTED | Configuration presence, passive recent events, cooldowns, readiness, and retrieval topology are visible without active paid probes. Process-local provider telemetry is best effort across replicas. |
+| Static HTTP Basic administrator | LEGACY | Available only when `LEGACY_ADMIN_BASIC_ENABLED=true`; off by default and deprecated. It is not stored in MongoDB. |
+| Logfire | IMPLEMENTED | Configured once before FastAPI instrumentation with service/environment attributes and `if-token-present`; test mode always sets export off. Headers, prompts, and response bodies are not opted into capture. |
+| Answer generation routing | PARTIALLY IMPLEMENTED | The existing direct-LLM boundary now declares answer, guardrail, evaluation, and future structured-analysis policies. Vertex remains answer/guardrail primary, configured direct APIs remain fallbacks, and provider/model/status/latency/token metadata is retained. Evaluator implementations remain separate callers under the declared evaluation policy. |
+| OmniGate | SHOULD NOT BE CHANGED | Optional evaluator fallback only; it is not the production answer or guardrail primary. |
+| Retrieval, rank fusion, evidence budget, semantic-cache fingerprint, Golden-50 | SHOULD NOT BE CHANGED | Unmodified by the production-foundation work. |
+
+Administrator bootstrap is deliberately non-public:
+
+```powershell
+python scripts/manage_admin.py grant admin@example.com
+python scripts/manage_admin.py revoke admin@example.com
+```
+
+The account must already exist. Grants/revocations create a bounded audit record;
+demotion revokes the account's active sessions. Never expose this command through
+a browser route.
+
 ## Architectural Topology
 
 ```text
@@ -72,6 +98,12 @@ The v3 lane exposes typed hybrid runtime and evaluation adapters. With `USE_LEGA
 - Current immutable evidence lives under
   `docs/evaluation/runs/*-golden50-expanded14962-rrf-dbsf-20260903/`. Both
   manifests honestly record the tested dirty source state and its diff hash.
+- Production-foundation work does not alter Vertex embeddings, Qdrant v3
+  retrieval, the RRF/DBSF blend, structural evidence selection, or evaluation
+  metric contracts. Historical retrieval evidence therefore remains descriptive
+  of the same retrieval configuration. Provider cooldown enforcement is stricter;
+  historical answer runs do not validate requests that would now skip a cooled
+  fallback provider.
 
 ## Opt-in structural v2 parallel path
 

@@ -69,3 +69,30 @@ and Supabase availability, and provider failures. Add persistent-volume capacity
 persistent topology and Vercel function duration/cold-start behavior for the
 serverless topology. Never include legal queries, passwords, cookies, or tokens
 in alert payloads.
+
+## Account and administrator operations
+
+- Existing account documents without `role` or `status` are read as `user` and
+  `active`; no mandatory bulk backfill is required. New documents persist both.
+- Password reset, account disablement, deletion, logout, role demotion, and
+  explicit operator revocation remove the relevant durable MongoDB sessions.
+- Bootstrap an administrator only from a trusted shell with
+  `python scripts/manage_admin.py grant <existing-email>`. Revoke with the same
+  command's `revoke` action. The last active administrator cannot be disabled or
+  demoted, and the web UI never grants roles.
+- `/admin` uses the normal authenticated account cookie and server-side role
+  check. `ADMIN_USERNAME`/`ADMIN_PASSWORD` are deprecated and ignored unless
+  `LEGACY_ADMIN_BASIC_ENABLED=true`; new production deployments must leave it
+  false.
+- Administrative disable/enable and session-revocation actions append bounded
+  records to `admin_audit_logs`. Back up this collection with the other MongoDB
+  source data. Records exclude passwords, cookies, raw tokens, and API keys.
+
+## Logfire privacy and availability
+
+`logfire.configure()` runs once with `send_to_logfire="if-token-present"`,
+`LOGFIRE_SERVICE_NAME`, and `APP_ENV`. Logfire consumes `LOGFIRE_TOKEN` through
+its normal environment contract; the application does not use it as a read or
+administrator token. Tests force `APP_ENV=test` and disable export. FastAPI
+header capture remains off, and telemetry availability is not an authorization
+or readiness dependency.

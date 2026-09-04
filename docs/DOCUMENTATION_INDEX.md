@@ -29,7 +29,7 @@ reviving an older design.
 | Evaluation status | [`evaluation/CURRENT_STATUS.md`](evaluation/CURRENT_STATUS.md) | Latest bounded benchmark and retained historical status log |
 | Portfolio claims | [`evaluation/PORTFOLIO_EVIDENCE.md`](evaluation/PORTFOLIO_EVIDENCE.md) | Claims allowed by immutable evidence and their boundaries |
 | Vercel deployment | [`runbooks/DEPLOYMENT.md`](runbooks/DEPLOYMENT.md) | Direct FastAPI/Jinja SSR deployment contract |
-| Persistent operations | [`PRODUCTION_OPERATIONS.md`](PRODUCTION_OPERATIONS.md) | Backups, restores, monitoring, and persistent-host responsibilities |
+| Persistent operations | [`PRODUCTION_OPERATIONS.md`](PRODUCTION_OPERATIONS.md) | Backups, restores, monitoring, account/admin bootstrap, and persistent-host responsibilities |
 | Corpus ingestion | [`huggingface-ingestion-runbook.md`](huggingface-ingestion-runbook.md) | Full-corpus preparation and verification |
 | Golden-50 | [`evaluation/golden50-v3/README.md`](evaluation/golden50-v3/README.md) | Reproducible online retrieval and answer evaluation commands |
 

@@ -447,6 +447,13 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 Mở <http://localhost:8000>. Các endpoint kiểm tra là `GET /healthz` và `GET /readyz`; `/readyz` chỉ xanh khi các dependency được cấu hình thực sự sẵn sàng.
 
+Tài khoản dùng đăng ký/xác minh email, cookie phiên opaque và token hash trong
+MongoDB. Admin dùng cùng identity model: sau khi tài khoản đã tồn tại, operator
+cấp quyền bằng `python scripts/manage_admin.py grant admin@example.com`.
+`LEGACY_ADMIN_BASIC_ENABLED` mặc định `false`; không bật cho deployment mới.
+Người dùng có thể xem/thu hồi phiên tại `/settings`; vô hiệu hóa tài khoản hoặc
+đặt lại mật khẩu sẽ thu hồi các phiên hiện có.
+
 ### 6. Kiểm thử vừa đủ
 
 Không cần chạy toàn bộ evaluation suite sau mỗi sửa UI. Dùng tầng nhỏ nhất chứng minh thay đổi:
