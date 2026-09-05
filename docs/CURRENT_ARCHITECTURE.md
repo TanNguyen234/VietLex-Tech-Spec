@@ -82,6 +82,69 @@ USE_LEGACY_FREE_PIPELINE=true
 
 The v3 lane exposes typed hybrid runtime and evaluation adapters. With `USE_LEGACY_FREE_PIPELINE=false`, `production` uses v3 as its primary retrieval path; initialization/provider failures are typed and do not silently fall back to Pinecone. After expansion, raw RRF missed one required document at top 3 because sparse-only distractors outranked the correct dense hit. Production therefore uses an equal reciprocal-rank blend of the Qdrant RRF and DBSF result lists; the 2026-09-03 Golden-50 run passed every retrieval gate. Qdrant ColBERT remains rejected because the live comparison reduced verified article/clause recall. The audited remote collection has 141,798 points over exactly 14,962 unique document IDs. Chat evidence comes directly from each Qdrant point payload (`body`); it does not fetch full text from Supabase. In serverless online-only mode, Supabase `public.legal_documents` supplies title/number search and full-document pages for the same 14,962-document set through a publishable-key, read-only RLS policy. The packaged local v3 bundle is older and must not be presented as matching the expanded online set. This remains a narrow slice of the 518,255-document corpus, not whole-corpus production-readiness evidence. Set the boolean to `true` to restore Pinecone v1 and disable all Google Cloud calls.
 
+## Evidence-centric research workspace
+
+The public FastAPI/Jinja application now includes additive research-product
+surfaces without changing retrieval or evaluation behavior:
+
+- `/workspaces` stores owner-scoped research cases in one MongoDB
+  `research_workspaces` collection. Authenticated ownership uses `user_id`;
+  anonymous ownership requires the existing signed `client_id` and no assigned
+  `user_id`. Evidence, per-evidence notes, and bounded analysis records are
+  embedded in each workspace document. Evidence retains its source trace and
+  session ID; existing chat sessions are not migrated.
+- Evidence can be pinned only by resolving a context index from an interaction
+  already owned by the requester. Citation, excerpt, document ID, and source URL
+  are derived server-side; browser-supplied evidence content is not accepted.
+- Selected-evidence analysis bypasses global retrieval and sends only the
+  server-resolved selected evidence to the existing direct generation boundary.
+  Missing/foreign selections fail as `insufficient_evidence`. A maximum of ten
+  evidence records must fit the existing `LLM_CONTEXT_MAX_TOKENS` whitespace-token
+  budget (720 by default), including their reference headers. Oversized selections
+  return `422 evidence_scope_too_large`; no selected record is silently dropped.
+  AI calls use a process-local semaphore of two and retain direct-provider timeouts.
+- Compare and obligation-matrix operations validate provider JSON with strict
+  Pydantic schemas. Invalid provider output is persisted and returned as
+  `invalid_structured_response`; malformed output is never presented as a
+  verified legal analysis. Selected answers also use a typed JSON schema with an
+  explicit `insufficient_evidence` state. Provider failures have a distinct
+  degraded/provider-error state. Saved analyses retain evidence snapshots so
+  provenance survives an unpin operation.
+- Interaction records may include a bounded `retrieval_trace` containing only
+  recorded backend/collection/ranking labels, numeric latency, stage candidate
+  counts, final evidence count, cache state, and context budget. Old records
+  remain valid and render `trace_not_recorded`.
+- Claim support is a deterministic citation-anchor coverage view. Its states do
+  not estimate confidence, semantic entailment, legal correctness, or current
+  legal effect. Exact article/clause anchors link to recorded citations; a
+  document-only anchor is partial; absent or ambiguous links are unresolved.
+  At most twelve sentence-like claims are projected without another model call.
+- `/evaluation-lab` reads the current immutable Golden-50 answer artifact and
+  exposes bounded deterministic, Ragas, case, and provenance projections. Page
+  loads make no provider call and never mutate or promote evaluation evidence.
+  Macro means expose their sum/count, coverage, skipped count and recorded skip
+  reasons. Per-case retrieval metrics retain original numerators/denominators.
+  Vercel and Docker bundle only `manifest.json` and `answer_results.json` from
+  `answer-v3-golden50-expanded14962-rrf-dbsf-20260903`, using the original artifacts.
+
+Research workspaces inherit `DATA_RETENTION_DAYS` through a MongoDB TTL index.
+Expiry is fixed at workspace creation; edits do not extend it. Each workspace
+holds at most 100 pinned records and the newest 50 analyses. Account sign-in
+claims anonymous workspaces; export includes a public-field projection; history
+and account deletion remove owned workspaces. The settings label includes this
+scope. They are research convenience records, not permanent legal archives.
+
+The document reader keeps full text and metadata with a responsive research
+sidecar. Its question shortcut pre-fills normal chat; it does not claim to scope
+global retrieval to that document. Strict scope is available through selected
+workspace evidence. Direct structural-section pinning/text-selection menus and
+temporal revision comparison are deferred; current Compare operates on evidence
+groups with explicit A/B provenance.
+
+Vertex/Qdrant v3 embeddings, dense+sparse retrieval, RRF+DBSF rank blending,
+structural evidence selection, original chat generation prompts/models, context budgets, and
+evaluation metric implementations are unchanged by this product layer.
+
 ## Verification & Provenance
 
 - Configuration declarations in `app/config.py` do not prove runtime usage until verified by code execution.

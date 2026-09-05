@@ -32,6 +32,7 @@ reviving an older design.
 | Persistent operations | [`PRODUCTION_OPERATIONS.md`](PRODUCTION_OPERATIONS.md) | Backups, restores, monitoring, account/admin bootstrap, and persistent-host responsibilities |
 | Corpus ingestion | [`huggingface-ingestion-runbook.md`](huggingface-ingestion-runbook.md) | Full-corpus preparation and verification |
 | Golden-50 | [`evaluation/golden50-v3/README.md`](evaluation/golden50-v3/README.md) | Reproducible online retrieval and answer evaluation commands |
+| Legal Intelligence Workspace | [`superpowers/plans/2026-09-04-legal-intelligence-workspace.md`](superpowers/plans/2026-09-04-legal-intelligence-workspace.md) | Current additive workspace, evidence, structured-analysis, retrieval-inspector, and Evaluation Lab contract |
 
 ## Evidence-bearing history
 

@@ -55,6 +55,18 @@ Hai ảnh được chụp ngày **2026-08-26** từ web FastAPI/Jinja2 chạy th
 - **Web backend:** FastAPI, Jinja2/HTMX, MongoDB cho session/log/feedback, rate limiting và guardrail modes `off`/`shadow`/`enforce`.
 - **Tài khoản:** đăng ký/đăng nhập, Gmail verification/reset, lịch sử theo chủ sở hữu, export và xóa dữ liệu.
 - **Tra cứu văn bản:** tìm theo số hiệu/tiêu đề và xem toàn văn từ Supabase ở online-only hoặc SQLite ở persistent/local, kèm cảnh báo chưa xác minh hiệu lực.
+- **Research Workspaces:** lưu chủ đề nghiên cứu theo đúng owner hiện có, ghim
+  bằng chứng từ interaction đã sở hữu, thêm ghi chú và tái sử dụng nguồn trong
+  phân tích có phạm vi.
+- **Evidence intelligence:** hiển thị coverage theo neo dẫn chiếu quan sát được,
+  retrieval inspector từ telemetry đã ghi, so sánh có evidence link và obligation
+  matrix có modality/provenance. Không dùng phần trăm confidence tự suy đoán.
+- **Selected-evidence analysis:** backend chỉ gửi các evidence ID đã được resolve
+  trong workspace; thiếu nguồn trả `insufficient_evidence`, không âm thầm chạy
+  global retrieval.
+- **Evaluation Lab:** `/evaluation-lab` đọc trực tiếp immutable Golden-50 artifact,
+  hiển thị provenance, deterministic metrics, Ragas thứ cấp và case explorer mà
+  không gọi model khi mở trang.
 
 ## Kiến trúc
 
