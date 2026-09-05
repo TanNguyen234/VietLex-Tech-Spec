@@ -25,6 +25,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY app/ ./app/
 COPY assets/ ./assets/
 COPY guardrails_config/ ./guardrails_config/
+COPY docs/evaluation/runs/answer-v3-golden50-expanded14962-rrf-dbsf-20260903/manifest.json docs/evaluation/runs/answer-v3-golden50-expanded14962-rrf-dbsf-20260903/answer_results.json ./docs/evaluation/runs/answer-v3-golden50-expanded14962-rrf-dbsf-20260903/
 
 # The indexed corpus is mounted at runtime and is never baked into the image.
 VOLUME ["/data"]

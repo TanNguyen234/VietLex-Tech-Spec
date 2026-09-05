@@ -4,7 +4,15 @@
 .tmp/
 .pytest_cache/
 data/
-docs/
+docs/*
+!docs/evaluation/
+docs/evaluation/*
+!docs/evaluation/runs/
+docs/evaluation/runs/*
+!docs/evaluation/runs/answer-v3-golden50-expanded14962-rrf-dbsf-20260903/
+docs/evaluation/runs/answer-v3-golden50-expanded14962-rrf-dbsf-20260903/*
+!docs/evaluation/runs/answer-v3-golden50-expanded14962-rrf-dbsf-20260903/manifest.json
+!docs/evaluation/runs/answer-v3-golden50-expanded14962-rrf-dbsf-20260903/answer_results.json
 tests/
 output/
 tmp/

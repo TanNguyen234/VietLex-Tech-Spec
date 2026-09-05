@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="vi" data-theme="dark">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Hồ sơ nghiên cứu · VietLex</title>
+  <link rel="stylesheet" href="/static/css/vietlex.css"><link rel="stylesheet" href="/static/css/vietlex-enhancements.css">
+<script src="/static/js/product.js" defer></script></head>
+<body>
+  <header class="topbar"><a class="brand" href="/"><span class="brand-mark">VL</span><span><strong>VietLex</strong><small>Nghiên cứu pháp luật</small></span></a>{% include "product_nav.html" %}</header>
+  <main class="research-page">
+    <header class="research-page-heading"><div><span class="eyebrow">Nghiên cứu pháp luật</span><h1>Hồ sơ nghiên cứu</h1><p>Gom hội thoại, bằng chứng và phân tích theo một vấn đề pháp lý lâu dài.</p></div></header>
+    <section class="research-split">
+      <form class="research-form" data-product-form method="post" action="/workspaces">
+        <h2>Tạo hồ sơ</h2><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <label>Tên chủ đề<input name="title" maxlength="120" required placeholder="Ví dụ: Thử việc và chấm dứt HĐLĐ"></label>
+        <label>Câu hỏi nghiên cứu<textarea name="description" maxlength="2000" rows="5" placeholder="Mục tiêu, phạm vi hoặc giả định cần kiểm tra"></textarea></label>
+        <button class="button button-primary" type="submit">Tạo hồ sơ</button>
+      </form>
+      <section aria-labelledby="workspace-list-title"><div class="section-rule"><h2 id="workspace-list-title">Đang nghiên cứu</h2><span>{{ workspaces|length }} hồ sơ</span></div>
+        <div class="workspace-list">
+        {% for workspace in workspaces %}<article class="workspace-row"><div><span class="eyebrow">Cập nhật {{ workspace.updated_at.strftime('%d/%m/%Y') if workspace.updated_at else '—' }}</span><h3><a href="/workspaces/{{ workspace.workspace_id }}">{{ workspace.title }}</a></h3><p>{{ workspace.description or 'Chưa có mô tả.' }}</p></div><dl><dt>Bằng chứng</dt><dd>{{ workspace.evidence|length }}</dd><dt>Phân tích</dt><dd>{{ workspace.analyses|length }}</dd></dl></article>
+        {% else %}<div class="empty-state"><h3>Chưa có hồ sơ</h3><p>Tạo một chủ đề nghiên cứu để bắt đầu ghim và tái sử dụng bằng chứng.</p></div>{% endfor %}
+        </div>
+      </section>
+    </section>
+  </main>
+</body></html>

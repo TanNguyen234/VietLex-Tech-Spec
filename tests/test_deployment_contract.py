@@ -137,6 +137,20 @@ def test_container_uses_persistent_corpus_paths_without_copying_data() -> None:
     assert "data/" in dockerignore
 
 
+def test_evaluation_lab_canonical_artifacts_are_in_deployment_bundle() -> None:
+    from app.api.evaluation_lab_routes import CURRENT_ANSWER_RUN
+
+    run = CURRENT_ANSWER_RUN.as_posix()
+    config = json.loads((ROOT / "vercel.json").read_text(encoding="utf-8"))
+    ignore = (ROOT / ".vercelignore").read_text(encoding="utf-8")
+    dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
+    assert "docs/**" not in config["functions"]["app/server.py"]["excludeFiles"]
+    for name in ("manifest.json", "answer_results.json"):
+        assert (ROOT / run / name).is_file()
+        assert f"!{run}/{name}" in ignore
+        assert f"{run}/{name}" in dockerfile
+
+
 def test_demo_documentation_states_the_split_and_secret_boundary() -> None:
     deployment = (ROOT / "deploy/vercel-proxy/README.md").read_text(
         encoding="utf-8"

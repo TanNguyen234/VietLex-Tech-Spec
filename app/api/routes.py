@@ -4,7 +4,6 @@ import time
 import uuid
 import secrets
 from functools import partial
-from pathlib import Path
 from typing import Dict
 import logfire
 
@@ -36,10 +35,14 @@ from app.services.conversation_export import render_conversation_markdown
 from app.services.readiness import build_readiness
 from app.rate_limit import limiter
 from app.services.evidence_presenter import present_context
-from app.services.portfolio_evidence import load_portfolio_evidence
 from app.services.provider_runtime import provider_status_snapshot
 from app.services.direct_llm import provider_cooldown_snapshot
 from app.services.chat_progress import chat_progress
+from app.services.research_presenter import (
+    build_claim_support,
+    build_public_retrieval_trace,
+    sanitize_retrieval_trace,
+)
 
 from app.services.pii import redact_pii
 from app.services.runtime_errors import (
@@ -176,6 +179,21 @@ async def chat_progress_status(request: Request, request_id: str):
     if snapshot is None:
         raise HTTPException(status_code=404, detail="Progress not found")
     return snapshot
+
+
+@router.get("/api/interactions/{trace_id}/retrieval")
+@limiter.limit(settings.SESSION_RATE_LIMIT)
+async def retrieval_inspector(
+    request: Request, trace_id: str, current_user=Depends(optional_user)
+):
+    if len(trace_id) > 100:
+        raise HTTPException(status_code=422, detail="Invalid trace ID")
+    client_id = getattr(request.state, "client_id", "legacy")
+    user_id = str(current_user["_id"]) if current_user else None
+    interaction = await _owned_interaction(trace_id, client_id, user_id)
+    if interaction is None or (user_id is None and interaction.get("user_id")):
+        raise HTTPException(status_code=404, detail="Interaction not found")
+    return build_public_retrieval_trace(interaction)
 
 
 @router.get("/api/progress/{request_id}/stream")
@@ -422,6 +440,13 @@ async def chat(
                 context_count=metrics.context_count,
                 no_evidence=metrics.no_evidence,
                 refusal_category=metrics.refusal_category,
+                retrieval_trace=sanitize_retrieval_trace(
+                    {"retrieval_status": "cache_hit"},
+                    cached_contexts,
+                    settings,
+                    query=message,
+                    cached=True,
+                ),
             )
             response = templates.TemplateResponse(
                 request,
@@ -436,6 +461,7 @@ async def chat(
                     "evidence_views": [
                         present_context(item) for item in cached_contexts
                     ],
+                    "claim_support": build_claim_support(cached_text, cached_contexts),
                 },
             )
             if is_new_session:
@@ -774,6 +800,13 @@ async def chat(
             context_count=metrics.context_count,
             no_evidence=metrics.no_evidence,
             refusal_category=metrics.refusal_category,
+            retrieval_trace=sanitize_retrieval_trace(
+                latency_info,
+                context_used,
+                settings,
+                query=message,
+                cached=False,
+            ),
         )
         
         # Cache only grounded, output-approved answers and preserve their evidence.
@@ -790,7 +823,7 @@ async def chat(
         response = templates.TemplateResponse(
             request,
             "chat_message.html",
-            {"user_msg": message, "bot_msg": final_response, "trace_id": trace_id, "session_id": session_id, "contexts": context_used, "evidence_views": [present_context(item) for item in context_used]}
+            {"user_msg": message, "bot_msg": final_response, "trace_id": trace_id, "session_id": session_id, "contexts": context_used, "evidence_views": [present_context(item) for item in context_used], "claim_support": build_claim_support(final_response, context_used)}
         )
         if is_new_session:
             response.headers["HX-Trigger"] = "load-sessions"
@@ -959,6 +992,9 @@ async def get_session_history(
             "evidence_views": [
                 present_context(item) for item in (message.get("contexts") or [])
             ],
+            "claim_support": build_claim_support(
+                message.get("bot_response") or "", message.get("contexts") or []
+            ),
         }
         for message in raw_messages
     ]
@@ -1055,9 +1091,6 @@ async def admin_page(
 
     system_status = await build_readiness(settings, admin_mongo_ping)
     csrf_token = secrets.token_hex(32)
-    portfolio_evidence = load_portfolio_evidence(
-        Path("docs/evaluation/runs/answer-balanced50-v2-live-20260822/report.md")
-    )
     response = templates.TemplateResponse(
         request,
         "admin.html",
@@ -1076,7 +1109,6 @@ async def admin_page(
             "search": search,
             "skip": 0,
             "limit": 25,
-            "portfolio_evidence": portfolio_evidence,
         }
     )
     response.set_cookie(
@@ -1159,7 +1191,7 @@ async def admin_users_partial(
     return templates.TemplateResponse(
         request,
         "admin_users.html",
-        {"users": users, "csrf_token": request.cookies.get("csrf_token", "")},
+        {"users": users, "csrf_token": request.cookies.get("csrf_token", ""), "current_admin": _admin},
     )
 
 

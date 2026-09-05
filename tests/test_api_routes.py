@@ -43,7 +43,13 @@ def test_chat_route_off_mode_does_not_enqueue_ragas(client, monkeypatch) -> None
             return_value=(
                 "Theo Luật 12/2026/NĐ-CP Điều 1...",
                 ["Ngữ cảnh trích xuất"],
-                {"t_total": 0.5, "t_retrieval": 0.2, "t_llm": 0.3},
+                {
+                    "t_total": 0.5,
+                    "t_retrieval": 0.2,
+                    "t_llm": 0.3,
+                    "retrieval_status": "ok",
+                    "retrieval_diagnostics": {"backend": "vertex-qdrant-v3"},
+                },
             )
         ),
     )
@@ -86,6 +92,7 @@ def test_chat_route_off_mode_does_not_enqueue_ragas(client, monkeypatch) -> None
     # When off, ragas_mock should not be enqueued/called
     ragas_mock.assert_not_called()
     assert logged_interaction.get("trace_id") is not None
+    assert logged_interaction["retrieval_trace"]["backend"] == "vertex-qdrant-v3"
 
 
 def test_chat_route_never_enqueues_online_ragas_even_when_legacy_mode_is_all(client, monkeypatch) -> None:

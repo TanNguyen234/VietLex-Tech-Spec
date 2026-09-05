@@ -2,38 +2,39 @@
 <html lang="vi" data-theme="dark">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="VietLex — demo tra cứu pháp luật Việt Nam có nguồn và đánh giá minh bạch.">
+  <meta name="description" content="VietLex — tra cứu, lưu bằng chứng và nghiên cứu pháp luật Việt Nam.">
   <title>VietLex · Trợ lý tra cứu pháp luật</title>
   <link rel="stylesheet" href="/static/css/vietlex.css"><link rel="stylesheet" href="/static/css/vietlex-enhancements.css"><script src="/static/js/vietlex.js" defer></script>
-</head>
+<script src="/static/js/product.js" defer></script></head>
 <body data-progress-transport="{{ progress_transport | default('sse') }}">
   <a class="skip-link" href="#chat-input">Bỏ qua đến ô nhập câu hỏi</a>
   <header class="topbar">
-    <a class="brand" href="/" aria-label="VietLex — trang chủ"><span class="brand-mark">VL</span><span><strong>VietLex</strong><small>Vietnamese Legal RAG</small></span></a>
-    <nav class="top-actions" aria-label="Tiện ích"><span id="system-readiness" class="status-chip" role="status" aria-live="polite">Đang kiểm tra hệ thống</span><a class="button button-quiet" href="/search">Tìm văn bản</a><button id="theme-toggle" class="icon-button" type="button" aria-label="Đổi giao diện sáng tối">◐</button>{% if current_user %}<a class="button button-quiet" href="/settings">{{ current_user.email }}</a>{% if current_user.role == 'admin' %}<a class="button button-quiet" href="/admin">Admin</a>{% endif %}<form method="post" action="/logout"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="button button-quiet" type="submit">Đăng xuất</button></form>{% else %}<a class="button button-quiet" href="/login">Đăng nhập</a>{% endif %}</nav>
+    <a class="brand" href="/" aria-label="VietLex — trang chủ"><span class="brand-mark">VL</span><span><strong>VietLex</strong><small>Tra cứu và nghiên cứu pháp luật</small></span></a>
+    <nav class="top-actions" aria-label="Điều hướng chính"><span id="system-readiness" class="status-chip" role="status" aria-live="polite">Đang kiểm tra hệ thống</span><a href="/workspaces">Nghiên cứu</a><a href="/search">Văn bản</a><details><summary>Tìm hiểu thêm</summary><a href="/evaluation-lab">Chất lượng và kiểm chứng</a></details><button id="theme-toggle" class="icon-button" type="button" aria-label="Đổi giao diện sáng tối">◐</button>{% if current_user %}<a class="button button-quiet" href="/settings">{{ current_user.email }}</a>{% if current_user.role == 'admin' %}<a class="button button-quiet" href="/admin">Quản trị</a>{% endif %}<form method="post" action="/logout"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="button button-quiet" type="submit">Đăng xuất</button></form>{% else %}<a class="button button-quiet" href="/login">Đăng nhập</a>{% endif %}</nav>
   </header>
   <main class="workspace">
     <aside class="session-panel" aria-label="Lịch sử hội thoại">
-      <div class="session-heading"><div><span class="eyebrow">Workspace</span><h1>Hội thoại</h1></div><button class="button button-primary" type="button" data-action="new-session">+ Mới</button></div>
+      <div class="session-heading"><div><span class="eyebrow">Không gian làm việc</span><h1>Hội thoại</h1></div><button class="button button-primary" type="button" data-action="new-session">+ Mới</button></div>
       <label class="search-field"><span class="sr-only">Tìm hội thoại</span><input id="session-search" type="search" aria-label="Tìm hội thoại" placeholder="Tìm theo tiêu đề…" autocomplete="off"></label>
       <div id="sidebar-sessions-list" class="session-list" aria-live="polite"><p class="muted">Đang tải lịch sử…</p></div>
     </aside>
     <section class="chat-panel" aria-label="Trợ lý pháp luật VietLex">
       <div id="chat-status" class="sr-only" role="status" aria-live="polite"></div>
       <div id="chat-history" class="chat-history" aria-live="polite">
-        <section id="welcome-container" class="welcome-card"><span class="eyebrow">Tra cứu có dẫn nguồn</span><h2>Hỏi luật bằng ngôn ngữ tự nhiên.</h2><p>VietLex tìm các đoạn văn bản liên quan, xếp hạng bằng chứng và giải thích bằng tiếng Việt.</p>
+        <section id="welcome-container" class="welcome-card"><span class="eyebrow">Tra cứu có dẫn nguồn</span><h2>Hỏi luật bằng ngôn ngữ tự nhiên.</h2><p>Tra cứu, mở nguồn dẫn, rồi lưu bằng chứng vào hồ sơ để so sánh và phân tích.</p>
           <div class="prompt-grid" aria-label="Câu hỏi gợi ý"><button type="button" data-prompt="Thời gian thử việc tối đa theo luật lao động là bao lâu?">Thời gian thử việc tối đa?</button><button type="button" data-prompt="Quy trình và hồ sơ thành lập công ty cổ phần?">Hồ sơ thành lập công ty?</button><button type="button" data-prompt="Điều kiện để doanh nghiệp đơn phương chấm dứt hợp đồng lao động?">Chấm dứt hợp đồng?</button><button type="button" data-prompt="Các hình thức xử lý kỷ luật lao động hợp pháp là gì?">Kỷ luật lao động?</button></div>
         </section>
       </div>
       <div id="chat-loading" class="loading-row" hidden><span class="spinner" aria-hidden="true"></span><div><strong id="pipeline-progress">Đã tiếp nhận câu hỏi</strong><small id="pipeline-elapsed">0.00 giây</small></div></div>
       <form id="chat-form" class="composer" action="/chat" method="post">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="session_id" value="default" id="session-id-input">
-        <label for="chat-input" class="sr-only">Nhập câu hỏi pháp luật</label><textarea id="chat-input" name="message" rows="2" maxlength="2000" required placeholder="Ví dụ: Thời gian thử việc tối đa là bao lâu?"></textarea>
-        <div class="composer-actions"><label class="switch-row" title="NeMo kiểm tra input và output; mặc định tắt."><input type="checkbox" name="nemo_enabled" value="true"><span>NeMo Guardrails</span><small>Mặc định tắt</small></label><button class="button button-primary" type="submit">Gửi câu hỏi →</button></div>
+        <label for="chat-input" class="sr-only">Nhập câu hỏi pháp luật</label><textarea id="chat-input" name="message" rows="2" maxlength="2000" required placeholder="Ví dụ: Thời gian thử việc tối đa là bao lâu?">{{ prefill_question }}</textarea>
+        <div class="composer-actions"><label class="switch-row" title="Kiểm tra câu hỏi và câu trả lời; có thể tăng thời gian xử lý."><input type="checkbox" name="nemo_enabled" value="true"><span>Kiểm tra an toàn bổ sung</span><small>Mặc định tắt</small></label><button class="button button-primary" type="submit">Gửi câu hỏi →</button></div>
         <p class="legal-note">Dữ liệu bên thứ ba, không tự xác nhận tình trạng hiệu lực và không thay thế tư vấn pháp lý. Luôn kiểm tra nguồn chính thức. <a href="/privacy">Quyền riêng tư</a> · <a href="/terms">Điều khoản</a></p>
       </form>
     </section>
   </main>
-  <aside id="evidence-drawer" class="drawer" aria-label="Nguồn pháp lý" aria-hidden="true"><div class="drawer-header"><div><span class="eyebrow">Evidence</span><h2>Nguồn pháp lý</h2></div><button type="button" class="icon-button" data-action="close-drawer" aria-label="Đóng nguồn">×</button></div><div id="evidence-drawer-content" class="drawer-content"></div></aside>
+  <aside id="evidence-drawer" class="drawer" aria-label="Nguồn pháp lý" aria-hidden="true"><div class="drawer-header"><div><span class="eyebrow">Bằng chứng</span><h2>Nguồn pháp lý</h2></div><button type="button" class="icon-button" data-action="close-drawer" aria-label="Đóng nguồn">×</button></div><div id="evidence-drawer-content" class="drawer-content"></div></aside>
+  <dialog id="pin-evidence-dialog" class="research-dialog"><form id="pin-evidence-form" method="dialog"><div class="drawer-header"><div><span class="eyebrow">Bằng chứng đã lưu</span><h2>Lưu vào hồ sơ</h2></div><button type="button" class="icon-button" data-action="close-pin-dialog" aria-label="Đóng">×</button></div><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="trace_id"><input type="hidden" name="evidence_index"><label>Không gian làm việc<select name="workspace_id" required></select></label><label>Ghi chú ngắn<textarea name="note" maxlength="500" rows="3"></textarea></label><p id="pin-evidence-empty" class="muted" hidden>Chưa có hồ sơ. <a href="/workspaces">Tạo hồ sơ trước</a>.</p><button class="button button-primary" type="submit">Ghim bằng chứng</button></form></dialog>
   <div id="drawer-backdrop" class="drawer-backdrop" hidden></div><div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 </body></html>

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="vi" data-theme="dark">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Chất lượng và kiểm chứng · VietLex</title>
+  <link rel="stylesheet" href="/static/css/vietlex.css"><link rel="stylesheet" href="/static/css/vietlex-enhancements.css">
+<script src="/static/js/product.js" defer></script></head>
+{% macro metrics_table(metrics) %}
+<table class="evaluation-table">
+  <thead><tr><th scope="col">Chỉ số</th><th scope="col">Trung bình</th><th scope="col">Số câu có dữ liệu</th><th scope="col">Cách tổng hợp / bỏ qua</th></tr></thead>
+  <tbody>{% for key, metric in metrics.items() %}
+    <tr><th scope="row">{{ key }}</th><td>{{ '%.4f'|format(metric.mean) if metric.mean is not none else 'N/A' }}</td><td>{{ metric.coverage }}/{{ metric.total }}</td>
+      <td><details><summary>{{ metric.skipped }} câu hỏi bỏ qua</summary><p>Mean = tổng {{ '%.4f'|format(metric.numerator) }} / {{ metric.denominator }} giá trị được ghi.</p>{% for reason, count in metric.skip_reasons.items() %}<p>{{ reason }}: {{ count }}</p>{% endfor %}</details></td></tr>
+  {% else %}<tr><td colspan="4">Không có metric được ghi cho nhóm này.</td></tr>{% endfor %}</tbody>
+</table>
+{% endmacro %}
+<body>
+<header class="topbar"><a class="brand" href="/"><span class="brand-mark">VL</span><span><strong>VietLex</strong><small>Nghiên cứu pháp luật</small></span></a>{% include "product_nav.html" %}</header>
+<main class="evaluation-lab-page">
+  <header class="research-page-heading"><span class="eyebrow">Chất lượng và kiểm chứng</span><h1>Chất lượng được kiểm chứng như thế nào?</h1><p>Kết quả dưới đây được đọc từ lần đánh giá đã lưu. Mở trang này không chạy đánh giá mới.</p></header>
+  {% if lab.status == 'available' %}
+  <details><summary>Nguồn số liệu và thông tin kỹ thuật</summary><section class="provenance-strip">
+    <div><small>Run ID</small><strong>{{ lab.provenance.run_id }}</strong></div>
+    <div><small>Commit</small><strong>{{ lab.provenance.git_sha or 'N/A' }}</strong></div>
+    <div><small>Git dirty</small><strong>{{ 'Có' if lab.provenance.git_dirty is sameas true else 'Không' if lab.provenance.git_dirty is sameas false else 'N/A' }}</strong></div>
+    <div><small>Thời điểm artifact (UTC)</small><strong>{{ lab.provenance.utc_timestamp or 'N/A' }}</strong></div>
+  </section>
+  <details><summary>Dataset và fingerprint</summary><dl class="trace-overview">
+    {% for key in ['dataset_revision','dataset_sha256','configuration_fingerprint','git_diff_sha256','provenance_status','judge_mode','selected_case_count'] %}<dt>{{ key }}</dt><dd>{{ lab.provenance.get(key) if lab.provenance.get(key) is not none else 'N/A' }}</dd>{% endfor %}
+  </dl></details></details>
+  <p class="legal-warning">{{ lab.boundary }}</p>
+  <p class="muted">Mean là macro average trên case có số liệu. N/A không phải 0. Tương đồng từ vựng không chứng minh tính đúng đắn pháp lý; LLM judge là nguồn đánh giá thứ cấp.</p>
+  <section class="lab-grid">
+    <article><div class="section-rule"><h2>Chỉ số tính toán tự động</h2><span>Tính bằng mã</span></div>{{ metrics_table(lab.deterministic_metrics) }}</article>
+    <article><div class="section-rule"><h2>Ragas</h2><span>AI đánh giá · tham khảo bổ sung</span></div>{{ metrics_table(lab.ragas_metrics) }}</article>
+  </section>
+  <section class="case-explorer">
+    <div class="section-rule"><h2>Xem từng câu hỏi</h2><span>{{ lab.cases|length }} câu hỏi</span></div>
+    <form method="get"><label>Chọn câu hỏi<select name="case"><option value="">— Chọn một câu hỏi —</option>{% for item in lab.cases %}<option value="{{ item.case_id }}" {% if item.case_id == selected_case_id %}selected{% endif %}>{{ item.case_id }} · {{ item.question }}</option>{% endfor %}</select></label><button class="button button-quiet" type="submit">Mở câu hỏi</button></form>
+    {% if lab.case %}
+    <article class="case-detail">
+      <span class="support-state">{{ lab.case.status }}</span><h3>{{ lab.case.question }}</h3>
+      <div class="case-columns"><section><h4>Câu trả lời đã ghi</h4><p>{{ lab.case.answer or 'Không ghi nhận câu trả lời.' }}</p>
+        <h4>Trạng thái / lỗi kỹ thuật</h4>{% for key, value in lab.case.technical_errors.items() %}<p>{{ key }}: {{ value }}</p>{% else %}<p>Không có lỗi kỹ thuật trong bản ghi.</p>{% endfor %}
+        <details><summary>Metric từng câu hỏi và lý do không áp dụng</summary><pre>{{ lab.case.metrics|tojson(indent=2) }}</pre><pre>{{ lab.case.ragas_metrics|tojson(indent=2) }}</pre></details>
+      </section><section><h4>Bằng chứng truy xuất · thứ tự cuối</h4>
+        {% for evidence in lab.case.evidence %}<article class="evidence-row"><strong>#{{ evidence.rank }} · {{ evidence.citation }}</strong>{% if evidence.document_id %}<a href="/documents/{{ evidence.document_id }}">Mở văn bản</a>{% endif %}<p>{{ evidence.text }}</p></article>{% else %}<p>Không có bằng chứng truy xuất.</p>{% endfor %}
+      </section></div>
+      <details><summary>Retrieval: tử số, mẫu số, stage survival và skip reasons đã ghi</summary><pre>{{ lab.case.retrieval_metrics|tojson(indent=2) }}</pre></details>
+      <p class="muted">Bản ghi answer không chứa nguyên văn expected evidence; không suy đoán nội dung chuẩn tham chiếu.</p>
+    </article>
+    {% elif selected_case_id %}<p role="status">Không tìm thấy câu hỏi trong lần đánh giá này.</p>{% endif %}
+  </section>
+  {% else %}<div class="empty-state"><h2>Chất lượng và kiểm chứng chưa khả dụng</h2><p>Trạng thái artifact: {{ lab.status }}. Không có số liệu nào được suy đoán.</p></div>{% endif %}
+</main>
+</body></html>

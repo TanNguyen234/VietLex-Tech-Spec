@@ -5,20 +5,19 @@
   <div class="avatar" aria-hidden="true">VL</div>
   <div class="message-card">
     <div class="answer-source sr-only">{{ bot_msg }}</div><div class="answer-text" data-markdown></div>
+    {% if claim_support %}<section class="claim-support"><div class="section-rule"><h3>Liên kết bằng chứng</h3><span>{{ claim_support|length }} nhận định được hiển thị</span></div>
+      <ol>{% for claim in claim_support %}<li><span class="support-state {{ claim.support_state }}">{{ {'directly_supported':'Có dẫn chiếu trực tiếp','partially_supported':'Có dẫn văn bản, chưa xác định điều khoản','unresolved':'Chưa xác định liên kết bằng chứng'}[claim.support_state] }}</span><p>{{ claim.text }}</p>{% for evidence_index in claim.evidence_indices %}<button type="button" class="claim-evidence-link" data-action="open-source" data-source-target="source-{{ trace_id }}-{{ evidence_index + 1 }}">Mở bằng chứng {{ evidence_index + 1 }}</button>{% endfor %}</li>{% endfor %}</ol><p class="muted">Trạng thái dựa trên neo dẫn chiếu quan sát được; không phải điểm tin cậy hay kết luận đúng pháp luật.</p>
+    </section>{% endif %}
     {% if evidence_views %}<section class="sources"><h3>Nguồn pháp lý truy xuất</h3><div class="source-list">
       {% for evidence in evidence_views %}
       <button type="button" class="source-button" data-action="open-source" data-source-target="source-{{ trace_id }}-{{ loop.index }}">{{ evidence.citation or evidence.title or ('Nguồn ' ~ loop.index) }}</button>
-      <template id="source-{{ trace_id }}-{{ loop.index }}"><article>{% if evidence.citation %}<p><strong>{{ evidence.citation }}</strong></p>{% endif %}{% if evidence.title %}<p>{{ evidence.title }}</p>{% endif %}{% if evidence.document_number %}<p>Số hiệu: {{ evidence.document_number }}</p>{% endif %}{% if evidence.document_id %}<p><a href="/documents/{{ evidence.document_id }}">Xem văn bản trong VietLex</a></p>{% endif %}{% if evidence.source_url %}<p><a href="{{ evidence.source_url }}" target="_blank" rel="noopener noreferrer">Mở nguồn dữ liệu ↗</a></p>{% endif %}<pre>{{ evidence.excerpt }}</pre></article></template>
+      <template id="source-{{ trace_id }}-{{ loop.index }}"><article class="evidence-detail">{% if evidence.citation %}<p class="citation"><strong>{{ evidence.citation }}</strong></p>{% endif %}{% if evidence.title %}<p>{{ evidence.title }}</p>{% endif %}{% if evidence.document_number %}<p>Số hiệu: {{ evidence.document_number }}</p>{% endif %}{% if evidence.document_id %}<p><a href="/documents/{{ evidence.document_id }}">Xem văn bản trong VietLex</a></p>{% endif %}{% if evidence.source_url %}<p><a href="{{ evidence.source_url }}" target="_blank" rel="noopener noreferrer">Mở nguồn dữ liệu ↗</a></p>{% endif %}<pre>{{ evidence.excerpt }}</pre><button type="button" class="button button-primary" data-action="pin-evidence" data-trace-id="{{ trace_id }}" data-evidence-index="{{ loop.index0 }}">Lưu vào hồ sơ</button></article></template>
       {% endfor %}
     </div></section>{% endif %}
-    <div class="evaluation-panel" hidden></div>
+    <div class="retrieval-panel" hidden></div><div class="evaluation-panel" hidden></div>
     <footer class="message-meta"><span>Trace {{ trace_id[:8] }}{% if cached %} · Cache{% endif %}</span><div class="message-actions">
-      <button type="button" data-action="copy-answer">Sao chép</button>
-      <button type="button" data-action="retry" data-query="{{ user_msg }}">Thử lại</button>
-      <button type="button" data-action="evaluate" data-trace-id="{{ trace_id }}">Đánh giá</button>
-      <form data-feedback-form><input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}"><input type="hidden" name="trace_id" value="{{ trace_id }}"><input type="hidden" name="rating" value="up"><button type="submit" aria-label="Đánh giá hữu ích">Hữu ích</button></form>
-      <form data-feedback-form><input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}"><input type="hidden" name="trace_id" value="{{ trace_id }}"><input type="hidden" name="rating" value="down"><button type="submit" aria-label="Đánh giá không hữu ích">Chưa tốt</button></form>
+      <button type="button" data-action="copy-answer">Sao chép</button><button type="button" data-action="retry" data-query="{{ user_msg }}">Thử lại</button><button type="button" data-action="inspect-retrieval" data-trace-id="{{ trace_id }}">Xem cách tìm nguồn</button><button type="button" data-action="evaluate" data-trace-id="{{ trace_id }}">Đánh giá</button>
+      <form data-feedback-form><input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}"><input type="hidden" name="trace_id" value="{{ trace_id }}"><input type="hidden" name="rating" value="up"><button type="submit" aria-label="Đánh giá hữu ích">Hữu ích</button></form><form data-feedback-form><input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}"><input type="hidden" name="trace_id" value="{{ trace_id }}"><input type="hidden" name="rating" value="down"><button type="submit" aria-label="Đánh giá không hữu ích">Chưa tốt</button></form>
     </div></footer>
   </div>
-</article>
-<input type="hidden" name="session_id" value="{{ session_id }}" id="session-id-input">
+</article><input type="hidden" name="session_id" value="{{ session_id }}" id="session-id-input">

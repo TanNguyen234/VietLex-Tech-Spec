@@ -4,7 +4,7 @@
   "functions": {
     "app/server.py": {
       "maxDuration": 300,
-      "excludeFiles": "{data/**,tests/**,docs/**,output/**,tmp/**,.env,.env.*,requirements.txt,Dockerfile,guardrails_config/**,**/__pycache__/**,**/*.pyc}"
+      "excludeFiles": "{data/**,tests/**,output/**,tmp/**,.env,.env.*,requirements.txt,Dockerfile,guardrails_config/**,**/__pycache__/**,**/*.pyc}"
     }
   }
 }

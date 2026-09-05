@@ -13,6 +13,8 @@ from app.database import init_db
 from app.api.routes import router as api_router
 from app.api.account_routes import router as account_router
 from app.api.legal_routes import router as legal_router
+from app.api.workspace_routes import router as workspace_router
+from app.api.evaluation_lab_routes import router as evaluation_lab_router
 from app.api.dependencies import optional_user
 from app.services.web_security import (
     AnonymousClientMiddleware,
@@ -93,6 +95,8 @@ def get_csrf_token(request: Request) -> str:
 app.include_router(api_router)
 app.include_router(account_router)
 app.include_router(legal_router)
+app.include_router(workspace_router)
+app.include_router(evaluation_lab_router)
 
 @app.get("/", response_class=HTMLResponse)
 async def get_index(request: Request, current_user=Depends(optional_user)):
@@ -110,6 +114,7 @@ async def get_index(request: Request, current_user=Depends(optional_user)):
             "csrf_token": token,
             "progress_transport": progress_transport,
             "current_user": current_user,
+            "prefill_question": request.query_params.get("question", "")[:2_000],
         },
     )
     # Save token in cookie for validation

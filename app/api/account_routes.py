@@ -27,7 +27,7 @@ from app.account_database import (
     revoke_other_auth_sessions,
     update_password,
 )
-from app.api.dependencies import require_user, verify_csrf
+from app.api.dependencies import optional_user, require_user, verify_csrf
 from app.config import get_settings
 from app.services.accounts import (
     hash_password,
@@ -270,6 +270,12 @@ async def reset_password(
     return _form_response(request, mode="message", message=message)
 
 
+@router.get("/account")
+async def account_entry(user=Depends(optional_user)):
+    """Give navigation a usable destination with or without a session."""
+    return RedirectResponse("/settings" if user else "/login", status_code=303)
+
+
 @router.get("/settings", response_class=HTMLResponse)
 async def account_settings(request: Request, user=Depends(require_user)):
     csrf_token = secrets.token_hex(32)
@@ -301,7 +307,7 @@ async def account_session_revoke(
     user=Depends(require_user),
 ):
     await revoke_auth_session_by_id(str(user["_id"]), session_id[:100])
-    return RedirectResponse("/settings", status_code=303)
+    return RedirectResponse("/account", status_code=303)
 
 
 @router.post("/account/sessions/revoke-others")

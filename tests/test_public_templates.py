@@ -17,6 +17,8 @@ def test_index_uses_local_assets_and_exposes_accessible_controls() -> None:
     assert 'name="nemo_enabled"' in html
     assert 'id="system-readiness"' in html
     assert 'id="theme-toggle"' in html
+    assert 'href="/workspaces"' in html
+    assert 'href="/evaluation-lab"' in html
 
 
 def test_message_template_has_visible_actions_and_honest_source_copy() -> None:
@@ -31,6 +33,9 @@ def test_message_template_has_visible_actions_and_honest_source_copy() -> None:
     assert "evidence_views" in html
     assert 'href="{{ evidence.source_url }}"' in html
     assert 'href="/documents/{{ evidence.document_id }}"' in html
+    assert 'data-action="pin-evidence"' in html
+    assert 'data-action="inspect-retrieval"' in html
+    assert "Liên kết bằng chứng" in html
 
 
 def test_local_css_covers_focus_touch_and_reduced_motion() -> None:
@@ -89,3 +94,33 @@ def test_legal_search_uses_compact_page_specific_typography() -> None:
     assert ".legal-search-page>.welcome-card" in css
     assert ".legal-results h2" in css
     assert "font-size:clamp(1.1rem" in css
+
+
+def test_workspace_and_evaluation_lab_templates_expose_real_workflows() -> None:
+    workspace = (ROOT / "app/templates/research_workspace.html").read_text(encoding="utf-8")
+    lab = (ROOT / "app/templates/evaluation_lab.html").read_text(encoding="utf-8")
+    document = (ROOT / "app/templates/legal_document.html").read_text(encoding="utf-8")
+    script = (ROOT / "app/static/js/research-workspace.js").read_text(encoding="utf-8")
+
+    assert "Phạm vi bằng chứng" in workspace
+    assert "/analyses/selected" in workspace
+    assert "/analyses/compare" in workspace
+    assert "/analyses/obligations" in workspace
+    assert "Mở trang này không chạy đánh giá mới." in lab
+    assert "Git dirty" in lab
+    assert "Trợ lý nghiên cứu" in document
+    assert "evidenceGroup" in script
+    assert "change_type" in script
+    assert "modality" in script
+
+
+def test_product_forms_and_navigation_are_usable_without_chat_script() -> None:
+    nav = (ROOT / "app/templates/product_nav.html").read_text(encoding="utf-8")
+    admin = (ROOT / "app/templates/admin.html").read_text(encoding="utf-8")
+    workspace = (ROOT / "app/templates/research_workspace.html").read_text(encoding="utf-8")
+    assert 'href="/account"' in nav
+    assert 'data-target="#admin-log-results"' in admin
+    assert 'data-target="#admin-user-results"' in admin
+    assert "/static/js/vietlex.js" not in admin
+    assert 'type="hidden" name="evidence_a"' in workspace
+    assert 'include "product_nav.html"' in workspace

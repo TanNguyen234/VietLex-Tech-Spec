@@ -35,9 +35,9 @@ def test_admin_template_uses_local_assets_and_evidence_summary() -> None:
     assert "cdn.tailwindcss.com" not in html
     assert "unpkg.com" not in html
     assert 'href="/static/css/vietlex.css"' in html
-    assert "portfolio_evidence" in html
+    assert 'href="/evaluation-lab"' in html
     assert "Lỗi kỹ thuật" in html
-    assert "Ragas coverage" in html
+    assert "Tỷ lệ có đánh giá Ragas" in html
 
 
 class _AggregateCursor:

@@ -11,7 +11,9 @@ __pycache__/
 .env.*
 Dockerfile
 .dockerignore
-docs/
+docs/**
+!docs/evaluation/runs/answer-v3-golden50-expanded14962-rrf-dbsf-20260903/manifest.json
+!docs/evaluation/runs/answer-v3-golden50-expanded14962-rrf-dbsf-20260903/answer_results.json
 checklist.md
 plan.md
 nemo_guardrails_features.md
