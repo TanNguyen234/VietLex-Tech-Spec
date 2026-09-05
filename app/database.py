@@ -52,8 +52,10 @@ async def init_db():
             name="chat_sessions_retention_ttl",
         )
         from app.account_database import init_account_db
+        from app.research_database import init_research_db
 
         await init_account_db()
+        await init_research_db()
         
         logfire.info("MongoDB database and indexes initialized successfully.")
     except Exception as e:
@@ -87,6 +89,7 @@ async def log_interaction(
     refusal_category: Optional[str] = None,
     technical_error: Optional[Dict[str, Any] | str] = None,
     user_id: Optional[str] = None,
+    retrieval_trace: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     database = get_db()
     collection = database.evaluation_logs
@@ -108,6 +111,7 @@ async def log_interaction(
         "bot_response": bot_response,
         "contexts": contexts,
         "cached": cached,
+        "retrieval_trace": retrieval_trace,
         "safety_status": {
             "input_safe": input_safe,
             "output_safe": output_safe,

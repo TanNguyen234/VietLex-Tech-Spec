@@ -342,6 +342,7 @@ async def claim_anonymous_history(user_id: str, client_id: str) -> None:
     anonymous_owner = {"client_id": client_id, "user_id": None}
     await database.chat_sessions.update_many(anonymous_owner, update)
     await database.evaluation_logs.update_many(anonymous_owner, update)
+    await database.research_workspaces.update_many(anonymous_owner, update)
 
 
 async def export_account(user_id: str) -> dict[str, Any] | None:
@@ -360,11 +361,21 @@ async def export_account(user_id: str) -> dict[str, Any] | None:
     interactions = await database.evaluation_logs.find(
         {"user_id": user_id}
     ).sort("timestamp", 1).to_list(length=100_000)
+    research_workspaces = await database.research_workspaces.find(
+        {"user_id": user_id}
+    ).sort("created_at", 1).to_list(length=10_000)
     return {
         "schema_version": SCHEMA_VERSION,
         "user": public_user,
         "sessions": sessions,
         "interactions": interactions,
+        "research_workspaces": [
+            {key: value for key, value in workspace.items() if key in {
+                "workspace_id", "title", "description", "created_at", "updated_at",
+                "expires_at", "evidence", "analyses",
+            }}
+            for workspace in research_workspaces
+        ],
     }
 
 
@@ -372,6 +383,7 @@ async def delete_account_history(user_id: str) -> None:
     database = get_db()
     await database.chat_sessions.delete_many({"user_id": user_id})
     await database.evaluation_logs.delete_many({"user_id": user_id})
+    await database.research_workspaces.delete_many({"user_id": user_id})
 
 
 async def delete_account(user_id: str) -> None:
@@ -380,4 +392,5 @@ async def delete_account(user_id: str) -> None:
     await database.account_tokens.delete_many({"user_id": user_id})
     await database.chat_sessions.delete_many({"user_id": user_id})
     await database.evaluation_logs.delete_many({"user_id": user_id})
+    await database.research_workspaces.delete_many({"user_id": user_id})
     await database.users.delete_one({"_id": user_id})

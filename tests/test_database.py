@@ -37,6 +37,7 @@ async def test_log_interaction_persists_all_operational_fields() -> None:
             context_count=1,
             no_evidence=False,
             technical_error=None,
+            retrieval_trace={"status": "available", "backend": "vertex-qdrant-v3"},
         )
 
     assert doc["_id"] == "trace-db-test-01"
@@ -52,6 +53,7 @@ async def test_log_interaction_persists_all_operational_fields() -> None:
     assert metrics["context_count"] == 1
     assert metrics["no_evidence"] is False
     assert metrics["technical_error"] is None
+    assert doc["retrieval_trace"]["backend"] == "vertex-qdrant-v3"
 
     # Verify no ambiguous old aliases are written for new records
     assert "faithfulness" not in metrics

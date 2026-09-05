@@ -123,6 +123,7 @@ def _database():
         admin_audit_logs=_Collection(),
         chat_sessions=_Collection(),
         evaluation_logs=_Collection(),
+        research_workspaces=_Collection(),
     )
 
 
@@ -220,6 +221,17 @@ async def test_claim_history_sets_user_id_only_for_matching_anonymous_owner(monk
             {"_id": "log-other", "client_id": "client-b"},
         ]
     )
+    database.research_workspaces.rows.extend(
+        [
+            {"_id": "workspace-mine", "client_id": "client-a"},
+            {
+                "_id": "workspace-owned",
+                "client_id": "client-a",
+                "user_id": "user-previous",
+            },
+            {"_id": "workspace-other", "client_id": "client-b"},
+        ]
+    )
     monkeypatch.setattr(accounts, "get_db", lambda: database)
 
     await accounts.claim_anonymous_history("user-1", "client-a")
@@ -230,6 +242,43 @@ async def test_claim_history_sets_user_id_only_for_matching_anonymous_owner(monk
     assert database.evaluation_logs.rows[0]["user_id"] == "user-1"
     assert database.evaluation_logs.rows[1]["user_id"] == "user-previous"
     assert "user_id" not in database.evaluation_logs.rows[2]
+    assert database.research_workspaces.rows[0]["user_id"] == "user-1"
+    assert database.research_workspaces.rows[1]["user_id"] == "user-previous"
+    assert "user_id" not in database.research_workspaces.rows[2]
+
+
+@pytest.mark.asyncio
+async def test_account_export_includes_owned_research_workspaces(monkeypatch) -> None:
+    import app.account_database as accounts
+
+    database = _database()
+    database.users.rows.append({"_id": "user-1", "email": "u@example.com"})
+    database.research_workspaces.rows.extend(
+        [
+            {"_id": "mine", "workspace_id": "mine", "user_id": "user-1", "title": "My research"},
+            {"_id": "other", "user_id": "user-2", "title": "Other"},
+        ]
+    )
+    monkeypatch.setattr(accounts, "get_db", lambda: database)
+
+    exported = await accounts.export_account("user-1")
+
+    assert exported is not None
+    assert [item["workspace_id"] for item in exported["research_workspaces"]] == ["mine"]
+    assert "user_id" not in exported["research_workspaces"][0]
+    assert "_id" not in exported["research_workspaces"][0]
+
+
+@pytest.mark.asyncio
+async def test_history_deletion_removes_owned_research_workspaces(monkeypatch) -> None:
+    import app.account_database as accounts
+
+    database = _database()
+    monkeypatch.setattr(accounts, "get_db", lambda: database)
+
+    await accounts.delete_account_history("user-1")
+
+    assert database.research_workspaces.deletes == [{"user_id": "user-1"}]
 
 
 @pytest.mark.asyncio
@@ -246,6 +295,7 @@ async def test_account_deletion_cascades_by_user_id(monkeypatch) -> None:
     assert database.account_tokens.deletes == [{"user_id": "user-1"}]
     assert database.chat_sessions.deletes == [{"user_id": "user-1"}]
     assert database.evaluation_logs.deletes == [{"user_id": "user-1"}]
+    assert database.research_workspaces.deletes == [{"user_id": "user-1"}]
 
 
 @pytest.mark.asyncio
