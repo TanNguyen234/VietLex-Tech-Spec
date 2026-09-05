@@ -164,6 +164,49 @@ async def test_persisted_request_contains_call_usage(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_external_http_calls_do_not_pollute_llm_token_usage(monkeypatch):
+    from unittest.mock import AsyncMock
+
+    import app.database as database
+    from app.services.admin_observability import present_interaction
+    from app.services.provider_runtime import (
+        ProviderEvent,
+        capture_provider_usage,
+        record_provider_event,
+    )
+
+    collection = SimpleNamespace(replace_one=AsyncMock())
+    monkeypatch.setattr(
+        database, "get_db", lambda: SimpleNamespace(evaluation_logs=collection)
+    )
+
+    @capture_provider_usage
+    async def request():
+        record_provider_event(
+            ProviderEvent(
+                provider="chinhphu_official_portal",
+                model="webforms-search-v1",
+                use_case="deep_research",
+                success=True,
+                error_kind=None,
+                latency_ms=12,
+                fallback_used=False,
+                timestamp="2026-09-05",
+                call_kind="http",
+                request_count=2,
+            )
+        )
+        return await database.log_interaction("trace", "query", "answer", [], False)
+
+    document = await request()
+    assert document["metrics"]["llm_calls"] == []
+    assert document["metrics"]["token_usage"]["calls"] == 0
+    assert document["metrics"]["token_usage"]["total_token_count"] is None
+    assert document["metrics"]["external_calls"][0]["request_count"] == 2
+    assert present_interaction(document)["external_calls"][0]["call_kind"] == "http"
+
+
+@pytest.mark.asyncio
 async def test_stats_connection_failure_is_unavailable_not_zero(monkeypatch):
     import app.database as database
 

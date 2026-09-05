@@ -13,7 +13,11 @@ from pydantic import ValidationError
 
 from app.api.dependencies import optional_user, verify_csrf, verify_csrf_header
 from app.config import get_settings
-from app.database import get_owned_interaction
+from app.database import (
+    get_owned_interaction,
+    log_interaction,
+    update_interaction_request_status,
+)
 from app.rate_limit import limiter
 from app.research_database import (
     create_workspace,
@@ -31,6 +35,13 @@ from app.services.research_analysis import (
     generate_obligation_matrix,
     generate_selected_evidence_answer,
 )
+from app.services.deep_research import (
+    DeepResearchDisabled,
+    ResearchPlan,
+    build_research_plan,
+    run_deep_research,
+)
+from app.services.provider_runtime import capture_provider_usage, current_provider_calls
 
 
 router = APIRouter()
@@ -159,7 +170,115 @@ async def workspace_detail(
     workspace, _client_id, _user_id = await _owned_workspace(
         request, workspace_id, current_user
     )
-    return _workspace_page(request, "research_workspace.html", {"workspace": workspace})
+    return _workspace_page(
+        request,
+        "research_workspace.html",
+        {
+            "workspace": workspace,
+            "official_research_enabled": (
+                settings.OFFICIAL_WEB_RESEARCH_ENABLED
+            ),
+        },
+    )
+
+
+@router.post("/workspaces/{workspace_id}/research/plan")
+@limiter.limit(settings.SESSION_RATE_LIMIT)
+async def deep_research_plan(
+    request: Request,
+    workspace_id: str,
+    question: str = Form(..., min_length=1, max_length=2_000),
+    _csrf: str = Depends(verify_csrf),
+    current_user=Depends(optional_user),
+):
+    await _owned_workspace(request, workspace_id, current_user)
+    try:
+        return build_research_plan(question).model_dump(mode="json")
+    except (ValidationError, ValueError) as error:
+        raise HTTPException(status_code=422, detail="invalid_research_question") from error
+
+
+@router.post("/workspaces/{workspace_id}/research/run")
+@limiter.limit(settings.OFFICIAL_WEB_RESEARCH_RATE_LIMIT)
+@capture_provider_usage
+async def deep_research_run(
+    request: Request,
+    workspace_id: str,
+    plan: str = Form(..., min_length=1, max_length=12_000),
+    _csrf: str = Depends(verify_csrf),
+    current_user=Depends(optional_user),
+):
+    _workspace, client_id, user_id = await _owned_workspace(
+        request, workspace_id, current_user
+    )
+    try:
+        approved_plan = ResearchPlan.model_validate_json(plan)
+    except ValidationError as error:
+        raise HTTPException(status_code=422, detail="invalid_research_plan") from error
+    try:
+        result = await run_deep_research(approved_plan)
+    except DeepResearchDisabled as error:
+        raise HTTPException(status_code=503, detail="research_disabled") from error
+    analysis = {
+        "analysis_id": str(uuid.uuid4()),
+        "kind": "deep_research",
+        "status": result.status,
+        "question": result.question,
+        "plan": approved_plan.model_copy(
+            update={"plan_id": result.plan_id}
+        ).model_dump(mode="json"),
+        "result": result.model_dump(mode="json"),
+        "provider": result.provider,
+        "model": result.model,
+        "provider_calls": current_provider_calls() or [],
+    }
+    contexts = [
+        f"[Official web: {source.title}]\nURL: {source.url}\n"
+        + source.snippet[:1_000]
+        for step in result.steps
+        for source in step.sources
+    ][:20]
+    logged = await log_interaction(
+        trace_id=analysis["analysis_id"],
+        user_query=result.question,
+        bot_response="\n\n".join(
+            source.title for step in result.steps for source in step.sources
+        )[:10_000],
+        contexts=contexts,
+        cached=False,
+        session_id=workspace_id,
+        client_id=client_id,
+        user_id=user_id,
+        request_status=(
+            "ok" if result.status == "complete" else "deep_research_" + result.status
+        ),
+        observed_provider=result.provider,
+        observed_model=result.model,
+        context_count=len(contexts),
+        no_evidence=not bool(contexts),
+        retrieval_trace={
+            "mode": "official_web",
+            "stages": [
+                {
+                    "stage": step.step_id,
+                    "status": step.status,
+                    "source_count": len(step.sources),
+                    "result_count": len(step.sources),
+                }
+                for step in result.steps
+            ],
+        },
+        request_metadata={"method": "POST", "path": request.url.path},
+    )
+    analysis["admin_trace_status"] = "persisted" if logged else "unavailable"
+    if not await save_workspace_analysis(
+        workspace_id, analysis, client_id, user_id=user_id
+    ):
+        await update_interaction_request_status(
+            analysis["analysis_id"], "workspace_changed"
+        )
+        raise HTTPException(status_code=409, detail="workspace_changed")
+    return JSONResponse(analysis)
 
 
 @router.post("/workspaces/{workspace_id}")

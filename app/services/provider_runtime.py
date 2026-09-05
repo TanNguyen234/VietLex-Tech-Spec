@@ -24,6 +24,8 @@ class ProviderEvent:
     output_token_count: int | None = None
     thinking_token_count: int | None = None
     total_token_count: int | None = None
+    call_kind: str = "llm"
+    request_count: int | None = None
 
 
 _events: deque[ProviderEvent] = deque(maxlen=200)

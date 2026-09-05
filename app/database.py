@@ -100,6 +100,8 @@ async def log_interaction(
     from app.services.provider_runtime import current_provider_calls
     from app.services.admin_observability import summarize_usage
     calls = current_provider_calls()
+    llm_calls = [call for call in (calls or []) if call.get("call_kind", "llm") == "llm"]
+    external_calls = [call for call in (calls or []) if call.get("call_kind", "llm") != "llm"]
 
     document = {
         "_id": trace_id,
@@ -152,8 +154,9 @@ async def log_interaction(
     }
 
     if calls is not None:
-        document['metrics']['llm_calls'] = calls
-        document['metrics']['token_usage'] = summarize_usage(calls)
+        document['metrics']['llm_calls'] = llm_calls
+        document['metrics']['external_calls'] = external_calls
+        document['metrics']['token_usage'] = summarize_usage(llm_calls)
         document['metrics']['usage_scope'] = 'reported_llm_results_excludes_embedding_reranker_unreported_attempts'
     try:
         await collection.replace_one({"_id": trace_id}, document, upsert=True)
@@ -162,6 +165,23 @@ async def log_interaction(
     except Exception as e:
         logfire.error("Failed to log interaction to MongoDB: {error}", error=str(e), trace_id=trace_id)
         return {}
+
+
+async def update_interaction_request_status(trace_id: str, status: str) -> bool:
+    """Correct a persisted request outcome without rewriting its evidence ledger."""
+    try:
+        result = await get_db().evaluation_logs.update_one(
+            {"_id": str(trace_id)[:100]},
+            {"$set": {"metrics.request_status": str(status)[:100]}},
+        )
+        return result.matched_count > 0
+    except Exception as error:
+        logfire.error(
+            "Failed to update interaction status: {error}",
+            error=str(error),
+            trace_id=trace_id,
+        )
+        return False
 
 async def update_evaluation(
     trace_id: str,

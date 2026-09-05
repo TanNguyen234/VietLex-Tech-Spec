@@ -174,6 +174,10 @@ def present_interaction(log: dict) -> dict:
             if isinstance(info, dict) and info.get("observed")
         ]
     calls = [call for call in calls if isinstance(call, dict)]
+    external_calls = raw_metrics.get("external_calls")
+    if not isinstance(external_calls, list):
+        external_calls = []
+    external_calls = [call for call in external_calls if isinstance(call, dict)]
     result = {
         "trace_id": clean_text(log.get("trace_id", log.get("_id", "")), 100),
         "session_id": clean_text(log.get("session_id", ""), 100),
@@ -191,7 +195,9 @@ def present_interaction(log: dict) -> dict:
         "retrieval_trace": _clean_metadata(_mapping(log.get("retrieval_trace"))),
         "request_metadata": _clean_metadata(_mapping(log.get("request_metadata"))),
         "calls": _clean_metadata(calls),
+        "external_calls": _clean_metadata(external_calls[:200]),
         'usage_display_truncated': len(calls) > 200,
+        "external_calls_display_truncated": len(external_calls) > 200,
         "usage": summarize_usage(calls),
         "stored_context_count": len(raw_contexts),
         "display_truncated": len(raw_contexts) > 10

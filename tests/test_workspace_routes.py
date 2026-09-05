@@ -83,6 +83,24 @@ def test_workspace_list_and_detail_render_empty_states(client, monkeypatch) -> N
     assert "Chưa có hồ sơ" in listing.text
     assert detail.status_code == 200
     assert "Chưa có bằng chứng được ghim" in detail.text
+    assert "Lập kế hoạch nghiên cứu sâu" in detail.text
+
+
+def test_workspace_hides_official_research_when_feature_is_disabled(
+    client, monkeypatch
+) -> None:
+    monkeypatch.setattr(
+        "app.api.workspace_routes.get_workspace",
+        AsyncMock(return_value={"workspace_id": "w-1", "evidence": [], "analyses": []}),
+    )
+    monkeypatch.setattr(
+        "app.api.workspace_routes.settings.OFFICIAL_WEB_RESEARCH_ENABLED", False
+    )
+
+    response = client.get("/workspaces/w-1")
+
+    assert response.status_code == 200
+    assert "Lập kế hoạch nghiên cứu sâu" not in response.text
 
 
 def test_pin_evidence_resolves_owned_trace_and_index(client, monkeypatch) -> None:
@@ -227,7 +245,6 @@ def test_compare_persists_validated_evidence_links(client, monkeypatch) -> None:
     )
     save = AsyncMock(return_value=True)
     monkeypatch.setattr("app.api.workspace_routes.save_workspace_analysis", save)
-
     response = client.post(
         "/workspaces/w-1/analyses/compare",
         data={"evidence_a": "ev-a", "evidence_b": "ev-b"},
@@ -359,3 +376,85 @@ def test_obligation_matrix_returns_typed_degraded_state(client, monkeypatch) -> 
 
     assert response.status_code == 200
     assert response.json()["result"]["rows"][0]["modality"] == "required"
+
+
+def test_deep_research_plan_is_previewed_without_provider_call(client, monkeypatch) -> None:
+    monkeypatch.setattr(
+        "app.api.workspace_routes.get_workspace",
+        AsyncMock(return_value={"workspace_id": "w-1", "evidence": [], "analyses": []}),
+    )
+
+    response = client.post(
+        "/workspaces/w-1/research/plan",
+        data={"question": "Điều kiện chấm dứt hợp đồng lao động?"},
+    )
+
+    assert response.status_code == 200
+    assert len(response.json()["steps"]) == 5
+    assert response.json()["status"] == "draft"
+    assert client.post(
+        "/workspaces/w-1/research/plan", data={"question": "   "}
+    ).status_code == 422
+
+
+def test_deep_research_run_persists_owner_scoped_result_and_provider_calls(
+    client, monkeypatch
+) -> None:
+    from app.services.deep_research import DeepResearchResult, ResearchStepResult
+
+    monkeypatch.setattr(
+        "app.api.workspace_routes.get_workspace",
+        AsyncMock(return_value={"workspace_id": "w-1", "evidence": [], "analyses": []}),
+    )
+    plan_response = client.post(
+        "/workspaces/w-1/research/plan", data={"question": "Câu hỏi pháp lý"}
+    )
+    result = DeepResearchResult(
+        status="partial",
+        question="Câu hỏi pháp lý",
+        plan_id=plan_response.json()["plan_id"],
+        steps=[
+            ResearchStepResult(
+                step_id="legal_basis",
+                title="Căn cứ pháp lý",
+                query="Câu hỏi pháp lý căn cứ pháp lý",
+                status="no_results",
+            )
+        ],
+        provider="chinhphu_official_portal",
+        model="webforms-search-v1",
+    )
+    monkeypatch.setattr(
+        "app.api.workspace_routes.run_deep_research", AsyncMock(return_value=result)
+    )
+    save = AsyncMock(return_value=True)
+    monkeypatch.setattr("app.api.workspace_routes.save_workspace_analysis", save)
+    log = AsyncMock(return_value={})
+    monkeypatch.setattr("app.api.workspace_routes.log_interaction", log)
+    update_status = AsyncMock(return_value=True)
+    monkeypatch.setattr(
+        "app.api.workspace_routes.update_interaction_request_status", update_status
+    )
+
+    response = client.post(
+        "/workspaces/w-1/research/run",
+        data={"plan": plan_response.text},
+    )
+
+    assert response.status_code == 200
+    saved = save.await_args.args[1]
+    assert saved["kind"] == "deep_research"
+    assert saved["status"] == "partial"
+    assert save.await_args.kwargs["user_id"] is None
+    assert saved["plan"]["plan_id"] == saved["result"]["plan_id"]
+    assert saved["admin_trace_status"] == "unavailable"
+    assert log.await_args.kwargs["request_metadata"]["path"].endswith("/research/run")
+
+    save.return_value = False
+    changed = client.post(
+        "/workspaces/w-1/research/run",
+        data={"plan": plan_response.text},
+    )
+    assert changed.status_code == 409
+    failed_analysis_id = save.await_args.args[1]["analysis_id"]
+    update_status.assert_awaited_once_with(failed_analysis_id, "workspace_changed")

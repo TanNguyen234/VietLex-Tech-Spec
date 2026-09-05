@@ -2,6 +2,8 @@
   const csrf = document.body.dataset.csrfToken || '';
   const workspaceId = document.body.dataset.workspaceId || '';
   const result = document.querySelector('#analysis-result');
+  const researchPlan = document.querySelector('#research-plan');
+  const researchResult = document.querySelector('#deep-research-result');
   const selected = () => [...document.querySelectorAll('[name="selected_evidence"]:checked')].map(node => node.value);
   const group = name => [...document.querySelectorAll('[data-evidence-group="' + name + '"]:checked')].map(node => node.value);
   let pending = false;
@@ -70,7 +72,54 @@
     });
     return cell;
   }
+  function renderResearch(payload, target = researchResult) {
+    if (!target) return;
+    target.replaceChildren();
+    const dossier = payload.result || payload;
+    const summary = dossier.status === 'complete' ? 'Cả 5 bước đều có kết quả metadata từ nguồn chính thức.' : dossier.status === 'failed' ? 'Không bước nào có kết quả metadata từ nguồn chính thức.' : 'Kết quả tìm kiếm một phần; xem trạng thái từng bước.';
+    target.append(element('p', summary, 'legal-warning'));
+    (dossier.steps || []).forEach(step => {
+      const card = element('article', undefined, 'research-step-result');
+      card.append(element('h3', step.title), element('p', step.query, 'muted'));
+      card.append(element('span', step.status, 'support-state ' + step.status));
+      if (!(step.sources || []).length) card.append(element('p', 'Chưa có kết quả metadata từ nguồn chính thức.', 'muted'));
+      const sources = element('ul', undefined, 'official-source-list');
+      (step.sources || []).forEach(source => {
+        const item = element('li'), link = element('a', source.title || source.domain);
+        link.href = source.url; link.target = '_blank'; link.rel = 'noopener noreferrer';
+        const metadata = [source.document_number, source.issued_date, source.domain].filter(Boolean).join(' · ');
+        item.append(link, document.createTextNode(' · ' + metadata));
+        if (source.snippet && source.snippet !== source.title) item.append(element('p', source.snippet));
+        sources.append(item);
+      });
+      if (sources.children.length) card.append(sources);
+      target.append(card);
+    });
+    if (payload.provider || dossier.provider || payload.model || dossier.model) {
+      const technical = element('details');
+      technical.append(element('summary', 'Thông tin kỹ thuật'), element('p', (payload.provider || dossier.provider || '—') + ' · ' + (payload.model || dossier.model || '—'), 'muted'));
+      target.append(technical);
+    }
+  }
+  function renderPlan(plan) {
+    if (!researchPlan) return;
+    researchPlan.replaceChildren();
+    const form = element('form', undefined, 'research-plan-editor');
+    form.dataset.deepResearch = 'true';
+    form.action = '/workspaces/' + workspaceId + '/research/run';
+    form.method = 'post';
+    form.append(element('h3', 'Kế hoạch đề xuất'));
+    plan.steps.forEach((step, index) => {
+      const label = element('label', (index + 1) + '. ' + step.title);
+      const input = element('textarea'); input.maxLength = 500; input.required = true; input.value = step.query; input.dataset.stepIndex = String(index);
+      label.append(input); form.append(label);
+    });
+    const note = element('p', 'Việc chạy kế hoạch gửi 5 truy vấn tới Hệ thống văn bản của Cổng Chính phủ. Không gọi LLM và không tiêu thụ token.', 'muted');
+    const button = element('button', 'Bắt đầu nghiên cứu', 'button button-primary'); button.type = 'submit';
+    form.append(note, button); form._researchPlan = plan; researchPlan.append(form);
+  }
   function renderAnalysis(payload, target = result) {
+    if (payload.kind === 'deep_research' || payload.result?.steps) { renderResearch(payload, target); return; }
     target.replaceChildren();
     if (payload.status && payload.status !== 'ok') target.append(element('p', labels[payload.status] || payload.status, 'legal-warning'));
       if (payload.provider || payload.model) {
@@ -126,6 +175,41 @@
     finally { button.disabled = false; }
   });
   document.addEventListener('submit', async event => {
+    const planForm = event.target.closest('[data-research-plan]');
+    if (planForm) {
+      event.preventDefault();
+      if (pending) return;
+      pending = true;
+      const button = planForm.querySelector('button'); button.disabled = true;
+      if (researchPlan) researchPlan.textContent = 'Đang tạo kế hoạch…';
+      try {
+        const response = await fetch(planForm.action, {method: 'POST', body: new FormData(planForm)});
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.detail || 'plan_failed');
+        renderPlan(payload);
+      } catch { if (researchPlan) researchPlan.textContent = 'Không thể tạo kế hoạch lúc này.'; }
+      finally { pending = false; button.disabled = false; }
+      return;
+    }
+    const runForm = event.target.closest('[data-deep-research]');
+    if (runForm) {
+      event.preventDefault();
+      if (pending) return;
+      const plan = structuredClone(runForm._researchPlan);
+      runForm.querySelectorAll('[data-step-index]').forEach(input => { plan.steps[Number(input.dataset.stepIndex)].query = input.value; });
+      const data = new FormData(); data.set('csrf_token', csrf); data.set('plan', JSON.stringify(plan));
+      pending = true;
+      runForm.querySelector('button').disabled = true;
+      if (researchResult) { researchResult.setAttribute('aria-busy', 'true'); researchResult.textContent = 'Đang đối chiếu 5 bước với nguồn chính thức…'; }
+      try {
+        const response = await fetch(runForm.action, {method: 'POST', body: data});
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.detail || 'research_failed');
+        renderResearch(payload);
+      } catch { if (researchResult) researchResult.textContent = 'Không thể hoàn tất nghiên cứu lúc này.'; }
+      finally { pending = false; runForm.querySelector('button').disabled = false; researchResult?.setAttribute('aria-busy', 'false'); }
+      return;
+    }
     const form = event.target.closest('[data-analysis]');
     if (!form) return;
     event.preventDefault();

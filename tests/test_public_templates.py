@@ -106,12 +106,16 @@ def test_workspace_and_evaluation_lab_templates_expose_real_workflows() -> None:
     assert "/analyses/selected" in workspace
     assert "/analyses/compare" in workspace
     assert "/analyses/obligations" in workspace
+    assert "/research/plan" in workspace
+    assert "official_research_enabled" in workspace
     assert "Mở trang này không chạy đánh giá mới." in lab
     assert "Git dirty" in lab
     assert "Trợ lý nghiên cứu" in document
     assert "evidenceGroup" in script
     assert "change_type" in script
     assert "modality" in script
+    assert "source.snippet" in script
+    assert "data-research-plan" in script
 
 
 def test_product_forms_and_navigation_are_usable_without_chat_script() -> None:
@@ -124,3 +128,14 @@ def test_product_forms_and_navigation_are_usable_without_chat_script() -> None:
     assert "/static/js/vietlex.js" not in admin
     assert 'type="hidden" name="evidence_a"' in workspace
     assert 'include "product_nav.html"' in workspace
+
+
+def test_admin_detail_separates_external_http_calls_from_llm_tokens() -> None:
+    html = (ROOT / "app/templates/admin_details.html").read_text(encoding="utf-8")
+    usage = (ROOT / "app/templates/admin_usage.html").read_text(encoding="utf-8")
+
+    assert "Các lần gọi dịch vụ ngoài không dùng token LLM" in html
+    assert "external_calls" in html
+    assert "HTTP request" in html
+    assert "Official web / metadata kết quả" in html
+    assert "Provider / model tạo câu trả lời" not in usage

@@ -8,7 +8,7 @@
 - Evaluation presentation includes stored quality gate, case status counts, deterministic/optional judge groups, all recorded recall cutoffs, stage recall, latency means, provenance and case evidence/error drilldown. Values are macro means over recorded finite case values; unavailable observations retain coverage and skip reasons. It does not revalidate provenance hashes or certify legal correctness.
 - The dashboard projects at most 100 cases and rejects individual JSON artifacts larger than 32 MiB. Truncation is explicit, and its summaries must not be interpreted as whole-run statistics. An absent stored gate is unknown, not passed. Reading artifacts never invokes a provider or starts evaluation.
 - The homepage launches existing search, evidence workspace, comparison and obligation-table workflows. Be Vietnam Pro is self-hosted under its OFL license; light is the default and dark remains selectable. Document outlines add anchors while preserving and HTML-escaping the original text.
-- This update does not implement official-web retrieval, deep research, upload/contract workflows, or verified legal-effect relationships. Those require separate implementation and evidence contracts; no inactive controls advertise them as working features.
+- Upload/contract workflows and verified legal-effect relationships remain unimplemented. The official-web research slice below is result discovery only; it does not make article-level legal conclusions.
 
 | Area | Classification | Current contract |
 | :--- | :--- | :--- |
@@ -91,6 +91,15 @@ USE_LEGACY_FREE_PIPELINE=true
 The v3 lane exposes typed hybrid runtime and evaluation adapters. With `USE_LEGACY_FREE_PIPELINE=false`, `production` uses v3 as its primary retrieval path; initialization/provider failures are typed and do not silently fall back to Pinecone. After expansion, raw RRF missed one required document at top 3 because sparse-only distractors outranked the correct dense hit. Production therefore uses an equal reciprocal-rank blend of the Qdrant RRF and DBSF result lists; the 2026-09-03 Golden-50 run passed every retrieval gate. Qdrant ColBERT remains rejected because the live comparison reduced verified article/clause recall. The audited remote collection has 141,798 points over exactly 14,962 unique document IDs. Chat evidence comes directly from each Qdrant point payload (`body`); it does not fetch full text from Supabase. In serverless online-only mode, Supabase `public.legal_documents` supplies title/number search and full-document pages for the same 14,962-document set through a publishable-key, read-only RLS policy. The packaged local v3 bundle is older and must not be presented as matching the expanded online set. This remains a narrow slice of the 518,255-document corpus, not whole-corpus production-readiness evidence. Set the boolean to `true` to restore Pinecone v1 and disable all Google Cloud calls.
 
 ## Evidence-centric research workspace
+
+### Official web research slice (2026-09-05)
+
+- An owner-scoped workspace can create a deterministic five-step plan and lets the user edit every query before the explicit run action.
+- The run reads the public search form at `vanban.chinhphu.vn`, preserves its Web Forms state, and submits five bounded searches under a dedicated `2/minute` client limit and a process-wide concurrency limit of two. It does not call an LLM or consume model tokens.
+- Results retain only HTTPS links on the exact government-domain allowlist. Stored support text is limited to official result metadata (document number, issue date, and abstract/title); it is not represented as article-level legal analysis or verified legal-effect status.
+- Each run stores per-step query, status and sources in the existing owner-scoped workspace. It attempts a request-level admin trace first and records `admin_trace_status=unavailable` in the workspace analysis if that write fails. Portal/contract failures remain explicit `provider_error`; empty steps remain `no_results` and make the overall run partial or failed.
+- Portal transactions are recorded as external HTTP calls, including reported request count and latency. They are excluded from the LLM-call ledger and token denominator.
+- Google Search Grounding is deliberately not used for this persisted workflow because its Search Suggestion display and Grounded Result storage terms do not match the workspace retention contract.
 
 The public FastAPI/Jinja application now includes additive research-product
 surfaces without changing retrieval or evaluation behavior:
