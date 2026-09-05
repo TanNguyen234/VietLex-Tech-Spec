@@ -254,6 +254,10 @@ async def test_pipeline_formats_ranked_evidence_for_existing_contract(
         "latency_ms": 12.5,
         "fallback_used": True,
         "primary_error_kind": "quota",
+        "prompt_token_count": None,
+        "output_token_count": None,
+        "thought_token_count": None,
+        "total_token_count": None,
     }
 
 

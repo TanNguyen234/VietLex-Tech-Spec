@@ -90,12 +90,16 @@ async def log_interaction(
     technical_error: Optional[Dict[str, Any] | str] = None,
     user_id: Optional[str] = None,
     retrieval_trace: Optional[Dict[str, Any]] = None,
+    request_metadata: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     database = get_db()
     collection = database.evaluation_logs
 
     ctx_count = context_count if context_count is not None else len(contexts)
     cit_count = citation_count if citation_count is not None else 0
+    from app.services.provider_runtime import current_provider_calls
+    from app.services.admin_observability import summarize_usage
+    calls = current_provider_calls()
 
     document = {
         "_id": trace_id,
@@ -112,6 +116,8 @@ async def log_interaction(
         "contexts": contexts,
         "cached": cached,
         "retrieval_trace": retrieval_trace,
+        "request_metadata": {key: value for key, value in (request_metadata or {}).items()
+                             if key in {'method', 'path', 'nemo_requested'}},
         "safety_status": {
             "input_safe": input_safe,
             "output_safe": output_safe,
@@ -145,7 +151,10 @@ async def log_interaction(
         }
     }
 
-
+    if calls is not None:
+        document['metrics']['llm_calls'] = calls
+        document['metrics']['token_usage'] = summarize_usage(calls)
+        document['metrics']['usage_scope'] = 'reported_llm_results_excludes_embedding_reranker_unreported_attempts'
     try:
         await collection.replace_one({"_id": trace_id}, document, upsert=True)
         logfire.info("Saved interaction to MongoDB: {trace_id}", trace_id=trace_id)
@@ -161,6 +170,7 @@ async def update_evaluation(
     status: str = "ok",
     error: Optional[Dict[str, Any] | str] = None,
     executed: bool = True,
+    provider_calls: Optional[List[Dict[str, Any]]] = None,
 ) -> bool:
     database = get_db()
     collection = database.evaluation_logs
@@ -175,9 +185,17 @@ async def update_evaluation(
     }
 
     try:
+        update = {'$set': update_data}
+        if provider_calls is not None:
+            from app.services.admin_observability import mongo_usage_summary
+            update = [
+                {'$set': {**{key: {'$literal': value} for key, value in update_data.items()},
+                          'metrics.llm_calls': {'$concatArrays': [{'$cond': [{'$isArray': '$metrics.llm_calls'}, '$metrics.llm_calls', []]}, {'$literal': provider_calls}]}}},
+                {'$set': {'metrics.token_usage': mongo_usage_summary()}},
+            ]
         result = await collection.update_one(
             {"_id": trace_id},
-            {"$set": update_data}
+            update
         )
         if result.modified_count > 0:
             logfire.info("Updated Ragas proxy evaluation metrics for trace: {trace_id}", trace_id=trace_id)
@@ -234,33 +252,29 @@ async def get_admin_logs(
     request_status: Optional[str] = None,
     provider: Optional[str] = None,
     cache_hit: Optional[bool] = None,
+    model: Optional[str] = None,
+    ragas_status: Optional[str] = None,
+    feedback: Optional[str] = None,
+    start_date=None,
+    end_date=None,
+    user_id=None,
+    session_id=None,
 ) -> List[Dict[str, Any]]:
-    database = get_db()
-    collection = database.evaluation_logs
-    
-    query: Dict[str, Any] = {}
-    if search_query:
-        bounded = re.escape(search_query[:100])
-        query["$or"] = [
-            {"user_query": {"$regex": bounded, "$options": "i"}},
-            {"bot_response": {"$regex": bounded, "$options": "i"}},
-            {"trace_id": {"$regex": bounded, "$options": "i"}},
-        ]
-    if request_status:
-        query["metrics.request_status"] = request_status[:50]
-    if provider:
-        query["metrics.observed_provider"] = provider[:100]
-    if cache_hit is not None:
-        query["cached"] = cache_hit
+    from app.services.admin_observability import admin_query
+    query = admin_query(search_query=search_query, request_status=request_status, provider=provider,
+                        model=model, cache_hit=cache_hit, ragas_status=ragas_status, feedback=feedback,
+                        start_date=start_date, end_date=end_date, user_id=user_id, session_id=session_id)
         
     try:
+        collection = get_db().evaluation_logs
         bounded_limit = min(max(1, limit), 100)
         cursor = collection.find(query).sort("timestamp", -1).skip(max(0, skip)).limit(bounded_limit)
         logs = await cursor.to_list(length=bounded_limit)
         return logs
     except Exception as e:
-        logfire.error("Failed to fetch admin logs from MongoDB: {error}", error=str(e))
-        return []
+        from app.services.admin_observability import AdminDataUnavailable
+        logfire.error('Admin logs unavailable: {error_kind}', error_kind=type(e).__name__)
+        raise AdminDataUnavailable(type(e).__name__) from e
 
 
 async def get_admin_audit_logs(limit: int = 50) -> List[Dict[str, Any]]:
@@ -277,23 +291,25 @@ async def get_admin_audit_logs(limit: int = 50) -> List[Dict[str, Any]]:
         )
         return []
 
-async def get_admin_stats() -> Dict[str, Any]:
-    database = get_db()
-    collection = database.evaluation_logs
+async def get_admin_stats(*, filters=None) -> Dict[str, Any]:
     
     stats = {
         "total_queries": 0,
         "cache_hit_rate": 0.0,
-        "avg_faithfulness": 0.0,
-        "avg_relevance": 0.0,
-        "avg_ragas_proxy_faithfulness": 0.0,
-        "avg_ragas_proxy_relevance": 0.0,
+        "avg_faithfulness": None,
+        "avg_relevance": None,
+        "avg_ragas_proxy_faithfulness": None,
+        "avg_ragas_proxy_relevance": None,
         "positive_feedback_rate": 0.0,
         "technical_error_count": 0,
         "ragas_coverage_rate": 0.0,
+        "status": "available",
+        "token_usage": {}, "providers": [], "daily": [], "request_statuses": [], "latency": {},
+        "judge_statuses": [], "error_stages": [], "llm_usage": [],
     }
     
     try:
+        collection = get_db().evaluation_logs
         pipeline = [
             {
                 "$facet": {
@@ -306,14 +322,16 @@ async def get_admin_stats() -> Dict[str, Any]:
                         {"$match": {"$or": [{"metrics.ragas_proxy_faithfulness": {"$ne": None}}, {"metrics.faithfulness": {"$ne": None}}]}},
                         {"$group": {
                             "_id": None,
-                            "avg": {"$avg": {"$ifNull": ["$metrics.ragas_proxy_faithfulness", "$metrics.faithfulness"]}}
+                            "avg": {"$avg": {"$ifNull": ["$metrics.ragas_proxy_faithfulness", "$metrics.faithfulness"]}},
+                            "count": {"$sum": {'$cond': [{'$isNumber': {'$ifNull': ['$metrics.ragas_proxy_faithfulness', '$metrics.faithfulness']}}, 1, 0]}}
                         }}
                     ],
                     "avg_relevance": [
                         {"$match": {"$or": [{"metrics.ragas_proxy_answer_relevance": {"$ne": None}}, {"metrics.answer_relevance": {"$ne": None}}]}},
                         {"$group": {
                             "_id": None,
-                            "avg": {"$avg": {"$ifNull": ["$metrics.ragas_proxy_answer_relevance", "$metrics.answer_relevance"]}}
+                            "avg": {"$avg": {"$ifNull": ["$metrics.ragas_proxy_answer_relevance", "$metrics.answer_relevance"]}},
+                            "count": {"$sum": {'$cond': [{'$isNumber': {'$ifNull': ['$metrics.ragas_proxy_answer_relevance', '$metrics.answer_relevance']}}, 1, 0]}}
                         }}
                     ],
                     "total_feedback": [
@@ -325,7 +343,10 @@ async def get_admin_stats() -> Dict[str, Any]:
                         {"$count": "count"}
                     ],
                     "technical_errors": [
-                        {"$match": {"metrics.request_status": "technical_error"}},
+                        {"$match": {'$or': [
+                            {'metrics.request_status': {'$in': ['technical_error', 'retrieval_error', 'reranker_error', 'partial_retrieval_error']}},
+                            {'metrics.technical_error': {'$ne': None}},
+                        ]}},
                         {"$count": "count"}
                     ],
                     "ragas_executed": [
@@ -335,12 +356,30 @@ async def get_admin_stats() -> Dict[str, Any]:
                 }
             }
         ]
+        from app.services.admin_observability import usage_facets
+        pipeline[0]['$facet'].update(usage_facets())
+        if filters:
+            from app.services.admin_observability import admin_query
+            query = admin_query(**filters)
+            if query:
+                pipeline.insert(0, {'$match': query})
         
         cursor = collection.aggregate(pipeline)
         result = await cursor.to_list(length=1)
         
         if result:
             facet = result[0]
+            for key in ('providers', 'daily', 'request_statuses', 'judge_statuses', 'error_stages', 'llm_usage', 'latency_buckets', 'user_usage'):
+                stats[key] = facet.get(key, [])
+            for key in ('no_context', 'no_citation', 'context_measured', 'citation_measured', 'total_feedback', 'positive_feedback', 'ragas_executed'):
+                rows = facet.get(key, [])
+                stats[key + '_count'] = rows[0]['count'] if rows else 0
+            for key in ('avg_faithfulness', 'avg_relevance'):
+                rows = facet.get(key, [])
+                stats[key + '_count'] = rows[0].get('count', 0) if rows else 0
+            for key in ('token_usage', 'latency'):
+                rows = facet.get(key, [])
+                stats[key] = rows[0] if rows else {}
             total_count = facet["total"][0]["count"] if facet["total"] else 0
             stats["total_queries"] = total_count
             
@@ -372,19 +411,44 @@ async def get_admin_stats() -> Dict[str, Any]:
                 stats["positive_feedback_rate"] = round((pos_fb / total_fb) * 100, 2)
                 
     except Exception as e:
-        logfire.error("Failed to calculate admin stats from MongoDB: {error}", error=str(e))
+        logfire.error('Admin stats unavailable: {error_kind}', error_kind=type(e).__name__)
+        stats['status'] = 'unavailable'
+        stats['error_kind'] = type(e).__name__
 
         
     return stats
 
-async def get_interaction(trace_id: str) -> Optional[Dict[str, Any]]:
-    database = get_db()
-    collection = database.evaluation_logs
+
+async def get_admin_inventory() -> dict:
+    import asyncio
+    now = datetime.utcnow()
     try:
+        database = get_db()
+        queries = {
+            'users': (database.users, {}),
+            'active_users': (database.users, {'status': 'active'}),
+            'admins': (database.users, {'role': 'admin', 'status': 'active'}),
+            'verified_users': (database.users, {'email_verified': True}),
+            'active_sessions': (database.auth_sessions, {'expires_at': {'$gt': now}}),
+            'conversations': (database.chat_sessions, {}),
+            'workspaces': (database.research_workspaces, {}),
+        }
+        values = await asyncio.gather(*(collection.count_documents(query) for collection, query in queries.values()))
+        return {'status': 'available', **dict(zip(queries, values))}
+    except Exception as error:
+        logfire.error('Admin inventory unavailable: {error_kind}', error_kind=type(error).__name__)
+        return {'status': 'unavailable', 'error_kind': type(error).__name__}
+
+async def get_interaction(trace_id: str, *, strict: bool = False) -> Optional[Dict[str, Any]]:
+    try:
+        collection = get_db().evaluation_logs
         log = await collection.find_one({"_id": trace_id})
         return log
     except Exception as e:
-        logfire.error("Failed to fetch interaction from MongoDB: {error}", error=str(e), trace_id=trace_id)
+        logfire.error('Interaction unavailable: {error_kind}', error_kind=type(e).__name__, trace_id=trace_id)
+        if strict:
+            from app.services.admin_observability import AdminDataUnavailable
+            raise AdminDataUnavailable(type(e).__name__) from e
         return None
 
 

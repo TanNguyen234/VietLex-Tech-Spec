@@ -647,6 +647,10 @@ async def run_advanced_rag(
             "latency_ms": llm_result.provider_latency_ms,
             "fallback_used": llm_result.fallback_used,
             "primary_error_kind": llm_result.primary_error_kind,
+            "prompt_token_count": llm_result.prompt_token_count,
+            "output_token_count": llm_result.output_token_count,
+            "thought_token_count": llm_result.thought_token_count,
+            "total_token_count": llm_result.total_token_count,
         },
         "guardrails": {
             "provider": "unobserved",

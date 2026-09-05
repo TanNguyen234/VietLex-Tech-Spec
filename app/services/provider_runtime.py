@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from collections import deque
+from contextvars import ContextVar
+from functools import wraps
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from threading import Lock
@@ -26,11 +28,40 @@ class ProviderEvent:
 
 _events: deque[ProviderEvent] = deque(maxlen=200)
 _lock = Lock()
+_request_calls: ContextVar[list[dict[str, Any]] | None] = ContextVar(
+    "provider_calls", default=None
+)
+
+
+def capture_provider_usage(operation):
+    """Bind telemetry to one request; child tasks share its bounded event list."""
+
+    @wraps(operation)
+    async def wrapped(*args, **kwargs):
+        token = _request_calls.set([])
+        try:
+            return await operation(*args, **kwargs)
+        finally:
+            _request_calls.reset(token)
+
+    return wrapped
+
+
+def current_provider_calls() -> list[dict[str, Any]] | None:
+    calls = _request_calls.get()
+    return [dict(call) for call in calls] if calls is not None else None
 
 
 def record_provider_event(event: ProviderEvent) -> None:
     with _lock:
         _events.append(event)
+    calls = _request_calls.get()
+    if calls is not None:
+        # Bound a single request without silently dropping token-bearing events.
+        if len(calls) < 200:
+            calls.append(asdict(event))
+        else:
+            calls[-1]['dropped_calls'] = calls[-1].get('dropped_calls', 0) + 1
 
 
 def record_generation_result(result: Any, use_case: str) -> None:
@@ -40,7 +71,9 @@ def record_generation_result(result: Any, use_case: str) -> None:
             model=str(result.observed_model)[:200],
             use_case=use_case[:50],
             success=result.status == "success",
-            error_kind=(None if result.status == "success" else str(result.status)[:50]),
+            error_kind=(
+                None if result.status == "success" else str(result.status)[:50]
+            ),
             latency_ms=result.provider_latency_ms,
             fallback_used=bool(result.fallback_used),
             timestamp=datetime.now(timezone.utc).isoformat(),

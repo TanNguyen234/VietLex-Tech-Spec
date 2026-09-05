@@ -84,3 +84,18 @@ async def test_failure_redacts_secrets_before_persistence(monkeypatch) -> None:
 def test_numeric_score_rejects_out_of_range_values() -> None:
     with pytest.raises(ValueError, match="invalid score"):
         evaluator._numeric_score(1.2, "faithfulness")
+@pytest.mark.asyncio
+async def test_judge_http_usage_is_captured_and_persisted_on_failure(monkeypatch):
+    import httpx
+
+    async def score(*args):
+        from app.services.evaluator import capture_judge_usage
+        await capture_judge_usage(httpx.Response(200, request=httpx.Request('POST','https://gateway.test/chat/completions'),
+            json={'model':'observed-model','usage':{'prompt_tokens':10,'completion_tokens':5,'total_tokens':15}}))
+        raise ValueError('later metric failed')
+    monkeypatch.setattr(evaluator, '_score_ragas_metrics', score)
+    update = AsyncMock()
+    monkeypatch.setattr('app.database.update_evaluation', update)
+    await evaluator.run_llm_as_judge('q',['c'],'a','trace',force=True)
+    assert update.await_args.kwargs['provider_calls'][0]['total_token_count'] == 15
+    assert update.await_args.kwargs['status'] == 'error'

@@ -3,11 +3,14 @@ import json
 import time
 import uuid
 import secrets
+import csv
+import io
+from datetime import date
 from functools import partial
 from typing import Dict
 import logfire
 
-from fastapi import APIRouter, Request, Depends, Form, BackgroundTasks, HTTPException
+from fastapi import APIRouter, Request, Depends, Form, BackgroundTasks, HTTPException, Query
 
 from fastapi.responses import (
     HTMLResponse,
@@ -35,7 +38,8 @@ from app.services.conversation_export import render_conversation_markdown
 from app.services.readiness import build_readiness
 from app.rate_limit import limiter
 from app.services.evidence_presenter import present_context
-from app.services.provider_runtime import provider_status_snapshot
+from app.services.provider_runtime import provider_status_snapshot, capture_provider_usage
+from app.services.admin_observability import present_interaction, AdminDataUnavailable
 from app.services.direct_llm import provider_cooldown_snapshot
 from app.services.chat_progress import chat_progress
 from app.services.research_presenter import (
@@ -54,6 +58,7 @@ from app.database import (
     log_interaction, update_feedback, get_admin_logs, get_admin_stats, get_interaction,
     create_session, get_sessions, get_session_messages, delete_session, rename_session,
     get_owned_interaction, get_admin_audit_logs,
+    get_admin_inventory,
 )
 from app.account_database import (
     get_user_by_id,
@@ -74,20 +79,44 @@ _public_ragas_semaphore = asyncio.Semaphore(1)
 
 
 def _sanitize_admin_interaction(log: dict) -> dict:
-    def bounded(value: object, limit: int) -> str:
-        return redact_pii(sanitize_error_message(value))[:limit]
+    return present_interaction(log)
 
-    raw_contexts = log.get("contexts")
-    contexts = raw_contexts if isinstance(raw_contexts, list) else []
+
+def admin_filters(
+    search: str = Query('', max_length=100), request_status: str = Query('', max_length=50),
+    provider: str = Query('', max_length=100), model: str = Query('', max_length=200),
+    cache_hit: str = Query('', pattern='^(|true|false)$'), ragas_status: str = Query('', max_length=50),
+    feedback: str = Query('', pattern='^(|up|down)$'), start_date: str = Query('', max_length=10),
+    end_date: str = Query('', max_length=10),
+    user_id: str = Query('', max_length=100), session_id: str = Query('', max_length=100),
+):
+    try:
+        start_date = date.fromisoformat(start_date) if start_date else None
+        end_date = date.fromisoformat(end_date) if end_date else None
+    except ValueError:
+        raise HTTPException(422, 'Ngày phải có định dạng YYYY-MM-DD.') from None
+    if start_date and end_date and start_date > end_date:
+        raise HTTPException(422, 'Ngày bắt đầu phải trước hoặc bằng ngày kết thúc.')
+    if end_date == date.max:
+        raise HTTPException(422, 'Ngày kết thúc vượt phạm vi hỗ trợ.')
+    return dict(search_query=search, request_status=request_status, provider=provider, model=model,
+                cache_hit=None if not cache_hit else cache_hit == 'true', ragas_status=ragas_status, feedback=feedback,
+                start_date=start_date, end_date=end_date, user_id=user_id, session_id=session_id)
+
+
+def admin_page_links(request: Request, skip: int, limit: int, size: int) -> dict:
     return {
-        **log,
-        "user_query": bounded(log.get("user_query", ""), 2_000),
-        "bot_response": bounded(log.get("bot_response", ""), 10_000),
-        "contexts": [
-            bounded(value, 4_000)
-            for value in contexts[:10]
-        ],
+        'previous_url': str(request.url.include_query_params(skip=max(0, skip-limit), limit=limit)) if skip else None,
+        'next_url': str(request.url.include_query_params(skip=skip+limit, limit=limit)) if size == limit else None,
+        'export_url': '/admin/export.csv?' + str(request.url.query),
     }
+
+
+async def _load_admin_logs(**kwargs):
+    try:
+        return await get_admin_logs(**kwargs)
+    except AdminDataUnavailable:
+        raise HTTPException(503, 'Không đọc được nhật ký. Vui lòng thử lại.', headers={'Cache-Control': 'no-store'}) from None
 
 
 async def check_input_guardrails(message: str):
@@ -224,6 +253,7 @@ async def chat_progress_stream(request: Request, request_id: str):
 
 @router.post("/chat", response_class=HTMLResponse)
 @limiter.limit(settings.CHAT_RATE_LIMIT)
+@capture_provider_usage
 async def chat(
     request: Request,
     background_tasks: BackgroundTasks,
@@ -241,7 +271,8 @@ async def chat(
     client_id = getattr(request.state, "client_id", "legacy")
     user_id = str(current_user["_id"]) if current_user else None
     persist_interaction = partial(
-        log_interaction, client_id=client_id, user_id=user_id
+        log_interaction, client_id=client_id, user_id=user_id,
+        request_metadata={'method': 'POST', 'path': '/chat', 'nemo_requested': nemo_enabled},
     )
     if request_id:
         chat_progress.start(request_id, client_id, nemo_enabled=nemo_enabled)
@@ -256,7 +287,7 @@ async def chat(
         )
         is_new_session = True
         
-    with logfire.span("Xử lý Chat Request: {message}", message=message) as span:
+    with logfire.span("Xử lý Chat Request", trace_id=trace_id, query_length=len(message)) as span:
         t_cache = 0.0
 
         # Step 2: Apply NeMo Guardrails (Input Check)
@@ -1076,11 +1107,13 @@ async def export_session(
 @router.get("/admin", response_class=HTMLResponse)
 async def admin_page(
     request: Request,
-    search: str = "",
+    filters: dict = Depends(admin_filters),
+    skip: int = Query(0, ge=0, le=100000),
+    limit: int = Query(25, ge=1, le=100),
     _admin: dict = Depends(require_admin),
 ):
-    stats = await get_admin_stats()
-    logs = await get_admin_logs(limit=25, skip=0, search_query=search.strip()[:100])
+    stats, logs, inventory = await asyncio.gather(
+        get_admin_stats(filters=filters), _load_admin_logs(limit=limit, skip=skip, **filters), get_admin_inventory())
     logs = [_sanitize_admin_interaction(log) for log in logs]
     users = await list_users(limit=25)
     audit_logs = await get_admin_audit_logs(limit=25)
@@ -1096,6 +1129,7 @@ async def admin_page(
         "admin.html",
         {
             "stats": stats,
+            "inventory": inventory,
             "logs": logs,
             "users": users,
             "audit_logs": audit_logs,
@@ -1106,10 +1140,10 @@ async def admin_page(
             "settings": settings,
             "current_admin": _admin,
             "csrf_token": csrf_token,
-            "search": search,
-            "skip": 0,
-            "limit": 25,
-        }
+            "search": filters['search_query'], "filters": filters,
+            "skip": skip, "limit": limit,
+            **admin_page_links(request, skip, limit, len(logs)),
+        }, headers={"Cache-Control": "no-store"}
     )
     response.set_cookie(
         "csrf_token",
@@ -1121,39 +1155,59 @@ async def admin_page(
     return response
 
 @router.get("/admin/stats", response_class=HTMLResponse)
-async def admin_stats_partial(request: Request, _admin: str = Depends(require_admin)):
-    stats = await get_admin_stats()
+async def admin_stats_partial(request: Request, filters: dict = Depends(admin_filters), _admin: str = Depends(require_admin)):
+    stats = await get_admin_stats(filters=filters)
     return templates.TemplateResponse(
         request,
         "admin_stats.html",
-        {"stats": stats}
+        {"stats": stats}, headers={"Cache-Control": "no-store"},
+        status_code=503 if stats.get('status') == 'unavailable' else 200,
     )
 
 @router.get("/admin/logs", response_class=HTMLResponse)
 async def admin_logs_partial(
     request: Request,
-    search: str = "",
-    skip: int = 0,
-    limit: int = 15,
-    request_status: str = "",
-    provider: str = "",
-    cache_hit: bool | None = None,
+    skip: int = Query(0, ge=0, le=100000),
+    limit: int = Query(25, ge=1, le=100),
+    filters: dict = Depends(admin_filters),
     _admin: dict = Depends(require_admin),
 ):
-    logs = await get_admin_logs(
+    logs = await _load_admin_logs(
         limit=limit,
         skip=skip,
-        search_query=search,
-        request_status=request_status or None,
-        provider=provider or None,
-        cache_hit=cache_hit,
+        **filters,
     )
     logs = [_sanitize_admin_interaction(log) for log in logs]
     return templates.TemplateResponse(
         request,
         "admin_logs.html",
-        {"logs": logs, "search": search, "skip": skip, "limit": limit}
+        {"logs": logs, "skip": skip, "limit": limit, **admin_page_links(request, skip, limit, len(logs))},
+        headers={"Cache-Control": "no-store"}
     )
+
+@router.get('/admin/export.csv')
+async def admin_export(request: Request, filters: dict = Depends(admin_filters),
+                       skip: int = Query(0, ge=0, le=100000), _admin: dict = Depends(require_admin)):
+    logs = await _load_admin_logs(limit=100, skip=skip, **filters)
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['trace_id', 'question_redacted', 'request_status', 'provider', 'model',
+                     'context_count', 'reported_llm_tokens', 'measured_calls', 'calls', 'ragas_status'])
+    def cell(value):
+        text = str(value) if value is not None else ''
+        return "'" + text if text.lstrip().startswith(('=', '+', '-', '@', '\t', '\r', '\n')) else text
+    for raw in logs:
+        log = present_interaction(raw)
+        metrics = log['metrics']
+        writer.writerow([cell(value) for value in (log['trace_id'], log['user_query'], metrics.get('request_status'),
+            metrics.get('observed_provider'), metrics.get('observed_model'), log['stored_context_count'],
+            log['usage']['total_token_count'], log['usage']['measured_calls'], log['usage']['calls'], metrics.get('ragas_status'))])
+    await write_admin_audit(str(_admin['_id']), 'request_export', 'evaluation_logs', 'bounded-export',
+                            metadata={'rows': len(logs), 'skip': skip, 'limit': 100})
+    return Response('\ufeff' + output.getvalue(), media_type='text/csv; charset=utf-8', headers={
+        'Cache-Control': 'no-store', 'Content-Disposition': 'attachment; filename="vietlex-requests.csv"',
+        'X-Export-Limit': '100', 'X-Export-Rows': str(len(logs)),
+    })
 
 @router.get("/admin/details/{trace_id}", response_class=HTMLResponse)
 async def admin_details_partial(
@@ -1161,13 +1215,17 @@ async def admin_details_partial(
     trace_id: str,
     _admin: str = Depends(require_admin),
 ):
-    log = await get_interaction(trace_id)
+    try:
+        log = await get_interaction(trace_id, strict=True)
+    except AdminDataUnavailable:
+        raise HTTPException(503, 'Không đọc được request.', headers={'Cache-Control': 'no-store'}) from None
     if log:
         log = _sanitize_admin_interaction(log)
     return templates.TemplateResponse(
         request,
         "admin_details.html",
-        {"log": log}
+        {"log": log}, status_code=200 if log else 404,
+        headers={"Cache-Control": "no-store"}
     )
 
 

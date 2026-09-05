@@ -52,7 +52,7 @@ class OnlineOperationalMetrics:
         return asdict(self)
 
 
-def sanitize_error_message(error: Any) -> str:
+def sanitize_error_message(error: Any, *, max_length: int = 200) -> str:
     """
     Sanitize error message to prevent secret/credential leakage into logs/telemetry.
     Redacts URL query param secrets, Bearer tokens, MongoDB connection URI credentials,
@@ -95,6 +95,9 @@ def sanitize_error_message(error: Any) -> str:
                 "QDRANT_API_KEY",
                 "MONGO_URL",
                 "LOGFIRE_TOKEN",
+                "ADMIN_PASSWORD",
+                "EMAIL_PASS",
+                "WEB_SESSION_SECRET",
             )
         ]
         for secret in configured_secrets:
@@ -103,7 +106,7 @@ def sanitize_error_message(error: Any) -> str:
     except Exception:
         pass
 
-    return msg[:200]
+    return msg[:max_length]
 
 
 def build_online_metrics(
@@ -196,6 +199,15 @@ def build_online_metrics(
                     "model": str(info.get("model", "unobserved")),
                     "observed": bool(info.get("observed", False)),
                 }
+                for key in ('prompt_token_count', 'output_token_count', 'thought_token_count', 'total_token_count'):
+                    value = info.get(key)
+                    if type(value) is int and 0 <= value <= 10**12:
+                        default_usage[stage][key] = value
+                for key in ('status', 'primary_error_kind', 'finish_reason'):
+                    if info.get(key) is not None:
+                        default_usage[stage][key] = sanitize_error_message(info[key])
+                if isinstance(info.get('fallback_used'), bool):
+                    default_usage[stage]['fallback_used'] = info['fallback_used']
 
     # Provider & model observation resolution
     if observed_provider and str(observed_provider).strip() and str(observed_provider).strip() != "unobserved":

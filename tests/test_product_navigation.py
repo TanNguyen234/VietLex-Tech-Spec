@@ -45,7 +45,8 @@ def test_admin_unknown_guardrail_is_not_a_block():
         "user_query": "<script>alert(1)</script>", "bot_response": "test",
         "metrics": {}, "contexts": [],
     })
-    assert html.count("Chưa ghi nhận") == 2
+    assert html.count("Chưa ghi nhận") >= 2
+    assert "Input: Chưa ghi nhận · Output: Chưa ghi nhận" in html
     assert "Bị chặn" not in html
     assert "<script>alert(1)</script>" not in html
     assert 'href="/admin"' in html

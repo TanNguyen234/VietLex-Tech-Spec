@@ -23,6 +23,16 @@ from app.services.provider_runtime import record_generation_result
 
 
 settings = get_settings()
+
+
+class _ProviderText(str):
+    """Keep the public text API while retaining usage for the metadata router."""
+    def __new__(cls, text: str, usage: dict):
+        result = super().__new__(cls, text)
+        result.usage = {key: value for key, value in usage.items()
+                        if type(value) is int and 0 <= value <= 10**12}
+        return result
+
 _cooldowns = {
     "openrouter": 0.0,
     "gemini": 0.0,
@@ -121,10 +131,18 @@ async def _call_openai_compatible_api(
             )
             return None
         response.raise_for_status()
-        choices = response.json().get("choices", [])
+        body = response.json()
+        choices = body.get("choices", [])
         if choices:
             text = choices[0].get("message", {}).get("content") or ""
-            return text.strip() or None
+            usage = body.get('usage') or {}
+            details = usage.get('completion_tokens_details') or {}
+            return _ProviderText(text.strip(), {
+                'prompt_token_count': usage.get('prompt_tokens'),
+                'output_token_count': usage.get('completion_tokens'),
+                'thought_token_count': details.get('reasoning_tokens'),
+                'total_token_count': usage.get('total_tokens'),
+            }) if text.strip() else None
     except Exception as error:
         _record_secondary_failure(provider, error)
     return None
@@ -198,11 +216,19 @@ async def call_gemini_api(
             )
             return None
         response.raise_for_status()
-        candidates = response.json().get("candidates", [])
+        body = response.json()
+        candidates = body.get("candidates", [])
         if candidates and candidates[0].get("content"):
             parts = candidates[0]["content"].get("parts", [])
             if parts:
-                return (parts[0].get("text") or "").strip() or None
+                text = (parts[0].get('text') or '').strip()
+                usage = body.get('usageMetadata') or {}
+                return _ProviderText(text, {
+                    'prompt_token_count': usage.get('promptTokenCount'),
+                    'output_token_count': usage.get('candidatesTokenCount'),
+                    'thought_token_count': usage.get('thoughtsTokenCount'),
+                    'total_token_count': usage.get('totalTokenCount'),
+                }) if text else None
     except Exception as error:
         _record_secondary_failure("gemini", error)
     return None
@@ -373,6 +399,7 @@ async def _run_secondary_fallbacks(
                 ),
                 fallback_used=True,
                 primary_error_kind=primary_error_kind,
+                **getattr(text, 'usage', {}),
             )
     return None
 

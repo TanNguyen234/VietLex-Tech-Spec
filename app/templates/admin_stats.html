@@ -1,3 +1,4 @@
+{% if stats.get('status', 'available') == 'unavailable' %}<p role="alert">Không đọc được thống kê: {{ stats.get('error_kind') }}. Vui lòng thử lại.</p>{% else %}
 <div class="admin-grid" aria-label="Thống kê runtime">
   <article class="admin-card"><small>Tổng câu hỏi</small><strong>{{ stats.total_queries }}</strong></article>
   <article class="admin-card"><small>Cache hit</small><strong>{{ stats.cache_hit_rate }}%</strong></article>
@@ -7,3 +8,6 @@
   <article class="admin-card"><small>Lỗi kỹ thuật</small><strong>{{ stats.get('technical_error_count', 0) }}</strong></article>
   <article class="admin-card"><small>Ragas coverage</small><strong>{{ stats.get('ragas_coverage_rate', 0) }}%</strong></article>
 </div>
+{% include 'admin_usage.html' %}
+{% include 'admin_quality.html' %}
+{% endif %}

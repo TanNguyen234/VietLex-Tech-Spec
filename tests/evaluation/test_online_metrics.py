@@ -259,3 +259,17 @@ def test_sanitize_error_message_redacts_actual_settings_secrets(monkeypatch) -> 
     assert "pcsk_pinecone_compat_key_456" not in sanitized_pinecone
     assert "logfire_secret_write_token_xyz" not in sanitized_pinecone
     assert "[REDACTED]" in sanitized_pinecone
+def test_provider_usage_keeps_reported_tokens_and_rejects_invalid_counts():
+    from app.evaluation.online_metrics import build_online_metrics
+
+    result = build_online_metrics('usage', provider_usage={'answer_generation': {
+        'provider': 'test', 'model': 'test', 'observed': True,
+        'prompt_token_count': 100, 'output_token_count': 20,
+        'total_token_count': 120, 'thought_token_count': -2,
+        'fallback_used': True, 'api_key': 'must-not-persist',
+    }})
+    usage = result.provider_usage['answer_generation']
+    assert usage['total_token_count'] == 120
+    assert usage['prompt_token_count'] == 100
+    assert usage.get('thought_token_count') is None
+    assert 'api_key' not in usage

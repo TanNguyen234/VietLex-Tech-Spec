@@ -276,3 +276,19 @@ async def test_legacy_free_mode_uses_api_fallback_after_vertex_is_disabled(
     assert result.text == "Kết quả miễn phí"
     assert result.observed_provider == "openrouter"
     assert result.primary_error_kind == "disabled"
+@pytest.mark.asyncio
+async def test_fallback_retains_provider_reported_usage(monkeypatch):
+    class FakeClient:
+        async def post(self, url, **kwargs):
+            return httpx.Response(200, request=httpx.Request('POST', url), json={
+                'choices': [{'message': {'content': 'answer'}}],
+                'usage': {'prompt_tokens': 11, 'completion_tokens': 5, 'total_tokens': 16},
+            })
+    monkeypatch.setattr(direct_llm, 'settings', SimpleNamespace(
+        OPENROUTER_API_KEY='test', GEMINI_API_KEY=None, NVIDIA_API_KEY=None, GROQ_API_KEY=None))
+    monkeypatch.setattr(direct_llm, 'get_direct_client', FakeClient)
+    monkeypatch.setitem(direct_llm._cooldowns, 'openrouter', 0)
+    result = await direct_llm._run_secondary_fallbacks('q', '', 100, primary_error_kind='quota', started=direct_llm.time.perf_counter())
+    assert result.prompt_token_count == 11
+    assert result.output_token_count == 5
+    assert result.total_token_count == 16

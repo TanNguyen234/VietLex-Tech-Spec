@@ -27,6 +27,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             "geolocation=(), camera=(), microphone=()"
         )
         response.headers["X-Frame-Options"] = "DENY"
+        if request.url.path == '/admin' or request.url.path.startswith('/admin/'):
+            response.headers['Cache-Control'] = 'no-store'
         forwarded_proto = request.headers.get("x-forwarded-proto", "")
         if request.url.scheme == "https" or forwarded_proto.split(",")[0].strip() == "https":
             response.headers["Strict-Transport-Security"] = "max-age=31536000"
