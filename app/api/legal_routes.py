@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 from typing import Any
 from urllib.parse import urlparse
 
@@ -14,6 +15,36 @@ from app.config import get_settings
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 browser: Any | None = None
+
+
+def document_sections(content: str) -> list[dict[str, str]]:
+    """Add navigable anchors without rewriting or dropping source characters."""
+    headings = list(
+        re.finditer(
+            r"(?m)^(?:Điều\s+\d+[a-zđ]?\b|Chương\s+[IVXLCDM\d]+\b)[^\r\n]*", content
+        )
+    )
+    sections = []
+    start = 0
+    for index, heading in enumerate(headings):
+        if index == 0 and heading.start():
+            sections.append(
+                {
+                    "id": "preamble",
+                    "title": "Mở đầu",
+                    "text": content[: heading.start()],
+                }
+            )
+        start = heading.start()
+        end = headings[index + 1].start() if index + 1 < len(headings) else len(content)
+        sections.append(
+            {
+                "id": f"section-{index + 1}",
+                "title": heading.group()[:180],
+                "text": content[start:end],
+            }
+        )
+    return sections or [{"id": "full-text", "title": "Toàn văn", "text": content}]
 
 
 def _get_browser() -> Any:
@@ -55,6 +86,7 @@ async def legal_document(request: Request, document_id: int):
         "legal_document.html",
         {
             "document": document,
+            "sections": document_sections(document.content),
             "source_url": _safe_source_url(document.metadata.source_url),
         },
     )

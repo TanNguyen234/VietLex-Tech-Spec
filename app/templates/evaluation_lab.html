@@ -1,15 +1,15 @@
 <!doctype html>
-<html lang="vi" data-theme="dark">
+<html lang="vi" data-theme="light">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Chất lượng và kiểm chứng · VietLex</title>
   <link rel="stylesheet" href="/static/css/vietlex.css"><link rel="stylesheet" href="/static/css/vietlex-enhancements.css">
 <script src="/static/js/product.js" defer></script></head>
-{% macro metrics_table(metrics) %}
+{% macro metrics_table(metrics, show_meter=true) %}
 <table class="evaluation-table">
   <thead><tr><th scope="col">Chỉ số</th><th scope="col">Trung bình</th><th scope="col">Số câu có dữ liệu</th><th scope="col">Cách tổng hợp / bỏ qua</th></tr></thead>
   <tbody>{% for key, metric in metrics.items() %}
-    <tr><th scope="row">{{ key }}</th><td>{{ '%.4f'|format(metric.mean) if metric.mean is not none else 'N/A' }}</td><td>{{ metric.coverage }}/{{ metric.total }}</td>
+    <tr><th scope="row">{{ key }}</th><td>{{ '%.4f'|format(metric.mean) if metric.mean is not none else 'N/A' }}{% if show_meter and metric.mean is not none and metric.mean >= 0 and metric.mean <= 1 %}<meter min="0" max="1" value="{{ metric.mean }}" aria-label="{{ key }}">{{ metric.mean }}</meter>{% endif %}</td><td>{{ metric.coverage }}/{{ metric.total }}</td>
       <td><details><summary>{{ metric.skipped }} câu hỏi bỏ qua</summary><p>Mean = tổng {{ '%.4f'|format(metric.numerator) }} / {{ metric.denominator }} giá trị được ghi.</p>{% for reason, count in metric.skip_reasons.items() %}<p>{{ reason }}: {{ count }}</p>{% endfor %}</details></td></tr>
   {% else %}<tr><td colspan="4">Không có metric được ghi cho nhóm này.</td></tr>{% endfor %}</tbody>
 </table>
@@ -17,8 +17,19 @@
 <body>
 <header class="topbar"><a class="brand" href="/"><span class="brand-mark">VL</span><span><strong>VietLex</strong><small>Nghiên cứu pháp luật</small></span></a>{% include "product_nav.html" %}</header>
 <main class="evaluation-lab-page">
+  {% if admin_view %}<nav class="evaluation-tabs" aria-label="Quản trị"><a href="/admin">Vận hành</a><a href="/admin/evaluations" aria-current="page">Đánh giá chất lượng</a></nav>{% endif %}
   <header class="research-page-heading"><span class="eyebrow">Chất lượng và kiểm chứng</span><h1>Chất lượng được kiểm chứng như thế nào?</h1><p>Kết quả dưới đây được đọc từ lần đánh giá đã lưu. Mở trang này không chạy đánh giá mới.</p></header>
+  {% if admin_view %}<form class="run-selector" method="get"><label for="evaluation-run">Lần đánh giá đã lưu</label><select id="evaluation-run" name="run">{% for run in runs %}<option value="{{ run }}" {% if run == selected_run %}selected{% endif %}>{{ run }}</option>{% endfor %}</select><button class="button button-primary" type="submit">Xem đánh giá</button></form>{% endif %}
   {% if lab.status == 'available' %}
+  {% if lab.record_count is defined %}
+  <section class="evaluation-overview" aria-label="Tổng quan lần đánh giá">
+    <article><small>Phạm vi đánh giá</small><strong>{{ lab.run_kind }}</strong><span>{{ lab.displayed_count }} / {{ lab.record_count }} case trong dashboard</span></article>
+    <article><small>Quality gate đã lưu</small><strong class="{{ 'gate-pass' if lab.quality_gate and lab.quality_gate.passed else 'gate-fail' if lab.quality_gate else '' }}">{{ 'Đạt' if lab.quality_gate and lab.quality_gate.passed else 'Không đạt' if lab.quality_gate else 'Chưa ghi nhận' }}</strong><span>Gate của run, không phải chứng nhận pháp lý</span></article>
+    <article><small>Provenance trong manifest</small><strong>{{ lab.provenance.provenance_status or 'N/A' }}</strong><span>Thông tin đã ghi; dashboard không tái xác minh hash</span></article>
+  </section>
+  {% if lab.truncated %}<p role="status" class="legal-warning">Dashboard giới hạn 100 case đầu. Các thống kê dưới đây chỉ áp dụng cho {{ lab.displayed_count }}/{{ lab.record_count }} case; gate đã lưu có thể có phạm vi khác.</p>{% endif %}
+  <div class="evaluation-diagnostics"><section><h2>Trạng thái từng lượt</h2>{% for state, count in lab.status_counts.items() %}<div class="status-distribution"><span>{{ state }}</span><progress max="{{ lab.displayed_count or 1 }}" value="{{ count }}" aria-label="{{ state }}"></progress><strong>{{ count }} / {{ lab.displayed_count }}</strong></div>{% else %}<p>Chưa ghi nhận case.</p>{% endfor %}</section><section><h2>Điều kiện và lỗi của gate</h2>{% if lab.quality_gate %}<details><summary>Xem ngưỡng và kết quả đã lưu</summary><pre>{{ lab.quality_gate|tojson(indent=2) }}</pre></details>{% for failure in lab.quality_gate.get('failures', []) %}<p class="gate-fail">{{ failure }}</p>{% endfor %}{% else %}<p class="muted">Không có quality_gate.json. Không suy ra đạt từ điểm trung bình.</p>{% endif %}</section></div>
+  {% endif %}
   <details><summary>Nguồn số liệu và thông tin kỹ thuật</summary><section class="provenance-strip">
     <div><small>Run ID</small><strong>{{ lab.provenance.run_id }}</strong></div>
     <div><small>Commit</small><strong>{{ lab.provenance.git_sha or 'N/A' }}</strong></div>
@@ -26,17 +37,19 @@
     <div><small>Thời điểm artifact (UTC)</small><strong>{{ lab.provenance.utc_timestamp or 'N/A' }}</strong></div>
   </section>
   <details><summary>Dataset và fingerprint</summary><dl class="trace-overview">
-    {% for key in ['dataset_revision','dataset_sha256','configuration_fingerprint','git_diff_sha256','provenance_status','judge_mode','selected_case_count'] %}<dt>{{ key }}</dt><dd>{{ lab.provenance.get(key) if lab.provenance.get(key) is not none else 'N/A' }}</dd>{% endfor %}
+    {% for key in ['dataset_revision','dataset_sha256','configuration_fingerprint','git_diff_sha256','provenance_status','judge_mode','selected_case_count','code_metric_version','command','configured_provider_models'] %}<dt>{{ key }}</dt><dd>{{ lab.provenance.get(key) if lab.provenance.get(key) is not none else 'N/A' }}</dd>{% endfor %}
   </dl></details></details>
   <p class="legal-warning">{{ lab.boundary }}</p>
   <p class="muted">Mean là macro average trên case có số liệu. N/A không phải 0. Tương đồng từ vựng không chứng minh tính đúng đắn pháp lý; LLM judge là nguồn đánh giá thứ cấp.</p>
   <section class="lab-grid">
-    <article><div class="section-rule"><h2>Chỉ số tính toán tự động</h2><span>Tính bằng mã</span></div>{{ metrics_table(lab.deterministic_metrics) }}</article>
+    <article><div class="section-rule"><h2>Chỉ số tính toán tự động</h2><span>Tính bằng mã</span></div>{% if lab.metric_groups %}{% for group, metrics in lab.metric_groups.items() %}<h3>{{ group }}</h3>{{ metrics_table(metrics) }}{% endfor %}{% else %}{{ metrics_table(lab.deterministic_metrics) }}{% endif %}</article>
     <article><div class="section-rule"><h2>Ragas</h2><span>AI đánh giá · tham khảo bổ sung</span></div>{{ metrics_table(lab.ragas_metrics) }}</article>
   </section>
+  {% if lab.stage_metrics %}<details class="stage-metrics"><summary>Stage survival · Recall theo từng giai đoạn</summary><p class="muted">Macro mean trên case có gold áp dụng. Mỗi K giữ lý do bỏ qua của artifact; stage không có dữ liệu không được coi là thất bại.</p>{{ metrics_table(lab.stage_metrics) }}</details>{% endif %}
+  {% if lab.latency %}<section><div class="section-rule"><h2>Thời gian xử lý đã ghi</h2><span>Giây · macro mean trên case có dữ liệu</span></div><p class="muted">Các bộ đếm có thể đo những giai đoạn khác nhau; không cộng chúng thành tổng thời gian.</p>{{ metrics_table(lab.latency, false) }}</section>{% endif %}
   <section class="case-explorer">
     <div class="section-rule"><h2>Xem từng câu hỏi</h2><span>{{ lab.cases|length }} câu hỏi</span></div>
-    <form method="get"><label>Chọn câu hỏi<select name="case"><option value="">— Chọn một câu hỏi —</option>{% for item in lab.cases %}<option value="{{ item.case_id }}" {% if item.case_id == selected_case_id %}selected{% endif %}>{{ item.case_id }} · {{ item.question }}</option>{% endfor %}</select></label><button class="button button-quiet" type="submit">Mở câu hỏi</button></form>
+    <form method="get">{% if admin_view %}<input type="hidden" name="run" value="{{ selected_run }}">{% endif %}<label>Chọn câu hỏi<select name="case"><option value="">— Chọn một câu hỏi —</option>{% for item in lab.cases %}<option value="{{ item.case_id }}" {% if item.case_id == selected_case_id %}selected{% endif %}>{{ item.case_id }} · {{ item.status }} · {{ item.question }}</option>{% endfor %}</select></label><button class="button button-quiet" type="submit">Mở câu hỏi</button></form>
     {% if lab.case %}
     <article class="case-detail">
       <span class="support-state">{{ lab.case.status }}</span><h3>{{ lab.case.question }}</h3>
@@ -51,6 +64,6 @@
     </article>
     {% elif selected_case_id %}<p role="status">Không tìm thấy câu hỏi trong lần đánh giá này.</p>{% endif %}
   </section>
-  {% else %}<div class="empty-state"><h2>Chất lượng và kiểm chứng chưa khả dụng</h2><p>Trạng thái artifact: {{ lab.status }}. Không có số liệu nào được suy đoán.</p></div>{% endif %}
+  {% else %}<div class="empty-state"><h2>Chất lượng và kiểm chứng chưa khả dụng</h2><p>Trạng thái artifact: {{ lab.status }}. Không có số liệu nào được suy đoán.</p>{% if lab.error_kind %}<p>Mã lỗi: {{ lab.error_kind }}. {% if lab.error_kind == "artifact_size_limit" %}Một tệp vượt giới hạn đọc 32 MiB của dashboard.{% else %}Không đọc được tệp hoặc cấu trúc dữ liệu không hợp lệ.{% endif %}</p>{% endif %}</div>{% endif %}
 </main>
 </body></html>

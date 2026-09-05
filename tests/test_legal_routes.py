@@ -111,6 +111,25 @@ def test_document_page_has_source_and_validity_warning(monkeypatch) -> None:
     assert client.get("/documents/999").status_code == 404
 
 
+def test_reader_outline_preserves_source_and_escapes_markup(monkeypatch):
+    client = _client(monkeypatch)
+    import app.api.legal_routes as routes
+
+    document = routes.browser.get_document(7)
+    document.content = (
+        "Mở đầu\nĐiều 1. Phạm vi\n<script>alert(1)</script>\nĐiều 2. Áp dụng\nNội dung"
+    )
+    response = client.get("/documents/7")
+    assert 'href="#section-1"' in response.text
+    assert 'id="section-2"' in response.text
+    assert (
+        "&lt;script&gt;" in response.text
+        and "<script>alert(1)</script>" not in response.text
+    )
+    sections = routes.document_sections(document.content)
+    assert "".join(row["text"] for row in sections) == document.content
+
+
 def test_document_page_suppresses_non_http_source_url(monkeypatch) -> None:
     client = _client(monkeypatch, source_url="javascript:alert(1)")
 

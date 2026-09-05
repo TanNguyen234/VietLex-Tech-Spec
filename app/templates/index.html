@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="vi" data-theme="dark">
+<html lang="vi" data-theme="light">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="VietLex — tra cứu, lưu bằng chứng và nghiên cứu pháp luật Việt Nam.">
-  <title>VietLex · Trợ lý tra cứu pháp luật</title>
+  <title>VietLex · Không gian nghiên cứu pháp luật</title>
   <link rel="stylesheet" href="/static/css/vietlex.css"><link rel="stylesheet" href="/static/css/vietlex-enhancements.css"><script src="/static/js/vietlex.js" defer></script>
 <script src="/static/js/product.js" defer></script></head>
 <body data-progress-transport="{{ progress_transport | default('sse') }}">
@@ -21,8 +21,14 @@
     <section class="chat-panel" aria-label="Trợ lý pháp luật VietLex">
       <div id="chat-status" class="sr-only" role="status" aria-live="polite"></div>
       <div id="chat-history" class="chat-history" aria-live="polite">
-        <section id="welcome-container" class="welcome-card"><span class="eyebrow">Tra cứu có dẫn nguồn</span><h2>Hỏi luật bằng ngôn ngữ tự nhiên.</h2><p>Tra cứu, mở nguồn dẫn, rồi lưu bằng chứng vào hồ sơ để so sánh và phân tích.</p>
-          <div class="prompt-grid" aria-label="Câu hỏi gợi ý"><button type="button" data-prompt="Thời gian thử việc tối đa theo luật lao động là bao lâu?">Thời gian thử việc tối đa?</button><button type="button" data-prompt="Quy trình và hồ sơ thành lập công ty cổ phần?">Hồ sơ thành lập công ty?</button><button type="button" data-prompt="Điều kiện để doanh nghiệp đơn phương chấm dứt hợp đồng lao động?">Chấm dứt hợp đồng?</button><button type="button" data-prompt="Các hình thức xử lý kỷ luật lao động hợp pháp là gì?">Kỷ luật lao động?</button></div>
+        <section id="welcome-container" class="welcome-card"><span class="eyebrow">Không gian nghiên cứu pháp luật</span><h2>Từ câu hỏi đến<br>hồ sơ có căn cứ.</h2><p>Tra cứu văn bản, đọc nguồn và tổ chức bằng chứng cho công việc pháp lý của bạn.</p>
+          <div class="workflow-grid" aria-label="Tác vụ nghiên cứu">
+            <a href="/search"><span>01 / Tra cứu</span><strong>Tìm và đọc văn bản ↗</strong><small>Tra cứu số hiệu, tiêu đề và mở toàn văn.</small></a>
+            <a href="/workspaces"><span>02 / Nghiên cứu</span><strong>Lập hồ sơ nghiên cứu ↗</strong><small>Ghim nguồn, ghi chú và hỏi trên bằng chứng đã chọn.</small></a>
+            <a href="/workspaces"><span>03 / Đối chiếu</span><strong>So sánh bằng chứng ↗</strong><small>Chọn hai nhóm nguồn trong hồ sơ để đối chiếu.</small></a>
+            <a href="/workspaces"><span>04 / Phân tích</span><strong>Lập bảng nghĩa vụ ↗</strong><small>Tạo bảng từ nguồn đã ghim, lọc và xuất kết quả.</small></a>
+          </div>
+          <p class="workflow-hint">Hoặc bắt đầu bằng một câu hỏi bên dưới. Nguồn hiện tại: kho VietLex; hiệu lực pháp lý chưa được xác minh.</p>
         </section>
       </div>
       <div id="chat-loading" class="loading-row" hidden><span class="spinner" aria-hidden="true"></span><div><strong id="pipeline-progress">Đã tiếp nhận câu hỏi</strong><small id="pipeline-elapsed">0.00 giây</small></div></div>

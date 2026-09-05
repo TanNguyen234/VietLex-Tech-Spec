@@ -2,6 +2,14 @@
 
 ## Production foundation state
 
+### Local research/admin presentation update (2026-09-05)
+
+- `/admin/evaluations` requires the existing administrator dependency. It selects local answer/retrieval runs with a manifest and results file, confines selection to the run root, and returns `Cache-Control: no-store`. The public `/evaluation-lab` remains pinned to its existing answer run.
+- Evaluation presentation includes stored quality gate, case status counts, deterministic/optional judge groups, all recorded recall cutoffs, stage recall, latency means, provenance and case evidence/error drilldown. Values are macro means over recorded finite case values; unavailable observations retain coverage and skip reasons. It does not revalidate provenance hashes or certify legal correctness.
+- The dashboard projects at most 100 cases and rejects individual JSON artifacts larger than 32 MiB. Truncation is explicit, and its summaries must not be interpreted as whole-run statistics. An absent stored gate is unknown, not passed. Reading artifacts never invokes a provider or starts evaluation.
+- The homepage launches existing search, evidence workspace, comparison and obligation-table workflows. Be Vietnam Pro is self-hosted under its OFL license; light is the default and dark remains selectable. Document outlines add anchors while preserving and HTML-escaping the original text.
+- This update does not implement official-web retrieval, deep research, upload/contract workflows, or verified legal-effect relationships. Those require separate implementation and evidence contracts; no inactive controls advertise them as working features.
+
 | Area | Classification | Current contract |
 | :--- | :--- | :--- |
 | Registration, verification, login, recovery, export/deletion | IMPLEMENTED | First-party MongoDB accounts; public registration always creates `role=user`, `status=active`. |

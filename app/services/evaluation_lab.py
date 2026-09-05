@@ -16,13 +16,15 @@ _BOUNDARY = (
 
 
 def _read_json(path: Path) -> Any:
+    if path.stat().st_size > 32 * 1024 * 1024:
+        raise ValueError("artifact_size_limit")
     return json.loads(path.read_text(encoding="utf-8"))
 
 
 @lru_cache(maxsize=2)
-def _read_immutable_run(run_path: Path) -> tuple[Any, Any]:
+def _read_immutable_run(run_path: Path, kind: str = "answer") -> tuple[Any, Any]:
     return _read_json(run_path / "manifest.json"), _read_json(
-        run_path / "answer_results.json"
+        run_path / f"{kind}_results.json"
     )
 
 
@@ -30,7 +32,7 @@ def _project_case(item: dict[str, Any]) -> dict[str, Any]:
     retrieval = item.get("retrieval_result") or {}
     if not isinstance(retrieval, dict):
         raise ValueError("invalid retrieval result")
-    for key in ("metrics", "ragas_metrics", "technical_errors"):
+    for key in ("metrics", "ragas_metrics", "technical_errors", "latency"):
         if item.get(key) is not None and not isinstance(item[key], dict):
             raise ValueError("invalid case field")
     retrieval_metrics = retrieval.get("metrics") or {}
@@ -66,6 +68,7 @@ def _project_case(item: dict[str, Any]) -> dict[str, Any]:
         "retrieval_metrics": retrieval_metrics
         if isinstance(retrieval_metrics, dict)
         else {},
+        "latency": item.get("latency") or {},
     }
 
 
@@ -77,6 +80,13 @@ def _metric_value(source: dict[str, Any], *path: str) -> float | None:
         value = value.get(key)
     if isinstance(value, dict):
         value = value.get("value")
+    if (
+        path
+        and path[-1]
+        in {"no_candidate", "retrieval_technical_error", "reranker_technical_error"}
+        and isinstance(value, bool)
+    ):
+        return float(value)
     if isinstance(value, (int, float)) and not isinstance(value, bool):
         return float(value) if math.isfinite(value) else None
     return None
@@ -93,15 +103,20 @@ _RETRIEVAL_METRICS = {
     "retrieval.exact_reference_hit": ("exact_reference_hit",),
     "retrieval.multi_hop_all_required": ("multi_hop", "all_required_metric"),
     "retrieval.multi_hop_partial": ("multi_hop", "partial_metric"),
+    "retrieval.no_candidate": ("no_candidate",),
+    "retrieval.technical_error": ("retrieval_technical_error",),
+    "retrieval.reranker_error": ("reranker_technical_error",),
 }
 
 
-def _summary(cases: list[dict], key: str, section: str) -> dict:
+def _summary(
+    cases: list[dict], key: str, section: str, path: tuple[str, ...] | None = None
+) -> dict:
     values = []
     skipped: Counter[str] = Counter()
+    path = path or _RETRIEVAL_METRICS.get(key, (key,))
     for case in cases:
         source = case[section]
-        path = _RETRIEVAL_METRICS.get(key, (key,))
         value = _metric_value(source, *path)
         if value is not None:
             values.append(value)
@@ -122,37 +137,132 @@ def _summary(cases: list[dict], key: str, section: str) -> dict:
     }
 
 
+def _recorded_retrieval_paths(cases: list[dict]) -> tuple[dict, dict]:
+    retrieval = dict(_RETRIEVAL_METRICS)
+    stages = {}
+    for case in cases:
+        metrics = case["retrieval_metrics"]
+        for level in ("document", "article", "clause"):
+            recalls = metrics.get(f"{level}_recall")
+            if isinstance(recalls, dict):
+                for k in recalls:
+                    if str(k).isdigit():
+                        retrieval[f"retrieval.{level}_recall_at_{k}"] = (
+                            f"{level}_recall",
+                            k,
+                        )
+        stage_rows = metrics.get("stages")
+        if not isinstance(stage_rows, dict):
+            continue
+        for name, stage in stage_rows.items():
+            if not isinstance(stage, dict):
+                continue
+            recalls = stage.get("recall")
+            if not isinstance(recalls, dict):
+                continue
+            for level in ("document", "article", "clause"):
+                if isinstance(recalls.get(level), dict):
+                    for k in recalls[level]:
+                        if str(k).isdigit():
+                            stages[f"{name}.{level}_recall_at_{k}"] = (
+                                "stages",
+                                name,
+                                "recall",
+                                level,
+                                k,
+                            )
+    return retrieval, stages
+
+
 def load_evaluation_lab(
     run_path: Path, *, case_id: str | None = None
 ) -> dict[str, Any]:
     manifest_path = run_path / "manifest.json"
-    results_path = run_path / "answer_results.json"
+    kind = "answer" if (run_path / "answer_results.json").is_file() else "retrieval"
     if not manifest_path.is_file():
         return {"status": "unavailable", "boundary": _BOUNDARY, "cases": []}
     try:
-        manifest, raw_results = _read_immutable_run(run_path)
-        if not results_path.is_file():
-            raise ValueError("missing answer results")
+        manifest, raw_results = _read_immutable_run(run_path, kind)
         if not isinstance(manifest, dict) or not isinstance(raw_results, list):
             raise ValueError("invalid artifact shape")
+        if any(not isinstance(row, dict) for row in raw_results):
+            raise ValueError("invalid case shape")
         cases = [
-            _project_case(row) for row in raw_results[:100] if isinstance(row, dict)
+            _project_case(
+                row
+                if kind == "answer"
+                else {
+                    **row,
+                    "metrics": {},
+                    "retrieval_result": row,
+                }
+            )
+            for row in raw_results[:100]
         ]
-    except (OSError, UnicodeError, json.JSONDecodeError, ValueError, TypeError):
-        return {"status": "invalid", "boundary": _BOUNDARY, "cases": []}
+        gate_path = run_path / "quality_gate.json"
+        gate = _read_json(gate_path) if gate_path.is_file() else None
+        if gate is not None and (
+            not isinstance(gate, dict) or type(gate.get("passed")) is not bool
+        ):
+            raise ValueError("invalid quality gate")
+        if gate is not None and (
+            not isinstance(gate.get("failures", []), list)
+            or any(not isinstance(value, str) for value in gate.get("failures", []))
+        ):
+            raise ValueError("invalid quality gate failures")
+    except (OSError, UnicodeError, json.JSONDecodeError, ValueError, TypeError) as exc:
+        return {
+            "status": "invalid",
+            "boundary": _BOUNDARY,
+            "cases": [],
+            "error_kind": "artifact_size_limit"
+            if str(exc) == "artifact_size_limit"
+            else "artifact_read_or_schema_error",
+        }
 
     selected = next((row for row in cases if row["case_id"] == case_id), None)
-    numeric_metrics: dict[str, list[float]] = {}
-    ragas_metrics: dict[str, list[float]] = {}
+    numeric_metrics: set[str] = set()
+    ragas_metrics: set[str] = set()
     for row in cases:
         for key, value in row["metrics"].items():
-            if isinstance(value, (int, float)) and not isinstance(value, bool):
-                numeric_metrics.setdefault(str(key), []).append(float(value))
+            if value is None or (
+                isinstance(value, (int, float)) and not isinstance(value, bool)
+            ):
+                if key != "skip_reason":
+                    numeric_metrics.add(str(key))
         for key, value in row["ragas_metrics"].items():
-            if isinstance(value, (int, float)) and not isinstance(value, bool):
-                ragas_metrics.setdefault(str(key), []).append(float(value))
+            if value is None or (
+                isinstance(value, (int, float)) and not isinstance(value, bool)
+            ):
+                ragas_metrics.add(str(key))
+    retrieval_paths, stage_paths = _recorded_retrieval_paths(cases)
+    answer_summaries = {
+        key: _summary(cases, key, "metrics") for key in sorted(numeric_metrics)
+    }
+    retrieval_summaries = {
+        key: _summary(cases, key, "retrieval_metrics", path)
+        for key, path in retrieval_paths.items()
+    }
     return {
         "status": "available",
+        "run_kind": kind,
+        "record_count": len(raw_results),
+        "displayed_count": len(cases),
+        "truncated": len(raw_results) > len(cases),
+        "quality_gate": gate,
+        "status_counts": dict(Counter(row["status"] for row in cases)),
+        "stage_metrics": {
+            key: _summary(cases, key, "retrieval_metrics", path)
+            for key, path in stage_paths.items()
+        },
+        "metric_groups": {
+            "Chất lượng câu trả lời": answer_summaries,
+            "Truy xuất và lỗi kỹ thuật": retrieval_summaries,
+        },
+        "latency": {
+            key: _summary(cases, key, "latency")
+            for key in sorted({key for row in cases for key in row["latency"]})
+        },
         "boundary": _BOUNDARY,
         "provenance": {
             key: manifest.get(key)
@@ -168,18 +278,14 @@ def load_evaluation_lab(
                 "judge_mode",
                 "selected_case_count",
                 "provenance_status",
+                "command",
+                "code_metric_version",
+                "configured_provider_models",
             )
         },
-        "deterministic_metrics": {
-            key: _summary(
-                cases,
-                key,
-                "retrieval_metrics" if key in _RETRIEVAL_METRICS else "metrics",
-            )
-            for key in (*numeric_metrics, *_RETRIEVAL_METRICS)
-        },
+        "deterministic_metrics": {**answer_summaries, **retrieval_summaries},
         "ragas_metrics": {
-            key: _summary(cases, key, "ragas_metrics") for key in ragas_metrics
+            key: _summary(cases, key, "ragas_metrics") for key in sorted(ragas_metrics)
         },
         "cases": [
             {
@@ -187,7 +293,7 @@ def load_evaluation_lab(
                 "question": row["question"],
                 "status": row["status"],
             }
-            for row in cases[:50]
+            for row in cases
         ],
         "case": selected,
     }
