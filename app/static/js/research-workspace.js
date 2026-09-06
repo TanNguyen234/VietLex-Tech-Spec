@@ -49,7 +49,8 @@
       invalid_structured_response: 'Chưa thể xác minh kết quả phân tích. Vui lòng thử lại hoặc chọn bằng chứng khác.',
       evidence_scope_too_large: 'Phạm vi quá lớn. Vui lòng chọn ít bằng chứng hơn.',
     workspace_changed: 'Hồ sơ đã thay đổi; kết quả chưa được lưu.',
-    invalid_evidence_id: 'Mã bằng chứng không hợp lệ.'
+    invalid_evidence_id: 'Mã bằng chứng không hợp lệ.',
+    evidence_linked: 'Đã liên kết căn cứ · cần kiểm chứng nội dung'
   };
   function evidenceLinks(ids, payload) {
     const cell = element('td');
@@ -118,8 +119,33 @@
     const button = element('button', 'Bắt đầu nghiên cứu', 'button button-primary'); button.type = 'submit';
     form.append(note, button); form._researchPlan = plan; researchPlan.append(form);
   }
+  function renderContractReview(payload, target) {
+    target.replaceChildren();
+    if (payload.status && !['ok', 'insufficient_evidence'].includes(payload.status)) {
+      target.append(element('p', labels[payload.status] || payload.status, 'legal-warning'));
+      return;
+    }
+    const findings = payload.result?.findings || [];
+    if (!findings.length) { target.append(element('p', 'Chưa có finding trong phạm vi điều khoản đã chọn.')); return; }
+    const clauses = new Map((payload.selected_clauses || []).map(item => [item.clause_id, item]));
+    const headings = ['Điều khoản', 'Mức rà soát', 'Vấn đề', 'Căn cứ luật', 'Trạng thái hỗ trợ', 'Đề xuất'];
+    const table = element('table', undefined, 'evaluation-table analysis-table contract-review-table');
+    const head = element('thead'), header = element('tr'), body = element('tbody');
+    headings.forEach(value => { const th = element('th', value); th.scope = 'col'; header.append(th); }); head.append(header);
+    findings.forEach(finding => {
+      const clause = clauses.get(finding.clause_id) || {};
+      const row = element('tr');
+      const values = [clause.title || finding.clause_id, finding.risk_level, finding.issue];
+      values.forEach((value, index) => { const cell = element('td', value || '—'); cell.dataset.label = headings[index]; if (index === 1) cell.className = 'contract-risk-' + finding.risk_level; row.append(cell); });
+      const law = evidenceLinks(finding.legal_evidence_ids || [], payload); law.dataset.label = headings[3]; if (!(finding.legal_evidence_ids || []).length) law.textContent = 'Chưa có căn cứ luật được chọn'; row.append(law);
+      [labels[finding.support_state] || finding.support_state, finding.recommendation].forEach((value, index) => { const cell = element('td', value || '—'); cell.dataset.label = headings[index + 4]; row.append(cell); });
+      body.append(row);
+    });
+    table.append(head, body); target.append(table);
+  }
   function renderAnalysis(payload, target = result) {
     if (payload.kind === 'deep_research' || payload.result?.steps) { renderResearch(payload, target); return; }
+    if (payload.kind === 'contract_review') { renderContractReview(payload, target); return; }
     target.replaceChildren();
     if (payload.status && payload.status !== 'ok') target.append(element('p', labels[payload.status] || payload.status, 'legal-warning'));
       if (payload.provider || payload.model) {
@@ -162,12 +188,27 @@
   document.addEventListener('change', showScope);
   document.addEventListener('click', async event => {
     const button = event.target.closest('button');
-    if (!button || !['delete-workspace', 'unpin-evidence'].includes(button.dataset.action)) return;
+    if (!button) return;
+    if (button.dataset.action === 'pin-document-clause') {
+      button.disabled = true;
+      try {
+        const path = '/workspaces/' + workspaceId + '/documents/' + button.dataset.documentId + '/clauses/' + button.dataset.clauseId + '/pin';
+        const response = await fetch(path, {method: 'POST', headers: {'X-CSRF-Token': csrf}});
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.detail || payload.reason || 'pin_failed');
+        location.reload();
+      } catch { if (result) result.textContent = 'Không thể ghim điều khoản. Điều khoản có thể đã được ghim hoặc bảng bằng chứng đã đầy.'; }
+      finally { button.disabled = false; }
+      return;
+    }
+    if (!['delete-workspace', 'unpin-evidence', 'delete-document'].includes(button.dataset.action)) return;
     const removeWorkspace = button.dataset.action === 'delete-workspace';
-    if (!confirm(removeWorkspace ? 'Xóa hồ sơ, ghi chú, bằng chứng và phân tích đã lưu? Không thể hoàn tác.' : 'Bỏ ghim bằng chứng này?')) return;
+    const removeDocument = button.dataset.action === 'delete-document';
+    const prompt = removeWorkspace ? 'Xóa hồ sơ, ghi chú, bằng chứng và phân tích đã lưu? Không thể hoàn tác.' : removeDocument ? 'Xóa tài liệu và mọi điều khoản đã ghim từ tài liệu này?' : 'Bỏ ghim bằng chứng này?';
+    if (!confirm(prompt)) return;
     button.disabled = true;
     try {
-      const path = '/workspaces/' + workspaceId + (removeWorkspace ? '' : '/evidence/' + button.dataset.evidenceId);
+      const path = '/workspaces/' + workspaceId + (removeWorkspace ? '' : removeDocument ? '/documents/' + button.dataset.documentId : '/evidence/' + button.dataset.evidenceId);
       const response = await fetch(path, {method: 'DELETE', headers: {'X-CSRF-Token': csrf}});
       if (!response.ok) throw new Error('delete_failed');
       if (removeWorkspace) location.href = '/workspaces'; else location.reload();
@@ -175,6 +216,40 @@
     finally { button.disabled = false; }
   });
   document.addEventListener('submit', async event => {
+    const uploadForm = event.target.closest('[data-document-upload]');
+    if (uploadForm) {
+      event.preventDefault();
+      if (pending) return;
+      pending = true; const button = uploadForm.querySelector('button'); button.disabled = true;
+      if (result) result.textContent = 'Đang trích xuất tài liệu…';
+      try {
+        const response = await fetch(uploadForm.action, {method: 'POST', body: new FormData(uploadForm)});
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.detail || 'upload_failed');
+        location.reload();
+      } catch { if (result) result.textContent = 'Không thể tải tài liệu. Kiểm tra định dạng, dung lượng hoặc nội dung trích xuất.'; }
+      finally { pending = false; button.disabled = false; }
+      return;
+    }
+    const contractForm = event.target.closest('[data-contract-review]');
+    if (contractForm) {
+      event.preventDefault();
+      if (pending) return;
+      const card = contractForm.closest('[data-workspace-document]');
+      const clauseIds = [...card.querySelectorAll('[data-document-clause]:checked')].map(node => node.value);
+      if (!clauseIds.length || clauseIds.length > 10) { if (result) result.textContent = 'Chọn từ 1 đến 10 điều khoản để rà soát.'; return; }
+      const lawIds = [...document.querySelectorAll('[name="selected_evidence"]:checked')].filter(node => node.closest('[data-source-kind]')?.dataset.sourceKind !== 'user_document').map(node => node.value);
+      const data = new FormData(contractForm); data.set('clause_ids', clauseIds.join(',')); data.set('legal_evidence_ids', lawIds.join(','));
+      pending = true; const button = contractForm.querySelector('button'); button.disabled = true;
+      if (result) { result.setAttribute('aria-busy', 'true'); result.textContent = 'Đang rà soát các điều khoản đã chọn…'; }
+      try {
+        const response = await fetch(contractForm.action, {method: 'POST', body: data});
+        const payload = await response.json(); renderAnalysis(payload);
+        if (!response.ok) throw new Error(payload.detail || payload.status || 'review_failed');
+      } catch { if (result && !result.children.length) result.textContent = 'Không thể hoàn tất rà soát lúc này.'; }
+      finally { pending = false; button.disabled = false; result?.setAttribute('aria-busy', 'false'); }
+      return;
+    }
     const planForm = event.target.closest('[data-research-plan]');
     if (planForm) {
       event.preventDefault();

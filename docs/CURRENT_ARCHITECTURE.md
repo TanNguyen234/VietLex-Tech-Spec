@@ -8,7 +8,7 @@
 - Evaluation presentation includes stored quality gate, case status counts, deterministic/optional judge groups, all recorded recall cutoffs, stage recall, latency means, provenance and case evidence/error drilldown. Values are macro means over recorded finite case values; unavailable observations retain coverage and skip reasons. It does not revalidate provenance hashes or certify legal correctness.
 - The dashboard projects at most 100 cases and rejects individual JSON artifacts larger than 32 MiB. Truncation is explicit, and its summaries must not be interpreted as whole-run statistics. An absent stored gate is unknown, not passed. Reading artifacts never invokes a provider or starts evaluation.
 - The homepage launches existing search, evidence workspace, comparison and obligation-table workflows. Be Vietnam Pro is self-hosted under its OFL license; light is the default and dark remains selectable. Document outlines add anchors while preserving and HTML-escaping the original text.
-- Upload/contract workflows and verified legal-effect relationships remain unimplemented. The official-web research slice below is result discovery only; it does not make article-level legal conclusions.
+- Workspace upload and selected-clause contract review are implemented with the limits below. Verified legal-effect relationships remain unimplemented. Official-web discovery does not make article-level legal conclusions.
 
 | Area | Classification | Current contract |
 | :--- | :--- | :--- |
@@ -91,6 +91,14 @@ USE_LEGACY_FREE_PIPELINE=true
 The v3 lane exposes typed hybrid runtime and evaluation adapters. With `USE_LEGACY_FREE_PIPELINE=false`, `production` uses v3 as its primary retrieval path; initialization/provider failures are typed and do not silently fall back to Pinecone. After expansion, raw RRF missed one required document at top 3 because sparse-only distractors outranked the correct dense hit. Production therefore uses an equal reciprocal-rank blend of the Qdrant RRF and DBSF result lists; the 2026-09-03 Golden-50 run passed every retrieval gate. Qdrant ColBERT remains rejected because the live comparison reduced verified article/clause recall. The audited remote collection has 141,798 points over exactly 14,962 unique document IDs. Chat evidence comes directly from each Qdrant point payload (`body`); it does not fetch full text from Supabase. In serverless online-only mode, Supabase `public.legal_documents` supplies title/number search and full-document pages for the same 14,962-document set through a publishable-key, read-only RLS policy. The packaged local v3 bundle is older and must not be presented as matching the expanded online set. This remains a narrow slice of the 518,255-document corpus, not whole-corpus production-readiness evidence. Set the boolean to `true` to restore Pinecone v1 and disable all Google Cloud calls.
 
 ## Evidence-centric research workspace
+
+### Personal documents and contract review (2026-09-06)
+
+- Uploads accept PDF, DOCX and UTF-8 TXT, with a 10 MB input cap, 250,000 extracted characters and 100 sections. PDF pages retain page numbers; scanned PDFs without text require OCR outside this workflow.
+- A short-lived subprocess imposes a 256 MiB memory ceiling (Windows Job Object / POSIX resource limit) and a 15-second deadline. Failure to establish isolation fails closed. Upload buffering is limited to two concurrent requests per process, six per client IP per minute and a 30-second body deadline.
+- Documents remain embedded in the owner-scoped workspace, sharing its TTL. An atomic BSON-size guard limits document, evidence and analysis growth to 12 MB; the workspace can reject additional records before its 20-document count limit. No raw upload bytes are persisted.
+- Contract review uses only selected server-resolved clauses and selected legal evidence; uploaded personal-document evidence cannot become legal authority. `evidence_linked` records a reference, not semantic verification. Missing law links are `needs_verification`.
+- Admin review telemetry stores status, counts, hashes and provider calls without copying private clauses, filenames or generated findings into evaluation logs. Removing a document removes its pinned evidence and document-specific review analyses.
 
 ### Official web research slice (2026-09-05)
 

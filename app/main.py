@@ -20,7 +20,11 @@ from app.services.web_security import (
     AnonymousClientMiddleware,
     resolve_web_session_secret,
 )
-from app.services.http_security import SecurityHeadersMiddleware
+from app.services.http_security import (
+    SecurityHeadersMiddleware,
+    WorkspaceUploadBodyLimitMiddleware,
+)
+from app.services.workspace_documents import MAX_UPLOAD_BYTES
 from app.rate_limit import limiter
 from app.services.observability import configure_observability
 
@@ -34,6 +38,10 @@ configure_observability(settings)
 app = FastAPI(title="VietLex Advanced Legal RAG")
 
 app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(
+    WorkspaceUploadBodyLimitMiddleware,
+    max_bytes=MAX_UPLOAD_BYTES + 256_000,
+)
 
 app.add_middleware(
     AnonymousClientMiddleware,

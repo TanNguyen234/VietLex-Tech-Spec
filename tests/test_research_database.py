@@ -91,6 +91,7 @@ async def test_pin_and_unpin_are_atomic_and_owner_scoped(monkeypatch) -> None:
     await research.unpin_workspace_evidence("w-1", "ev-1", "owner-a")
 
     pin_query, pin_update = collection.update_calls[0]
+    assert pin_query.pop('$expr')['$lte'][1] == 12_000_000
     assert pin_query == {
         "_id": "w-1",
         "client_id": "owner-a",
@@ -105,3 +106,45 @@ async def test_pin_and_unpin_are_atomic_and_owner_scoped(monkeypatch) -> None:
         "user_id": None,
         "evidence.evidence_id": "ev-1",
     }
+
+
+@pytest.mark.asyncio
+async def test_workspace_documents_are_bounded_duplicate_safe_and_owner_scoped(
+    monkeypatch,
+) -> None:
+    import app.research_database as research
+
+    collection = _Collection()
+    monkeypatch.setattr(
+        research,
+        "get_db",
+        lambda: SimpleNamespace(research_workspaces=collection),
+    )
+    document = {
+        "document_id": "a" * 24,
+        "filename": "contract.txt",
+        "clauses": [],
+    }
+
+    assert await research.save_workspace_document(
+        "w-1", document, "owner-a", user_id="user-1"
+    )
+    assert await research.remove_workspace_document(
+        "w-1", "a" * 24, "owner-a", user_id="user-1"
+    )
+
+    save_query, save_update = collection.update_calls[0]
+    size_guard = save_query.pop('$expr')
+    assert size_guard['$lte'][0]['$add'][0] == {'$bsonSize': '$$ROOT'}
+    assert size_guard['$lte'][1] == 12_000_000
+    assert save_query == {
+        "_id": "w-1",
+        "user_id": "user-1",
+        "documents.document_id": {"$ne": "a" * 24},
+        "documents.19": {"$exists": False},
+    }
+    assert save_update["$push"]["documents"]["document_id"] == "a" * 24
+    remove_query, remove_update = collection.update_calls[1]
+    assert remove_query["documents.document_id"] == "a" * 24
+    assert remove_update["$pull"]["evidence"]["workspace_document_id"] == "a" * 24
+    assert remove_update['$pull']['analyses']['workspace_document_id'] == 'a' * 24

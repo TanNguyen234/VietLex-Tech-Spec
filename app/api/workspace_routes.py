@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import re
 import secrets
 import uuid
 from dataclasses import asdict
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import ValidationError
@@ -25,13 +26,16 @@ from app.research_database import (
     get_workspace,
     list_workspaces,
     pin_workspace_evidence,
+    remove_workspace_document,
     save_workspace_analysis,
+    save_workspace_document,
     unpin_workspace_evidence,
     update_workspace,
 )
 from app.services.evidence_presenter import present_context
 from app.services.research_analysis import (
     generate_comparison,
+    generate_contract_review,
     generate_obligation_matrix,
     generate_selected_evidence_answer,
 )
@@ -42,6 +46,13 @@ from app.services.deep_research import (
     run_deep_research,
 )
 from app.services.provider_runtime import capture_provider_usage, current_provider_calls
+from app.services.workspace_documents import (
+    DocumentExtractionError,
+    MAX_UPLOAD_BYTES,
+)
+from app.services.document_worker import extract_isolated as extract_workspace_document
+
+_DOCUMENT_PARSE_GATE = asyncio.Semaphore(2)
 
 
 router = APIRouter()
@@ -103,6 +114,9 @@ def _evidence_snapshot(evidence: list[dict]) -> list[dict]:
         "document_number",
         "title",
         "source_url",
+        "source_kind",
+        "workspace_document_id",
+        "clause_id",
     }
     return [
         {key: value for key, value in item.items() if key in fields}
@@ -180,6 +194,266 @@ async def workspace_detail(
             ),
         },
     )
+
+
+def _workspace_document(workspace: dict, document_id: str) -> dict:
+    _validate_id(document_id, "document")
+    document = next(
+        (
+            item
+            for item in (workspace.get("documents") or [])[:20]
+            if item.get("document_id") == document_id
+        ),
+        None,
+    )
+    if document is None:
+        raise HTTPException(status_code=404, detail="Document not found")
+    return document
+
+
+@router.post("/workspaces/{workspace_id}/documents")
+@limiter.limit(settings.SESSION_RATE_LIMIT)
+async def workspace_document_upload(
+    request: Request,
+    workspace_id: str,
+    document: UploadFile = File(...),
+    _csrf: str = Depends(verify_csrf),
+    current_user=Depends(optional_user),
+):
+    workspace, client_id, user_id = await _owned_workspace(
+        request, workspace_id, current_user
+    )
+    if len(workspace.get("documents") or []) >= 20:
+        raise HTTPException(status_code=409, detail="document_limit_reached")
+    try:
+        payload = await document.read(MAX_UPLOAD_BYTES + 1)
+    finally:
+        await document.close()
+    try:
+        async with _DOCUMENT_PARSE_GATE:
+            extracted = await asyncio.to_thread(
+                extract_workspace_document,
+                document.filename or "document",
+                document.content_type or "",
+                payload,
+            )
+    except DocumentExtractionError as error:
+        raise HTTPException(status_code=422, detail=error.kind) from error
+    if any(
+        item.get("document_id") == extracted.document_id
+        for item in (workspace.get("documents") or [])
+    ):
+        raise HTTPException(status_code=409, detail="duplicate_document")
+    record = extracted.model_dump(mode="json")
+    if not await save_workspace_document(
+        workspace_id, record, client_id, user_id=user_id
+    ):
+        raise HTTPException(status_code=409, detail="workspace_changed")
+    return JSONResponse(record)
+
+
+@router.delete("/workspaces/{workspace_id}/documents/{document_id}")
+@limiter.limit(settings.SESSION_RATE_LIMIT)
+async def workspace_document_delete(
+    request: Request,
+    workspace_id: str,
+    document_id: str,
+    _csrf: str = Depends(verify_csrf_header),
+    current_user=Depends(optional_user),
+):
+    workspace, client_id, user_id = await _owned_workspace(
+        request, workspace_id, current_user
+    )
+    _workspace_document(workspace, document_id)
+    if not await remove_workspace_document(
+        workspace_id, document_id, client_id, user_id=user_id
+    ):
+        raise HTTPException(status_code=409, detail="workspace_changed")
+    return {"status": "deleted"}
+
+
+@router.post(
+    "/workspaces/{workspace_id}/documents/{document_id}/clauses/{clause_id}/pin"
+)
+@limiter.limit(settings.SESSION_RATE_LIMIT)
+async def workspace_document_clause_pin(
+    request: Request,
+    workspace_id: str,
+    document_id: str,
+    clause_id: str,
+    _csrf: str = Depends(verify_csrf_header),
+    current_user=Depends(optional_user),
+):
+    workspace, client_id, user_id = await _owned_workspace(
+        request, workspace_id, current_user
+    )
+    source = _workspace_document(workspace, document_id)
+    _validate_id(clause_id, "clause")
+    clause = next(
+        (
+            item
+            for item in (source.get("clauses") or [])[:100]
+            if item.get("clause_id") == clause_id
+        ),
+        None,
+    )
+    if clause is None:
+        raise HTTPException(status_code=422, detail="invalid_clause_id")
+    page = f" · Trang {clause.get('page')}" if clause.get("page") else ""
+    citation = f"{source.get('filename')} · {clause.get('title')}{page}"[:500]
+    original = f"[{citation}]\n{str(clause.get('text') or '')}"[:12_500]
+    evidence = {
+        "evidence_id": f"udoc-{clause_id}",
+        "trace_id": f"document-{document_id}",
+        "session_id": workspace_id,
+        "workspace_document_id": document_id,
+        "clause_id": clause_id,
+        "source_kind": "user_document",
+        "introduced_by_claim": "Điều khoản do người dùng tải lên; chưa được đối chiếu luật.",
+        "note": "",
+        "original": original,
+        "citation": citation,
+        "excerpt": str(clause.get("text") or "")[:600],
+        "document_id": None,
+        "document_number": "",
+        "title": str(clause.get("title") or "")[:240],
+        "source_url": "",
+    }
+    if not await pin_workspace_evidence(
+        workspace_id, evidence, client_id, user_id=user_id
+    ):
+        return JSONResponse(
+            {"status": "not_pinned", "reason": "duplicate_or_workspace_limit"},
+            status_code=409,
+        )
+    return {"status": "pinned", "evidence": evidence}
+
+
+@router.post("/workspaces/{workspace_id}/documents/{document_id}/review")
+@limiter.limit(settings.CHAT_RATE_LIMIT)
+@capture_provider_usage
+async def workspace_contract_review(
+    request: Request,
+    workspace_id: str,
+    document_id: str,
+    clause_ids: str = Form(..., min_length=1, max_length=4_000),
+    legal_evidence_ids: str = Form("", max_length=2_000),
+    _csrf: str = Depends(verify_csrf),
+    current_user=Depends(optional_user),
+):
+    workspace, client_id, user_id = await _owned_workspace(
+        request, workspace_id, current_user
+    )
+    source = _workspace_document(workspace, document_id)
+    requested_clauses = {item for item in clause_ids.split(",") if item}
+    if (
+        not requested_clauses
+        or len(requested_clauses) > 10
+        or any(not _SAFE_ID.fullmatch(item) for item in requested_clauses)
+    ):
+        raise HTTPException(status_code=422, detail="invalid_clause_id")
+    clauses = [
+        item
+        for item in (source.get("clauses") or [])[:100]
+        if item.get("clause_id") in requested_clauses
+    ]
+    if len(clauses) != len(requested_clauses):
+        raise HTTPException(status_code=422, detail="invalid_clause_id")
+    requested_evidence = {
+        item for item in legal_evidence_ids.split(",") if item
+    }
+    if len(requested_evidence) > 10 or any(
+        not _SAFE_ID.fullmatch(item) for item in requested_evidence
+    ):
+        raise HTTPException(status_code=422, detail="invalid_evidence_id")
+    legal_evidence = [
+        item
+        for item in (workspace.get("evidence") or [])[:100]
+        if item.get("evidence_id") in requested_evidence
+        and item.get("source_kind") != "user_document"
+    ]
+    if len(legal_evidence) != len(requested_evidence):
+        raise HTTPException(status_code=422, detail="invalid_evidence_id")
+    analysis_id = str(uuid.uuid4())
+    try:
+        result, metadata = await generate_contract_review(clauses, legal_evidence)
+        analysis = {
+            "analysis_id": analysis_id,
+            "kind": "contract_review",
+            "status": "ok" if result.findings else "insufficient_evidence",
+            "workspace_document_id": document_id,
+            "filename": str(source.get("filename") or "")[:180],
+            "selected_clauses": clauses,
+            "evidence_snapshot": _evidence_snapshot(legal_evidence),
+            "result": result.model_dump(mode="json"),
+            "provider_calls": current_provider_calls() or [],
+            **metadata,
+        }
+        status_code = 200
+    except ValueError as error:
+        if str(error) == "evidence_scope_too_large":
+            raise HTTPException(status_code=422, detail=str(error)) from error
+        analysis = {
+            "analysis_id": analysis_id,
+            "kind": "contract_review",
+            "status": "invalid_structured_response",
+            "workspace_document_id": document_id,
+            "error_type": type(error).__name__,
+        }
+        status_code = 502
+    except (ValidationError, RuntimeError) as error:
+        analysis = {
+            "analysis_id": analysis_id,
+            "kind": "contract_review",
+            "status": (
+                "invalid_structured_response"
+                if isinstance(error, ValidationError)
+                else "provider_error"
+            ),
+            "workspace_document_id": document_id,
+            "error_type": type(error).__name__,
+        }
+        status_code = 502
+    contexts = [
+        f"[User document: {source.get('filename')} · {item.get('title')}]\n"
+        f"{str(item.get('text') or '')[:4_000]}"
+        for item in clauses
+    ] + [str(item.get("original") or "")[:4_000] for item in legal_evidence]
+    logged = await log_interaction(
+        trace_id=analysis_id,
+        user_query=f"Rà soát {len(clauses)} điều khoản tài liệu cá nhân",
+        bot_response=analysis['status'],
+        contexts=[],
+        cached=False,
+        session_id=workspace_id,
+        client_id=client_id,
+        user_id=user_id,
+        request_status=f"contract_review_{analysis['status']}",
+        observed_provider=analysis.get("provider"),
+        observed_model=analysis.get("model"),
+        context_count=len(contexts[:20]),
+        no_evidence=not bool(contexts),
+        retrieval_trace={
+            "mode": "user_document_review",
+            "document_id": document_id,
+            "selected_clause_count": len(clauses),
+            "selected_legal_evidence_count": len(legal_evidence),
+            "content_storage": "workspace_only",
+            "context_sha256": [hashlib.sha256(c.encode('utf-8')).hexdigest() for c in contexts],
+        },
+        request_metadata={"method": "POST", "path": request.url.path},
+    )
+    analysis["admin_trace_status"] = "persisted" if logged else "unavailable"
+    if not await save_workspace_analysis(
+        workspace_id,
+        analysis,
+        client_id,
+        user_id=user_id,
+        required_document_id=document_id,
+    ):
+        await update_interaction_request_status(analysis_id, "workspace_changed")
+        raise HTTPException(status_code=409, detail="workspace_changed")
+    return JSONResponse(analysis, status_code=status_code)
 
 
 @router.post("/workspaces/{workspace_id}/research/plan")

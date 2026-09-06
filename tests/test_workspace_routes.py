@@ -458,3 +458,160 @@ def test_deep_research_run_persists_owner_scoped_result_and_provider_calls(
     assert changed.status_code == 409
     failed_analysis_id = save.await_args.args[1]["analysis_id"]
     update_status.assert_awaited_once_with(failed_analysis_id, "workspace_changed")
+
+
+def test_workspace_upload_extracts_and_persists_without_raw_bytes(
+    client, monkeypatch
+) -> None:
+    from app.services.workspace_documents import (
+        ExtractedWorkspaceDocument,
+        WorkspaceClause,
+    )
+
+    monkeypatch.setattr(
+        "app.api.workspace_routes.get_workspace",
+        AsyncMock(return_value={"workspace_id": "w-1", "documents": []}),
+    )
+    extracted = ExtractedWorkspaceDocument(
+        document_id="a" * 24,
+        filename="contract.txt",
+        file_type="txt",
+        media_type="text/plain",
+        sha256="a" * 64,
+        size_bytes=20,
+        extracted_characters=12,
+        clauses=[
+            WorkspaceClause(
+                clause_id=f"{'a' * 24}-001",
+                title="Điều 1",
+                text="Nội dung thật",
+                order=1,
+            )
+        ],
+    )
+    extract = pytest.importorskip("unittest.mock").Mock(return_value=extracted)
+    save = AsyncMock(return_value=True)
+    monkeypatch.setattr("app.api.workspace_routes.extract_workspace_document", extract)
+    monkeypatch.setattr("app.api.workspace_routes.save_workspace_document", save)
+
+    response = client.post(
+        "/workspaces/w-1/documents",
+        data={"csrf_token": "valid"},
+        files={"document": ("contract.txt", b"raw file bytes", "text/plain")},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["document_id"] == "a" * 24
+    persisted = save.await_args.args[1]
+    assert persisted["clauses"][0]["text"] == "Nội dung thật"
+    assert b"raw file bytes" not in str(persisted).encode()
+
+
+def test_document_clause_pin_resolves_text_server_side(client, monkeypatch) -> None:
+    document_id = "a" * 24
+    clause_id = f"{document_id}-001"
+    workspace = {
+        "workspace_id": "w-1",
+        "documents": [
+            {
+                "document_id": document_id,
+                "filename": "contract.txt",
+                "clauses": [
+                    {
+                        "clause_id": clause_id,
+                        "title": "Điều 1",
+                        "text": "Server clause",
+                        "page": None,
+                    }
+                ],
+            }
+        ],
+        "evidence": [],
+    }
+    monkeypatch.setattr("app.api.workspace_routes.get_workspace", AsyncMock(return_value=workspace))
+    pin = AsyncMock(return_value=True)
+    monkeypatch.setattr("app.api.workspace_routes.pin_workspace_evidence", pin)
+
+    response = client.post(
+        f"/workspaces/w-1/documents/{document_id}/clauses/{clause_id}/pin",
+        headers={"X-CSRF-Token": "valid"},
+    )
+
+    assert response.status_code == 200
+    evidence = pin.await_args.args[1]
+    assert evidence["original"].endswith("Server clause")
+    assert evidence["workspace_document_id"] == document_id
+    forged = client.post(
+        f"/workspaces/w-1/documents/{document_id}/clauses/{document_id}-099/pin",
+        headers={"X-CSRF-Token": "valid"},
+    )
+    assert forged.status_code == 422
+
+
+def test_contract_review_uses_selected_server_clauses_and_legal_evidence(
+    client, monkeypatch
+) -> None:
+    from app.services.workspace_documents import ContractFinding, ContractReviewResult
+
+    document_id = "b" * 24
+    clause_id = f"{document_id}-001"
+    workspace = {
+        "workspace_id": "w-1",
+        "documents": [
+            {
+                "document_id": document_id,
+                "filename": "agreement.docx",
+                "clauses": [{"clause_id": clause_id, "title": "Điều 1", "text": "Server clause"}],
+            }
+        ],
+        "evidence": [{"evidence_id": "ev-law", "original": "Điều luật", "citation": "Điều 1"}],
+    }
+    monkeypatch.setattr("app.api.workspace_routes.get_workspace", AsyncMock(return_value=workspace))
+    generated = ContractReviewResult(
+        findings=[
+            ContractFinding(
+                clause_id=clause_id,
+                risk_level="review",
+                issue="Cần đối chiếu",
+                legal_evidence_ids=["ev-law"],
+                recommendation="Kiểm tra thêm",
+                support_state="evidence_linked",
+            )
+        ]
+    )
+    generate = AsyncMock(return_value=(generated, {"provider": "test", "model": "model"}))
+    monkeypatch.setattr("app.api.workspace_routes.generate_contract_review", generate)
+    save = AsyncMock(return_value=True)
+    monkeypatch.setattr("app.api.workspace_routes.save_workspace_analysis", save)
+    log = AsyncMock(return_value={"trace_id": "trace"})
+    monkeypatch.setattr("app.api.workspace_routes.log_interaction", log)
+
+    response = client.post(
+        f"/workspaces/w-1/documents/{document_id}/review",
+        data={"clause_ids": clause_id, "legal_evidence_ids": "ev-law"},
+    )
+
+    assert response.status_code == 200
+    assert generate.await_args.args[0][0]["text"] == "Server clause"
+    assert generate.await_args.args[1][0]["evidence_id"] == "ev-law"
+    assert save.await_args.args[1]["kind"] == "contract_review"
+    assert save.await_args.kwargs["required_document_id"] == document_id
+    assert save.await_args.args[1]["admin_trace_status"] == "persisted"
+    assert log.await_args.kwargs["retrieval_trace"]["mode"] == "user_document_review"
+    assert log.await_args.kwargs['contexts'] == []
+    assert 'agreement.docx' not in log.await_args.kwargs['user_query']
+    assert 'Cần đối chiếu' not in log.await_args.kwargs['bot_response']
+
+    workspace["evidence"].append(
+        {
+            "evidence_id": "ev-user",
+            "source_kind": "user_document",
+            "original": "Hợp đồng khác",
+        }
+    )
+    invalid_law = client.post(
+        f"/workspaces/w-1/documents/{document_id}/review",
+        data={"clause_ids": clause_id, "legal_evidence_ids": "ev-user"},
+    )
+    assert invalid_law.status_code == 422
+    assert generate.await_count == 1

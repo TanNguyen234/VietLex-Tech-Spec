@@ -116,6 +116,12 @@ def test_workspace_and_evaluation_lab_templates_expose_real_workflows() -> None:
     assert "modality" in script
     assert "source.snippet" in script
     assert "data-research-plan" in script
+    assert 'enctype="multipart/form-data"' in workspace
+    assert "workspace.documents" in workspace
+    assert "data-document-clause" in workspace
+    assert "data-contract-review" in workspace
+    assert "contract_review" in script
+    assert "legal_evidence_ids" in script
 
 
 def test_product_forms_and_navigation_are_usable_without_chat_script() -> None:
@@ -138,4 +144,5 @@ def test_admin_detail_separates_external_http_calls_from_llm_tokens() -> None:
     assert "external_calls" in html
     assert "HTTP request" in html
     assert "Official web / metadata kết quả" in html
+    assert "Rà soát tài liệu người dùng" in html
     assert "Provider / model tạo câu trả lời" not in usage

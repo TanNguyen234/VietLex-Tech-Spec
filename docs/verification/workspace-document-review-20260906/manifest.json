@@ -1,0 +1,29 @@
+{
+  "base_git_sha": "66cdeeaea4f67cade0f27fc2503383b7d3c32781",
+  "git_dirty": true,
+  "tracked_scope_diff_sha256": "4da6ab7781cd3ac027a5bfa5b58f9056993c45f00ff7c55ffe698dfa5c9592cb",
+  "file_sha256": {
+    "app/api/workspace_routes.py": "8bbc11807aa6f85fab38bcd95fe4abf981e5a533cc7b2070a7ee8094e5c02ec7",
+    "app/main.py": "a6e0c00b52193cef4ea00f75efbc015ce455b14201d78250e792986f59235a1e",
+    "app/research_database.py": "735d4ef2c2a18885ecaeac81b7cd2fb27017195cc3f7807a923452bb178a8504",
+    "app/services/http_security.py": "9a9b3673988c35591e861531a2a4383650a414ccafb6300bc10ebc81c3d03bba",
+    "app/services/research_analysis.py": "ae8c212b09d9c7e64166d33f250380cc14af65558619464a9809bbf4d918002e",
+    "app/services/document_worker.py": "cf288343ef2fa48a8bdabd6e0611dcb58497b839c7bf5b3d7d45fa2e814d120f",
+    "app/services/workspace_documents.py": "94c5e5d3c574f22f39acdccf87fff29e0d490bbdfec72cefcefeab8e4e45f4dc",
+    "app/static/css/vietlex-enhancements.css": "88b7efee0d76558c718f6025f57627bf7a816f6c974b3d46d4239ba0f2d2d311",
+    "app/static/js/research-workspace.js": "da914fcd4c314990db608c48322b0ceeb67e9a4e40632bad7d6934539b91b107",
+    "app/templates/admin_details.html": "9f75b0674c855bb15852c2e27c0e08c6ebc2389846e8067c5e88c2f6ba88120e",
+    "app/templates/research_workspace.html": "55786fbe08e467530c1bb175aa19b22a6eaaff25b60ea2248f0934c168aaf72d",
+    "docs/CURRENT_ARCHITECTURE.md": "ecc11ad8e249986010f826b41e86d3b86b2dbabebb890858120b915276938f5e",
+    "pyproject.toml": "fca5cc4130dee0cfd863d6cf0fe51ab686d43c2aa4b6ef63eb727ddfb00b4429",
+    "tests/services/test_research_analysis.py": "5b4f5b683639919486d1247530ccc44617387a3bcdfb3431b9e1fa5a7aa3c087",
+    "tests/services/test_document_worker.py": "53b294469a0826ccbc24f5b5c67983605f52b1e81e43c7576770238d9c2c33e3",
+    "tests/services/test_upload_body_limit.py": "d3a588b47c61be4b7d21b45b57e04c614e159a9b97f5bfc76cee50c4a95cd897",
+    "tests/services/test_workspace_documents.py": "ae079fcb1b58392dd476891945fd301044d8097d1cc05a2297333420afda2411",
+    "tests/test_public_templates.py": "b0b9e5b1bebd5bfe6734db89b567a06b4fe87f255b30105778811ba62a0aa687",
+    "tests/test_research_database.py": "733c0f147bd2cb8e1f4d36fbe1fa4baf5e6a5e742cacc60e38f1ab74c714bc15",
+    "tests/test_workspace_routes.py": "fa8b253c9e5e9fa5958f2278868e6331cc84a7909bf2fc1a5ff85cdc477a11b3"
+  },
+  "live_providers": "NOT RUN",
+  "live_database": "NOT RUN"
+}

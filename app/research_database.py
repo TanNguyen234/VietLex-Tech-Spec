@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 from typing import Any
+from bson import BSON
 
 from app.config import get_settings
 from app.database import get_db
@@ -9,6 +10,14 @@ from app.database import get_db
 
 def _now() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def _size_guard(record: dict) -> dict:
+    # Atomic byte budget; reserve array-key/update overhead and BSON headroom.
+    return {'$expr': {'$lte': [
+        {'$add': [{'$bsonSize': '$$ROOT'}, len(BSON.encode(record)) + 4096]},
+        12_000_000,
+    ]}}
 
 
 def _owner(client_id: str, user_id: str | None) -> dict[str, Any]:
@@ -49,6 +58,7 @@ async def create_workspace(
         "expires_at": now + timedelta(days=get_settings().DATA_RETENTION_DAYS),
         "evidence": [],
         "analyses": [],
+        "documents": [],
     }
     await get_db().research_workspaces.replace_one(
         {"_id": workspace_id}, document, upsert=True
@@ -119,6 +129,7 @@ async def pin_workspace_evidence(
             **_owner(client_id, user_id),
             "evidence.evidence_id": {"$ne": evidence["evidence_id"]},
             "evidence.99": {"$exists": False},
+            **_size_guard(evidence),
         },
         {
             "$push": {"evidence": {**evidence, "created_at": now}},
@@ -155,10 +166,15 @@ async def save_workspace_analysis(
     client_id: str,
     *,
     user_id: str | None = None,
+    required_document_id: str | None = None,
 ) -> bool:
     now = _now()
+    query = {"_id": workspace_id, **_owner(client_id, user_id)}
+    query.update(_size_guard(analysis))
+    if required_document_id is not None:
+        query["documents.document_id"] = required_document_id
     result = await get_db().research_workspaces.update_one(
-        {"_id": workspace_id, **_owner(client_id, user_id)},
+        query,
         {
             "$push": {
                 "analyses": {
@@ -167,6 +183,56 @@ async def save_workspace_analysis(
                 }
             },
             "$set": {"updated_at": now},
+        },
+    )
+    return result.modified_count > 0
+
+
+async def save_workspace_document(
+    workspace_id: str,
+    document: dict[str, Any],
+    client_id: str,
+    *,
+    user_id: str | None = None,
+) -> bool:
+    now = _now()
+    document_id = str(document["document_id"])
+    result = await get_db().research_workspaces.update_one(
+        {
+            "_id": workspace_id,
+            **_owner(client_id, user_id),
+            "documents.document_id": {"$ne": document_id},
+            "documents.19": {"$exists": False},
+            **_size_guard(document),
+        },
+        {
+            "$push": {"documents": {**document, "uploaded_at": now}},
+            "$set": {"updated_at": now},
+        },
+    )
+    return result.modified_count > 0
+
+
+async def remove_workspace_document(
+    workspace_id: str,
+    document_id: str,
+    client_id: str,
+    *,
+    user_id: str | None = None,
+) -> bool:
+    result = await get_db().research_workspaces.update_one(
+        {
+            "_id": workspace_id,
+            **_owner(client_id, user_id),
+            "documents.document_id": document_id,
+        },
+        {
+            "$pull": {
+                "documents": {"document_id": document_id},
+                "evidence": {"workspace_document_id": document_id},
+                "analyses": {"workspace_document_id": document_id},
+            },
+            "$set": {"updated_at": _now()},
         },
     )
     return result.modified_count > 0
