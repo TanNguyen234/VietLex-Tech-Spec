@@ -97,19 +97,22 @@ def clean_text(value: Any, limit: int = 200) -> str:
     return redact_pii(sanitize_error_message(value, max_length=limit))[:limit]
 
 
+def valid_token_integer(value):
+    """Mongo equivalent of count(): missing, booleans and fractions are not usage."""
+    return {'$and': [{'$in': [{'$type': value}, ['int', 'long']]},
+                     {'$gte': [value, 0]}, {'$lte': [value, 10**12]}]}
+
+
 def mongo_usage_summary() -> dict:
     """Recompute from the atomically appended ledger inside one Mongo update."""
     calls = {'$cond': [{'$isArray': '$metrics.llm_calls'}, '$metrics.llm_calls', []]}
-    def valid_integer(value):
-        return {'$and': [{'$in': [{'$type': value}, ['int', 'long']]},
-                         {'$gte': [value, 0]}, {'$lte': [value, 10**12]}]}
     dropped = {'$sum': {'$map': {'input': calls, 'as': 'call', 'in':
-                               {'$cond': [valid_integer('$$call.dropped_calls'), '$$call.dropped_calls', 0]}}}}
+                               {'$cond': [valid_token_integer('$$call.dropped_calls'), '$$call.dropped_calls', 0]}}}}
     result = {'calls': {'$add': [{'$size': calls}, dropped]}, 'dropped_calls': dropped,
               'capture_truncated': {'$gt': [dropped, 0]}}
     for field in TOKEN_FIELDS:
         values = {'$filter': {'input': {'$map': {'input': calls, 'as': 'call', 'in': '$$call.' + field}},
-                              'as': 'value', 'cond': valid_integer('$$value')}}
+                              'as': 'value', 'cond': valid_token_integer('$$value')}}
         coverage = {'$size': values}
         result[field] = {'$cond': [{'$gt': [coverage, 0]}, {'$sum': values}, None]}
         result[field + '_coverage'] = coverage
@@ -274,6 +277,18 @@ def usage_facets() -> dict:
         totals[field + "_coverage"] = {
             "$sum": "$metrics.token_usage." + field + "_coverage"
         }
+    call_group = {
+        "_id": {key: "$metrics.llm_calls." + key for key in ("provider", "model", "use_case")},
+        "calls": {"$sum": 1},
+    }
+    for field in TOKEN_FIELDS:
+        value = "$metrics.llm_calls." + field
+        valid = valid_token_integer(value)
+        call_group[field] = {"$sum": {"$cond": [valid, value, 0]}}
+        call_group[field + "_coverage"] = {"$sum": {"$cond": [valid, 1, 0]}}
+    # Preserve existing projections while applying the same validation everywhere.
+    call_group["tokens"] = call_group["total_token_count"]
+    call_group["measured"] = call_group["total_token_count_coverage"]
     return {
         'user_usage': [{'$group': {'_id': '$user_id', 'requests': {'$sum': 1},
                                   'tokens': {'$sum': '$metrics.token_usage.total_token_count'},
@@ -371,26 +386,7 @@ def usage_facets() -> dict:
         ],
         "llm_usage": [
             {"$unwind": "$metrics.llm_calls"},
-            {
-                "$group": {
-                    "_id": {
-                        "provider": "$metrics.llm_calls.provider",
-                        "model": "$metrics.llm_calls.model",
-                        "use_case": "$metrics.llm_calls.use_case",
-                    },
-                    "calls": {"$sum": 1},
-                    "tokens": {"$sum": "$metrics.llm_calls.total_token_count"},
-                    "measured": {
-                        "$sum": {
-                            "$cond": [
-                                {"$isNumber": "$metrics.llm_calls.total_token_count"},
-                                1,
-                                0,
-                            ]
-                        }
-                    },
-                }
-            },
+            {"$group": call_group},
             {"$sort": {"calls": -1}},
             {"$limit": 50},
         ],

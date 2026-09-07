@@ -1,0 +1,10 @@
+{
+  "base_git_sha": "2822608ce0a8c7d19d411994b2b139cac386a293",
+  "git_dirty": true,
+  "tracked_scope_diff_sha256": "84adb57f64b486e868fbf1167f32e80c176bfcde693bc1b9e63a38451f8b7154",
+  "file_sha256": {
+    "app/services/admin_observability.py": "04283a36531eed13944953d41803d33983e585c485ff06d6b41935fee9cbb349",
+    "app/templates/admin_quality.html": "b2818477eab83ed1467e2b21dc8285eaceab068a7c9b1ebf4b3dccd884589944",
+    "tests/services/test_admin_token_breakdown.py": "3d14a567e6014ae9bd0915d5d6119f97cf9b880111c81e92485c59aa7d687c85"
+  }
+}
