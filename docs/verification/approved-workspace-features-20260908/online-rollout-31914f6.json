@@ -1,0 +1,54 @@
+{
+  "timestamp": "2026-09-08T08:56:53.103846+00:00",
+  "commit": "31914f6",
+  "vercel_status": "success",
+  "results": [
+    {
+      "path": "/?release=31914f6",
+      "status": 200,
+      "expected": 200,
+      "passed": true
+    },
+    {
+      "path": "/healthz?release=31914f6",
+      "status": 200,
+      "expected": 200,
+      "passed": true
+    },
+    {
+      "path": "/readyz?release=31914f6",
+      "status": 200,
+      "expected": 200,
+      "passed": true
+    },
+    {
+      "path": "/evaluation-lab?release=31914f6",
+      "status": 200,
+      "expected": 200,
+      "passed": true
+    },
+    {
+      "path": "/admin?release=31914f6",
+      "status": 401,
+      "expected": 401,
+      "passed": true
+    },
+    {
+      "path": "/static/js/research-workspace.js?release=31914f6",
+      "status": 200,
+      "new_report_renderer": true,
+      "sha256": "5a95d76dd5ce2a1a6c19b14d2c9241ea58a7a555da199af0ccbc8baf3f0c1c0b",
+      "matches_local": false
+    },
+    {
+      "path": "POST /workspaces/reviewer-smoke/analyses/report (empty anonymous)",
+      "status": 401,
+      "expected": 401,
+      "passed": true
+    }
+  ],
+  "limits": [
+    "authenticated/provider flow NOT RUN",
+    "edge WAF UNVERIFIED"
+  ]
+}

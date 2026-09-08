@@ -1,0 +1,10 @@
+{
+  "timestamp": "2026-09-08T08:57:57.404864+00:00",
+  "commit": "31914f6",
+  "path": "app/static/js/research-workspace.js",
+  "http_status": 200,
+  "matches_git_blob": true,
+  "matches_local_after_lf_normalization": true,
+  "git_blob_sha256": "5a95d76dd5ce2a1a6c19b14d2c9241ea58a7a555da199af0ccbc8baf3f0c1c0b",
+  "remote_sha256": "5a95d76dd5ce2a1a6c19b14d2c9241ea58a7a555da199af0ccbc8baf3f0c1c0b"
+}

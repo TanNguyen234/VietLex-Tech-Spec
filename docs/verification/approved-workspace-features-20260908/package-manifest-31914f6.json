@@ -1,0 +1,17 @@
+{
+  "commit": "31914f6",
+  "files": {
+    "vietlex_online_ssr-0.1.0-py3-none-any.whl": "576caf568bd59c1e4016927d717fecf9270f2df6e859b1ec740f6fae30afd4df",
+    "vietlex-reviewer-source-31914f6.zip": "9fca99d563d53c61b4bc0ccbe2e69736c40ac999914667735e64f59f9c82d759"
+  },
+  "wheel_entries_matched_to_source": 152,
+  "new_installed_wheel_smoke": "NOT RUN; prior clean environment unavailable",
+  "excluded_roots": [
+    ".agents",
+    ".codex",
+    ".env",
+    "build",
+    "data",
+    "output"
+  ]
+}
