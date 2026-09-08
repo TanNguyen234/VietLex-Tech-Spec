@@ -27,9 +27,9 @@ Không upload `.env`, service-account file, `data/`, tests, reports hoặc corpu
 `/healthz` chỉ chứng minh process phục vụ HTTP; `/readyz` kiểm tra MongoDB và
 cấu hình retrieval online mà không phát sinh provider call trả phí.
 
-Các trang `/search` và `/documents/{id}` vẫn là trình duyệt corpus local và
-không phải contract của deployment online-only. Chat lấy evidence trực tiếp từ
-Qdrant v3 payload.
+Các trang `/search` và `/documents/{id}` dùng Supabase trong online-only, trên slice 14.962 văn bản đã audit. Chat lấy evidence trực tiếp từ Qdrant v3 payload.
+
+Bản reviewer dùng `requirements-demo.lock`, demo admission và quota Mongo chia sẻ giữa instance. Xem `docs/REVIEWER_GUIDE.md` để cấu hình, quyền truy cập và các gate WAF/online chưa xác minh.
 
 Production alias đã kiểm tra ngày 2026-09-01:
 <https://vietlex-legal-rag.vercel.app>. Health/readiness/chat smoke không phải

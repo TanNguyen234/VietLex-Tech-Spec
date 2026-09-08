@@ -12,7 +12,7 @@ def test_vercel_runs_the_existing_fastapi_app_directly() -> None:
     entrypoint = (ROOT / "app/server.py").read_text(encoding="utf-8")
 
     assert "rewrites" not in config
-    assert config["installCommand"] == "python -m pip install ."
+    assert config["installCommand"] == "python -m pip install -r requirements-demo.lock && python -m pip install . --no-deps"
     assert config["functions"]["app/server.py"]["maxDuration"] == 300
     assert "from app.main import app" in entrypoint
 
@@ -175,3 +175,26 @@ def test_production_operations_document_backup_and_restore_boundaries() -> None:
     assert "Pinecone" in operations and "derived" in operations
     assert "restore" in operations.casefold()
     assert "GET /readyz" in operations
+
+
+def test_demo_packaging_uses_canonical_runtime_and_non_root():
+    import tomllib
+    config = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    assert any(item.startswith("uvicorn") for item in config["project"]["dependencies"])
+    assert config["tool"]["setuptools"]["package-data"]["app"]
+    dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
+    assert "pip install --no-cache-dir ." in dockerfile
+    assert "USER vietlex" in dockerfile
+    assert "pip install --no-cache-dir -r requirements.txt" not in dockerfile
+
+
+def test_demo_home_and_static_work_outside_checkout(tmp_path, monkeypatch):
+    from fastapi.testclient import TestClient
+    from app.main import app
+    monkeypatch.setattr(app.state, "reviewer_demo_mode", True)
+    monkeypatch.chdir(tmp_path)
+    client = TestClient(app, raise_server_exceptions=True)
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "Demo reviewer:" in response.text
+    assert client.get("/static/css/vietlex.css").status_code == 200

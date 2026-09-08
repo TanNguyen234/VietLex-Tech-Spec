@@ -4,6 +4,7 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from app.paths import APP_ROOT
 from fastapi.staticfiles import StaticFiles
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -27,6 +28,7 @@ from app.services.http_security import (
 from app.services.workspace_documents import MAX_UPLOAD_BYTES
 from app.rate_limit import limiter
 from app.services.observability import configure_observability
+from app.services.reviewer_demo import ReviewerDemoMiddleware
 
 # Load environment variables from .env before settings/observability initialization.
 load_dotenv()
@@ -90,8 +92,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-templates = Jinja2Templates(directory="app/templates")
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.add_middleware(ReviewerDemoMiddleware, settings=settings)
+app.state.reviewer_demo_mode = settings.REVIEWER_DEMO_MODE
+app.state.demo_ai_daily_limit = settings.DEMO_AI_DAILY_LIMIT
+
+templates = Jinja2Templates(directory=APP_ROOT / "templates")
+app.mount("/static", StaticFiles(directory=APP_ROOT / "static"), name="static")
 
 # CSRF helper function
 def get_csrf_token(request: Request) -> str:

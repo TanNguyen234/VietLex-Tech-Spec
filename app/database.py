@@ -56,6 +56,7 @@ async def init_db():
 
         await init_account_db()
         await init_research_db()
+        await database.demo_usage.create_index("expires_at", expireAfterSeconds=0)
         
         logfire.info("MongoDB database and indexes initialized successfully.")
     except Exception as e:

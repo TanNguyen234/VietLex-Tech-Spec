@@ -7,6 +7,7 @@ import logfire
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
+from app.paths import APP_ROOT
 from pymongo.errors import DuplicateKeyError
 
 from app.account_database import (
@@ -41,7 +42,7 @@ from app.rate_limit import limiter
 
 
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(directory=APP_ROOT / "templates")
 settings = get_settings()
 _GENERIC_EMAIL_MESSAGE = (
     "Nếu địa chỉ hợp lệ, VietLex đã gửi hướng dẫn tới email của bạn."

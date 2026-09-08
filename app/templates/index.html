@@ -12,6 +12,7 @@
     <a class="brand" href="/" aria-label="VietLex — trang chủ"><span class="brand-mark">VL</span><span><strong>VietLex</strong><small>Tra cứu và nghiên cứu pháp luật</small></span></a>
     <nav class="top-actions" aria-label="Điều hướng chính"><span id="system-readiness" class="status-chip" role="status" aria-live="polite">Đang kiểm tra hệ thống</span><a href="/workspaces">Nghiên cứu</a><a href="/search">Văn bản</a><details><summary>Tìm hiểu thêm</summary><a href="/evaluation-lab">Chất lượng và kiểm chứng</a></details><button id="theme-toggle" class="icon-button" type="button" aria-label="Đổi giao diện sáng tối">◐</button>{% if current_user %}<a class="button button-quiet" href="/settings">{{ current_user.email }}</a>{% if current_user.role == 'admin' %}<a class="button button-quiet" href="/admin">Quản trị</a>{% endif %}<form method="post" action="/logout"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="button button-quiet" type="submit">Đăng xuất</button></form>{% else %}<a class="button button-quiet" href="/login">Đăng nhập</a>{% endif %}</nav>
   </header>
+  {% include "demo_notice.html" %}
   <main class="workspace">
     <aside class="session-panel" aria-label="Lịch sử hội thoại">
       <div class="session-heading"><div><span class="eyebrow">Không gian làm việc</span><h1>Hội thoại</h1></div><button class="button button-primary" type="button" data-action="new-session">+ Mới</button></div>

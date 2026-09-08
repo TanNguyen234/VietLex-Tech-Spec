@@ -76,7 +76,7 @@ def test_admin_credentials_require_exact_match(
     assert (state is AdminAuthState.AUTHENTICATED) is expected
 
 
-def test_public_rate_limit_key_combines_client_and_ip() -> None:
+def test_public_rate_limit_key_uses_peer_ip() -> None:
     from app.services.web_security import public_rate_limit_key
 
     request = SimpleNamespace(
@@ -84,7 +84,7 @@ def test_public_rate_limit_key_combines_client_and_ip() -> None:
         client=SimpleNamespace(host="203.0.113.10"),
     )
 
-    assert public_rate_limit_key(request) == "203.0.113.10:client-123"
+    assert public_rate_limit_key(request) == "203.0.113.10"
 
 
 def test_authentication_rate_limit_cannot_be_bypassed_by_cookie() -> None:

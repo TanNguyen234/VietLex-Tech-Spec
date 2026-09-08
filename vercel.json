@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "python -m pip install .",
+  "installCommand": "python -m pip install -r requirements-demo.lock && python -m pip install . --no-deps",
   "functions": {
     "app/server.py": {
       "maxDuration": 300,

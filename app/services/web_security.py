@@ -80,9 +80,7 @@ def verify_admin_credentials(
 def public_rate_limit_key(request: Any) -> str:
     client = getattr(request, "client", None)
     ip_address = getattr(client, "host", None) or "unknown"
-    state = getattr(request, "state", None)
-    client_id = getattr(state, "client_id", None) or "anonymous"
-    return f"{ip_address}:{client_id}"
+    return str(ip_address)
 
 
 def authentication_rate_limit_key(request: Any) -> str:

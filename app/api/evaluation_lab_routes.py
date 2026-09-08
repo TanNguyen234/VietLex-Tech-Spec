@@ -5,13 +5,14 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from app.paths import APP_ROOT
 
 from app.services.evaluation_lab import load_evaluation_lab
 from app.api.dependencies import require_admin
 
 
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(directory=APP_ROOT / "templates")
 CURRENT_ANSWER_RUN = Path(
     "docs/evaluation/runs/answer-v3-golden50-expanded14962-rrf-dbsf-20260903"
 )

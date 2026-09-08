@@ -24,7 +24,11 @@ dependencies = [
     "slowapi>=0.1.8",
     "truststore>=0.10.4",
     "zstandard>=0.23.0",
+    "uvicorn>=0.22.0",
 ]
 
 [tool.setuptools.packages.find]
 include = ["app*"]
+
+[tool.setuptools.package-data]
+app = ["templates/*.html", "static/**/*", "data/*.json"]

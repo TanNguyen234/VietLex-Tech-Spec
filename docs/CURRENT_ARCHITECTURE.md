@@ -1,5 +1,13 @@
 # CURRENT_ARCHITECTURE.md — Technical Source of Truth
 
+## Reviewer demo packaging (2026-09-08)
+
+- Vercel entrypoint and Docker default to REVIEWER_DEMO_MODE=true (explicit environment override possible). Anonymous mutations are denied before body parsing; active verified accounts use existing owner/admin-scoped functions.
+- Shared Mongo demo_usage records enforce atomic personal/global minute/day attempt caps. AI/research defaults: 3/minute, 20/day/account and 100/day globally. Ordinary writes: 15/minute, 100/day/account and 1000/day globally. Auth: 5/minute and 15/day/peer IP, 200/day globally. Each category has global 60/minute cap. Protective logout/session-revocation/privacy deletion paths skip shared work quota.
+- Admission fails closed on auth/quota errors; it bounds body receive time and per-instance mutation concurrency. Peer-IP Slowapi keys cannot be reset by rotating the anonymous cookie. Edge WAF is still required and has NOT been verified in the packaging session.
+- Runtime dependencies are hash-locked for Python 3.12; Docker uses the same runtime set as Vercel and a non-root user. Installed-package template/static paths are absolute. Wheel alone does not include external immutable evaluation artifacts; the companion source bundle does.
+- Validation and unapproved feature backlog are in docs/REVIEWER_GUIDE.md and docs/UNFINISHED_FEATURES_REVIEW_20260908.md. No new product workflow from that backlog was implemented.
+
 ## Production foundation state
 
 ### Local research/admin presentation update (2026-09-05)

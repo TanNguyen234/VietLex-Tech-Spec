@@ -27,12 +27,14 @@ VietLex là dự án portfolio AI/ML xây dựng hệ thống hỏi đáp pháp 
 | Hoàn tất pipeline | **50/50** generation `STOP` · **50/50** NeMo input/output safe · **50/50** Ragas · 0 lỗi kỹ thuật |
 | Verified retrieval subset | **40** case có toàn bộ required evidence đã xác minh · Document Recall@3 **1,0000**, micro **53/53** |
 | Dữ liệu v3 đã kiểm kê | **141.798** point remote · **14.962** document ID duy nhất · Supabase cùng **14.962** văn bản |
-| Automated verification | **925 passed, 2 skipped**; 2 deployment test pass khi chạy lại riêng sau timeout dưới tải full-suite |
+| Automated verification | **1084 passed, 2 skipped** ngày 2026-09-08; provider-free suite sau review đóng gói, không phải live-provider benchmark |
 | Public SSR smoke | Vercel FastAPI/Jinja tại <https://vietlex-legal-rag.vercel.app>: SSR và readiness sẵn sàng; tìm kiếm Supabase và trang toàn văn đã được kiểm tra trực tiếp |
 
 Golden-50 v3 được tách từ Balanced-50, gồm 40 case có fully verified required retrieval evidence và 10 deterministic reference-only case. Các metric trên là bằng chứng cho một lát cắt đánh giá có giới hạn, không chứng minh độ chính xác pháp lý trên toàn corpus hoặc production readiness. Xem [`PORTFOLIO_EVIDENCE.md`](docs/evaluation/PORTFOLIO_EVIDENCE.md) để biết provenance và evidence boundary đầy đủ.
 
 ## Demo
+
+Bản đóng gói reviewer: [hướng dẫn](docs/REVIEWER_GUIDE.md) · [chức năng chưa hoàn thiện, chờ duyệt](docs/UNFINISHED_FEATURES_REVIEW_20260908.md). Đóng gói/provider-free tests không thay thế nghiệm thu online hoặc WAF.
 
 ### Hỏi đáp có dẫn nguồn
 

@@ -8,12 +8,13 @@ from urllib.parse import urlparse
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from app.paths import APP_ROOT
 
 from app.config import get_settings
 
 
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(directory=APP_ROOT / "templates")
 browser: Any | None = None
 
 

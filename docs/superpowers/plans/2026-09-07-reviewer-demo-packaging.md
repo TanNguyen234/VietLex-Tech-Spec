@@ -1,0 +1,7 @@
+# Reviewer demo packaging contract
+
+Authority: user requested an unfinished-feature report and forbids implementing those features before approval. Authorized scope: packaging existing functions, anonymous read-only use, full existing functions after login with bounded quotas, abuse protection, verification and handoff. Existing commit/push authorization to main persists. Do not change secrets, ingest vectors, run paid providers or claim remote protections without evidence.
+
+Runtime/security: opt-in reviewer demo middleware gates mutations before reading body, requires active verified session except bounded authentication endpoints; durable Mongo counters cap per-subject and global minute/day attempts across workers, fail closed on storage errors. Anonymous GET pages remain accessible. Upload/body/time caps, consistent peer-IP limiter keys, existing CSRF/ownership/admin checks remain intact. HTTP read/DDoS attacks still require verified edge controls.
+
+Packaging: align Docker installation with canonical pyproject runtime; include templates/static resources; non-root container; clear Vercel upload limit. No unfinished product feature implementation. Freeze affected files around demo middleware, config/main, security key, packaging and tests. RED then minimal GREEN, independent stable security review, full suite once. Final reports list incomplete features awaiting approval, exact commands, local vs online evidence, blockers and Git state.

@@ -10,6 +10,7 @@ from dataclasses import asdict
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from app.paths import APP_ROOT
 from pydantic import ValidationError
 
 from app.api.dependencies import optional_user, verify_csrf, verify_csrf_header
@@ -56,7 +57,7 @@ _DOCUMENT_PARSE_GATE = asyncio.Semaphore(2)
 
 
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(directory=APP_ROOT / "templates")
 settings = get_settings()
 _SAFE_ID = re.compile(r"^[A-Za-z0-9-]{1,100}$")
 

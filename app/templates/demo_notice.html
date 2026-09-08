@@ -1,0 +1,1 @@
+{% if request is defined and request.app.state.reviewer_demo_mode|default(false) %}<p class="muted" role="status">Demo reviewer: chưa đăng nhập có thể tra cứu và xem benchmark. <a href="/account">Đăng nhập</a> để dùng chức năng hiện có; tối đa {{ request.app.state.demo_ai_daily_limit }} lượt AI/ngày UTC/tài khoản, 3 lượt/phút, còn tùy quota chung. Upload dưới 4 MB.</p>{% endif %}

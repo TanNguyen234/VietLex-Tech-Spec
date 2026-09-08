@@ -1,0 +1,31 @@
+{
+  "time": "2026-09-08T05:55:50.068992+00:00",
+  "mode": "installed wheel outside checkout; ASGI; no lifespan/providers",
+  "results": [
+    {
+      "path": "/",
+      "status": 200
+    },
+    {
+      "path": "/healthz",
+      "status": 200
+    },
+    {
+      "path": "/static/css/vietlex.css",
+      "status": 200
+    },
+    {
+      "path": "/login",
+      "status": 200
+    },
+    {
+      "path": "/admin",
+      "status": 401
+    },
+    {
+      "path": "POST /chat",
+      "status": 401,
+      "detail": "demo_login_required"
+    }
+  ]
+}

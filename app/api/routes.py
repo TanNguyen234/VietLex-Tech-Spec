@@ -20,6 +20,7 @@ from fastapi.responses import (
     StreamingResponse,
 )
 from fastapi.templating import Jinja2Templates
+from app.paths import APP_ROOT
 
 from app.evaluation.online_metrics import build_online_metrics, sanitize_error_message
 from app.api.dependencies import (
@@ -69,7 +70,7 @@ from app.account_database import (
 )
 
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(directory=APP_ROOT / "templates")
 settings = get_settings()
 _public_ragas_quota = DailyRagasQuota(
     client_limit=settings.PUBLIC_RAGAS_CLIENT_DAILY_LIMIT,

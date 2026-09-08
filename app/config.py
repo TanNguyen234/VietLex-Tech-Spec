@@ -157,6 +157,9 @@ class Settings(BaseSettings):
     SUPABASE_SERVICE_ROLE_KEY: Optional[str] = None
 
     # Public web application security and opt-in evaluation controls.
+    REVIEWER_DEMO_MODE: bool = False
+    DEMO_AI_DAILY_LIMIT: int = Field(default=20, ge=1, le=100)
+    DEMO_AI_GLOBAL_DAILY_LIMIT: int = Field(default=100, ge=1, le=1000)
     WEB_SESSION_SECRET: Optional[str] = None
     DATA_RETENTION_DAYS: int = Field(default=30, ge=1, le=365)
     ANONYMOUS_COOKIE_NAME: str = "vietlex_client"
