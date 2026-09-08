@@ -1,9 +1,29 @@
 import json
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
-
 import pytest
 
+
+@pytest.mark.asyncio
+async def test_observed_token_truncation_preserves_usage_without_retry(monkeypatch):
+    from app.services import claim_verification
+    from types import SimpleNamespace
+
+    generation = SimpleNamespace(
+        text='{"claims":[', status="success", observed_provider="google_vertex_ai",
+        observed_model="gemini-3.5-flash", finish_reason="MAX_TOKENS",
+        prompt_token_count=1122, output_token_count=250,
+        thought_token_count=1746, total_token_count=3118,
+    )
+    generate = AsyncMock(return_value=generation)
+    monkeypatch.setattr(claim_verification, "_generate", generate)
+    result = await claim_verification.verify_claims(
+        "Claim.", [{"evidence_id": "ev-1", "excerpt": "Evidence."}]
+    )
+    assert result["error_code"] == "output_token_limit"
+    assert result["diagnostics"]["total_token_count"] == 3118
+    assert result["result"]["coverage"]["assessed_claims"] == 0
+    assert generate.await_count == 1
 
 def _generation(text: str, *, status: str = "success") -> SimpleNamespace:
     return SimpleNamespace(

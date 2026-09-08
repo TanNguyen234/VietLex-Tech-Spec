@@ -7,6 +7,9 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_valida
 
 from app.services.claim_verification import _server_claims, verify_claims
 from app.services.research_analysis import _generate, build_selected_evidence_prompt
+from app.services.structured_diagnostics import (
+    REPORT_MAX_OUTPUT_TOKENS, generation_diagnostics, validation_diagnostics,
+)
 
 
 class SourceLinkedClaim(BaseModel):
@@ -49,6 +52,7 @@ def _metadata(generation) -> dict:
         "provider": generation.observed_provider,
         "model": generation.observed_model,
         "provider_status": generation.status,
+        "diagnostics": generation_diagnostics(generation),
     }
 
 
@@ -137,6 +141,7 @@ def _failure(
     *,
     error_type: str | None = None,
     error_code: str | None = None,
+    validation_error: ValueError | None = None,
 ) -> dict:
     response = {
         "status": status,
@@ -146,11 +151,14 @@ def _failure(
         "model_assessment": _empty_assessment("report_unavailable"),
         "legal_certification": False,
         **_metadata(generation),
+        "error_stage": "report_generation",
     }
     if error_type:
         response["error_type"] = error_type
     if error_code:
         response["error_code"] = error_code
+    if validation_error is not None:
+        response["diagnostics"].update(validation_diagnostics(validation_error))
     return response
 
 
@@ -174,7 +182,7 @@ async def generate_research_report(question: str, evidence: list[dict]) -> dict:
                 "Liệt kê giới hạn trong unknown. Không suy đoán, không truy xuất nguồn khác, "
                 "không chứng nhận pháp lý, hiệu lực, hoặc kết luận đã được con người kiểm tra."
             ),
-            max_output_tokens=2_000,
+            max_output_tokens=REPORT_MAX_OUTPUT_TOKENS,
         )
     except Exception:
         return {
@@ -194,12 +202,18 @@ async def generate_research_report(question: str, evidence: list[dict]) -> dict:
             "provider_error", generation, error_type="ResearchReportProviderError"
         )
     try:
+        if getattr(generation, "finish_reason", None) == "MAX_TOKENS":
+            return _failure(
+                "invalid_structured_response", generation,
+                error_type="ResearchReportValidationError", error_code="output_token_limit",
+            )
         report = ResearchReport.model_validate_json(generation.text)
-    except ValidationError:
+    except ValidationError as error:
         return _failure(
             "invalid_structured_response",
             generation,
             error_type="ResearchReportValidationError",
+            validation_error=error,
         )
     try:
         _validate_references(
@@ -249,4 +263,9 @@ async def generate_research_report(question: str, evidence: list[dict]) -> dict:
         "model_assessment": assessment,
         "legal_certification": False,
         **_metadata(generation),
+        **({
+            "error_stage": "claim_verification",
+            "error_type": assessment.get("error_type"),
+            "error_code": assessment.get("error_code"),
+        } if assessment_status not in {"ok", "not_run"} else {}),
     }

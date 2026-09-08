@@ -7,6 +7,9 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from app.services.research_analysis import _generate, build_selected_evidence_prompt
+from app.services.structured_diagnostics import (
+    REPORT_MAX_OUTPUT_TOKENS, generation_diagnostics, validation_diagnostics,
+)
 
 
 _CLAIM_SPLIT = re.compile(r"(?<=[.!?])\s+|\n+")
@@ -173,7 +176,7 @@ async def verify_claims(claim_text: str, evidence: list[dict]) -> dict:
                 "không phải chứng nhận pháp lý, không khẳng định hiệu lực pháp luật và "
                 "không tạo confidence."
             ),
-            max_output_tokens=2_000,
+            max_output_tokens=REPORT_MAX_OUTPUT_TOKENS,
         )
     except Exception as error:
         return {
@@ -204,12 +207,16 @@ async def verify_claims(claim_text: str, evidence: list[dict]) -> dict:
             "provenance": provenance,
         }
     try:
+        if getattr(generation, "finish_reason", None) == "MAX_TOKENS":
+            raise ValueError("output_token_limit")
         parsed = ClaimVerificationResponse.model_validate_json(generation.text)
         validated = _validated_claims(parsed, claims, evidence)
-    except (ValidationError, ValueError):
+    except (ValidationError, ValueError) as error:
         return {
             "status": "invalid_structured_response",
             "error_type": "ClaimVerificationValidationError",
+            "error_code": validation_diagnostics(error).get("error_code", "schema_validation"),
+            "diagnostics": {**generation_diagnostics(generation), **validation_diagnostics(error)},
             "result": _result([], total_claims=len(claims), skipped_claims=len(claims)),
             **_metadata(generation),
             "provenance": provenance,

@@ -58,6 +58,7 @@ def _result(status: str = "ok") -> dict:
         "model": "test-model",
         "provider_status": "success",
         "legal_certification": False,
+        "diagnostics": {"finish_reason": "STOP", "total_token_count": 42},
     }
 
 
@@ -96,6 +97,9 @@ def test_research_report_uses_owned_evidence_and_persists_private_snapshot(
     assert log.await_args.kwargs["contexts"] == []
     assert "Cần làm gì" not in log.await_args.kwargs["user_query"]
     assert log.await_args.kwargs["retrieval_trace"]["context_sha256"]
+    assert log.await_args.kwargs["retrieval_trace"]["report_diagnostics"] == {
+        "finish_reason": "STOP", "total_token_count": 42,
+    }
 
 
 def test_research_report_rejects_unselected_evidence_before_generation(

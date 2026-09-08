@@ -87,6 +87,10 @@ async def research_report(
         no_evidence=not bool(contexts),
         retrieval_trace={
             "mode": "selected_evidence_research_report",
+            "report_diagnostics": result.get("diagnostics", {}),
+            "assessment_diagnostics": (result.get("model_assessment") or {}).get("diagnostics", {}),
+            "error_stage": result.get("error_stage"),
+            "error_code": result.get("error_code"),
             "selected_evidence_count": len(evidence),
             "report_claim_count": int(
                 (analysis.get("coverage") or {}).get("report_claims", 0)

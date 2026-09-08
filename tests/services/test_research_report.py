@@ -24,6 +24,61 @@ def _generation(text: str, status: str = "success"):
 
 
 @pytest.mark.asyncio
+async def test_report_validation_diagnostics_exclude_provider_content(monkeypatch):
+    import json
+    from app.services import research_report
+
+    generation = _generation('{"private-secret-key": "private content"}')
+    generation.finish_reason = "STOP"
+    generation.total_token_count = 42
+    generate = AsyncMock(return_value=generation)
+    monkeypatch.setattr(research_report, "_generate", generate)
+    result = await research_report.generate_research_report("Q", _evidence())
+
+    assert result["diagnostics"]["finish_reason"] == "STOP"
+    assert result["diagnostics"]["total_token_count"] == 42
+    assert result["diagnostics"]["validation_errors"]
+    assert "private" not in json.dumps(result)
+    assert generate.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_report_propagates_verification_failure_stage(monkeypatch):
+    from app.services import research_report
+
+    raw = '''{"status":"ok", "issue":"I",
+      "analysis":[{"text":"Claim.","evidence_ids":["ev-1"]}],
+      "exceptions":[], "checklist":[], "sources":["ev-1"], "unknown":[]}'''
+    monkeypatch.setattr(research_report, "_generate", AsyncMock(return_value=_generation(raw)))
+    monkeypatch.setattr(research_report, "verify_claims", AsyncMock(return_value={
+        "status": "invalid_structured_response",
+        "error_type": "ClaimVerificationValidationError",
+        "error_code": "invalid_evidence_quote",
+        "result": {"coverage": {"assessed_claims": 0}},
+    }))
+    result = await research_report.generate_research_report("Q", _evidence())
+    assert result["error_stage"] == "claim_verification"
+    assert result["error_code"] == "invalid_evidence_quote"
+
+
+@pytest.mark.asyncio
+async def test_report_token_limit_is_typed_and_never_verified_or_retried(monkeypatch):
+    from app.services import research_report
+
+    generation = _generation('{"status":"ok", "analysis":[')
+    generation.finish_reason = "MAX_TOKENS"
+    generate = AsyncMock(return_value=generation)
+    verify = AsyncMock()
+    monkeypatch.setattr(research_report, "_generate", generate)
+    monkeypatch.setattr(research_report, "verify_claims", verify)
+    result = await research_report.generate_research_report("Q", _evidence())
+    assert result["error_code"] == "output_token_limit"
+    assert result["diagnostics"]["finish_reason"] == "MAX_TOKENS"
+    assert generate.await_count == 1
+    verify.assert_not_awaited()
+
+
+@pytest.mark.asyncio
 async def test_generate_report_verifies_source_linked_claims(monkeypatch) -> None:
     from app.services import research_report
 
