@@ -10,10 +10,18 @@ name: Vietlex Legal RAG CI/CD
       - main
   workflow_dispatch: # Cho phép chạy thủ công từ tab Actions
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # --- PHASE 1: CONTINUOUS INTEGRATION (CI) ---
   test-and-lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       # Bước 1: Kéo code từ repo về máy ảo của GitHub
       - name: Checkout code
@@ -27,6 +35,9 @@ jobs:
         with:
           python-version: '3.12'
           cache: 'pip' # Cache lại thư viện để lần sau build nhanh hơn
+          cache-dependency-path: |
+            requirements.txt
+            pyproject.toml
 
       # Bước 3: Cài đặt dependencies
       - name: Install dependencies
@@ -34,6 +45,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install ruff==0.15.21 pytest==9.1.1 pytest-asyncio==1.4.0
           pip install -r requirements.txt
+          python -c "from pypdf import PdfReader, PdfWriter; import app"
 
       # Bước 4: Kiểm tra format code (Linting) bằng Ruff
       - name: Lint with Ruff
@@ -49,7 +61,15 @@ jobs:
         env:
           PYTHONPATH: .
         run: |
-          pytest -q
+          pytest tests -q -m "not live" --durations=20 --junitxml=output/ci-tests.xml
+
+      - name: Upload test timings and results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-test-results
+          path: output/ci-tests.xml
+          if-no-files-found: ignore
 
   # --- PHASE 2: CONTINUOUS DEPLOYMENT (CD) ---
   build-and-push:

@@ -1,3 +1,5 @@
+# Install the application too: pyproject.toml is authoritative for runtime dependencies.
+-e .
 fastapi>=0.100.0
 uvicorn>=0.22.0
 pydantic>=2.0
