@@ -1,5 +1,7 @@
 # VietLex functional verification — 2026-09-08
 
+**Deployment follow-up:** [final runtime rollout evidence](rollout.md) resolves the creation-time pending state below.
+
 Deployed runtime source: `20d0159ef2022d54450910d6238d6bfabc963142`, following
 `d7ec81cad557c4cfcf44aa082ee20470e82e4c0d`. This is a small operational verification,
 not a legal-quality benchmark or production-readiness certification.

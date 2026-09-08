@@ -9,7 +9,7 @@ review passed after deployment. This does not establish production readiness:
 guarded chat and NVIDIA/Groq comparison did not complete successfully in this
 session; email/two-user acceptance, OCR/large storage and legal-quality benchmarks
 remain incomplete. Local guardrail packaging fix `8cbd948` additionally passed
-1,180 tests and awaits its own deployment verification. See the current [feature/evidence matrix](verification/feature-live-20260908/README.md)
+1,180 tests; [post-deploy verification](verification/feature-live-20260908/rollout.md) confirmed its persisted fail-closed error. See the current [feature/evidence matrix](verification/feature-live-20260908/README.md)
 and [remaining work](verification/feature-live-20260908/remaining-work.md).
 
 ## Project Overview
