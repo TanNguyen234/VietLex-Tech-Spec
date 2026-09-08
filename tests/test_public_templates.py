@@ -129,8 +129,10 @@ def test_product_forms_and_navigation_are_usable_without_chat_script() -> None:
     admin = (ROOT / "app/templates/admin.html").read_text(encoding="utf-8")
     workspace = (ROOT / "app/templates/research_workspace.html").read_text(encoding="utf-8")
     assert 'href="/account"' in nav
-    assert 'action="/admin"' in (ROOT / "app/templates/admin_filters.html").read_text(encoding="utf-8")
-    assert 'data-target="#admin-user-results"' in admin
+    assert "filter_action|default('/admin')" in (ROOT / "app/templates/admin_filters.html").read_text(encoding="utf-8")
+    accounts = (ROOT / "app/templates/admin_users_page.html").read_text(encoding="utf-8")
+    assert 'method="get" action="/admin/users"' in accounts
+    assert "extends 'admin_base.html'" in admin
     assert "/static/js/vietlex.js" not in admin
     assert 'type="hidden" name="evidence_a"' in workspace
     assert 'include "product_nav.html"' in workspace

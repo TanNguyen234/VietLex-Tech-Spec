@@ -1,4 +1,4 @@
-<form class="admin-filters" method="get" action="/admin">
+<form class="admin-filters" method="get" action="{{ filter_action|default('/admin') }}">
 <label>Tìm câu hỏi, trả lời, trace<input name="search" value="{{ filters.search_query }}" maxlength="100"></label>
 <label>Từ ngày UTC<input type="date" name="start_date" value="{{ filters.start_date or '' }}"></label><label>Đến ngày UTC<input type="date" name="end_date" value="{{ filters.end_date or '' }}"></label>
 <label>Trạng thái request<input name="request_status" value="{{ filters.request_status }}" placeholder="ok, technical_error…" maxlength="50"></label>
@@ -8,4 +8,4 @@
 <label>Đánh giá judge<input name="ragas_status" value="{{ filters.ragas_status }}" placeholder="disabled, ok, error…" maxlength="50"></label>
 <label>Feedback<select name="feedback"><option value="">Tất cả</option><option value="up" {{ 'selected' if filters.feedback == 'up' }}>Hữu ích</option><option value="down" {{ 'selected' if filters.feedback == 'down' }}>Chưa tốt</option></select></label>
 <label>Số dòng / trang<select name="limit">{% for value in [15,25,50,100] %}<option value="{{ value }}" {{ 'selected' if limit == value }}>{{ value }}</option>{% endfor %}</select></label>
-<button class="button button-primary" type="submit">Áp dụng</button><a class="button button-quiet" href="/admin">Xóa bộ lọc</a><a class="button" href="{{ export_url }}">Xuất CSV (≤100)</a></form>
+<button class="button button-primary" type="submit">Áp dụng</button><a class="button button-quiet" href="{{ filter_action|default('/admin') }}">Xóa bộ lọc</a><a class="button" href="{{ export_url }}">Xuất CSV (≤100)</a></form>

@@ -1,0 +1,5 @@
+{% extends 'admin_base.html' %}{% block content %}
+<header class="admin-page-heading"><div><span class="admin-overline">SECURITY / AUDIT</span><h1>Nhật ký quản trị</h1><p>Theo dõi thay đổi tài khoản, phiên đăng nhập và xuất dữ liệu.</p></div></header>
+<section class="admin-section"><div class="section-heading"><h2>Hành động gần nhất</h2><form method="get" class="admin-filters"><label>Số bản ghi<select name="limit">{% for value in [25,50,100] %}<option value="{{ value }}" {{ 'selected' if limit == value }}>{{ value }}</option>{% endfor %}</select></label><button class="button" type="submit">Áp dụng</button></form></div>{% include 'admin_audit.html' %}</section>
+<nav class="admin-pagination" aria-label="Phân trang nhật ký">{% if previous_url %}<a class="button" href="{{ previous_url }}">← Trang trước</a>{% endif %}<span>Từ bản ghi {{ skip + 1 }} · tối đa {{ limit }} bản ghi</span>{% if next_url %}<a class="button" href="{{ next_url }}">Trang sau →</a>{% endif %}</nav>
+{% endblock %}

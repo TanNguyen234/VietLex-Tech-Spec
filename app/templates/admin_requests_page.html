@@ -1,0 +1,5 @@
+{% extends 'admin_base.html' %}{% block content %}
+<header class="admin-page-heading"><div><span class="admin-overline">ACTIVITY / REQUESTS</span><h1>Nhật ký requests</h1><p>Từ yêu cầu đến câu trả lời, context và các lần gọi mô hình.</p></div><a class="button" href="{{ export_url }}">↓ Xuất CSV</a></header>
+<section class="admin-section"><h2>Tìm và lọc requests</h2>{% include 'admin_filters.html' %}</section>
+<section class="admin-section"><div class="section-heading"><h2>Kết quả truy vấn</h2><span class="admin-chip">{{ logs|length }} bản ghi trên trang</span></div>{% include 'admin_logs.html' %}</section>
+{% endblock %}

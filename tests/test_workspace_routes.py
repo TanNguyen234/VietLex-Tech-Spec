@@ -460,7 +460,7 @@ def test_deep_research_run_persists_owner_scoped_result_and_provider_calls(
     update_status.assert_awaited_once_with(failed_analysis_id, "workspace_changed")
 
 
-def test_workspace_upload_extracts_and_persists_without_raw_bytes(
+def test_workspace_upload_keeps_original_private_and_returns_only_metadata(
     client, monkeypatch
 ) -> None:
     from app.services.workspace_documents import (
@@ -504,7 +504,26 @@ def test_workspace_upload_extracts_and_persists_without_raw_bytes(
     assert response.json()["document_id"] == "a" * 24
     persisted = save.await_args.args[1]
     assert persisted["clauses"][0]["text"] == "Nội dung thật"
-    assert b"raw file bytes" not in str(persisted).encode()
+    assert save.await_args.kwargs['original_bytes'] == b"raw file bytes"
+    assert response.json()['original_available'] is True
+    assert 'original_bytes' not in response.text
+
+
+def test_original_download_is_owner_scoped_and_forces_attachment(client, monkeypatch):
+    monkeypatch.setattr('app.api.workspace_routes.get_workspace', AsyncMock(return_value={'documents': []}))
+    original = AsyncMock(return_value={'filename': 'hợp đồng.txt', 'original_bytes': b'private original'})
+    monkeypatch.setattr('app.api.workspace_routes.get_workspace_original', original, raising=False)
+    response = client.get('/workspaces/w-1/documents/doc-1/original')
+    assert response.status_code == 200
+    assert response.content == b'private original'
+    assert response.headers['cache-control'] == 'no-store'
+    assert response.headers['x-content-type-options'] == 'nosniff'
+    assert response.headers['content-disposition'].startswith('attachment;')
+    original.assert_awaited_once_with('w-1', 'doc-1', 'owner-a', user_id=None)
+    monkeypatch.setattr('app.api.workspace_routes.get_workspace', AsyncMock(return_value=None))
+    original.reset_mock()
+    assert client.get('/workspaces/w-1/documents/doc-1/original').status_code == 404
+    original.assert_not_awaited()
 
 
 def test_document_clause_pin_resolves_text_server_side(client, monkeypatch) -> None:

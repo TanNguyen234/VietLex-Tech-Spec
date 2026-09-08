@@ -308,18 +308,25 @@ async def get_admin_logs(
         raise AdminDataUnavailable(type(e).__name__) from e
 
 
-async def get_admin_audit_logs(limit: int = 50) -> List[Dict[str, Any]]:
+async def get_admin_audit_logs(
+    limit: int = 50, *, skip: int = 0, strict: bool = False
+) -> List[Dict[str, Any]]:
     bounded_limit = min(max(1, limit), 100)
     try:
-        cursor = get_db().admin_audit_logs.find({}).sort("timestamp", -1).limit(
-            bounded_limit
-        )
+        cursor = get_db().admin_audit_logs.find({}).sort("timestamp", -1)
+        if skip:
+            cursor = cursor.skip(min(max(0, skip), 100000))
+        cursor = cursor.limit(bounded_limit)
         return await cursor.to_list(length=bounded_limit)
     except Exception as error:
         logfire.error(
             "Failed to fetch administrative audit logs: {error_kind}",
             error_kind=type(error).__name__,
         )
+        if strict:
+            from app.services.admin_observability import AdminDataUnavailable
+
+            raise AdminDataUnavailable("audit_unavailable") from None
         return []
 
 async def get_admin_stats(*, filters=None) -> Dict[str, Any]:

@@ -362,7 +362,7 @@ async def export_account(user_id: str) -> dict[str, Any] | None:
         {"user_id": user_id}
     ).sort("timestamp", 1).to_list(length=100_000)
     research_workspaces = await database.research_workspaces.find(
-        {"user_id": user_id}
+        {"user_id": user_id}, {"documents.original_bytes": 0}
     ).sort("created_at", 1).to_list(length=10_000)
     return {
         "schema_version": SCHEMA_VERSION,

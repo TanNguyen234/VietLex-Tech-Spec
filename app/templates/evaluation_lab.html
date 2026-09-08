@@ -1,10 +1,4 @@
-<!doctype html>
-<html lang="vi" data-theme="light">
-<head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Chất lượng và kiểm chứng · VietLex</title>
-  <link rel="stylesheet" href="/static/css/vietlex.css"><link rel="stylesheet" href="/static/css/vietlex-enhancements.css">
-<script src="/static/js/product.js" defer></script></head>
+{% extends 'admin_base.html' if admin_view else 'public_evaluation_base.html' %}
 {% macro metrics_table(metrics, show_meter=true) %}
 <table class="evaluation-table">
   <thead><tr><th scope="col">Chỉ số</th><th scope="col">Trung bình</th><th scope="col">Số câu có dữ liệu</th><th scope="col">Cách tổng hợp / bỏ qua</th></tr></thead>
@@ -14,10 +8,7 @@
   {% else %}<tr><td colspan="4">Không có metric được ghi cho nhóm này.</td></tr>{% endfor %}</tbody>
 </table>
 {% endmacro %}
-<body>
-<header class="topbar"><a class="brand" href="/"><span class="brand-mark">VL</span><span><strong>VietLex</strong><small>Nghiên cứu pháp luật</small></span></a>{% include "product_nav.html" %}</header>
-<main class="evaluation-lab-page">
-  {% if admin_view %}<nav class="evaluation-tabs" aria-label="Quản trị"><a href="/admin">Vận hành</a><a href="/admin/evaluations" aria-current="page">Đánh giá chất lượng</a></nav>{% endif %}
+{% block content %}<div class="evaluation-content{{ ' evaluation-lab-page' if admin_view else '' }}">
   <header class="research-page-heading"><span class="eyebrow">Chất lượng và kiểm chứng</span><h1>Chất lượng được kiểm chứng như thế nào?</h1><p>Kết quả dưới đây được đọc từ lần đánh giá đã lưu. Mở trang này không chạy đánh giá mới.</p></header>
   {% if admin_view %}<form class="run-selector" method="get"><label for="evaluation-run">Lần đánh giá đã lưu</label><select id="evaluation-run" name="run">{% for run in runs %}<option value="{{ run }}" {% if run == selected_run %}selected{% endif %}>{{ run }}</option>{% endfor %}</select><button class="button button-primary" type="submit">Xem đánh giá</button></form>{% endif %}
   {% if lab.status == 'available' %}
@@ -65,5 +56,5 @@
     {% elif selected_case_id %}<p role="status">Không tìm thấy câu hỏi trong lần đánh giá này.</p>{% endif %}
   </section>
   {% else %}<div class="empty-state"><h2>Chất lượng và kiểm chứng chưa khả dụng</h2><p>Trạng thái artifact: {{ lab.status }}. Không có số liệu nào được suy đoán.</p>{% if lab.error_kind %}<p>Mã lỗi: {{ lab.error_kind }}. {% if lab.error_kind == "artifact_size_limit" %}Một tệp vượt giới hạn đọc 32 MiB của dashboard.{% else %}Không đọc được tệp hoặc cấu trúc dữ liệu không hợp lệ.{% endif %}</p>{% endif %}</div>{% endif %}
-</main>
-</body></html>
+
+</div>{% endblock %}

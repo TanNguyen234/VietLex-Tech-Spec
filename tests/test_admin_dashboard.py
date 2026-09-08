@@ -31,6 +31,7 @@ def test_portfolio_evidence_loader_reads_scores_and_boundary(tmp_path: Path) -> 
 def test_admin_template_uses_local_assets_and_evidence_summary() -> None:
     root = Path(__file__).resolve().parents[1]
     html = (root / "app/templates/admin.html").read_text(encoding="utf-8")
+    html += (root / "app/templates/admin_base.html").read_text(encoding="utf-8")
 
     assert "cdn.tailwindcss.com" not in html
     assert "unpkg.com" not in html

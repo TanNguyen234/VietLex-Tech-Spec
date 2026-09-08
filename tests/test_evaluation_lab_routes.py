@@ -27,6 +27,7 @@ def test_evaluation_lab_route_renders_artifact_provenance(monkeypatch) -> None:
     assert response.status_code == 200
     assert "run-1" in response.text
     assert "Git dirty" in response.text
+    assert 'aria-label="Điều hướng quản trị"' not in response.text
 
 
 def test_admin_evaluations_requires_admin_and_confines_run_paths(monkeypatch, tmp_path):
@@ -48,6 +49,8 @@ def test_admin_evaluations_requires_admin_and_confines_run_paths(monkeypatch, tm
     assert result.status_code == 200
     assert result.headers["cache-control"] == "no-store"
     assert "0.2500" in result.text and "run-1" in result.text
+    assert 'href="/admin/evaluations" aria-current="page"' in result.text
+    assert 'aria-label="Điều hướng quản trị"' in result.text
     assert (
         client.get("/admin/evaluations", params={"run": "../secret"}).status_code == 404
     )

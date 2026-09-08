@@ -6,9 +6,10 @@ import re
 import secrets
 import uuid
 from dataclasses import asdict
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from app.paths import APP_ROOT
 from pydantic import ValidationError
@@ -25,6 +26,7 @@ from app.research_database import (
     create_workspace,
     delete_workspace,
     get_workspace,
+    get_workspace_original,
     list_workspaces,
     pin_workspace_evidence,
     remove_workspace_document,
@@ -250,11 +252,29 @@ async def workspace_document_upload(
     ):
         raise HTTPException(status_code=409, detail="duplicate_document")
     record = extracted.model_dump(mode="json")
+    record["original_available"] = True
     if not await save_workspace_document(
-        workspace_id, record, client_id, user_id=user_id
+        workspace_id, record, client_id, user_id=user_id, original_bytes=payload
     ):
         raise HTTPException(status_code=409, detail="workspace_changed")
     return JSONResponse(record)
+
+
+@router.get("/workspaces/{workspace_id}/documents/{document_id}/original")
+@limiter.limit(settings.SESSION_RATE_LIMIT)
+async def workspace_original_download(
+    request: Request, workspace_id: str, document_id: str,
+    current_user=Depends(optional_user),
+):
+    _workspace, client_id, user_id = await _owned_workspace(request, workspace_id, current_user)
+    original = await get_workspace_original(workspace_id, document_id, client_id, user_id=user_id)
+    if original is None:
+        raise HTTPException(404, "original_not_found", headers={"Cache-Control": "no-store"})
+    filename = quote(original.get("filename") or "document", safe="")
+    return Response(original["original_bytes"], media_type="application/octet-stream", headers={
+        "Content-Disposition": f"attachment; filename*=UTF-8''{filename}",
+        "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff",
+    })
 
 
 @router.delete("/workspaces/{workspace_id}/documents/{document_id}")

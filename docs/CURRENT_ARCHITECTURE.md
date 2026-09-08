@@ -1,5 +1,27 @@
 # CURRENT_ARCHITECTURE.md — Technical Source of Truth
 
+## Admin and temporary originals update (2026-09-09)
+
+Admin now has dedicated Overview, Requests, Usage, Accounts, Providers, Evaluation,
+System and Audit pages, a shared responsive shell, page-specific database reads,
+bounded account/audit pagination and preserved RBAC/CSRF/no-store. Request details
+show a guardrail technical failure rather than safe boolean defaults.
+
+New successful PDF/DOCX/TXT uploads retain original BSON binary with their extracted
+metadata inside the same Mongo workspace. The existing atomic 12,000,000-byte
+workspace budget includes originals; maximum 20 documents. Owner-scoped original
+downloads force attachment/no-store/nosniff. Normal reads exclude binary; reads and
+new document saves reject expired workspaces before the Mongo TTL sweep. Existing
+document/workspace/account deletion removes embedded originals in the same write;
+no new collection, migration, credentials, or external storage service is needed.
+Prior uploads cannot regain original bytes. Existing serverless upload/body limits
+still apply. This does not implement OCR or large-object storage.
+
+See [verification](verification/admin-storage-20260909/README.md) for exact local
+checks and deployment status. Provider-free tests and synthetic layout previews
+are not live Mongo/provider or legal-quality acceptance.
+
+
 ## Approved workspace feature expansion (2026-09-08)
 
 The owner subsequently approved deployment and implementation of the dated unfinished-feature backlog. The prior backlog remains a historical review, not the current approval state.

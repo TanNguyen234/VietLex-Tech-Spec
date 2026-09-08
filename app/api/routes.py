@@ -1112,56 +1112,81 @@ async def export_session(
         },
     )
 
+def _admin_response(request, template, section, title, context=None, *, status_code=200):
+    csrf_token = request.cookies.get("csrf_token") or secrets.token_hex(32)
+    response = templates.TemplateResponse(
+        request, template,
+        {"admin_section": section, "page_title": title, "csrf_token": csrf_token,
+         "settings": settings, **(context or {})},
+        status_code=status_code, headers={"Cache-Control": "no-store"},
+    )
+    if not request.cookies.get("csrf_token"):
+        response.set_cookie("csrf_token", csrf_token, httponly=True,
+                            secure=settings.APP_ENV == "production" or request.url.scheme == "https",
+                            samesite="strict")
+    return response
+
+
 @router.get("/admin", response_class=HTMLResponse)
 async def admin_page(
-    request: Request,
-    filters: dict = Depends(admin_filters),
-    skip: int = Query(0, ge=0, le=100000),
-    limit: int = Query(25, ge=1, le=100),
+    request: Request, filters: dict = Depends(admin_filters),
+    skip: int = Query(0, ge=0, le=100000), limit: int = Query(25, ge=1, le=100),
     _admin: dict = Depends(require_admin),
 ):
     stats, logs, inventory = await asyncio.gather(
-        get_admin_stats(filters=filters), _load_admin_logs(limit=limit, skip=skip, **filters), get_admin_inventory())
-    logs = [_sanitize_admin_interaction(log) for log in logs]
-    users = await list_users(limit=25)
-    audit_logs = await get_admin_audit_logs(limit=25)
-    async def admin_mongo_ping() -> bool:
-        from app.database import get_db
+        get_admin_stats(filters=filters), _load_admin_logs(limit=6, skip=0, **filters),
+        get_admin_inventory(),
+    )
+    return _admin_response(request, "admin.html", "overview", "Tổng quan vận hành", {
+        "stats": stats, "inventory": inventory,
+        "logs": [_sanitize_admin_interaction(log) for log in logs],
+        "filters": filters, "filter_action": "/admin", "limit": limit,
+        "export_url": "/admin/export.csv?" + str(request.url.query),
+    }, status_code=503 if stats.get("status") == "unavailable" else 200)
 
+
+@router.get("/admin/requests", response_class=HTMLResponse)
+async def admin_requests_page(
+    request: Request, filters: dict = Depends(admin_filters),
+    skip: int = Query(0, ge=0, le=100000), limit: int = Query(25, ge=1, le=100),
+    _admin: dict = Depends(require_admin),
+):
+    logs = await _load_admin_logs(limit=limit, skip=skip, **filters)
+    return _admin_response(request, "admin_requests_page.html", "requests", "Nhật ký requests", {
+        "logs": [_sanitize_admin_interaction(log) for log in logs],
+        "filters": filters, "filter_action": "/admin/requests", "skip": skip, "limit": limit,
+        **admin_page_links(request, skip, limit, len(logs)),
+    })
+
+
+@router.get("/admin/usage", response_class=HTMLResponse)
+async def admin_usage_page(request: Request, filters: dict = Depends(admin_filters),
+                           _admin: dict = Depends(require_admin)):
+    stats = await get_admin_stats(filters=filters)
+    return _admin_response(request, "admin_usage_page.html", "usage", "Usage và chất lượng", {
+        "stats": stats, "filters": filters, "filter_action": "/admin/usage", "limit": 25,
+        "export_url": "/admin/export.csv?" + str(request.url.query),
+    }, status_code=503 if stats.get("status") == "unavailable" else 200)
+
+
+@router.get("/admin/providers", response_class=HTMLResponse)
+async def admin_providers_page(request: Request, _admin: dict = Depends(require_admin)):
+    return _admin_response(request, "admin_providers_page.html", "providers", "Nhà cung cấp AI", {
+        "provider_status": provider_status_snapshot(settings, provider_cooldown_snapshot()),
+    })
+
+
+@router.get("/admin/system", response_class=HTMLResponse)
+async def admin_system_page(request: Request, _admin: dict = Depends(require_admin)):
+    async def mongo_ping():
+        from app.database import get_db
         return (await get_db().command("ping")).get("ok") == 1.0
 
-    system_status = await build_readiness(settings, admin_mongo_ping)
-    csrf_token = secrets.token_hex(32)
-    response = templates.TemplateResponse(
-        request,
-        "admin.html",
-        {
-            "stats": stats,
-            "inventory": inventory,
-            "logs": logs,
-            "users": users,
-            "audit_logs": audit_logs,
-            "provider_status": provider_status_snapshot(
-                settings, provider_cooldown_snapshot()
-            ),
-            "system_status": system_status,
-            "demo_admission": demo_admission_snapshot(),
-            "settings": settings,
-            "current_admin": _admin,
-            "csrf_token": csrf_token,
-            "search": filters['search_query'], "filters": filters,
-            "skip": skip, "limit": limit,
-            **admin_page_links(request, skip, limit, len(logs)),
-        }, headers={"Cache-Control": "no-store"}
-    )
-    response.set_cookie(
-        "csrf_token",
-        csrf_token,
-        httponly=True,
-        secure=settings.APP_ENV == "production" or request.url.scheme == "https",
-        samesite="strict",
-    )
-    return response
+    system_status = await build_readiness(settings, mongo_ping)
+    return _admin_response(request, "admin_system_page.html", "system", "Hệ thống và giới hạn", {
+        "system_status": system_status, "demo_admission": demo_admission_snapshot(),
+    })
+
 
 @router.get("/admin/stats", response_class=HTMLResponse)
 async def admin_stats_partial(request: Request, filters: dict = Depends(admin_filters), _admin: str = Depends(require_admin)):
@@ -1230,36 +1255,27 @@ async def admin_details_partial(
         raise HTTPException(503, 'Không đọc được request.', headers={'Cache-Control': 'no-store'}) from None
     if log:
         log = _sanitize_admin_interaction(log)
-    return templates.TemplateResponse(
-        request,
-        "admin_details.html",
+    return _admin_response(
+        request, "admin_details.html", "requests", "Chi tiết request",
         {"log": log}, status_code=200 if log else 404,
-        headers={"Cache-Control": "no-store"}
     )
 
 
 @router.get("/admin/users", response_class=HTMLResponse)
 async def admin_users_partial(
-    request: Request,
-    search: str = "",
-    account_status: str = "",
-    role: str = "",
-    skip: int = 0,
-    limit: int = 25,
+    request: Request, search: str = Query("", max_length=100),
+    account_status: str = Query("", pattern="^(active|disabled)?$"),
+    role: str = Query("", pattern="^(admin|user)?$"),
+    skip: int = Query(0, ge=0, le=100000), limit: int = Query(25, ge=1, le=100),
     _admin: dict = Depends(require_admin),
 ):
-    users = await list_users(
-        search=search.strip(),
-        status=account_status,
-        role=role,
-        skip=skip,
-        limit=limit,
-    )
-    return templates.TemplateResponse(
-        request,
-        "admin_users.html",
-        {"users": users, "csrf_token": request.cookies.get("csrf_token", ""), "current_admin": _admin},
-    )
+    users = await list_users(search=search.strip(), status=account_status, role=role,
+                             skip=skip, limit=limit)
+    return _admin_response(request, "admin_users_page.html", "users", "Tài khoản", {
+        "users": users, "current_admin": _admin, "search": search,
+        "account_status": account_status, "role": role, "skip": skip, "limit": limit,
+        **admin_page_links(request, skip, limit, len(users)),
+    })
 
 
 @router.post("/admin/users/{user_id}/status")
@@ -1286,7 +1302,7 @@ async def admin_set_user_status(
         user_id,
         request_id=request.headers.get("x-request-id"),
     )
-    return RedirectResponse("/admin", status_code=303)
+    return RedirectResponse("/admin/users", status_code=303)
 
 
 @router.post("/admin/users/{user_id}/revoke-sessions")
@@ -1307,17 +1323,22 @@ async def admin_revoke_user_sessions(
         user_id,
         request_id=request.headers.get("x-request-id"),
     )
-    return RedirectResponse("/admin", status_code=303)
+    return RedirectResponse("/admin/users", status_code=303)
 
 
 @router.get("/admin/audit", response_class=HTMLResponse)
 async def admin_audit_partial(
-    request: Request,
-    limit: int = 50,
+    request: Request, limit: int = Query(50, ge=1, le=100),
+    skip: int = Query(0, ge=0, le=100000),
     _admin: dict = Depends(require_admin),
 ):
-    return templates.TemplateResponse(
-        request,
-        "admin_audit.html",
-        {"audit_logs": await get_admin_audit_logs(limit=limit)},
-    )
+    try:
+        audit_logs = await get_admin_audit_logs(limit=limit, skip=skip, strict=True)
+    except AdminDataUnavailable:
+        return _admin_response(request, "admin_error_page.html", "audit", "Nhật ký quản trị", {
+            "message": "Không đọc được nhật ký quản trị. Vui lòng thử lại sau.",
+        }, status_code=503)
+    return _admin_response(request, "admin_audit_page.html", "audit", "Nhật ký quản trị", {
+        "audit_logs": audit_logs, "limit": limit, "skip": skip,
+        **admin_page_links(request, skip, limit, len(audit_logs)),
+    })

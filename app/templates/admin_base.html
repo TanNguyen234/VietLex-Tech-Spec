@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="vi" data-theme="light"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{ page_title|default('Quản trị') }} · VietLex Admin</title>
+<link rel="stylesheet" href="/static/css/vietlex.css"><link rel="stylesheet" href="/static/css/vietlex-enhancements.css"><link rel="stylesheet" href="/static/css/admin.css">
+<script src="/static/js/product.js" defer></script>
+<script src="/static/js/admin.js" defer></script>
+</head><body class="admin-app">
+<a class="admin-skip" href="#admin-main">Bỏ qua đến nội dung</a>
+{% include 'admin_sidebar.html' %}
+<div class="admin-frame">
+<header class="admin-topbar"><div class="admin-breadcrumb">VietLex <span>/</span> Quản trị <span>/</span> <strong>{{ page_title|default('Kiểm chứng') }}</strong></div><div class="admin-top-actions"><span class="admin-private">Không gian riêng tư</span><button type="button" class="admin-theme" data-theme-switch aria-label="Đổi giao diện sáng tối">◐</button><a class="admin-avatar" href="/settings" aria-label="Tài khoản của tôi">VL</a></div></header>
+<main id="admin-main" class="admin-workspace" tabindex="-1">{% block content %}{% endblock %}</main>
+<footer class="admin-footer"><span>VietLex / Quản trị vận hành</span><span>Số liệu thực đo · Múi giờ UTC</span></footer>
+</div></body></html>

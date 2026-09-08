@@ -22,11 +22,11 @@ class _Collection:
         self.update_calls = []
         self.delete_queries = []
 
-    def find(self, query):
+    def find(self, query, projection=None):
         self.find_queries.append(query)
         return _Cursor()
 
-    async def find_one(self, query):
+    async def find_one(self, query, projection=None):
         self.find_one_queries.append(query)
         return None
 
@@ -64,7 +64,9 @@ async def test_workspace_queries_use_authenticated_owner(monkeypatch) -> None:
     await research.delete_workspace("w-1", "client-a", user_id="user-1")
 
     assert created["user_id"] == "user-1"
+    assert collection.find_queries[0].pop("expires_at")["$gt"]
     assert collection.find_queries == [{"user_id": "user-1"}]
+    assert collection.find_one_queries[0].pop("expires_at")["$gt"]
     assert collection.find_one_queries == [{"_id": "w-1", "user_id": "user-1"}]
     assert collection.update_calls[0][0] == {"_id": "w-1", "user_id": "user-1"}
     assert collection.delete_queries == [{"_id": "w-1", "user_id": "user-1"}]
@@ -135,6 +137,7 @@ async def test_workspace_documents_are_bounded_duplicate_safe_and_owner_scoped(
 
     save_query, save_update = collection.update_calls[0]
     size_guard = save_query.pop('$expr')
+    assert save_query.pop('expires_at')['$gt']
     assert size_guard['$lte'][0]['$add'][0] == {'$bsonSize': '$$ROOT'}
     assert size_guard['$lte'][1] == 12_000_000
     assert save_query == {

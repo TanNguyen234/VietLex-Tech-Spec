@@ -73,7 +73,10 @@ async def list_workspaces(
     bounded = min(max(1, limit), 100)
     cursor = (
         get_db()
-        .research_workspaces.find(_owner(client_id, user_id))
+        .research_workspaces.find(
+            {**_owner(client_id, user_id), "expires_at": {"$gt": _now()}},
+            {"documents.original_bytes": 0},
+        )
         .sort("updated_at", -1)
         .limit(bounded)
     )
@@ -84,8 +87,22 @@ async def get_workspace(
     workspace_id: str, client_id: str, *, user_id: str | None = None
 ) -> dict[str, Any] | None:
     return await get_db().research_workspaces.find_one(
-        {"_id": workspace_id, **_owner(client_id, user_id)}
+        {"_id": workspace_id, **_owner(client_id, user_id), "expires_at": {"$gt": _now()}},
+        {"documents.original_bytes": 0},
     )
+
+
+async def get_workspace_original(
+    workspace_id: str, document_id: str, client_id: str, *, user_id: str | None = None
+) -> dict[str, Any] | None:
+    record = await get_db().research_workspaces.find_one(
+        {"_id": workspace_id, **_owner(client_id, user_id), "expires_at": {"$gt": _now()}},
+        {"documents": {"$elemMatch": {"document_id": document_id}}, "_id": 0},
+    )
+    documents = (record or {}).get("documents") or []
+    if not documents or not isinstance(documents[0].get("original_bytes"), bytes):
+        return None
+    return documents[0]
 
 
 async def update_workspace(
@@ -248,19 +265,28 @@ async def save_workspace_document(
     client_id: str,
     *,
     user_id: str | None = None,
+    original_bytes: bytes | None = None,
 ) -> bool:
     now = _now()
     document_id = str(document["document_id"])
+    stored = {**document, "uploaded_at": now}
+    if original_bytes is not None:
+        from app.services.workspace_documents import MAX_UPLOAD_BYTES
+
+        if not isinstance(original_bytes, bytes) or not 0 < len(original_bytes) <= MAX_UPLOAD_BYTES:
+            raise ValueError("invalid_original_size")
+        stored.update(original_bytes=original_bytes, original_available=True)
     result = await get_db().research_workspaces.update_one(
         {
             "_id": workspace_id,
             **_owner(client_id, user_id),
             "documents.document_id": {"$ne": document_id},
             "documents.19": {"$exists": False},
-            **_size_guard(document),
+            "expires_at": {"$gt": now},
+            **_size_guard(stored),
         },
         {
-            "$push": {"documents": {**document, "uploaded_at": now}},
+            "$push": {"documents": stored},
             "$set": {"updated_at": now},
         },
     )

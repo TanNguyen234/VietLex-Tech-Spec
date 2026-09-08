@@ -1,0 +1,5 @@
+{% extends 'admin_base.html' %}{% block content %}
+<header class="admin-page-heading"><div><span class="admin-overline">OBSERVABILITY / USAGE</span><h1>Usage & chất lượng</h1><p>Token, độ trễ và độ đầy đủ của bằng chứng được ghi nhận.</p></div></header>
+<details class="admin-filter-panel"><summary>Phạm vi phân tích <span>{{ 'Đang lọc' if request.url.query else 'Toàn bộ nhật ký còn lưu' }}</span></summary>{% include 'admin_filters.html' %}</details>
+{% include 'admin_usage.html' %}{% if stats.get('status') != 'unavailable' %}{% include 'admin_quality.html' %}{% endif %}
+{% endblock %}

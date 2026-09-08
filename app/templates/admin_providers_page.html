@@ -1,0 +1,5 @@
+{% extends 'admin_base.html' %}{% block content %}
+<header class="admin-page-heading"><div><span class="admin-overline">AI / PROVIDERS</span><h1>Nhà cung cấp AI</h1><p>Cấu hình, hoạt động gần nhất và thời gian tạm ngừng được quan sát.</p></div></header>
+<p class="admin-notice">Trang này không gọi API trả phí. Đã cấu hình không chứng minh dịch vụ đang khả dụng; trạng thái gần đây chỉ thuộc tiến trình hiện tại.</p>
+<div class="admin-provider-grid">{% for provider in provider_status %}<article class="admin-section admin-provider"><div class="section-heading"><span class="admin-provider-icon" aria-hidden="true">◇</span><span class="admin-status {{ 'is-warning' if provider.state == 'UNKNOWN' else '' }}">{{ provider.state }}</span></div><h2>{{ provider.provider }}</h2><p>{{ 'Đã cấu hình' if provider.configured else 'Chưa cấu hình' }}</p>{% if provider.recent %}<dl class="detail-grid"><div><dt>Model gần nhất</dt><dd>{{ provider.recent.model }}</dd></div><div><dt>Tác vụ</dt><dd>{{ provider.recent.use_case }}</dd></div></dl>{% else %}<p class="muted">Chưa có hoạt động trong tiến trình này.</p>{% endif %}</article>{% endfor %}</div>
+{% endblock %}

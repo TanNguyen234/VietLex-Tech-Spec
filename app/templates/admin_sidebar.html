@@ -1,0 +1,10 @@
+{% set active = admin_section|default('evaluations' if admin_view else 'requests') %}
+<aside class="admin-sidebar">
+<a class="admin-brand" href="/admin"><span class="admin-brand-mark">V<span>L</span></span><span>VietLex<small>ADMINISTRATION</small></span></a>
+<details class="admin-mobile-nav" open><summary>Điều hướng quản trị</summary>
+<nav aria-label="Điều hướng quản trị"><span class="admin-nav-label">KHÔNG GIAN QUẢN TRỊ</span>
+{% for key, path, label, glyph in [('overview','/admin','Tổng quan','◫'),('requests','/admin/requests','Requests','≡'),('usage','/admin/usage','Usage & chất lượng','▥'),('users','/admin/users','Tài khoản','◎'),('providers','/admin/providers','Nhà cung cấp','◇'),('evaluations','/admin/evaluations','Đánh giá','✓'),('system','/admin/system','Hệ thống','⚙'),('audit','/admin/audit','Nhật ký quản trị','↺')] %}
+<a href="{{ path }}"{% if active == key %} aria-current="page"{% endif %}><span class="admin-nav-icon" aria-hidden="true">{{ glyph }}</span><span>{{ label }}</span>{% if active == key %}<span class="admin-nav-dot" aria-hidden="true"></span>{% endif %}</a>
+{% endfor %}</nav></details>
+<div class="admin-sidebar-bottom"><div class="admin-workspace-label"><span class="admin-workspace-monogram">VL</span><div>VietLex Legal RAG<small>Quản trị có phân quyền</small></div></div><a href="/">↗ Trở về ứng dụng</a><p>Kiểm chứng trước khi kết luận.</p></div>
+</aside>
