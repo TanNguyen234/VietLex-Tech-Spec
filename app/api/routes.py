@@ -122,13 +122,19 @@ async def _load_admin_logs(**kwargs):
 
 
 async def check_input_guardrails(message: str):
-    from app.services.guardrails import check_input_guardrails as implementation
+    try:
+        from app.services.guardrails import check_input_guardrails as implementation
+    except ImportError:
+        raise GuardrailUnavailableError("input", "dependency_unavailable") from None
 
     return await implementation(message)
 
 
 async def check_output_guardrails(response: str, contexts: list[str], query: str):
-    from app.services.guardrails import check_output_guardrails as implementation
+    try:
+        from app.services.guardrails import check_output_guardrails as implementation
+    except ImportError:
+        raise GuardrailUnavailableError("output", "dependency_unavailable") from None
 
     return await implementation(response, contexts, query)
 

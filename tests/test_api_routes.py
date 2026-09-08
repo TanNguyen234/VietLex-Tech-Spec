@@ -267,6 +267,31 @@ def test_chat_route_rejects_unsafe_input_before_using_cache(client, monkeypatch)
     cache_lookup.assert_not_awaited()
 
 
+def test_chat_missing_guardrail_dependency_fails_closed(client, monkeypatch) -> None:
+    import builtins
+
+    original_import = builtins.__import__
+
+    def without_guardrails(name, *args, **kwargs):
+        if name == "app.services.guardrails":
+            raise ModuleNotFoundError("No module named 'nemoguardrails'")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", without_guardrails)
+    logged = AsyncMock()
+    retrieval = AsyncMock()
+    monkeypatch.setattr("app.api.routes.log_interaction", logged)
+    monkeypatch.setattr("app.api.routes.run_advanced_rag", retrieval)
+    response = client.post("/chat", data={
+        "message": "Câu hỏi kiểm tra", "csrf_token": "valid_token",
+        "session_id": "test-session", "nemo_enabled": "true",
+    })
+    assert response.status_code == 503
+    assert logged.await_args.kwargs["technical_error"]["stage"] == "guardrails_input"
+    assert logged.await_args.kwargs["request_status"] == "technical_error"
+    retrieval.assert_not_awaited()
+
+
 def test_chat_route_input_guardrail_unavailable_persists_technical_error(client, monkeypatch) -> None:
     from app.services.guardrails import GuardrailUnavailableError
 
