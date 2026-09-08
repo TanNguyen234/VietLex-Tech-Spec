@@ -82,8 +82,9 @@ async def test_openrouter_fallback_honors_the_requested_output_budget(
     assert captured["max_tokens"] == 640
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("structured", [False, True])
 async def test_generate_llm_response_with_metadata_observes_provider_and_model(
-    monkeypatch,
+    monkeypatch, structured,
 ) -> None:
     vertex_call = {}
 
@@ -127,6 +128,8 @@ async def test_generate_llm_response_with_metadata_observes_provider_and_model(
         "Câu hỏi",
         max_output_tokens=512,
         thinking_level="MINIMAL",
+        use_case=(direct_llm.LLMUseCase.STRUCTURED_ANALYSIS if structured
+                  else direct_llm.LLMUseCase.ANSWER),
     )
 
     assert isinstance(result, direct_llm.LLMGenerationResult)
@@ -139,6 +142,7 @@ async def test_generate_llm_response_with_metadata_observes_provider_and_model(
     assert result.location == "global"
     assert result.provider_latency_ms == 12.5
     assert vertex_call["thinking_level"] == "MINIMAL"
+    assert vertex_call.get("response_mime_type") == ("application/json" if structured else None)
 
 
 @pytest.mark.asyncio

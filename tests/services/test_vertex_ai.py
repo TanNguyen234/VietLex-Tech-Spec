@@ -128,6 +128,26 @@ async def test_generation_returns_typed_vertex_metadata_without_credentials() ->
 
 
 @pytest.mark.asyncio
+async def test_json_mode_prevents_observed_markdown_wrapped_review():
+    vertex_ai = _module()
+    models = _Models()
+
+    async def generate_content(**kwargs):
+        # Observed failure: valid JSON wrapped in a Markdown fence with STOP.
+        mime = kwargs["config"].response_mime_type
+        return SimpleNamespace(text='{"findings":[]}' if mime == "application/json"
+                               else '```json\n{"findings":[]}\n```')
+
+    models.generate_content = generate_content
+    provider = vertex_ai.VertexAIProvider(
+        settings=_settings(), credentials_loader=lambda: (object(), "project"),
+        client_factory=lambda **_: _Client(models),
+    )
+    result = await provider.generate("Review", response_mime_type="application/json")
+    assert json.loads(result.text) == {"findings": []}
+
+
+@pytest.mark.asyncio
 async def test_structured_generation_uses_vertex_response_schema() -> None:
     vertex_ai = _module()
 

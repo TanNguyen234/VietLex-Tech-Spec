@@ -181,7 +181,11 @@ def test_run_success_uses_atomic_clause_progress(client, monkeypatch) -> None:
     assert save.await_args.kwargs["completed_clause_ids"] == ["a" * 24 + "-001"]
 
 
-def test_provider_failure_persists_without_progress(client, monkeypatch) -> None:
+@pytest.mark.parametrize("error,status", [
+    (RuntimeError("quota"), "provider_error"),
+    (ValueError("invalid_clause_reference"), "invalid_structured_response"),
+])
+def test_provider_failure_persists_without_progress(client, monkeypatch, error, status) -> None:
     monkeypatch.setattr(
         "app.api.workspace_routes.get_workspace", AsyncMock(return_value=_workspace())
     )
@@ -191,7 +195,7 @@ def test_provider_failure_persists_without_progress(client, monkeypatch) -> None
     )
     monkeypatch.setattr(
         "app.api.full_document_review_routes.generate_contract_review",
-        AsyncMock(side_effect=RuntimeError("quota")),
+        AsyncMock(side_effect=error),
     )
     atomic = AsyncMock()
     fallback = AsyncMock(return_value=True)
@@ -221,7 +225,7 @@ def test_provider_failure_persists_without_progress(client, monkeypatch) -> None
     )
     assert response.status_code == 502
     atomic.assert_not_awaited()
-    assert fallback.await_args.args[1]["status"] == "provider_error"
+    assert fallback.await_args.args[1]["status"] == status
 
 
 def test_run_requires_csrf_before_workspace_or_provider(client, monkeypatch) -> None:

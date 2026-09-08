@@ -104,6 +104,16 @@ async def log_interaction(
     llm_calls = [call for call in (calls or []) if call.get("call_kind", "llm") == "llm"]
     external_calls = [call for call in (calls or []) if call.get("call_kind", "llm") != "llm"]
 
+    # Structured workspace failures must participate in the same admin error
+    # counters as chat failures. Do not relabel refusals or insufficient evidence.
+    if technical_error is None:
+        for stage in ("full_document_review", "contract_review", "research_report",
+                      "claim_verification", "selected_evidence", "comparison",
+                      "obligation_matrix"):
+            for kind in ("invalid_structured_response", "provider_error"):
+                if request_status == f"{stage}_{kind}":
+                    technical_error = {"stage": stage, "error_type": kind}
+
     document = {
         "_id": trace_id,
         "trace_id": trace_id,

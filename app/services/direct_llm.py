@@ -421,6 +421,8 @@ async def generate_llm_response_with_metadata(
         }
         if thinking_level is not None:
             vertex_options["thinking_level"] = thinking_level
+        if use_case == LLMUseCase.STRUCTURED_ANALYSIS:
+            vertex_options["response_mime_type"] = "application/json"
         result = await get_vertex_provider().generate(prompt, **vertex_options)
     except VertexAIError as error:
         has_fallback = bool(

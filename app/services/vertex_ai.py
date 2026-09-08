@@ -240,6 +240,7 @@ class VertexAIProvider:
         system_instruction: str = "",
         max_output_tokens: int = 1024,
         thinking_level: types.ThinkingLevel | None = None,
+        response_mime_type: str | None = None,
     ) -> GenerationResult:
         started = time.perf_counter()
         client = self._get_client()
@@ -247,6 +248,7 @@ class VertexAIProvider:
             system_instruction=system_instruction or None,
             temperature=0.2,
             max_output_tokens=max_output_tokens,
+            response_mime_type=response_mime_type,
             thinking_config=(
                 types.ThinkingConfig(thinking_level=thinking_level)
                 if thinking_level is not None

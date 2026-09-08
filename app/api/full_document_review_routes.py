@@ -117,7 +117,7 @@ async def run_full_document_review(
     try:
         review, metadata = await generate_contract_review(clauses, evidence)
         status, result, error_type = "ok", review.model_dump(mode="json"), None
-    except ValidationError:
+    except (ValidationError, ValueError):
         status, result, error_type, metadata = (
             "invalid_structured_response",
             None,

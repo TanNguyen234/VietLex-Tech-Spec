@@ -7,6 +7,23 @@ from app.database import log_interaction, update_evaluation
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("request_status,expected", [
+    ("full_document_review_invalid_structured_response", {"stage":"full_document_review", "error_type":"invalid_structured_response"}),
+    ("research_report_provider_error", {"stage":"research_report", "error_type":"provider_error"}),
+    ("claim_verification_invalid_structured_response", {"stage":"claim_verification", "error_type":"invalid_structured_response"}),
+    ("research_report_insufficient_evidence", None),
+    ("blocked_input", None),
+])
+async def test_structured_failures_are_visible_in_admin_error_metrics(request_status, expected):
+    database = MagicMock()
+    database.evaluation_logs = AsyncMock()
+    with patch("app.database.get_db", return_value=database):
+        doc = await log_interaction("trace", "synthetic", "status", [], False,
+                                    request_status=request_status)
+    assert doc["metrics"]["technical_error"] == expected
+
+
+@pytest.mark.asyncio
 async def test_log_interaction_persists_all_operational_fields() -> None:
     fake_collection = AsyncMock()
     fake_db = MagicMock()
