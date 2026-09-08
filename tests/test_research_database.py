@@ -147,4 +147,56 @@ async def test_workspace_documents_are_bounded_duplicate_safe_and_owner_scoped(
     remove_query, remove_update = collection.update_calls[1]
     assert remove_query["documents.document_id"] == "a" * 24
     assert remove_update["$pull"]["evidence"]["workspace_document_id"] == "a" * 24
-    assert remove_update['$pull']['analyses']['workspace_document_id'] == 'a' * 24
+    assert remove_update["$pull"]["analyses"] == {
+        "$or": [
+            {"workspace_document_id": "a" * 24},
+            {"required_document_ids": "a" * 24},
+        ]
+    }
+
+
+@pytest.mark.asyncio
+async def test_analysis_requires_all_document_ids_in_the_atomic_save_query(monkeypatch) -> None:
+    import app.research_database as research
+
+    collection = _Collection()
+    monkeypatch.setattr(
+        research,
+        "get_db",
+        lambda: SimpleNamespace(research_workspaces=collection),
+    )
+
+    assert await research.save_workspace_analysis(
+        "w-1",
+        {"analysis_id": "redline-1", "required_document_ids": ["doc-a", "doc-b"]},
+        "owner-a",
+        required_document_ids=["doc-a", "doc-b"],
+    )
+    save_query, _save_update = collection.update_calls[0]
+    assert save_query["documents.document_id"] == {"$all": ["doc-a", "doc-b"]}
+
+    await research.save_workspace_analysis(
+        "w-1", {"analysis_id": "general-1"}, "owner-a", required_document_ids=[]
+    )
+    unconstrained_query, _unconstrained_update = collection.update_calls[1]
+    assert "documents.document_id" not in unconstrained_query
+
+
+@pytest.mark.asyncio
+async def test_full_review_batch_atomically_preserves_literals_and_document_guard(monkeypatch) -> None:
+    import app.research_database as research
+
+    collection = _Collection()
+    monkeypatch.setattr(research, "get_db", lambda: SimpleNamespace(research_workspaces=collection))
+
+    assert await research.save_full_document_review_batch(
+        "w-1", {"analysis_id": "a", "private": "$must-remain-literal"}, "owner-a",
+        user_id=None, document_id="doc-1", input_sha256="a" * 64,
+        completed_clause_ids=["a" * 24 + "-001"],
+    )
+    query, pipeline = collection.update_calls[0]
+    assert query["documents.document_id"] == "doc-1"
+    stage = pipeline[0]["$set"]
+    literal = stage["analyses"]["$slice"][0]["$concatArrays"][1]["$literal"][0]
+    assert literal["private"] == "$must-remain-literal"
+    assert literal["required_document_ids"] == ["doc-1"]

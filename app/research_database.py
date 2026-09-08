@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 from typing import Any
+import re
 from bson import BSON
 
 from app.config import get_settings
@@ -167,23 +168,76 @@ async def save_workspace_analysis(
     *,
     user_id: str | None = None,
     required_document_id: str | None = None,
+    required_document_ids: list[str] | None = None,
 ) -> bool:
+    if required_document_id is not None and required_document_ids is not None:
+        raise ValueError("provide required_document_id or required_document_ids, not both")
+    if required_document_ids is not None and any(
+        not isinstance(document_id, str) or not document_id
+        for document_id in required_document_ids
+    ):
+        raise ValueError("required_document_ids must contain non-empty strings")
+    if required_document_ids is not None and len(set(required_document_ids)) != len(
+        required_document_ids
+    ):
+        raise ValueError("required_document_ids must be unique")
+    required_ids = (
+        [required_document_id]
+        if required_document_id is not None
+        else list(required_document_ids or [])
+    )
     now = _now()
+    stored_analysis = {**analysis, "created_at": now}
+    if required_document_ids:
+        stored_analysis["required_document_ids"] = required_ids
     query = {"_id": workspace_id, **_owner(client_id, user_id)}
-    query.update(_size_guard(analysis))
-    if required_document_id is not None:
-        query["documents.document_id"] = required_document_id
+    query.update(_size_guard(stored_analysis))
+    if len(required_ids) == 1:
+        query["documents.document_id"] = required_ids[0]
+    elif required_ids:
+        query["documents.document_id"] = {"$all": required_ids}
     result = await get_db().research_workspaces.update_one(
         query,
         {
             "$push": {
                 "analyses": {
-                    "$each": [{**analysis, "created_at": now}],
+                    "$each": [stored_analysis],
                     "$slice": -50,
                 }
             },
             "$set": {"updated_at": now},
         },
+    )
+    return result.modified_count > 0
+
+
+async def save_full_document_review_batch(
+    workspace_id: str,
+    analysis: dict[str, Any],
+    client_id: str,
+    *,
+    user_id: str | None,
+    document_id: str,
+    input_sha256: str,
+    completed_clause_ids: list[str],
+) -> bool:
+    """Atomically retain a review batch and its bounded per-document progress."""
+    if len(completed_clause_ids) > 100 or len(set(completed_clause_ids)) != len(completed_clause_ids) or any(not re.fullmatch(r"[a-f0-9]{24}-\d{3}", item) for item in completed_clause_ids):
+        raise ValueError("invalid_completed_clause_ids")
+    now = _now()
+    stored = {**analysis, "required_document_ids": [document_id], "created_at": now}
+    existing = {"$ifNull": ["$$doc.full_review_progress", []]}
+    same = {"$filter": {"input": existing, "as": "item", "cond": {"$eq": ["$$item.input_sha256", input_sha256]}}}
+    current = {"$ifNull": [{"$arrayElemAt": [same, 0]}, {}]}
+    merged = {
+        "input_sha256": input_sha256,
+        "completed_clause_ids": {"$setUnion": [{"$ifNull": ["$$current.completed_clause_ids", []]}, completed_clause_ids]},
+        "updated_at": now,
+    }
+    replacement = {"$slice": [{"$concatArrays": [{"$filter": {"input": existing, "as": "item", "cond": {"$ne": ["$$item.input_sha256", input_sha256]}}}, [merged]]}, -3]}
+    result = await get_db().research_workspaces.update_one(
+        {"_id": workspace_id, **_owner(client_id, user_id), "documents.document_id": document_id, **_size_guard(stored)},
+        [{"$set": {"documents": {"$map": {"input": "$documents", "as": "doc", "in": {"$cond": [{"$eq": ["$$doc.document_id", document_id]}, {"$mergeObjects": ["$$doc", {"full_review_progress": {"$let": {"vars": {"current": current}, "in": replacement}}}]}, "$$doc"]}}}, "analyses": {"$slice": [{"$concatArrays": ["$analyses", {"$literal": [stored]}]}, -50]}, "updated_at": now}}],
     )
     return result.modified_count > 0
 
@@ -230,7 +284,12 @@ async def remove_workspace_document(
             "$pull": {
                 "documents": {"document_id": document_id},
                 "evidence": {"workspace_document_id": document_id},
-                "analyses": {"workspace_document_id": document_id},
+                "analyses": {
+                    "$or": [
+                        {"workspace_document_id": document_id},
+                        {"required_document_ids": document_id},
+                    ]
+                },
             },
             "$set": {"updated_at": _now()},
         },
