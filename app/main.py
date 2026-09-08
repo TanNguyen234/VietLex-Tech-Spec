@@ -66,7 +66,7 @@ async def startup_event():
 
     await init_db()
     await ensure_semantic_cache_collection()
-    if settings.PUBLIC_NEMO_DEFAULT_ENABLED:
+    if settings.PUBLIC_NEMO_DEFAULT_ENABLED and not settings.SERVERLESS_ONLINE_ONLY:
         from app.services.guardrails import warm_guardrails
 
         await warm_guardrails()

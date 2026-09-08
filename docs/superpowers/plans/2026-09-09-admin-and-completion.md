@@ -52,3 +52,22 @@ Files: app/templates/admin_details.html, evaluation_lab.html; app/api/evaluation
 - [ ] Preserve benchmark scope and expert legal-review requirements. Corpus expansion requires separate migration/ingestion authorization.
 
 Evidence is written after source stabilizes. Do not declare all project gaps closed while operational/expert dependencies remain unresolved.
+
+## Follow-on runtime scope frozen 2026-09-09
+
+- Admin/Mongo originals committed/pushed as 62fbec7; Vercel success. No VPS available.
+- Serverless guardrail self-check mirrors versioned NeMo prompts and the current primary model
+  without retry/fallback; explicit runtime selection, strict complete yes/no decision, timeout as
+  typed technical error. Existing container NeMo/evaluation modes remain unchanged.
+- OCR: explicit opt-in on the existing upload form, PDF only <=5 pages /3.7 MB,
+  one inline Vertex request (no Files API, no worker, no fallback/retry), <=8192
+  output tokens, schema/page-order validation, hash/page provenance, machine text
+  visibly unverified. Save original and extracted record atomically only on success.
+  Default extraction makes zero generation calls. Invalid/error/truncated OCR must
+  preserve typed status/usage and never masquerade as complete text.
+- Tests first: inline PDF transport/bounds, default zero OCR, strict page coverage,
+  owner/CSRF routes, metadata visibility and no private bytes in HTML/logs.
+- Model replacements require identical-input bounded A/B and new paid-call authority;
+  current Llama aliases were absent from both provider catalogs on read-only checks.
+
+2026-09-09 execution update: tasks 1–2 delivered in 62fbec7 (CI/Vercel success). User approved 24 additional synthetic/public generation attempts. OCR passed two image-PDF samples; guardrail exact prompt-label parser corrected after live diagnosis; Groq primary replacement passed identical-input date/amount A/B, NVIDIA candidate failed and is not promoted. Two-user acceptance awaits self-registration.

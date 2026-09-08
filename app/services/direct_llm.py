@@ -411,6 +411,8 @@ async def generate_llm_response_with_metadata(
     max_output_tokens: int = 1024,
     thinking_level: types.ThinkingLevel | str | None = None,
     use_case: LLMUseCase = LLMUseCase.ANSWER,
+    max_retries: int | None = None,
+    allow_fallback: bool = True,
 ) -> LLMGenerationResult:
     """Use Vertex first, then the legacy direct APIs as secondary models."""
     started = time.perf_counter()
@@ -421,11 +423,13 @@ async def generate_llm_response_with_metadata(
         }
         if thinking_level is not None:
             vertex_options["thinking_level"] = thinking_level
+        if max_retries is not None:
+            vertex_options["max_retries"] = max_retries
         if use_case == LLMUseCase.STRUCTURED_ANALYSIS:
             vertex_options["response_mime_type"] = "application/json"
         result = await get_vertex_provider().generate(prompt, **vertex_options)
     except VertexAIError as error:
-        has_fallback = bool(
+        has_fallback = allow_fallback and bool(
             settings.OPENROUTER_API_KEY
             or settings.GEMINI_API_KEY
             or settings.NVIDIA_API_KEY

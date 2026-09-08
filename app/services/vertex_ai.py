@@ -241,7 +241,16 @@ class VertexAIProvider:
         max_output_tokens: int = 1024,
         thinking_level: types.ThinkingLevel | None = None,
         response_mime_type: str | None = None,
+        pdf_bytes: bytes | None = None,
+        max_retries: int | None = None,
     ) -> GenerationResult:
+        if pdf_bytes is not None and (
+            not isinstance(pdf_bytes, bytes) or not pdf_bytes.startswith(b"%PDF-")
+            or len(pdf_bytes) > 3_700_000
+        ):
+            raise ValueError("invalid_pdf_payload")
+        if max_retries is not None and not 0 <= max_retries <= 5:
+            raise ValueError("invalid_retry_limit")
         started = time.perf_counter()
         client = self._get_client()
         config = types.GenerateContentConfig(
@@ -249,6 +258,8 @@ class VertexAIProvider:
             temperature=0.2,
             max_output_tokens=max_output_tokens,
             response_mime_type=response_mime_type,
+            http_options=(types.HttpOptions(retry_options=types.HttpRetryOptions(attempts=max_retries + 1))
+                          if max_retries is not None else None),
             thinking_config=(
                 types.ThinkingConfig(thinking_level=thinking_level)
                 if thinking_level is not None
@@ -258,7 +269,7 @@ class VertexAIProvider:
         try:
             response = await client.aio.models.generate_content(
                 model=self.settings.VERTEX_LLM_MODEL,
-                contents=prompt,
+                contents=prompt if pdf_bytes is None else [prompt, types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf")],
                 config=config,
             )
         except Exception as error:

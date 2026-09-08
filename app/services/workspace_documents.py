@@ -53,6 +53,9 @@ class ExtractedWorkspaceDocument(BaseModel):
     extracted_characters: int = Field(ge=1, le=MAX_EXTRACTED_CHARACTERS)
     page_count: int | None = Field(default=None, ge=1, le=MAX_PDF_PAGES)
     clauses: list[WorkspaceClause] = Field(min_length=1, max_length=MAX_CLAUSES)
+    extraction_method: Literal["text", "vertex_ocr"] = "text"
+    ocr_provider: str | None = Field(default=None, max_length=100)
+    ocr_model: str | None = Field(default=None, max_length=200)
 
 
 class ContractFinding(BaseModel):

@@ -130,7 +130,7 @@ async def log_interaction(
         "cached": cached,
         "retrieval_trace": retrieval_trace,
         "request_metadata": {key: value for key, value in (request_metadata or {}).items()
-                             if key in {'method', 'path', 'nemo_requested'}},
+                             if key in {'method', 'path', 'nemo_requested', 'guardrail_engine'}},
         "safety_status": {
             "input_safe": input_safe,
             "output_safe": output_safe,

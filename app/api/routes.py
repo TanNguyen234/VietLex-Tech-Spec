@@ -123,7 +123,10 @@ async def _load_admin_logs(**kwargs):
 
 async def check_input_guardrails(message: str):
     try:
-        from app.services.guardrails import check_input_guardrails as implementation
+        if settings.SERVERLESS_ONLINE_ONLY:
+            from app.services.serverless_guardrails import check_input_guardrails as implementation
+        else:
+            from app.services.guardrails import check_input_guardrails as implementation
     except ImportError:
         raise GuardrailUnavailableError("input", "dependency_unavailable") from None
 
@@ -132,7 +135,10 @@ async def check_input_guardrails(message: str):
 
 async def check_output_guardrails(response: str, contexts: list[str], query: str):
     try:
-        from app.services.guardrails import check_output_guardrails as implementation
+        if settings.SERVERLESS_ONLINE_ONLY:
+            from app.services.serverless_guardrails import check_output_guardrails as implementation
+        else:
+            from app.services.guardrails import check_output_guardrails as implementation
     except ImportError:
         raise GuardrailUnavailableError("output", "dependency_unavailable") from None
 
@@ -280,7 +286,8 @@ async def chat(
     user_id = str(current_user["_id"]) if current_user else None
     persist_interaction = partial(
         log_interaction, client_id=client_id, user_id=user_id,
-        request_metadata={'method': 'POST', 'path': '/chat', 'nemo_requested': nemo_enabled},
+        request_metadata={'method': 'POST', 'path': '/chat', 'nemo_requested': nemo_enabled,
+                          'guardrail_engine': 'direct_self_check' if settings.SERVERLESS_ONLINE_ONLY else 'nemo'},
     )
     if request_id:
         chat_progress.start(request_id, client_id, nemo_enabled=nemo_enabled)

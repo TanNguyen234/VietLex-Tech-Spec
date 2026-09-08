@@ -54,10 +54,12 @@ async def test_log_interaction_persists_all_operational_fields() -> None:
             context_count=1,
             no_evidence=False,
             technical_error=None,
+            request_metadata={"guardrail_engine": "direct_self_check"},
             retrieval_trace={"status": "available", "backend": "vertex-qdrant-v3"},
         )
 
     assert doc["_id"] == "trace-db-test-01"
+    assert doc['request_metadata']['guardrail_engine'] == 'direct_self_check'
     metrics = doc["metrics"]
     assert metrics["request_status"] == "ok"
     assert metrics["ragas_selected"] is True

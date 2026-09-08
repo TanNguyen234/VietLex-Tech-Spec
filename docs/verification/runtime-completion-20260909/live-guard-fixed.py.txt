@@ -1,0 +1,15 @@
+import asyncio,json,sys
+from pathlib import Path
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
+from app.services.serverless_guardrails import check_input_guardrails,check_output_guardrails
+async def main():
+    out=Path('output/live-guard-fixed.jsonl')
+    if out.exists(): raise SystemExit('Already attempted')
+    cases=[('input_allow',lambda:check_input_guardrails('Quyền chấm dứt hợp đồng lao động tại Việt Nam được quy định thế nào?')),('output_block',lambda:check_output_guardrails('Bên A giao tài liệu ngày 30/12/2027.',['Dữ liệu giả lập: Bên A giao tài liệu ngày 15/09/2026.']))]
+    for name,call in cases:
+        with out.open('a',encoding='utf8') as f:f.write(json.dumps({'event':'attempt_started','case':name})+'\n')
+        try: row={'case':name,'result':await call(),'status':'success'}
+        except Exception as error: row={'case':name,'status':'error','error_type':type(error).__name__,'message':str(error)}
+        with out.open('a',encoding='utf8') as f:f.write(json.dumps({'event':'attempt_finished',**row},ensure_ascii=False)+'\n')
+        print(json.dumps(row),flush=True)
+asyncio.run(main())

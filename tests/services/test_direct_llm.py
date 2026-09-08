@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 import httpx
 import pytest
 
@@ -10,6 +11,19 @@ from app.services.vertex_ai import (
     VertexAuthenticationError,
     VertexQuotaError,
 )
+
+
+@pytest.mark.asyncio
+async def test_bounded_generation_can_disable_retry_and_fallback(monkeypatch):
+    generate = AsyncMock(side_effect=VertexQuotaError('quota', status_code=429))
+    monkeypatch.setattr(direct_llm, 'get_vertex_provider', lambda: SimpleNamespace(generate=generate))
+    monkeypatch.setattr(direct_llm.settings, 'NVIDIA_API_KEY', 'test-only')
+    fallback = AsyncMock(side_effect=AssertionError('no fallback permitted'))
+    monkeypatch.setattr(direct_llm, '_run_secondary_fallbacks', fallback)
+    result = await direct_llm.generate_llm_response_with_metadata('synthetic', max_retries=0, allow_fallback=False)
+    assert result.status == 'quota'
+    assert generate.await_args.kwargs['max_retries'] == 0
+    fallback.assert_not_awaited()
 
 
 def test_use_case_policies_keep_answer_and_judge_routing_separate() -> None:

@@ -280,7 +280,7 @@ def test_provider_catalog_preserves_current_fallback_orders() -> None:
         ("OpenRouter", "meta-llama/llama-3.3-70b-instruct"),
         ("Gemini", "gemini-2.0-flash"),
         ("NVIDIA NIM", "meta/llama-3.3-70b-instruct"),
-        ("Groq", "llama-3.3-70b-versatile"),
+        ("Groq", "qwen/qwen3.8-27b"),
         ("OpenRouter", "meta-llama/llama-3.3-70b-instruct"),
         ("Gemini", "gemini-1.5-flash"),
         ("Groq", "llama3-8b-8192"),
@@ -290,7 +290,7 @@ def test_provider_catalog_preserves_current_fallback_orders() -> None:
     ] == [
         ("Gemini", "gemini-2.0-flash"),
         ("NVIDIA NIM", "meta/llama-3.3-70b-instruct"),
-        ("Groq", "llama-3.3-70b-versatile"),
+        ("Groq", "qwen/qwen3.8-27b"),
         ("OpenRouter", "meta-llama/llama-3.3-70b-instruct"),
         ("OmniGate", "legal-core-model"),
     ]

@@ -294,3 +294,11 @@ The authenticated `/admin` workspace projects persisted `evaluation_logs` withou
 Token totals include only LLM responses that reported usage. They exclude embedding and reranker usage, provider attempts without usage, and monetary cost. Input, output, thinking and provider-reported total tokens have independent coverage denominators; thinking tokens are not added to provider totals. New chat calls and opt-in Ragas judge calls append to the per-request ledger. Missing and malformed legacy telemetry remains `N/A`, and capture overflow is explicit.
 
 Context inspection performs structural citation-anchor and exact-quote membership checks only. Semantic claim support remains `NOT_EVALUATED`, and legal-effect status remains `UNKNOWN` unless a future authoritative contract records it. The dashboard never presents these deterministic checks or Ragas proxy scores as proof of legal correctness.
+
+## Serverless OCR and guardrail update — 2026-09-09
+
+On `SERVERLESS_ONLINE_ONLY=true`, opt-in chat self-checks use the versioned NeMo prompts through the current Vertex primary, one request per check, without retry/fallback or NeMo import. Container NeMo and offline off/shadow/enforce behavior remain unchanged. Complete yes/no decisions may include the exact prompt label; technical failures remain distinct from semantic blocks. The legacy free switch still prevents Vertex client creation.
+
+Workspace uploads have explicit opt-in inline-PDF OCR (maximum 5 pages, 3,700,000 bytes, 60 seconds, 8,192 output tokens, one Vertex request). Strict JSON/page coverage rejects partial output. Machine text retains page/hash/model provenance and is visibly unverified. Original bytes and text share the existing owner-scoped Mongo record and retention. Reviewer demo OCR reserves the AI budget; ordinary text extraction makes zero generation calls. No external worker, Files API, new storage collection or migration is required.
+
+The Groq primary is `qwen/qwen3.8-27b` after an identical-input two-case synthetic operational A/B (old alias HTTP 404, new alias 2/2 exact JSON). This is not evidence of legal-answer quality. NVIDIA original/candidate failed live and were not replaced; the old Groq secondary is also unverified/unavailable in the catalog. No retrieval model, embeddings, reranking or corpus changes.

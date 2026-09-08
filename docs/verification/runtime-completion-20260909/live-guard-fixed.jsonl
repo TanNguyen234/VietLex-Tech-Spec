@@ -1,0 +1,4 @@
+{"event": "attempt_started", "case": "input_allow"}
+{"event": "attempt_finished", "case": "input_allow", "result": [true, ""], "status": "success"}
+{"event": "attempt_started", "case": "output_block"}
+{"event": "attempt_finished", "case": "output_block", "result": [false, "Kiểm tra tự động phát hiện câu trả lời chưa được tài liệu hỗ trợ đầy đủ. Vui lòng kiểm chứng nguồn."], "status": "success"}

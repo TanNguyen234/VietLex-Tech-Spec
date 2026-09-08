@@ -1,0 +1,33 @@
+"""Five real adapter calls; bounded transport override only, no fake responses."""
+import asyncio,json,sys
+from pathlib import Path
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
+import httpx
+from app.config import system_ssl_context
+from app.services import direct_llm
+from app.services.research_analysis import generate_selected_evidence_answer,generate_obligation_matrix
+from app.services.claim_verification import verify_claims
+from app.services.model_comparison import compare_models
+
+OUT=Path('output/live-completion-features.jsonl')
+EVIDENCE=[{'evidence_id':'synthetic-1','citation':'Tài liệu giả lập · Điều 1','excerpt':'Bên A phải giao tài liệu ngày 15/09/2026. Bên B phải trả phí dịch vụ 1200000 đồng.'}]
+
+async def main():
+    if OUT.exists(): raise SystemExit('Already attempted')
+    original=direct_llm.generate_llm_response_with_metadata
+    async def bounded(*args,**kwargs):
+        return await original(*args,**kwargs,max_retries=0,allow_fallback=False)
+    direct_llm.generate_llm_response_with_metadata=bounded
+    direct_llm._http_client=httpx.AsyncClient(verify=system_ssl_context(),timeout=30,transport=httpx.AsyncHTTPTransport(verify=system_ssl_context(),retries=0))
+    cases=[('selected',1,lambda:generate_selected_evidence_answer('Bên A phải giao tài liệu khi nào?',EVIDENCE)),('obligations',1,lambda:generate_obligation_matrix(EVIDENCE)),('claims',1,lambda:verify_claims('Bên A phải giao tài liệu ngày 15/09/2026.',EVIDENCE)),('model_comparison',2,lambda:compare_models('Bên A phải giao tài liệu khi nào?',EVIDENCE,'groq_llama','nvidia_llama'))]
+    for name,calls,call in cases:
+        with OUT.open('a',encoding='utf8') as f:f.write(json.dumps({'event':'attempt_started','case':name,'calls':calls,'evidence':EVIDENCE},ensure_ascii=False)+'\n')
+        try:
+            result=await call()
+            if isinstance(result,tuple): result=[item.model_dump() if hasattr(item,'model_dump') else item for item in result]
+            row={'status':'returned','result':result}
+        except Exception as error: row={'status':'error','error_type':type(error).__name__}
+        with OUT.open('a',encoding='utf8') as f:f.write(json.dumps({'event':'attempt_finished','case':name,**row},ensure_ascii=False,default=str)+'\n')
+        print(json.dumps({'case':name,**row},default=str),flush=True)
+    await direct_llm._http_client.aclose()
+asyncio.run(main())

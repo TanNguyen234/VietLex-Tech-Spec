@@ -460,8 +460,9 @@ def test_deep_research_run_persists_owner_scoped_result_and_provider_calls(
     update_status.assert_awaited_once_with(failed_analysis_id, "workspace_changed")
 
 
+@pytest.mark.parametrize('ocr_enabled', [False, True])
 def test_workspace_upload_keeps_original_private_and_returns_only_metadata(
-    client, monkeypatch
+    client, monkeypatch, ocr_enabled
 ) -> None:
     from app.services.workspace_documents import (
         ExtractedWorkspaceDocument,
@@ -493,10 +494,13 @@ def test_workspace_upload_keeps_original_private_and_returns_only_metadata(
     save = AsyncMock(return_value=True)
     monkeypatch.setattr("app.api.workspace_routes.extract_workspace_document", extract)
     monkeypatch.setattr("app.api.workspace_routes.save_workspace_document", save)
+    ocr = AsyncMock(return_value=extracted)
+    monkeypatch.setattr('app.api.workspace_routes.extract_ocr_document', ocr, raising=False)
+    monkeypatch.setattr('app.api.workspace_routes.log_interaction', AsyncMock())
 
     response = client.post(
         "/workspaces/w-1/documents",
-        data={"csrf_token": "valid"},
+        data={"csrf_token": "valid", "ocr_enabled": str(ocr_enabled).lower()},
         files={"document": ("contract.txt", b"raw file bytes", "text/plain")},
     )
 
@@ -507,6 +511,42 @@ def test_workspace_upload_keeps_original_private_and_returns_only_metadata(
     assert save.await_args.kwargs['original_bytes'] == b"raw file bytes"
     assert response.json()['original_available'] is True
     assert 'original_bytes' not in response.text
+    if ocr_enabled:
+        ocr.assert_awaited_once()
+        extract.assert_not_called()
+    else:
+        ocr.assert_not_awaited()
+
+
+def test_ocr_failure_is_typed_and_never_saves_incomplete_document(client, monkeypatch):
+    from app.services.workspace_documents import DocumentExtractionError
+    monkeypatch.setattr('app.api.workspace_routes.get_workspace', AsyncMock(return_value={'documents': []}))
+    monkeypatch.setattr('app.api.workspace_routes.extract_ocr_document', AsyncMock(side_effect=DocumentExtractionError('ocr_incomplete')), raising=False)
+    save = AsyncMock()
+    logged = AsyncMock()
+    monkeypatch.setattr('app.api.workspace_routes.save_workspace_document', save)
+    monkeypatch.setattr('app.api.workspace_routes.log_interaction', logged)
+    response = client.post('/workspaces/w-1/documents',data={'csrf_token':'valid','ocr_enabled':'true'},files={'document':('scan.pdf',b'%PDF-test','application/pdf')})
+    assert response.status_code == 502
+    assert response.json()['detail'] == 'ocr_incomplete'
+    save.assert_not_awaited()
+    assert logged.await_args.kwargs['technical_error']['stage'] == 'document_ocr'
+    assert '%PDF-test' not in str(logged.await_args)
+
+
+def test_ocr_reserves_ai_quota_before_generation(client, monkeypatch):
+    import app.api.workspace_routes as routes
+    monkeypatch.setattr(routes.settings, 'REVIEWER_DEMO_MODE', True)
+    client.app.dependency_overrides[optional_user] = lambda: {'_id':'user-1','email_verified':True}
+    monkeypatch.setattr(routes, 'get_workspace', AsyncMock(return_value={'documents': []}))
+    quota = AsyncMock(return_value=False)
+    monkeypatch.setattr('app.services.reviewer_demo.reserve_demo_budget', quota)
+    ocr = AsyncMock(side_effect=AssertionError('quota denied'))
+    monkeypatch.setattr(routes, 'extract_ocr_document', ocr)
+    response = client.post('/workspaces/w-1/documents', data={'csrf_token':'valid','ocr_enabled':'true'}, files={'document':('scan.pdf',b'%PDF-test','application/pdf')})
+    assert response.status_code == 429
+    assert quota.await_args.args[:2] == ('user-1', 'ai')
+    ocr.assert_not_awaited()
 
 
 def test_original_download_is_owner_scoped_and_forces_attachment(client, monkeypatch):

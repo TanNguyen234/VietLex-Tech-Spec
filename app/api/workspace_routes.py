@@ -49,6 +49,7 @@ from app.services.deep_research import (
     run_deep_research,
 )
 from app.services.provider_runtime import capture_provider_usage, current_provider_calls
+from app.services.workspace_ocr import extract_ocr_document
 from app.services.workspace_documents import (
     DocumentExtractionError,
     MAX_UPLOAD_BYTES,
@@ -220,10 +221,12 @@ def _workspace_document(workspace: dict, document_id: str) -> dict:
 
 @router.post("/workspaces/{workspace_id}/documents")
 @limiter.limit(settings.SESSION_RATE_LIMIT)
+@capture_provider_usage
 async def workspace_document_upload(
     request: Request,
     workspace_id: str,
     document: UploadFile = File(...),
+    ocr_enabled: bool = Form(False),
     _csrf: str = Depends(verify_csrf),
     current_user=Depends(optional_user),
 ):
@@ -236,15 +239,46 @@ async def workspace_document_upload(
         payload = await document.read(MAX_UPLOAD_BYTES + 1)
     finally:
         await document.close()
+    digest = hashlib.sha256(payload).hexdigest()
+    if any(item.get('document_id') == digest[:24] for item in workspace.get('documents') or []):
+        raise HTTPException(409, 'duplicate_document')
+
+    async def log_ocr(status: str, error: str | None = None, model: str | None = None):
+        await log_interaction(
+            trace_id=str(uuid.uuid4()), user_query=f'OCR tài liệu SHA-256 {digest}',
+            bot_response=status, contexts=[], cached=False, session_id=workspace_id,
+            client_id=client_id, user_id=user_id, request_status='document_ocr_' + status,
+            observed_provider='google_vertex_ai', observed_model=model,
+            technical_error={'stage':'document_ocr','error_type':error} if error else None,
+        )
+
+    if ocr_enabled and settings.REVIEWER_DEMO_MODE:
+        from app.services.reviewer_demo import reserve_demo_budget
+        if not current_user or not current_user.get('email_verified'):
+            raise HTTPException(401, 'demo_login_required')
+        try:
+            for minute, own, total in [(True, 3, 60), (False, settings.DEMO_AI_DAILY_LIMIT, settings.DEMO_AI_GLOBAL_DAILY_LIMIT)]:
+                if not await asyncio.wait_for(reserve_demo_budget(str(current_user['_id']), 'ai', own, total, minute=minute), timeout=3):
+                    raise HTTPException(429, 'demo_minute_quota' if minute else 'demo_daily_quota')
+        except HTTPException:
+            raise
+        except Exception:
+            raise HTTPException(503, 'ocr_admission_unavailable') from None
     try:
         async with _DOCUMENT_PARSE_GATE:
-            extracted = await asyncio.to_thread(
-                extract_workspace_document,
-                document.filename or "document",
-                document.content_type or "",
-                payload,
-            )
+            if ocr_enabled:
+                extracted = await extract_ocr_document(document.filename or 'document', document.content_type or '', payload)
+            else:
+                extracted = await asyncio.to_thread(
+                    extract_workspace_document, document.filename or "document",
+                    document.content_type or "", payload,
+                )
     except DocumentExtractionError as error:
+        if ocr_enabled:
+            validation_errors = {'ocr_pdf_only','ocr_file_limit','ocr_page_limit','encrypted_document','malformed_document'}
+            technical = error.kind not in validation_errors
+            await log_ocr('failed', error.kind if technical else None)
+            raise HTTPException(502 if technical else 422, error.kind) from None
         raise HTTPException(status_code=422, detail=error.kind) from error
     if any(
         item.get("document_id") == extracted.document_id
@@ -256,7 +290,11 @@ async def workspace_document_upload(
     if not await save_workspace_document(
         workspace_id, record, client_id, user_id=user_id, original_bytes=payload
     ):
+        if ocr_enabled:
+            await log_ocr('workspace_changed', model=extracted.ocr_model)
         raise HTTPException(status_code=409, detail="workspace_changed")
+    if ocr_enabled:
+        await log_ocr('ok', model=extracted.ocr_model)
     return JSONResponse(record)
 
 

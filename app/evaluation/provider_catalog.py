@@ -12,7 +12,7 @@ class ProviderModel:
 OPENROUTER_PRIMARY_MODEL = "meta-llama/llama-3.3-70b-instruct"
 GEMINI_PRIMARY_MODEL = "gemini-2.0-flash"
 NVIDIA_PRIMARY_MODEL = "meta/llama-3.3-70b-instruct"
-GROQ_PRIMARY_MODEL = "llama-3.3-70b-versatile"
+GROQ_PRIMARY_MODEL = "qwen/qwen3.8-27b"
 GEMINI_SECONDARY_MODEL = "gemini-1.5-flash"
 GROQ_SECONDARY_MODEL = "llama3-8b-8192"
 

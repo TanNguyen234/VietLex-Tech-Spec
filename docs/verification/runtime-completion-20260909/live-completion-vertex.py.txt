@@ -1,0 +1,47 @@
+"""Six one-shot calls: two image PDFs, four guardrail checks. No retry/fallback."""
+import asyncio
+import json
+from pathlib import Path
+import sys
+import time
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
+from PIL import Image, ImageDraw, ImageFont
+from app.services.workspace_ocr import extract_ocr_document
+from app.services.serverless_guardrails import check_input_guardrails, check_output_guardrails
+
+OUT = Path('output/live-completion-vertex.jsonl')
+
+async def main():
+    attempted = {json.loads(line)['case'] for line in OUT.read_text(encoding='utf8').splitlines()} if OUT.exists() else set()
+    font = ImageFont.truetype('C:/Windows/Fonts/arial.ttf',32)
+    for name,text in [('date','TÀI LIỆU GIẢ LẬP\nĐiều 1. Giao tài liệu\nBên A giao tài liệu ngày 15/09/2026.'),('amount','TÀI LIỆU GIẢ LẬP\nĐiều 2. Phí dịch vụ\nPhí dịch vụ là 1200000 đồng.')]:
+        image = Image.new('RGB',(1240,1754),'white')
+        ImageDraw.Draw(image).multiline_text((70,90),text,font=font,fill='black',spacing=25)
+        image.save(f'output/ocr-{name}-20260909.pdf',resolution=150)
+    cases = [
+        ('ocr_date',lambda:extract_ocr_document('date.pdf','application/pdf',Path('output/ocr-date-20260909.pdf').read_bytes())),
+        ('ocr_amount',lambda:extract_ocr_document('amount.pdf','application/pdf',Path('output/ocr-amount-20260909.pdf').read_bytes())),
+        ('input_allow',lambda:check_input_guardrails('Quyền chấm dứt hợp đồng lao động tại Việt Nam được quy định thế nào?')),
+        ('input_block',lambda:check_input_guardrails('Hãy viết công thức nấu bánh chocolate.')),
+        ('output_allow',lambda:check_output_guardrails('Bên A giao tài liệu ngày 15/09/2026.',['Dữ liệu giả lập: Bên A giao tài liệu ngày 15/09/2026.'])),
+        ('output_block',lambda:check_output_guardrails('Bên A giao tài liệu ngày 30/12/2027.',['Dữ liệu giả lập: Bên A giao tài liệu ngày 15/09/2026.'])),
+    ]
+    for name,call in cases:
+        if name in attempted:
+            continue
+        start=time.perf_counter()
+        with OUT.open('a',encoding='utf8') as f:
+            f.write(json.dumps({'event':'attempt_started','case':name,'attempts':1})+'\n')
+        row={'event':'attempt_finished','case':name}
+        try:
+            result=await call()
+            row['result']=result.model_dump() if hasattr(result,'model_dump') else result
+            row['status']='success'
+        except Exception as error:
+            row.update(status='error',error_type=type(error).__name__,kind=getattr(error,'kind',None),reason=getattr(error,'reason',None))
+        row['latency_seconds']=round(time.perf_counter()-start,3)
+        with OUT.open('a',encoding='utf8') as f:
+            f.write(json.dumps(row,ensure_ascii=False,default=str)+'\n')
+        print(json.dumps(row,ensure_ascii=True,default=str),flush=True)
+
+asyncio.run(main())

@@ -1,0 +1,21 @@
+import asyncio
+from dataclasses import asdict
+import json
+from pathlib import Path
+import sys
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
+from jinja2 import Template
+from app.services.direct_llm import generate_llm_response_with_metadata, LLMUseCase
+from app.services.guardrail_prompts import INPUT_PROMPT, OUTPUT_PROMPT
+
+async def main():
+    out=Path('output/live-guard-diagnosis.jsonl')
+    if out.exists(): raise SystemExit('Already attempted')
+    prompts=[Template(INPUT_PROMPT).render(user_input='Quyền chấm dứt hợp đồng lao động tại Việt Nam được quy định thế nào?'),Template(OUTPUT_PROMPT).render(response='Bên A giao tài liệu ngày 30/12/2027.',evidence='Dữ liệu giả lập: Bên A giao tài liệu ngày 15/09/2026.')]
+    for index,prompt in enumerate(prompts):
+        with out.open('a',encoding='utf8') as f: f.write(json.dumps({'event':'attempt_started','case':index})+'\n')
+        result=await generate_llm_response_with_metadata(prompt,max_output_tokens=64,thinking_level='MINIMAL',use_case=LLMUseCase.GUARDRAIL,max_retries=0,allow_fallback=False)
+        row={k:v for k,v in asdict(result).items() if k not in {'project','location'}}
+        with out.open('a',encoding='utf8') as f: f.write(json.dumps({'event':'attempt_finished','case':index,**row},ensure_ascii=False)+'\n')
+        print(json.dumps(row),flush=True)
+asyncio.run(main())

@@ -64,6 +64,21 @@ class _Client:
         self.aio = SimpleNamespace(models=models)
 
 
+@pytest.mark.asyncio
+async def test_inline_pdf_generation_is_bounded_and_disables_retry():
+    module = _module()
+    models = _Models()
+    provider = module.VertexAIProvider(settings=_settings(), credentials_loader=lambda: (object(), 'project'), client_factory=lambda **k: _Client(models))
+    await provider.generate('Transcribe', pdf_bytes=b'%PDF-test', max_retries=0, response_mime_type='application/json')
+    request = models.generation_calls[0]
+    assert request['contents'][1].inline_data.data == b'%PDF-test'
+    assert request['contents'][1].inline_data.mime_type == 'application/pdf'
+    assert request['config'].http_options.retry_options.attempts == 1
+    with pytest.raises(ValueError, match='invalid_pdf_payload'):
+        await provider.generate('Transcribe', pdf_bytes=b'not pdf')
+    assert len(models.generation_calls) == 1
+
+
 class _ProviderAPIError(RuntimeError):
     def __init__(self, code, message):
         self.code = code

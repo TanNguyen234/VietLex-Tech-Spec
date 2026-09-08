@@ -52,5 +52,7 @@ that test infrastructure issue before the successful focused gate.
 
 ## Delivery
 
-Commit/push/deployment: pending at report creation. Unrelated skill/config changes,
+Delivered commit 62fbec7a35df527c826a157e39af2fa634785d18 to origin/main. GitHub Actions run 34259865993 passed test-and-lint and build-and-push. Vercel deployment NLZM5FCBTpF1wWq1F1nTWg5XfH4n succeeded. Unrelated skill/config changes,
 build/egg-info and existing evaluation run directories are preserved and excluded.
+
+Production acceptance after deployment: authenticated /admin dashboard and /admin/system rendered real persisted values and online-only readiness. The synthetic workspace accepted admin-original-20260909.txt (215 bytes, SHA-256 0358ea0827bbe9d5ea8579ce1fe25cd23fae8f917ed97903a584e9331236b328), retained its link after reload, and clicking the owner-scoped original link emitted a browser download event. Download bytes were not accessible through the opaque browser result; a separate local Mongo hash comparison failed DNS resolution, so exact live byte round-trip is NOT VERIFIED. Unit tests verify byte/owner/expiry behavior. The test file remains until workspace expiry 2026-10-08. No provider call was used for this upload. Two verified-user acceptance remains NOT RUN pending user self-registration.

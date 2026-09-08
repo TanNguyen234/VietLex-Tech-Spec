@@ -1,0 +1,56 @@
+"""One-shot eight-call synthetic generation A/B; no retry or fallback."""
+import asyncio
+import hashlib
+import json
+from pathlib import Path
+import sys
+import time
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import httpx
+from app.config import get_settings, system_ssl_context
+
+OUT = Path('output/live-completion-ab.jsonl')
+CASES = [
+    ('date', 'Dữ liệu giả lập: Bên A giao tài liệu ngày 15/09/2026. Chỉ trả JSON {"date":"YYYY-MM-DD"} ghi ngày giao trong dữ liệu. Không bổ sung nội dung.', {'date':'2026-09-15'}),
+    ('amount', 'Dữ liệu giả lập: Phí dịch vụ là 1200000 đồng. Chỉ trả JSON {"amount":số_nguyên,"currency":"VND"} dựa trên dữ liệu. Không bổ sung nội dung.', {'amount':1200000,'currency':'VND'}),
+]
+
+async def main():
+    if OUT.exists():
+        raise SystemExit('Refusing to repeat eight-call run: output already exists')
+    settings = get_settings()
+    providers = [
+        ('groq', 'https://api.groq.com/openai/v1/chat/completions', settings.GROQ_API_KEY, ['llama-3.3-70b-versatile','qwen/qwen3.8-27b']),
+        ('nvidia', 'https://integrate.api.nvidia.com/v1/chat/completions', settings.NVIDIA_API_KEY, ['meta/llama-3.3-70b-instruct','mistralai/mistral-large-2-instruct']),
+    ]
+    assert all(item[2] for item in providers), 'Missing key'
+    async with httpx.AsyncClient(verify=system_ssl_context(), timeout=50, transport=httpx.AsyncHTTPTransport(verify=system_ssl_context(), retries=0)) as client:
+        for provider, url, key, models in providers:
+            for model in models:
+                for name, prompt, expected in CASES:
+                    row = {'provider':provider,'model':model,'case':name,'prompt':prompt,'expected':expected,'attempts':1,'max_tokens':512}
+                    started = time.perf_counter()
+                    with OUT.open('a',encoding='utf8') as f:
+                        f.write(json.dumps({'event':'attempt_started',**row},ensure_ascii=False)+'\n')
+                    try:
+                        response = await client.post(url, headers={'Authorization':f'Bearer {key}'}, json={'model':model,'messages':[{'role':'user','content':prompt}],'temperature':0,'max_tokens':512})
+                        row['http_status'] = response.status_code
+                        data = response.json()
+                        if response.is_success:
+                            choice = data['choices'][0]
+                            row.update(text=choice['message'].get('content'),finish_reason=choice.get('finish_reason'),usage=data.get('usage'),observed_model=data.get('model'))
+                            try:
+                                row['exact_json_pass'] = json.loads(row['text']) == expected and row['finish_reason']=='stop'
+                            except (ValueError,TypeError):
+                                row['exact_json_pass'] = False
+                        else:
+                            row['error_code'] = data.get('error',{}).get('code') if isinstance(data.get('error'),dict) else 'provider_error'
+                    except Exception as error:
+                        row['error_type'] = type(error).__name__
+                    row['latency_seconds'] = round(time.perf_counter()-started,3)
+                    with OUT.open('a',encoding='utf8') as f:
+                        f.write(json.dumps({'event':'attempt_finished',**row},ensure_ascii=False)+'\n')
+                    print(json.dumps({k:v for k,v in row.items() if k not in {'prompt','text','usage'}},ensure_ascii=False),flush=True)
+
+asyncio.run(main())

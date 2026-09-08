@@ -377,7 +377,20 @@
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.detail || 'upload_failed');
         location.reload();
-      } catch { if (result) result.textContent = 'Không thể tải tài liệu. Kiểm tra định dạng, dung lượng hoặc nội dung trích xuất.'; }
+      } catch (error) {
+        const uploadErrors = {
+          ocr_incomplete: 'OCR chưa đọc đầy đủ tài liệu; chưa lưu kết quả. Thử tách PDF thành ít trang hơn.',
+          ocr_invalid_response: 'Kết quả OCR không đủ hoặc sai thứ tự trang; chưa lưu tài liệu.',
+          ocr_page_limit: 'OCR chỉ hỗ trợ tối đa 5 trang mỗi tài liệu.',
+          ocr_file_limit: 'OCR chỉ hỗ trợ PDF tối đa 3,7 MB.',
+          ocr_pdf_only: 'Chỉ chọn OCR khi tải file PDF.',
+          ocr_timeout: 'OCR vượt thời gian xử lý. Không tự thử lại.',
+          duplicate_document: 'Tài liệu này đã có trong hồ sơ.',
+          demo_daily_quota: 'Đã hết lượt AI hôm nay.',
+          workspace_changed: 'Hồ sơ đã thay đổi hoặc chạm giới hạn tổng dung lượng 12 MB; chưa lưu tài liệu.'
+        };
+        if (result) result.textContent = uploadErrors[error.message] || 'Không thể tải tài liệu. Kiểm tra định dạng, dung lượng hoặc thử lại sau.';
+      }
       finally { pending = false; button.disabled = false; }
       return;
     }

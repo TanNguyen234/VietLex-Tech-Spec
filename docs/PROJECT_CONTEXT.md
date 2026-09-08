@@ -108,3 +108,11 @@ The current priority is to establish a verified, measurable, reproducible, and d
 
 - Cache entries are valid only for the exact corpus and pipeline fingerprint (including `ANSWER_PROMPT_VERSION`) and only for request status `ok`.
 - Each hit carries the original evidence contexts plus their SHA-256. Missing, empty, tampered, old-schema, `no_evidence`, or `blocked_output` entries are ignored.
+
+## Serverless OCR and guardrail update — 2026-09-09
+
+On `SERVERLESS_ONLINE_ONLY=true`, opt-in chat self-checks use the versioned NeMo prompts through the current Vertex primary, one request per check, without retry/fallback or NeMo import. Container NeMo and offline off/shadow/enforce behavior remain unchanged. Complete yes/no decisions may include the exact prompt label; technical failures remain distinct from semantic blocks. The legacy free switch still prevents Vertex client creation.
+
+Workspace uploads have explicit opt-in inline-PDF OCR (maximum 5 pages, 3,700,000 bytes, 60 seconds, 8,192 output tokens, one Vertex request). Strict JSON/page coverage rejects partial output. Machine text retains page/hash/model provenance and is visibly unverified. Original bytes and text share the existing owner-scoped Mongo record and retention. Reviewer demo OCR reserves the AI budget; ordinary text extraction makes zero generation calls. No external worker, Files API, new storage collection or migration is required.
+
+The Groq primary is `qwen/qwen3.8-27b` after an identical-input two-case synthetic operational A/B (old alias HTTP 404, new alias 2/2 exact JSON). This is not evidence of legal-answer quality. NVIDIA original/candidate failed live and were not replaced; the old Groq secondary is also unverified/unavailable in the catalog. No retrieval model, embeddings, reranking or corpus changes.
