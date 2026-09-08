@@ -15,6 +15,14 @@ from app.api.routes import router as api_router
 from app.api.account_routes import router as account_router
 from app.api.legal_routes import router as legal_router
 from app.api.workspace_routes import router as workspace_router
+from app.api.legal_timeline_routes import router as timeline_router
+from app.api.claim_verification_routes import router as claim_router
+from app.api.document_redline_routes import router as redline_router
+from app.api.research_report_routes import router as research_report_router
+from app.api.trusted_source_routes import router as source_router
+from app.api.model_comparison_routes import router as model_comparison_router
+from app.api.full_document_review_routes import router as full_review_router
+from app.api.legal_effect_routes import router as legal_effect_router
 from app.api.evaluation_lab_routes import router as evaluation_lab_router
 from app.api.dependencies import optional_user
 from app.services.web_security import (
@@ -110,6 +118,14 @@ app.include_router(api_router)
 app.include_router(account_router)
 app.include_router(legal_router)
 app.include_router(workspace_router)
+app.include_router(timeline_router)
+app.include_router(claim_router)
+app.include_router(redline_router)
+app.include_router(research_report_router)
+app.include_router(source_router)
+app.include_router(model_comparison_router)
+app.include_router(full_review_router)
+app.include_router(legal_effect_router)
 app.include_router(evaluation_lab_router)
 
 @app.get("/", response_class=HTMLResponse)

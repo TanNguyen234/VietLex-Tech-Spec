@@ -17,6 +17,20 @@ Domain hiện có: https://vietlex-legal-rag.vercel.app . Kiểm tra có dòng *
 
 Đây là checklist thao tác cho reviewer, không phải tuyên bố mọi bước đã chạy online trong phiên đóng gói. Kết quả đã chạy nằm trong báo cáo verification và bản ghi online riêng.
 
+## Công cụ mới trong hồ sơ
+
+Các bước dưới là hướng dẫn nghiệm thu, không phải bằng chứng đã chạy AI thật online.
+
+- Tải hai file hư cấu `docs/reviewer/sample-contract.txt` và `sample-contract-revised.txt`; chọn bản trước/bản sau để xem phần thêm, xóa, thay đổi. Đối chiếu này không gọi AI.
+- Ghim trích đoạn có ngày, chọn bằng chứng rồi dựng timeline. Ngày không hợp lệ và hạn tương đối thiếu ngày bắt đầu được tách riêng; không tự suy ra ngày đáo hạn.
+- Chọn nguồn rồi nhập tối đa 10 khẳng định để kiểm chứng. `supported`/`contradicted` là đánh giá của mô hình kèm quote khớp nguồn; không phải kết luận pháp lý đã được chuyên gia xác nhận.
+- Lập báo cáo từ nguồn đã chọn để xem phân tích, ngoại lệ, checklist và kết quả kiểm chứng. Một báo cáo dùng tối đa hai lần gọi mô hình; các dẫn nguồn không khớp được cảnh báo.
+- Với một tài liệu, lập kế hoạch rà soát rồi chạy từng lô. Xem số điều khoản chưa chạy/bị bỏ qua vì vượt ngân sách. Tiến độ lưu theo ba fingerprint kế hoạch gần nhất của tài liệu; thay đổi nguồn hoặc nội dung tạo fingerprint mới.
+- Đọc tối đa ba URL HTML tại vanban.chinhphu.vn/baochinhphu.vn; ghim nguyên văn một trích đoạn đã lưu. Reader báo lỗi nguồn bị chặn, không tự theo redirect hoặc đọc file PDF. Nội dung trùng được gắn nhãn, không được suy thành mâu thuẫn pháp luật.
+- So sánh hai model nếu operator đã cấu hình ít nhất hai lựa chọn. Hai câu trả lời dùng cùng input; thiếu model ID thực báo từ provider được đánh dấu chưa xác định. Không chọn model thắng từ độ giống nhau văn bản.
+- Quản trị viên có thể ghi nhận sự kiện hiệu lực sau khi đối chiếu quote/ngày/số hiệu/phạm vi với nguồn chính thức. Sửa đổi một phần không tự chứng minh hiệu lực của toàn văn bản.
+- Xem quota còn lại tại Cài đặt tài khoản. Admin có thêm số lượt bị admission từ chối trong tiến trình hiện tại; đây không phải tổng WAF toàn hệ thống.
+
 ## Chính sách demo
 
 - Khách chưa login: chỉ đọc/tra cứu; mutation bị chặn trước body/provider.

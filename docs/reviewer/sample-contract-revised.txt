@@ -1,0 +1,13 @@
+MẪU HƯ CẤU CHỈ ĐỂ TEST PHẦN MỀM — KHÔNG PHẢI HỢP ĐỒNG DÙNG THẬT
+
+Điều 1. Công việc
+Bên A thuê Bên B chuẩn bị một bản mô tả sản phẩm mẫu. Các bên và giao dịch đều hư cấu.
+
+Điều 2. Bàn giao
+Bên B dự kiến bàn giao bản mô tả vào ngày 20/10/2026. Tiêu chí chấp nhận sẽ do hai bên thống nhất bằng văn bản.
+
+Điều 3. Thanh toán
+Bên A dự kiến thanh toán trong 10 ngày sau khi chấp nhận sản phẩm. Mẫu này cố ý chưa quy định đầy đủ thời hạn, số tiền và cách giải quyết bất đồng để thử giao diện review; không có nhãn đúng/sai pháp lý.
+
+Điều 4. Lưu bản bàn giao
+Hai bên lưu một bản mô tả sản phẩm mẫu sau khi bàn giao. Nội dung này chỉ phục vụ thử chức năng redline.

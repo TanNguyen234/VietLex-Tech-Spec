@@ -143,7 +143,157 @@
     });
     table.append(head, body); target.append(table);
   }
+  function sourceLinks(ids, payload) {
+    const group = element('div', undefined, 'analysis-source-links');
+    const cell = evidenceLinks(ids, payload); group.append(...cell.childNodes); return group;
+  }
+  function renderTimeline(payload, target) {
+    target.replaceChildren();
+    target.append(element('p', 'Các ngày được trích từ nguồn; chưa xác minh hiệu lực hoặc tính đúng đắn của thời hạn pháp lý.', 'legal-warning'));
+    const timeline = payload.result || {};
+    (timeline.events || []).forEach(event => {
+      const card = element('article');
+      card.append(element('h3', event.date), element('p', event.context), element('blockquote', event.quote));
+      card.append(sourceLinks([event.evidence_id], payload)); target.append(card);
+    });
+    (timeline.unresolved || []).forEach(event => {
+      const card = element('article');
+      card.append(element('p', event.reason === 'invalid_calendar_date' ? 'Ngày không hợp lệ' : 'Cần xác định ngày bắt đầu'), element('blockquote', event.quote), sourceLinks([event.evidence_id], payload)); target.append(card);
+    });
+    const coverage = timeline.coverage || {};
+    target.append(element('p', `${coverage.sources_with_dates || 0}/${coverage.sources_total || 0} nguồn có ngày hợp lệ; ${coverage.events || 0} mốc, ${coverage.unresolved || 0} mục cần làm rõ.`, 'muted'));
+  }
+  function renderClaims(payload, target) {
+    target.replaceChildren();
+    target.append(element('p', 'Đánh giá của mô hình trong phạm vi nguồn đã chọn; không chứng nhận tính đúng đắn pháp lý.', 'legal-warning'));
+    if (payload.status !== 'ok') target.append(element('p', labels[payload.status] || 'Chưa kiểm chứng được các khẳng định.', 'legal-warning'));
+    const verification = payload.result || {};
+    const verdicts = {supported: 'Nguồn hỗ trợ', contradicted: 'Nguồn mâu thuẫn', insufficient: 'Chưa đủ bằng chứng'};
+    (verification.claims || []).forEach(claim => {
+      const card = element('article'); card.append(element('h3', claim.text), element('p', verdicts[claim.verdict] || claim.verdict));
+      (claim.quotes || []).forEach(quote => card.append(element('blockquote', quote.quote), sourceLinks([quote.evidence_id], payload)));
+      target.append(card);
+    });
+    const coverage = verification.coverage || {};
+    target.append(element('p', `${coverage.assessed_claims || 0}/${coverage.total_claims || 0} khẳng định đã đánh giá; ${coverage.insufficient_claims || 0} chưa đủ bằng chứng; ${coverage.skipped_claims || 0} chưa đánh giá.`, 'muted'));
+  }
+  function renderRedline(payload, target) {
+    target.replaceChildren();
+    target.append(element('p', 'So sánh văn bản, chưa đánh giá ý nghĩa hoặc rủi ro pháp lý.', 'legal-warning'));
+    const redline = payload.result || {};
+    const groups = {added: 'Thêm', removed: 'Xóa', changed: 'Thay đổi', same: 'Nội dung giữ nguyên'};
+    Object.entries(groups).forEach(([key, title]) => {
+      const section = element('details'); section.open = key !== 'same';
+      section.append(element('summary', `${title}: ${(redline[key] || []).length}`));
+      (redline[key] || []).forEach(row => {
+        const card = element('article');
+        card.append(element('h3', (row.before?.title || row.after?.title || 'Điều khoản')));
+        ['before', 'after'].forEach(side => { if (row[side]) card.append(element('p', `${side === 'before' ? 'Trước' : 'Sau'}: ${row[side].clause_id} · thứ tự ${row[side].order || '—'}`, 'muted')); });
+        if (row.comparison_mode === 'bounded_coarse_span') card.append(element('p', 'Vùng thay đổi lớn; hiển thị trích đoạn thay vì diff từng ký tự.', 'muted'));
+        const changes = row.changes || [{before: row.before_quote, after: row.after_quote}];
+        changes.forEach(change => {
+          if (change.before?.quote) card.append(element(key === 'same' ? 'blockquote' : 'del', change.before.quote));
+          if (change.after?.quote && key !== 'same') card.append(element('ins', change.after.quote));
+        });
+        section.append(card);
+      }); target.append(section);
+    });
+    const coverage = redline.coverage?.clauses || {};
+    target.append(element('p', `${coverage.numerator || 0}/${coverage.denominator || 0} điều khoản được đối chiếu.`, 'muted'));
+  }
+  function renderReport(payload, target) {
+    target.replaceChildren();
+    const bundle = payload.result || payload, report = bundle.report;
+    if (payload.status === 'citation_mismatch') target.append(element('p', 'Có khẳng định dẫn nguồn không khớp với nguồn mô hình dùng để kiểm chứng. Cần rà soát lại.', 'legal-warning'));
+    target.append(element('p', 'Báo cáo giới hạn trong nguồn đã chọn. Kiểm chứng bằng mô hình; chưa được chuyên gia xác nhận.', 'legal-warning'));
+    if (!report) { target.append(element('p', labels[payload.status] || 'Chưa lập được báo cáo.')); return; }
+    target.append(element('h3', report.issue));
+    Object.entries({analysis: 'Phân tích', exceptions: 'Ngoại lệ', checklist: 'Checklist'}).forEach(([key,title]) => {
+      const section = element('section'); section.append(element('h3', title));
+      (report[key] || []).forEach(claim => { const row = element('article'); row.append(element('p', claim.text), sourceLinks(claim.evidence_ids || [], payload)); section.append(row); });
+      target.append(section);
+    });
+    (report.unknown || []).forEach(text => target.append(element('p', text, 'legal-warning')));
+    const assessment = element('details'), view = element('div'); assessment.append(element('summary', 'Kiểm chứng khẳng định'), view);
+    renderClaims({...bundle.model_assessment, evidence_snapshot: payload.evidence_snapshot}, view); target.append(assessment);
+  }
+  function renderSources(payload, target) {
+    target.replaceChildren();
+    target.append(element('p', 'Nội dung HTML trích xuất từ nguồn; chưa xác minh hiệu lực hoặc tính đầy đủ của văn bản.', 'legal-warning'));
+    (payload.result?.sources || []).forEach((source,index) => {
+      const card = element('details'), link = element('a', source.url);
+      link.href = source.url; link.target = '_blank'; link.rel = 'noopener noreferrer';
+      card.append(element('summary', source.title || source.url), link, element('p', source.text));
+      if (source.truncated) card.append(element('p', `Chỉ lưu ${source.stored_characters}/${source.extracted_characters} ký tự.`, 'legal-warning'));
+      // Pin only exact server-stored excerpts; requests include no replacement source body.
+      const form = element('form'), quote = element('textarea'), button = element('button', 'Ghim trích đoạn', 'button button-quiet');
+      quote.name = 'quote'; quote.maxLength = 3000; quote.required = true; quote.placeholder = 'Dán nguyên văn trích đoạn từ nội dung phía trên';
+      const label = element('label', 'Trích đoạn cần ghim'); label.append(quote); form.append(label, button);
+      form.addEventListener('submit', async event => {
+        event.preventDefault(); button.disabled = true;
+        const data = new FormData(form); data.set('csrf_token', csrf); data.set('analysis_id', payload.analysis_id); data.set('source_index', String(index));
+        try { const response = await fetch('/workspaces/' + workspaceId + '/sources/pin', {method:'POST',body:data}); if (!response.ok) throw new Error(); location.reload(); }
+        catch { button.textContent = 'Chưa ghim được; kiểm tra trích đoạn rồi thử lại'; }
+        finally { button.disabled = false; }
+      });
+      if (payload.analysis_id) card.append(form); target.append(card);
+    });
+    (payload.result?.errors || []).forEach(error => target.append(element('p', error.url + ' · ' + error.kind, 'legal-warning')));
+    (payload.result?.duplicates || []).forEach(group => target.append(element('p', 'Nội dung trùng: ' + group.urls.join(' · '), 'muted')));
+  }
+  function renderModels(payload, target) {
+    target.replaceChildren();
+    target.append(element('p', 'Đối chiếu văn bản trả lời; chưa đánh giá model nào đúng pháp luật.', 'legal-warning'));
+    (payload.result?.responses || []).forEach(response => {
+      const card = element('article'); card.append(element('h3', response.requested?.provider + ' · ' + response.requested?.model), element('p', response.status), element('p', response.text || 'Không có câu trả lời.'));
+      card.append(element('p', 'Model phản hồi: ' + (response.observed?.model && response.observed.model !== 'unobserved' ? response.observed.model : 'Provider chưa báo mã model'), 'muted'));
+      const usage = response.usage || {}; card.append(element('p', 'Token thực đo: ' + (usage.total_token_count ?? 'Chưa có số liệu'), 'muted')); target.append(card);
+    });
+    const comparison = payload.result?.textual_comparison || {};
+    target.append(element('p', {same:'Hai câu trả lời giống nhau sau chuẩn hóa khoảng trắng.', different:'Hai câu trả lời khác nhau về văn bản.', not_available:'Chưa đủ kết quả để đối chiếu.'}[comparison.status] || '', 'muted'));
+  }
+  function renderFullReviewPlan(plan, target) {
+    const aggregate = plan.aggregate || {}, coverage = aggregate.coverage || plan.coverage || {};
+    target.append(element('h3', 'Kế hoạch rà soát theo lô'), element('p', `${coverage.reviewed_clauses || 0}/${coverage.total_clauses || 0} điều khoản đã rà soát; ${coverage.skipped_clauses || 0} chưa thể xếp lô.`, 'muted'));
+    (plan.skipped || []).forEach(item => target.append(element('p', item.clause_id + ' · ' + item.reason, 'legal-warning')));
+    const pendingIds = aggregate.pending_batch_ids || (plan.batches || []).map(batch => batch.batch_id);
+    (plan.batches || []).filter(batch => pendingIds.includes(batch.batch_id)).forEach(batch => {
+      const form = element('form'), button = element('button', 'Rà soát ' + batch.batch_id + ' (' + batch.clause_ids.length + ' điều khoản)', 'button button-quiet');
+      form.append(button);
+      form.addEventListener('submit', async event => {
+        event.preventDefault(); if (pending) return; pending = true; button.disabled = true;
+        const data = new FormData(); Object.entries({csrf_token:csrf,document_id:plan.document_id,batch_id:batch.batch_id,input_sha256:plan.input_sha256,legal_evidence_ids:plan.legal_evidence_ids.join(',')}).forEach(([key,value]) => data.set(key,value));
+        try { const response = await fetch('/workspaces/' + workspaceId + '/analyses/full-review',{method:'POST',body:data}); const payload = await response.json(); renderAnalysis(payload); }
+        catch { result.textContent = 'Chưa rà soát được lô này. Tải lại kế hoạch để kiểm tra trạng thái.'; }
+        finally { pending = false; button.disabled = false; }
+      }); target.append(form);
+    });
+    if (coverage.complete) target.append(element('p', 'Đã rà soát toàn bộ phạm vi của kế hoạch này. Kết quả vẫn cần chuyên gia kiểm tra.'));
+  }
+  document.querySelectorAll('[data-full-review-plan]').forEach(button => button.addEventListener('click', async () => {
+    if (pending) return; pending = true; button.disabled = true;
+    const lawIds = [...document.querySelectorAll('[name="selected_evidence"]:checked')].filter(node => node.closest('[data-source-kind]')?.dataset.sourceKind !== 'user_document').map(node => node.value);
+    const data = new FormData(); data.set('csrf_token',csrf); data.set('legal_evidence_ids',lawIds.join(','));
+    try { const response = await fetch('/workspaces/' + workspaceId + '/documents/' + button.dataset.documentId + '/analyses/full-review/plan',{method:'POST',body:data}); const plan = await response.json(); if (!response.ok) throw new Error(); result.replaceChildren(); renderFullReviewPlan(plan,result); }
+    catch { result.textContent = 'Chưa lập được kế hoạch; kiểm tra tài liệu và phạm vi bằng chứng.'; }
+    finally { pending = false; button.disabled = false; }
+  }));
+  function renderLegalEffect(payload, target) {
+    target.replaceChildren(); const effect = payload.result || payload;
+    target.append(element('p', 'Tình trạng theo các sự kiện đã được quản trị viên đối chiếu trong hồ sơ này; chưa chứng nhận tính đầy đủ của lịch sử pháp luật.', 'legal-warning'));
+    (effect.effects || []).forEach(row => target.append(element('p', row.target_document_number + ' · ' + row.as_of + ' · ' + ({effective:'Có hiệu lực theo hồ sơ',repealed:'Đã bãi bỏ theo hồ sơ',replaced:'Đã thay thế theo hồ sơ',unknown:'Chưa xác định'}[row.status] || row.status))));
+    (effect.assertions || []).forEach(row => { const card = element('article'); card.append(element('h3', row.effective_date + ' · ' + row.event_kind), element('blockquote', row.exact_quote), sourceLinks([row.evidence_id], payload)); target.append(card); });
+    (effect.reasons || []).forEach(reason => target.append(element('p', reason, 'muted')));
+  }
   function renderAnalysis(payload, target = result) {
+    if (payload.kind === 'legal_effect_review') { renderLegalEffect(payload, target); return; }
+    if (payload.kind === 'full_document_review') { renderContractReview(payload,target); if (payload.plan) renderFullReviewPlan({...payload.plan,aggregate:payload.aggregate},target); return; }
+    if (payload.kind === 'model_comparison') { renderModels(payload, target); return; }
+    if (payload.kind === 'trusted_sources') { renderSources(payload, target); return; }
+    if (payload.kind === 'research_report') { renderReport(payload, target); return; }
+    if (payload.kind === 'document_redline') { renderRedline(payload, target); return; }
+    if (payload.kind === 'claim_verification') { renderClaims(payload, target); return; }
+    if (payload.kind === 'legal_timeline') { renderTimeline(payload, target); return; }
     if (payload.kind === 'deep_research' || payload.result?.steps) { renderResearch(payload, target); return; }
     if (payload.kind === 'contract_review') { renderContractReview(payload, target); return; }
     target.replaceChildren();
@@ -290,10 +440,16 @@
     event.preventDefault();
     if (pending) return;
     const data = new FormData(form);
-    if (form.dataset.analysis === 'compare') {
+    if (form.dataset.analysis === 'legal-effect') {
+      const event = {}; ['event_kind','effective_date','document_number','target_document_number','exact_quote'].forEach(key => event[key] = data.get(key)); event.evidence_id = data.get('event_evidence_id'); event.scope = data.get('event_scope'); data.set('events',JSON.stringify([event])); data.set('evidence_ids',event.evidence_id);
+    } else if (form.dataset.analysis === 'compare') {
       const a = group('a'), b = group('b');
       if (!a.length || !b.length) { result.textContent = 'Chọn bằng chứng cho cả nhóm A và nhóm B.'; return; }
       data.set('evidence_a', a.join(',')); data.set('evidence_b', b.join(','));
+    } else if (form.dataset.analysis === 'sources') {
+      // URL reads do not use the evidence selection.
+    } else if (form.dataset.analysis === 'redline') {
+      if (data.get('document_a_id') === data.get('document_b_id')) { result.textContent = 'Chọn hai tài liệu khác nhau.'; return; }
     } else {
       if (!selected().length) { result.textContent = 'Chọn ít nhất một bằng chứng.'; return; }
       data.set('evidence_ids', selected().join(','));

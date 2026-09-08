@@ -1,12 +1,24 @@
 # CURRENT_ARCHITECTURE.md — Technical Source of Truth
 
+## Approved workspace feature expansion (2026-09-08)
+
+The owner subsequently approved deployment and implementation of the dated unfinished-feature backlog. The prior backlog remains a historical review, not the current approval state.
+
+- Workspace tools add explicit model claim assessment with exact server-source quotes, structured reports followed by claim assessment, deterministic document redlines and explicit-date timelines. These outputs do not certify legal correctness or current legal effect.
+- Legal-effect records require owner scope plus an administrator's explicit review, an exact official-source quote, applicable date, document references and whole-document/partial scope. Unknown or conflicting histories remain unknown.
+- Public HTML reading is limited to vanban.chinhphu.vn and baochinhphu.vn, three URLs per request, no redirects or login bypass, bounded bodies/text and explicit failures/truncation. Only exact stored excerpts can be pinned. This is not unrestricted general-web search or PDF extraction.
+- Full-document review is an explicit plan and one user-run batch per request. It respects existing context limits and reports oversized/skipped clauses. Successful batch storage atomically preserves bounded document-level progress for the latest three input fingerprints, independently of the 50-entry analysis history. Document deletion removes that progress and dependent private analyses.
+- Model comparison uses two configured direct-provider aliases, identical bounded input, separate observed usage/error records and no implicit cross-provider fallback. Missing reported model identity remains unobserved/partial. Text equality is not an accuracy ranking.
+- Account settings show advisory daily attempt quota and UTC reset, with owner-only projected reads and unavailable states. Admin admission counters are explicitly process-local since startup, not global WAF/Slowapi totals. Actual provider billing reconciliation remains unavailable.
+- OCR/large-object storage and full-corpus expansion are not implemented by this slice. Live model benchmarks, authenticated production workflow tests and edge WAF verification still require operational evidence; no production-readiness promotion follows from these implementations.
+
 ## Reviewer demo packaging (2026-09-08)
 
 - Vercel entrypoint and Docker default to REVIEWER_DEMO_MODE=true (explicit environment override possible). Anonymous mutations are denied before body parsing; active verified accounts use existing owner/admin-scoped functions.
 - Shared Mongo demo_usage records enforce atomic personal/global minute/day attempt caps. AI/research defaults: 3/minute, 20/day/account and 100/day globally. Ordinary writes: 15/minute, 100/day/account and 1000/day globally. Auth: 5/minute and 15/day/peer IP, 200/day globally. Each category has global 60/minute cap. Protective logout/session-revocation/privacy deletion paths skip shared work quota.
 - Admission fails closed on auth/quota errors; it bounds body receive time and per-instance mutation concurrency. Peer-IP Slowapi keys cannot be reset by rotating the anonymous cookie. Edge WAF is still required and has NOT been verified in the packaging session.
 - Runtime dependencies are hash-locked for Python 3.12; Docker uses the same runtime set as Vercel and a non-root user. Installed-package template/static paths are absolute. Wheel alone does not include external immutable evaluation artifacts; the companion source bundle does.
-- Validation and unapproved feature backlog are in docs/REVIEWER_GUIDE.md and docs/UNFINISHED_FEATURES_REVIEW_20260908.md. No new product workflow from that backlog was implemented.
+- Validation and unapproved feature backlog are in docs/REVIEWER_GUIDE.md and docs/UNFINISHED_FEATURES_REVIEW_20260908.md. That packaging release itself introduced no new product workflow; the subsequently approved expansion is described above.
 
 ## Production foundation state
 

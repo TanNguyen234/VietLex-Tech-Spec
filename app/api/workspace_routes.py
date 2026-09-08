@@ -185,11 +185,15 @@ async def workspace_detail(
     workspace, _client_id, _user_id = await _owned_workspace(
         request, workspace_id, current_user
     )
+    from app.services.model_comparison import available_model_choices
+
     return _workspace_page(
         request,
         "research_workspace.html",
         {
             "workspace": workspace,
+            "workspace_user": current_user,
+            "comparison_models": available_model_choices() if current_user and current_user.get("email_verified") else [],
             "official_research_enabled": (
                 settings.OFFICIAL_WEB_RESEARCH_ENABLED
             ),

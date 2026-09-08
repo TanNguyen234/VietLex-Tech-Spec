@@ -5,6 +5,7 @@ import asyncio
 from datetime import datetime, timedelta, timezone
 import hashlib
 import re
+import logging
 
 from pymongo.errors import DuplicateKeyError
 from starlette.requests import Request
@@ -17,6 +18,40 @@ _AUTH = {'/login', '/register', '/forgot-password', '/reset-password', '/verify-
 _PROTECTIVE = re.compile(r'^/(?:logout|account/(?:delete|history/delete|sessions/(?:revoke-others|[^/]+/revoke)))$')
 _UPLOAD = re.compile(r'^/workspaces/[^/]+/documents$')
 _AI = re.compile(r'^/workspaces/[^/]+/(?:analyses/[^/]+|research/run|documents/[^/]+/review)$')
+
+
+_DENIED = {}
+_STARTED_AT = datetime.now(timezone.utc).isoformat()
+
+
+def demo_admission_snapshot() -> dict:
+    return {'scope': 'process_since_start', 'started_at': _STARTED_AT, 'denied': dict(_DENIED)}
+
+
+async def get_demo_quota(subject: str, settings) -> dict:
+    """Advisory daily attempt snapshot; admission remains atomic in middleware."""
+    if not settings.REVIEWER_DEMO_MODE:
+        return {'status': 'disabled'}
+    now = datetime.now(timezone.utc)
+    digest = hashlib.sha256(subject.encode()).hexdigest()
+    reset = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+    result = {'status': 'ok', 'resets_at': reset.isoformat(), 'unit': 'attempts'}
+    try:
+        for category, personal, total in [('ai', settings.DEMO_AI_DAILY_LIMIT,
+                                          settings.DEMO_AI_GLOBAL_DAILY_LIMIT),
+                                         ('write', 100, 1000)]:
+            record = await asyncio.wait_for(get_db().demo_usage.find_one(
+                {'_id': category + ':' + now.strftime('%Y-%m-%d')},
+                {'count': 1, 'subjects.' + digest: 1}), timeout=3) or {}
+            used = max(0, int(record.get('subjects', {}).get(digest, 0)))
+            remaining = max(0, personal - used)
+            shared = max(0, total - int(record.get('count', 0)))
+            result[category] = {'used': used, 'limit': personal, 'remaining': remaining,
+                                'available': min(remaining, shared)}
+    except Exception as error:
+        logging.getLogger(__name__).warning('demo_quota_read_failed type=%s', type(error).__name__)
+        return {'status': 'unavailable'}
+    return result
 
 
 async def reserve_demo_budget(subject: str, category: str, personal: int, total: int,
@@ -61,6 +96,7 @@ class ReviewerDemoMiddleware:
         request = Request(scope)
 
         async def deny(status, kind, message):
+            _DENIED[kind] = min(_DENIED.get(kind, 0) + 1, 2**63 - 1)
             headers = {'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff'}
             if status == 429:
                 headers['Retry-After'] = '60' if kind == 'demo_minute_quota' else '86400'

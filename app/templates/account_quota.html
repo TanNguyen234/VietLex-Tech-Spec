@@ -1,0 +1,7 @@
+{% if demo_quota.status == 'ok' %}
+<section aria-labelledby="quota-title"><h2 id="quota-title">Quota demo hôm nay</h2>
+<p>Số lượt yêu cầu, không phải số token. Lượt lỗi cũng được tính. Hạn mức chung và giới hạn theo phút vẫn áp dụng.</p>
+<dl>{% for key, title in [('ai', 'AI / phân tích'), ('write', 'Lưu / thay đổi dữ liệu')] %}
+<dt>{{ title }}</dt><dd>Đã dùng {{ demo_quota[key].used }} / {{ demo_quota[key].limit }}; còn {{ demo_quota[key].remaining }} lượt cá nhân. Khả dụng theo hạn mức chung: {{ demo_quota[key].available }}.</dd>
+{% endfor %}</dl><p>Đặt lại: {{ demo_quota.resets_at }} (UTC). Số liệu tại thời điểm tải trang.</p></section>
+{% elif demo_quota.status == 'unavailable' %}<p role="status">Chưa đọc được quota. Vui lòng tải lại trang; hạn mức vẫn được kiểm tra khi gửi yêu cầu.</p>{% endif %}

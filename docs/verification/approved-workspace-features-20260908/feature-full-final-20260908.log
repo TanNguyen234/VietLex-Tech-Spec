@@ -1,0 +1,263 @@
+........................................................................ [  6%]
+........................................................................ [ 12%]
+........................................................................ [ 18%]
+........................................................................ [ 24%]
+...................F.................................................... [ 30%]
+........................................................................ [ 36%]
+........................................................................ [ 43%]
+........................................................................ [ 49%]
+...................................................ss................... [ 55%]
+.......................................F................................ [ 61%]
+........................................................................ [ 67%]
+........................................................................ [ 73%]
+........................................................................ [ 80%]
+....................................................................F... [ 86%]
+........................................................................ [ 92%]
+...................................F.................................... [ 98%]
+.................                                                        [100%]
+================================== FAILURES ===================================
+_________________ test_non_git_directory_is_typed_unavailable _________________
+
+tmp_path = WindowsPath('D:/Download/ProfessionalLegalRAG/output/pytest-feature-full-final-20260908-c82f3/test_non_git_directory_is_type0')
+
+    def test_non_git_directory_is_typed_unavailable(tmp_path: Path) -> None:
+        provenance = collect_git_provenance(tmp_path)
+    
+>       assert provenance.status == "unavailable"
+E       AssertionError: assert 'ok' == 'unavailable'
+E         
+E         - unavailable
+E         + ok
+
+tests\evaluation\test_provenance.py:270: AssertionError
+___________ test_isolated_extraction_returns_text_and_typed_errors ____________
+
+    def test_isolated_extraction_returns_text_and_typed_errors():
+        from app.services.document_worker import extract_isolated
+        from app.services.workspace_documents import DocumentExtractionError
+    
+>       result = extract_isolated('sample.txt', 'text/plain', b'Contract content')
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\services\test_document_worker.py:8: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+filename = 'sample.txt', media_type = 'text/plain'
+payload = b'Contract content'
+
+    def extract_isolated(filename: str, media_type: str, payload: bytes):
+        if len(payload) > MAX_UPLOAD_BYTES:
+            raise DocumentExtractionError('document_too_large')
+        request = json.dumps({'filename': filename[:180], 'media_type': media_type[:160],
+                              'payload': base64.b64encode(payload).decode('ascii')}).encode()
+        try:
+            completed = subprocess.run(
+                [sys.executable, '-m', 'app.services.document_worker'],
+                input=request, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                cwd=Path(__file__).resolve().parents[2], timeout=15,
+                creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0,
+            )
+        except subprocess.TimeoutExpired:
+>           raise DocumentExtractionError('document_processing_timeout') from None
+E           app.services.workspace_documents.DocumentExtractionError: document_processing_timeout
+
+app\services\document_worker.py:73: DocumentExtractionError
+______________ test_web_import_does_not_eagerly_load_ai_runtime _______________
+
+    def test_web_import_does_not_eagerly_load_ai_runtime() -> None:
+        script = """
+    import json
+    import sys
+    from app.main import app
+    print(json.dumps({
+        'guardrails': 'app.services.guardrails' in sys.modules,
+        'rag_pipeline': 'app.services.rag_pipeline' in sys.modules,
+        'pyarrow': 'pyarrow' in sys.modules,
+        'pyvi': 'pyvi' in sys.modules,
+        'sklearn': 'sklearn' in sys.modules,
+        'transformers': 'transformers' in sys.modules,
+        'torch': 'torch' in sys.modules,
+    }))
+    """
+>       completed = subprocess.run(
+            [sys.executable, "-c", script],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+
+tests\test_deployment_contract.py:106: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+D:\VI TINH THANH AN\AppData\Local\Programs\Python\Python312\Lib\subprocess.py:550: in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+D:\VI TINH THANH AN\AppData\Local\Programs\Python\Python312\Lib\subprocess.py:1209: in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Popen: returncode: 1 args: ['D:\\Download\\ProfessionalLegalRAG\\.venv\\Scr...>
+input = None, endtime = 24729.453, orig_timeout = 30
+
+    def _communicate(self, input, endtime, orig_timeout):
+        # Start reader threads feeding into a list hanging off of this
+        # object, unless they've already been started.
+        if self.stdout and not hasattr(self, "_stdout_buff"):
+            self._stdout_buff = []
+            self.stdout_thread = \
+                    threading.Thread(target=self._readerthread,
+                                     args=(self.stdout, self._stdout_buff))
+            self.stdout_thread.daemon = True
+            self.stdout_thread.start()
+        if self.stderr and not hasattr(self, "_stderr_buff"):
+            self._stderr_buff = []
+            self.stderr_thread = \
+                    threading.Thread(target=self._readerthread,
+                                     args=(self.stderr, self._stderr_buff))
+            self.stderr_thread.daemon = True
+            self.stderr_thread.start()
+    
+        if self.stdin:
+            self._stdin_write(input)
+    
+        # Wait for the reader threads, or time out.  If we time out, the
+        # threads remain reading and the fds left open in case the user
+        # calls communicate again.
+        if self.stdout is not None:
+            self.stdout_thread.join(self._remaining_time(endtime))
+            if self.stdout_thread.is_alive():
+>               raise TimeoutExpired(self.args, orig_timeout)
+E               subprocess.TimeoutExpired: Command '['D:\\Download\\ProfessionalLegalRAG\\.venv\\Scripts\\python.exe', '-c', "\nimport json\nimport sys\nfrom app.main import app\nprint(json.dumps({\n    'guardrails': 'app.services.guardrails' in sys.modules,\n    'rag_pipeline': 'app.services.rag_pipeline' in sys.modules,\n    'pyarrow': 'pyarrow' in sys.modules,\n    'pyvi': 'pyvi' in sys.modules,\n    'sklearn': 'sklearn' in sys.modules,\n    'transformers': 'transformers' in sys.modules,\n    'torch': 'torch' in sys.modules,\n}))\n"]' timed out after 30 seconds
+
+D:\VI TINH THANH AN\AppData\Local\Programs\Python\Python312\Lib\subprocess.py:1630: TimeoutExpired
+______________ test_help_does_not_boot_the_full_rag_application _______________
+
+    def test_help_does_not_boot_the_full_rag_application() -> None:
+>       completed = subprocess.run(
+            [sys.executable, "run_eval_suite.py", "--help"],
+            cwd=run_eval_suite.PROJECT_ROOT,
+            capture_output=True,
+            text=True,
+            timeout=15,
+            check=False,
+        )
+
+tests\test_run_eval_suite.py:12: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+D:\VI TINH THANH AN\AppData\Local\Programs\Python\Python312\Lib\subprocess.py:550: in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+D:\VI TINH THANH AN\AppData\Local\Programs\Python\Python312\Lib\subprocess.py:1209: in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Popen: returncode: 1 args: ['D:\\Download\\ProfessionalLegalRAG\\.venv\\Scr...>
+input = None, endtime = 24832.875, orig_timeout = 15
+
+    def _communicate(self, input, endtime, orig_timeout):
+        # Start reader threads feeding into a list hanging off of this
+        # object, unless they've already been started.
+        if self.stdout and not hasattr(self, "_stdout_buff"):
+            self._stdout_buff = []
+            self.stdout_thread = \
+                    threading.Thread(target=self._readerthread,
+                                     args=(self.stdout, self._stdout_buff))
+            self.stdout_thread.daemon = True
+            self.stdout_thread.start()
+        if self.stderr and not hasattr(self, "_stderr_buff"):
+            self._stderr_buff = []
+            self.stderr_thread = \
+                    threading.Thread(target=self._readerthread,
+                                     args=(self.stderr, self._stderr_buff))
+            self.stderr_thread.daemon = True
+            self.stderr_thread.start()
+    
+        if self.stdin:
+            self._stdin_write(input)
+    
+        # Wait for the reader threads, or time out.  If we time out, the
+        # threads remain reading and the fds left open in case the user
+        # calls communicate again.
+        if self.stdout is not None:
+            self.stdout_thread.join(self._remaining_time(endtime))
+            if self.stdout_thread.is_alive():
+>               raise TimeoutExpired(self.args, orig_timeout)
+E               subprocess.TimeoutExpired: Command '['D:\\Download\\ProfessionalLegalRAG\\.venv\\Scripts\\python.exe', 'run_eval_suite.py', '--help']' timed out after 15 seconds
+
+D:\VI TINH THANH AN\AppData\Local\Programs\Python\Python312\Lib\subprocess.py:1630: TimeoutExpired
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  D:\Download\ProfessionalLegalRAG\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+tests/services/test_admin_observability.py::test_persisted_request_contains_call_usage
+tests/services/test_admin_observability.py::test_external_http_calls_do_not_pollute_llm_token_usage
+tests/test_database.py::test_log_interaction_persists_all_operational_fields
+tests/test_database.py::test_log_interaction_persists_technical_error
+  D:\Download\ProfessionalLegalRAG\app\database.py:113: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    "timestamp": datetime.utcnow(),
+
+tests/services/test_admin_observability.py::test_persisted_request_contains_call_usage
+tests/services/test_admin_observability.py::test_external_http_calls_do_not_pollute_llm_token_usage
+tests/test_database.py::test_log_interaction_persists_all_operational_fields
+tests/test_database.py::test_log_interaction_persists_technical_error
+  D:\Download\ProfessionalLegalRAG\app\database.py:114: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    "expires_at": datetime.utcnow() + timedelta(
+
+tests/test_database.py::test_update_evaluation_sets_ragas_executed_and_proxy_metrics
+  D:\Download\ProfessionalLegalRAG\app\database.py:205: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    "metrics.evaluated_at": datetime.utcnow(),
+
+tests/test_database_sessions.py::test_session_queries_are_scoped_to_owner
+tests/test_database_sessions.py::test_authenticated_session_queries_use_user_id
+  D:\Download\ProfessionalLegalRAG\app\database.py:506: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    "timestamp": datetime.utcnow(),
+
+tests/test_database_sessions.py::test_session_queries_are_scoped_to_owner
+tests/test_database_sessions.py::test_authenticated_session_queries_use_user_id
+  D:\Download\ProfessionalLegalRAG\app\database.py:507: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    "expires_at": datetime.utcnow() + timedelta(
+
+tests/test_deployment_contract.py::test_demo_home_and_static_work_outside_checkout
+  D:\Download\ProfessionalLegalRAG\app\main.py:63: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+tests/test_deployment_contract.py::test_demo_home_and_static_work_outside_checkout
+tests/test_deployment_contract.py::test_demo_home_and_static_work_outside_checkout
+  D:\Download\ProfessionalLegalRAG\.venv\Lib\site-packages\fastapi\applications.py:4675: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)  # ty: ignore[deprecated]
+
+tests/test_deployment_contract.py::test_demo_home_and_static_work_outside_checkout
+  D:\Download\ProfessionalLegalRAG\app\main.py:74: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("shutdown")
+
+tests/test_rbac.py::test_normal_account_cannot_access_admin
+tests/test_rbac.py::test_admin_account_can_access_admin
+  D:\Download\ProfessionalLegalRAG\.venv\Lib\site-packages\starlette\testclient.py:454: DeprecationWarning: Setting per-request cookies=<...> is being deprecated, because the expected behaviour on cookie persistence is ambiguous. Set cookies directly on the client instance instead.
+    return super().request(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/evaluation/test_provenance.py::test_non_git_directory_is_typed_unavailable
+FAILED tests/services/test_document_worker.py::test_isolated_extraction_returns_text_and_typed_errors
+FAILED tests/test_deployment_contract.py::test_web_import_does_not_eagerly_load_ai_runtime
+FAILED tests/test_run_eval_suite.py::test_help_does_not_boot_the_full_rag_application
+4 failed, 1163 passed, 2 skipped, 20 warnings in 1071.59s (0:17:51)

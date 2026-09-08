@@ -127,3 +127,44 @@ async def test_security_and_privacy_actions_survive_exhausted_write_quota(monkey
         AsyncMock(return_value={"type":"http.request", "body":b"csrf_token=test", "more_body":False}), AsyncMock())
     downstream.assert_awaited_once()
     reserve.assert_not_awaited()
+
+@pytest.mark.asyncio
+async def test_quota_snapshot_projects_only_current_subject_and_global(monkeypatch):
+    import hashlib
+    import app.services.reviewer_demo as demo
+    digest = hashlib.sha256(b'user-a').hexdigest()
+    collection = SimpleNamespace(find_one=AsyncMock(return_value={'count': 99, 'subjects': {digest: 7}}))
+    monkeypatch.setattr(demo, 'get_db', lambda: SimpleNamespace(demo_usage=collection))
+    result = await demo.get_demo_quota('user-a', settings())
+    assert result['status'] == 'ok'
+    assert result['ai']['used'] == 7
+    assert result['ai']['remaining'] == 13
+    assert result['ai']['available'] == 1
+    assert 'subjects' not in str(result)
+    assert collection.find_one.await_args_list[0].args[1] == {'count': 1, 'subjects.' + digest: 1}
+
+@pytest.mark.asyncio
+async def test_quota_snapshot_failure_never_claims_unused_budget(monkeypatch):
+    import app.services.reviewer_demo as demo
+    monkeypatch.setattr(demo, 'get_db', lambda: SimpleNamespace(demo_usage=SimpleNamespace(find_one=AsyncMock(side_effect=RuntimeError('private db error')))))
+    assert await demo.get_demo_quota('u', settings()) == {'status': 'unavailable'}
+
+@pytest.mark.asyncio
+async def test_disabled_quota_does_not_access_database(monkeypatch):
+    import app.services.reviewer_demo as demo
+    monkeypatch.setattr(demo, 'get_db', lambda: pytest.fail('database should not be read'))
+    config = settings()
+    config.REVIEWER_DEMO_MODE = False
+    assert await demo.get_demo_quota('u', config) == {'status': 'disabled'}
+
+@pytest.mark.asyncio
+async def test_denial_counters_are_bounded_and_contain_no_subject(monkeypatch):
+    import app.services.reviewer_demo as demo
+    monkeypatch.setattr(demo, 'resolve_auth_session', AsyncMock(return_value=None))
+    before = demo.demo_admission_snapshot()['denied'].get('demo_login_required', 0)
+    await demo.ReviewerDemoMiddleware(AsyncMock(), settings=settings())(
+        {'type':'http', 'method':'POST', 'path':'/chat', 'headers':[], 'client':('private-peer',1)}, AsyncMock(), AsyncMock())
+    snapshot = demo.demo_admission_snapshot()
+    assert snapshot['denied']['demo_login_required'] == before + 1
+    assert snapshot['scope'] == 'process_since_start'
+    assert 'private-peer' not in str(snapshot)

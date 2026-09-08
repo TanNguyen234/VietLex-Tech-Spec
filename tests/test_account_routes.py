@@ -212,3 +212,22 @@ def test_disabled_user_cannot_login(client, monkeypatch) -> None:
 
     assert response.status_code == 401
     create_session.assert_not_awaited()
+
+def test_settings_quota_is_owner_scoped_and_not_cached(client, monkeypatch):
+    import app.api.account_routes as routes
+    client.app.dependency_overrides[routes.require_user] = lambda: {'_id': 'owner', 'email': 'a@example.com'}
+    monkeypatch.setattr(routes, 'list_auth_sessions', AsyncMock(return_value=[]))
+    quota = AsyncMock(return_value={'status': 'ok', 'resets_at': '2026-09-09T00:00:00+00:00', 'ai': {'used': 7, 'limit': 20, 'remaining': 13, 'available': 1}, 'write': {'used': 0, 'limit': 100, 'remaining': 100, 'available': 100}})
+    monkeypatch.setattr(routes, 'get_demo_quota', quota)
+    response = client.get('/settings')
+    assert response.status_code == 200
+    assert response.headers['cache-control'] == 'no-store'
+    assert 'còn 13' in response.text
+    assert quota.await_args.args[0] == 'owner'
+
+def test_account_export_is_not_cached(client, monkeypatch):
+    import app.api.account_routes as routes
+    client.app.dependency_overrides[routes.require_user] = lambda: {'_id': 'owner'}
+    monkeypatch.setattr(routes, 'export_account', AsyncMock(return_value={'private': 'data'}))
+    response = client.get('/account/export')
+    assert response.headers['cache-control'] == 'no-store'

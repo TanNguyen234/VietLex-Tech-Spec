@@ -1,3 +1,4 @@
+from app.services.reviewer_demo import demo_admission_snapshot
 import asyncio
 import json
 import time
@@ -1138,6 +1139,7 @@ async def admin_page(
                 settings, provider_cooldown_snapshot()
             ),
             "system_status": system_status,
+            "demo_admission": demo_admission_snapshot(),
             "settings": settings,
             "current_admin": _admin,
             "csrf_token": csrf_token,

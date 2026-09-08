@@ -38,6 +38,7 @@ from app.services.accounts import (
 )
 from app.services.email_delivery import SmtpEmailSender
 from app.services.web_security import authentication_rate_limit_key
+from app.services.reviewer_demo import get_demo_quota
 from app.rate_limit import limiter
 
 
@@ -287,8 +288,10 @@ async def account_settings(request: Request, user=Depends(require_user)):
     response = templates.TemplateResponse(
         request,
         "settings.html",
-        {"user": user, "sessions": sessions, "csrf_token": csrf_token},
+        {"user": user, "sessions": sessions, "csrf_token": csrf_token,
+         "demo_quota": await get_demo_quota(str(user["_id"]), settings)},
     )
+    response.headers["Cache-Control"] = "no-store"
     response.set_cookie(
         "csrf_token",
         csrf_token,
@@ -331,7 +334,8 @@ async def account_export(user=Depends(require_user)):
         json.dumps(payload, ensure_ascii=False, default=str, indent=2),
         media_type="application/json",
         headers={
-            "Content-Disposition": 'attachment; filename="vietlex-account.json"'
+            "Content-Disposition": 'attachment; filename="vietlex-account.json"',
+            "Cache-Control": "no-store"
         },
     )
 
