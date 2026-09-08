@@ -1,5 +1,10 @@
 # Test execution
 
+Latest functional evidence (2026-09-08): [commands and gates](verification/feature-live-20260908/commands.md),
+[feature matrix and live limits](verification/feature-live-20260908/README.md).
+The final local provider-free run passed 1,180 tests; its basetemp was outside
+the checkout. Live integration remains opt-in and requires a bounded provider budget.
+
 Install development/evaluation dependencies with `python -m pip install -r requirements.txt`.
 This also installs the application from `pyproject.toml`, including the PDF parser.
 Deployment continues to use `requirements-demo.lock`; evaluation dependencies and tests

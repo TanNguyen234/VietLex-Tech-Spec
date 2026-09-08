@@ -1,0 +1,40 @@
+{
+  "kind": "functional-verification-not-benchmark",
+  "created_at_utc": "2026-09-08T16:49:40.457329+00:00",
+  "runtime_head": "8cbd948147b0bf1fdd3cfefc7a92032f0b202cb5",
+  "git_dirty": true,
+  "git_diff_sha256": "f69957d8622a5c1a522d562cdce27b2a140c8404af565de82e3da34fd59c7a25",
+  "source_file_sha256": {
+    "app/api/full_document_review_routes.py": "7541fdcfefeb0a10ae3803c2f44e8a7309141e2309e8d5c8523bbe991cbfba44",
+    "app/api/research_report_routes.py": "fe72e2a6435af5286e80c8a035c253a2bf3ed1024c4996294df9f3b1c8028e54",
+    "app/api/routes.py": "025ff00df420811962d1961c62f83cc39a5fd164aea91d8d202878aa63cf5635",
+    "app/config.py": "1fd004a9c92dd573757d3b04787b772dd01a25f9f355ef0770997f9d0544e03d",
+    "app/database.py": "9831e37bd4a0fcabb9504a5c558d79cc7c583a0eb31dc8e830d659aaf25a4d3e",
+    "app/services/claim_verification.py": "c0311ada5fade91d7e7d3d1d8071012e71a55c62ca50bf8d3b6d66981e39f4d1",
+    "app/services/direct_llm.py": "21a3295a5e792f968470ae1a712617b1f92cedcc824c5ebd1969eace3541f8f0",
+    "app/services/research_report.py": "e786b225dd2ae5cfd949c6e626db0fb28743b881a0fe3af3c4d18a69799fa074",
+    "app/services/structured_diagnostics.py": "328dd30339b925aaf4bcad60cb7a19ff765c0f83e2c3a64dff9b1ffcb384f57a",
+    "app/services/vertex_ai.py": "3d956f4d65eba045d69f56a035522a200ea79ca3dc32211f80ef33e7e127b3d4",
+    "pyproject.toml": "4a6b9cf6fe23e702fece5f947cc031dbaa8ff89ef2eea5f48037470c8ba62997",
+    "requirements-demo.lock": "9e3aebedb932de2f1e60f6cd328dc3aadb3dadadbc3bb6cbbc0b21f69fd2cfdd",
+    "tests/integration/test_research_report_live.py": "22b8e882bb3faa1d5c5c708d83a0a30df567dc8c39641c27e949fcbc54ee5e2c",
+    "tests/services/test_claim_verification.py": "8bbae313487466f30d53a050b2097e4e882f770d011eae340e26635ec06feb0b",
+    "tests/services/test_direct_llm.py": "3fd6fecdf6fda7ab560ff7f98569b69f1c42f3d8497cb7a2854a253864abec7c",
+    "tests/services/test_research_report.py": "557ed0d50c9fda364ae4df8973029d428f8e9cf6b87d26cfc78385e74146a8cc",
+    "tests/services/test_vertex_ai.py": "2f860f84aeec517ca7ae911cf7f1b9f3fb7764903bd1be94524b4a3a5f3824ff",
+    "tests/test_api_routes.py": "a9cd0ecaa91e52d34edbcda4cf29dc41cc3ff55cbe6f099d744b7027110109c2",
+    "tests/test_database.py": "6afb12c029bae8465a151b05fe5051bb274c57547c8c86617f596c4d2ddd9999",
+    "tests/test_full_document_review_routes.py": "28d3a8ca8be117a4b23d8338bab30cb274f292c6ec764e52b81144cd0cbaea67",
+    "tests/test_research_report_routes.py": "803d6a0cf0d84f2bf6cd947a1f1bb7624ff9c756e4ead90ac4bdfa80d60cc808",
+    "vercel.json": "9a31e3d4bdde655fc6926bafdf562b28411a75b62e434baa11e25fb7ae789e49"
+  },
+  "final_test_xml_sha256": "1f30c1812e8323897bca27f9a39bf7babb7ffb4ef8b832845893f7f9987090e2",
+  "final_provider_free_result": {
+    "passed": 1180,
+    "deselected": 4,
+    "warnings": 30,
+    "seconds": 255.5
+  },
+  "deployed_browser_evidence_revision": "20d0159ef2022d54450910d6238d6bfabc963142",
+  "guardrail_fix_deployment": "PENDING at manifest creation"
+}

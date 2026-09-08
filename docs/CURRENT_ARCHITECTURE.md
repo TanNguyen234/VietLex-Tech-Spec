@@ -258,6 +258,15 @@ The final pilot benchmark requires fused Document Recall@24 `1.0`, applicable Ar
 Remote ingestion is ordered and artifact-bound: `create -> probe-model -> upload -> finalize -> verify -> benchmark`. Runtime/evaluation reads do not create indexes or mutate payload schemas. Raw structural traces use only `dense_hits`, `bm25_hits`, `exact_hits`, `fused_hits`, `reranker_input`, `reranker_output`, and `final_hits`; legacy metric-v3 names exist only in a declared offline adapter. The evaluator records the effective structural collection, limits, reranker mode, and Pinecone fallback in its configuration fingerprint.
 # Administrative request observability
 
+2026-09-08 update: structured workspace reports include bounded validation and
+generation diagnostics; report and claim verification each use a finite 4,096
+output-token budget. Structured Vertex calls request `application/json` while
+keeping strict downstream schemas. New known structured failures populate admin
+technical-error fields; no historical backfill was performed. See the
+[functional verification matrix](verification/feature-live-20260908/README.md).
+Semantic model assessment is available in workspace workflows; the structural
+admin checks described below still do not establish legal correctness.
+
 The authenticated `/admin` workspace projects persisted `evaluation_logs` without invoking retrieval or evaluation providers. Its filters apply to both request summaries and log rows. Administrators can inspect bounded, redacted request/answer content, stored context, retrieval stages, provider/model calls, provider-reported token counts, latency, guardrail state, feedback and stored Ragas proxy results. A bounded CSV export records an administrative audit event.
 
 Token totals include only LLM responses that reported usage. They exclude embedding and reranker usage, provider attempts without usage, and monetary cost. Input, output, thinking and provider-reported total tokens have independent coverage denominators; thinking tokens are not added to provider totals. New chat calls and opt-in Ragas judge calls append to the per-request ledger. Missing and malformed legacy telemetry remains `N/A`, and capture overflow is explicit.

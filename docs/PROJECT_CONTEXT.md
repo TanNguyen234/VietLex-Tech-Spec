@@ -1,5 +1,17 @@
 # PROJECT_CONTEXT.md — VietLex Legal RAG System Context
 
+## Functional verification update (2026-09-08)
+
+Runtime `20d0159` passed 1,179 provider-free tests and CI/Docker, and is deployed
+on Vercel. Structured report diagnostics/token caps and Vertex JSON transport
+were corrected from observed live failures. Synthetic browser report and full
+review passed after deployment. This does not establish production readiness:
+guarded chat and NVIDIA/Groq comparison did not complete successfully in this
+session; email/two-user acceptance, OCR/large storage and legal-quality benchmarks
+remain incomplete. Local guardrail packaging fix `8cbd948` additionally passed
+1,180 tests and awaits its own deployment verification. See the current [feature/evidence matrix](verification/feature-live-20260908/README.md)
+and [remaining work](verification/feature-live-20260908/remaining-work.md).
+
 ## Project Overview
 
 VietLex is an enterprise-grade Vietnamese legal Retrieval-Augmented Generation (RAG) system operating over a pinned third-party corpus of 518,255 legal documents (`vohuutridung/vietnamese-legal-documents`).
