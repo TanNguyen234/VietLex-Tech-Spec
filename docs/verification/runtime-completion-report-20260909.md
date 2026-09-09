@@ -47,3 +47,19 @@ Do not blindly rerun live scripts: the allowance is finite and each journal refu
 Two-user/mail acceptance awaits the user's registration/verification of the second identity; protected admin remains unchanged. NVIDIA availability needs a working authorized model/endpoint. Previously observed Logfire export HTTP 401 still requires owner credential remediation. Large-document processing beyond five-page OCR, backup restore/load/security testing and expert legal benchmark acceptance are **NOT RUN**. Historical answer baseline failed; corpus coverage remains 14,962 audited v3 documents. No production-ready claim.
 
 No corpus ingestion, vector migration/deletion, credential change, new storage service or account mutation. Synthetic originals remain in the existing expiring workspace. Unrelated skill/config/build/evaluation directories remain untouched; Git tree is intentionally dirty. Follow-on commit/CI/deployment and final production OCR evidence will be recorded after delivery.
+
+## Delivery and production acceptance
+
+Runtime commit `a439cd9e60b4cb3e8ac893488d2d2036421b74c1` pushed to main. GitHub Actions run `34264441805` passed test-and-lint and Docker build-and-push. Vercel deployment `A3nZuBfaSMb2gXGKvHRWGpbunFQ8` succeeded.
+
+The final authorized generation attempt used the production upload form with OCR checked. `ocr-date-20260909.pdf` (47,891 bytes; SHA-256 `260f5e4f1c64c9269ca99292454b943690a20bbab95564989f2ffd218ad4914e`) was saved in the existing synthetic workspace. Reloaded UI showed two extracted sections, page provenance, original-download link, model `gemini-3.5-flash`, and the explicit unverified-text warning. Expanded section text preserved `Điều 1. Giao tài liệu` and `Bên A giao tài liệu ngày 15/09/2026.`
+
+Admin trace `5077e212-a59a-4b96-9247-cd2643350cfb` recorded `document_ocr_ok`, **855 reported total tokens, 1/1 calls with usage**. This is a real production form/storage/telemetry acceptance, not a legal certification. The synthetic PDF remains until workspace expiry. **24/24 attempts consumed/reserved; no additional generation is authorized.**
+
+The live log exposed an old presentation error labeling every uncached operation “RAG”. Final correction uses “Trực tiếp”; request status still identifies OCR or other workflow. Regression failed before the label fix; affected admin/public gates passed **48 tests, 1 warning, 16.40 seconds** afterwards. The 1,233-test full-suite result applies to the preceding runtime source; final label change is covered by these affected gates and subsequent CI. Exact final gate:
+
+```powershell
+.venv/Scripts/python.exe -m pytest tests/test_admin_navigation.py tests/test_admin_operations.py tests/test_admin_dashboard.py tests/test_public_templates.py -q -p no:cacheprovider --basetemp='C:/Users/VI TINH THANH AN/.codex/visualizations/2026/09/08/01a081ac-2897-7a21-a24b-71ee2809f0c7/pytest-admin-label-resumed'
+```
+
+Final changed files additionally include `app/templates/admin_logs.html`, `tests/test_admin_navigation.py` and this report. Local preview helper was stopped. No further AI calls were made.

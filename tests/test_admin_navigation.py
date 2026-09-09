@@ -61,6 +61,18 @@ def test_requests_filter_stays_on_requests_page(admin_pages):
     assert 'href="/admin/export.csv?model=example&amp;skip=25"' in response.text
 
 
+def test_non_cached_ocr_row_does_not_claim_retrieval():
+    from app.api.routes import templates
+    rendered = templates.env.get_template('admin_logs.html').render(logs=[{
+        'timestamp': None, 'trace_id': 'ocr-test', 'user_query': 'OCR SHA-256 test',
+        'cached': False, 'metrics': {'request_status': 'document_ocr_ok', 'ragas_status': 'disabled'},
+        'usage': {'total_token_count': 855, 'measured_calls': 1, 'calls': 1},
+        'stored_context_count': 0, 'feedback': {},
+    }])
+    assert '<small>RAG</small>' not in rendered
+    assert '<small>Trực tiếp</small>' in rendered
+
+
 @pytest.mark.parametrize("query", ["skip=-1", "limit=1000", "role=root", "account_status=deleted"])
 def test_accounts_reject_invalid_filters_before_read(admin_pages, query):
     client, readers = admin_pages
