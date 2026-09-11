@@ -83,7 +83,7 @@ def test_workspace_list_and_detail_render_empty_states(client, monkeypatch) -> N
     assert "Chưa có hồ sơ" in listing.text
     assert detail.status_code == 200
     assert "Chưa có bằng chứng được ghim" in detail.text
-    assert "Lập kế hoạch nghiên cứu sâu" in detail.text
+    assert "Tra cứu nguồn pháp luật chính thức" in detail.text
 
 
 def test_workspace_hides_official_research_when_feature_is_disabled(
@@ -100,7 +100,7 @@ def test_workspace_hides_official_research_when_feature_is_disabled(
     response = client.get("/workspaces/w-1")
 
     assert response.status_code == 200
-    assert "Lập kế hoạch nghiên cứu sâu" not in response.text
+    assert "Tra cứu nguồn pháp luật chính thức" not in response.text
 
 
 def test_pin_evidence_resolves_owned_trace_and_index(client, monkeypatch) -> None:

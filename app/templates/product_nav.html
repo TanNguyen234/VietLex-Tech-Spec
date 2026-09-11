@@ -1,5 +1,7 @@
+{% set nav_path = request.url.path if request is defined else '' %}
 <nav class="product-nav" aria-label="Điều hướng ứng dụng">
-  <a href="/">Hỏi đáp</a><a href="/workspaces">Hồ sơ nghiên cứu</a><a href="/search">Tìm văn bản</a><a href="/account">Tài khoản</a>
+  <a class="brand nav-brand" href="/" aria-label="VietLex — trang chủ"><span class="brand-mark">VL</span><span><strong>VietLex</strong><small>Không gian pháp luật</small></span></a>
+  <a href="/"{% if nav_path == '/' %} aria-current="page"{% endif %}>Hỏi đáp</a><a href="/workspaces"{% if nav_path.startswith('/workspaces') %} aria-current="page"{% endif %}>Hồ sơ nghiên cứu</a><a href="/search"{% if nav_path == '/search' or nav_path.startswith('/documents/') %} aria-current="page"{% endif %}>Tìm văn bản</a><a href="/account"{% if nav_path in ['/account', '/settings', '/login', '/register', '/forgot-password', '/reset-password', '/verify-email'] %} aria-current="page"{% endif %}>Tài khoản</a>
   <details><summary>Tìm hiểu thêm</summary><a href="/evaluation-lab">Chất lượng và kiểm chứng</a><a href="/privacy">Quyền riêng tư</a><a href="/terms">Điều khoản</a></details>
   <button type="button" data-theme-switch aria-label="Đổi giao diện sáng tối">Sáng / tối</button>
 </nav>

@@ -41,6 +41,8 @@ async def model_comparison(
 ):
     if not current_user.get("email_verified"):
         raise HTTPException(status_code=403, detail="verified_account_required")
+    if current_user.get("role", "user") != "admin":
+        raise HTTPException(status_code=403, detail="admin_required")
     workspace, client_id, user_id = await _owned_workspace(
         request, workspace_id, current_user
     )

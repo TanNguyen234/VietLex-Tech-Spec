@@ -13,7 +13,7 @@ from app.services.deep_research import OFFICIAL_SOURCE_DOMAINS
 
 
 EventKind = Literal["effective", "repeal", "amend", "replace"]
-EffectStatus = Literal["effective", "repealed", "replaced", "unknown"]
+EffectStatus = Literal["effective", "amended", "partially_effective", "repealed", "replaced", "unknown"]
 
 
 class LegalEffectEvent(BaseModel):
@@ -67,7 +67,7 @@ def _validated_events(
     sources: dict[str, dict] = {}
     for item in evidence:
         evidence_id = str(item.get("evidence_id") or "")
-        if not evidence_id or not _is_official_source(item.get("source_url")):
+        if not evidence_id or evidence_id in sources or not _is_official_source(item.get("source_url")):
             raise ValueError("invalid_legal_effect_event")
         sources[evidence_id] = item
     try:
@@ -163,6 +163,17 @@ def _effect_for_target(
                 "repeal": "repealed",
                 "replace": "replaced",
             }[latest["event_kind"]]
+            if status == "effective":
+                changes = [
+                    event for event in dated
+                    if event["effective_date"] >= latest["effective_date"]
+                ]
+                if any(event["scope"] == "partial" and event["event_kind"] in {"repeal", "replace"} for event in changes):
+                    status = "partially_effective"
+                    reasons.append("partial_termination_in_reviewed_events")
+                elif any(event["event_kind"] == "amend" for event in changes):
+                    status = "amended"
+                    reasons.append("amendment_in_reviewed_events")
     return {
         "target_document_number": target_document_number,
         "as_of": as_of.isoformat(),

@@ -33,6 +33,26 @@ def test_health_is_provider_free(client) -> None:
     assert response.json() == {"status": "ok", "service": "vietlex"}
 
 
+def test_document_chat_bypasses_global_cache(client, monkeypatch):
+    from app.api import legal_routes
+    from app.services import rag_pipeline
+    from app.ingestion.legal_text import DocumentMetadata
+
+    document = SimpleNamespace(metadata=DocumentMetadata(7, "45/2019/QH14", "Luật", "https://vbpl.vn/7", "Luật", "", "", None), content="Điều 25. Thử việc")
+    monkeypatch.setattr(legal_routes, "browser", SimpleNamespace(get_document=lambda value: document if value == 7 else None))
+    cache = AsyncMock(side_effect=AssertionError("global cache forbidden"))
+    monkeypatch.setattr("app.api.routes.check_semantic_cache", cache)
+    monkeypatch.setattr("app.api.routes.save_to_semantic_cache", cache)
+    monkeypatch.setattr("app.api.routes.log_interaction", AsyncMock())
+    pipeline = AsyncMock(return_value=("Trong văn bản này", ["Điều 25"], {"t_total": 0.1}))
+    monkeypatch.setattr(rag_pipeline, "run_advanced_rag", pipeline)
+    response = client.post("/chat", data={"message": "Điều 25", "csrf_token": "valid", "session_id": "s-1", "document_id": "7"})
+    assert response.status_code == 200
+    assert pipeline.await_args.kwargs["scoped_outcome"].evidence[0].document_id == 7
+    cache.assert_not_awaited()
+    assert client.post("/chat", data={"message": "Test", "csrf_token": "valid", "session_id": "s-1", "document_id": "999"}).status_code == 404
+
+
 def test_progress_endpoint_is_owner_scoped(client, monkeypatch) -> None:
     registry = SimpleNamespace(
         get=lambda request_id, client_id: (
@@ -83,6 +103,20 @@ def test_chat_defaults_to_nemo_off(client, monkeypatch) -> None:
     assert response.status_code == 200
     input_guardrail.assert_not_awaited()
     output_guardrail.assert_not_awaited()
+
+
+def test_client_cannot_disable_server_guardrail_policy(client, monkeypatch):
+    monkeypatch.setattr("app.api.routes.settings.PUBLIC_NEMO_DEFAULT_ENABLED", True)
+    guard = AsyncMock(return_value=(True, ""))
+    monkeypatch.setattr("app.api.routes.check_input_guardrails", guard)
+    monkeypatch.setattr("app.api.routes.check_output_guardrails", guard)
+    monkeypatch.setattr("app.api.routes.check_semantic_cache", AsyncMock(return_value=None))
+    monkeypatch.setattr("app.api.routes.run_advanced_rag", AsyncMock(return_value=("Answer", ["Context"], {})))
+    monkeypatch.setattr("app.api.routes.log_interaction", AsyncMock())
+    monkeypatch.setattr("app.api.routes.save_to_semantic_cache", AsyncMock())
+    response = client.post("/chat", data={"message": "Test", "csrf_token": "valid", "session_id": "s-1", "nemo_enabled": "false"})
+    assert response.status_code == 200
+    assert guard.await_count == 2
 
 
 def test_chat_runs_nemo_only_when_explicitly_enabled(client, monkeypatch) -> None:

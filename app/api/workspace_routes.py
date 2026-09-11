@@ -197,6 +197,7 @@ async def workspace_detail(
             "workspace": workspace,
             "workspace_user": current_user,
             "comparison_models": available_model_choices() if current_user and current_user.get("email_verified") else [],
+            "official_web_coverage": "Tìm trên cổng Chính phủ và Brave Search, chỉ giữ domain pháp luật chính thức (nhánh Brave có dùng API)." if settings.OFFICIAL_BRAVE_SEARCH_ENABLED else "Tìm trực tiếp trên vanban.chinhphu.vn; tìm web đa nguồn chưa bật.",
             "official_research_enabled": (
                 settings.OFFICIAL_WEB_RESEARCH_ENABLED
             ),

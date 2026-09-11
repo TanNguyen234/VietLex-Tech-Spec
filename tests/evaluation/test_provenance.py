@@ -264,7 +264,9 @@ def test_source_state_is_content_stable_across_git_index_transitions(
     assert staged.source_state_sha256 == committed.source_state_sha256
 
 
-def test_non_git_directory_is_typed_unavailable(tmp_path: Path) -> None:
+def test_non_git_directory_is_typed_unavailable(tmp_path: Path, monkeypatch) -> None:
+    # --basetemp may be inside the checkout. Do not discover its parent repo.
+    monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
     provenance = collect_git_provenance(tmp_path)
 
     assert provenance.status == "unavailable"

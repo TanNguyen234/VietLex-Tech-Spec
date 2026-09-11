@@ -203,6 +203,11 @@
   }
   function renderReport(payload, target) {
     target.replaceChildren();
+    if (payload.analysis_id) {
+      const link = element('a', 'Mở, sửa hoặc xuất báo cáo');
+      link.href = '/workspaces/' + encodeURIComponent(workspaceId) + '/reports/' + encodeURIComponent(payload.analysis_id);
+      target.append(link);
+    }
     const bundle = payload.result || payload, report = bundle.report;
     if (payload.status === 'citation_mismatch') target.append(element('p', 'Có khẳng định dẫn nguồn không khớp với nguồn mô hình dùng để kiểm chứng. Cần rà soát lại.', 'legal-warning'));
     target.append(element('p', 'Báo cáo giới hạn trong nguồn đã chọn. Kiểm chứng bằng mô hình; chưa được chuyên gia xác nhận.', 'legal-warning'));
@@ -281,11 +286,12 @@
   function renderLegalEffect(payload, target) {
     target.replaceChildren(); const effect = payload.result || payload;
     target.append(element('p', 'Tình trạng theo các sự kiện đã được quản trị viên đối chiếu trong hồ sơ này; chưa chứng nhận tính đầy đủ của lịch sử pháp luật.', 'legal-warning'));
-    (effect.effects || []).forEach(row => target.append(element('p', row.target_document_number + ' · ' + row.as_of + ' · ' + ({effective:'Có hiệu lực theo hồ sơ',repealed:'Đã bãi bỏ theo hồ sơ',replaced:'Đã thay thế theo hồ sơ',unknown:'Chưa xác định'}[row.status] || row.status))));
+    (effect.effects || []).forEach(row => target.append(element('p', row.target_document_number + ' · ' + row.as_of + ' · ' + ({effective:'Có hiệu lực theo hồ sơ',amended:'Đã sửa đổi theo hồ sơ',partially_effective:'Hết hiệu lực một phần theo hồ sơ',repealed:'Đã bãi bỏ theo hồ sơ',replaced:'Đã thay thế theo hồ sơ',unknown:'Chưa xác định'}[row.status] || row.status))));
     (effect.assertions || []).forEach(row => { const card = element('article'); card.append(element('h3', row.effective_date + ' · ' + row.event_kind), element('blockquote', row.exact_quote), sourceLinks([row.evidence_id], payload)); target.append(card); });
     (effect.reasons || []).forEach(reason => target.append(element('p', reason, 'muted')));
   }
   function renderAnalysis(payload, target = result) {
+    if (target === result && ['contract_review', 'full_document_review'].includes(payload.kind)) location.hash = 'review';
     if (payload.kind === 'legal_effect_review') { renderLegalEffect(payload, target); return; }
     if (payload.kind === 'full_document_review') { renderContractReview(payload,target); if (payload.plan) renderFullReviewPlan({...payload.plan,aggregate:payload.aggregate},target); return; }
     if (payload.kind === 'model_comparison') { renderModels(payload, target); return; }

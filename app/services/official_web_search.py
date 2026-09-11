@@ -50,6 +50,8 @@ class OfficialSearchResponse:
     provider: str
     latency_ms: float
     request_count: int = 2
+    errors: tuple[str, ...] = ()
+    method: str = "webforms-search-v1"
 
 
 class _PortalParser(HTMLParser):

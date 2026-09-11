@@ -61,6 +61,45 @@ def test_legal_browser_blank_query_and_missing_document_are_empty() -> None:
     assert browser.get_document(7).content == "Điều 25..."
 
 
+def test_supabase_filters_are_applied_before_limit():
+    from app.services.legal_browser import SupabaseLegalStore, SearchFilters
+    requests = []
+    client = httpx.Client(transport=httpx.MockTransport(lambda request: requests.append(request) or httpx.Response(200, json=[])))
+    store = SupabaseLegalStore(url="https://project.supabase.co", publishable_key="test", client=client)
+    store.search("lao động", limit=20, filters=SearchFilters(legal_type="Bộ luật", authority="Quốc hội", issued_from="2019-01-01", issued_to="2020-01-01", sort="newest"))
+    params = requests[0].url.params
+    assert params["legal_type"] == "eq.Bộ luật"
+    assert params["issuing_authority"] == "eq.Quốc hội"
+    assert params["and"] == "(issuance_date.gte.2019-01-01,issuance_date.lte.2020-01-01)"
+    assert params["order"] == "issuance_date.desc.nullslast,document_id.asc"
+    assert params["limit"] == "20"
+
+
+def test_corpus_quality_queue_reads_bounded_metadata_without_full_content():
+    from app.services.legal_browser import SupabaseLegalStore, LegalBrowser
+    requests = []
+    client = httpx.Client(transport=httpx.MockTransport(lambda request: requests.append(request) or httpx.Response(200, json=[])))
+    store = SupabaseLegalStore(url="https://project.supabase.co", publishable_key="test", client=client)
+    assert LegalBrowser(store=store, index=store).quality_queue("missing_date", offset=50) == []
+    params = requests[0].url.params
+    assert params["issuance_date"] == "is.null"
+    assert params["limit"] == "50" and params["offset"] == "50"
+    assert "content" not in params["select"]
+
+
+def test_local_filters_are_not_applied_to_an_already_truncated_page(tmp_path):
+    import sqlite3
+    from app.services.legal_browser import LegalBrowser, SearchFilters
+    store = _Store()
+    store.path = tmp_path / "content.sqlite3"
+    with sqlite3.connect(store.path) as connection:
+        connection.execute("CREATE TABLE metadata(document_id INTEGER, document_number TEXT, title TEXT, legal_type TEXT, issuing_authority TEXT, issuance_date TEXT)")
+        connection.executemany("INSERT INTO metadata VALUES(?,?,?,?,?,?)", [(i, "X", "lao động", "Khác", "", "2020-01-01") for i in range(6)])
+        connection.execute("INSERT INTO metadata VALUES(7,'45/2019/QH14','lao động','Bộ luật','Quốc hội','2019-11-20')")
+    result = LegalBrowser(store=store, index=_Index([])).search("lao động", limit=1, filters=SearchFilters(legal_type="Bộ luật"))
+    assert [row.document_id for row in result] == [7]
+
+
 def test_supabase_legal_store_reads_search_and_full_document() -> None:
     from app.services.legal_browser import SupabaseLegalStore
 

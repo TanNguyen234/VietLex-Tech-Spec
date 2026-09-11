@@ -530,10 +530,11 @@ async def run_advanced_rag(
     *,
     rewrite_mode: str = "off",
     profile: Any = None,
+    scoped_outcome: RetrievalOutcome | None = None,
 ) -> Tuple[str, List[str], Dict[str, Any]]:
     started = time.perf_counter()
 
-    if rewrite_mode == "off":
+    if rewrite_mode == "off" or scoped_outcome is not None:
         rewritten_query = user_query
         rewrite_seconds = 0.0
         rewrite_meta = {
@@ -550,7 +551,7 @@ async def run_advanced_rag(
         rewrite_seconds = time.perf_counter() - rewrite_started
 
     retrieval_started = time.perf_counter()
-    retrieval_outcome = await retrieve_configured_legal_evidence(
+    retrieval_outcome = scoped_outcome if scoped_outcome is not None else await retrieve_configured_legal_evidence(
         rewritten_query,
         user_query,
         profile,
@@ -559,7 +560,8 @@ async def run_advanced_rag(
     retrieval_seconds = time.perf_counter() - retrieval_started
 
     contexts = [
-        chunk.formatted_context() for chunk in evidence
+        ((f"ID tài liệu: {chunk.document_id}\n" if scoped_outcome is not None else "")
+         + chunk.formatted_context()) for chunk in evidence
     ]
     latency = {
         "t_rewrite": round(rewrite_seconds, 3),
@@ -614,7 +616,7 @@ async def run_advanced_rag(
             3,
         )
         latency["generation_status"] = "no_contexts"
-        return NO_EVIDENCE_RESPONSE, [], latency
+        return ("Không tìm thấy căn cứ phù hợp trong văn bản này." if scoped_outcome is not None else NO_EVIDENCE_RESPONSE), [], latency
 
     llm_started = time.perf_counter()
     llm_result = await generate_response_with_metadata(

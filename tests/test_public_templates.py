@@ -14,7 +14,7 @@ def test_index_uses_local_assets_and_exposes_accessible_controls() -> None:
     assert 'href="/static/css/vietlex.css"' in html
     assert 'src="/static/js/vietlex.js"' in html
     assert 'aria-label="Tìm hội thoại"' in html
-    assert 'name="nemo_enabled"' in html
+    assert 'name="nemo_enabled"' not in html
     assert 'id="system-readiness"' in html
     assert 'id="theme-toggle"' in html
     assert 'href="/workspaces"' in html

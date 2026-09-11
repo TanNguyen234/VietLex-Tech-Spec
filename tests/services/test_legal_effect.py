@@ -14,6 +14,35 @@ def _evidence() -> list[dict]:
     ]
 
 
+@pytest.mark.parametrize("kind, expected", [("repeal", "partially_effective"), ("replace", "partially_effective"), ("amend", "amended")])
+def test_later_partial_event_qualifies_effective_status(kind, expected):
+    from app.services.legal_effect import review_legal_effect
+
+    evidence = _evidence()
+    events = [
+        dict(event_kind="effective", effective_date="2021-01-01",
+             document_number="01/2020/QH14", target_document_number="01/2020/QH14",
+             evidence_id="ev-1", exact_quote=evidence[0]["excerpt"].split(". ")[0] + ".",
+             scope="whole_document"),
+        dict(event_kind=kind, effective_date="2024-01-01",
+             document_number="01/2020/QH14", target_document_number="01/2020/QH14",
+             evidence_id="ev-1", exact_quote="Văn bản 01/2020/QH14 bị bãi bỏ ngày 01/01/2024.",
+             scope="partial"),
+    ]
+    assert review_legal_effect(evidence, "2023-01-01", events)["result"]["effects"][0]["status"] == "effective"
+    assert review_legal_effect(evidence, "2024-01-01", events)["result"]["effects"][0]["status"] == expected
+    events[1]["event_kind"] = "repeal"
+    events[1]["scope"] = "whole_document"
+    assert review_legal_effect(evidence, "2024-01-01", events)["result"]["effects"][0]["status"] == "repealed"
+
+
+def test_duplicate_evidence_ids_are_rejected_instead_of_overwriting_provenance():
+    from app.services.legal_effect import review_legal_effect
+
+    with pytest.raises(ValueError, match="invalid_legal_effect_event"):
+        review_legal_effect(_evidence() * 2, "2023-01-01", [])
+
+
 def test_legal_effect_uses_explicit_official_effective_event_only() -> None:
     from app.services.legal_effect import review_legal_effect
 

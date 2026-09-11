@@ -1,5 +1,7 @@
 # CURRENT_ARCHITECTURE.md — Technical Source of Truth
 
+> Current product capability status: [FEATURE_STATUS](../FEATURE_STATUS.md). Dated updates below describe their own change sets, not an exhaustive current feature inventory. Local product reliability changes have not been deployed or live-provider verified.
+
 ## Admin and temporary originals update (2026-09-09)
 
 Admin now has dedicated Overview, Requests, Usage, Accounts, Providers, Evaluation,

@@ -1,4 +1,6 @@
-# Chức năng chưa hoàn thiện — chờ chủ dự án duyệt
+# Bản review lịch sử ngày 2026-09-08
+
+> Tài liệu lịch sử, không dùng để xác định chức năng hiện tại hoặc quyền triển khai. Một số mục dưới đây đã được triển khai sau review. Nguồn trạng thái duy nhất: [FEATURE_STATUS](../FEATURE_STATUS.md). Yêu cầu cải tiến hiện tại của chủ dự án thay thế phạm vi đóng gói cũ; ranh giới commit/provider/migration trong AGENTS.md vẫn áp dụng.
 
 Ngày rà soát: 2026-09-08. Căn cứ: code/tests hiện tại, config và CURRENT_ARCHITECTURE; không dùng nhận xét marketing làm bằng chứng runtime. **Không triển khai các mục F01–F10 trước khi chủ dự án duyệt phạm vi cụ thể.** Đợt hiện tại chỉ đóng gói và bảo vệ các chức năng đã có.
 

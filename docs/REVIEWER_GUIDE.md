@@ -1,6 +1,6 @@
 # VietLex reviewer demo
 
-Bản demo phục vụ đánh giá năng lực kỹ thuật, không phải tư vấn pháp lý hay chứng nhận production-ready. Danh sách chức năng còn thiếu: [chờ duyệt](UNFINISHED_FEATURES_REVIEW_20260908.md).
+Bản demo phục vụ đánh giá năng lực kỹ thuật, không phải tư vấn pháp lý hay chứng nhận production-ready. Trạng thái chức năng và giới hạn hiện tại: [FEATURE_STATUS](../FEATURE_STATUS.md). Các thay đổi local chưa mặc nhiên có trên deployment.
 
 ## Tour online 10–15 phút
 
@@ -10,8 +10,8 @@ Domain hiện có: https://vietlex-legal-rag.vercel.app . Kiểm tra có dòng *
 2. Đăng ký email riêng, xác minh và đăng nhập (SMTP phải được operator cấu hình). Không dùng chung tài khoản admin. Không dùng thông tin hợp đồng thật trong demo.
 3. Hỏi một câu thuộc bộ ví dụ/corpus, mở evidence và retrieval inspector. Kiểm tra nguồn và trạng thái thiếu dữ liệu, không coi lời AI là kết luận pháp lý.
 4. Tạo hồ sơ, ghim evidence từ interaction của mình, thêm ghi chú; thử phân tích evidence đã chọn, bảng nghĩa vụ hoặc so sánh. Ngân sách context nhỏ: giảm số evidence nếu thấy `evidence_scope_too_large`.
-5. Tạo kế hoạch web, sửa truy vấn rồi bấm chạy rõ ràng. Kết quả hiện chỉ là metadata từ cổng Chính phủ; rỗng/lỗi không được hiểu là không có quy định.
-6. Upload `docs/reviewer/sample-contract.txt`, chọn điều khoản và căn cứ luật rồi review. Mẫu là hư cấu; không dùng finding này làm tư vấn. Không có OCR.
+5. Tạo kế hoạch web, sửa truy vấn rồi bấm chạy rõ ràng. Mặc định tìm metadata từ cổng Chính phủ; adapter Brave theo whitelist là opt-in, chưa được nghiệm thu live; rỗng/lỗi không được hiểu là không có quy định.
+6. Upload `docs/reviewer/sample-contract.txt`, chọn điều khoản và căn cứ luật rồi review. Mẫu là hư cấu; không dùng finding này làm tư vấn. OCR có implementation tùy chọn, tối đa 5 trang; cần provider được cấu hình và nghiệm thu riêng.
 7. Export dữ liệu từ tài khoản; kiểm tra chỉ có dữ liệu của mình. Đăng xuất/thu hồi phiên/xóa dữ liệu của chính mình khi cần. Không xóa dữ liệu của người khác hoặc tạo tải phá hoại.
 8. Chủ dự án có thể tự mở admin để kiểm tra trace, context, trạng thái đánh giá và token coverage. Reviewer thông thường không được quyền admin.
 
@@ -27,7 +27,7 @@ Các bước dưới là hướng dẫn nghiệm thu, không phải bằng chứ
 - Lập báo cáo từ nguồn đã chọn để xem phân tích, ngoại lệ, checklist và kết quả kiểm chứng. Một báo cáo dùng tối đa hai lần gọi mô hình; các dẫn nguồn không khớp được cảnh báo.
 - Với một tài liệu, lập kế hoạch rà soát rồi chạy từng lô. Xem số điều khoản chưa chạy/bị bỏ qua vì vượt ngân sách. Tiến độ lưu theo ba fingerprint kế hoạch gần nhất của tài liệu; thay đổi nguồn hoặc nội dung tạo fingerprint mới.
 - Đọc tối đa ba URL HTML tại vanban.chinhphu.vn/baochinhphu.vn; ghim nguyên văn một trích đoạn đã lưu. Reader báo lỗi nguồn bị chặn, không tự theo redirect hoặc đọc file PDF. Nội dung trùng được gắn nhãn, không được suy thành mâu thuẫn pháp luật.
-- So sánh hai model nếu operator đã cấu hình ít nhất hai lựa chọn. Hai câu trả lời dùng cùng input; thiếu model ID thực báo từ provider được đánh dấu chưa xác định. Không chọn model thắng từ độ giống nhau văn bản.
+- Chỉ admin được so sánh hai model nếu operator đã cấu hình ít nhất hai lựa chọn. Hai câu trả lời dùng cùng input; thiếu model ID thực báo từ provider được đánh dấu chưa xác định. Không chọn model thắng từ độ giống nhau văn bản.
 - Quản trị viên có thể ghi nhận sự kiện hiệu lực sau khi đối chiếu quote/ngày/số hiệu/phạm vi với nguồn chính thức. Sửa đổi một phần không tự chứng minh hiệu lực của toàn văn bản.
 - Xem quota còn lại tại Cài đặt tài khoản. Admin có thêm số lượt bị admission từ chối trong tiến trình hiện tại; đây không phải tổng WAF toàn hệ thống.
 

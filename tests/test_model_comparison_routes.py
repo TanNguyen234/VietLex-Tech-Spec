@@ -61,10 +61,21 @@ def test_model_comparison_requires_verified_active_user() -> None:
     assert response.json()["detail"] == "verified_account_required"
 
 
+def test_model_experiments_reject_regular_users_before_provider_calls(monkeypatch):
+    client = _client({"_id": "user-1", "status": "active", "email_verified": True})
+    compare = AsyncMock()
+    monkeypatch.setattr("app.api.model_comparison_routes.compare_models", compare)
+    monkeypatch.setattr("app.api.workspace_routes.get_workspace", AsyncMock(return_value=_workspace()))
+    response = client.post("/workspaces/w-1/analyses/models", data={
+        "question": "Q", "evidence_ids": "ev-1", "model_a": "a", "model_b": "b"})
+    assert response.status_code == 403
+    compare.assert_not_awaited()
+
+
 def test_model_comparison_persists_server_selected_evidence_and_document_requirements(
     monkeypatch,
 ) -> None:
-    client = _client({"_id": "user-1", "status": "active", "email_verified": True})
+    client = _client({"_id": "user-1", "status": "active", "email_verified": True, "role": "admin"})
     monkeypatch.setattr(
         "app.api.workspace_routes.get_workspace", AsyncMock(return_value=_workspace())
     )
@@ -105,7 +116,7 @@ def test_model_comparison_persists_server_selected_evidence_and_document_require
 def test_model_comparison_fails_before_saving_when_model_is_unavailable(
     monkeypatch,
 ) -> None:
-    client = _client({"_id": "user-1", "status": "active", "email_verified": True})
+    client = _client({"_id": "user-1", "status": "active", "email_verified": True, "role": "admin"})
     monkeypatch.setattr(
         "app.api.workspace_routes.get_workspace", AsyncMock(return_value=_workspace())
     )
@@ -125,7 +136,7 @@ def test_model_comparison_fails_before_saving_when_model_is_unavailable(
 
 
 def test_unreported_model_identity_is_partial(monkeypatch):
-    client = _client({"_id": "user-1", "status": "active", "email_verified": True})
+    client = _client({"_id": "user-1", "status": "active", "email_verified": True, "role": "admin"})
     monkeypatch.setattr(
         "app.api.workspace_routes.get_workspace", AsyncMock(return_value=_workspace())
     )

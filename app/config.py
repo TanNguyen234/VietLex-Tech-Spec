@@ -141,6 +141,8 @@ class Settings(BaseSettings):
     VERTEX_REQUEST_TIMEOUT_SECONDS: float = Field(default=30.0, gt=0)
     VERTEX_MAX_RETRIES: int = Field(default=2, ge=0, le=5)
     OFFICIAL_WEB_RESEARCH_ENABLED: bool = True
+    OFFICIAL_BRAVE_SEARCH_ENABLED: bool = False
+    BRAVE_SEARCH_API_KEY: Optional[str] = None
     OFFICIAL_WEB_SEARCH_TIMEOUT_SECONDS: float = Field(default=20.0, gt=0, le=60)
     OFFICIAL_WEB_RESEARCH_RATE_LIMIT: str = "2/minute"
     

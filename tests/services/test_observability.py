@@ -52,6 +52,7 @@ def test_non_test_environment_uses_logfire_environment_contract() -> None:
         fake,
     ) is True
     assert fake.calls[0]["send_to_logfire"] == "if-token-present"
+    assert fake.calls[0]["token"] == "configured"
 
 
 def test_logfire_export_failure_falls_back_to_local_disabled_mode() -> None:

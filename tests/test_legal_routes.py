@@ -99,6 +99,29 @@ def test_search_page_links_to_document_detail(monkeypatch) -> None:
     assert 'href="/documents/7"' in response.text
 
 
+def test_reader_pin_resolves_source_on_server_and_checks_workspace_owner(monkeypatch):
+    from unittest.mock import AsyncMock
+    from app.api import workspace_routes
+    from app.api.dependencies import verify_csrf
+    from app.api.legal_routes import router
+    _client(monkeypatch)
+    app = FastAPI()
+    app.include_router(router)
+    app.dependency_overrides[verify_csrf] = lambda: "ok"
+    monkeypatch.setattr(workspace_routes, "get_workspace", AsyncMock(return_value={}))
+    save = AsyncMock(return_value=True)
+    monkeypatch.setattr(workspace_routes, "pin_workspace_evidence", save)
+    client = TestClient(app)
+    response = client.post("/documents/7/sections/section-1/pin", data={"workspace_id": "w-1", "note": "Check current version"})
+    assert response.status_code == 200
+    evidence = save.await_args.args[1]
+    assert evidence["document_id"] == 7
+    assert evidence["excerpt"] == "Điều 25. Thời gian thử việc"
+    assert evidence["note"] == "Check current version"
+    monkeypatch.setattr(workspace_routes, "get_workspace", AsyncMock(return_value=None))
+    assert client.post("/documents/7/sections/section-1/pin", data={"workspace_id": "other"}).status_code == 404
+
+
 def test_document_page_has_source_and_validity_warning(monkeypatch) -> None:
     client = _client(monkeypatch)
 

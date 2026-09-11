@@ -157,10 +157,10 @@ async def save_to_semantic_cache(*args, **kwargs):
     return await implementation(*args, **kwargs)
 
 
-async def run_advanced_rag(message: str):
+async def run_advanced_rag(message: str, **kwargs):
     from app.services.rag_pipeline import run_advanced_rag as implementation
 
-    return await implementation(message)
+    return await implementation(message, **kwargs)
 
 
 async def run_llm_as_judge(*args, **kwargs):
@@ -275,19 +275,36 @@ async def chat(
     csrf_token: str = Form(...),
     session_id: str = Form(None),
     nemo_enabled: bool = Form(False),
+    document_id: int | None = Form(None, ge=0),
     request_id: str = Form(""),
     csrf_valid: str = Depends(verify_csrf),
     current_user=Depends(optional_user),
 ):
     request_started = time.perf_counter()
+    # A legacy client may request stricter checks, never disable server policy.
+    nemo_enabled = settings.PUBLIC_NEMO_DEFAULT_ENABLED or nemo_enabled
     message = redact_pii(message)
     trace_id = str(uuid.uuid4())
     client_id = getattr(request.state, "client_id", "legacy")
     user_id = str(current_user["_id"]) if current_user else None
+    scoped_outcome = None
+    if document_id is not None:
+        from app.api.legal_routes import _get_browser
+        from app.services.document_scope import document_evidence
+        from app.services.legal_browser import LegalBrowserBackendError
+
+        try:
+            document = await asyncio.to_thread(_get_browser().get_document, document_id)
+        except LegalBrowserBackendError:
+            raise HTTPException(503, "Không đọc được văn bản đã chọn.") from None
+        if document is None:
+            raise HTTPException(404, "Không tìm thấy văn bản đã chọn.")
+        scoped_outcome = await asyncio.to_thread(document_evidence, message, document)
     persist_interaction = partial(
         log_interaction, client_id=client_id, user_id=user_id,
         request_metadata={'method': 'POST', 'path': '/chat', 'nemo_requested': nemo_enabled,
-                          'guardrail_engine': 'direct_self_check' if settings.SERVERLESS_ONLINE_ONLY else 'nemo'},
+                          'guardrail_engine': 'direct_self_check' if settings.SERVERLESS_ONLINE_ONLY else 'nemo',
+                          'scope': 'document' if document_id is not None else 'corpus', 'document_id': document_id},
     )
     if request_id:
         chat_progress.start(request_id, client_id, nemo_enabled=nemo_enabled)
@@ -441,7 +458,7 @@ async def chat(
                 request_id, client_id, "semantic_cache", "Đang kiểm tra semantic cache"
             )
         cache_started = time.perf_counter()
-        cached_response = await check_semantic_cache(message)
+        cached_response = None if scoped_outcome is not None or nemo_enabled else await check_semantic_cache(message)
         t_cache = round(time.perf_counter() - cache_started, 4)
 
         if cached_response:
@@ -527,7 +544,9 @@ async def chat(
                 "Đang retrieval, rerank và tạo câu trả lời",
             )
         try:
-            bot_response, context_used, latency_info = await run_advanced_rag(message)
+            bot_response, context_used, latency_info = await run_advanced_rag(
+                message, **({"scoped_outcome": scoped_outcome} if scoped_outcome is not None else {})
+            )
         except RetrievalPipelineError as error:
             t_total = round(time.perf_counter() - request_started, 4)
             tech_error = {
@@ -856,7 +875,7 @@ async def chat(
         )
         
         # Cache only grounded, output-approved answers and preserve their evidence.
-        if req_status == "ok" and context_used:
+        if req_status == "ok" and context_used and scoped_outcome is None:
             background_tasks.add_task(
                 save_to_semantic_cache,
                 message,

@@ -12,6 +12,7 @@ def configure_observability(settings: Any, logfire_module: Any | None = None) ->
     if logfire_module is None:
         import logfire as logfire_module
     options = {
+        "token": settings.LOGFIRE_TOKEN,
         "send_to_logfire": "if-token-present",
         "service_name": settings.LOGFIRE_SERVICE_NAME,
         "environment": settings.APP_ENV,

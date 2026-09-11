@@ -98,6 +98,7 @@ class ResearchStepResult(BaseModel):
     query: str
     status: Literal[
         "results_found",
+        "partial_results",
         "no_results",
         "provider_error",
     ]
@@ -196,6 +197,11 @@ async def run_deep_research(
         from app.services.official_web_search import OfficialPortalClient
 
         provider = OfficialPortalClient(settings=settings)
+        if getattr(settings, "OFFICIAL_BRAVE_SEARCH_ENABLED", False):
+            if not getattr(settings, "BRAVE_SEARCH_API_KEY", None):
+                raise DeepResearchDisabled("brave_search_not_configured")
+            from app.services.federated_official_search import BraveOfficialClient, FederatedOfficialClient
+            provider = FederatedOfficialClient(portal=provider, web=BraveOfficialClient(settings=settings))
 
     # User-edited queries receive a new immutable identity at execution time.
     plan_id = _plan_id(plan.question, plan.steps)
@@ -233,14 +239,15 @@ async def run_deep_research(
             continue
 
         observed_provider = result.provider
+        observed_model = getattr(result, "method", "webforms-search-v1")
         record_provider_event(
             ProviderEvent(
                 provider=result.provider,
-                model="webforms-search-v1",
+                model=observed_model,
                 use_case="deep_research",
                 call_kind="http",
-                success=True,
-                error_kind=None,
+                success=not bool(getattr(result, "errors", ())),
+                error_kind=";".join(getattr(result, "errors", ())) or None,
                 latency_ms=result.latency_ms,
                 fallback_used=False,
                 timestamp=datetime.now(timezone.utc).isoformat(),
@@ -269,19 +276,22 @@ async def run_deep_research(
             if len(unique_sources) >= 10:
                 break
         step_status = "results_found" if unique_sources else "no_results"
+        if getattr(result, "errors", ()):
+            step_status = "partial_results" if unique_sources else "provider_error"
         step_results.append(
             ResearchStepResult(
                 step_id=step.step_id,
                 title=step.title,
                 query=step.query,
                 status=step_status,
+                error_kind=";".join(getattr(result, "errors", ()))[:80] or None,
                 sources=list(unique_sources.values()),
                 executed_queries=[step.query],
             )
         )
 
     completed = sum(step.status == "results_found" for step in step_results)
-    status = "complete" if completed == len(step_results) else ("partial" if completed else "failed")
+    status = "complete" if completed == len(step_results) else ("partial" if any(step.sources for step in step_results) else "failed")
     return DeepResearchResult(
         status=status,
         question=plan.question,

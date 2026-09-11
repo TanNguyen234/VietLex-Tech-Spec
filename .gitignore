@@ -44,6 +44,8 @@ app/data/*.json
 app/data/*.json.gz
 data/huggingface/
 .tmp/
+# Provider-free test basetemps, including nested disposable Git fixtures.
+/.tmp-product-*/
 null/
 output/
 tmp/

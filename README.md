@@ -34,7 +34,7 @@ Golden-50 v3 được tách từ Balanced-50, gồm 40 case có fully verified r
 
 ## Demo
 
-Bản đóng gói reviewer: [hướng dẫn](docs/REVIEWER_GUIDE.md) · [chức năng chưa hoàn thiện, chờ duyệt](docs/UNFINISHED_FEATURES_REVIEW_20260908.md). Đóng gói/provider-free tests không thay thế nghiệm thu online hoặc WAF.
+Bản đóng gói reviewer: [hướng dẫn](docs/REVIEWER_GUIDE.md) · [trạng thái chức năng hiện tại](FEATURE_STATUS.md). Đóng gói/provider-free tests không thay thế nghiệm thu online hoặc WAF.
 
 ### Hỏi đáp có dẫn nguồn
 

@@ -1,6 +1,7 @@
 import secrets
+import asyncio
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, Request, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -14,6 +15,8 @@ from app.database import init_db
 from app.api.routes import router as api_router
 from app.api.account_routes import router as account_router
 from app.api.legal_routes import router as legal_router
+from app.api.finding_routes import router as finding_router
+from app.api.product_quality_routes import router as product_quality_router
 from app.api.workspace_routes import router as workspace_router
 from app.api.legal_timeline_routes import router as timeline_router
 from app.api.claim_verification_routes import router as claim_router
@@ -117,6 +120,8 @@ def get_csrf_token(request: Request) -> str:
 app.include_router(api_router)
 app.include_router(account_router)
 app.include_router(legal_router)
+app.include_router(finding_router)
+app.include_router(product_quality_router)
 app.include_router(workspace_router)
 app.include_router(timeline_router)
 app.include_router(claim_router)
@@ -129,7 +134,17 @@ app.include_router(legal_effect_router)
 app.include_router(evaluation_lab_router)
 
 @app.get("/", response_class=HTMLResponse)
-async def get_index(request: Request, current_user=Depends(optional_user)):
+async def get_index(request: Request, current_user=Depends(optional_user), document_id: int | None = Query(None, ge=0)):
+    scoped_document = None
+    if document_id is not None:
+        from app.api.legal_routes import _get_browser
+        from app.services.legal_browser import LegalBrowserBackendError
+        try:
+            scoped_document = await asyncio.to_thread(_get_browser().get_document, document_id)
+        except LegalBrowserBackendError:
+            raise HTTPException(503, "Không đọc được văn bản đã chọn.") from None
+        if scoped_document is None:
+            raise HTTPException(404, "Không tìm thấy văn bản đã chọn.")
     # CSRF generation
     token = secrets.token_hex(32)
     progress_transport = (
@@ -145,6 +160,7 @@ async def get_index(request: Request, current_user=Depends(optional_user)):
             "progress_transport": progress_transport,
             "current_user": current_user,
             "prefill_question": request.query_params.get("question", "")[:2_000],
+            "scoped_document": scoped_document,
         },
     )
     # Save token in cookie for validation

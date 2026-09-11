@@ -321,3 +321,24 @@ async def remove_workspace_document(
         },
     )
     return result.modified_count > 0
+
+
+async def update_finding_review(workspace_id: str, analysis_id: str, finding_index: int,
+                                state: dict, client_id: str, *, user_id: str | None = None,
+                                expected_version: int) -> bool:
+    """Compare-and-set reviewer state without changing the generated finding."""
+    if not 0 <= finding_index < 30 or expected_version < 0:
+        raise ValueError("invalid_finding_revision")
+    version_key = f"finding_reviews.{finding_index}.version"
+    match = {"analysis_id": analysis_id, "kind": {"$in": ["contract_review", "full_document_review"]},
+             f"result.findings.{finding_index}": {"$exists": True}}
+    if expected_version:
+        match[version_key] = expected_version
+    else:
+        match["$or"] = [{version_key: 0}, {version_key: {"$exists": False}}]
+    now = _now()
+    result = await get_db().research_workspaces.update_one(
+        {"_id": workspace_id, **_owner(client_id, user_id), "expires_at": {"$gt": now},
+         "analyses": {"$elemMatch": match}, **_size_guard(state)},
+        {"$set": {f"analyses.$.finding_reviews.{finding_index}": state, "updated_at": now}})
+    return result.modified_count > 0

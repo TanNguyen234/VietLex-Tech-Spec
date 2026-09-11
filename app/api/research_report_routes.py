@@ -5,6 +5,10 @@ import uuid
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import JSONResponse
+from fastapi.responses import Response, RedirectResponse
+from typing import Literal
+from app.api.workspace_routes import _workspace_page, _validate_id
+from app.services.report_deliverables import report_body, report_sources, report_markdown, report_docx
 
 from app.api.dependencies import optional_user, verify_csrf
 from app.api.workspace_routes import _evidence_snapshot, _owned_workspace, _selected
@@ -18,6 +22,56 @@ from app.services.research_report import generate_research_report
 
 router = APIRouter()
 settings = get_settings()
+
+
+async def _owned_report(request, workspace_id, analysis_id, current_user):
+    _validate_id(analysis_id, "analysis")
+    workspace, client_id, user_id = await _owned_workspace(request, workspace_id, current_user)
+    analysis = next((item for item in workspace.get("analyses", [])
+                     if item.get("analysis_id") == analysis_id and item.get("kind") == "research_report"), None)
+    if analysis is None:
+        raise HTTPException(404, "report_not_found")
+    return analysis, client_id, user_id
+
+
+@router.get("/workspaces/{workspace_id}/reports/{analysis_id}")
+@limiter.limit(settings.SESSION_RATE_LIMIT)
+async def report_editor(request: Request, workspace_id: str, analysis_id: str, current_user=Depends(optional_user)):
+    analysis, _, _ = await _owned_report(request, workspace_id, analysis_id, current_user)
+    return _workspace_page(request, "report_editor.html", {"workspace_id": workspace_id, "analysis": analysis,
+        "body": report_body(analysis), "sources": report_sources(analysis), "workspace_user": current_user})
+
+
+@router.post("/workspaces/{workspace_id}/reports/{analysis_id}")
+@limiter.limit(settings.SESSION_RATE_LIMIT)
+async def report_save_version(request: Request, workspace_id: str, analysis_id: str,
+                              markdown: str = Form(..., min_length=1, max_length=40_000),
+                              _csrf: str = Depends(verify_csrf), current_user=Depends(optional_user)):
+    analysis, client_id, user_id = await _owned_report(request, workspace_id, analysis_id, current_user)
+    if not markdown.strip():
+        raise HTTPException(422, "report_body_required")
+    version_id = str(uuid.uuid4())
+    version = {"analysis_id": version_id, "kind": "research_report", "parent_analysis_id": analysis_id,
+               "status": "human_edited_unverified", "markdown": markdown,
+               "evidence_snapshot": analysis.get("evidence_snapshot") or [],
+               "workspace_document_ids": analysis.get("workspace_document_ids") or [],
+               "editor_id": user_id or client_id, "legal_certification": False, "provider_calls": []}
+    if not await save_workspace_analysis(workspace_id, version, client_id, user_id=user_id,
+                                        required_document_ids=version["workspace_document_ids"]):
+        raise HTTPException(409, "workspace_changed")
+    return RedirectResponse(f"/workspaces/{workspace_id}/reports/{version_id}", status_code=303,
+                            headers={"Cache-Control": "no-store"})
+
+
+@router.get("/workspaces/{workspace_id}/reports/{analysis_id}/export")
+@limiter.limit(settings.SESSION_RATE_LIMIT)
+async def report_export(request: Request, workspace_id: str, analysis_id: str,
+                        format: Literal["md", "docx"] = "md", current_user=Depends(optional_user)):
+    analysis, _, _ = await _owned_report(request, workspace_id, analysis_id, current_user)
+    content = report_docx(analysis) if format == "docx" else report_markdown(analysis)
+    media_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document" if format == "docx" else "text/markdown"
+    return Response(content, media_type=media_type, headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff",
+        "Content-Disposition": f'attachment; filename="vietlex-report-{analysis_id}.{format}"'})
 
 
 def _workspace_document_ids(evidence: list[dict]) -> list[str]:

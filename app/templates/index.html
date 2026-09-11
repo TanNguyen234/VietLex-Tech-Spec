@@ -5,7 +5,7 @@
   <meta name="description" content="VietLex — tra cứu, lưu bằng chứng và nghiên cứu pháp luật Việt Nam.">
   <title>VietLex · Không gian nghiên cứu pháp luật</title>
   <link rel="stylesheet" href="/static/css/vietlex.css"><link rel="stylesheet" href="/static/css/vietlex-enhancements.css"><script src="/static/js/vietlex.js" defer></script>
-<script src="/static/js/product.js" defer></script></head>
+<script src="/static/js/product.js" defer></script><link rel="stylesheet" href="/static/css/vietlex-redesign.css"></head>
 <body data-progress-transport="{{ progress_transport | default('sse') }}">
   <a class="skip-link" href="#chat-input">Bỏ qua đến ô nhập câu hỏi</a>
   <header class="topbar">
@@ -34,9 +34,10 @@
       </div>
       <div id="chat-loading" class="loading-row" hidden><span class="spinner" aria-hidden="true"></span><div><strong id="pipeline-progress">Đã tiếp nhận câu hỏi</strong><small id="pipeline-elapsed">0.00 giây</small></div></div>
       <form id="chat-form" class="composer" action="/chat" method="post">
+        {% if scoped_document %}<label>Nguồn tìm kiếm<select name="document_id"><option value="{{ scoped_document.metadata.document_id }}">Chỉ văn bản {{ scoped_document.metadata.document_number }}</option><option value="">Toàn bộ VietLex</option></select></label><p class="legal-note">Không tự mở rộng nguồn. Chỉ chọn tối đa 3 đoạn phù hợp trong văn bản; không phải rà soát toàn văn.</p>{% else %}<p class="legal-note">Nguồn tìm kiếm: Toàn bộ VietLex. Mở văn bản trong Tra cứu để hỏi riêng văn bản.</p>{% endif %}
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="session_id" value="default" id="session-id-input">
         <label for="chat-input" class="sr-only">Nhập câu hỏi pháp luật</label><textarea id="chat-input" name="message" rows="2" maxlength="2000" required placeholder="Ví dụ: Thời gian thử việc tối đa là bao lâu?">{{ prefill_question }}</textarea>
-        <div class="composer-actions"><label class="switch-row" title="Kiểm tra câu hỏi và câu trả lời; có thể tăng thời gian xử lý."><input type="checkbox" name="nemo_enabled" value="true"><span>Kiểm tra an toàn bổ sung</span><small>Mặc định tắt</small></label><button class="button button-primary" type="submit">Gửi câu hỏi →</button></div>
+        <div class="composer-actions"><button class="button button-primary" type="submit">Gửi câu hỏi →</button></div>
         <p class="legal-note">Dữ liệu bên thứ ba, không tự xác nhận tình trạng hiệu lực và không thay thế tư vấn pháp lý. Luôn kiểm tra nguồn chính thức. <a href="/privacy">Quyền riêng tư</a> · <a href="/terms">Điều khoản</a></p>
       </form>
     </section>

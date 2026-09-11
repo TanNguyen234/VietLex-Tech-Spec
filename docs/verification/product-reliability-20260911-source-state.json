@@ -1,0 +1,19 @@
+{
+  "recorded_at": "2026-09-11T11:45:03.837308+00:00",
+  "kind": "local_verification_source_snapshot",
+  "snapshot_boundary": "After markdown report, before this JSON; no live benchmark claimed",
+  "provenance": {
+    "status": "ok",
+    "error": null,
+    "repository_root": "D:\\Download\\ProfessionalLegalRAG",
+    "git_sha": "84ce93d2372a2b5884d12e49aa663da9ce10b150",
+    "git_dirty": true,
+    "git_tracked_dirty": true,
+    "git_staged_dirty": false,
+    "git_untracked_dirty": true,
+    "git_diff_sha256": "f934f9a30244e953bdc71152cbe14a7a2fb859bbfc57f88f32a6e68401f7b38d",
+    "git_diff_status": "ok",
+    "git_diff_reason": null,
+    "source_state_sha256": "54abb4afe45816898a156679a1b6a213c89240083a27e2ae5c9cec1bbcb0946e"
+  }
+}
