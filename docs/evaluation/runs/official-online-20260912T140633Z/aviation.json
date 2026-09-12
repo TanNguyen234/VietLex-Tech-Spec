@@ -1,0 +1,192 @@
+{
+  "case": {
+    "id": "aviation",
+    "reference_number": "68/2026/TT-BXD",
+    "topic": "Hàng không",
+    "question": "Chi phí trực tiếp và gián tiếp khi khai thác tài sản hạ tầng hàng không do Nhà nước đầu tư được phân bổ thế nào theo quy định tháng 9/2026?",
+    "reference_url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219442",
+    "reference_title": "Quy định việc xác định chi phí trực tiếp, tiêu chí phân bổ chi phí gián tiếp, dùng chung liên quan đến việc khai thác tài sản kết cấu hạ tầng hàng không do Nhà nước đầu tư, quản lý",
+    "reference_issued_date": "10/09/2026"
+  },
+  "plan": {
+    "version": "official-web-v3",
+    "query_method": "model_keywords",
+    "planner_error": null,
+    "planner_provider": "google_vertex_ai",
+    "planner_model": "gemini-3.5-flash",
+    "plan_id": "b075d84f8e60f6f960d1f710",
+    "status": "draft",
+    "question": "Chi phí trực tiếp và gián tiếp khi khai thác tài sản hạ tầng hàng không do Nhà nước đầu tư được phân bổ thế nào theo quy định tháng 9/2026?",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "kind": "legal_basis",
+        "title": "Tìm tiêu đề — cụm 1",
+        "query": "khai thác tài sản hạ tầng hàng không"
+      },
+      {
+        "step_id": "conditions",
+        "kind": "conditions",
+        "title": "Tìm tiêu đề — cụm 2",
+        "query": "phân bổ chi phí tài sản hạ tầng"
+      },
+      {
+        "step_id": "exceptions",
+        "kind": "exceptions",
+        "title": "Tìm tiêu đề — cụm 3",
+        "query": "quản lý tài sản hạ tầng hàng không"
+      },
+      {
+        "step_id": "amendments",
+        "kind": "amendments",
+        "title": "Tìm tiêu đề — cụm 4",
+        "query": "tài sản hạ tầng hàng không"
+      },
+      {
+        "step_id": "official_verification",
+        "kind": "official_verification",
+        "title": "Tìm tiêu đề — cụm 5",
+        "query": "hạ tầng hàng không"
+      }
+    ]
+  },
+  "result": {
+    "status": "partial",
+    "question": "Chi phí trực tiếp và gián tiếp khi khai thác tài sản hạ tầng hàng không do Nhà nước đầu tư được phân bổ thế nào theo quy định tháng 9/2026?",
+    "plan_id": "b075d84f8e60f6f960d1f710",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "title": "Tìm tiêu đề — cụm 1",
+        "query": "khai thác tài sản hạ tầng hàng không",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "khai thác tài sản hạ tầng hàng không"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "conditions",
+        "title": "Tìm tiêu đề — cụm 2",
+        "query": "phân bổ chi phí tài sản hạ tầng",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "phân bổ chi phí tài sản hạ tầng"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "exceptions",
+        "title": "Tìm tiêu đề — cụm 3",
+        "query": "quản lý tài sản hạ tầng hàng không",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "quản lý tài sản hạ tầng hàng không"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "amendments",
+        "title": "Tìm tiêu đề — cụm 4",
+        "query": "tài sản hạ tầng hàng không",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "tài sản hạ tầng hàng không"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "official_verification",
+        "title": "Tìm tiêu đề — cụm 5",
+        "query": "hạ tầng hàng không",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "4bc3f387c09dfe959c75b4b7",
+            "title": "Quy định việc xác định chi phí trực tiếp, tiêu chí phân bổ chi phí gián tiếp, dùng chung liên quan đến việc khai thác tài sản kết cấu hạ tầng hàng không do Nhà nước đầu tư, quản lý",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219442",
+            "document_number": "68/2026/TT-BXD",
+            "issued_date": "10/09/2026",
+            "snippet": "Quy định việc xác định chi phí trực tiếp, tiêu chí phân bổ chi phí gián tiếp, dùng chung liên quan đến việc khai thác tài sản kết cấu hạ tầng hàng không do Nhà nước đầu tư, quản lý",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "076a4bcf1df027334003e2ba",
+            "title": "Kết luận của Thường trực Chính phủ tại cuộc họp về đề xuất tham gia đầu tư hạ tầng hàng không của Công ty Cổ phần Hàng không Vietjet",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=217687",
+            "document_number": "180/TB-VPCP",
+            "issued_date": "07/04/2026",
+            "snippet": "Kết luận của Thường trực Chính phủ tại cuộc họp về đề xuất tham gia đầu tư hạ tầng hàng không của Công ty Cổ phần Hàng không Vietjet",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "69e92ef844fb5eca357d1441",
+            "title": "Quy định chế độ quản lý, tính hao mòn tài sản kết cấu hạ tầng hàng không và hướng dẫn việc kê khai, báo cáo tài sản kết cấu hạ tầng hàng không do Nhà nước đầu tư, quản lý được giao cho doanh nghiệp theo hình thức không tính thành phần vốn nhà nước tại doanh nghiệp",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=216464",
+            "document_number": "137/2025/TT-BTC",
+            "issued_date": "30/12/2025",
+            "snippet": "Quy định chế độ quản lý, tính hao mòn tài sản kết cấu hạ tầng hàng không và hướng dẫn việc kê khai, báo cáo tài sản kết cấu hạ tầng hàng không do Nhà nước đầu tư, quản lý được giao cho doanh nghiệp theo hình thức không tính thành phần vốn nhà nước tại doanh nghiệp",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "hạ tầng hàng không"
+        ],
+        "error_kind": null
+      }
+    ],
+    "provider": "chinhphu_official_portal",
+    "model": "webforms-search-v1"
+  },
+  "expected_url_hit": true,
+  "source": {
+    "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219442",
+    "attachment_url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/9/68-bxd.signed.pdf",
+    "title": "\r\n\tThông tư số 68/2026/TT-BXD của Bộ Xây dựng: Quy định việc xác định chi phí trực tiếp, tiêu chí phân bổ chi phí gián tiếp, dùng chung liên quan đến việc khai thác tài sản kết cấu hạ tầng hàng không do \nNhà nước đầu tư, quản lý\r\n",
+    "text": "BỘ XÂY DỰNG \n \nCỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM \nĐộc lập - Tự do - Hạnh phúc  \n \nSố:         /2026/TT-BXD Hà Nội, ngày      tháng 9 năm 2026 \n  \nTHÔNG TƯ \nQuy định việc xác định chi phí trực tiếp, tiêu chí phân bổ chi phí gián tiếp, \ndùng chung liên quan đến việc khai thác tài sản kết cấu hạ tầng hàng không do \nNhà nước đầu tư, quản lý \n \nCăn cứ Nghị định số 33/2025/NĐ -CP của Chính phủ quy định chức năng , \nnhiệm vụ, quyền hạn và cơ cấu tổ chức của Bộ Xây dựng; \nCăn cứ Nghị định số 287/2025/NĐ-CP của Chính phủ quy định việc quản lý, \nsử dụng và khai thác tài sản kết cấu hạ tầng hàng không; \nTheo đề nghị của Cục trưởng Cục Hàng không Việt Nam; \nBộ trưởng Bộ Xây dựng ban hành Thông tư quy định việc xác định chi phí trực \ntiếp, tiêu chí phân bổ chi phí gián tiếp, dùng chung liên quan đến việc khai thác tài \nsản kết cấu hạ tầng hàng không do Nhà nước đầu tư, quản lý. \nĐiều 1. Phạm vi điều chỉnh và đối tượng áp dụng \n1. Thông tư này quy định việc xác định chi phí trực tiếp, tiêu chí phân bổ chi \nphí gián tiếp, dùng chung liên quan đến việc khai thác tài sản kết cấu hạ tầng hàng \nkhông do Nhà nước đầu tư, quản lý. \n2. Thông tư này áp dụng đối với: \na) Cơ quan thực hiện chức năng tham mưu và  tổ chức thực thi pháp luật \nchuyên ngành về hàng không dân dụng; \nb) Doanh nghiệp kinh doanh, khai thác cảng hàng không được giao trực \ntiếp tổ chức khai thác tài sản kết cấu hạ tầng hàng không do Nhà nước đầu tư, \nquản lý; \nc) Các cơ quan, tổ chức và cá nhân khác có liên quan đến việc xác định chi \nphí trực tiếp, chi phí gián tiếp, dùng chung liên quan đến khai thác tài sản kết cấu \nhạ tầng hàng không do Nhà nước đầu tư, quản lý. \nĐiều 2. Giải thích từ ngữ  \n1. Chi phí khai thác tài sản kết cấu hạ tầng hàng không  là các khoản chi \ncho hoạt động khai thác , vận hành tài sản kết cấu hạ tầng hàng không , gồm các \nchi phí trực tiếp và chi phí gián tiếp.  \n2. Chi phí trực tiếp là các khoản chi phát sinh được xác định riêng biệt để \nthực hiện các công việc trực tiếp cho hoạt động khai thác thường xuyên, liên tục \n\n2 \n \ncủa tài sản kết cấu hạ tầng hàng không và chỉ phục vụ cho hoạt động khai thác tài \nsản kết cấu hạ tầng hàng không do Nhà nước đầu tư, quản lý. \n3. Chi phí gián tiếp gồm chi phí có liên quan không trực tiếp và chi phí \ndùng chung trong việc khai thác, vận hành tài sản, bao gồm:  \na) Chi phí có liên quan không trực tiếp là các khoản chi phí phục vụ công \ntác quản lý, điều hành chung trong hoạt động khai thác cảng hàng không, bao gồm \nchi phí của bộ máy quản lý, điều hành của doanh nghiệp kinh doanh, khai thác \ncảng và các người khai thác cảng được phân bổ theo tiêu chí quy định tại khoản 1 \nĐiều 5 Thông tư này;  \n b) Chi phí dùng chung là các khoản chi để thực hiện các công việc trực tiếp \ncho hoạt động khai thác thường xuyên, liên tục được thực hiện đồng thời giữa tài \nsản kết cấu hạ tầng hàng không của Nhà nước và tài sản của doanh nghiệp nhưng \nkhông phân định được chi phí cụ thể, riêng biệt. Các khoản chi này được phân bổ \ntheo tiêu chí quy định tại khoản 2 Điều 5 Thông tư này. \n 4. Doanh thu cung cấp dịch vụ của doanh nghiệp kinh doanh, khai thác cảng \nlà doanh thu thuần từ hoạt động cung cấp dịch vụ được ghi nhận trên báo cáo tài \nchính của doanh nghiệp theo quy định của pháp luật về kế toán. \n 5. Doanh thu cung cấp dịch vụ tại cảng hàng không là doanh thu thuần từ \nhoạt động cung cấp dịch vụ của các cảng hàng không. \n 6. Doanh thu từ cung cấp dịch vụ sử dụng kết cấu hạ tầng hàng không là \ndoanh thu phát sinh từ  hoạt động khai thác  tài sản kết cấu hạ tầng hàng không \nđược giao doanh nghiệp kinh doanh, khai thác cảng theo hình thức không tính \nthành phần vốn nhà nước tại doanh nghiệp. \n Điều 3. Quản lý, điều hành, khai thác tài sản k ết cấu hạ tầng hàng \nkhông \n 1. Khai thác tài sản kết cấu hạ tầng hàng không gồm các công việc sau: \na) Đánh giá, báo cáo tình trạng các công trình trong sân bay; \nb) Kiểm tra an toàn sân bay;  \nc) Vận hành hệ thống quản lý an toàn;  \nd) Quản lý hoạt động thi công, xây dựng tại sân bay; \nđ) Quản lý vật ngoại lai;  \ne) Kiểm soát chim, động vật hoang dã, vật nuôi;  \ng) Đảm bảo an toàn khai thác công trình trong sân bay;  \nh) Quản lý, vận hành thiết bị, phương tiện hoạt động tại sân bay;  \ni) Thực hiện công tác cứu nạn, chữa cháy; \nk) Quản lý kho vật tư, nguyên liệu, vật liệu phục vụ hoạt động khai thác tài \nsản kết cấu hạ tầng hàng không;",
+    "sha256": "e19e45d7950b86f1920e6ac809c0314b08e7ea2e73b783bfef1f7a2e0b63abd1",
+    "document_sha256": "316352ed8a263d22b45e0653abc4d40dbb5a9b39ee3b1d6aaf2e847577add9e7",
+    "parser_recovered": false,
+    "ocr_input_sha256": null,
+    "ocr_input_transform": null,
+    "retrieved_at": "2026-09-12T14:07:09.736236+00:00",
+    "extracted_characters": 4346,
+    "stored_characters": 4346,
+    "truncated": true,
+    "method": "pdf_text",
+    "legal_effect_status": "unverified",
+    "document_number": "68/2026/TT-BXD",
+    "content_status": "readable",
+    "pages": [
+      {
+        "page": 1,
+        "text": "BỘ XÂY DỰNG \n \nCỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM \nĐộc lập - Tự do - Hạnh phúc  \n \nSố:         /2026/TT-BXD Hà Nội, ngày      tháng 9 năm 2026 \n  \nTHÔNG TƯ \nQuy định việc xác định chi phí trực tiếp, tiêu chí phân bổ chi phí gián tiếp, \ndùng chung liên quan đến việc khai thác tài sản kết cấu hạ tầng hàng không do \nNhà nước đầu tư, quản lý \n \nCăn cứ Nghị định số 33/2025/NĐ -CP của Chính phủ quy định chức năng , \nnhiệm vụ, quyền hạn và cơ cấu tổ chức của Bộ Xây dựng; \nCăn cứ Nghị định số 287/2025/NĐ-CP của Chính phủ quy định việc quản lý, \nsử dụng và khai thác tài sản kết cấu hạ tầng hàng không; \nTheo đề nghị của Cục trưởng Cục Hàng không Việt Nam; \nBộ trưởng Bộ Xây dựng ban hành Thông tư quy định việc xác định chi phí trực \ntiếp, tiêu chí phân bổ chi phí gián tiếp, dùng chung liên quan đến việc khai thác tài \nsản kết cấu hạ tầng hàng không do Nhà nước đầu tư, quản lý. \nĐiều 1. Phạm vi điều chỉnh và đối tượng áp dụng \n1. Thông tư này quy định việc xác định chi phí trực tiếp, tiêu chí phân bổ chi \nphí gián tiếp, dùng chung liên quan đến việc khai thác tài sản kết cấu hạ tầng hàng \nkhông do Nhà nước đầu tư, quản lý. \n2. Thông tư này áp dụng đối với: \na) Cơ quan thực hiện chức năng tham mưu và  tổ chức thực thi pháp luật \nchuyên ngành về hàng không dân dụng; \nb) Doanh nghiệp kinh doanh, khai thác cảng hàng không được giao trực \ntiếp tổ chức khai thác tài sản kết cấu hạ tầng hàng không do Nhà nước đầu tư, \nquản lý; \nc) Các cơ quan, tổ chức và cá nhân khác có liên quan đến việc xác định chi \nphí trực tiếp, chi phí gián tiếp, dùng chung liên quan đến khai thác tài sản kết cấu \nhạ tầng hàng không do Nhà nước đầu tư, quản lý. \nĐiều 2. Giải thích từ ngữ  \n1. Chi phí khai thác tài sản kết cấu hạ tầng hàng không  là các khoản chi \ncho hoạt động khai thác , vận hành tài sản kết cấu hạ tầng hàng không , gồm các \nchi phí trực tiếp và chi phí gián tiếp.  \n2. Chi phí trực tiếp là các khoản chi phát sinh được xác định riêng biệt để \nthực hiện các công việc trực tiếp cho hoạt động khai thác thường xuyên, liên tục "
+      },
+      {
+        "page": 2,
+        "text": "2 \n \ncủa tài sản kết cấu hạ tầng hàng không và chỉ phục vụ cho hoạt động khai thác tài \nsản kết cấu hạ tầng hàng không do Nhà nước đầu tư, quản lý. \n3. Chi phí gián tiếp gồm chi phí có liên quan không trực tiếp và chi phí \ndùng chung trong việc khai thác, vận hành tài sản, bao gồm:  \na) Chi phí có liên quan không trực tiếp là các khoản chi phí phục vụ công \ntác quản lý, điều hành chung trong hoạt động khai thác cảng hàng không, bao gồm \nchi phí của bộ máy quản lý, điều hành của doanh nghiệp kinh doanh, khai thác \ncảng và các người khai thác cảng được phân bổ theo tiêu chí quy định tại khoản 1 \nĐiều 5 Thông tư này;  \n b) Chi phí dùng chung là các khoản chi để thực hiện các công việc trực tiếp \ncho hoạt động khai thác thường xuyên, liên tục được thực hiện đồng thời giữa tài \nsản kết cấu hạ tầng hàng không của Nhà nước và tài sản của doanh nghiệp nhưng \nkhông phân định được chi phí cụ thể, riêng biệt. Các khoản chi này được phân bổ \ntheo tiêu chí quy định tại khoản 2 Điều 5 Thông tư này. \n 4. Doanh thu cung cấp dịch vụ của doanh nghiệp kinh doanh, khai thác cảng \nlà doanh thu thuần từ hoạt động cung cấp dịch vụ được ghi nhận trên báo cáo tài \nchính của doanh nghiệp theo quy định của pháp luật về kế toán. \n 5. Doanh thu cung cấp dịch vụ tại cảng hàng không là doanh thu thuần từ \nhoạt động cung cấp dịch vụ của các cảng hàng không. \n 6. Doanh thu từ cung cấp dịch vụ sử dụng kết cấu hạ tầng hàng không là \ndoanh thu phát sinh từ  hoạt động khai thác  tài sản kết cấu hạ tầng hàng không \nđược giao doanh nghiệp kinh doanh, khai thác cảng theo hình thức không tính \nthành phần vốn nhà nước tại doanh nghiệp. \n Điều 3. Quản lý, điều hành, khai thác tài sản k ết cấu hạ tầng hàng \nkhông \n 1. Khai thác tài sản kết cấu hạ tầng hàng không gồm các công việc sau: \na) Đánh giá, báo cáo tình trạng các công trình trong sân bay; \nb) Kiểm tra an toàn sân bay;  \nc) Vận hành hệ thống quản lý an toàn;  \nd) Quản lý hoạt động thi công, xây dựng tại sân bay; \nđ) Quản lý vật ngoại lai;  \ne) Kiểm soát chim, động vật hoang dã, vật nuôi;  \ng) Đảm bảo an toàn khai thác công trình trong sân bay;  \nh) Quản lý, vận hành thiết bị, phương tiện hoạt động tại sân bay;  \ni) Thực hiện công tác cứu nạn, chữa cháy; \nk) Quản lý kho vật tư, nguyên liệu, vật liệu phục vụ hoạt động khai thác tài \nsản kết cấu hạ tầng hàng không; "
+      }
+    ],
+    "page_count": 4,
+    "page_start": 1,
+    "page_end": 2,
+    "next_page_start": 3,
+    "requires_ocr": false,
+    "unreadable_pages": [],
+    "ocr_provider": null,
+    "ocr_model": null,
+    "attachments": [
+      "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/9/68-bxd.signed.pdf"
+    ],
+    "issued_date": "10-09-2026",
+    "reported_effective_from": "01-01-2027"
+  },
+  "elapsed_seconds": 35.20300000000134
+}

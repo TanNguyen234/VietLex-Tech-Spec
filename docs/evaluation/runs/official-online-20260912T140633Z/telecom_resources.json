@@ -1,0 +1,219 @@
+{
+  "case": {
+    "id": "telecom_resources",
+    "question": "Nhà nước thu hồi tài nguyên Internet và số viễn thông thì bồi thường như thế nào?",
+    "reference_number": "18/2026/VBHN-NĐ-BKHCN",
+    "reference_url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219416"
+  },
+  "plan": {
+    "version": "official-web-v3",
+    "query_method": "model_keywords",
+    "planner_error": null,
+    "planner_provider": "google_vertex_ai",
+    "planner_model": "gemini-3.5-flash",
+    "plan_id": "78ffd6a68b41628c0b11a894",
+    "status": "draft",
+    "question": "Nhà nước thu hồi tài nguyên Internet và số viễn thông thì bồi thường như thế nào?",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "kind": "legal_basis",
+        "title": "Tìm tiêu đề — cụm 1",
+        "query": "thu hồi tài nguyên internet"
+      },
+      {
+        "step_id": "conditions",
+        "kind": "conditions",
+        "title": "Tìm tiêu đề — cụm 2",
+        "query": "bồi thường số viễn thông"
+      },
+      {
+        "step_id": "exceptions",
+        "kind": "exceptions",
+        "title": "Tìm tiêu đề — cụm 3",
+        "query": "thu hồi số viễn thông"
+      },
+      {
+        "step_id": "amendments",
+        "kind": "amendments",
+        "title": "Tìm tiêu đề — cụm 4",
+        "query": "tài nguyên internet"
+      },
+      {
+        "step_id": "official_verification",
+        "kind": "official_verification",
+        "title": "Tìm tiêu đề — cụm 5",
+        "query": "kho số viễn thông"
+      }
+    ]
+  },
+  "result": {
+    "status": "partial",
+    "question": "Nhà nước thu hồi tài nguyên Internet và số viễn thông thì bồi thường như thế nào?",
+    "plan_id": "78ffd6a68b41628c0b11a894",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "title": "Tìm tiêu đề — cụm 1",
+        "query": "thu hồi tài nguyên internet",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "thu hồi tài nguyên internet"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "conditions",
+        "title": "Tìm tiêu đề — cụm 2",
+        "query": "bồi thường số viễn thông",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "bồi thường số viễn thông"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "exceptions",
+        "title": "Tìm tiêu đề — cụm 3",
+        "query": "thu hồi số viễn thông",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "thu hồi số viễn thông"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "amendments",
+        "title": "Tìm tiêu đề — cụm 4",
+        "query": "tài nguyên internet",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "ff6161d554c0442d5da932a6",
+            "title": "Quy định chi tiết một số điều của Luật Viễn thông về quản lý kho số viễn thông, tài nguyên Internet; việc bồi thường khi nhà nước thu hồi mã, số viễn thông, tài nguyên Internet; đấu giá quyền sử dụng mã, số viễn thông, tên miền quốc gia Việt Nam \".vn\"",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219416",
+            "document_number": "18/2026/VBHN-NĐ-BKHCN",
+            "issued_date": "07/09/2026",
+            "snippet": "Quy định chi tiết một số điều của Luật Viễn thông về quản lý kho số viễn thông, tài nguyên Internet; việc bồi thường khi nhà nước thu hồi mã, số viễn thông, tài nguyên Internet; đấu giá quyền sử dụng mã, số viễn thông, tên miền quốc gia Việt Nam \".vn\"",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "43875a8b310d4ea0eb99fd28",
+            "title": "Quy định về nội dung, trình tự phê duyệt quy hoạch kho số viễn thông và tài nguyên Internet và thực hiện việc phê duyệt quy hoạch",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=218473",
+            "document_number": "34/2026/TT-BKHCN",
+            "issued_date": "15/06/2026",
+            "snippet": "Quy định về nội dung, trình tự phê duyệt quy hoạch kho số viễn thông và tài nguyên Internet và thực hiện việc phê duyệt quy hoạch",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "09ae6a9950d5e0e339c4e5d8",
+            "title": "Hướng dẫn về quản lý và sử dụng tài nguyên Internet",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=216356",
+            "document_number": "48/2025/TT-BKHCN",
+            "issued_date": "25/12/2025",
+            "snippet": "Hướng dẫn về quản lý và sử dụng tài nguyên Internet",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "tài nguyên internet"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "official_verification",
+        "title": "Tìm tiêu đề — cụm 5",
+        "query": "kho số viễn thông",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "ff6161d554c0442d5da932a6",
+            "title": "Quy định chi tiết một số điều của Luật Viễn thông về quản lý kho số viễn thông, tài nguyên Internet; việc bồi thường khi nhà nước thu hồi mã, số viễn thông, tài nguyên Internet; đấu giá quyền sử dụng mã, số viễn thông, tên miền quốc gia Việt Nam \".vn\"",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219416",
+            "document_number": "18/2026/VBHN-NĐ-BKHCN",
+            "issued_date": "07/09/2026",
+            "snippet": "Quy định chi tiết một số điều của Luật Viễn thông về quản lý kho số viễn thông, tài nguyên Internet; việc bồi thường khi nhà nước thu hồi mã, số viễn thông, tài nguyên Internet; đấu giá quyền sử dụng mã, số viễn thông, tên miền quốc gia Việt Nam \".vn\"",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "43875a8b310d4ea0eb99fd28",
+            "title": "Quy định về nội dung, trình tự phê duyệt quy hoạch kho số viễn thông và tài nguyên Internet và thực hiện việc phê duyệt quy hoạch",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=218473",
+            "document_number": "34/2026/TT-BKHCN",
+            "issued_date": "15/06/2026",
+            "snippet": "Quy định về nội dung, trình tự phê duyệt quy hoạch kho số viễn thông và tài nguyên Internet và thực hiện việc phê duyệt quy hoạch",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "6d8f084173c4f8d5b002a8b7",
+            "title": "Quy định về nội dung, trình tự phê duyệt quy hoạch kho số viễn thông, quy hoạch tài nguyên Internet và thực hiện việc phê duyệt quy hoạch",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=215599",
+            "document_number": "21/2025/TT-BKHCN",
+            "issued_date": "06/10/2025",
+            "snippet": "Quy định về nội dung, trình tự phê duyệt quy hoạch kho số viễn thông, quy hoạch tài nguyên Internet và thực hiện việc phê duyệt quy hoạch",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "kho số viễn thông"
+        ],
+        "error_kind": null
+      }
+    ],
+    "provider": "chinhphu_official_portal",
+    "model": "webforms-search-v1"
+  },
+  "expected_url_hit": true,
+  "source": {
+    "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219416",
+    "attachment_url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/9/18-2026-vbhn-bkhcn.signed.pdf",
+    "title": "\r\n\tVăn bản hợp nhất số 18/2026/VBHN-NĐ-BKHCN của Bộ Khoa học và Công nghệ: Quy định chi tiết một số điều của Luật Viễn thông về quản lý kho số viễn thông, tài nguyên Internet; việc bồi thường khi nhà nước thu hồi mã, số viễn thông, tài nguyên Internet; đấu giá quyền sử dụng mã, số viễn thông, tên mi",
+    "text": "VĂN BẢN HỢP NHẤT\nSố: 18 /2026/VBHN-NĐ-BKHCN\nCỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\nHà Nội, ngày 07 tháng 9 năm 2026\nCỤC THÔNG TIN VÀ TRUYỀN THÔNG CHÍNH PHỦ\nĐẾN Giờ: C\nNgày: 08/9/2026\nVĂN PHÒNG CHÍNH PHỦ\nCÔNG VĂN ĐẾN\nGiờ: ... Ngày 08/9\nKính chuyển: CTCP\nNGHỊ ĐỊNH\nQuy định chi tiết một số điều của Luật Viễn thông về quản lý kho\nsố viễn thông, tài nguyên Internet; việc bồi thường khi nhà nước thu hồi mã, số\nviễn thông, tài nguyên Internet; đấu giá quyền sử dụng mã,\nsố viễn thông, tên miền quốc gia Việt Nam \".vn\"\nNghị định số 115/2025/NĐ-CP ngày 03 tháng 6 năm 2025 của Chính phủ\nquy định chi tiết một số điều của Luật Viễn thông về quản lý kho số viễn thông,\ntài nguyên Internet; việc bồi thường khi nhà nước thu hồi mã, số viễn thông, tài\nnguyên Internet; đấu giá quyền sử dụng mã, số viễn thông, tên miền quốc gia\nViệt Nam \".vn\", có hiệu lực thi hành kể từ ngày 20 tháng 7 năm 2025, được sửa\nđổi, bổ sung bởi:\nNghị định số 15/2026/NĐ-CP ngày 14 tháng 01 năm 2026 của Chính phủ\nsửa đổi, bổ sung một số điều của các Nghị định để cắt giảm, đơn giản hóa thủ\ntục hành chính liên quan đến hoạt động sản xuất, kinh doanh thuộc phạm vi\nquản lý nhà nước của Bộ Khoa học và Công nghệ, có hiệu lực thi hành kể từ\nngày 14 tháng 01 năm 2026.\nCăn cứ Luật Tổ chức Chính phủ ngày 18 tháng 02 năm 2025;\nCăn cứ Luật Tổ chức chính quyền địa phương ngày 19 tháng 02 năm 2025;\nCăn cứ Luật Viễn thông ngày 24 tháng 11 năm 2023;\nCăn cứ Luật Đấu giá tài sản ngày 17 tháng 11 năm 2016; Luật sửa đổi, bổ\nsung một số điều của Luật Đấu giá tài sản ngày 27 tháng 6 năm 2024;\nCăn cứ Luật Quản lý, sử dụng tài sản công ngày 21 tháng 6 năm 2017;\nTheo đề nghị của Bộ trưởng Bộ Khoa học và Công nghệ;\nChính phủ ban hành Nghị định quy định chi tiết một số điều của Luật Viễn\nthông về quản lý kho số viễn thông, tài nguyên Internet; việc bồi thường khi nhà\nnước thu hồi mã, số viễn thông, tài nguyên Internet; đấu giá quyền sử dụng mã,\nsố viễn thông, tên miền quốc gia Việt Nam \".vn\"¹.\n¹ Nghị định số 15/2026/NĐ-CP, có căn cứ ban hành như sau:\n“Căn cứ Luật Tổ chức Chính phủ số 63/2025/QH15;\nCăn cứ Luật Khoa học, công nghệ và đổi mới sáng tạo số 93/2025/QH15;\n\n2\n\nChương I\nNHỮNG QUY ĐỊNH CHUNG\n\nĐiều 1. Phạm vi điều chỉnh\nNghị định này quy định chi tiết khoản 4 Điều 48 và khoản 10 Điều 50 của\nLuật Viễn thông về việc quản lý kho số viễn thông, tài nguyên Internet; việc bồi\nthường khi Nhà nước thu hồi mã, số viễn thông, tài nguyên Internet; đấu giá\nquyền sử dụng mã, số viễn thông, tên miền quốc gia Việt Nam \".vn”.\n\nĐiều 2. Đối tượng áp dụng\nNghị định này áp dụng đối với:\n1. Cơ quan quản lý nhà nước có liên quan đến hoạt động quản lý, sử dụng\nkho số viễn thông, tài nguyên Internet.\n2. Cơ quan, đơn vị được giao nhiệm vụ quản lý kho số viễn thông, tài\nnguyên Internet.\n3. Tổ chức, doanh nghiệp, cá nhân được phân bổ, cấp mã, số viễn thông, tài\nnguyên Internet.\n4. Tổ chức, doanh nghiệp, cá nhân liên quan đến hoạt động đấu giá, chuyển\nnhượng quyền sử dụng mã, số viễn thông, tên miền quốc gia Việt Nam \".vn”.\n\nĐiều 3. Giải thích từ ngữ\nTrong Nghị định này, các từ ngữ dưới đây được hiểu như sau:\n1. Quản lý kho số viễn thông bao gồm việc phân bổ, cấp, ấn định, thu hồi,\nhoàn trả, sử dụng, chuyển nhượng quyền sử dụng mã, số viễn thông, thuê và cho\nthuê số thuê bao viễn thông, đổi số thuê bao viễn thông.\n2. Phân bổ mã, số viễn thông là việc cơ quan quản lý nhà nước cấp quyền sử\ndụng mã, số viễn thông cho tổ chức, doanh nghiệp, cá nhân theo quy hoạch kho\nsố viễn thông và quy định tại Nghị định này.\n3. Khai thác mã, số viễn thông là việc tổ chức, doanh nghiệp khai báo và\nCăn cứ Luật Chuyển giao công nghệ số 07/2017/QH14 được sửa đổi, bổ sung bởi Luật số 16/2023/QH15 và\nLuật số 93/2025/QH15;\nCăn cứ Luật Viễn thông số 24/2023/QH15;\nCăn cứ Luật Giao dịch điện tử số 20/2023/QH15 được sửa đổi, bổ sung bởi Luật số 60/2024/QH15;\nCăn cứ Luật Sở hữu trí tuệ số 50/2005/QH11 được sửa đổi, bổ sung bởi Luật số 36/2009/QH12, Luật số\n42/2019/QH14, Luật số 07/2022/QH15 và Luật số 93/2025/QH15;\nCăn cứ Luật Tần số vô tuyến điện số 42/2009/QH12 được sửa đổi, bổ sung bởi Luật số 09/2022/QH15, Luật số\n24/2023/QH15 và Luật số 84/2025/QH15;\nTheo đề nghị của Bộ trưởng Bộ Khoa học và Công nghệ;\nChính phủ ban hành Nghị định sửa đổi, bổ sung một số điều của các Nghị định để cắt giảm, đơn giản hóa thủ\ntục hành chính liên quan đến hoạt động sản xuất, kinh doanh thuộc phạm vi quản lý nhà nước của Bộ Khoa học\nvà Công nghệ.”",
+    "sha256": "f815542fe41c6a3e0cf0ecab38aab8e89e39750fbd96e1219f426b957acbe025",
+    "document_sha256": "534a09d2704988b98c5cccffdea15cad07f282c76732194e196d7f0d61f01e11",
+    "parser_recovered": false,
+    "ocr_input_sha256": "fba67a8952b8ed2be0e60d4fde43d682c4c63cb03358e71183ba4fa1b0611def",
+    "ocr_input_transform": "selected_page_content_without_annotations",
+    "retrieved_at": "2026-09-12T14:13:58.372349+00:00",
+    "extracted_characters": 4412,
+    "stored_characters": 4412,
+    "truncated": true,
+    "method": "vertex_ocr",
+    "legal_effect_status": "unverified",
+    "document_number": "18/2026/VBHN-NĐ-BKHCN",
+    "content_status": "readable",
+    "pages": [
+      {
+        "page": 1,
+        "text": "VĂN BẢN HỢP NHẤT\nSố: 18 /2026/VBHN-NĐ-BKHCN\nCỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\nHà Nội, ngày 07 tháng 9 năm 2026\nCỤC THÔNG TIN VÀ TRUYỀN THÔNG CHÍNH PHỦ\nĐẾN Giờ: C\nNgày: 08/9/2026\nVĂN PHÒNG CHÍNH PHỦ\nCÔNG VĂN ĐẾN\nGiờ: ... Ngày 08/9\nKính chuyển: CTCP\nNGHỊ ĐỊNH\nQuy định chi tiết một số điều của Luật Viễn thông về quản lý kho\nsố viễn thông, tài nguyên Internet; việc bồi thường khi nhà nước thu hồi mã, số\nviễn thông, tài nguyên Internet; đấu giá quyền sử dụng mã,\nsố viễn thông, tên miền quốc gia Việt Nam \".vn\"\nNghị định số 115/2025/NĐ-CP ngày 03 tháng 6 năm 2025 của Chính phủ\nquy định chi tiết một số điều của Luật Viễn thông về quản lý kho số viễn thông,\ntài nguyên Internet; việc bồi thường khi nhà nước thu hồi mã, số viễn thông, tài\nnguyên Internet; đấu giá quyền sử dụng mã, số viễn thông, tên miền quốc gia\nViệt Nam \".vn\", có hiệu lực thi hành kể từ ngày 20 tháng 7 năm 2025, được sửa\nđổi, bổ sung bởi:\nNghị định số 15/2026/NĐ-CP ngày 14 tháng 01 năm 2026 của Chính phủ\nsửa đổi, bổ sung một số điều của các Nghị định để cắt giảm, đơn giản hóa thủ\ntục hành chính liên quan đến hoạt động sản xuất, kinh doanh thuộc phạm vi\nquản lý nhà nước của Bộ Khoa học và Công nghệ, có hiệu lực thi hành kể từ\nngày 14 tháng 01 năm 2026.\nCăn cứ Luật Tổ chức Chính phủ ngày 18 tháng 02 năm 2025;\nCăn cứ Luật Tổ chức chính quyền địa phương ngày 19 tháng 02 năm 2025;\nCăn cứ Luật Viễn thông ngày 24 tháng 11 năm 2023;\nCăn cứ Luật Đấu giá tài sản ngày 17 tháng 11 năm 2016; Luật sửa đổi, bổ\nsung một số điều của Luật Đấu giá tài sản ngày 27 tháng 6 năm 2024;\nCăn cứ Luật Quản lý, sử dụng tài sản công ngày 21 tháng 6 năm 2017;\nTheo đề nghị của Bộ trưởng Bộ Khoa học và Công nghệ;\nChính phủ ban hành Nghị định quy định chi tiết một số điều của Luật Viễn\nthông về quản lý kho số viễn thông, tài nguyên Internet; việc bồi thường khi nhà\nnước thu hồi mã, số viễn thông, tài nguyên Internet; đấu giá quyền sử dụng mã,\nsố viễn thông, tên miền quốc gia Việt Nam \".vn\"¹.\n¹ Nghị định số 15/2026/NĐ-CP, có căn cứ ban hành như sau:\n“Căn cứ Luật Tổ chức Chính phủ số 63/2025/QH15;\nCăn cứ Luật Khoa học, công nghệ và đổi mới sáng tạo số 93/2025/QH15;"
+      },
+      {
+        "page": 2,
+        "text": "2\n\nChương I\nNHỮNG QUY ĐỊNH CHUNG\n\nĐiều 1. Phạm vi điều chỉnh\nNghị định này quy định chi tiết khoản 4 Điều 48 và khoản 10 Điều 50 của\nLuật Viễn thông về việc quản lý kho số viễn thông, tài nguyên Internet; việc bồi\nthường khi Nhà nước thu hồi mã, số viễn thông, tài nguyên Internet; đấu giá\nquyền sử dụng mã, số viễn thông, tên miền quốc gia Việt Nam \".vn”.\n\nĐiều 2. Đối tượng áp dụng\nNghị định này áp dụng đối với:\n1. Cơ quan quản lý nhà nước có liên quan đến hoạt động quản lý, sử dụng\nkho số viễn thông, tài nguyên Internet.\n2. Cơ quan, đơn vị được giao nhiệm vụ quản lý kho số viễn thông, tài\nnguyên Internet.\n3. Tổ chức, doanh nghiệp, cá nhân được phân bổ, cấp mã, số viễn thông, tài\nnguyên Internet.\n4. Tổ chức, doanh nghiệp, cá nhân liên quan đến hoạt động đấu giá, chuyển\nnhượng quyền sử dụng mã, số viễn thông, tên miền quốc gia Việt Nam \".vn”.\n\nĐiều 3. Giải thích từ ngữ\nTrong Nghị định này, các từ ngữ dưới đây được hiểu như sau:\n1. Quản lý kho số viễn thông bao gồm việc phân bổ, cấp, ấn định, thu hồi,\nhoàn trả, sử dụng, chuyển nhượng quyền sử dụng mã, số viễn thông, thuê và cho\nthuê số thuê bao viễn thông, đổi số thuê bao viễn thông.\n2. Phân bổ mã, số viễn thông là việc cơ quan quản lý nhà nước cấp quyền sử\ndụng mã, số viễn thông cho tổ chức, doanh nghiệp, cá nhân theo quy hoạch kho\nsố viễn thông và quy định tại Nghị định này.\n3. Khai thác mã, số viễn thông là việc tổ chức, doanh nghiệp khai báo và\nCăn cứ Luật Chuyển giao công nghệ số 07/2017/QH14 được sửa đổi, bổ sung bởi Luật số 16/2023/QH15 và\nLuật số 93/2025/QH15;\nCăn cứ Luật Viễn thông số 24/2023/QH15;\nCăn cứ Luật Giao dịch điện tử số 20/2023/QH15 được sửa đổi, bổ sung bởi Luật số 60/2024/QH15;\nCăn cứ Luật Sở hữu trí tuệ số 50/2005/QH11 được sửa đổi, bổ sung bởi Luật số 36/2009/QH12, Luật số\n42/2019/QH14, Luật số 07/2022/QH15 và Luật số 93/2025/QH15;\nCăn cứ Luật Tần số vô tuyến điện số 42/2009/QH12 được sửa đổi, bổ sung bởi Luật số 09/2022/QH15, Luật số\n24/2023/QH15 và Luật số 84/2025/QH15;\nTheo đề nghị của Bộ trưởng Bộ Khoa học và Công nghệ;\nChính phủ ban hành Nghị định sửa đổi, bổ sung một số điều của các Nghị định để cắt giảm, đơn giản hóa thủ\ntục hành chính liên quan đến hoạt động sản xuất, kinh doanh thuộc phạm vi quản lý nhà nước của Bộ Khoa học\nvà Công nghệ.”"
+      }
+    ],
+    "page_count": 98,
+    "page_start": 1,
+    "page_end": 2,
+    "next_page_start": 3,
+    "requires_ocr": false,
+    "unreadable_pages": [],
+    "ocr_provider": "google_vertex_ai",
+    "ocr_model": "gemini-3.5-flash",
+    "attachments": [
+      "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/9/18-2026-vbhn-bkhcn.signed.pdf"
+    ],
+    "issued_date": "07-09-2026"
+  },
+  "elapsed_seconds": 31.23400000000038
+}

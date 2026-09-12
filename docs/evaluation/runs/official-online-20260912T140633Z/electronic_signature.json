@@ -1,0 +1,281 @@
+{
+  "case": {
+    "id": "electronic_signature",
+    "question": "Dịch vụ tin cậy và chữ ký điện tử phải đáp ứng quy định nào?",
+    "reference_number": "17/2026/VBHN-NĐ-BKHCN",
+    "reference_url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219408"
+  },
+  "plan": {
+    "version": "official-web-v3",
+    "query_method": "model_keywords",
+    "planner_error": null,
+    "planner_provider": "google_vertex_ai",
+    "planner_model": "gemini-3.5-flash",
+    "plan_id": "5c55257b4d8f1cab0a5c95c0",
+    "status": "draft",
+    "question": "Dịch vụ tin cậy và chữ ký điện tử phải đáp ứng quy định nào?",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "kind": "legal_basis",
+        "title": "Tìm tiêu đề — cụm 1",
+        "query": "dịch vụ tin cậy"
+      },
+      {
+        "step_id": "conditions",
+        "kind": "conditions",
+        "title": "Tìm tiêu đề — cụm 2",
+        "query": "chữ ký điện tử"
+      },
+      {
+        "step_id": "exceptions",
+        "kind": "exceptions",
+        "title": "Tìm tiêu đề — cụm 3",
+        "query": "giao dịch điện tử"
+      },
+      {
+        "step_id": "amendments",
+        "kind": "amendments",
+        "title": "Tìm tiêu đề — cụm 4",
+        "query": "dịch vụ chữ ký"
+      },
+      {
+        "step_id": "official_verification",
+        "kind": "official_verification",
+        "title": "Tìm tiêu đề — cụm 5",
+        "query": "chữ ký số"
+      }
+    ]
+  },
+  "result": {
+    "status": "partial",
+    "question": "Dịch vụ tin cậy và chữ ký điện tử phải đáp ứng quy định nào?",
+    "plan_id": "5c55257b4d8f1cab0a5c95c0",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "title": "Tìm tiêu đề — cụm 1",
+        "query": "dịch vụ tin cậy",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "92eecda12fd91a7b11a06c16",
+            "title": "Quy định về chữ ký điện tử và dịch vụ tin cậy",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219408",
+            "document_number": "17/2026/VBHN-NĐ-BKHCN",
+            "issued_date": "07/09/2026",
+            "snippet": "Quy định về chữ ký điện tử và dịch vụ tin cậy",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "f9c31b07a8c6c99898e7b74d",
+            "title": "Quy định kiểm toán kỹ thuật đối với chữ ký điện tử và dịch vụ tin cậy",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=215589",
+            "document_number": "19/2025/TT-BKHCN",
+            "issued_date": "06/10/2025",
+            "snippet": "Quy định kiểm toán kỹ thuật đối với chữ ký điện tử và dịch vụ tin cậy",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "f90dad119668604ffe668db0",
+            "title": "Quy định về chữ ký điện tử và dịch vụ tin cậy",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=212829",
+            "document_number": "23/2025/NĐ-CP",
+            "issued_date": "21/02/2025",
+            "snippet": "Quy định về chữ ký điện tử và dịch vụ tin cậy",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "dịch vụ tin cậy"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "conditions",
+        "title": "Tìm tiêu đề — cụm 2",
+        "query": "chữ ký điện tử",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "92eecda12fd91a7b11a06c16",
+            "title": "Quy định về chữ ký điện tử và dịch vụ tin cậy",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219408",
+            "document_number": "17/2026/VBHN-NĐ-BKHCN",
+            "issued_date": "07/09/2026",
+            "snippet": "Quy định về chữ ký điện tử và dịch vụ tin cậy",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "3a85e3cfa2fb8efc2072d1cf",
+            "title": "Quy định về việc cung cấp và sử dụng chữ ký điện tử chuyên dùng, chứng thư chữ ký điện tự chuyên dùng Ngân hàng Nhà nước",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=216435",
+            "document_number": "59/2025/TT-NHNN",
+            "issued_date": "29/12/2025",
+            "snippet": "Quy định về việc cung cấp và sử dụng chữ ký điện tử chuyên dùng, chứng thư chữ ký điện tự chuyên dùng Ngân hàng Nhà nước",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "f9c31b07a8c6c99898e7b74d",
+            "title": "Quy định kiểm toán kỹ thuật đối với chữ ký điện tử và dịch vụ tin cậy",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=215589",
+            "document_number": "19/2025/TT-BKHCN",
+            "issued_date": "06/10/2025",
+            "snippet": "Quy định kiểm toán kỹ thuật đối với chữ ký điện tử và dịch vụ tin cậy",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "chữ ký điện tử"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "exceptions",
+        "title": "Tìm tiêu đề — cụm 3",
+        "query": "giao dịch điện tử",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "162484d2465d08128da29ccc",
+            "title": "Hướng dẫn giao dịch điện tử trong lĩnh vực thuế",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=218760",
+            "document_number": "21/VBHN-BTC",
+            "issued_date": "29/06/2026",
+            "snippet": "Hướng dẫn giao dịch điện tử trong lĩnh vực thuế",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "6ad4d5d79cb12bb273940be8",
+            "title": "Quy định xử phạt vi phạm hành chính trong lĩnh vực bưu chính, viễn thông, tần số vô tuyến điện, giao dịch điện tử và công nghệ thông tin",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=218185",
+            "document_number": "174/2026/NĐ-CP",
+            "issued_date": "15/05/2026",
+            "snippet": "Quy định xử phạt vi phạm hành chính trong lĩnh vực bưu chính, viễn thông, tần số vô tuyến điện, giao dịch điện tử và công nghệ thông tin",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "9a90ca9884979b0e3af7abcd",
+            "title": "Luật Giao dịch điện tử",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=217207",
+            "document_number": "36/VBHN-VPQH",
+            "issued_date": "13/03/2026",
+            "snippet": "Luật Giao dịch điện tử",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "giao dịch điện tử"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "amendments",
+        "title": "Tìm tiêu đề — cụm 4",
+        "query": "dịch vụ chữ ký",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "dịch vụ chữ ký"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "official_verification",
+        "title": "Tìm tiêu đề — cụm 5",
+        "query": "chữ ký số",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "0eb3a8ce68587e571ba89ed7",
+            "title": "Ban hành \"Quy chuẩn kỹ thuật quốc gia về yêu cầu đối với dịch vụ chứng thực chữ ký số công cộng\"",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=216563",
+            "document_number": "50/2025/TT-BKHCN",
+            "issued_date": "31/12/2025",
+            "snippet": "Ban hành \"Quy chuẩn kỹ thuật quốc gia về yêu cầu đối với dịch vụ chứng thực chữ ký số công cộng\"",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "fd7d7156ccc7b4562e37eb22",
+            "title": "Quy định định dạng thông tin trên chứng thư chữ ký số",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=215820",
+            "document_number": "28/2025/TT-BKHCN",
+            "issued_date": "04/11/2025",
+            "snippet": "Quy định định dạng thông tin trên chứng thư chữ ký số",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "221faeee16719a36e148510d",
+            "title": "Quy định yêu cầu kỹ thuật đối với phần mềm ký số, phần mềm kiểm tra chữ ký số và Cổng kết nối dịch vụ chứng thực chữ ký số công cộng",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=214970",
+            "document_number": "15/2025/TT-BKHCN",
+            "issued_date": "15/08/2025",
+            "snippet": "Quy định yêu cầu kỹ thuật đối với phần mềm ký số, phần mềm kiểm tra chữ ký số và Cổng kết nối dịch vụ chứng thực chữ ký số công cộng",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "chữ ký số"
+        ],
+        "error_kind": null
+      }
+    ],
+    "provider": "chinhphu_official_portal",
+    "model": "webforms-search-v1"
+  },
+  "expected_url_hit": true,
+  "source": {
+    "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219408",
+    "attachment_url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/9/17-vbhn-bkhcn.signed.pdf",
+    "title": "\r\n\tVăn bản hợp nhất số 17/2026/VBHN-NĐ-BKHCN của Bộ Khoa học và Công nghệ: Quy định về chữ ký điện tử và dịch vụ tin cậy\r\n",
+    "text": "SAO Y; Bộ Khoa học và Công nghệ; 07/09/2026; 16:56:07; +07:00\n\nVĂN BẢN HỢP NHẤT\nSố: 17 /2026/VBHN-NĐ-BKHCN\n\nCỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\nHà Nội, ngày 07 tháng 9 năm 2026\n\nNGHỊ ĐỊNH\nQuy định về chữ ký điện tử và dịch vụ tin cậy\n\nNghị định số 23/2025/NĐ-CP ngày 21 tháng 02 năm 2025 của Chính phủ quy định về chữ ký điện tử và dịch vụ tin cậy, có hiệu lực kể từ ngày 10 tháng 4 năm 2025, được sửa đổi, bổ sung bởi:\n\nNghị định số 15/2026/NĐ-CP ngày 14 tháng 01 năm 2026 của Chính phủ sửa đổi, bổ sung một số điều của các nghị định để cắt giảm, đơn giản hóa thủ tục hành chính liên quan đến hoạt động sản xuất, kinh doanh thuộc phạm vi quản lý nhà nước của Bộ Khoa học và Công nghệ, có hiệu lực kể từ ngày 14 tháng 01 năm 2026;\n\nCăn cứ Luật Tổ chức Chính phủ ngày 19 tháng 6 năm 2015; Luật sửa đổi, bổ sung một số điều của Luật Tổ chức Chính phủ và Luật Tổ chức chính quyền địa phương ngày 22 tháng 11 năm 2019;\n\nCăn cứ Luật Giao dịch điện tử ngày 22 tháng 6 năm 2023;\nCăn cứ Luật Phí và lệ phí ngày 25 tháng 11 năm 2015;\nTheo đề nghị của Bộ trưởng Bộ Khoa học và Công nghệ;\nChính phủ ban hành Nghị định quy định về chữ ký điện tử và dịch vụ tin cậy¹.\n\n¹ Nghị định số 15/2026/NĐ-CP, có căn cứ ban hành như sau:\n\"Căn cứ Luật Tổ chức Chính phủ số 63/2025/QH15;\nCăn cứ Luật Khoa học, công nghệ và đổi mới sáng tạo số 93/2025/QH15;\nCăn cứ Luật Chuyển giao công nghệ số 07/2017/QH14 được sửa đổi, bổ sung bởi Luật số 16/2023/QH15 và Luật số 93/2025/QH15;\nCăn cứ Luật Viễn thông số 24/2023/QH15;\nCăn cứ Luật Giao dịch điện tử số 20/2023/QH15 được sửa đổi, bổ sung bởi Luật số 60/2024/QH15;\n\n2\n\nChương I\nNHỮNG QUY ĐỊNH CHUNG\n\nĐiều 1. Phạm vi điều chỉnh\nNghị định này quy định về chữ ký điện tử và dịch vụ tin cậy, trừ chữ ký số chuyên dùng công vụ và dịch vụ chứng thực chữ ký số chuyên dùng công vụ.\n\nĐiều 2. Đối tượng áp dụng\nNghị định này áp dụng đối với cơ quan, tổ chức, cá nhân tham gia trực tiếp hoặc có liên quan đến chữ ký điện tử và dịch vụ tin cậy.\n\nĐiều 3. Giải thích từ ngữ\nTrong Nghị định này, các từ ngữ dưới đây được hiểu như sau:\n1. “Khóa” là một chuỗi các số nhị phân (0 và 1) dùng trong các hệ thống mật mã.\n2. “Ký số” là việc đưa khóa bí mật vào một chương trình phần mềm để tự động tạo và gắn chữ ký số vào thông điệp dữ liệu.\n3. “Chứng thư chữ ký số có hiệu lực” là chứng thư chữ ký số chưa hết hạn, không bị tạm dừng hoặc bị thu hồi.\n4. “Mã bảo đảm toàn vẹn thông điệp dữ liệu” là một dãy ký tự được sử dụng để kiểm tra được tính toàn vẹn của thông điệp dữ liệu.\n5. “Thuê bao” là cơ quan, tổ chức, cá nhân giao kết hợp đồng cung cấp và sử dụng dịch vụ tin cậy với tổ chức cung cấp dịch vụ tin cậy.\n6. “Tổ chức cung cấp dịch vụ chứng thực điện tử quốc gia” là Trung tâm Chứng thực điện tử quốc gia trực thuộc Bộ Thông tin và Truyền thông.\n7. “Quy chế chứng thực” là văn bản về chính sách và quy trình, thủ tục cấp, quản lý chứng thư chữ ký điện tử hoặc chứng thư chữ ký số, sử dụng chữ ký điện tử chuyên dùng bảo đảm an toàn hoặc dịch vụ tin cậy của tổ chức cung cấp dịch vụ\n\nCăn cứ Luật Sở hữu trí tuệ số 50/2005/QH11 được sửa đổi, bổ sung bởi Luật số 36/2009/QH12, Luật số 42/2019/QH14, Luật số 07/2022/QH15 và Luật số 93/2025/QH15;\nCăn cứ Luật Tần số vô tuyến điện số 42/2009/QH12 được sửa đổi, bổ sung bởi Luật số 09/2022/QH15, Luật số 24/2023/QH15 và Luật số 84/2025/QH15;\nTheo đề nghị của Bộ trưởng Bộ Khoa học và Công nghệ;\nChính phủ ban hành Nghị định sửa đổi, bổ sung một số điều của các Nghị định để cắt giảm, đơn giản hóa thủ tục hành chính liên quan đến hoạt động sản xuất, kinh doanh thuộc phạm vi quản lý nhà nước của Bộ Khoa học và Công nghệ.\"",
+    "sha256": "4d5fbf1473d85a3be44aa81adadb8f48f2ac4af9f46b87992e64c4da907449a6",
+    "document_sha256": "be91175c5e33e6755b2bc841b8845d7151ebdbf084213fc9741f69624daf995a",
+    "parser_recovered": false,
+    "ocr_input_sha256": "88f8bfeafcade0124048178d4e64c61dda9e24fa563390066c74386f1d3c7df9",
+    "ocr_input_transform": "selected_page_content_without_annotations",
+    "retrieved_at": "2026-09-12T14:13:27.118405+00:00",
+    "extracted_characters": 3603,
+    "stored_characters": 3603,
+    "truncated": true,
+    "method": "vertex_ocr",
+    "legal_effect_status": "unverified",
+    "document_number": "17/2026/VBHN-NĐ-BKHCN",
+    "content_status": "readable",
+    "pages": [
+      {
+        "page": 1,
+        "text": "SAO Y; Bộ Khoa học và Công nghệ; 07/09/2026; 16:56:07; +07:00\n\nVĂN BẢN HỢP NHẤT\nSố: 17 /2026/VBHN-NĐ-BKHCN\n\nCỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\nHà Nội, ngày 07 tháng 9 năm 2026\n\nNGHỊ ĐỊNH\nQuy định về chữ ký điện tử và dịch vụ tin cậy\n\nNghị định số 23/2025/NĐ-CP ngày 21 tháng 02 năm 2025 của Chính phủ quy định về chữ ký điện tử và dịch vụ tin cậy, có hiệu lực kể từ ngày 10 tháng 4 năm 2025, được sửa đổi, bổ sung bởi:\n\nNghị định số 15/2026/NĐ-CP ngày 14 tháng 01 năm 2026 của Chính phủ sửa đổi, bổ sung một số điều của các nghị định để cắt giảm, đơn giản hóa thủ tục hành chính liên quan đến hoạt động sản xuất, kinh doanh thuộc phạm vi quản lý nhà nước của Bộ Khoa học và Công nghệ, có hiệu lực kể từ ngày 14 tháng 01 năm 2026;\n\nCăn cứ Luật Tổ chức Chính phủ ngày 19 tháng 6 năm 2015; Luật sửa đổi, bổ sung một số điều của Luật Tổ chức Chính phủ và Luật Tổ chức chính quyền địa phương ngày 22 tháng 11 năm 2019;\n\nCăn cứ Luật Giao dịch điện tử ngày 22 tháng 6 năm 2023;\nCăn cứ Luật Phí và lệ phí ngày 25 tháng 11 năm 2015;\nTheo đề nghị của Bộ trưởng Bộ Khoa học và Công nghệ;\nChính phủ ban hành Nghị định quy định về chữ ký điện tử và dịch vụ tin cậy¹.\n\n¹ Nghị định số 15/2026/NĐ-CP, có căn cứ ban hành như sau:\n\"Căn cứ Luật Tổ chức Chính phủ số 63/2025/QH15;\nCăn cứ Luật Khoa học, công nghệ và đổi mới sáng tạo số 93/2025/QH15;\nCăn cứ Luật Chuyển giao công nghệ số 07/2017/QH14 được sửa đổi, bổ sung bởi Luật số 16/2023/QH15 và Luật số 93/2025/QH15;\nCăn cứ Luật Viễn thông số 24/2023/QH15;\nCăn cứ Luật Giao dịch điện tử số 20/2023/QH15 được sửa đổi, bổ sung bởi Luật số 60/2024/QH15;"
+      },
+      {
+        "page": 2,
+        "text": "2\n\nChương I\nNHỮNG QUY ĐỊNH CHUNG\n\nĐiều 1. Phạm vi điều chỉnh\nNghị định này quy định về chữ ký điện tử và dịch vụ tin cậy, trừ chữ ký số chuyên dùng công vụ và dịch vụ chứng thực chữ ký số chuyên dùng công vụ.\n\nĐiều 2. Đối tượng áp dụng\nNghị định này áp dụng đối với cơ quan, tổ chức, cá nhân tham gia trực tiếp hoặc có liên quan đến chữ ký điện tử và dịch vụ tin cậy.\n\nĐiều 3. Giải thích từ ngữ\nTrong Nghị định này, các từ ngữ dưới đây được hiểu như sau:\n1. “Khóa” là một chuỗi các số nhị phân (0 và 1) dùng trong các hệ thống mật mã.\n2. “Ký số” là việc đưa khóa bí mật vào một chương trình phần mềm để tự động tạo và gắn chữ ký số vào thông điệp dữ liệu.\n3. “Chứng thư chữ ký số có hiệu lực” là chứng thư chữ ký số chưa hết hạn, không bị tạm dừng hoặc bị thu hồi.\n4. “Mã bảo đảm toàn vẹn thông điệp dữ liệu” là một dãy ký tự được sử dụng để kiểm tra được tính toàn vẹn của thông điệp dữ liệu.\n5. “Thuê bao” là cơ quan, tổ chức, cá nhân giao kết hợp đồng cung cấp và sử dụng dịch vụ tin cậy với tổ chức cung cấp dịch vụ tin cậy.\n6. “Tổ chức cung cấp dịch vụ chứng thực điện tử quốc gia” là Trung tâm Chứng thực điện tử quốc gia trực thuộc Bộ Thông tin và Truyền thông.\n7. “Quy chế chứng thực” là văn bản về chính sách và quy trình, thủ tục cấp, quản lý chứng thư chữ ký điện tử hoặc chứng thư chữ ký số, sử dụng chữ ký điện tử chuyên dùng bảo đảm an toàn hoặc dịch vụ tin cậy của tổ chức cung cấp dịch vụ\n\nCăn cứ Luật Sở hữu trí tuệ số 50/2005/QH11 được sửa đổi, bổ sung bởi Luật số 36/2009/QH12, Luật số 42/2019/QH14, Luật số 07/2022/QH15 và Luật số 93/2025/QH15;\nCăn cứ Luật Tần số vô tuyến điện số 42/2009/QH12 được sửa đổi, bổ sung bởi Luật số 09/2022/QH15, Luật số 24/2023/QH15 và Luật số 84/2025/QH15;\nTheo đề nghị của Bộ trưởng Bộ Khoa học và Công nghệ;\nChính phủ ban hành Nghị định sửa đổi, bổ sung một số điều của các Nghị định để cắt giảm, đơn giản hóa thủ tục hành chính liên quan đến hoạt động sản xuất, kinh doanh thuộc phạm vi quản lý nhà nước của Bộ Khoa học và Công nghệ.\""
+      }
+    ],
+    "page_count": 57,
+    "page_start": 1,
+    "page_end": 2,
+    "next_page_start": 3,
+    "requires_ocr": false,
+    "unreadable_pages": [],
+    "ocr_provider": "google_vertex_ai",
+    "ocr_model": "gemini-3.5-flash",
+    "attachments": [
+      "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/9/17-vbhn-bkhcn.signed.pdf"
+    ],
+    "issued_date": "07-09-2026"
+  },
+  "elapsed_seconds": 32.3130000000001
+}

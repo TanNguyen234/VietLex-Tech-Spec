@@ -1,0 +1,11 @@
+{"name": "login_page", "status": 200, "seconds": 0.3899999999994179}
+{"name": "login", "status": 303, "seconds": 2.29700000000048}
+{"name": "login_page", "status": 200, "seconds": 0.06300000000010186}
+{"name": "login", "status": 303, "seconds": 1.6090000000003783}
+{"name": "create", "status": 303, "seconds": 5.234000000000378}
+{"name": "plan", "status": 200, "seconds": 9.688000000000102}
+{"name": "search", "status": 200, "seconds": 16.186999999999898}
+{"name": "read", "status": 200, "seconds": 11.093999999999141}
+{"name": "pin", "status": 200, "seconds": 9.688000000000102}
+{"name": "analysis", "status": 200, "seconds": 3.311999999999898}
+{"name": "readback", "status": 200, "seconds": 1.8440000000009604}

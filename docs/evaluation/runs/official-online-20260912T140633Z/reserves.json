@@ -1,0 +1,183 @@
+{
+  "case": {
+    "id": "reserves",
+    "reference_number": "345/2026/NĐ-CP",
+    "topic": "Dự trữ quốc gia",
+    "question": "Quản lý và sử dụng hàng dự trữ quốc gia theo Nghị định 345/2026/NĐ-CP được quy định thế nào?",
+    "reference_url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219380",
+    "reference_title": "Quy định chi tiết một số điều, biện pháp thi hành Luật Dự trữ quốc gia về dự trữ quốc gia và quản lý, sử dụng hàng dự trữ quốc gia",
+    "reference_issued_date": "04/09/2026"
+  },
+  "plan": {
+    "version": "official-web-v3",
+    "query_method": "literal",
+    "planner_error": null,
+    "planner_provider": null,
+    "planner_model": null,
+    "plan_id": "70b7f56e4192522813cafd2c",
+    "status": "draft",
+    "question": "Quản lý và sử dụng hàng dự trữ quốc gia theo Nghị định 345/2026/NĐ-CP được quy định thế nào?",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "kind": "legal_basis",
+        "title": "Căn cứ pháp lý trực tiếp",
+        "query": "345/2026/NĐ-CP"
+      },
+      {
+        "step_id": "conditions",
+        "kind": "conditions",
+        "title": "Điều kiện và thủ tục",
+        "query": "345/2026/NĐ-CP điều kiện"
+      },
+      {
+        "step_id": "exceptions",
+        "kind": "exceptions",
+        "title": "Ngoại lệ và giới hạn",
+        "query": "345/2026/NĐ-CP không được"
+      },
+      {
+        "step_id": "amendments",
+        "kind": "amendments",
+        "title": "Sửa đổi và tình trạng hiệu lực",
+        "query": "345/2026/NĐ-CP sửa đổi"
+      },
+      {
+        "step_id": "official_verification",
+        "kind": "official_verification",
+        "title": "Đối chiếu nguồn chính thức",
+        "query": "345/2026/NĐ-CP"
+      }
+    ]
+  },
+  "result": {
+    "status": "partial",
+    "question": "Quản lý và sử dụng hàng dự trữ quốc gia theo Nghị định 345/2026/NĐ-CP được quy định thế nào?",
+    "plan_id": "70b7f56e4192522813cafd2c",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "title": "Căn cứ pháp lý trực tiếp",
+        "query": "345/2026/NĐ-CP",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "ba6449822dd133828581d1c3",
+            "title": "Quy định chi tiết một số điều, biện pháp thi hành Luật Dự trữ quốc gia về dự trữ quốc gia và quản lý, sử dụng hàng dự trữ quốc gia",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219380",
+            "document_number": "345/2026/NĐ-CP",
+            "issued_date": "04/09/2026",
+            "snippet": "Quy định chi tiết một số điều, biện pháp thi hành Luật Dự trữ quốc gia về dự trữ quốc gia và quản lý, sử dụng hàng dự trữ quốc gia",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "345/2026/NĐ-CP"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "conditions",
+        "title": "Điều kiện và thủ tục",
+        "query": "345/2026/NĐ-CP điều kiện",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "345/2026/NĐ-CP điều kiện"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "exceptions",
+        "title": "Ngoại lệ và giới hạn",
+        "query": "345/2026/NĐ-CP không được",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "345/2026/NĐ-CP không được"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "amendments",
+        "title": "Sửa đổi và tình trạng hiệu lực",
+        "query": "345/2026/NĐ-CP sửa đổi",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "345/2026/NĐ-CP sửa đổi"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "official_verification",
+        "title": "Đối chiếu nguồn chính thức",
+        "query": "345/2026/NĐ-CP",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "ba6449822dd133828581d1c3",
+            "title": "Quy định chi tiết một số điều, biện pháp thi hành Luật Dự trữ quốc gia về dự trữ quốc gia và quản lý, sử dụng hàng dự trữ quốc gia",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219380",
+            "document_number": "345/2026/NĐ-CP",
+            "issued_date": "04/09/2026",
+            "snippet": "Quy định chi tiết một số điều, biện pháp thi hành Luật Dự trữ quốc gia về dự trữ quốc gia và quản lý, sử dụng hàng dự trữ quốc gia",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "345/2026/NĐ-CP"
+        ],
+        "error_kind": null
+      }
+    ],
+    "provider": "chinhphu_official_portal",
+    "model": "webforms-search-v1"
+  },
+  "expected_url_hit": true,
+  "source": {
+    "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219380",
+    "attachment_url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/9/345_2026_nd-cp_04092026-signed.signed.pdf",
+    "title": "\r\n\tNghị định số 345/2026/NĐ-CP của Chính phủ: Quy định chi tiết một số điều, biện pháp thi hành Luật Dự trữ quốc gia về dự trữ quốc gia và quản lý, sử dụng hàng dự trữ quốc gia\r\n",
+    "text": "CHÍNH PHỦ\n\nCỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\n\nSố: 345/2026/NĐ-CP\n\nHà Nội, ngày 04 tháng 9 năm 2026\n\nNGHỊ ĐỊNH\nQuy định chi tiết một số điều, biện pháp thi hành Luật Dự trữ quốc gia\nvề dự trữ quốc gia và quản lý, sử dụng hàng dự trữ quốc gia\n\nCăn cứ Luật Tổ chức Chính phủ số 63/2025/QH15;\nCăn cứ Luật Dự trữ quốc gia số 145/2025/QH15;\nTheo đề nghị của Bộ trưởng Bộ Tài chính;\n\nChính phủ ban hành Nghị định quy định chi tiết một số điều, biện pháp\nthi hành Luật Dự trữ quốc gia về dự trữ quốc gia và quản lý, sử dụng hàng\ndự trữ quốc gia.\n\nChương I\nQUY ĐỊNH CHUNG\n\nĐiều 1. Phạm vi điều chỉnh\n1. Quy định chi tiết các điều, khoản trong Luật Dự trữ quốc gia, bao gồm:\nKhoản 2 Điều 6 về nguồn hình thành dự trữ quốc gia; khoản 3 Điều 7 về hàng\ndự trữ quốc gia; khoản 3 Điều 12 về chế độ, chính sách đối với người làm công\ntác dự trữ quốc gia; khoản 4 Điều 22 về nội dung, quyết định kế hoạch hàng dự\ntrữ quốc gia hằng năm; khoản 3 Điều 23 về nhập, xuất hàng dự trữ quốc gia của\nBộ trưởng Bộ Tài chính; khoản 5 Điều 24 về nhập, xuất hàng dự trữ quốc gia\ncủa Bộ trưởng, Thủ trưởng cơ quan ngang bộ quản lý hàng dự trữ quốc gia;\nkhoản 5 Điều 25 về mua, bán hàng dự trữ quốc gia; khoản 2 Điều 26 về hàng dự\ntrữ quốc gia hao hụt thấp hơn so với định mức quy định trong quá trình bảo quản.\n2. Biện pháp thi hành Luật Dự trữ quốc gia, bao gồm: Khoản 5 Điều 9 về\ntổ chức nghiên cứu, ứng dụng tiến bộ khoa học công nghệ, chuyển đổi số trong\nquản lý, bảo quản hàng dự trữ quốc gia, hàng dự trữ chiến lược; khoản 8 Điều\n9 về hợp tác quốc tế về dự trữ quốc gia; khoản 1 Điều 10 về báo cáo Quốc hội\nvề quản lý, sử dụng dự trữ quốc gia; khoản 4 Điều 10 về kiểm tra về dự trữ\nquốc gia; Điều 14 về ngân sách nhà nước chi dự trữ quốc gia; Điều 17 về quản\nlý tài chính, chế độ kế toán, kiểm toán, thống kê, chế độ báo cáo về dự trữ quốc\ngia; Điều 20 về kho dự trữ quốc gia; khoản 2 Điều 26 về hàng dự trữ quốc gia\nhao hụt quá định mức quy định trong quá trình bảo quản; khoản 1 Điều 27 về\nquy định về bảo quản hàng dự trữ quốc gia, định mức kinh tế - kỹ thuật nhập,\nxuất, bảo quản hàng dự trữ quốc gia; khoản 4 Điều 27 về thuê tổ chức, doanh\nnghiệp bảo quản hàng dự trữ quốc gia; Điều 30 về sử dụng hàng dự trữ quốc gia.\n\n2\n\nĐiều 2. Đối tượng áp dụng\nCơ quan, tổ chức, đơn vị, doanh nghiệp, cá nhân có liên quan đến việc\nhình thành, quản lý, sử dụng dự trữ quốc gia.\n\nĐiều 3. Giải thích từ ngữ\nTrong Nghị định này, các từ ngữ dưới đây được hiểu như sau:\n1. Luân phiên, đổi hàng dự trữ quốc gia là việc thực hiện xuất bán, xuất\ncấp hàng dự trữ quốc gia và mua, nhập hàng để thay thế hàng dự trữ quốc gia\nnhằm bảo đảm yêu cầu về số lượng, thời hạn sử dụng, chất lượng, công nghệ\nđáp ứng mục tiêu dự trữ quốc gia.\n2. Hoán đổi hàng dự trữ quốc gia là việc dùng vật tư, thiết bị, hàng hóa để\nthay thế hàng dự trữ quốc gia đang bảo quản.\n3. Điều chuyển nội bộ hàng dự trữ quốc gia là việc điều chuyển hàng dự\ntrữ quốc gia từ địa điểm này sang địa điểm khác thuộc phạm vi quản lý để bảo\nđảm an toàn, đáp ứng yêu cầu thực hiện mục tiêu dự trữ quốc gia.\n4. Tạm xuất hàng dự trữ quốc gia là việc thực hiện xuất hàng dự trữ quốc\ngia để thực hiện mục tiêu dự trữ quốc gia quy định tại khoản 1 Điều 2 của Luật\nDự trữ quốc gia, sau khi hoàn thành nhiệm vụ phải bảo dưỡng, thu hồi nhập lại\nkho dự trữ quốc gia hoặc xuất cấp, xuất bán theo quy định tại Nghị định này.\n\nChương II\nQUY ĐỊNH CỤ THỂ\n\nMục 1\nDANH MỤC HÀNG DỰ TRỮ QUỐC GIA\n\nĐiều 4. Danh mục hàng dự trữ quốc gia\n1. Danh mục hàng dự trữ quốc gia và phân công quản lý hàng dự trữ quốc\ngia được quy định tại Phụ lục I ban hành kèm theo Nghị định này.\n2. Trường hợp cần sửa đổi, bổ sung Danh mục hàng dự trữ quốc gia và\n\nđiều chỉnh phân công cơ quan quản lý hàng dự trữ quốc gia, bộ, cơ quan ngang\nbộ quản lý hàng dự trữ quốc gia đề xuất gửi Bộ Tài chính tổng hợp, trình Chính\nphủ xem xét, quyết định. Nội dung đề xuất bao gồm:\na) Trường hợp đề xuất sửa đổi, bổ sung Danh mục hàng dự trữ quốc gia\ngồm các nội dung: Cơ sở chính trị, cơ sở pháp lý; sự cần thiết sửa đổi, bổ sung\nDanh mục hàng dự trữ quốc gia; thực trạng công tác quản lý, sử dụng hàng dự\ntrữ quốc gia; đề xuất sửa đổi, bổ sung Danh mục hàng dự trữ quốc gia; giải\npháp tổ chức triển khai thực hiện; nguồn kinh phí thực hiện.\nb) Trường hợp điều chỉnh phân công quản lý hàng dự trữ quốc gia, bộ, cơ\nquan ngang bộ đang quản lý hàng dự trữ quốc gia tổng hợp ý kiến bộ, cơ quan",
+    "sha256": "ac8e3da6bf37380512519f5da7def14b6624ba63ce467857821965baeb4a16b1",
+    "document_sha256": "c21fd81af62dd8a9968aacc809a42e5e9168047395d24512860be92ae5aaf98d",
+    "parser_recovered": false,
+    "ocr_input_sha256": "2aa8dfe29be0db62ca454da4caa6a3ae65120091c15a40028423ee18f8c4ee8f",
+    "ocr_input_transform": "selected_page_content_without_annotations",
+    "retrieved_at": "2026-09-12T14:12:25.368604+00:00",
+    "extracted_characters": 4382,
+    "stored_characters": 4382,
+    "truncated": true,
+    "method": "vertex_ocr",
+    "legal_effect_status": "unverified",
+    "document_number": "345/2026/NĐ-CP",
+    "content_status": "readable",
+    "pages": [
+      {
+        "page": 1,
+        "text": "CHÍNH PHỦ\n\nCỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\n\nSố: 345/2026/NĐ-CP\n\nHà Nội, ngày 04 tháng 9 năm 2026\n\nNGHỊ ĐỊNH\nQuy định chi tiết một số điều, biện pháp thi hành Luật Dự trữ quốc gia\nvề dự trữ quốc gia và quản lý, sử dụng hàng dự trữ quốc gia\n\nCăn cứ Luật Tổ chức Chính phủ số 63/2025/QH15;\nCăn cứ Luật Dự trữ quốc gia số 145/2025/QH15;\nTheo đề nghị của Bộ trưởng Bộ Tài chính;\n\nChính phủ ban hành Nghị định quy định chi tiết một số điều, biện pháp\nthi hành Luật Dự trữ quốc gia về dự trữ quốc gia và quản lý, sử dụng hàng\ndự trữ quốc gia.\n\nChương I\nQUY ĐỊNH CHUNG\n\nĐiều 1. Phạm vi điều chỉnh\n1. Quy định chi tiết các điều, khoản trong Luật Dự trữ quốc gia, bao gồm:\nKhoản 2 Điều 6 về nguồn hình thành dự trữ quốc gia; khoản 3 Điều 7 về hàng\ndự trữ quốc gia; khoản 3 Điều 12 về chế độ, chính sách đối với người làm công\ntác dự trữ quốc gia; khoản 4 Điều 22 về nội dung, quyết định kế hoạch hàng dự\ntrữ quốc gia hằng năm; khoản 3 Điều 23 về nhập, xuất hàng dự trữ quốc gia của\nBộ trưởng Bộ Tài chính; khoản 5 Điều 24 về nhập, xuất hàng dự trữ quốc gia\ncủa Bộ trưởng, Thủ trưởng cơ quan ngang bộ quản lý hàng dự trữ quốc gia;\nkhoản 5 Điều 25 về mua, bán hàng dự trữ quốc gia; khoản 2 Điều 26 về hàng dự\ntrữ quốc gia hao hụt thấp hơn so với định mức quy định trong quá trình bảo quản.\n2. Biện pháp thi hành Luật Dự trữ quốc gia, bao gồm: Khoản 5 Điều 9 về\ntổ chức nghiên cứu, ứng dụng tiến bộ khoa học công nghệ, chuyển đổi số trong\nquản lý, bảo quản hàng dự trữ quốc gia, hàng dự trữ chiến lược; khoản 8 Điều\n9 về hợp tác quốc tế về dự trữ quốc gia; khoản 1 Điều 10 về báo cáo Quốc hội\nvề quản lý, sử dụng dự trữ quốc gia; khoản 4 Điều 10 về kiểm tra về dự trữ\nquốc gia; Điều 14 về ngân sách nhà nước chi dự trữ quốc gia; Điều 17 về quản\nlý tài chính, chế độ kế toán, kiểm toán, thống kê, chế độ báo cáo về dự trữ quốc\ngia; Điều 20 về kho dự trữ quốc gia; khoản 2 Điều 26 về hàng dự trữ quốc gia\nhao hụt quá định mức quy định trong quá trình bảo quản; khoản 1 Điều 27 về\nquy định về bảo quản hàng dự trữ quốc gia, định mức kinh tế - kỹ thuật nhập,\nxuất, bảo quản hàng dự trữ quốc gia; khoản 4 Điều 27 về thuê tổ chức, doanh\nnghiệp bảo quản hàng dự trữ quốc gia; Điều 30 về sử dụng hàng dự trữ quốc gia."
+      },
+      {
+        "page": 2,
+        "text": "2\n\nĐiều 2. Đối tượng áp dụng\nCơ quan, tổ chức, đơn vị, doanh nghiệp, cá nhân có liên quan đến việc\nhình thành, quản lý, sử dụng dự trữ quốc gia.\n\nĐiều 3. Giải thích từ ngữ\nTrong Nghị định này, các từ ngữ dưới đây được hiểu như sau:\n1. Luân phiên, đổi hàng dự trữ quốc gia là việc thực hiện xuất bán, xuất\ncấp hàng dự trữ quốc gia và mua, nhập hàng để thay thế hàng dự trữ quốc gia\nnhằm bảo đảm yêu cầu về số lượng, thời hạn sử dụng, chất lượng, công nghệ\nđáp ứng mục tiêu dự trữ quốc gia.\n2. Hoán đổi hàng dự trữ quốc gia là việc dùng vật tư, thiết bị, hàng hóa để\nthay thế hàng dự trữ quốc gia đang bảo quản.\n3. Điều chuyển nội bộ hàng dự trữ quốc gia là việc điều chuyển hàng dự\ntrữ quốc gia từ địa điểm này sang địa điểm khác thuộc phạm vi quản lý để bảo\nđảm an toàn, đáp ứng yêu cầu thực hiện mục tiêu dự trữ quốc gia.\n4. Tạm xuất hàng dự trữ quốc gia là việc thực hiện xuất hàng dự trữ quốc\ngia để thực hiện mục tiêu dự trữ quốc gia quy định tại khoản 1 Điều 2 của Luật\nDự trữ quốc gia, sau khi hoàn thành nhiệm vụ phải bảo dưỡng, thu hồi nhập lại\nkho dự trữ quốc gia hoặc xuất cấp, xuất bán theo quy định tại Nghị định này.\n\nChương II\nQUY ĐỊNH CỤ THỂ\n\nMục 1\nDANH MỤC HÀNG DỰ TRỮ QUỐC GIA\n\nĐiều 4. Danh mục hàng dự trữ quốc gia\n1. Danh mục hàng dự trữ quốc gia và phân công quản lý hàng dự trữ quốc\ngia được quy định tại Phụ lục I ban hành kèm theo Nghị định này.\n2. Trường hợp cần sửa đổi, bổ sung Danh mục hàng dự trữ quốc gia và\n\nđiều chỉnh phân công cơ quan quản lý hàng dự trữ quốc gia, bộ, cơ quan ngang\nbộ quản lý hàng dự trữ quốc gia đề xuất gửi Bộ Tài chính tổng hợp, trình Chính\nphủ xem xét, quyết định. Nội dung đề xuất bao gồm:\na) Trường hợp đề xuất sửa đổi, bổ sung Danh mục hàng dự trữ quốc gia\ngồm các nội dung: Cơ sở chính trị, cơ sở pháp lý; sự cần thiết sửa đổi, bổ sung\nDanh mục hàng dự trữ quốc gia; thực trạng công tác quản lý, sử dụng hàng dự\ntrữ quốc gia; đề xuất sửa đổi, bổ sung Danh mục hàng dự trữ quốc gia; giải\npháp tổ chức triển khai thực hiện; nguồn kinh phí thực hiện.\nb) Trường hợp điều chỉnh phân công quản lý hàng dự trữ quốc gia, bộ, cơ\nquan ngang bộ đang quản lý hàng dự trữ quốc gia tổng hợp ý kiến bộ, cơ quan"
+      }
+    ],
+    "page_count": 40,
+    "page_start": 1,
+    "page_end": 2,
+    "next_page_start": 3,
+    "requires_ocr": false,
+    "unreadable_pages": [],
+    "ocr_provider": "google_vertex_ai",
+    "ocr_model": "gemini-3.5-flash",
+    "attachments": [
+      "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/9/345_2026_nd-cp_04092026-signed.signed.pdf"
+    ],
+    "issued_date": "04-09-2026",
+    "reported_effective_from": "04-09-2026"
+  },
+  "elapsed_seconds": 35.875
+}

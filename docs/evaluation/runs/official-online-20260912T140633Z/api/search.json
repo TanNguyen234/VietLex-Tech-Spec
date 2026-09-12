@@ -1,0 +1,312 @@
+{
+  "analysis_id": "c5539318-a118-4356-92b8-6b1676305e8f",
+  "kind": "deep_research",
+  "status": "complete",
+  "question": "Quy định lựa chọn nhà thầu được sửa đổi ra sao trong tháng 9/2026?",
+  "plan": {
+    "version": "official-web-v3",
+    "query_method": "model_keywords",
+    "planner_error": null,
+    "planner_provider": "google_vertex_ai",
+    "planner_model": "gemini-3.5-flash",
+    "plan_id": "cf49b0d387477a94f5e56b2c",
+    "status": "draft",
+    "question": "Quy định lựa chọn nhà thầu được sửa đổi ra sao trong tháng 9/2026?",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "kind": "legal_basis",
+        "title": "Tìm tiêu đề — cụm 1",
+        "query": "lựa chọn nhà thầu"
+      },
+      {
+        "step_id": "conditions",
+        "kind": "conditions",
+        "title": "Tìm tiêu đề — cụm 2",
+        "query": "đấu thầu lựa chọn nhà thầu"
+      },
+      {
+        "step_id": "exceptions",
+        "kind": "exceptions",
+        "title": "Tìm tiêu đề — cụm 3",
+        "query": "quy chế lựa chọn nhà thầu"
+      },
+      {
+        "step_id": "amendments",
+        "kind": "amendments",
+        "title": "Tìm tiêu đề — cụm 4",
+        "query": "nhà thầu"
+      },
+      {
+        "step_id": "official_verification",
+        "kind": "official_verification",
+        "title": "Tìm tiêu đề — cụm 5",
+        "query": "đấu thầu"
+      }
+    ]
+  },
+  "result": {
+    "status": "complete",
+    "question": "Quy định lựa chọn nhà thầu được sửa đổi ra sao trong tháng 9/2026?",
+    "plan_id": "cf49b0d387477a94f5e56b2c",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "title": "Tìm tiêu đề — cụm 1",
+        "query": "lựa chọn nhà thầu",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "488744d4cf815ddb8303b5f4",
+            "title": "Sửa đổi, bổ sung một số điều của các Nghị định quy định chi tiết một số điều và biện pháp thi hành Luật Đấu thầu về lựa chọn nhà thầu",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219431",
+            "document_number": "349/2026/NĐ-CP",
+            "issued_date": "09/09/2026",
+            "snippet": "Sửa đổi, bổ sung một số điều của các Nghị định quy định chi tiết một số điều và biện pháp thi hành Luật Đấu thầu về lựa chọn nhà thầu",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "21b1445d576c27ef807719a8",
+            "title": "Quy định về sản phẩm, dịch vụ công nghệ số được hưởng ưu đãi về lựa chọn nhà thầu trong thuê, mua sắm sản phẩm, dịch vụ công nghệ số sử dụng vốn ngân sách nhà nước",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=216032",
+            "document_number": "34/2025/TT-BKHCN",
+            "issued_date": "15/11/2025",
+            "snippet": "Quy định về sản phẩm, dịch vụ công nghệ số được hưởng ưu đãi về lựa chọn nhà thầu trong thuê, mua sắm sản phẩm, dịch vụ công nghệ số sử dụng vốn ngân sách nhà nước",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "f6367699017ccd0b38adc91a",
+            "title": "V/v kết quả rà soát các nội dung liên quan đến việc lựa chọn nhà thầu gói thầu thi công Dự án xây dựng đường cao tốc Thành phố Hồ Chí Minh - Thủ Dầu Một - Chơn Thành đoạn qua tỉnh Bình Phước",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=215064",
+            "document_number": "8005/VPCP-CN",
+            "issued_date": "26/08/2025",
+            "snippet": "V/v kết quả rà soát các nội dung liên quan đến việc lựa chọn nhà thầu gói thầu thi công Dự án xây dựng đường cao tốc Thành phố Hồ Chí Minh - Thủ Dầu Một - Chơn Thành đoạn qua tỉnh Bình Phước",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "lựa chọn nhà thầu"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "conditions",
+        "title": "Tìm tiêu đề — cụm 2",
+        "query": "đấu thầu lựa chọn nhà thầu",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "4a014f753853ca057431892c",
+            "title": "V/v tình hình đấu thầu lựa chọn nhà thầu Dự án nhà máy điện Nhơn Trạch 2",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=80210",
+            "document_number": "7521/VPCP-KTN",
+            "issued_date": "03/11/2008",
+            "snippet": "V/v tình hình đấu thầu lựa chọn nhà thầu Dự án nhà máy điện Nhơn Trạch 2",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "đấu thầu lựa chọn nhà thầu"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "exceptions",
+        "title": "Tìm tiêu đề — cụm 3",
+        "query": "quy chế lựa chọn nhà thầu",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "ef6f91b48cddc678c1de7407",
+            "title": "Ban hành Quy chế lựa chọn nhà thầu sản xuất và cung ứng sản phẩm dịch vụ công ích trên địa bàn thành phố Hà Nội",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=177275",
+            "document_number": "77/2014/QĐ-UBND",
+            "issued_date": "10/10/2014",
+            "snippet": "Ban hành Quy chế lựa chọn nhà thầu sản xuất và cung ứng sản phẩm dịch vụ công ích trên địa bàn thành phố Hà Nội",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "quy chế lựa chọn nhà thầu"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "amendments",
+        "title": "Tìm tiêu đề — cụm 4",
+        "query": "nhà thầu",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "488744d4cf815ddb8303b5f4",
+            "title": "Sửa đổi, bổ sung một số điều của các Nghị định quy định chi tiết một số điều và biện pháp thi hành Luật Đấu thầu về lựa chọn nhà thầu",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219431",
+            "document_number": "349/2026/NĐ-CP",
+            "issued_date": "09/09/2026",
+            "snippet": "Sửa đổi, bổ sung một số điều của các Nghị định quy định chi tiết một số điều và biện pháp thi hành Luật Đấu thầu về lựa chọn nhà thầu",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "21b1445d576c27ef807719a8",
+            "title": "Quy định về sản phẩm, dịch vụ công nghệ số được hưởng ưu đãi về lựa chọn nhà thầu trong thuê, mua sắm sản phẩm, dịch vụ công nghệ số sử dụng vốn ngân sách nhà nước",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=216032",
+            "document_number": "34/2025/TT-BKHCN",
+            "issued_date": "15/11/2025",
+            "snippet": "Quy định về sản phẩm, dịch vụ công nghệ số được hưởng ưu đãi về lựa chọn nhà thầu trong thuê, mua sắm sản phẩm, dịch vụ công nghệ số sử dụng vốn ngân sách nhà nước",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "50ec3d6bc37a3872fe60b014",
+            "title": "V/v biểu dương các chủ đầu tư, Ban Quản lý dự án, đơn vị tư vấn, nhà thầu thi công tại các công trình trọng điểm quốc gia",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=215345",
+            "document_number": "164/CĐ-TTg",
+            "issued_date": "14/09/2025",
+            "snippet": "V/v biểu dương các chủ đầu tư, Ban Quản lý dự án, đơn vị tư vấn, nhà thầu thi công tại các công trình trọng điểm quốc gia",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "nhà thầu"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "official_verification",
+        "title": "Tìm tiêu đề — cụm 5",
+        "query": "đấu thầu",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "488744d4cf815ddb8303b5f4",
+            "title": "Sửa đổi, bổ sung một số điều của các Nghị định quy định chi tiết một số điều và biện pháp thi hành Luật Đấu thầu về lựa chọn nhà thầu",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219431",
+            "document_number": "349/2026/NĐ-CP",
+            "issued_date": "09/09/2026",
+            "snippet": "Sửa đổi, bổ sung một số điều của các Nghị định quy định chi tiết một số điều và biện pháp thi hành Luật Đấu thầu về lựa chọn nhà thầu",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "130f8c6a3fa055cfd790822c",
+            "title": "Quy định chi tiết mẫu hồ sơ yêu cầu áp dụng hình thức chỉ định thầu, báo cáo đánh giá, báo cáo thẩm định, kiểm tra, giám sát, báo cáo tình hình thực hiện hoạt động đấu thầu",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219443",
+            "document_number": "134/2026/TT-BTC",
+            "issued_date": "09/09/2026",
+            "snippet": "Quy định chi tiết mẫu hồ sơ yêu cầu áp dụng hình thức chỉ định thầu, báo cáo đánh giá, báo cáo thẩm định, kiểm tra, giám sát, báo cáo tình hình thực hiện hoạt động đấu thầu",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "2fff9743ef625f15f29f5974",
+            "title": "Sửa đổi, bổ sung một số điều của Thông tư số 98/2025/TT-BTC ngày 27 tháng 10 năm 2025 của Bộ trưởng Bộ Tài chính quy định mẫu hồ sơ đấu thầu lựa chọn nhà đầu tư thực hiện dự án đầu tư theo phương thức đối tác công tư, dự án đầu tư kinh doanh; cung cấp, đăng tải thông tin về đầu tư theo phương thức đối tác công tư, đấu thầu lựa chọn nhà đầu tư trên Hệ thống mạng đấu thầu quốc gia",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219364",
+            "document_number": "129/2026/TT-BTC",
+            "issued_date": "27/08/2026",
+            "snippet": "Sửa đổi, bổ sung một số điều của Thông tư số 98/2025/TT-BTC ngày 27 tháng 10 năm 2025 của Bộ trưởng Bộ Tài chính quy định mẫu hồ sơ đấu thầu lựa chọn nhà đầu tư thực hiện dự án đầu tư theo phương thức đối tác công tư, dự án đầu tư kinh doanh; cung cấp, đăng tải thông tin về đầu tư theo phương thức đối tác công tư, đấu thầu lựa chọn nhà đầu tư trên Hệ thống mạng đấu thầu quốc gia",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "đấu thầu"
+        ],
+        "error_kind": null
+      }
+    ],
+    "provider": "chinhphu_official_portal",
+    "model": "webforms-search-v1"
+  },
+  "provider": "chinhphu_official_portal",
+  "model": "webforms-search-v1",
+  "provider_calls": [
+    {
+      "provider": "chinhphu_official_portal",
+      "model": "webforms-search-v1",
+      "use_case": "deep_research",
+      "success": true,
+      "error_kind": null,
+      "latency_ms": 2068.834,
+      "fallback_used": false,
+      "timestamp": "2026-09-12T14:12:50.211134+00:00",
+      "prompt_token_count": null,
+      "output_token_count": null,
+      "thinking_token_count": null,
+      "total_token_count": null,
+      "call_kind": "http",
+      "request_count": 2
+    },
+    {
+      "provider": "chinhphu_official_portal",
+      "model": "webforms-search-v1",
+      "use_case": "deep_research",
+      "success": true,
+      "error_kind": null,
+      "latency_ms": 2996.966,
+      "fallback_used": false,
+      "timestamp": "2026-09-12T14:12:53.980179+00:00",
+      "prompt_token_count": null,
+      "output_token_count": null,
+      "thinking_token_count": null,
+      "total_token_count": null,
+      "call_kind": "http",
+      "request_count": 2
+    },
+    {
+      "provider": "chinhphu_official_portal",
+      "model": "webforms-search-v1",
+      "use_case": "deep_research",
+      "success": true,
+      "error_kind": null,
+      "latency_ms": 2665.847,
+      "fallback_used": false,
+      "timestamp": "2026-09-12T14:12:57.135342+00:00",
+      "prompt_token_count": null,
+      "output_token_count": null,
+      "thinking_token_count": null,
+      "total_token_count": null,
+      "call_kind": "http",
+      "request_count": 2
+    },
+    {
+      "provider": "chinhphu_official_portal",
+      "model": "webforms-search-v1",
+      "use_case": "deep_research",
+      "success": true,
+      "error_kind": null,
+      "latency_ms": 1789.369,
+      "fallback_used": false,
+      "timestamp": "2026-09-12T14:12:59.581498+00:00",
+      "prompt_token_count": null,
+      "output_token_count": null,
+      "thinking_token_count": null,
+      "total_token_count": null,
+      "call_kind": "http",
+      "request_count": 2
+    },
+    {
+      "provider": "chinhphu_official_portal",
+      "model": "webforms-search-v1",
+      "use_case": "deep_research",
+      "success": true,
+      "error_kind": null,
+      "latency_ms": 1518.449,
+      "fallback_used": false,
+      "timestamp": "2026-09-12T14:13:02.253178+00:00",
+      "prompt_token_count": null,
+      "output_token_count": null,
+      "thinking_token_count": null,
+      "total_token_count": null,
+      "call_kind": "http",
+      "request_count": 2
+    }
+  ],
+  "admin_trace_status": "persisted"
+}

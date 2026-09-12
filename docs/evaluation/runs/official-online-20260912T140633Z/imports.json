@@ -1,0 +1,223 @@
+{
+  "case": {
+    "id": "imports",
+    "reference_number": "56/2026/TT-BKHCN",
+    "topic": "Nhập khẩu",
+    "question": "Nhập khẩu dây chuyền công nghệ đã qua sử dụng phải đáp ứng điều kiện gì theo quy định mới tháng 9/2026?",
+    "reference_url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219429",
+    "reference_title": "Quy định việc nhập khẩu máy móc, thiết bị, dây chuyền công nghệ đã qua sử dụng",
+    "reference_issued_date": "05/09/2026"
+  },
+  "plan": {
+    "version": "official-web-v3",
+    "query_method": "model_keywords",
+    "planner_error": null,
+    "planner_provider": "google_vertex_ai",
+    "planner_model": "gemini-3.5-flash",
+    "plan_id": "9478c3c8c23f18a420f5d466",
+    "status": "draft",
+    "question": "Nhập khẩu dây chuyền công nghệ đã qua sử dụng phải đáp ứng điều kiện gì theo quy định mới tháng 9/2026?",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "kind": "legal_basis",
+        "title": "Tìm tiêu đề — cụm 1",
+        "query": "nhập khẩu dây chuyền công nghệ đã qua sử dụng"
+      },
+      {
+        "step_id": "conditions",
+        "kind": "conditions",
+        "title": "Tìm tiêu đề — cụm 2",
+        "query": "nhập khẩu công nghệ đã qua sử dụng"
+      },
+      {
+        "step_id": "exceptions",
+        "kind": "exceptions",
+        "title": "Tìm tiêu đề — cụm 3",
+        "query": "dây chuyền công nghệ đã qua sử dụng"
+      },
+      {
+        "step_id": "amendments",
+        "kind": "amendments",
+        "title": "Tìm tiêu đề — cụm 4",
+        "query": "nhập khẩu dây chuyền công nghệ"
+      },
+      {
+        "step_id": "official_verification",
+        "kind": "official_verification",
+        "title": "Tìm tiêu đề — cụm 5",
+        "query": "công nghệ đã qua sử dụng"
+      }
+    ]
+  },
+  "result": {
+    "status": "partial",
+    "question": "Nhập khẩu dây chuyền công nghệ đã qua sử dụng phải đáp ứng điều kiện gì theo quy định mới tháng 9/2026?",
+    "plan_id": "9478c3c8c23f18a420f5d466",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "title": "Tìm tiêu đề — cụm 1",
+        "query": "nhập khẩu dây chuyền công nghệ đã qua sử dụng",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "nhập khẩu dây chuyền công nghệ đã qua sử dụng"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "conditions",
+        "title": "Tìm tiêu đề — cụm 2",
+        "query": "nhập khẩu công nghệ đã qua sử dụng",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "nhập khẩu công nghệ đã qua sử dụng"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "exceptions",
+        "title": "Tìm tiêu đề — cụm 3",
+        "query": "dây chuyền công nghệ đã qua sử dụng",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "ffdabb7a4128d9ef4a9cb550",
+            "title": "Quy định việc nhập khẩu máy móc, thiết bị, dây chuyền công nghệ đã qua sử dụng",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219429",
+            "document_number": "56/2026/TT-BKHCN",
+            "issued_date": "05/09/2026",
+            "snippet": "Quy định việc nhập khẩu máy móc, thiết bị, dây chuyền công nghệ đã qua sử dụng",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "05db2171590412038120760b",
+            "title": "Quy định việc nhập khẩu máy móc, thiết bị, dây chuyền công nghệ đã qua sử dụng",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219308",
+            "document_number": "14/2026/VBHN-QĐ-BKHCN",
+            "issued_date": "27/08/2026",
+            "snippet": "Quy định việc nhập khẩu máy móc, thiết bị, dây chuyền công nghệ đã qua sử dụng",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "f8137f94fa0397fc9c2678bf",
+            "title": "Sửa đổi, bổ sung một số điều của Quyết định số 18/2019/QĐ-TTg ngày 19 tháng 4 năm 2019 quy định việc nhập khẩu máy móc, thiết bị, dây chuyền công nghệ đã qua sử dụng",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=207040",
+            "document_number": "28/2022/QĐ-TTg",
+            "issued_date": "20/12/2022",
+            "snippet": "Sửa đổi, bổ sung một số điều của Quyết định số 18/2019/QĐ-TTg ngày 19 tháng 4 năm 2019 quy định việc nhập khẩu máy móc, thiết bị, dây chuyền công nghệ đã qua sử dụng",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "dây chuyền công nghệ đã qua sử dụng"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "amendments",
+        "title": "Tìm tiêu đề — cụm 4",
+        "query": "nhập khẩu dây chuyền công nghệ",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "nhập khẩu dây chuyền công nghệ"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "official_verification",
+        "title": "Tìm tiêu đề — cụm 5",
+        "query": "công nghệ đã qua sử dụng",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "ffdabb7a4128d9ef4a9cb550",
+            "title": "Quy định việc nhập khẩu máy móc, thiết bị, dây chuyền công nghệ đã qua sử dụng",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219429",
+            "document_number": "56/2026/TT-BKHCN",
+            "issued_date": "05/09/2026",
+            "snippet": "Quy định việc nhập khẩu máy móc, thiết bị, dây chuyền công nghệ đã qua sử dụng",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "05db2171590412038120760b",
+            "title": "Quy định việc nhập khẩu máy móc, thiết bị, dây chuyền công nghệ đã qua sử dụng",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219308",
+            "document_number": "14/2026/VBHN-QĐ-BKHCN",
+            "issued_date": "27/08/2026",
+            "snippet": "Quy định việc nhập khẩu máy móc, thiết bị, dây chuyền công nghệ đã qua sử dụng",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "f8137f94fa0397fc9c2678bf",
+            "title": "Sửa đổi, bổ sung một số điều của Quyết định số 18/2019/QĐ-TTg ngày 19 tháng 4 năm 2019 quy định việc nhập khẩu máy móc, thiết bị, dây chuyền công nghệ đã qua sử dụng",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=207040",
+            "document_number": "28/2022/QĐ-TTg",
+            "issued_date": "20/12/2022",
+            "snippet": "Sửa đổi, bổ sung một số điều của Quyết định số 18/2019/QĐ-TTg ngày 19 tháng 4 năm 2019 quy định việc nhập khẩu máy móc, thiết bị, dây chuyền công nghệ đã qua sử dụng",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "công nghệ đã qua sử dụng"
+        ],
+        "error_kind": null
+      }
+    ],
+    "provider": "chinhphu_official_portal",
+    "model": "webforms-search-v1"
+  },
+  "expected_url_hit": true,
+  "source": {
+    "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219429",
+    "attachment_url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/9/56-bkhcn.signed.pdf",
+    "title": "\r\n\tThông tư số 56/2026/TT-BKHCN của Bộ Khoa học và Công nghệ: Quy định việc nhập khẩu máy móc, thiết bị, dây chuyền công nghệ đã qua sử dụng\r\n",
+    "text": "SAO Y; Bộ Khoa học và Công nghệ; 08/09/2026; 17:23:16; +07:00\n\nBỘ KHOA HỌC VÀ CÔNG NGHỆ CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\nSố: 56 /2026/TT-BKHCN\nHà Nội, ngày 05 tháng 9 năm 2026\n\nTHÔNG TƯ\nQuy định việc nhập khẩu máy móc, thiết bị,\ndây chuyền công nghệ đã qua sử dụng\n\nCăn cứ Luật Quản lý ngoại thương số 05/2017/QH14;\nCăn cứ Nghị định số 225/2026/NĐ-CP ngày 24 tháng 6 năm 2026 của\nChính phủ quy định chức năng, nhiệm vụ, quyền hạn và cơ cấu tổ chức của\nBộ Khoa học và Công nghệ;\nCăn cứ Nghị định số 292/2026/NĐ-CP ngày 22 tháng 7 năm 2026 của\nChính phủ quy định chi tiết một số điều và biện pháp để tổ chức, hướng dẫn thi\nhành Luật Quản lý ngoại thương;\nCăn cứ Nghị định số 37/2026/NĐ-CP ngày 23 tháng 01 năm 2026 của\nChính phủ quy định chi tiết một số điều và biện pháp để tổ chức, hướng dẫn thi\nhành Luật Chất lượng sản phẩm, hàng hóa;\nTheo đề nghị của Vụ trưởng Vụ Đánh giá và Thẩm định công nghệ,\nBộ trưởng Bộ Khoa học và Công nghệ ban hành Thông tư quy định việc\nnhập khẩu máy móc, thiết bị, dây chuyền công nghệ đã qua sử dụng.\n\nChương I\nQUY ĐỊNH CHUNG\n\nĐiều 1. Phạm vi điều chỉnh\n1. Thông tư này quy định tiêu chí, hồ sơ, trình tự, thủ tục nhập khẩu và\nhoạt động giám định đối với máy móc, thiết bị, dây chuyền công nghệ đã qua sử\ndụng có mã hàng hóa (mã số HS) thuộc Chương 84 và Chương 85 quy định tại\nDanh mục hàng hóa xuất khẩu, nhập khẩu Việt Nam, được nhập khẩu nhằm sử\ndụng cho hoạt động sản xuất tại Việt Nam mà không thuộc các danh mục hàng\nhóa cấm nhập khẩu do Chính phủ, Thủ tướng Chính phủ quy định, các bộ, cơ\nquan ngang bộ công bố chi tiết theo quy định tại Nghị định số 292/2026/NĐ-\nCP ngày 22 tháng 7 năm 2026 của Chính phủ quy định chi tiết một số điều và\nbiện pháp để tổ chức, hướng dẫn thi hành Luật Quản lý ngoại thương.\n2. Thông tư này không áp dụng đối với máy móc, thiết bị, dây chuyền\ncông nghệ đã qua sử dụng trong các trường hợp sau đây:\na) Quá cảnh; trung chuyển hàng hóa; hàng hóa từ nước ngoài gửi kho\nngoại quan;\nb) Kinh doanh chuyển khẩu;\n\n2\n\nc) Kinh doanh tạm nhập, tái xuất;\nd) Các hình thức tạm nhập, tái xuất khác quy định tại Điều 16 và tạm\nxuất, tái nhập quy định tại Điều 17 Nghị định số 292/2026/NĐ-CP ngày 22\ntháng 7 năm 2026 của Chính phủ quy định chi tiết một số điều và biện pháp để\ntổ chức, hướng dẫn thi hành Luật Quản lý ngoại thương (trừ trường hợp tạm\nnhập, tái xuất để thực hiện các hợp đồng gia công; trường hợp nhập khẩu để sản\nxuất, thi công thực hiện các dự án đầu tư);\nđ) Thực hiện hợp đồng dịch vụ sửa chữa, bảo dưỡng với thương nhân\nnước ngoài;\ne) Mua bán giữa các doanh nghiệp trong khu chế xuất, doanh nghiệp trong khu\nphi thuế quan; doanh nghiệp trong khu chế xuất bán tài sản thanh lý vào nội địa;\ng) Nhận chuyển giao từ đối tác nước ngoài sau khi hết hạn hợp đồng gia\ncông, hợp đồng thuê mua tài chính; thay đổi mục đích sử dụng chuyển tiêu thụ\nnội địa sau khi hết hạn tạm nhập để thi công công trình hoặc tạm nhập theo hình\nthức thuê, mượn để thực hiện hợp đồng gia công cho thương nhân nước ngoài;\nchuyển giao giữa các doanh nghiệp thực hiện hợp đồng gia công cho thương\nnhân nước ngoài;\nh) Phục vụ nghiên cứu khoa học và phát triển công nghệ mà trong nước\nchưa sản xuất được; phục vụ nhiệm vụ an ninh, quốc phòng theo yêu cầu của\ncác bộ quản lý ngành, lĩnh vực;\ni) Máy móc, thiết bị thuộc Danh mục sản phẩm, hàng hóa có mức độ rủi\nro cao do các bộ quản lý ngành, lĩnh vực ban hành theo quy định của Luật Chất\nlượng sản phẩm, hàng hóa;\nk) Máy móc, thiết bị thuộc lĩnh vực chuyên ngành mà các bộ, cơ quan\nngang bộ đã có văn bản quy phạm pháp luật để quản lý.\n\nĐiều 2. Đối tượng áp dụng\n1. Tổ chức, doanh nghiệp (sau đây viết chung là doanh nghiệp) nhập khẩu\nmáy móc, thiết bị, dây chuyền công nghệ đã qua sử dụng.\n2. Tổ chức giám định thực hiện giám định máy móc, thiết bị, dây chuyền\ncông nghệ đã qua sử dụng theo quy định tại Thông tư này.\n3. Cơ quan quản lý nhà nước có liên quan đến việc nhập khẩu máy móc, thiết\nbị, dây chuyền công nghệ đã qua sử dụng quy định tại Điều 1 Thông tư này.\n\nĐiều 3. Giải thích từ ngữ\nTrong Thông tư này, các từ ngữ dưới đây được hiểu như sau:\n1. Máy móc, thiết bị là một kết cấu hoàn chỉnh, gồm các chi tiết, cụm chi\ntiết, bộ phận có liên kết với nhau để vận hành, chuyển động theo mục đích sử\ndụng được thiết kế.\n2. Dây chuyền công nghệ là hệ thống các máy móc, thiết bị, công cụ, phương\ntiện được bố trí, lắp đặt, kết nối liên hoàn tại một địa điểm nhất định theo sơ đồ,",
+    "sha256": "6480330dd289f0a73beaadeeca93af227124abb77ccdcca532f10c9d985db433",
+    "document_sha256": "08e33a899b30ce0d145bf514abba8135aab66558754c8fd99104dd362c844e8f",
+    "parser_recovered": false,
+    "ocr_input_sha256": "a2eceaf6b3f8d81692cf93be1b96b6db488d3bd5fbd778ff47a489f097ddf99e",
+    "ocr_input_transform": "selected_page_content_without_annotations",
+    "retrieved_at": "2026-09-12T14:11:49.479417+00:00",
+    "extracted_characters": 4404,
+    "stored_characters": 4404,
+    "truncated": true,
+    "method": "vertex_ocr",
+    "legal_effect_status": "unverified",
+    "document_number": "56/2026/TT-BKHCN",
+    "content_status": "readable",
+    "pages": [
+      {
+        "page": 1,
+        "text": "SAO Y; Bộ Khoa học và Công nghệ; 08/09/2026; 17:23:16; +07:00\n\nBỘ KHOA HỌC VÀ CÔNG NGHỆ CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\nSố: 56 /2026/TT-BKHCN\nHà Nội, ngày 05 tháng 9 năm 2026\n\nTHÔNG TƯ\nQuy định việc nhập khẩu máy móc, thiết bị,\ndây chuyền công nghệ đã qua sử dụng\n\nCăn cứ Luật Quản lý ngoại thương số 05/2017/QH14;\nCăn cứ Nghị định số 225/2026/NĐ-CP ngày 24 tháng 6 năm 2026 của\nChính phủ quy định chức năng, nhiệm vụ, quyền hạn và cơ cấu tổ chức của\nBộ Khoa học và Công nghệ;\nCăn cứ Nghị định số 292/2026/NĐ-CP ngày 22 tháng 7 năm 2026 của\nChính phủ quy định chi tiết một số điều và biện pháp để tổ chức, hướng dẫn thi\nhành Luật Quản lý ngoại thương;\nCăn cứ Nghị định số 37/2026/NĐ-CP ngày 23 tháng 01 năm 2026 của\nChính phủ quy định chi tiết một số điều và biện pháp để tổ chức, hướng dẫn thi\nhành Luật Chất lượng sản phẩm, hàng hóa;\nTheo đề nghị của Vụ trưởng Vụ Đánh giá và Thẩm định công nghệ,\nBộ trưởng Bộ Khoa học và Công nghệ ban hành Thông tư quy định việc\nnhập khẩu máy móc, thiết bị, dây chuyền công nghệ đã qua sử dụng.\n\nChương I\nQUY ĐỊNH CHUNG\n\nĐiều 1. Phạm vi điều chỉnh\n1. Thông tư này quy định tiêu chí, hồ sơ, trình tự, thủ tục nhập khẩu và\nhoạt động giám định đối với máy móc, thiết bị, dây chuyền công nghệ đã qua sử\ndụng có mã hàng hóa (mã số HS) thuộc Chương 84 và Chương 85 quy định tại\nDanh mục hàng hóa xuất khẩu, nhập khẩu Việt Nam, được nhập khẩu nhằm sử\ndụng cho hoạt động sản xuất tại Việt Nam mà không thuộc các danh mục hàng\nhóa cấm nhập khẩu do Chính phủ, Thủ tướng Chính phủ quy định, các bộ, cơ\nquan ngang bộ công bố chi tiết theo quy định tại Nghị định số 292/2026/NĐ-\nCP ngày 22 tháng 7 năm 2026 của Chính phủ quy định chi tiết một số điều và\nbiện pháp để tổ chức, hướng dẫn thi hành Luật Quản lý ngoại thương.\n2. Thông tư này không áp dụng đối với máy móc, thiết bị, dây chuyền\ncông nghệ đã qua sử dụng trong các trường hợp sau đây:\na) Quá cảnh; trung chuyển hàng hóa; hàng hóa từ nước ngoài gửi kho\nngoại quan;\nb) Kinh doanh chuyển khẩu;"
+      },
+      {
+        "page": 2,
+        "text": "2\n\nc) Kinh doanh tạm nhập, tái xuất;\nd) Các hình thức tạm nhập, tái xuất khác quy định tại Điều 16 và tạm\nxuất, tái nhập quy định tại Điều 17 Nghị định số 292/2026/NĐ-CP ngày 22\ntháng 7 năm 2026 của Chính phủ quy định chi tiết một số điều và biện pháp để\ntổ chức, hướng dẫn thi hành Luật Quản lý ngoại thương (trừ trường hợp tạm\nnhập, tái xuất để thực hiện các hợp đồng gia công; trường hợp nhập khẩu để sản\nxuất, thi công thực hiện các dự án đầu tư);\nđ) Thực hiện hợp đồng dịch vụ sửa chữa, bảo dưỡng với thương nhân\nnước ngoài;\ne) Mua bán giữa các doanh nghiệp trong khu chế xuất, doanh nghiệp trong khu\nphi thuế quan; doanh nghiệp trong khu chế xuất bán tài sản thanh lý vào nội địa;\ng) Nhận chuyển giao từ đối tác nước ngoài sau khi hết hạn hợp đồng gia\ncông, hợp đồng thuê mua tài chính; thay đổi mục đích sử dụng chuyển tiêu thụ\nnội địa sau khi hết hạn tạm nhập để thi công công trình hoặc tạm nhập theo hình\nthức thuê, mượn để thực hiện hợp đồng gia công cho thương nhân nước ngoài;\nchuyển giao giữa các doanh nghiệp thực hiện hợp đồng gia công cho thương\nnhân nước ngoài;\nh) Phục vụ nghiên cứu khoa học và phát triển công nghệ mà trong nước\nchưa sản xuất được; phục vụ nhiệm vụ an ninh, quốc phòng theo yêu cầu của\ncác bộ quản lý ngành, lĩnh vực;\ni) Máy móc, thiết bị thuộc Danh mục sản phẩm, hàng hóa có mức độ rủi\nro cao do các bộ quản lý ngành, lĩnh vực ban hành theo quy định của Luật Chất\nlượng sản phẩm, hàng hóa;\nk) Máy móc, thiết bị thuộc lĩnh vực chuyên ngành mà các bộ, cơ quan\nngang bộ đã có văn bản quy phạm pháp luật để quản lý.\n\nĐiều 2. Đối tượng áp dụng\n1. Tổ chức, doanh nghiệp (sau đây viết chung là doanh nghiệp) nhập khẩu\nmáy móc, thiết bị, dây chuyền công nghệ đã qua sử dụng.\n2. Tổ chức giám định thực hiện giám định máy móc, thiết bị, dây chuyền\ncông nghệ đã qua sử dụng theo quy định tại Thông tư này.\n3. Cơ quan quản lý nhà nước có liên quan đến việc nhập khẩu máy móc, thiết\nbị, dây chuyền công nghệ đã qua sử dụng quy định tại Điều 1 Thông tư này.\n\nĐiều 3. Giải thích từ ngữ\nTrong Thông tư này, các từ ngữ dưới đây được hiểu như sau:\n1. Máy móc, thiết bị là một kết cấu hoàn chỉnh, gồm các chi tiết, cụm chi\ntiết, bộ phận có liên kết với nhau để vận hành, chuyển động theo mục đích sử\ndụng được thiết kế.\n2. Dây chuyền công nghệ là hệ thống các máy móc, thiết bị, công cụ, phương\ntiện được bố trí, lắp đặt, kết nối liên hoàn tại một địa điểm nhất định theo sơ đồ,"
+      }
+    ],
+    "page_count": 39,
+    "page_start": 1,
+    "page_end": 2,
+    "next_page_start": 3,
+    "requires_ocr": false,
+    "unreadable_pages": [],
+    "ocr_provider": "google_vertex_ai",
+    "ocr_model": "gemini-3.5-flash",
+    "attachments": [
+      "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/9/56-bkhcn.signed.pdf"
+    ],
+    "issued_date": "05-09-2026",
+    "reported_effective_from": "05-09-2026"
+  },
+  "elapsed_seconds": 35.57800000000134
+}

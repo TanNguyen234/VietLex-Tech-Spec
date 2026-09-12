@@ -1,0 +1,42 @@
+{
+  "version": "official-web-v3",
+  "query_method": "model_keywords",
+  "planner_error": null,
+  "planner_provider": "google_vertex_ai",
+  "planner_model": "gemini-3.5-flash",
+  "plan_id": "cf49b0d387477a94f5e56b2c",
+  "status": "draft",
+  "question": "Quy định lựa chọn nhà thầu được sửa đổi ra sao trong tháng 9/2026?",
+  "steps": [
+    {
+      "step_id": "legal_basis",
+      "kind": "legal_basis",
+      "title": "Tìm tiêu đề — cụm 1",
+      "query": "lựa chọn nhà thầu"
+    },
+    {
+      "step_id": "conditions",
+      "kind": "conditions",
+      "title": "Tìm tiêu đề — cụm 2",
+      "query": "đấu thầu lựa chọn nhà thầu"
+    },
+    {
+      "step_id": "exceptions",
+      "kind": "exceptions",
+      "title": "Tìm tiêu đề — cụm 3",
+      "query": "quy chế lựa chọn nhà thầu"
+    },
+    {
+      "step_id": "amendments",
+      "kind": "amendments",
+      "title": "Tìm tiêu đề — cụm 4",
+      "query": "nhà thầu"
+    },
+    {
+      "step_id": "official_verification",
+      "kind": "official_verification",
+      "title": "Tìm tiêu đề — cụm 5",
+      "query": "đấu thầu"
+    }
+  ]
+}

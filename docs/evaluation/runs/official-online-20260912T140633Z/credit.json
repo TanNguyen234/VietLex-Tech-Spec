@@ -1,0 +1,183 @@
+{
+  "case": {
+    "id": "credit",
+    "reference_number": "46/2026/TT-NHNN",
+    "topic": "Tín dụng",
+    "question": "Hoạt động thông tin tín dụng có thay đổi gì theo Thông tư 46/2026/TT-NHNN?",
+    "reference_url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219435",
+    "reference_title": "Sửa đổi, bổ sung một số điều của Thông tư số 15/2023/TT-NHNN quy định về hoạt động thông tin tín dụng của Ngân hàng Nhà nước Việt Nam",
+    "reference_issued_date": "09/09/2026"
+  },
+  "plan": {
+    "version": "official-web-v3",
+    "query_method": "literal",
+    "planner_error": null,
+    "planner_provider": null,
+    "planner_model": null,
+    "plan_id": "d029ee0cf54e954b43e8de2b",
+    "status": "draft",
+    "question": "Hoạt động thông tin tín dụng có thay đổi gì theo Thông tư 46/2026/TT-NHNN?",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "kind": "legal_basis",
+        "title": "Căn cứ pháp lý trực tiếp",
+        "query": "46/2026/TT-NHNN"
+      },
+      {
+        "step_id": "conditions",
+        "kind": "conditions",
+        "title": "Điều kiện và thủ tục",
+        "query": "46/2026/TT-NHNN điều kiện"
+      },
+      {
+        "step_id": "exceptions",
+        "kind": "exceptions",
+        "title": "Ngoại lệ và giới hạn",
+        "query": "46/2026/TT-NHNN không được"
+      },
+      {
+        "step_id": "amendments",
+        "kind": "amendments",
+        "title": "Sửa đổi và tình trạng hiệu lực",
+        "query": "46/2026/TT-NHNN sửa đổi"
+      },
+      {
+        "step_id": "official_verification",
+        "kind": "official_verification",
+        "title": "Đối chiếu nguồn chính thức",
+        "query": "46/2026/TT-NHNN"
+      }
+    ]
+  },
+  "result": {
+    "status": "partial",
+    "question": "Hoạt động thông tin tín dụng có thay đổi gì theo Thông tư 46/2026/TT-NHNN?",
+    "plan_id": "d029ee0cf54e954b43e8de2b",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "title": "Căn cứ pháp lý trực tiếp",
+        "query": "46/2026/TT-NHNN",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "9feb8c94f0212720cb1e10c2",
+            "title": "Sửa đổi, bổ sung một số điều của Thông tư số 15/2023/TT-NHNN quy định về hoạt động thông tin tín dụng của Ngân hàng Nhà nước Việt Nam",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219435",
+            "document_number": "46/2026/TT-NHNN",
+            "issued_date": "09/09/2026",
+            "snippet": "Sửa đổi, bổ sung một số điều của Thông tư số 15/2023/TT-NHNN quy định về hoạt động thông tin tín dụng của Ngân hàng Nhà nước Việt Nam",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "46/2026/TT-NHNN"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "conditions",
+        "title": "Điều kiện và thủ tục",
+        "query": "46/2026/TT-NHNN điều kiện",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "46/2026/TT-NHNN điều kiện"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "exceptions",
+        "title": "Ngoại lệ và giới hạn",
+        "query": "46/2026/TT-NHNN không được",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "46/2026/TT-NHNN không được"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "amendments",
+        "title": "Sửa đổi và tình trạng hiệu lực",
+        "query": "46/2026/TT-NHNN sửa đổi",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "46/2026/TT-NHNN sửa đổi"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "official_verification",
+        "title": "Đối chiếu nguồn chính thức",
+        "query": "46/2026/TT-NHNN",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "9feb8c94f0212720cb1e10c2",
+            "title": "Sửa đổi, bổ sung một số điều của Thông tư số 15/2023/TT-NHNN quy định về hoạt động thông tin tín dụng của Ngân hàng Nhà nước Việt Nam",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219435",
+            "document_number": "46/2026/TT-NHNN",
+            "issued_date": "09/09/2026",
+            "snippet": "Sửa đổi, bổ sung một số điều của Thông tư số 15/2023/TT-NHNN quy định về hoạt động thông tin tín dụng của Ngân hàng Nhà nước Việt Nam",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "46/2026/TT-NHNN"
+        ],
+        "error_kind": null
+      }
+    ],
+    "provider": "chinhphu_official_portal",
+    "model": "webforms-search-v1"
+  },
+  "expected_url_hit": true,
+  "source": {
+    "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219435",
+    "attachment_url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/9/46-nhnn.signed.pdf",
+    "title": "\r\n\tThông tư số 46/2026/TT-NHNN của Ngân hàng Nhà nước Việt Nam: Sửa đổi, bổ sung một số điều của Thông tư số 15/2023/TT-NHNN quy định về hoạt động thông tin tín dụng của Ngân hàng Nhà nước Việt Nam\r\n",
+    "text": "NGÂN HÀNG NHÀ NƯỚC\nVIỆT NAM\nSố: 46 /2026/TT-NHNN\nCỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\nHà Nội, ngày 09 tháng 9 năm 2026\nTHÔNG TƯ\nSửa đổi, bổ sung một số điều của Thông tư số 15/2023/TT-NHNN\nquy định về hoạt động thông tin tín dụng của Ngân hàng Nhà nước Việt Nam\nCăn cứ Luật Ngân hàng Nhà nước Việt Nam số 46/2010/QH12;\nCăn cứ Luật Các tổ chức tín dụng số 32/2024/QH15 được sửa đổi, bổ\nsung bởi Luật số 96/2025/QH15;\nCăn cứ Nghị định số 329/2025/NĐ-CP của Chính phủ về cấp phép thành\nlập và hoạt động ngân hàng, quản lý ngoại hối, phòng chống rửa tiền, chống tài\ntrợ khủng bố, chống tài trợ phổ biến vũ khí hủy diệt hàng loạt tại Trung tâm tài\nchính quốc tế tại Việt Nam;\nCăn cứ Nghị định số 26/2025/NĐ-CP của Chính phủ quy định chức năng,\nnhiệm vụ, quyền hạn và cơ cấu tổ chức của Ngân hàng Nhà nước Việt Nam\nđược sửa đổi, bổ sung bởi Nghị định số 198/2026/NĐ-CP;\nTheo đề nghị của Cục trưởng Cục An toàn hệ thống các tổ chức tín dụng;\nThống đốc Ngân hàng Nhà nước Việt Nam ban hành Thông tư sửa đổi, bổ\nsung một số điều của Thông tư số 15/2023/TT-NHNN quy định về hoạt động\nthông tin tín dụng của Ngân hàng Nhà nước Việt Nam.\n\nĐiều 1. Sửa đổi, bổ sung một số khoản của Điều 2\n1. Sửa đổi, bổ sung khoản 1 như sau:\n“1. Vụ, Cục, đơn vị thuộc cơ cấu tổ chức của Ngân hàng Nhà nước, Ngân\nhàng Nhà nước chi nhánh tại các khu vực, Công ty trách nhiệm hữu hạn một\nthành viên Quản lý tài sản của các tổ chức tín dụng Việt Nam (sau đây gọi\nchung là đơn vị thuộc Ngân hàng Nhà nước).”\n2. Sửa đổi, bổ sung khoản 2 như sau:\n“2. Tổ chức tín dụng, chi nhánh ngân hàng nước ngoài được thành lập và\nhoạt động tại Việt Nam (sau đây gọi chung là tổ chức tín dụng).”\n\nĐiều 2. Sửa đổi, bổ sung một số khoản của Điều 3\n1. Bổ sung khoản 3a vào sau khoản 3 như sau:\n\n2\n“3a. Ngân hàng thành viên là ngân hàng thương mại, chi nhánh ngân hàng\nnước ngoài được thành lập, tổ chức và hoạt động theo quy định tại Nghị quyết\nsố 222/2025/QH15 về Trung tâm tài chính quốc tế tại Việt Nam và Nghị định số\n329/2025/NĐ-CP về cấp phép thành lập và hoạt động ngân hàng, quản lý ngoại\nhối, phòng chống rửa tiền, chống tài trợ khủng bố, chống tài trợ phổ biến vũ khí\nhủy diệt hàng loạt tại Trung tâm tài chính quốc tế tại Việt Nam.”.\n2. Sửa đổi, bổ sung khoản 4 như sau:\n“4. Người có liên quan của khách hàng vay là tổ chức, cá nhân có quan hệ\ntrực tiếp hoặc gián tiếp với khách hàng vay của tổ chức tín dụng theo quy định\ntại Luật Các tổ chức tín dụng.\nRiêng đối với ngân hàng thành viên, người có liên quan được xác định\ntheo quy định tại Nghị định số 329/2025/NĐ-CP.”.\n\nĐiều 3. Sửa đổi, bổ sung một số khoản của Điều 4\n1. Sửa đổi, bổ sung khoản 2 như sau:\n“2. Hỗ trợ tổ chức tín dụng trong hoạt động, góp phần bảo đảm an toàn\nhoạt động của các tổ chức tín dụng.”.\n2. Bổ sung khoản 2a vào sau khoản 2 như sau:\n“2a. Hỗ trợ tổ chức tự nguyện trong hoạt động kinh doanh.”.\n\nĐiều 4. Sửa đổi, bổ sung một số điểm, khoản của Điều 9\n1. Sửa đổi, bổ sung điểm i khoản 1 như sau:\n“i) Báo cáo tài chính năm (theo báo cáo tài chính đã nộp cho cơ quan\nThuế hoặc báo cáo tài chính đã được kiểm toán) của khách hàng vay là doanh\nnghiệp. Đối với khách hàng vay là tổ chức nước ngoài, sử dụng báo cáo tài\nchính năm lập theo Chuẩn mực kế toán quốc tế hoặc Chuẩn mực kế toán của\nquốc gia nơi đặt trụ sở.”.\n2. Sửa đổi, bổ sung khoản 3 như sau:\n“3. Việc cung cấp thông tin tín dụng quy định tại khoản 1 và khoản 2 Điều\nnày được thực hiện dưới dạng dữ liệu điện tử theo Hệ thống chỉ tiêu thông tin tín\ndụng. Trường hợp một số nhóm hoặc toàn bộ các nhóm chỉ tiêu thông tin tín\ndụng không thể cung cấp được dưới dạng dữ liệu điện tử, tổ chức tín dụng, tổ\nchức tự nguyện có thể cung cấp bằng văn bản trên cơ sở thống nhất với CIC.”.\n\nĐiều 5. Sửa đổi, bổ sung Điều 10\n“Điều 10. Thời hạn cung cấp thông tin tín dụng\nThời hạn cung cấp các nhóm chỉ tiêu tại Điều 9 Thông tư này như sau:\n1. Tổ chức tín dụng cung cấp theo tần suất quy định cụ thể tại Hệ thống\nchỉ tiêu thông tin tín dụng ban hành kèm theo Quyết định của Thống đốc Ngân\nhàng Nhà nước.",
+    "sha256": "d888b409572a44567acdbfc8242f50548ff2585e11d0cf02583a7c651e64453a",
+    "document_sha256": "e9fd8d162e022d2e3236aa3d23ca0b4cb43faca6e13277ed7dee7a001ff5e2c3",
+    "parser_recovered": true,
+    "ocr_input_sha256": "0697c60ca93b98db7aea76965529713023e3adaaac26ff7bf92b6cfdd58d20cb",
+    "ocr_input_transform": "selected_page_content_without_annotations",
+    "retrieved_at": "2026-09-12T14:09:23.479404+00:00",
+    "extracted_characters": 4007,
+    "stored_characters": 4007,
+    "truncated": true,
+    "method": "vertex_ocr",
+    "legal_effect_status": "unverified",
+    "document_number": "46/2026/TT-NHNN",
+    "content_status": "readable",
+    "pages": [
+      {
+        "page": 1,
+        "text": "NGÂN HÀNG NHÀ NƯỚC\nVIỆT NAM\nSố: 46 /2026/TT-NHNN\nCỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\nHà Nội, ngày 09 tháng 9 năm 2026\nTHÔNG TƯ\nSửa đổi, bổ sung một số điều của Thông tư số 15/2023/TT-NHNN\nquy định về hoạt động thông tin tín dụng của Ngân hàng Nhà nước Việt Nam\nCăn cứ Luật Ngân hàng Nhà nước Việt Nam số 46/2010/QH12;\nCăn cứ Luật Các tổ chức tín dụng số 32/2024/QH15 được sửa đổi, bổ\nsung bởi Luật số 96/2025/QH15;\nCăn cứ Nghị định số 329/2025/NĐ-CP của Chính phủ về cấp phép thành\nlập và hoạt động ngân hàng, quản lý ngoại hối, phòng chống rửa tiền, chống tài\ntrợ khủng bố, chống tài trợ phổ biến vũ khí hủy diệt hàng loạt tại Trung tâm tài\nchính quốc tế tại Việt Nam;\nCăn cứ Nghị định số 26/2025/NĐ-CP của Chính phủ quy định chức năng,\nnhiệm vụ, quyền hạn và cơ cấu tổ chức của Ngân hàng Nhà nước Việt Nam\nđược sửa đổi, bổ sung bởi Nghị định số 198/2026/NĐ-CP;\nTheo đề nghị của Cục trưởng Cục An toàn hệ thống các tổ chức tín dụng;\nThống đốc Ngân hàng Nhà nước Việt Nam ban hành Thông tư sửa đổi, bổ\nsung một số điều của Thông tư số 15/2023/TT-NHNN quy định về hoạt động\nthông tin tín dụng của Ngân hàng Nhà nước Việt Nam.\n\nĐiều 1. Sửa đổi, bổ sung một số khoản của Điều 2\n1. Sửa đổi, bổ sung khoản 1 như sau:\n“1. Vụ, Cục, đơn vị thuộc cơ cấu tổ chức của Ngân hàng Nhà nước, Ngân\nhàng Nhà nước chi nhánh tại các khu vực, Công ty trách nhiệm hữu hạn một\nthành viên Quản lý tài sản của các tổ chức tín dụng Việt Nam (sau đây gọi\nchung là đơn vị thuộc Ngân hàng Nhà nước).”\n2. Sửa đổi, bổ sung khoản 2 như sau:\n“2. Tổ chức tín dụng, chi nhánh ngân hàng nước ngoài được thành lập và\nhoạt động tại Việt Nam (sau đây gọi chung là tổ chức tín dụng).”\n\nĐiều 2. Sửa đổi, bổ sung một số khoản của Điều 3\n1. Bổ sung khoản 3a vào sau khoản 3 như sau:"
+      },
+      {
+        "page": 2,
+        "text": "2\n“3a. Ngân hàng thành viên là ngân hàng thương mại, chi nhánh ngân hàng\nnước ngoài được thành lập, tổ chức và hoạt động theo quy định tại Nghị quyết\nsố 222/2025/QH15 về Trung tâm tài chính quốc tế tại Việt Nam và Nghị định số\n329/2025/NĐ-CP về cấp phép thành lập và hoạt động ngân hàng, quản lý ngoại\nhối, phòng chống rửa tiền, chống tài trợ khủng bố, chống tài trợ phổ biến vũ khí\nhủy diệt hàng loạt tại Trung tâm tài chính quốc tế tại Việt Nam.”.\n2. Sửa đổi, bổ sung khoản 4 như sau:\n“4. Người có liên quan của khách hàng vay là tổ chức, cá nhân có quan hệ\ntrực tiếp hoặc gián tiếp với khách hàng vay của tổ chức tín dụng theo quy định\ntại Luật Các tổ chức tín dụng.\nRiêng đối với ngân hàng thành viên, người có liên quan được xác định\ntheo quy định tại Nghị định số 329/2025/NĐ-CP.”.\n\nĐiều 3. Sửa đổi, bổ sung một số khoản của Điều 4\n1. Sửa đổi, bổ sung khoản 2 như sau:\n“2. Hỗ trợ tổ chức tín dụng trong hoạt động, góp phần bảo đảm an toàn\nhoạt động của các tổ chức tín dụng.”.\n2. Bổ sung khoản 2a vào sau khoản 2 như sau:\n“2a. Hỗ trợ tổ chức tự nguyện trong hoạt động kinh doanh.”.\n\nĐiều 4. Sửa đổi, bổ sung một số điểm, khoản của Điều 9\n1. Sửa đổi, bổ sung điểm i khoản 1 như sau:\n“i) Báo cáo tài chính năm (theo báo cáo tài chính đã nộp cho cơ quan\nThuế hoặc báo cáo tài chính đã được kiểm toán) của khách hàng vay là doanh\nnghiệp. Đối với khách hàng vay là tổ chức nước ngoài, sử dụng báo cáo tài\nchính năm lập theo Chuẩn mực kế toán quốc tế hoặc Chuẩn mực kế toán của\nquốc gia nơi đặt trụ sở.”.\n2. Sửa đổi, bổ sung khoản 3 như sau:\n“3. Việc cung cấp thông tin tín dụng quy định tại khoản 1 và khoản 2 Điều\nnày được thực hiện dưới dạng dữ liệu điện tử theo Hệ thống chỉ tiêu thông tin tín\ndụng. Trường hợp một số nhóm hoặc toàn bộ các nhóm chỉ tiêu thông tin tín\ndụng không thể cung cấp được dưới dạng dữ liệu điện tử, tổ chức tín dụng, tổ\nchức tự nguyện có thể cung cấp bằng văn bản trên cơ sở thống nhất với CIC.”.\n\nĐiều 5. Sửa đổi, bổ sung Điều 10\n“Điều 10. Thời hạn cung cấp thông tin tín dụng\nThời hạn cung cấp các nhóm chỉ tiêu tại Điều 9 Thông tư này như sau:\n1. Tổ chức tín dụng cung cấp theo tần suất quy định cụ thể tại Hệ thống\nchỉ tiêu thông tin tín dụng ban hành kèm theo Quyết định của Thống đốc Ngân\nhàng Nhà nước."
+      }
+    ],
+    "page_count": 4,
+    "page_start": 1,
+    "page_end": 2,
+    "next_page_start": 3,
+    "requires_ocr": false,
+    "unreadable_pages": [],
+    "ocr_provider": "google_vertex_ai",
+    "ocr_model": "gemini-3.5-flash",
+    "attachments": [
+      "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/9/46-nhnn.signed.pdf"
+    ],
+    "issued_date": "09-09-2026",
+    "reported_effective_from": "01-11-2026"
+  },
+  "elapsed_seconds": 26.95300000000134
+}

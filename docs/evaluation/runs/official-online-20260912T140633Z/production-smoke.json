@@ -1,0 +1,20 @@
+[
+  {
+    "path": "/healthz",
+    "status": 200,
+    "sha256": "39bcfc121f792d5490e728361dfb1a4ebe57956dfa841678110b1f3ee3748e6a",
+    "official_reader_present": null
+  },
+  {
+    "path": "/readyz",
+    "status": 200,
+    "sha256": "0bc270a059af7a6a091cb3a4c789749882e90943dc5def6be358d39ba75eb995",
+    "official_reader_present": null
+  },
+  {
+    "path": "/static/js/research-workspace.js",
+    "status": 200,
+    "sha256": "5ba232e2af0c7f5e0d6d944d07dcfe1df9a2e368190848973a66de6b9e950fd5",
+    "official_reader_present": true
+  }
+]

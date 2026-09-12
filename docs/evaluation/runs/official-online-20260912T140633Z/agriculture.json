@@ -1,0 +1,183 @@
+{
+  "case": {
+    "id": "agriculture",
+    "reference_number": "346/2026/NĐ-CP",
+    "topic": "Bảo hiểm nông nghiệp",
+    "question": "Bảo hiểm nông nghiệp được sửa đổi những nội dung gì theo Nghị định 346/2026/NĐ-CP?",
+    "reference_url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219420",
+    "reference_title": "Sửa đổi, bổ sung một số điều của Nghị định số 58/2018/NĐ-CР ngày 18 tháng 4 năm 2018 của Chính phủ về bảo hiểm nông nghiệp",
+    "reference_issued_date": "05/09/2026"
+  },
+  "plan": {
+    "version": "official-web-v3",
+    "query_method": "literal",
+    "planner_error": null,
+    "planner_provider": null,
+    "planner_model": null,
+    "plan_id": "cb27840b918546fe7d5b186c",
+    "status": "draft",
+    "question": "Bảo hiểm nông nghiệp được sửa đổi những nội dung gì theo Nghị định 346/2026/NĐ-CP?",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "kind": "legal_basis",
+        "title": "Căn cứ pháp lý trực tiếp",
+        "query": "346/2026/NĐ-CP"
+      },
+      {
+        "step_id": "conditions",
+        "kind": "conditions",
+        "title": "Điều kiện và thủ tục",
+        "query": "346/2026/NĐ-CP điều kiện"
+      },
+      {
+        "step_id": "exceptions",
+        "kind": "exceptions",
+        "title": "Ngoại lệ và giới hạn",
+        "query": "346/2026/NĐ-CP không được"
+      },
+      {
+        "step_id": "amendments",
+        "kind": "amendments",
+        "title": "Sửa đổi và tình trạng hiệu lực",
+        "query": "346/2026/NĐ-CP sửa đổi"
+      },
+      {
+        "step_id": "official_verification",
+        "kind": "official_verification",
+        "title": "Đối chiếu nguồn chính thức",
+        "query": "346/2026/NĐ-CP"
+      }
+    ]
+  },
+  "result": {
+    "status": "partial",
+    "question": "Bảo hiểm nông nghiệp được sửa đổi những nội dung gì theo Nghị định 346/2026/NĐ-CP?",
+    "plan_id": "cb27840b918546fe7d5b186c",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "title": "Căn cứ pháp lý trực tiếp",
+        "query": "346/2026/NĐ-CP",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "fc31625aeb900eb9ad735525",
+            "title": "Sửa đổi, bổ sung một số điều của Nghị định số 58/2018/NĐ-CР ngày 18 tháng 4 năm 2018 của Chính phủ về bảo hiểm nông nghiệp",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219420",
+            "document_number": "346/2026/NĐ-CP",
+            "issued_date": "05/09/2026",
+            "snippet": "Sửa đổi, bổ sung một số điều của Nghị định số 58/2018/NĐ-CР ngày 18 tháng 4 năm 2018 của Chính phủ về bảo hiểm nông nghiệp",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "346/2026/NĐ-CP"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "conditions",
+        "title": "Điều kiện và thủ tục",
+        "query": "346/2026/NĐ-CP điều kiện",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "346/2026/NĐ-CP điều kiện"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "exceptions",
+        "title": "Ngoại lệ và giới hạn",
+        "query": "346/2026/NĐ-CP không được",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "346/2026/NĐ-CP không được"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "amendments",
+        "title": "Sửa đổi và tình trạng hiệu lực",
+        "query": "346/2026/NĐ-CP sửa đổi",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "346/2026/NĐ-CP sửa đổi"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "official_verification",
+        "title": "Đối chiếu nguồn chính thức",
+        "query": "346/2026/NĐ-CP",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "fc31625aeb900eb9ad735525",
+            "title": "Sửa đổi, bổ sung một số điều của Nghị định số 58/2018/NĐ-CР ngày 18 tháng 4 năm 2018 của Chính phủ về bảo hiểm nông nghiệp",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219420",
+            "document_number": "346/2026/NĐ-CP",
+            "issued_date": "05/09/2026",
+            "snippet": "Sửa đổi, bổ sung một số điều của Nghị định số 58/2018/NĐ-CР ngày 18 tháng 4 năm 2018 của Chính phủ về bảo hiểm nông nghiệp",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "346/2026/NĐ-CP"
+        ],
+        "error_kind": null
+      }
+    ],
+    "provider": "chinhphu_official_portal",
+    "model": "webforms-search-v1"
+  },
+  "expected_url_hit": true,
+  "source": {
+    "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219420",
+    "attachment_url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/9/346_2026_nd-cp_05092026-signed.signed.pdf",
+    "title": "\r\n\tNghị định số 346/2026/NĐ-CP của Chính phủ: Sửa đổi, bổ sung một số điều của Nghị định số 58/2018/NĐ-CР ngày 18 tháng 4 năm 2018 của Chính phủ về bảo hiểm nông nghiệp\r\n",
+    "text": "CHÍNH PHỦ\nSố: 346/2026/NĐ-CP\nCỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\nHà Nội, ngày 05 tháng 9 năm 2026\nNGHỊ ĐỊNH\nSửa đổi, bổ sung một số điều của Nghị định số 58/2018/NĐ-CP\nngày 18 tháng 4 năm 2018 của Chính phủ về bảo hiểm nông nghiệp\nCăn cứ Luật Tổ chức Chính phủ số 63/2025/QH15;\nCăn cứ Luật Ngân sách nhà nước số 89/2025/QH15;\nCăn cứ Luật Kinh doanh bảo hiểm số 08/2022/QH15 được sửa đổi, bổ\nsung bởi Luật số 139/2025/QH15;\nTheo đề nghị của Bộ trưởng Bộ Tài chính;\nChính phủ ban hành Nghị định sửa đổi, bổ sung một số điều của Nghị\nđịnh số 58/2018/NĐ-CP ngày 18 tháng 4 năm 2018 của Chính phủ về bảo\nhiểm nông nghiệp.\n\nĐiều 1. Sửa đổi, bổ sung Điều 4\n“Điều 4. Các loại hình sản phẩm bảo hiểm, nguồn cung cấp chỉ số\nđối với bảo hiểm theo chỉ số\n1. Các loại hình sản phẩm\na) Bảo hiểm đối với rủi ro định danh, theo đó khi xảy ra sự kiện bảo\nhiểm, doanh nghiệp bảo hiểm bồi thường cho tổn thất thực tế do các rủi ro\nđược thỏa thuận cụ thể trong hợp đồng bảo hiểm nông nghiệp gây ra;\nb) Bảo hiểm mọi rủi ro, theo đó khi xảy ra sự kiện bảo hiểm, doanh\nnghiệp bảo hiểm bồi thường cho tổn thất thực tế do mọi rủi ro gây ra, trừ các\ntrường hợp loại trừ trách nhiệm bảo hiểm được thỏa thuận tại hợp đồng bảo\nhiểm nông nghiệp;\nc) Bảo hiểm đối với tổn thất về thu nhập, theo đó khi xảy ra sự kiện bảo\nhiểm, doanh nghiệp bảo hiểm bồi thường cho chi phí sản xuất nông nghiệp để bù\nđắp cho tổn thất do các rủi ro được bảo hiểm gây ra theo thỏa thuận tại hợp\nđồng bảo hiểm nông nghiệp;\n\n2\nd) Bảo hiểm theo chỉ số năng suất, theo đó khi xảy ra sự kiện bảo hiểm,\ndoanh nghiệp bảo hiểm bồi thường theo mức sụt giảm năng suất thực tế của\nmột khu vực địa lý (xã, một số xã...) theo thỏa thuận tại hợp đồng bảo hiểm\nnông nghiệp, không phụ thuộc vào tổn thất thực tế của đối tượng bảo hiểm;\nđ) Bảo hiểm theo chỉ số thời tiết, theo đó khi xảy ra sự kiện bảo hiểm,\ndoanh nghiệp bảo hiểm bồi thường theo biến động của chỉ số thời tiết (mưa,\ngió, hạn hán, ngập lụt, rét hại, mưa đá, sương muối, động đất, sóng thần...)\ntheo thỏa thuận tại hợp đồng bảo hiểm nông nghiệp, không phụ thuộc vào tổn\nthất thực tế của đối tượng bảo hiểm. Việc lựa chọn nguồn cung cấp các chỉ số\nthời tiết tại hợp đồng bảo hiểm phải đáp ứng quy định tại khoản 2 Điều này;\ne) Bảo hiểm theo chỉ số viễn thám, theo đó khi xảy ra sự kiện bảo hiểm,\ndoanh nghiệp bảo hiểm bồi thường theo sự biến động của chỉ số viễn thám\ntheo thỏa thuận tại hợp đồng bảo hiểm nông nghiệp, không phụ thuộc vào tổn\nthất thực tế của đối tượng bảo hiểm. Việc lựa chọn nguồn cung cấp các chỉ số\nviễn thám tại hợp đồng bảo hiểm phải đáp ứng quy định tại khoản 2 Điều này;\ng) Các loại hình sản phẩm bảo hiểm nông nghiệp khác theo thỏa thuận\ntại hợp đồng bảo hiểm nông nghiệp.\nDoanh nghiệp bảo hiểm có trách nhiệm giải thích rõ cho bên mua bảo\nhiểm việc xác định tổn thất thực tế trong trường hợp bảo hiểm quy định tại\ncác điểm a, b và c khoản 1 Điều này và cách xác định số tiền bồi thường bảo\nhiểm trong trường hợp bảo hiểm quy định tại các điểm d, đ và e khoản 1 Điều\nnày.\n2. Nguồn cung cấp chỉ số\nDoanh nghiệp bảo hiểm và bên mua bảo hiểm có thể lựa chọn nguồn cung\ncấp các chỉ số thời tiết và chỉ số viễn thám theo một hoặc một số trong số các\nnguồn sau:\na) Trung tâm Dự báo khí tượng thủy văn quốc gia trực thuộc Cục Khí\ntượng Thuỷ văn;\nb) Hệ thống Thông tin dịch vụ khí hậu của Tổ chức Khí tượng thế giới\n(WMO);\nc) Trung tâm Giám sát nông nghiệp, tài nguyên và môi trường thuộc\nCục Viễn thám quốc gia;\nd) Các nguồn dữ liệu khác phải bảo đảm nguồn tin cậy của các yếu tố\nkhí hậu, chỉ số viễn thám, được sự xác nhận hoặc chấp thuận của nhà tái bảo\nhiểm quốc tế và phải được quy định rõ tại Hợp đồng bảo hiểm.”.",
+    "sha256": "5dcf90a81392847c7e1bbaa88b07096ef2b824c88b4b35bf3a9e02bff12594ba",
+    "document_sha256": "ee1d6b89362982bbe57c0455243b3b63d1a59ba8f5ed6215ce6f153d3bc1f63b",
+    "parser_recovered": false,
+    "ocr_input_sha256": "3057dd6bd980d00841a9271849caa19f3bf91970f55fbd6d4062e4c33aa03a3f",
+    "ocr_input_transform": "selected_page_content_without_annotations",
+    "retrieved_at": "2026-09-12T14:11:13.898373+00:00",
+    "extracted_characters": 3660,
+    "stored_characters": 3660,
+    "truncated": true,
+    "method": "vertex_ocr",
+    "legal_effect_status": "unverified",
+    "document_number": "346/2026/NĐ-CP",
+    "content_status": "readable",
+    "pages": [
+      {
+        "page": 1,
+        "text": "CHÍNH PHỦ\nSố: 346/2026/NĐ-CP\nCỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\nHà Nội, ngày 05 tháng 9 năm 2026\nNGHỊ ĐỊNH\nSửa đổi, bổ sung một số điều của Nghị định số 58/2018/NĐ-CP\nngày 18 tháng 4 năm 2018 của Chính phủ về bảo hiểm nông nghiệp\nCăn cứ Luật Tổ chức Chính phủ số 63/2025/QH15;\nCăn cứ Luật Ngân sách nhà nước số 89/2025/QH15;\nCăn cứ Luật Kinh doanh bảo hiểm số 08/2022/QH15 được sửa đổi, bổ\nsung bởi Luật số 139/2025/QH15;\nTheo đề nghị của Bộ trưởng Bộ Tài chính;\nChính phủ ban hành Nghị định sửa đổi, bổ sung một số điều của Nghị\nđịnh số 58/2018/NĐ-CP ngày 18 tháng 4 năm 2018 của Chính phủ về bảo\nhiểm nông nghiệp.\n\nĐiều 1. Sửa đổi, bổ sung Điều 4\n“Điều 4. Các loại hình sản phẩm bảo hiểm, nguồn cung cấp chỉ số\nđối với bảo hiểm theo chỉ số\n1. Các loại hình sản phẩm\na) Bảo hiểm đối với rủi ro định danh, theo đó khi xảy ra sự kiện bảo\nhiểm, doanh nghiệp bảo hiểm bồi thường cho tổn thất thực tế do các rủi ro\nđược thỏa thuận cụ thể trong hợp đồng bảo hiểm nông nghiệp gây ra;\nb) Bảo hiểm mọi rủi ro, theo đó khi xảy ra sự kiện bảo hiểm, doanh\nnghiệp bảo hiểm bồi thường cho tổn thất thực tế do mọi rủi ro gây ra, trừ các\ntrường hợp loại trừ trách nhiệm bảo hiểm được thỏa thuận tại hợp đồng bảo\nhiểm nông nghiệp;\nc) Bảo hiểm đối với tổn thất về thu nhập, theo đó khi xảy ra sự kiện bảo\nhiểm, doanh nghiệp bảo hiểm bồi thường cho chi phí sản xuất nông nghiệp để bù\nđắp cho tổn thất do các rủi ro được bảo hiểm gây ra theo thỏa thuận tại hợp\nđồng bảo hiểm nông nghiệp;"
+      },
+      {
+        "page": 2,
+        "text": "2\nd) Bảo hiểm theo chỉ số năng suất, theo đó khi xảy ra sự kiện bảo hiểm,\ndoanh nghiệp bảo hiểm bồi thường theo mức sụt giảm năng suất thực tế của\nmột khu vực địa lý (xã, một số xã...) theo thỏa thuận tại hợp đồng bảo hiểm\nnông nghiệp, không phụ thuộc vào tổn thất thực tế của đối tượng bảo hiểm;\nđ) Bảo hiểm theo chỉ số thời tiết, theo đó khi xảy ra sự kiện bảo hiểm,\ndoanh nghiệp bảo hiểm bồi thường theo biến động của chỉ số thời tiết (mưa,\ngió, hạn hán, ngập lụt, rét hại, mưa đá, sương muối, động đất, sóng thần...)\ntheo thỏa thuận tại hợp đồng bảo hiểm nông nghiệp, không phụ thuộc vào tổn\nthất thực tế của đối tượng bảo hiểm. Việc lựa chọn nguồn cung cấp các chỉ số\nthời tiết tại hợp đồng bảo hiểm phải đáp ứng quy định tại khoản 2 Điều này;\ne) Bảo hiểm theo chỉ số viễn thám, theo đó khi xảy ra sự kiện bảo hiểm,\ndoanh nghiệp bảo hiểm bồi thường theo sự biến động của chỉ số viễn thám\ntheo thỏa thuận tại hợp đồng bảo hiểm nông nghiệp, không phụ thuộc vào tổn\nthất thực tế của đối tượng bảo hiểm. Việc lựa chọn nguồn cung cấp các chỉ số\nviễn thám tại hợp đồng bảo hiểm phải đáp ứng quy định tại khoản 2 Điều này;\ng) Các loại hình sản phẩm bảo hiểm nông nghiệp khác theo thỏa thuận\ntại hợp đồng bảo hiểm nông nghiệp.\nDoanh nghiệp bảo hiểm có trách nhiệm giải thích rõ cho bên mua bảo\nhiểm việc xác định tổn thất thực tế trong trường hợp bảo hiểm quy định tại\ncác điểm a, b và c khoản 1 Điều này và cách xác định số tiền bồi thường bảo\nhiểm trong trường hợp bảo hiểm quy định tại các điểm d, đ và e khoản 1 Điều\nnày.\n2. Nguồn cung cấp chỉ số\nDoanh nghiệp bảo hiểm và bên mua bảo hiểm có thể lựa chọn nguồn cung\ncấp các chỉ số thời tiết và chỉ số viễn thám theo một hoặc một số trong số các\nnguồn sau:\na) Trung tâm Dự báo khí tượng thủy văn quốc gia trực thuộc Cục Khí\ntượng Thuỷ văn;\nb) Hệ thống Thông tin dịch vụ khí hậu của Tổ chức Khí tượng thế giới\n(WMO);\nc) Trung tâm Giám sát nông nghiệp, tài nguyên và môi trường thuộc\nCục Viễn thám quốc gia;\nd) Các nguồn dữ liệu khác phải bảo đảm nguồn tin cậy của các yếu tố\nkhí hậu, chỉ số viễn thám, được sự xác nhận hoặc chấp thuận của nhà tái bảo\nhiểm quốc tế và phải được quy định rõ tại Hợp đồng bảo hiểm.”."
+      }
+    ],
+    "page_count": 24,
+    "page_start": 1,
+    "page_end": 2,
+    "next_page_start": 3,
+    "requires_ocr": false,
+    "unreadable_pages": [],
+    "ocr_provider": "google_vertex_ai",
+    "ocr_model": "gemini-3.5-flash",
+    "attachments": [
+      "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/9/346_2026_nd-cp_05092026-signed.signed.pdf"
+    ],
+    "issued_date": "05-09-2026",
+    "reported_effective_from": "20-10-2026"
+  },
+  "elapsed_seconds": 41.5
+}

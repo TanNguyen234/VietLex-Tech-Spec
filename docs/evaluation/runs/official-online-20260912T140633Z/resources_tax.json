@@ -1,0 +1,183 @@
+{
+  "case": {
+    "id": "resources_tax",
+    "reference_number": "135/2026/TT-BTC",
+    "topic": "Thuế tài nguyên",
+    "question": "Hướng dẫn thuế tài nguyên thay đổi thế nào theo Thông tư 135/2026/TT-BTC?",
+    "reference_url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219437",
+    "reference_title": "Sửa đổi, bổ sung một số điều của Thông tư số 152/2015/TT-BTC ngày 02 tháng 10 năm 2015 của Bộ trưởng Bộ Tài chính hướng dẫn về thuế tài nguyên được sửa đổi, bổ sung bởi Thông tư số 41/2024/TT-BТС",
+    "reference_issued_date": "09/09/2026"
+  },
+  "plan": {
+    "version": "official-web-v3",
+    "query_method": "literal",
+    "planner_error": null,
+    "planner_provider": null,
+    "planner_model": null,
+    "plan_id": "8f7ad0d16ff61b9275fd7bc4",
+    "status": "draft",
+    "question": "Hướng dẫn thuế tài nguyên thay đổi thế nào theo Thông tư 135/2026/TT-BTC?",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "kind": "legal_basis",
+        "title": "Căn cứ pháp lý trực tiếp",
+        "query": "135/2026/TT-BTC"
+      },
+      {
+        "step_id": "conditions",
+        "kind": "conditions",
+        "title": "Điều kiện và thủ tục",
+        "query": "135/2026/TT-BTC điều kiện"
+      },
+      {
+        "step_id": "exceptions",
+        "kind": "exceptions",
+        "title": "Ngoại lệ và giới hạn",
+        "query": "135/2026/TT-BTC không được"
+      },
+      {
+        "step_id": "amendments",
+        "kind": "amendments",
+        "title": "Sửa đổi và tình trạng hiệu lực",
+        "query": "135/2026/TT-BTC sửa đổi"
+      },
+      {
+        "step_id": "official_verification",
+        "kind": "official_verification",
+        "title": "Đối chiếu nguồn chính thức",
+        "query": "135/2026/TT-BTC"
+      }
+    ]
+  },
+  "result": {
+    "status": "partial",
+    "question": "Hướng dẫn thuế tài nguyên thay đổi thế nào theo Thông tư 135/2026/TT-BTC?",
+    "plan_id": "8f7ad0d16ff61b9275fd7bc4",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "title": "Căn cứ pháp lý trực tiếp",
+        "query": "135/2026/TT-BTC",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "95bb1a2918311bab01500c9d",
+            "title": "Sửa đổi, bổ sung một số điều của Thông tư số 152/2015/TT-BTC ngày 02 tháng 10 năm 2015 của Bộ trưởng Bộ Tài chính hướng dẫn về thuế tài nguyên được sửa đổi, bổ sung bởi Thông tư số 41/2024/TT-BТС",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219437",
+            "document_number": "135/2026/TT-BTC",
+            "issued_date": "09/09/2026",
+            "snippet": "Sửa đổi, bổ sung một số điều của Thông tư số 152/2015/TT-BTC ngày 02 tháng 10 năm 2015 của Bộ trưởng Bộ Tài chính hướng dẫn về thuế tài nguyên được sửa đổi, bổ sung bởi Thông tư số 41/2024/TT-BТС",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "135/2026/TT-BTC"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "conditions",
+        "title": "Điều kiện và thủ tục",
+        "query": "135/2026/TT-BTC điều kiện",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "135/2026/TT-BTC điều kiện"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "exceptions",
+        "title": "Ngoại lệ và giới hạn",
+        "query": "135/2026/TT-BTC không được",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "135/2026/TT-BTC không được"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "amendments",
+        "title": "Sửa đổi và tình trạng hiệu lực",
+        "query": "135/2026/TT-BTC sửa đổi",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "135/2026/TT-BTC sửa đổi"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "official_verification",
+        "title": "Đối chiếu nguồn chính thức",
+        "query": "135/2026/TT-BTC",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "95bb1a2918311bab01500c9d",
+            "title": "Sửa đổi, bổ sung một số điều của Thông tư số 152/2015/TT-BTC ngày 02 tháng 10 năm 2015 của Bộ trưởng Bộ Tài chính hướng dẫn về thuế tài nguyên được sửa đổi, bổ sung bởi Thông tư số 41/2024/TT-BТС",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219437",
+            "document_number": "135/2026/TT-BTC",
+            "issued_date": "09/09/2026",
+            "snippet": "Sửa đổi, bổ sung một số điều của Thông tư số 152/2015/TT-BTC ngày 02 tháng 10 năm 2015 của Bộ trưởng Bộ Tài chính hướng dẫn về thuế tài nguyên được sửa đổi, bổ sung bởi Thông tư số 41/2024/TT-BТС",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "135/2026/TT-BTC"
+        ],
+        "error_kind": null
+      }
+    ],
+    "provider": "chinhphu_official_portal",
+    "model": "webforms-search-v1"
+  },
+  "expected_url_hit": true,
+  "source": {
+    "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219437",
+    "attachment_url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/9/135-btc.signed.pdf",
+    "title": "\r\n\tThông tư số 135/2026/TT-BTC của Bộ Tài chính: Sửa đổi, bổ sung một số điều của Thông tư số 152/2015/TT-BTC ngày 02 tháng 10 năm 2015 của Bộ trưởng Bộ Tài chính hướng dẫn về thuế tài nguyên được sửa đổi, bổ sung bởi Thông tư số 41/2024/TT-BТС\r\n",
+    "text": "BỘ TÀI CHÍNH\n\nSố: 135/2026/TT-BTC\n\nCỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\n\nHà Nội, ngày 09 tháng 9 năm 2026\n\nTHÔNG TƯ\nSửa đổi, bổ sung một số điều của Thông tư số 152/2015/TT-BTC ngày 02\ntháng 10 năm 2015 của Bộ trưởng Bộ Tài chính hướng dẫn về thuế tài\nnguyên được sửa đổi, bổ sung bởi Thông tư số 41/2024/TT-BTC\n\nCăn cứ Luật Thuế tài nguyên số 45/2009/QH12 được sửa đổi, bổ sung bởi\nLuật số 71/2014/QH13;\n\nCăn cứ Nghị định số 50/2010/NĐ-CP của Chính phủ quy định chi tiết và\nhướng dẫn thi hành một số điều của Luật Thuế tài nguyên được sửa đổi, bổ sung\nbởi Nghị định số 12/2015/NĐ-CP;\n\nCăn cứ Nghị định số 29/2025/NĐ-CP của Chính phủ quy định chức năng,\nnhiệm vụ, quyền hạn và cơ cấu tổ chức của Bộ Tài chính được sửa đổi, bổ sung\nbởi Nghị định số 166/2025/NĐ-CP;\n\nTheo đề nghị của Cục trưởng Cục Quản lý, giám sát chính sách thuế, phí\nvà lệ phí;\n\nBộ trưởng Bộ Tài chính ban hành Thông tư sửa đổi, bổ sung một số điều\ncủa Thông tư số 152/2015/TT-BTC ngày 02 tháng 10 năm 2015 của Bộ trưởng\nBộ Tài chính hướng dẫn về thuế tài nguyên được sửa đổi, bổ sung bởi Thông tư\nsố 41/2024/TT-BTC.\n\nĐiều 1. Sửa đổi, bổ sung một số điều của Thông tư số 152/2015/TT-\nBTC ngày 02 tháng 10 năm 2015 của Bộ trưởng Bộ Tài chính hướng dẫn về\nthuế tài nguyên được sửa đổi, bổ sung bởi Thông tư số 41/2024/TT-BTC\n\n1. Sửa đổi, bổ sung điểm 5.3 khoản 5 Điều 6 Thông tư số 152/2015/TT-\nBTC được sửa đổi, bổ sung bởi khoản 2 Điều 2 của Thông tư số 41/2024/TT-\nBTC như sau:\n\n“5.3. Trường hợp điều chỉnh, sửa đổi, bổ sung Bảng giá tính thuế tài\nnguyên, Sở Tài chính chủ trì phối hợp với các cơ quan liên quan tổ chức\nviệc xây dựng, điều chỉnh, sửa đổi, bổ sung Bảng giá tính thuế tài nguyên và\ntrình Ủy ban nhân dân cấp tỉnh ban hành Bảng giá tính thuế tài nguyên.”\n\n2. Sửa đổi, bổ sung điểm 5.4 khoản 5 Điều 6 Thông tư số 152/2015/TT-\nBTC như sau:\n\n2\n\n“5.4. Sau khi Bảng giá tính thuế tài nguyên được ban hành, Bộ Tài chính\n(Cục Thuế) cập nhật cơ sở dữ liệu giá tính thuế tài nguyên. Cơ quan thuế địa\nphương công khai Bảng giá tính thuế tài nguyên trên Cổng thông tin điện tử của\ncơ quan mình.”\n\n3. Sửa đổi, bổ sung điểm a khoản 3 Điều 9 Thông tư số 152/2015/TT-\nBTC như sau:\n\n“a) Sản lượng tài nguyên tính thuế là tổng sản lượng tài nguyên khai thác\ntrong năm, không phân biệt tồn kho hay đang trong quá trình chế biến hoặc vận\nchuyển.\n\nTrường hợp trong sản lượng bán ra vừa có sản lượng sản phẩm tài nguyên\nvừa có sản lượng sản phẩm công nghiệp thì phải quy đổi từ tài nguyên có trong\nsản lượng sản phẩm tài nguyên và sản phẩm công nghiệp ra sản lượng tài\nnguyên khai thác theo định mức sử dụng tài nguyên do người nộp thuế tự xác\nđịnh.\n\nTrường hợp áp dụng định mức sử dụng tài nguyên tính trên một đơn vị\nsản phẩm do người nộp thuế tự xác định tính ra số thuế tài nguyên phải nộp thấp\nhơn số thuế tài nguyên tính theo định mức sử dụng tài nguyên do Ủy ban nhân\ndân cấp tỉnh đã ban hành đối với cùng một loại tài nguyên thì áp dụng định mức\nsử dụng tài nguyên do Ủy ban nhân dân cấp tỉnh ban hành”.\n\n4. Sửa đổi, bổ sung khoản 1 Điều 13 được sửa đổi, bổ sung bởi khoản 3\n\nĐiều 2 của Thông tư số 41/2024/TT-BTC như sau:\n\n“1. Uỷ ban nhân dân cấp tỉnh có trách nhiệm:\n\na) Chỉ đạo Sở Tài chính chủ trì, phối hợp với các cơ quan liên quan: xây\ndựng Bảng giá tính thuế tài nguyên áp dụng tại địa phương; rà soát biến động\ncủa thị trường để điều chỉnh Bảng giá tính thuế tài nguyên phù hợp với quy\nđịnh.\n\nb) Chỉ đạo các cơ quan thuế, tài chính, nông nghiệp và môi trường và các\ncơ quan có liên quan phối hợp thực hiện quản lý thuế tài nguyên theo hướng dẫn\ntại Thông tư này. ”.\n\nĐiều 2. Bãi bỏ, thay thế một số quy định\n\n1. Bãi bỏ, thay thế một số quy định tại Thông tư số 152/2015/TT-BTC\n\na) Bãi bỏ Ví dụ 1, Ví dụ 2, Ví dụ 3, Ví dụ 4, Ví dụ 5, Ví dụ 6, Ví dụ 7 tại\n\nĐiều 5 và Ví dụ 8, Ví dụ 9 tại Điều 6.\n\nb) Bãi bỏ nội dung “Chi phí chế biến phát sinh của công đoạn chế biến từ\nsản phẩm tài nguyên thành sản phẩm công nghiệp được trừ khi xác định giá tính\nthuế căn cứ công nghệ chế biến của doanh nghiệp theo Dự án đã được phê duyệt\nnhưng không bao gồm chi phí khai thác, sàng, tuyển, làm giàu hàm lượng.” tại\nđiểm b khoản 3 Điều 6.\n\nc) Bãi bỏ các cụm từ “Hàng năm”, cụm từ “để thực hiện cho năm tiếp\ntheo liền kề”, cụm từ “phải căn cứ hướng dẫn của các Bộ quản lý nhà nước",
+    "sha256": "e3e45595bdbdb5338be9a573a5e9b5208d234f34d43af63343209dd7b297142b",
+    "document_sha256": "7ee8e04bac6e27436f7c700ef68555a80dba88ed93b91ecf9b80e1ef694cfbd7",
+    "parser_recovered": false,
+    "ocr_input_sha256": "6cbd93d7dd531ef4fd931d8c882a2516b314140c587153bda096c6614e56ec86",
+    "ocr_input_transform": "selected_page_content_without_annotations",
+    "retrieved_at": "2026-09-12T14:08:56.522652+00:00",
+    "extracted_characters": 4269,
+    "stored_characters": 4269,
+    "truncated": true,
+    "method": "vertex_ocr",
+    "legal_effect_status": "unverified",
+    "document_number": "135/2026/TT-BTC",
+    "content_status": "readable",
+    "pages": [
+      {
+        "page": 1,
+        "text": "BỘ TÀI CHÍNH\n\nSố: 135/2026/TT-BTC\n\nCỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\n\nHà Nội, ngày 09 tháng 9 năm 2026\n\nTHÔNG TƯ\nSửa đổi, bổ sung một số điều của Thông tư số 152/2015/TT-BTC ngày 02\ntháng 10 năm 2015 của Bộ trưởng Bộ Tài chính hướng dẫn về thuế tài\nnguyên được sửa đổi, bổ sung bởi Thông tư số 41/2024/TT-BTC\n\nCăn cứ Luật Thuế tài nguyên số 45/2009/QH12 được sửa đổi, bổ sung bởi\nLuật số 71/2014/QH13;\n\nCăn cứ Nghị định số 50/2010/NĐ-CP của Chính phủ quy định chi tiết và\nhướng dẫn thi hành một số điều của Luật Thuế tài nguyên được sửa đổi, bổ sung\nbởi Nghị định số 12/2015/NĐ-CP;\n\nCăn cứ Nghị định số 29/2025/NĐ-CP của Chính phủ quy định chức năng,\nnhiệm vụ, quyền hạn và cơ cấu tổ chức của Bộ Tài chính được sửa đổi, bổ sung\nbởi Nghị định số 166/2025/NĐ-CP;\n\nTheo đề nghị của Cục trưởng Cục Quản lý, giám sát chính sách thuế, phí\nvà lệ phí;\n\nBộ trưởng Bộ Tài chính ban hành Thông tư sửa đổi, bổ sung một số điều\ncủa Thông tư số 152/2015/TT-BTC ngày 02 tháng 10 năm 2015 của Bộ trưởng\nBộ Tài chính hướng dẫn về thuế tài nguyên được sửa đổi, bổ sung bởi Thông tư\nsố 41/2024/TT-BTC.\n\nĐiều 1. Sửa đổi, bổ sung một số điều của Thông tư số 152/2015/TT-\nBTC ngày 02 tháng 10 năm 2015 của Bộ trưởng Bộ Tài chính hướng dẫn về\nthuế tài nguyên được sửa đổi, bổ sung bởi Thông tư số 41/2024/TT-BTC\n\n1. Sửa đổi, bổ sung điểm 5.3 khoản 5 Điều 6 Thông tư số 152/2015/TT-\nBTC được sửa đổi, bổ sung bởi khoản 2 Điều 2 của Thông tư số 41/2024/TT-\nBTC như sau:\n\n“5.3. Trường hợp điều chỉnh, sửa đổi, bổ sung Bảng giá tính thuế tài\nnguyên, Sở Tài chính chủ trì phối hợp với các cơ quan liên quan tổ chức\nviệc xây dựng, điều chỉnh, sửa đổi, bổ sung Bảng giá tính thuế tài nguyên và\ntrình Ủy ban nhân dân cấp tỉnh ban hành Bảng giá tính thuế tài nguyên.”\n\n2. Sửa đổi, bổ sung điểm 5.4 khoản 5 Điều 6 Thông tư số 152/2015/TT-\nBTC như sau:"
+      },
+      {
+        "page": 2,
+        "text": "2\n\n“5.4. Sau khi Bảng giá tính thuế tài nguyên được ban hành, Bộ Tài chính\n(Cục Thuế) cập nhật cơ sở dữ liệu giá tính thuế tài nguyên. Cơ quan thuế địa\nphương công khai Bảng giá tính thuế tài nguyên trên Cổng thông tin điện tử của\ncơ quan mình.”\n\n3. Sửa đổi, bổ sung điểm a khoản 3 Điều 9 Thông tư số 152/2015/TT-\nBTC như sau:\n\n“a) Sản lượng tài nguyên tính thuế là tổng sản lượng tài nguyên khai thác\ntrong năm, không phân biệt tồn kho hay đang trong quá trình chế biến hoặc vận\nchuyển.\n\nTrường hợp trong sản lượng bán ra vừa có sản lượng sản phẩm tài nguyên\nvừa có sản lượng sản phẩm công nghiệp thì phải quy đổi từ tài nguyên có trong\nsản lượng sản phẩm tài nguyên và sản phẩm công nghiệp ra sản lượng tài\nnguyên khai thác theo định mức sử dụng tài nguyên do người nộp thuế tự xác\nđịnh.\n\nTrường hợp áp dụng định mức sử dụng tài nguyên tính trên một đơn vị\nsản phẩm do người nộp thuế tự xác định tính ra số thuế tài nguyên phải nộp thấp\nhơn số thuế tài nguyên tính theo định mức sử dụng tài nguyên do Ủy ban nhân\ndân cấp tỉnh đã ban hành đối với cùng một loại tài nguyên thì áp dụng định mức\nsử dụng tài nguyên do Ủy ban nhân dân cấp tỉnh ban hành”.\n\n4. Sửa đổi, bổ sung khoản 1 Điều 13 được sửa đổi, bổ sung bởi khoản 3\n\nĐiều 2 của Thông tư số 41/2024/TT-BTC như sau:\n\n“1. Uỷ ban nhân dân cấp tỉnh có trách nhiệm:\n\na) Chỉ đạo Sở Tài chính chủ trì, phối hợp với các cơ quan liên quan: xây\ndựng Bảng giá tính thuế tài nguyên áp dụng tại địa phương; rà soát biến động\ncủa thị trường để điều chỉnh Bảng giá tính thuế tài nguyên phù hợp với quy\nđịnh.\n\nb) Chỉ đạo các cơ quan thuế, tài chính, nông nghiệp và môi trường và các\ncơ quan có liên quan phối hợp thực hiện quản lý thuế tài nguyên theo hướng dẫn\ntại Thông tư này. ”.\n\nĐiều 2. Bãi bỏ, thay thế một số quy định\n\n1. Bãi bỏ, thay thế một số quy định tại Thông tư số 152/2015/TT-BTC\n\na) Bãi bỏ Ví dụ 1, Ví dụ 2, Ví dụ 3, Ví dụ 4, Ví dụ 5, Ví dụ 6, Ví dụ 7 tại\n\nĐiều 5 và Ví dụ 8, Ví dụ 9 tại Điều 6.\n\nb) Bãi bỏ nội dung “Chi phí chế biến phát sinh của công đoạn chế biến từ\nsản phẩm tài nguyên thành sản phẩm công nghiệp được trừ khi xác định giá tính\nthuế căn cứ công nghệ chế biến của doanh nghiệp theo Dự án đã được phê duyệt\nnhưng không bao gồm chi phí khai thác, sàng, tuyển, làm giàu hàm lượng.” tại\nđiểm b khoản 3 Điều 6.\n\nc) Bãi bỏ các cụm từ “Hàng năm”, cụm từ “để thực hiện cho năm tiếp\ntheo liền kề”, cụm từ “phải căn cứ hướng dẫn của các Bộ quản lý nhà nước"
+      }
+    ],
+    "page_count": 3,
+    "page_start": 1,
+    "page_end": 2,
+    "next_page_start": 3,
+    "requires_ocr": false,
+    "unreadable_pages": [],
+    "ocr_provider": "google_vertex_ai",
+    "ocr_model": "gemini-3.5-flash",
+    "attachments": [
+      "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/9/135-btc.signed.pdf"
+    ],
+    "issued_date": "09-09-2026",
+    "reported_effective_from": "09-09-2026"
+  },
+  "elapsed_seconds": 27.59399999999914
+}

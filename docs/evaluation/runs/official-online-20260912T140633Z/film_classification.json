@@ -1,0 +1,178 @@
+{
+  "case": {
+    "id": "film_classification",
+    "question": "Hội đồng thẩm định và phân loại phim được tổ chức và hoạt động ra sao?",
+    "reference_number": "3/2026/VBHN-TT-BVHTTDL",
+    "reference_url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219406"
+  },
+  "plan": {
+    "version": "official-web-v3",
+    "query_method": "model_keywords",
+    "planner_error": null,
+    "planner_provider": "google_vertex_ai",
+    "planner_model": "gemini-3.5-flash",
+    "plan_id": "0df4da6c2cb6a7902298d94d",
+    "status": "draft",
+    "question": "Hội đồng thẩm định và phân loại phim được tổ chức và hoạt động ra sao?",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "kind": "legal_basis",
+        "title": "Tìm tiêu đề — cụm 1",
+        "query": "Hội đồng thẩm định phim"
+      },
+      {
+        "step_id": "conditions",
+        "kind": "conditions",
+        "title": "Tìm tiêu đề — cụm 2",
+        "query": "phân loại phim"
+      },
+      {
+        "step_id": "exceptions",
+        "kind": "exceptions",
+        "title": "Tìm tiêu đề — cụm 3",
+        "query": "thẩm định phân loại phim"
+      },
+      {
+        "step_id": "amendments",
+        "kind": "amendments",
+        "title": "Tìm tiêu đề — cụm 4",
+        "query": "thẩm định phim"
+      },
+      {
+        "step_id": "official_verification",
+        "kind": "official_verification",
+        "title": "Tìm tiêu đề — cụm 5",
+        "query": "Hội đồng phim"
+      }
+    ]
+  },
+  "result": {
+    "status": "partial",
+    "question": "Hội đồng thẩm định và phân loại phim được tổ chức và hoạt động ra sao?",
+    "plan_id": "0df4da6c2cb6a7902298d94d",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "title": "Tìm tiêu đề — cụm 1",
+        "query": "Hội đồng thẩm định phim",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "Hội đồng thẩm định phim"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "conditions",
+        "title": "Tìm tiêu đề — cụm 2",
+        "query": "phân loại phim",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "7fc53eb7ecc1c2f4be35ca15",
+            "title": "Quy định về tổ chức và hoạt động của Hội đồng thẩm định, phân loại phim",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219406",
+            "document_number": "3/2026/VBHN-TT-BVHTTDL",
+            "issued_date": "07/09/2026",
+            "snippet": "Quy định về tổ chức và hoạt động của Hội đồng thẩm định, phân loại phim",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "e212883bfb981105df4e69f5",
+            "title": "Quy định điều kiện cấp Giấy phép phân loại phim của Ủy ban nhân dân tỉnh, thành phố trực thuộc trung ương",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=209633",
+            "document_number": "17/2023/TT-BVHTTDL",
+            "issued_date": "29/12/2023",
+            "snippet": "Quy định điều kiện cấp Giấy phép phân loại phim của Ủy ban nhân dân tỉnh, thành phố trực thuộc trung ương",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "phân loại phim"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "exceptions",
+        "title": "Tìm tiêu đề — cụm 3",
+        "query": "thẩm định phân loại phim",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "thẩm định phân loại phim"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "amendments",
+        "title": "Tìm tiêu đề — cụm 4",
+        "query": "thẩm định phim",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "thẩm định phim"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "official_verification",
+        "title": "Tìm tiêu đề — cụm 5",
+        "query": "Hội đồng phim",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "Hội đồng phim"
+        ],
+        "error_kind": null
+      }
+    ],
+    "provider": "chinhphu_official_portal",
+    "model": "webforms-search-v1"
+  },
+  "expected_url_hit": true,
+  "source": {
+    "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219406",
+    "attachment_url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/9/03-vbhn-bvhttdl.signed.pdf",
+    "title": "\r\n\tVăn bản hợp nhất số 3/2026/VBHN-TT-BVHTTDL của Bộ Văn hóa, Thể thao và Du lịch: Quy định về tổ chức và hoạt động của Hội đồng thẩm định, phân loại phim\r\n",
+    "text": "CỘNG HÒA XÃ HỘI CHỦ NGHĨAVIỆT NAM \nVĂN BẢN HỢP NHẤT Độc lập - Tự do - Hạnh phúc \nSố: /2026/VBHN-TT-BVHTTDL \n \nHà Nội, ngày tháng năm 2026 \n \n \nTHÔNG TƯ \nQuy định về tổ chức và hoạt động của Hội đồng thẩm định, phân loại phim \n \nThông tư số 11/2023/TT-BVHTTDL ngày 05 tháng 10 năm 2023 của Bộ \ntrưởng Bộ Văn hóa, Thể thao và Du lịch quy định về tổ chức và hoạt động của \nHội đồng thẩm định, phân loại phim có hiệu lực thi hành từ ngày 21 tháng 11 năm \n2023, được đính chính bởi: \nQuyết định số 3891/QĐ-BVHTTDL ngày 15 tháng 12 năm 2023 của Bộ \ntrưởng Bộ Văn hóa, Thể thao và Du lịch về việc đính chính Thông tư số \n11/2023/TT- BVHTTDL ngày 05 tháng 10 năm 2023 của Bộ trưởng Bộ Văn hóa, \nThể thao và Du lịch quy định về tổ chức và hoạt động của Hội đồng thẩm định, \nphân loại phim. \nCăn cứ Luật Điện ảnh ngày 15 tháng 6 năm 2022; \nCăn cứ Nghị định số 131/2022/NĐ-CP ngày 31 tháng 12 năm 2022 của \nChính phủ quy định chi tiết một số điều của Luật Điện ảnh; \nCăn cứ Nghị định số 01/2023/NĐ-CP ngày 16 tháng 01 năm 2023 của Chính \nphủ quy định chức năng, nhiệm vụ, quyền hạn và cơ cấu tổ chức của Bộ Văn hóa, \nThể thao và Du lịch; \nTheo đề nghị của Cục trưởng Cục Điện ảnh; \nBộ trưởng Bộ Văn hóa, Thể thao và Du lịch ban hành Thông tư quy định về \ntổ chức và hoạt động của Hội đồng thẩm định, phân loại phim1. \n \n \nChương I \nQUY ĐỊNH CHUNG \n 1 Quyết định số 3891/QĐ-BVHTTDL có căn cứ ban hành như sau: \n“Căn cứ Luật Ban hành văn bản quy phạm pháp luật ngày 22 tháng 6 năm 2015; Luật sửa đổi, bổ sung một số \nđiều của Luật Ban hành văn bản quy phạm pháp luật ngày 18 tháng 6 năm 2020; \nCăn cứ Nghị định số 34/2016/NĐ-CP ngày 14 tháng 5 năm 2016 của Chính phủ quy định chi tiết một số điều và \nbiện pháp thi hành Luật Ban hành văn bản quy phạm pháp luật; Nghị định số 154/2020/NĐ-CP ngày 31 tháng 12 \nnăm 2020 của Chính phủ sửa đổi, bổ sung một số điều của Nghị định số 34/2016/NĐ-CP; \nCăn cứ Nghị định số 01/2023/NĐ-CP ngày 16 tháng 01 năm 2023 của Chính phủ quy định chức năng, nhiệm vụ, \nquyền hạn và cơ cấu tổ chức của Bộ Văn hóa, Thể thao và Du lịch; \nTheo đề nghị của Cục trưởng Cục Điện ảnh.”. \n \n\n\n 2 \nĐiều 1. Phạm vi điều chỉnh \nThông tư này quy định về tổ chức và hoạt động của Hội đồng thẩm định, \nphân loại phim (sau đây gọi là Hội đồng) của Bộ Văn hóa, Thể thao và Du lịch, \nỦy ban nhân dân các tỉnh, thành phố trực thuộc trung ương (sau đây gọi là Ủy ban \nnhân dân cấp tỉnh), cơ quan báo chí có giấy phép hoạt động truyền hình. \nĐiều 2. Đối tượng áp dụng \nThông tư này áp dụng đối với cơ quan có thẩm quyền cấp Giấy phép phân \nloại phim, cơ quan cấp quyết định phát sóng để phổ biến phim trên hệ thống truyền \nhình; Hội đồng thẩm định, phân loại phim của Bộ Văn hóa, Thể thao và Du lịch, \nỦy ban nhân dân cấp tỉnh, cơ quan báo chí có giấy phép hoạt động truyền hình và \ncác tổ chức, cá nhân có liên quan. \nĐiều 3. Giải thích từ ngữ \nTrong Thông tư này, các từ ngữ dưới đây được hiểu như sau: \n1. Nhà chuyên môn điện ảnh là người có bằng đại học trở lên ngành, chuyên \nngành điện ảnh. \n2. Phim ngắn là phim truyện và phim kết hợp nhiều loại hình có thời lượng \ndưới 60 phút. \n \nChương II \nTỔ CHỨC VÀ HOẠT ĐỘNG CỦA HỘI ĐỒNG THẨM ĐỊNH,  \nPHÂN LOẠI PHIM \nĐiều 4. Chức năng của Hội đồng \nHội đồng có chức năng thẩm định, phân loại phim để tư vấn cho Bộ Văn hóa, \nThể thao và Du lịch, Ủy ban nhân dân cấp tỉnh (sau đây gọi là cơ quan cấp giấy \nphép), cơ quan báo chí có giấy phép hoạt động truyền hình (sau đây gọi là cơ quan \ncấp quyết định phát sóng) trước khi cấp Giấy phép phân loại phim, Quyết định \nphát sóng theo quy định tại Điều 31 Luật Điện ảnh. \nĐiều 5. Thành lập Hội đồng \n1. Các Hội đồng thẩm định, phân loại phim \na) Hội đồng thẩm định, phân loại phim truyện, phim kết hợp nhiều loại hình; \nb) Hội đồng thẩm định, phân loại phim tài liệu, phim khoa học, phim hoạt \nhình, phim ngắn; \nc) Hội đồng thẩm định, phân loại phim tham gia liên hoan phim, liên hoan \nphim chuyên ngành, chuyên đề, giải thưởng phim, cuộc thi phim, chương trình \nphim, tuần phim tại Việt Nam và nước ngoài;",
+    "sha256": "7f27fd089ea029a2d85a5bb773aa038d5c8b8b5767810d3a931891136c879c42",
+    "document_sha256": "72570f3c01aeb26c3283745a99a952a3430b7e8af97f6ed432a39c0f7198d504",
+    "parser_recovered": false,
+    "ocr_input_sha256": null,
+    "ocr_input_transform": null,
+    "retrieved_at": "2026-09-12T14:14:19.509076+00:00",
+    "extracted_characters": 3993,
+    "stored_characters": 3993,
+    "truncated": true,
+    "method": "pdf_text",
+    "legal_effect_status": "unverified",
+    "document_number": "3/2026/VBHN-TT-BVHTTDL",
+    "content_status": "readable",
+    "pages": [
+      {
+        "page": 1,
+        "text": " CỘNG HÒA XÃ HỘI CHỦ NGHĨAVIỆT NAM \nVĂN BẢN HỢP NHẤT Độc lập - Tự do - Hạnh phúc \nSố: /2026/VBHN-TT-BVHTTDL \n \nHà Nội, ngày tháng năm 2026 \n \n \nTHÔNG TƯ \nQuy định về tổ chức và hoạt động của Hội đồng thẩm định, phân loại phim \n \nThông tư số 11/2023/TT-BVHTTDL ngày 05 tháng 10 năm 2023 của Bộ \ntrưởng Bộ Văn hóa, Thể thao và Du lịch quy định về tổ chức và hoạt động của \nHội đồng thẩm định, phân loại phim có hiệu lực thi hành từ ngày 21 tháng 11 năm \n2023, được đính chính bởi: \nQuyết định số 3891/QĐ-BVHTTDL ngày 15 tháng 12 năm 2023 của Bộ \ntrưởng Bộ Văn hóa, Thể thao và Du lịch về việc đính chính Thông tư số \n11/2023/TT- BVHTTDL ngày 05 tháng 10 năm 2023 của Bộ trưởng Bộ Văn hóa, \nThể thao và Du lịch quy định về tổ chức và hoạt động của Hội đồng thẩm định, \nphân loại phim. \nCăn cứ Luật Điện ảnh ngày 15 tháng 6 năm 2022; \nCăn cứ Nghị định số 131/2022/NĐ-CP ngày 31 tháng 12 năm 2022 của \nChính phủ quy định chi tiết một số điều của Luật Điện ảnh; \nCăn cứ Nghị định số 01/2023/NĐ-CP ngày 16 tháng 01 năm 2023 của Chính \nphủ quy định chức năng, nhiệm vụ, quyền hạn và cơ cấu tổ chức của Bộ Văn hóa, \nThể thao và Du lịch; \nTheo đề nghị của Cục trưởng Cục Điện ảnh; \nBộ trưởng Bộ Văn hóa, Thể thao và Du lịch ban hành Thông tư quy định về \ntổ chức và hoạt động của Hội đồng thẩm định, phân loại phim1. \n \n \nChương I \nQUY ĐỊNH CHUNG \n 1 Quyết định số 3891/QĐ-BVHTTDL có căn cứ ban hành như sau: \n“Căn cứ Luật Ban hành văn bản quy phạm pháp luật ngày 22 tháng 6 năm 2015; Luật sửa đổi, bổ sung một số \nđiều của Luật Ban hành văn bản quy phạm pháp luật ngày 18 tháng 6 năm 2020; \nCăn cứ Nghị định số 34/2016/NĐ-CP ngày 14 tháng 5 năm 2016 của Chính phủ quy định chi tiết một số điều và \nbiện pháp thi hành Luật Ban hành văn bản quy phạm pháp luật; Nghị định số 154/2020/NĐ-CP ngày 31 tháng 12 \nnăm 2020 của Chính phủ sửa đổi, bổ sung một số điều của Nghị định số 34/2016/NĐ-CP; \nCăn cứ Nghị định số 01/2023/NĐ-CP ngày 16 tháng 01 năm 2023 của Chính phủ quy định chức năng, nhiệm vụ, \nquyền hạn và cơ cấu tổ chức của Bộ Văn hóa, Thể thao và Du lịch; \nTheo đề nghị của Cục trưởng Cục Điện ảnh.”. \n \n"
+      },
+      {
+        "page": 2,
+        "text": " 2 \nĐiều 1. Phạm vi điều chỉnh \nThông tư này quy định về tổ chức và hoạt động của Hội đồng thẩm định, \nphân loại phim (sau đây gọi là Hội đồng) của Bộ Văn hóa, Thể thao và Du lịch, \nỦy ban nhân dân các tỉnh, thành phố trực thuộc trung ương (sau đây gọi là Ủy ban \nnhân dân cấp tỉnh), cơ quan báo chí có giấy phép hoạt động truyền hình. \nĐiều 2. Đối tượng áp dụng \nThông tư này áp dụng đối với cơ quan có thẩm quyền cấp Giấy phép phân \nloại phim, cơ quan cấp quyết định phát sóng để phổ biến phim trên hệ thống truyền \nhình; Hội đồng thẩm định, phân loại phim của Bộ Văn hóa, Thể thao và Du lịch, \nỦy ban nhân dân cấp tỉnh, cơ quan báo chí có giấy phép hoạt động truyền hình và \ncác tổ chức, cá nhân có liên quan. \nĐiều 3. Giải thích từ ngữ \nTrong Thông tư này, các từ ngữ dưới đây được hiểu như sau: \n1. Nhà chuyên môn điện ảnh là người có bằng đại học trở lên ngành, chuyên \nngành điện ảnh. \n2. Phim ngắn là phim truyện và phim kết hợp nhiều loại hình có thời lượng \ndưới 60 phút. \n \nChương II \nTỔ CHỨC VÀ HOẠT ĐỘNG CỦA HỘI ĐỒNG THẨM ĐỊNH,  \nPHÂN LOẠI PHIM \nĐiều 4. Chức năng của Hội đồng \nHội đồng có chức năng thẩm định, phân loại phim để tư vấn cho Bộ Văn hóa, \nThể thao và Du lịch, Ủy ban nhân dân cấp tỉnh (sau đây gọi là cơ quan cấp giấy \nphép), cơ quan báo chí có giấy phép hoạt động truyền hình (sau đây gọi là cơ quan \ncấp quyết định phát sóng) trước khi cấp Giấy phép phân loại phim, Quyết định \nphát sóng theo quy định tại Điều 31 Luật Điện ảnh. \nĐiều 5. Thành lập Hội đồng \n1. Các Hội đồng thẩm định, phân loại phim \na) Hội đồng thẩm định, phân loại phim truyện, phim kết hợp nhiều loại hình; \nb) Hội đồng thẩm định, phân loại phim tài liệu, phim khoa học, phim hoạt \nhình, phim ngắn; \nc) Hội đồng thẩm định, phân loại phim tham gia liên hoan phim, liên hoan \nphim chuyên ngành, chuyên đề, giải thưởng phim, cuộc thi phim, chương trình \nphim, tuần phim tại Việt Nam và nước ngoài; "
+      }
+    ],
+    "page_count": 24,
+    "page_start": 1,
+    "page_end": 2,
+    "next_page_start": 3,
+    "requires_ocr": false,
+    "unreadable_pages": [],
+    "ocr_provider": null,
+    "ocr_model": null,
+    "attachments": [
+      "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/9/03-vbhn-bvhttdl.signed.pdf"
+    ],
+    "issued_date": "07-09-2026"
+  },
+  "elapsed_seconds": 21.14099999999962
+}

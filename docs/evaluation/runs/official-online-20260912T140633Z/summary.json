@@ -1,0 +1,119 @@
+[
+  {
+    "id": "aviation",
+    "hit": true,
+    "readable": true,
+    "pages_read": 2,
+    "total_pages": 4,
+    "error": null,
+    "query_method": "model_keywords"
+  },
+  {
+    "id": "health",
+    "hit": true,
+    "readable": true,
+    "pages_read": 2,
+    "total_pages": 6,
+    "error": null,
+    "query_method": "model_keywords"
+  },
+  {
+    "id": "procurement",
+    "hit": true,
+    "readable": true,
+    "pages_read": 2,
+    "total_pages": 23,
+    "error": null,
+    "query_method": "model_keywords"
+  },
+  {
+    "id": "resources_tax",
+    "hit": true,
+    "readable": true,
+    "pages_read": 2,
+    "total_pages": 3,
+    "error": null,
+    "query_method": "literal"
+  },
+  {
+    "id": "credit",
+    "hit": true,
+    "readable": true,
+    "pages_read": 2,
+    "total_pages": 4,
+    "error": null,
+    "query_method": "literal"
+  },
+  {
+    "id": "maritime",
+    "hit": true,
+    "readable": false,
+    "pages_read": 0,
+    "total_pages": null,
+    "error": "source_transport_error",
+    "query_method": "literal"
+  },
+  {
+    "id": "agriculture",
+    "hit": true,
+    "readable": true,
+    "pages_read": 2,
+    "total_pages": 24,
+    "error": null,
+    "query_method": "literal"
+  },
+  {
+    "id": "imports",
+    "hit": true,
+    "readable": true,
+    "pages_read": 2,
+    "total_pages": 39,
+    "error": null,
+    "query_method": "model_keywords"
+  },
+  {
+    "id": "reserves",
+    "hit": true,
+    "readable": true,
+    "pages_read": 2,
+    "total_pages": 40,
+    "error": null,
+    "query_method": "literal"
+  },
+  {
+    "id": "electricity",
+    "hit": true,
+    "readable": true,
+    "pages_read": 2,
+    "total_pages": 18,
+    "error": null,
+    "query_method": "model_keywords"
+  },
+  {
+    "id": "electronic_signature",
+    "hit": true,
+    "readable": true,
+    "pages_read": 2,
+    "total_pages": 57,
+    "error": null,
+    "query_method": "model_keywords"
+  },
+  {
+    "id": "telecom_resources",
+    "hit": true,
+    "readable": true,
+    "pages_read": 2,
+    "total_pages": 98,
+    "error": null,
+    "query_method": "model_keywords"
+  },
+  {
+    "id": "film_classification",
+    "hit": true,
+    "readable": true,
+    "pages_read": 2,
+    "total_pages": 24,
+    "error": null,
+    "query_method": "model_keywords"
+  }
+]

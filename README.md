@@ -15,7 +15,7 @@ Ngôn ngữ: **Tiếng Việt** | [English](README.en.md)
 
 VietLex hỗ trợ người nghiên cứu pháp lý và compliance đi từ câu hỏi đến hồ sơ có căn cứ: **tìm văn bản → đọc và ghim Điều/Khoản → phân tích nguồn → rà soát tài liệu và xử lý findings → chỉnh sửa, xuất báo cáo**. Đây vẫn là sản phẩm nghiên cứu đang được kiểm chứng, chưa đạt production readiness.
 
-Trạng thái UI/API/tests và giới hạn chỉ được duy trì tại [FEATURE_STATUS.md](FEATURE_STATUS.md). Xem [kiểm tra online 10 chủ đề](docs/verification/online-discovery-20260912/REPORT.md) và [phân tích workflow, chức năng cần đầu tư](docs/PRODUCT_WORKFLOWS_20260912.md).
+Trạng thái UI/API/tests và giới hạn chỉ được duy trì tại [FEATURE_STATUS.md](FEATURE_STATUS.md). Xem [nghiệm thu nguồn ngoài corpus: 10 câu + 3 holdout](docs/evaluation/runs/official-online-20260912T140633Z/REPORT.md), [baseline trước sửa](docs/verification/online-discovery-20260912/REPORT.md) và [phân tích workflow](docs/PRODUCT_WORKFLOWS_20260912.md).
 
 > [!WARNING]
 > Corpus là dataset nghiên cứu của bên thứ ba [`vohuutridung/vietnamese-legal-documents`](https://huggingface.co/datasets/vohuutridung/vietnamese-legal-documents), không phải cơ sở dữ liệu pháp luật chính thức và không tự xác nhận hiệu lực hiện hành. Kết quả chỉ nhằm mục đích tham khảo thông tin, không phải tư vấn pháp lý; luôn đối chiếu với nguồn chính thức cập nhật.
@@ -29,8 +29,8 @@ Trạng thái UI/API/tests và giới hạn chỉ được duy trì tại [FEATU
 | Hoàn tất pipeline | **50/50** generation `STOP` · **50/50** NeMo input/output safe · **50/50** Ragas · 0 lỗi kỹ thuật |
 | Verified retrieval subset | **40** case có toàn bộ required evidence đã xác minh · Document Recall@3 **1,0000**, micro **53/53** |
 | Dữ liệu v3 đã kiểm kê | **141.798** point remote · **14.962** document ID duy nhất · Supabase cùng **14.962** văn bản |
-| Automated verification | **1264 passed, 30 warnings** ngày 2026-09-12 trên source/config cuối; suite không gọi provider, loại integration/visual; không phải live-provider benchmark |
-| Online discovery, 10 chủ đề mới | **5/10** tìm được neo văn bản; có số hiệu **5/5**, câu tự nhiên **0/5**. Chưa đánh giá độ đúng/đủ của câu trả lời; xem report và JSON thực chạy |
+| Automated verification | **1278 passed, 30 warnings** ngày 2026-09-12; sau sửa cuối CSS/template, **34 tests liên quan passed**. Suite không gọi provider, loại integration/visual |
+| Online discovery ngoài corpus | **10/10** neo ban đầu + **3/3** holdout; đọc hai trang đầu **12/13** lần đầu, **13/13** sau một retry mạng. Chưa đánh giá độ đúng/đủ pháp lý của 13 câu rộng; xem JSON và giới hạn trong report |
 | Public SSR smoke | Vercel FastAPI/Jinja tại <https://vietlex-legal-rag.vercel.app>: SSR và readiness sẵn sàng; tìm kiếm Supabase và trang toàn văn đã được kiểm tra trực tiếp |
 
 Golden-50 v3 được tách từ Balanced-50, gồm 40 case có fully verified required retrieval evidence và 10 deterministic reference-only case. Các metric trên là bằng chứng cho một lát cắt đánh giá có giới hạn, không chứng minh độ chính xác pháp lý trên toàn corpus hoặc production readiness. Xem [`PORTFOLIO_EVIDENCE.md`](docs/evaluation/PORTFOLIO_EVIDENCE.md) để biết provenance và evidence boundary đầy đủ.
@@ -50,6 +50,12 @@ Bản đóng gói reviewer: [hướng dẫn](docs/REVIEWER_GUIDE.md) · [trạng
 Ảnh chụp ngày **2026-09-12** từ [production](https://vietlex-legal-rag.vercel.app), bản runtime `93ec75d`, bằng Chrome thật ở viewport 1440×1050; không mock dữ liệu hoặc sửa DOM. Trang tìm kiếm và toàn văn dùng Supabase. [Ảnh Evaluation Lab](docs/images/vietlex-metrics-20260912.png) và [báo cáo sau sửa](docs/verification/product-fixes-20260912.md) nêu rõ giới hạn kiểm chứng.
 
 ## Năng lực cốt lõi
+
+Khi thiếu căn cứ nội tại, người dùng có thể chuyển câu hỏi sang hồ sơ, chỉnh từ khóa tìm nguồn chính thức, đọc PDF/OCR từng nhóm trang, ghim trích đoạn rồi phân tích chỉ trên nguồn đã chọn. Hiệu lực vẫn chưa xác minh; OCR cần đối chiếu bản gốc.
+
+![Hồ sơ với căn cứ ngoài corpus đã ghim](docs/images/vietlex-official-workflow-20260912.png)
+
+Ảnh workflow chụp từ API **local**, Chrome thật, MongoDB và Vertex thật; không phải ảnh production. [Báo cáo nghiệm thu](docs/evaluation/runs/official-online-20260912T140633Z/REPORT.md) lưu riêng kết quả API, lỗi OCR quan sát được và giới hạn trang đọc.
 
 - **V3 hybrid retrieval mặc định:** Qdrant dense 1024d + sparse IDF; hợp nhất RRF và DBSF bằng reciprocal-rank blend 50/50 trên **141.798** structural point.
 - **Evidence v3:** chat đọc trực tiếp trường `body` trong Qdrant payload; không gọi Supabase để resolve full text.

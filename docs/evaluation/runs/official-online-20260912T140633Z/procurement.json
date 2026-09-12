@@ -1,0 +1,254 @@
+{
+  "case": {
+    "id": "procurement",
+    "reference_number": "349/2026/NĐ-CP",
+    "topic": "Đấu thầu",
+    "question": "Quy định lựa chọn nhà thầu được sửa đổi ra sao trong tháng 9/2026?",
+    "reference_url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219431",
+    "reference_title": "Sửa đổi, bổ sung một số điều của các Nghị định quy định chi tiết một số điều và biện pháp thi hành Luật Đấu thầu về lựa chọn nhà thầu",
+    "reference_issued_date": "09/09/2026"
+  },
+  "plan": {
+    "version": "official-web-v3",
+    "query_method": "model_keywords",
+    "planner_error": null,
+    "planner_provider": "google_vertex_ai",
+    "planner_model": "gemini-3.5-flash",
+    "plan_id": "d78cee46b1f8de4734ec5496",
+    "status": "draft",
+    "question": "Quy định lựa chọn nhà thầu được sửa đổi ra sao trong tháng 9/2026?",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "kind": "legal_basis",
+        "title": "Tìm tiêu đề — cụm 1",
+        "query": "lựa chọn nhà thầu"
+      },
+      {
+        "step_id": "conditions",
+        "kind": "conditions",
+        "title": "Tìm tiêu đề — cụm 2",
+        "query": "quy định lựa chọn nhà thầu"
+      },
+      {
+        "step_id": "exceptions",
+        "kind": "exceptions",
+        "title": "Tìm tiêu đề — cụm 3",
+        "query": "sửa đổi lựa chọn nhà thầu"
+      },
+      {
+        "step_id": "amendments",
+        "kind": "amendments",
+        "title": "Tìm tiêu đề — cụm 4",
+        "query": "nhà thầu"
+      },
+      {
+        "step_id": "official_verification",
+        "kind": "official_verification",
+        "title": "Tìm tiêu đề — cụm 5",
+        "query": "đấu thầu"
+      }
+    ]
+  },
+  "result": {
+    "status": "partial",
+    "question": "Quy định lựa chọn nhà thầu được sửa đổi ra sao trong tháng 9/2026?",
+    "plan_id": "d78cee46b1f8de4734ec5496",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "title": "Tìm tiêu đề — cụm 1",
+        "query": "lựa chọn nhà thầu",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "488744d4cf815ddb8303b5f4",
+            "title": "Sửa đổi, bổ sung một số điều của các Nghị định quy định chi tiết một số điều và biện pháp thi hành Luật Đấu thầu về lựa chọn nhà thầu",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219431",
+            "document_number": "349/2026/NĐ-CP",
+            "issued_date": "09/09/2026",
+            "snippet": "Sửa đổi, bổ sung một số điều của các Nghị định quy định chi tiết một số điều và biện pháp thi hành Luật Đấu thầu về lựa chọn nhà thầu",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "21b1445d576c27ef807719a8",
+            "title": "Quy định về sản phẩm, dịch vụ công nghệ số được hưởng ưu đãi về lựa chọn nhà thầu trong thuê, mua sắm sản phẩm, dịch vụ công nghệ số sử dụng vốn ngân sách nhà nước",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=216032",
+            "document_number": "34/2025/TT-BKHCN",
+            "issued_date": "15/11/2025",
+            "snippet": "Quy định về sản phẩm, dịch vụ công nghệ số được hưởng ưu đãi về lựa chọn nhà thầu trong thuê, mua sắm sản phẩm, dịch vụ công nghệ số sử dụng vốn ngân sách nhà nước",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "f6367699017ccd0b38adc91a",
+            "title": "V/v kết quả rà soát các nội dung liên quan đến việc lựa chọn nhà thầu gói thầu thi công Dự án xây dựng đường cao tốc Thành phố Hồ Chí Minh - Thủ Dầu Một - Chơn Thành đoạn qua tỉnh Bình Phước",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=215064",
+            "document_number": "8005/VPCP-CN",
+            "issued_date": "26/08/2025",
+            "snippet": "V/v kết quả rà soát các nội dung liên quan đến việc lựa chọn nhà thầu gói thầu thi công Dự án xây dựng đường cao tốc Thành phố Hồ Chí Minh - Thủ Dầu Một - Chơn Thành đoạn qua tỉnh Bình Phước",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "lựa chọn nhà thầu"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "conditions",
+        "title": "Tìm tiêu đề — cụm 2",
+        "query": "quy định lựa chọn nhà thầu",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "quy định lựa chọn nhà thầu"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "exceptions",
+        "title": "Tìm tiêu đề — cụm 3",
+        "query": "sửa đổi lựa chọn nhà thầu",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "sửa đổi lựa chọn nhà thầu"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "amendments",
+        "title": "Tìm tiêu đề — cụm 4",
+        "query": "nhà thầu",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "488744d4cf815ddb8303b5f4",
+            "title": "Sửa đổi, bổ sung một số điều của các Nghị định quy định chi tiết một số điều và biện pháp thi hành Luật Đấu thầu về lựa chọn nhà thầu",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219431",
+            "document_number": "349/2026/NĐ-CP",
+            "issued_date": "09/09/2026",
+            "snippet": "Sửa đổi, bổ sung một số điều của các Nghị định quy định chi tiết một số điều và biện pháp thi hành Luật Đấu thầu về lựa chọn nhà thầu",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "21b1445d576c27ef807719a8",
+            "title": "Quy định về sản phẩm, dịch vụ công nghệ số được hưởng ưu đãi về lựa chọn nhà thầu trong thuê, mua sắm sản phẩm, dịch vụ công nghệ số sử dụng vốn ngân sách nhà nước",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=216032",
+            "document_number": "34/2025/TT-BKHCN",
+            "issued_date": "15/11/2025",
+            "snippet": "Quy định về sản phẩm, dịch vụ công nghệ số được hưởng ưu đãi về lựa chọn nhà thầu trong thuê, mua sắm sản phẩm, dịch vụ công nghệ số sử dụng vốn ngân sách nhà nước",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "50ec3d6bc37a3872fe60b014",
+            "title": "V/v biểu dương các chủ đầu tư, Ban Quản lý dự án, đơn vị tư vấn, nhà thầu thi công tại các công trình trọng điểm quốc gia",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=215345",
+            "document_number": "164/CĐ-TTg",
+            "issued_date": "14/09/2025",
+            "snippet": "V/v biểu dương các chủ đầu tư, Ban Quản lý dự án, đơn vị tư vấn, nhà thầu thi công tại các công trình trọng điểm quốc gia",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "nhà thầu"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "official_verification",
+        "title": "Tìm tiêu đề — cụm 5",
+        "query": "đấu thầu",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "488744d4cf815ddb8303b5f4",
+            "title": "Sửa đổi, bổ sung một số điều của các Nghị định quy định chi tiết một số điều và biện pháp thi hành Luật Đấu thầu về lựa chọn nhà thầu",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219431",
+            "document_number": "349/2026/NĐ-CP",
+            "issued_date": "09/09/2026",
+            "snippet": "Sửa đổi, bổ sung một số điều của các Nghị định quy định chi tiết một số điều và biện pháp thi hành Luật Đấu thầu về lựa chọn nhà thầu",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "130f8c6a3fa055cfd790822c",
+            "title": "Quy định chi tiết mẫu hồ sơ yêu cầu áp dụng hình thức chỉ định thầu, báo cáo đánh giá, báo cáo thẩm định, kiểm tra, giám sát, báo cáo tình hình thực hiện hoạt động đấu thầu",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219443",
+            "document_number": "134/2026/TT-BTC",
+            "issued_date": "09/09/2026",
+            "snippet": "Quy định chi tiết mẫu hồ sơ yêu cầu áp dụng hình thức chỉ định thầu, báo cáo đánh giá, báo cáo thẩm định, kiểm tra, giám sát, báo cáo tình hình thực hiện hoạt động đấu thầu",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "2fff9743ef625f15f29f5974",
+            "title": "Sửa đổi, bổ sung một số điều của Thông tư số 98/2025/TT-BTC ngày 27 tháng 10 năm 2025 của Bộ trưởng Bộ Tài chính quy định mẫu hồ sơ đấu thầu lựa chọn nhà đầu tư thực hiện dự án đầu tư theo phương thức đối tác công tư, dự án đầu tư kinh doanh; cung cấp, đăng tải thông tin về đầu tư theo phương thức đối tác công tư, đấu thầu lựa chọn nhà đầu tư trên Hệ thống mạng đấu thầu quốc gia",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219364",
+            "document_number": "129/2026/TT-BTC",
+            "issued_date": "27/08/2026",
+            "snippet": "Sửa đổi, bổ sung một số điều của Thông tư số 98/2025/TT-BTC ngày 27 tháng 10 năm 2025 của Bộ trưởng Bộ Tài chính quy định mẫu hồ sơ đấu thầu lựa chọn nhà đầu tư thực hiện dự án đầu tư theo phương thức đối tác công tư, dự án đầu tư kinh doanh; cung cấp, đăng tải thông tin về đầu tư theo phương thức đối tác công tư, đấu thầu lựa chọn nhà đầu tư trên Hệ thống mạng đấu thầu quốc gia",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "đấu thầu"
+        ],
+        "error_kind": null
+      }
+    ],
+    "provider": "chinhphu_official_portal",
+    "model": "webforms-search-v1"
+  },
+  "expected_url_hit": true,
+  "source": {
+    "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219431",
+    "attachment_url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/9/349_2026_nd-cp_09092026-signed.signed.pdf",
+    "title": "\r\n\tNghị định số 349/2026/NĐ-CP của Chính phủ: Sửa đổi, bổ sung một số điều của các Nghị định quy định chi tiết một số điều và biện pháp thi hành Luật Đấu thầu về lựa chọn nhà thầu\r\n",
+    "text": "CHÍNH PHỦ\n\nCỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\n\nSố: 349/2026/NĐ-CP\n\nHà Nội, ngày 09 tháng 9 năm 2026\n\nNGHỊ ĐỊNH\nSửa đổi, bổ sung một số điều của các Nghị định quy định chi tiết\nmột số điều và biện pháp thi hành Luật Đấu thầu về lựa chọn nhà thầu\n\nCăn cứ Luật Tổ chức Chính phủ số 63/2025/QH15 được sửa đổi, bổ sung\nbởi Luật số 137/2025/QH15;\nCăn cứ Luật Tổ chức chính quyền địa phương số 72/2025/QH15;\nCăn cứ Luật Đấu thầu số 22/2023/QH15 được sửa đổi, bổ sung bởi Luật\nsố 57/2024/QH15, Luật số 90/2025/QH15, Luật số 116/2025/QH15, Luật số\n133/2025/QH15, Luật số 142/2025/QH15;\nTheo đề nghị của Bộ trưởng Bộ Tài chính;\nChính phủ ban hành Nghị định sửa đổi, bổ sung một số điều của các Nghị\nđịnh quy định chi tiết một số điều và biện pháp thi hành Luật Đấu thầu về lựa\nchọn nhà thầu.\n\nChương I\nSỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA NGHỊ ĐỊNH SỐ 214/2025/NĐ-CP\nNGÀY 04 THÁNG 8 NĂM 2025 CỦA CHÍNH PHỦ QUY ĐỊNH CHI TIẾT\nMỘT SỐ ĐIỀU VÀ BIỆN PHÁP THI HÀNH LUẬT ĐẤU THẦU\nVỀ LỰA CHỌN NHÀ THẦU (ĐƯỢC SỬA ĐỔI, BỔ SUNG BỞI\nNGHỊ ĐỊNH SỐ 165/2026/NĐ-CP NGÀY 15 THÁNG 5 NĂM 2026\nCỦA CHÍNH PHỦ VÀ NGHỊ ĐỊNH SỐ 170/2026/NĐ-CP NGÀY 15\nTHÁNG 5 NĂM 2026 CỦA CHÍNH PHỦ)\n\nĐiều 1. Sửa đổi, bổ sung điểm d khoản 2 Điều 18\n“d) Tối thiểu 01 báo giá của hàng hóa, dịch vụ; khuyến khích thu thập\nnhiều hơn 01 báo giá. Chủ đầu tư phải đăng tải yêu cầu báo giá trên Hệ thống\nmạng đấu thầu quốc gia, đơn vị quan tâm phải gửi báo giá trên Hệ thống mạng\nđấu thầu quốc gia trong thời hạn tối thiểu 03 ngày làm việc kể từ ngày đăng tải\nyêu cầu báo giá. Trường hợp có nhiều hơn 01 báo giá thì được lấy giá trung\nbình của các báo giá; khi xác định giá trung bình, trường hợp có báo giá hoặc\nhạng mục trong báo giá có giá cao hoặc thấp hơn 30% giá trung bình, chủ đầu\ntư có quyền loại trừ các báo giá này để xác định giá trung bình.\n\n2\n\nĐối với gói thầu mua thuốc; hóa chất, vật tư xét nghiệm, thiết bị y tế; linh\nkiện, phụ kiện, vật tư thay thế sử dụng cho thiết bị y tế: trên cơ sở yêu cầu\nchuyên môn, chủ đầu tư quyết định các tiêu chí kỹ thuật và tổ chức lấy báo giá.\nChủ đầu tư phải đăng tải yêu cầu báo giá trên Hệ thống mạng đấu thầu quốc gia;\nkhuyến khích đăng tải trên Cổng thông tin điện tử hoặc Trang thông tin điện tử\ncủa chủ đầu tư hoặc Cổng thông tin điện tử của Bộ Y tế hoặc Cổng dịch vụ công\ntrực tuyến về quản lý thiết bị y tế; đơn vị quan tâm gửi báo giá trong thời hạn tối\nthiểu 10 ngày kể từ ngày đăng tải yêu cầu báo giá trên Hệ thống mạng đấu thầu\nquốc gia. Trường hợp có từ 02 báo giá trở lên, chủ đầu tư được lựa chọn báo giá\ncao nhất phù hợp với khả năng tài chính và yêu cầu chuyên môn.\n\nChủ đầu tư chịu trách nhiệm thu thập báo cáo bảo đảm công khai, minh\nbạch. Đơn vị cung cấp báo giá chịu trách nhiệm cung cấp thông tin về giá của\nhàng hóa, dịch vụ phù hợp với khả năng cung cấp của mình và phải bảo đảm\nviệc cung cấp báo giá không vi phạm quy định của pháp luật về cạnh tranh, bán\nphá giá hoặc nâng khống giá.\n\nTrường hợp chủ đầu tư đã tuân thủ đầy đủ quy định về tổ chức thu thập\nbáo giá, bảo đảm công khai, minh bạch thì chủ đầu tư không phải chịu trách\nnhiệm đối với việc đơn vị cung cấp vi phạm quy định về cung cấp báo giá tại\nđiểm này.”.\n\nĐiều 2. Sửa đổi, bổ sung khoản 2 và bổ sung khoản 2a vào sau khoản 2\n\nĐiều 21\n“2. Đối với gói thầu thuộc dự án khoa học, công nghệ và đổi mới sáng tạo\ntheo quy định của pháp luật về khoa học, công nghệ và đổi mới sáng tạo; dự án\nứng dụng công nghệ cao theo quy định của pháp luật về công nghệ cao, ứng\ndụng công nghệ mới theo quy định của pháp luật về chuyển giao công nghệ,\ngói thầu thuộc dự toán mua sắm không hình thành dự án, chủ đầu tư quyết định\nlựa chọn thành viên tham gia tổ chuyên gia, tổ thẩm định bảo đảm có năng lực\nthực hiện công việc được giao mà không bắt buộc phải đáp ứng yêu cầu tại\nđiểm a và điểm d khoản 1 Điều này, trừ trường hợp thành viên tổ chuyên gia,\ntổ thẩm định là tư vấn cá nhân hoặc cá nhân thuộc tổ chức tư vấn đấu thầu.\n\n2a. Trường hợp cần lấy ý kiến hoặc huy động chuyên gia chuyên ngành\nkhông thuộc nhân sự của chủ đầu tư, đơn vị tư vấn đấu thầu thì các chuyên gia\nnày không bắt buộc có chứng chỉ nghiệp vụ chuyên môn về đấu thầu.”.\n\nĐiều 3. Sửa đổi, bổ sung khoản 2 Điều 35\n“2. Chủ đầu tư phải cập nhật tiến độ thực tế thực hiện hợp đồng khi thực\nhiện xong các mốc hoàn thành quy định trong hợp đồng trên Hệ thống mạng\nđấu thầu quốc gia. Trong quá trình thực hiện hợp đồng, chủ đầu tư có trách\nnhiệm cập nhật thông tin thay đổi, phát sinh về danh sách, phạm vi công việc\nvà tỷ lệ sử dụng nhà thầu phụ, nhà thầu phụ đặc biệt (nếu có).”.",
+    "sha256": "0d64d9039ef79e6d5b45ad22cf05d756ce1e834c491711658d7178c6418f2ffc",
+    "document_sha256": "b028a4c9732789ff1acda5f669fce6c8134169c87b3492982d61bf67d1d97cc8",
+    "parser_recovered": false,
+    "ocr_input_sha256": "ef1ba2eb31209fecabec9208003cb367c510a57200375221d6cff22dc8e3c4f0",
+    "ocr_input_transform": "selected_page_content_without_annotations",
+    "retrieved_at": "2026-09-12T14:08:28.933056+00:00",
+    "extracted_characters": 4531,
+    "stored_characters": 4531,
+    "truncated": true,
+    "method": "vertex_ocr",
+    "legal_effect_status": "unverified",
+    "document_number": "349/2026/NĐ-CP",
+    "content_status": "readable",
+    "pages": [
+      {
+        "page": 1,
+        "text": "CHÍNH PHỦ\n\nCỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\n\nSố: 349/2026/NĐ-CP\n\nHà Nội, ngày 09 tháng 9 năm 2026\n\nNGHỊ ĐỊNH\nSửa đổi, bổ sung một số điều của các Nghị định quy định chi tiết\nmột số điều và biện pháp thi hành Luật Đấu thầu về lựa chọn nhà thầu\n\nCăn cứ Luật Tổ chức Chính phủ số 63/2025/QH15 được sửa đổi, bổ sung\nbởi Luật số 137/2025/QH15;\nCăn cứ Luật Tổ chức chính quyền địa phương số 72/2025/QH15;\nCăn cứ Luật Đấu thầu số 22/2023/QH15 được sửa đổi, bổ sung bởi Luật\nsố 57/2024/QH15, Luật số 90/2025/QH15, Luật số 116/2025/QH15, Luật số\n133/2025/QH15, Luật số 142/2025/QH15;\nTheo đề nghị của Bộ trưởng Bộ Tài chính;\nChính phủ ban hành Nghị định sửa đổi, bổ sung một số điều của các Nghị\nđịnh quy định chi tiết một số điều và biện pháp thi hành Luật Đấu thầu về lựa\nchọn nhà thầu.\n\nChương I\nSỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA NGHỊ ĐỊNH SỐ 214/2025/NĐ-CP\nNGÀY 04 THÁNG 8 NĂM 2025 CỦA CHÍNH PHỦ QUY ĐỊNH CHI TIẾT\nMỘT SỐ ĐIỀU VÀ BIỆN PHÁP THI HÀNH LUẬT ĐẤU THẦU\nVỀ LỰA CHỌN NHÀ THẦU (ĐƯỢC SỬA ĐỔI, BỔ SUNG BỞI\nNGHỊ ĐỊNH SỐ 165/2026/NĐ-CP NGÀY 15 THÁNG 5 NĂM 2026\nCỦA CHÍNH PHỦ VÀ NGHỊ ĐỊNH SỐ 170/2026/NĐ-CP NGÀY 15\nTHÁNG 5 NĂM 2026 CỦA CHÍNH PHỦ)\n\nĐiều 1. Sửa đổi, bổ sung điểm d khoản 2 Điều 18\n“d) Tối thiểu 01 báo giá của hàng hóa, dịch vụ; khuyến khích thu thập\nnhiều hơn 01 báo giá. Chủ đầu tư phải đăng tải yêu cầu báo giá trên Hệ thống\nmạng đấu thầu quốc gia, đơn vị quan tâm phải gửi báo giá trên Hệ thống mạng\nđấu thầu quốc gia trong thời hạn tối thiểu 03 ngày làm việc kể từ ngày đăng tải\nyêu cầu báo giá. Trường hợp có nhiều hơn 01 báo giá thì được lấy giá trung\nbình của các báo giá; khi xác định giá trung bình, trường hợp có báo giá hoặc\nhạng mục trong báo giá có giá cao hoặc thấp hơn 30% giá trung bình, chủ đầu\ntư có quyền loại trừ các báo giá này để xác định giá trung bình."
+      },
+      {
+        "page": 2,
+        "text": "2\n\nĐối với gói thầu mua thuốc; hóa chất, vật tư xét nghiệm, thiết bị y tế; linh\nkiện, phụ kiện, vật tư thay thế sử dụng cho thiết bị y tế: trên cơ sở yêu cầu\nchuyên môn, chủ đầu tư quyết định các tiêu chí kỹ thuật và tổ chức lấy báo giá.\nChủ đầu tư phải đăng tải yêu cầu báo giá trên Hệ thống mạng đấu thầu quốc gia;\nkhuyến khích đăng tải trên Cổng thông tin điện tử hoặc Trang thông tin điện tử\ncủa chủ đầu tư hoặc Cổng thông tin điện tử của Bộ Y tế hoặc Cổng dịch vụ công\ntrực tuyến về quản lý thiết bị y tế; đơn vị quan tâm gửi báo giá trong thời hạn tối\nthiểu 10 ngày kể từ ngày đăng tải yêu cầu báo giá trên Hệ thống mạng đấu thầu\nquốc gia. Trường hợp có từ 02 báo giá trở lên, chủ đầu tư được lựa chọn báo giá\ncao nhất phù hợp với khả năng tài chính và yêu cầu chuyên môn.\n\nChủ đầu tư chịu trách nhiệm thu thập báo cáo bảo đảm công khai, minh\nbạch. Đơn vị cung cấp báo giá chịu trách nhiệm cung cấp thông tin về giá của\nhàng hóa, dịch vụ phù hợp với khả năng cung cấp của mình và phải bảo đảm\nviệc cung cấp báo giá không vi phạm quy định của pháp luật về cạnh tranh, bán\nphá giá hoặc nâng khống giá.\n\nTrường hợp chủ đầu tư đã tuân thủ đầy đủ quy định về tổ chức thu thập\nbáo giá, bảo đảm công khai, minh bạch thì chủ đầu tư không phải chịu trách\nnhiệm đối với việc đơn vị cung cấp vi phạm quy định về cung cấp báo giá tại\nđiểm này.”.\n\nĐiều 2. Sửa đổi, bổ sung khoản 2 và bổ sung khoản 2a vào sau khoản 2\n\nĐiều 21\n“2. Đối với gói thầu thuộc dự án khoa học, công nghệ và đổi mới sáng tạo\ntheo quy định của pháp luật về khoa học, công nghệ và đổi mới sáng tạo; dự án\nứng dụng công nghệ cao theo quy định của pháp luật về công nghệ cao, ứng\ndụng công nghệ mới theo quy định của pháp luật về chuyển giao công nghệ,\ngói thầu thuộc dự toán mua sắm không hình thành dự án, chủ đầu tư quyết định\nlựa chọn thành viên tham gia tổ chuyên gia, tổ thẩm định bảo đảm có năng lực\nthực hiện công việc được giao mà không bắt buộc phải đáp ứng yêu cầu tại\nđiểm a và điểm d khoản 1 Điều này, trừ trường hợp thành viên tổ chuyên gia,\ntổ thẩm định là tư vấn cá nhân hoặc cá nhân thuộc tổ chức tư vấn đấu thầu.\n\n2a. Trường hợp cần lấy ý kiến hoặc huy động chuyên gia chuyên ngành\nkhông thuộc nhân sự của chủ đầu tư, đơn vị tư vấn đấu thầu thì các chuyên gia\nnày không bắt buộc có chứng chỉ nghiệp vụ chuyên môn về đấu thầu.”.\n\nĐiều 3. Sửa đổi, bổ sung khoản 2 Điều 35\n“2. Chủ đầu tư phải cập nhật tiến độ thực tế thực hiện hợp đồng khi thực\nhiện xong các mốc hoàn thành quy định trong hợp đồng trên Hệ thống mạng\nđấu thầu quốc gia. Trong quá trình thực hiện hợp đồng, chủ đầu tư có trách\nnhiệm cập nhật thông tin thay đổi, phát sinh về danh sách, phạm vi công việc\nvà tỷ lệ sử dụng nhà thầu phụ, nhà thầu phụ đặc biệt (nếu có).”."
+      }
+    ],
+    "page_count": 23,
+    "page_start": 1,
+    "page_end": 2,
+    "next_page_start": 3,
+    "requires_ocr": false,
+    "unreadable_pages": [],
+    "ocr_provider": "google_vertex_ai",
+    "ocr_model": "gemini-3.5-flash",
+    "attachments": [
+      "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/9/349_2026_nd-cp_09092026-signed.signed.pdf"
+    ],
+    "issued_date": "09-09-2026",
+    "reported_effective_from": "09-09-2026"
+  },
+  "elapsed_seconds": 44.57799999999952
+}

@@ -1,0 +1,192 @@
+{
+  "case": {
+    "id": "health",
+    "reference_number": "350/2026/NĐ-CP",
+    "topic": "Y tế",
+    "question": "Nhân viên y tế được hưởng phụ cấp ưu đãi nghề như thế nào theo quy định mới tháng 9/2026?",
+    "reference_url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219438",
+    "reference_title": "Quy định chế độ phụ cấp ưu đãi nghề đối với nhân viên y tế",
+    "reference_issued_date": "09/09/2026"
+  },
+  "plan": {
+    "version": "official-web-v3",
+    "query_method": "model_keywords",
+    "planner_error": null,
+    "planner_provider": "google_vertex_ai",
+    "planner_model": "gemini-3.5-flash",
+    "plan_id": "15a7dd15fc9aad6ef8ae7822",
+    "status": "draft",
+    "question": "Nhân viên y tế được hưởng phụ cấp ưu đãi nghề như thế nào theo quy định mới tháng 9/2026?",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "kind": "legal_basis",
+        "title": "Tìm tiêu đề — cụm 1",
+        "query": "phụ cấp ưu đãi nghề y tế"
+      },
+      {
+        "step_id": "conditions",
+        "kind": "conditions",
+        "title": "Tìm tiêu đề — cụm 2",
+        "query": "phụ cấp ưu đãi nhân viên y tế"
+      },
+      {
+        "step_id": "exceptions",
+        "kind": "exceptions",
+        "title": "Tìm tiêu đề — cụm 3",
+        "query": "chế độ phụ cấp nghề y tế"
+      },
+      {
+        "step_id": "amendments",
+        "kind": "amendments",
+        "title": "Tìm tiêu đề — cụm 4",
+        "query": "phụ cấp ưu đãi nghề"
+      },
+      {
+        "step_id": "official_verification",
+        "kind": "official_verification",
+        "title": "Tìm tiêu đề — cụm 5",
+        "query": "phụ cấp y tế"
+      }
+    ]
+  },
+  "result": {
+    "status": "partial",
+    "question": "Nhân viên y tế được hưởng phụ cấp ưu đãi nghề như thế nào theo quy định mới tháng 9/2026?",
+    "plan_id": "15a7dd15fc9aad6ef8ae7822",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "title": "Tìm tiêu đề — cụm 1",
+        "query": "phụ cấp ưu đãi nghề y tế",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "phụ cấp ưu đãi nghề y tế"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "conditions",
+        "title": "Tìm tiêu đề — cụm 2",
+        "query": "phụ cấp ưu đãi nhân viên y tế",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "phụ cấp ưu đãi nhân viên y tế"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "exceptions",
+        "title": "Tìm tiêu đề — cụm 3",
+        "query": "chế độ phụ cấp nghề y tế",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "chế độ phụ cấp nghề y tế"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "amendments",
+        "title": "Tìm tiêu đề — cụm 4",
+        "query": "phụ cấp ưu đãi nghề",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "0138577c0620bad604087891",
+            "title": "Quy định chế độ phụ cấp ưu đãi nghề đối với nhân viên y tế",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219438",
+            "document_number": "350/2026/NĐ-CP",
+            "issued_date": "09/09/2026",
+            "snippet": "Quy định chế độ phụ cấp ưu đãi nghề đối với nhân viên y tế",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "dd871f62f90bb30be09916a3",
+            "title": "Quy định về phụ cấp ưu đãi nghề, chế độ bồi dưỡng luyện tập và biểu diễn đối với viên chức, người lao động hoạt động đặc thù về nghề nghiệp trong các đơn vị sự nghiệp công lập nghệ thuật biểu diễn, đơn vị nghệ thuật biểu diễn thuộc lực lượng vũ trang",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=218693",
+            "document_number": "261/2026/NĐ-CP",
+            "issued_date": "30/06/2026",
+            "snippet": "Quy định về phụ cấp ưu đãi nghề, chế độ bồi dưỡng luyện tập và biểu diễn đối với viên chức, người lao động hoạt động đặc thù về nghề nghiệp trong các đơn vị sự nghiệp công lập nghệ thuật biểu diễn, đơn vị nghệ thuật biểu diễn thuộc lực lượng vũ trang",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "f2b7c7101d77c0d78f14cc39",
+            "title": "Về chế độ phụ cấp ưu đãi nghề nghiệp và chế độ bồi dưỡng đối với người làm việc trong lĩnh vực nghệ thuật biểu diễn",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=179978",
+            "document_number": "14/2015/QĐ-TTg",
+            "issued_date": "20/05/2015",
+            "snippet": "Về chế độ phụ cấp ưu đãi nghề nghiệp và chế độ bồi dưỡng đối với người làm việc trong lĩnh vực nghệ thuật biểu diễn",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "phụ cấp ưu đãi nghề"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "official_verification",
+        "title": "Tìm tiêu đề — cụm 5",
+        "query": "phụ cấp y tế",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "phụ cấp y tế"
+        ],
+        "error_kind": null
+      }
+    ],
+    "provider": "chinhphu_official_portal",
+    "model": "webforms-search-v1"
+  },
+  "expected_url_hit": true,
+  "source": {
+    "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219438",
+    "attachment_url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/9/350_2026_nd-cp_09092026-signed.signed.pdf",
+    "title": "\r\n\tNghị định số 350/2026/NĐ-CP của Chính phủ: Quy định chế độ phụ cấp ưu đãi nghề đối với nhân viên y tế\r\n",
+    "text": "CHÍNH PHỦ\n\nCỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\n\nSố: 350/2026/NĐ-CP\n\nHà Nội, ngày 09 tháng 9 năm 2026\n\nNGHỊ ĐỊNH\nQuy định chế độ phụ cấp ưu đãi nghề đối với nhân viên y tế\n\nCăn cứ Luật Tổ chức Chính phủ số 63/2025/QH15;\nCăn cứ Luật Khám bệnh, chữa bệnh số 15/2023/QH15;\nCăn cứ Luật Phòng bệnh số 114/2025/QH15;\nCăn cứ Nghị quyết số 261/2025/QH15 của Quốc hội về một số cơ chế,\nchính sách đặc biệt tạo đột phá cho công tác bảo vệ, chăm sóc và nâng cao\nsức khỏe Nhân dân;\nTheo đề nghị của Bộ trưởng Bộ Y tế;\nChính phủ ban hành Nghị định quy định chế độ phụ cấp ưu đãi nghề đối\nvới nhân viên y tế.\n\nĐiều 1. Phạm vi điều chỉnh\nNghị định này quy định đối tượng áp dụng, nguyên tắc áp dụng, cách\ntính phụ cấp, mức hưởng, thời gian hưởng và nguồn chi trả của chế độ phụ\ncấp ưu đãi nghề đối với nhân viên y tế.\n\nĐiều 2. Đối tượng áp dụng\nNghị định này quy định chế độ phụ cấp ưu đãi nghề đối với nhân viên y\ntế là những viên chức, người lao động tham gia hoạt động chăm sóc bảo vệ\nsức khỏe, công tác trong các lĩnh vực thuộc phạm vi quản lý nhà nước của\nngành y tế, bao gồm:\n1. Viên chức, người lao động hợp đồng công tác tại:\na) Các đơn vị sự nghiệp công lập hoạt động trong các lĩnh vực: Phòng\nbệnh; khám bệnh, chữa bệnh, phục hồi chức năng; y, dược cổ truyền; dược,\nmỹ phẩm; an toàn thực phẩm; thiết bị y tế; giám định y khoa, pháp y, pháp y\ntâm thần; dân số; bảo trợ xã hội; phòng, chống tệ nạn xã hội.\nb) Trạm y tế xã, phường, đặc khu.\n2. Nhân viên y tế trường học tại các cơ sở giáo dục công lập.\n3. Người làm chuyên môn y tế thuộc lực lượng vũ trang.\n\n2\n\nĐiều 3. Nguyên tắc áp dụng và cách tính phụ cấp\n1. Mỗi viên chức, người lao động hợp đồng được phân công nhiều công\nviệc có mức phụ cấp ưu đãi nghề khác nhau thì chỉ được hưởng một mức phụ\ncấp ưu đãi nghề cao nhất.\nĐối với người làm chuyên môn y tế thuộc lực lượng vũ trang, trường\nhợp đồng thời thuộc đối tượng hưởng phụ cấp ưu đãi nghề theo Nghị định này\nvà phụ cấp đặc thù khác có cùng tính chất thì chỉ được hưởng một mức phụ\ncấp cao nhất, trừ trường hợp pháp luật có quy định khác.\n2. Phụ cấp ưu đãi nghề được tính theo tỷ lệ phần trăm (sau đây viết tắt là\n%) trên hệ số lương hiện hưởng cộng phụ cấp chức vụ lãnh đạo, hệ số chênh\nlệch bảo lưu (nếu có), phụ cấp thâm niên vượt khung (nếu có) của đối tượng\nđược hưởng.\n3. Phụ cấp ưu đãi nghề được trả cùng kỳ lương hằng tháng và không\ndùng để tính đóng, hưởng chế độ bảo hiểm xã hội.\n4. Viên chức làm chuyên môn y tế là người có trình độ chuyên môn phù\nhợp được cấp có thẩm quyền phân công vào vị trí việc làm chuyên môn,\nnghiệp vụ trong các lĩnh vực: Phòng bệnh; khám bệnh, chữa bệnh, phục hồi\nchức năng; y, dược cổ truyền; dược, mỹ phẩm; an toàn thực phẩm; thiết bị y\ntế; giám định y khoa, pháp y, pháp y tâm thần; dân số; bảo trợ xã hội; phòng,\nchống tệ nạn xã hội.\n5. Mức độ thường xuyên làm các công việc chuyên môn được xác định\ntối thiểu bằng 50% thời giờ làm việc bình thường theo tháng được quy định\ntại Bộ luật Lao động.\n\nĐiều 4. Mức phụ cấp ưu đãi nghề\n1. Mức phụ cấp 80% áp dụng đối với:\na) Viên chức làm chuyên môn y tế được phân công thường xuyên, trực\ntiếp làm công việc: Khám, điều trị, xét nghiệm, chăm sóc người bệnh tâm\nthần; pháp y, pháp y tâm thần; hồi sức cấp cứu (bao gồm cả cấp cứu, hồi sức\ntích cực, chống độc); giải phẫu bệnh;\nb) Viên chức làm chuyên môn y tế tại trạm y tế cấp xã, cơ sở y tế dự\nphòng: trên địa bàn biên giới, hải đảo; trên địa bàn xã khu vực II (xã khó\nkhăn), khu vực III (xã đặc biệt khó khăn) vùng đồng bào dân tộc thiểu số và\nmiền núi theo quy định của Chính phủ.\n2. Mức phụ cấp 70% áp dụng đối với:\na) Viên chức làm chuyên môn y tế được phân công thường xuyên, trực\ntiếp làm các công việc sau:",
+    "sha256": "2ef24f277c08c8d2e8261792867b6666b1fd06843116b96c4c88771b6cf098ca",
+    "document_sha256": "0bbbaf871cbc9f7895466bfca92cac0cbb24c84ca8efd120f7ba3d954fba7f9c",
+    "parser_recovered": false,
+    "ocr_input_sha256": "25c6bb8272351c7983bd4aff25bb27ed2fed3e2d87ef1d7f37f7b574de867d67",
+    "ocr_input_transform": "selected_page_content_without_annotations",
+    "retrieved_at": "2026-09-12T14:07:44.355393+00:00",
+    "extracted_characters": 3675,
+    "stored_characters": 3675,
+    "truncated": true,
+    "method": "vertex_ocr",
+    "legal_effect_status": "unverified",
+    "document_number": "350/2026/NĐ-CP",
+    "content_status": "readable",
+    "pages": [
+      {
+        "page": 1,
+        "text": "CHÍNH PHỦ\n\nCỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\n\nSố: 350/2026/NĐ-CP\n\nHà Nội, ngày 09 tháng 9 năm 2026\n\nNGHỊ ĐỊNH\nQuy định chế độ phụ cấp ưu đãi nghề đối với nhân viên y tế\n\nCăn cứ Luật Tổ chức Chính phủ số 63/2025/QH15;\nCăn cứ Luật Khám bệnh, chữa bệnh số 15/2023/QH15;\nCăn cứ Luật Phòng bệnh số 114/2025/QH15;\nCăn cứ Nghị quyết số 261/2025/QH15 của Quốc hội về một số cơ chế,\nchính sách đặc biệt tạo đột phá cho công tác bảo vệ, chăm sóc và nâng cao\nsức khỏe Nhân dân;\nTheo đề nghị của Bộ trưởng Bộ Y tế;\nChính phủ ban hành Nghị định quy định chế độ phụ cấp ưu đãi nghề đối\nvới nhân viên y tế.\n\nĐiều 1. Phạm vi điều chỉnh\nNghị định này quy định đối tượng áp dụng, nguyên tắc áp dụng, cách\ntính phụ cấp, mức hưởng, thời gian hưởng và nguồn chi trả của chế độ phụ\ncấp ưu đãi nghề đối với nhân viên y tế.\n\nĐiều 2. Đối tượng áp dụng\nNghị định này quy định chế độ phụ cấp ưu đãi nghề đối với nhân viên y\ntế là những viên chức, người lao động tham gia hoạt động chăm sóc bảo vệ\nsức khỏe, công tác trong các lĩnh vực thuộc phạm vi quản lý nhà nước của\nngành y tế, bao gồm:\n1. Viên chức, người lao động hợp đồng công tác tại:\na) Các đơn vị sự nghiệp công lập hoạt động trong các lĩnh vực: Phòng\nbệnh; khám bệnh, chữa bệnh, phục hồi chức năng; y, dược cổ truyền; dược,\nmỹ phẩm; an toàn thực phẩm; thiết bị y tế; giám định y khoa, pháp y, pháp y\ntâm thần; dân số; bảo trợ xã hội; phòng, chống tệ nạn xã hội.\nb) Trạm y tế xã, phường, đặc khu.\n2. Nhân viên y tế trường học tại các cơ sở giáo dục công lập.\n3. Người làm chuyên môn y tế thuộc lực lượng vũ trang."
+      },
+      {
+        "page": 2,
+        "text": "2\n\nĐiều 3. Nguyên tắc áp dụng và cách tính phụ cấp\n1. Mỗi viên chức, người lao động hợp đồng được phân công nhiều công\nviệc có mức phụ cấp ưu đãi nghề khác nhau thì chỉ được hưởng một mức phụ\ncấp ưu đãi nghề cao nhất.\nĐối với người làm chuyên môn y tế thuộc lực lượng vũ trang, trường\nhợp đồng thời thuộc đối tượng hưởng phụ cấp ưu đãi nghề theo Nghị định này\nvà phụ cấp đặc thù khác có cùng tính chất thì chỉ được hưởng một mức phụ\ncấp cao nhất, trừ trường hợp pháp luật có quy định khác.\n2. Phụ cấp ưu đãi nghề được tính theo tỷ lệ phần trăm (sau đây viết tắt là\n%) trên hệ số lương hiện hưởng cộng phụ cấp chức vụ lãnh đạo, hệ số chênh\nlệch bảo lưu (nếu có), phụ cấp thâm niên vượt khung (nếu có) của đối tượng\nđược hưởng.\n3. Phụ cấp ưu đãi nghề được trả cùng kỳ lương hằng tháng và không\ndùng để tính đóng, hưởng chế độ bảo hiểm xã hội.\n4. Viên chức làm chuyên môn y tế là người có trình độ chuyên môn phù\nhợp được cấp có thẩm quyền phân công vào vị trí việc làm chuyên môn,\nnghiệp vụ trong các lĩnh vực: Phòng bệnh; khám bệnh, chữa bệnh, phục hồi\nchức năng; y, dược cổ truyền; dược, mỹ phẩm; an toàn thực phẩm; thiết bị y\ntế; giám định y khoa, pháp y, pháp y tâm thần; dân số; bảo trợ xã hội; phòng,\nchống tệ nạn xã hội.\n5. Mức độ thường xuyên làm các công việc chuyên môn được xác định\ntối thiểu bằng 50% thời giờ làm việc bình thường theo tháng được quy định\ntại Bộ luật Lao động.\n\nĐiều 4. Mức phụ cấp ưu đãi nghề\n1. Mức phụ cấp 80% áp dụng đối với:\na) Viên chức làm chuyên môn y tế được phân công thường xuyên, trực\ntiếp làm công việc: Khám, điều trị, xét nghiệm, chăm sóc người bệnh tâm\nthần; pháp y, pháp y tâm thần; hồi sức cấp cứu (bao gồm cả cấp cứu, hồi sức\ntích cực, chống độc); giải phẫu bệnh;\nb) Viên chức làm chuyên môn y tế tại trạm y tế cấp xã, cơ sở y tế dự\nphòng: trên địa bàn biên giới, hải đảo; trên địa bàn xã khu vực II (xã khó\nkhăn), khu vực III (xã đặc biệt khó khăn) vùng đồng bào dân tộc thiểu số và\nmiền núi theo quy định của Chính phủ.\n2. Mức phụ cấp 70% áp dụng đối với:\na) Viên chức làm chuyên môn y tế được phân công thường xuyên, trực\ntiếp làm các công việc sau:"
+      }
+    ],
+    "page_count": 6,
+    "page_start": 1,
+    "page_end": 2,
+    "next_page_start": 3,
+    "requires_ocr": false,
+    "unreadable_pages": [],
+    "ocr_provider": "google_vertex_ai",
+    "ocr_model": "gemini-3.5-flash",
+    "attachments": [
+      "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/9/350_2026_nd-cp_09092026-signed.signed.pdf"
+    ],
+    "issued_date": "09-09-2026",
+    "reported_effective_from": "09-09-2026"
+  },
+  "elapsed_seconds": 34.60900000000038
+}

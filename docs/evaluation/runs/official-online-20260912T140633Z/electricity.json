@@ -1,0 +1,224 @@
+{
+  "case": {
+    "id": "electricity",
+    "reference_number": "344/2026/NĐ-CP",
+    "topic": "Điện lực",
+    "question": "Quy định mới tháng 9/2026 hỗ trợ ứng dụng khoa học công nghệ và chế tạo trong lĩnh vực điện lực như thế nào?",
+    "reference_url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219377",
+    "reference_title": "Quy định về ứng dụng khoa học, công nghệ và phát triển công nghiệp chế tạo trong lĩnh vực điện lực",
+    "reference_issued_date": "04/09/2026"
+  },
+  "plan": {
+    "version": "official-web-v3",
+    "query_method": "model_keywords",
+    "planner_error": null,
+    "planner_provider": "google_vertex_ai",
+    "planner_model": "gemini-3.5-flash",
+    "plan_id": "7fa16b6050428de899a6f1ab",
+    "status": "draft",
+    "question": "Quy định mới tháng 9/2026 hỗ trợ ứng dụng khoa học công nghệ và chế tạo trong lĩnh vực điện lực như thế nào?",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "kind": "legal_basis",
+        "title": "Tìm tiêu đề — cụm 1",
+        "query": "hỗ trợ ứng dụng khoa học công nghệ điện lực"
+      },
+      {
+        "step_id": "conditions",
+        "kind": "conditions",
+        "title": "Tìm tiêu đề — cụm 2",
+        "query": "chế tạo trong lĩnh vực điện lực"
+      },
+      {
+        "step_id": "exceptions",
+        "kind": "exceptions",
+        "title": "Tìm tiêu đề — cụm 3",
+        "query": "khoa học công nghệ điện lực"
+      },
+      {
+        "step_id": "amendments",
+        "kind": "amendments",
+        "title": "Tìm tiêu đề — cụm 4",
+        "query": "phát triển điện lực"
+      },
+      {
+        "step_id": "official_verification",
+        "kind": "official_verification",
+        "title": "Tìm tiêu đề — cụm 5",
+        "query": "ngành điện lực"
+      }
+    ]
+  },
+  "result": {
+    "status": "partial",
+    "question": "Quy định mới tháng 9/2026 hỗ trợ ứng dụng khoa học công nghệ và chế tạo trong lĩnh vực điện lực như thế nào?",
+    "plan_id": "7fa16b6050428de899a6f1ab",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "title": "Tìm tiêu đề — cụm 1",
+        "query": "hỗ trợ ứng dụng khoa học công nghệ điện lực",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "hỗ trợ ứng dụng khoa học công nghệ điện lực"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "conditions",
+        "title": "Tìm tiêu đề — cụm 2",
+        "query": "chế tạo trong lĩnh vực điện lực",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "00cdb15c5a914bb1f99fee2d",
+            "title": "Quy định về ứng dụng khoa học, công nghệ và phát triển công nghiệp chế tạo trong lĩnh vực điện lực",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219377",
+            "document_number": "344/2026/NĐ-CP",
+            "issued_date": "04/09/2026",
+            "snippet": "Quy định về ứng dụng khoa học, công nghệ và phát triển công nghiệp chế tạo trong lĩnh vực điện lực",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "chế tạo trong lĩnh vực điện lực"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "exceptions",
+        "title": "Tìm tiêu đề — cụm 3",
+        "query": "khoa học công nghệ điện lực",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "khoa học công nghệ điện lực"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "amendments",
+        "title": "Tìm tiêu đề — cụm 4",
+        "query": "phát triển điện lực",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "3243002b9dd6679de3c0075b",
+            "title": "Sửa đổi, bổ sung Nghị định số 56/2025/NĐ-CP ngày 03 tháng 3 năm 2025 của Chính phủ quy định chi tiết một số điều của Luật Điện lực về quy hoạch phát triển điện lực, phương án phát triển mạng lưới cấp điện, đầu tư xây dựng dự án điện lực và đấu thầu lựa chọn nhà đầu tư dự án kinh doanh điện lực",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=213584",
+            "document_number": "100/2025/NĐ-CP",
+            "issued_date": "08/05/2025",
+            "snippet": "Sửa đổi, bổ sung Nghị định số 56/2025/NĐ-CP ngày 03 tháng 3 năm 2025 của Chính phủ quy định chi tiết một số điều của Luật Điện lực về quy hoạch phát triển điện lực, phương án phát triển mạng lưới cấp điện, đầu tư xây dựng dự án điện lực và đấu thầu lựa chọn nhà đầu tư dự án kinh doanh điện lực",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "29f3f0b4407f25cd8cc07258",
+            "title": "Phê duyệt Điều chỉnh Quy hoạch phát triển điện lực quốc gia thời kỳ 2021 - 2030, tầm nhìn đến năm 2050",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=213388",
+            "document_number": "768/QĐ-TTg",
+            "issued_date": "15/04/2025",
+            "snippet": "Phê duyệt Điều chỉnh Quy hoạch phát triển điện lực quốc gia thời kỳ 2021 - 2030, tầm nhìn đến năm 2050",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "6945034d892dcf4f35bd8490",
+            "title": "Kết luận của Phó Thủ tướng Chính phủ Bùi Thanh Sơn tại cuộc họp rà soát Điều chỉnh Quy hoạch phát triển điện lực quốc gia thời kỳ 2021 - 2030, tầm nhìn đến năm 2050",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=213152",
+            "document_number": "126/TB-VPCP",
+            "issued_date": "19/03/2025",
+            "snippet": "Kết luận của Phó Thủ tướng Chính phủ Bùi Thanh Sơn tại cuộc họp rà soát Điều chỉnh Quy hoạch phát triển điện lực quốc gia thời kỳ 2021 - 2030, tầm nhìn đến năm 2050",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "phát triển điện lực"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "official_verification",
+        "title": "Tìm tiêu đề — cụm 5",
+        "query": "ngành điện lực",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "06005ae3cbdb76b34d424d1d",
+            "title": "Kết luận của Phó Thủ tướng Chính phủ Vũ Đức Đam tại cuộc họp về bảo đảm an toàn, an ninh hệ thống thông tin ngành điện lực và giao thông vận tải",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=190001",
+            "document_number": "260/TB-VPCP",
+            "issued_date": "08/06/2017",
+            "snippet": "Kết luận của Phó Thủ tướng Chính phủ Vũ Đức Đam tại cuộc họp về bảo đảm an toàn, an ninh hệ thống thông tin ngành điện lực và giao thông vận tải",
+            "source_type": "official_government"
+          },
+          {
+            "source_id": "1d86eb6d2c98ce131a7032b0",
+            "title": "Về ngày truyền thống ngành Điện lực Việt Nam",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=90973",
+            "document_number": "1594/QĐ-TTG",
+            "issued_date": "12/10/2009",
+            "snippet": "Về ngày truyền thống ngành Điện lực Việt Nam",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "ngành điện lực"
+        ],
+        "error_kind": null
+      }
+    ],
+    "provider": "chinhphu_official_portal",
+    "model": "webforms-search-v1"
+  },
+  "expected_url_hit": true,
+  "source": {
+    "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219377",
+    "attachment_url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/9/344_2026_nd-cp_04092026-signed.signed.pdf",
+    "title": "\r\n\tNghị định số 344/2026/NĐ-CP của Chính phủ: Quy định về ứng dụng khoa học, công nghệ và phát triển công nghiệp chế tạo trong lĩnh vực điện lực\r\n",
+    "text": "CHÍNH PHỦ\n\nCỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\n\nSố: 344/2026/NĐ-CP\n\nHà Nội, ngày 04 tháng 9 năm 2026\n\nNGHỊ ĐỊNH\nQuy định về ứng dụng khoa học, công nghệ và phát triển\ncông nghiệp chế tạo trong lĩnh vực điện lực\n\nCăn cứ Luật Tổ chức Chính phủ số 63/2025/QH15;\nCăn cứ Luật Điện lực số 61/2024/QH15;\nCăn cứ Luật Khoa học, công nghệ và đổi mới sáng tạo số 93/2025/QH15;\nCăn cứ Luật Thuế Thu nhập doanh nghiệp số 69/2025/QH15;\nCăn cứ Nghị quyết số 198/2025/QH15 của Quốc hội về một số cơ chế,\nchính sách đặc biệt phát triển kinh tế tư nhân;\nCăn cứ Nghị quyết số 253/2025/QH15 của Quốc hội về các cơ chế, chính\nsách phát triển năng lượng quốc gia giai đoạn 2026-2030;\nTheo đề nghị của Bộ trưởng Bộ Công Thương;\nChính phủ ban hành Nghị định quy định về ứng dụng khoa học, công\nnghệ và phát triển công nghiệp chế tạo trong lĩnh vực điện lực.\n\nChương I\nQUY ĐỊNH CHUNG\n\nĐiều 1. Phạm vi điều chỉnh\nNghị định này quy định chi tiết và các biện pháp để tổ chức hướng dẫn\nthi hành Điều 8 Luật Điện lực về ứng dụng khoa học, công nghệ và phát triển\ncông nghiệp chế tạo trong lĩnh vực điện lực, gồm:\n1. Danh mục các hạng mục, thiết bị và dịch vụ tư vấn quan trọng nhằm\nduy trì cung cấp điện liên tục, bảo đảm an ninh năng lượng quốc gia được ưu\ntiên sản xuất, cung cấp trong nước.\n\n2\n\n2. Hoạt động nghiên cứu, ứng dụng và phát triển khoa học, công nghệ;\ncông nghiệp chế tạo thiết bị điện và dịch vụ năng lượng trong lĩnh vực điện lực.\n3. Cơ chế khuyến khích và hỗ trợ phát triển nghiên cứu khoa học, công\nnghệ; công nghiệp thiết kế, chế tạo, lắp đặt thiết bị điện và cung ứng dịch vụ\ntrong lĩnh vực điện lực.\n4. Ưu tiên phát triển các ngành công nghiệp chế tạo thiết bị điện và dịch\nvụ điện; thực hiện các yêu cầu, chỉ tiêu về tỷ lệ nội địa hóa trong công nghiệp\nđiện; khuyến khích phát triển doanh nghiệp trong nước có quy mô lớn, trình độ\ncông nghệ tiên tiến, có khả năng thực hiện các dự án phức tạp, yêu cầu kỹ thuật\ncao trong lĩnh vực điện lực, đáp ứng các tiêu chuẩn chất lượng quốc tế.\n5. Tổ hợp công nghiệp, dịch vụ năng lượng.\n\nĐiều 2. Đối tượng áp dụng\nNghị định này áp dụng với các cơ quan, tổ chức, cá nhân có liên quan\nđến hoạt động ứng dụng khoa học, công nghệ và phát triển công nghiệp chế tạo\ntrong lĩnh vực điện lực.\n\nĐiều 3. Giải thích từ ngữ\nTrong Nghị định này, các từ ngữ dưới đây được hiểu như sau:\n1. Sản xuất thiết bị điện là việc sản xuất, chế tạo sản phẩm, phương tiện,\nmáy móc, thiết bị, cơ khí điện cung ứng cho các công trình điện lực.\n2. Tổ hợp công nghiệp, dịch vụ năng lượng là khu chức năng tích hợp\ncác hoạt động nghiên cứu, chế tạo thử nghiệm, sản xuất thiết bị điện; cung cấp\ncác dịch vụ xây dựng, lắp đặt, vận hành, bảo trì các dự án điện và dịch vụ liên\nquan khác phục vụ trong lĩnh vực điện lực.\n3. Chương trình phát triển công nghệ, công nghiệp chế tạo thiết bị điện\nvà dịch vụ năng lượng là tập hợp các nhiệm vụ có mục tiêu chung để giải quyết\ncác vấn đề trong hoạt động điện lực, duy trì cung cấp điện liên tục, bảo đảm an\nninh năng lượng quốc gia, thực hiện các yêu cầu chỉ tiêu về tỷ lệ nội địa hóa\ntrong công nghiệp điện, sử dụng điện nhằm tiết kiệm, nâng cao hiệu quả sử\ndụng các nguồn năng lượng, bảo vệ môi trường, bảo vệ hành lang bảo vệ công\ntrình điện lực, an toàn điện và an toàn đập, hồ chứa thủy điện.",
+    "sha256": "6b41650b259599d030ecda37be743e4d125a6749784fd06735be324eb0f7dc61",
+    "document_sha256": "7eb6ab635d9eb0c4d754af8e3eed9a12edad3325bfdbb6fb5ab6070dca5b3ff1",
+    "parser_recovered": false,
+    "ocr_input_sha256": "c7ac152e32d5a7c302e5774c7a568eee7180584f94e44e79b319a36865a38465",
+    "ocr_input_transform": "selected_page_content_without_annotations",
+    "retrieved_at": "2026-09-12T14:12:54.802820+00:00",
+    "extracted_characters": 3265,
+    "stored_characters": 3265,
+    "truncated": true,
+    "method": "vertex_ocr",
+    "legal_effect_status": "unverified",
+    "document_number": "344/2026/NĐ-CP",
+    "content_status": "readable",
+    "pages": [
+      {
+        "page": 1,
+        "text": "CHÍNH PHỦ\n\nCỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\n\nSố: 344/2026/NĐ-CP\n\nHà Nội, ngày 04 tháng 9 năm 2026\n\nNGHỊ ĐỊNH\nQuy định về ứng dụng khoa học, công nghệ và phát triển\ncông nghiệp chế tạo trong lĩnh vực điện lực\n\nCăn cứ Luật Tổ chức Chính phủ số 63/2025/QH15;\nCăn cứ Luật Điện lực số 61/2024/QH15;\nCăn cứ Luật Khoa học, công nghệ và đổi mới sáng tạo số 93/2025/QH15;\nCăn cứ Luật Thuế Thu nhập doanh nghiệp số 69/2025/QH15;\nCăn cứ Nghị quyết số 198/2025/QH15 của Quốc hội về một số cơ chế,\nchính sách đặc biệt phát triển kinh tế tư nhân;\nCăn cứ Nghị quyết số 253/2025/QH15 của Quốc hội về các cơ chế, chính\nsách phát triển năng lượng quốc gia giai đoạn 2026-2030;\nTheo đề nghị của Bộ trưởng Bộ Công Thương;\nChính phủ ban hành Nghị định quy định về ứng dụng khoa học, công\nnghệ và phát triển công nghiệp chế tạo trong lĩnh vực điện lực.\n\nChương I\nQUY ĐỊNH CHUNG\n\nĐiều 1. Phạm vi điều chỉnh\nNghị định này quy định chi tiết và các biện pháp để tổ chức hướng dẫn\nthi hành Điều 8 Luật Điện lực về ứng dụng khoa học, công nghệ và phát triển\ncông nghiệp chế tạo trong lĩnh vực điện lực, gồm:\n1. Danh mục các hạng mục, thiết bị và dịch vụ tư vấn quan trọng nhằm\nduy trì cung cấp điện liên tục, bảo đảm an ninh năng lượng quốc gia được ưu\ntiên sản xuất, cung cấp trong nước."
+      },
+      {
+        "page": 2,
+        "text": "2\n\n2. Hoạt động nghiên cứu, ứng dụng và phát triển khoa học, công nghệ;\ncông nghiệp chế tạo thiết bị điện và dịch vụ năng lượng trong lĩnh vực điện lực.\n3. Cơ chế khuyến khích và hỗ trợ phát triển nghiên cứu khoa học, công\nnghệ; công nghiệp thiết kế, chế tạo, lắp đặt thiết bị điện và cung ứng dịch vụ\ntrong lĩnh vực điện lực.\n4. Ưu tiên phát triển các ngành công nghiệp chế tạo thiết bị điện và dịch\nvụ điện; thực hiện các yêu cầu, chỉ tiêu về tỷ lệ nội địa hóa trong công nghiệp\nđiện; khuyến khích phát triển doanh nghiệp trong nước có quy mô lớn, trình độ\ncông nghệ tiên tiến, có khả năng thực hiện các dự án phức tạp, yêu cầu kỹ thuật\ncao trong lĩnh vực điện lực, đáp ứng các tiêu chuẩn chất lượng quốc tế.\n5. Tổ hợp công nghiệp, dịch vụ năng lượng.\n\nĐiều 2. Đối tượng áp dụng\nNghị định này áp dụng với các cơ quan, tổ chức, cá nhân có liên quan\nđến hoạt động ứng dụng khoa học, công nghệ và phát triển công nghiệp chế tạo\ntrong lĩnh vực điện lực.\n\nĐiều 3. Giải thích từ ngữ\nTrong Nghị định này, các từ ngữ dưới đây được hiểu như sau:\n1. Sản xuất thiết bị điện là việc sản xuất, chế tạo sản phẩm, phương tiện,\nmáy móc, thiết bị, cơ khí điện cung ứng cho các công trình điện lực.\n2. Tổ hợp công nghiệp, dịch vụ năng lượng là khu chức năng tích hợp\ncác hoạt động nghiên cứu, chế tạo thử nghiệm, sản xuất thiết bị điện; cung cấp\ncác dịch vụ xây dựng, lắp đặt, vận hành, bảo trì các dự án điện và dịch vụ liên\nquan khác phục vụ trong lĩnh vực điện lực.\n3. Chương trình phát triển công nghệ, công nghiệp chế tạo thiết bị điện\nvà dịch vụ năng lượng là tập hợp các nhiệm vụ có mục tiêu chung để giải quyết\ncác vấn đề trong hoạt động điện lực, duy trì cung cấp điện liên tục, bảo đảm an\nninh năng lượng quốc gia, thực hiện các yêu cầu chỉ tiêu về tỷ lệ nội địa hóa\ntrong công nghiệp điện, sử dụng điện nhằm tiết kiệm, nâng cao hiệu quả sử\ndụng các nguồn năng lượng, bảo vệ môi trường, bảo vệ hành lang bảo vệ công\ntrình điện lực, an toàn điện và an toàn đập, hồ chứa thủy điện."
+      }
+    ],
+    "page_count": 18,
+    "page_start": 1,
+    "page_end": 2,
+    "next_page_start": 3,
+    "requires_ocr": false,
+    "unreadable_pages": [],
+    "ocr_provider": "google_vertex_ai",
+    "ocr_model": "gemini-3.5-flash",
+    "attachments": [
+      "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/9/344_2026_nd-cp_04092026-signed.signed.pdf"
+    ],
+    "issued_date": "04-09-2026",
+    "reported_effective_from": "20-10-2026"
+  },
+  "elapsed_seconds": 29.436999999999898
+}

@@ -1,0 +1,21 @@
+{
+  "completed_at": "2026-09-12T14:14:19.514078+00:00",
+  "files": {
+    "agriculture.json": "6cf839f959b0f98fb45b9f921a47a5269a03383d005678a4b539a107bdb0f820",
+    "aviation.json": "388f56ee2c07346a017222b10d18e58a2619069333ccd201fdd07393a962a237",
+    "cases.json": "3370e4629a5f5f9c8c63a38979be296b5ced51a9679ba9627ac9950500abc6e3",
+    "credit.json": "6300cd57099cdd32e2c2a478a761367585f98764f2c0146b47fc82275fbe8e3d",
+    "electricity.json": "cd7f9222438b72d74eb676a6526d4802df0abc0640dee1d9eb65945d52b4dc82",
+    "electronic_signature.json": "34dc3fdf419eaec11df5ab7205d431086307e58857180c80286205128ac5eec0",
+    "film_classification.json": "fcc50a1e1e9727e0b95d865a5049ed5a135a427a44b02a194e328fd29802beeb",
+    "health.json": "75c1d2a2796119c3f8ac016478a415e65d5a3bc9aa18d8a55d52abdcca216b57",
+    "imports.json": "8f109471f870e1f32750cc7939824e49a568299e6eedabfc57bdf75fce05db93",
+    "manifest.json": "6203fe361a5ee8a7c1c04c32ddf775255ffe5644b5d852b438f160867861dbde",
+    "maritime.json": "07bd167f98804f4db93b4d80205488c45c115602ebe17d14343118948080766c",
+    "procurement.json": "862b23b2248ed97875547c0751574588cc5589384d98fbbbd374331f334bdd07",
+    "reserves.json": "041a74355d1d5010175e47ddb4cbfcbe5e67e81ebabedace2f541ac52c43cf20",
+    "resources_tax.json": "4bfffdc8a0d2e134963275b218f6c49c2ebcbc71d436edc014d30885b7bab06e",
+    "summary.json": "09d75f21eb0fc6ce7af1dee2b94db120e9d78eaa2c25c18d26685d060ef7ea35",
+    "telecom_resources.json": "44b54fdb2c77a94c043017ef89cb2f983346bf765fe71ca7d61072f02e2dbbc4"
+  }
+}
