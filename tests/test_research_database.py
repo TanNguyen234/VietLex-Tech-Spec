@@ -68,6 +68,8 @@ async def test_workspace_queries_use_authenticated_owner(monkeypatch) -> None:
     assert collection.find_queries == [{"user_id": "user-1"}]
     assert collection.find_one_queries[0].pop("expires_at")["$gt"]
     assert collection.find_one_queries == [{"_id": "w-1", "user_id": "user-1"}]
+    expiry = collection.update_calls[0][0].pop("expires_at")["$gt"]
+    assert collection.update_calls[0][1]["$set"]["updated_at"] <= expiry <= research._now()
     assert collection.update_calls[0][0] == {"_id": "w-1", "user_id": "user-1"}
     assert collection.delete_queries == [{"_id": "w-1", "user_id": "user-1"}]
 
@@ -94,6 +96,7 @@ async def test_pin_and_unpin_are_atomic_and_owner_scoped(monkeypatch) -> None:
 
     pin_query, pin_update = collection.update_calls[0]
     assert pin_query.pop('$expr')['$lte'][1] == 12_000_000
+    assert pin_query.pop('expires_at')['$gt'] == pin_update['$set']['updated_at']
     assert pin_query == {
         "_id": "w-1",
         "client_id": "owner-a",
@@ -102,6 +105,8 @@ async def test_pin_and_unpin_are_atomic_and_owner_scoped(monkeypatch) -> None:
         "evidence.99": {"$exists": False},
     }
     assert pin_update["$push"]["evidence"]["evidence_id"] == "ev-1"
+    expiry = collection.update_calls[1][0].pop("expires_at")["$gt"]
+    assert pin_update["$set"]["updated_at"] <= expiry <= research._now()
     assert collection.update_calls[1][0] == {
         "_id": "w-1",
         "client_id": "owner-a",

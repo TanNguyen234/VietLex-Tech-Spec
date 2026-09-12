@@ -198,3 +198,11 @@ def reconcile_sources(sources: list[dict]) -> dict:
             if len({s["sha256"] for s in group}) > 1
         ],
     }
+
+
+def official_evidence_id(source: dict, quote: str) -> str:
+    """Deduplicate within a source version, never across replaced documents."""
+    import json
+
+    identity = [source["url"], source.get("document_sha256") or source["sha256"], quote]
+    return hashlib.sha256(json.dumps(identity, ensure_ascii=False, separators=(",", ":")).encode("utf-8")).hexdigest()[:24]

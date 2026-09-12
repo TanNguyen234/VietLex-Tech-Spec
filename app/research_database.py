@@ -119,7 +119,7 @@ async def update_workspace(
     if description is not None:
         values["description"] = description.strip()[:2_000]
     result = await get_db().research_workspaces.update_one(
-        {"_id": workspace_id, **_owner(client_id, user_id)}, {"$set": values}
+        {"_id": workspace_id, **_owner(client_id, user_id), "expires_at": {"$gt": _now()}}, {"$set": values}
     )
     return result.modified_count > 0
 
@@ -145,6 +145,7 @@ async def pin_workspace_evidence(
         {
             "_id": workspace_id,
             **_owner(client_id, user_id),
+            "expires_at": {"$gt": now},
             "evidence.evidence_id": {"$ne": evidence["evidence_id"]},
             "evidence.99": {"$exists": False},
             **_size_guard(evidence),
@@ -185,6 +186,7 @@ async def unpin_workspace_evidence(
         {
             "_id": workspace_id,
             **_owner(client_id, user_id),
+            "expires_at": {"$gt": _now()},
             "evidence.evidence_id": evidence_id,
         },
         {
@@ -224,7 +226,7 @@ async def save_workspace_analysis(
     stored_analysis = {**analysis, "created_at": now}
     if required_document_ids:
         stored_analysis["required_document_ids"] = required_ids
-    query = {"_id": workspace_id, **_owner(client_id, user_id)}
+    query = {"_id": workspace_id, **_owner(client_id, user_id), "expires_at": {"$gt": now}}
     query.update(_size_guard(stored_analysis))
     if len(required_ids) == 1:
         query["documents.document_id"] = required_ids[0]
@@ -270,7 +272,7 @@ async def save_full_document_review_batch(
     }
     replacement = {"$slice": [{"$concatArrays": [{"$filter": {"input": existing, "as": "item", "cond": {"$ne": ["$$item.input_sha256", input_sha256]}}}, [merged]]}, -3]}
     result = await get_db().research_workspaces.update_one(
-        {"_id": workspace_id, **_owner(client_id, user_id), "documents.document_id": document_id, **_size_guard(stored)},
+        {"_id": workspace_id, **_owner(client_id, user_id), "expires_at": {"$gt": now}, "documents.document_id": document_id, **_size_guard(stored)},
         [{"$set": {"documents": {"$map": {"input": "$documents", "as": "doc", "in": {"$cond": [{"$eq": ["$$doc.document_id", document_id]}, {"$mergeObjects": ["$$doc", {"full_review_progress": {"$let": {"vars": {"current": current}, "in": replacement}}}]}, "$$doc"]}}}, "analyses": {"$slice": [{"$concatArrays": ["$analyses", {"$literal": [stored]}]}, -50]}, "updated_at": now}}],
     )
     return result.modified_count > 0
@@ -322,6 +324,7 @@ async def remove_workspace_document(
             "_id": workspace_id,
             **_owner(client_id, user_id),
             "documents.document_id": document_id,
+            "expires_at": {"$gt": _now()},
         },
         {
             "$pull": {

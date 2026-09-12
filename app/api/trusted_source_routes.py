@@ -1,7 +1,6 @@
 """Bounded reads from approved public origins and explicit excerpt pinning."""
 
 import asyncio
-import hashlib
 import uuid
 from datetime import datetime, timezone
 from typing import Literal
@@ -15,6 +14,7 @@ from app.research_database import save_workspace_analysis, pin_workspace_evidenc
 from app.services.provider_runtime import capture_provider_usage, current_provider_calls
 from app.services.trusted_source_reader import (
     read_source,
+    official_evidence_id,
     validate_source_url,
     reconcile_sources,
     SourceReadError,
@@ -159,9 +159,7 @@ async def pin_source(
     if not quote.strip() or quote not in source["text"]:
         raise HTTPException(422, detail="quote_not_in_source")
     evidence = {
-        "evidence_id": hashlib.sha256(
-            (source["url"] + "\n" + quote).encode()
-        ).hexdigest()[:24],
+        "evidence_id": official_evidence_id(source, quote),
         "trace_id": analysis_id,
         "session_id": None,
         "source_kind": "official_web",
