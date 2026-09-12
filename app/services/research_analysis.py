@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from dataclasses import replace
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -147,19 +148,23 @@ def build_selected_evidence_prompt(question: str, evidence: list[dict]) -> str:
     )
 
 
-async def _generate(prompt: str, system_prompt: str, *, max_output_tokens: int = 1_536):
+async def _generate(prompt: str, system_prompt: str, *, max_output_tokens: int = 4_096):
     from app.services.direct_llm import (
         LLMUseCase,
         generate_llm_response_with_metadata,
     )
 
     async with _ANALYSIS_SEMAPHORE:
-        return await generate_llm_response_with_metadata(
+        result = await generate_llm_response_with_metadata(
             prompt,
             system_prompt,
             max_output_tokens=max_output_tokens,
             use_case=LLMUseCase.STRUCTURED_ANALYSIS,
+            thinking_level="MINIMAL",
         )
+    if result.finish_reason == "MAX_TOKENS":
+        return replace(result, status="truncated_output")
+    return result
 
 
 def _metadata(result) -> dict:
@@ -297,6 +302,11 @@ async def generate_contract_review(
             "Trạng thái evidence_linked chỉ nghĩa là đã liên kết căn cứ để người dùng "
             "kiểm tra, không chứng minh kết luận đúng. Nếu không có bằng chứng luật, "
             "không khẳng định vi phạm và dùng needs_verification. Không tạo điểm rủi ro số."
+            " Tất cả nguồn LAW ở đây chưa xác minh hiệu lực; không khẳng định nguồn "
+            "là pháp luật hiện hành, còn hiệu lực hoặc điều khoản hoàn toàn hợp pháp. "
+            "Chỉ nêu sự phù hợp hoặc khác biệt so với nội dung nguồn được cấp, và "
+            "nêu rõ cần kiểm tra hiệu lực trước khi áp dụng. Tài liệu có thể là trích "
+            "đoạn luật, không được mặc định mọi tài liệu tải lên đều là hợp đồng."
         ),
         max_output_tokens=2_048,
     )

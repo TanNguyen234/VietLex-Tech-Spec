@@ -132,15 +132,16 @@ def lexical_prefilter(
     chunks: list[EvidenceChunk],
     *,
     limit: int,
+    tokenize=normalized_terms,
 ) -> list[EvidenceChunk]:
-    query_terms = normalized_terms(query)
+    query_terms = tokenize(query)
     query_phrase = " ".join(query.casefold().split())
 
     def score(chunk: EvidenceChunk) -> tuple[float, int, str]:
         normalized_text = " ".join(
             chunk.text.casefold().split()
         )
-        counts = Counter(normalized_terms(chunk.text))
+        counts = Counter(tokenize(chunk.text))
         lexical_score = sum(
             1.0 + math.log(counts[term])
             for term in set(query_terms)

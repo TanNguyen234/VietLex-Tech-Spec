@@ -5,7 +5,7 @@ import re
 
 from app.config import get_settings
 from app.ingestion.legal_text import chunk_document
-from app.ingestion.sparse_encoder import normalized_terms
+from app.ingestion.pinecone_store import fast_terms
 from app.services.retrieval import RetrievalOutcome, lexical_prefilter, select_ranked_evidence
 
 
@@ -16,12 +16,13 @@ def document_evidence(query: str, document) -> RetrievalOutcome:
                             overlap_tokens=settings.QUERY_CHUNK_OVERLAP_TOKENS)
     articles = {value.casefold() for value in re.findall(r"\bđiều\s+(\d+[a-z]?)\b", query, re.I)}
     clauses = set(re.findall(r"\bkhoản\s+(\d+)\b", query, re.I))
-    terms = set(normalized_terms(query))
+    terms = set(fast_terms(query))
     candidates = [chunk for chunk in chunks
                   if (not articles or (chunk.article or "").casefold().removeprefix("điều ") in articles)
                   and (not clauses or (chunk.clause or "").casefold().removeprefix("khoản ") in clauses)
-                  and (articles or clauses or terms.intersection(normalized_terms(chunk.text)))]
-    ranked = lexical_prefilter(query, candidates, limit=settings.FINAL_EVIDENCE_LIMIT)
+                  and (articles or clauses or terms.intersection(fast_terms(chunk.text)))]
+    ranked = lexical_prefilter(query, candidates, limit=settings.FINAL_EVIDENCE_LIMIT,
+                               tokenize=fast_terms)
     evidence = select_ranked_evidence(
         [(1.0, chunk) for chunk in ranked], max_chunks=settings.FINAL_EVIDENCE_LIMIT,
         max_tokens=settings.LLM_CONTEXT_MAX_TOKENS,

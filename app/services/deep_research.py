@@ -20,7 +20,7 @@ OFFICIAL_SOURCE_DOMAINS = (
     "moj.gov.vn",
     "phapdien.moj.gov.vn",
 )
-_PLAN_VERSION = "official-web-v1"
+_PLAN_VERSION = "official-web-v2"
 _SPACE = re.compile(r"\s+")
 _QUERY_TOKEN = re.compile(r"[\w/-]+", re.UNICODE)
 _QUERY_STOPWORDS = {
@@ -53,7 +53,7 @@ class ResearchPlanStep(BaseModel):
 class ResearchPlan(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    version: Literal["official-web-v1"] = _PLAN_VERSION
+    version: Literal["official-web-v1", "official-web-v2"] = _PLAN_VERSION
     plan_id: str = Field(pattern=r"^[a-f0-9]{24}$")
     status: Literal["draft"] = "draft"
     question: str = Field(min_length=1, max_length=2_000)
@@ -130,22 +130,23 @@ def _plan_id(question: str, steps: list[ResearchPlanStep]) -> str:
 def build_research_plan(question: str) -> ResearchPlan:
     question = _clean(question, 2_000)
     document_number = re.search(
-        r"\b\d{1,4}/\d{4}/[A-ZĐ-]{2,30}\b", question.upper()
+        r"\b\d{1,4}/\d{4}/[A-ZĐ][A-ZĐ0-9-]{1,29}\b", question.upper()
     )
+    named_law = re.search(r"\b(?:bộ luật|luật)\s+[^?!.;\n]{2,100}?\b(?:19|20)\d{2}\b", question.casefold())
     tokens = [
         token
         for token in _QUERY_TOKEN.findall(question.casefold())
         if token not in _QUERY_STOPWORDS and len(token) > 1
     ]
-    seed = document_number.group(0) if document_number else " ".join(tokens[-4:])
+    seed = (document_number.group(0) if document_number else
+            named_law.group(0) if named_law else " ".join(tokens[-4:]))
     seed = seed or question
-    tail = " ".join(seed.split()[-2:])
     definitions: list[tuple[StepKind, str, str]] = [
         ("legal_basis", "Căn cứ pháp lý trực tiếp", seed),
-        ("conditions", "Điều kiện và thủ tục", f"{tail} điều kiện"),
-        ("exceptions", "Ngoại lệ và giới hạn", f"{tail} không được"),
-        ("amendments", "Sửa đổi và tình trạng hiệu lực", f"{tail} sửa đổi"),
-        ("official_verification", "Đối chiếu nguồn chính thức", f"bộ luật {tail}"),
+        ("conditions", "Điều kiện và thủ tục", f"{seed} điều kiện"),
+        ("exceptions", "Ngoại lệ và giới hạn", f"{seed} không được"),
+        ("amendments", "Sửa đổi và tình trạng hiệu lực", f"{seed} sửa đổi"),
+        ("official_verification", "Đối chiếu nguồn chính thức", seed),
     ]
     steps = [
         ResearchPlanStep(

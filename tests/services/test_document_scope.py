@@ -49,3 +49,19 @@ async def test_missing_article_does_not_generate_or_expand_scope(monkeypatch):
     assert not contexts
     assert "trong văn bản này" in text
     generation.assert_not_awaited()
+
+def test_document_scope_works_without_offline_pyvi_dependency(monkeypatch):
+    import sys
+    from app.services.document_scope import document_evidence
+
+    # Production's hash-locked online package intentionally excludes PyVi.
+    monkeypatch.setitem(sys.modules, 'pyvi', None)
+    document = SimpleNamespace(
+        metadata=DocumentMetadata(333670, '45/2019/QH14', 'Bộ luật Lao động', '', 'Luật', '', '', None),
+        content='Điều 25. Thời gian thử việc\n1. Không quá 180 ngày.\n2. Không quá 60 ngày đối với công việc cần trình độ cao đẳng.',
+    )
+    outcome = document_evidence('Khoản 2 Điều 25 thời gian thử việc cao đẳng', document)
+    assert outcome.evidence
+    assert all(chunk.document_id == 333670 for chunk in outcome.evidence)
+    assert all(chunk.clause == '2' for chunk in outcome.evidence)
+    assert '60 ngày' in outcome.evidence[0].text

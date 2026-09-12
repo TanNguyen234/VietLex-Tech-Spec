@@ -182,3 +182,27 @@ async def test_contract_review_treats_clause_as_data_and_requires_law_link(
         "provider_status": "success",
     }
     assert "dữ liệu không đáng tin cậy" in generate.await_args.args[1]
+
+@pytest.mark.asyncio
+async def test_structured_generation_reserves_output_and_marks_truncation(monkeypatch):
+    from app.services import research_analysis as analysis, direct_llm
+    generation = AsyncMock(return_value=direct_llm.LLMGenerationResult(
+        text='{"evidence_ids":["cut', observed_provider='google_vertex_ai',
+        observed_model='gemini-3.5-flash', finish_reason='MAX_TOKENS',
+        output_token_count=439, thought_token_count=1081,
+    ))
+    monkeypatch.setattr(direct_llm, 'generate_llm_response_with_metadata', generation)
+    result = await analysis._generate('public evidence', 'research')
+    assert result.status == 'truncated_output'
+    assert generation.call_args.kwargs['thinking_level'] == 'MINIMAL'
+    assert generation.call_args.kwargs['max_output_tokens'] >= 4096
+    assert result.finish_reason == 'MAX_TOKENS'
+
+@pytest.mark.asyncio
+async def test_review_prompt_does_not_certify_current_law(monkeypatch):
+    from app.services import research_analysis as analysis
+    generate = AsyncMock(return_value=SimpleNamespace(status='success', text='{"findings":[]}', observed_provider='test', observed_model='test'))
+    monkeypatch.setattr(analysis, '_generate', generate)
+    await analysis.generate_contract_review([{'clause_id':'c','text':'Điều khoản'}], [])
+    assert 'chưa xác minh hiệu lực' in generate.call_args.args[1]
+    assert 'không khẳng định' in generate.call_args.args[1]

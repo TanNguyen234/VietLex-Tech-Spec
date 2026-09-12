@@ -144,3 +144,13 @@ async def test_provider_failure_preserves_http_error_telemetry() -> None:
     assert calls[0]["call_kind"] == "http"
     assert calls[0]["request_count"] == 1
     assert calls[0]["latency_ms"] == 4.5
+
+def test_research_plan_preserves_named_law_across_steps():
+    plan = build_research_plan('Quy định về thời gian thử việc theo Bộ luật Lao động 2019')
+    assert plan.steps[0].query == 'bộ luật lao động 2019'
+    assert all('bộ luật lao động 2019' in step.query for step in plan.steps)
+
+
+def test_research_plan_preserves_document_number_across_steps():
+    plan = build_research_plan('Tìm sửa đổi 45/2019/QH14')
+    assert all('45/2019/QH14' in step.query for step in plan.steps)
