@@ -79,6 +79,8 @@
     const dossier = payload.result || payload;
     const summary = dossier.status === 'complete' ? 'Cả 5 bước đều có kết quả metadata từ nguồn chính thức.' : dossier.status === 'failed' ? 'Không bước nào có kết quả metadata từ nguồn chính thức.' : 'Kết quả tìm kiếm một phần; xem trạng thái từng bước.';
     target.append(element('p', summary, 'legal-warning'));
+    target.append(element('p', 'Tìm thấy tiêu đề chưa đủ để trả lời. Đọc nguồn, ghim đoạn căn cứ rồi chọn Phân tích; hiệu lực vẫn chưa xác minh.'));
+    const seen = new Set();
     (dossier.steps || []).forEach(step => {
       const card = element('article', undefined, 'research-step-result');
       card.append(element('h3', step.title), element('p', step.query, 'muted'));
@@ -86,11 +88,21 @@
       if (!(step.sources || []).length) card.append(element('p', 'Chưa có kết quả metadata từ nguồn chính thức.', 'muted'));
       const sources = element('ul', undefined, 'official-source-list');
       (step.sources || []).forEach(source => {
+        if (seen.has(source.url)) return;
+        seen.add(source.url);
         const item = element('li'), link = element('a', source.title || source.domain);
         link.href = source.url; link.target = '_blank'; link.rel = 'noopener noreferrer';
         const metadata = [source.document_number, source.issued_date, source.domain].filter(Boolean).join(' · ');
         item.append(link, document.createTextNode(' · ' + metadata));
         if (source.snippet && source.snippet !== source.title) item.append(element('p', source.snippet));
+        const read = element('button', 'Đọc toàn văn / bản gốc', 'button button-quiet');
+        read.type = 'button';
+        const reader = element('div'); reader.setAttribute('aria-live', 'polite');
+        read.addEventListener('click', async () => {
+          read.disabled = true;
+          try { await readOfficial(source.url, reader); } finally { read.disabled = false; }
+        });
+        item.append(read, reader);
         sources.append(item);
       });
       if (sources.children.length) card.append(sources);
@@ -110,12 +122,13 @@
     form.action = '/workspaces/' + workspaceId + '/research/run';
     form.method = 'post';
     form.append(element('h3', 'Kế hoạch đề xuất'));
+    if (plan.query_method === 'fallback') form.append(element('p', 'Chưa tạo được từ khóa bằng AI. Hãy sửa các cụm tìm kiếm bên dưới trước khi chạy.', 'legal-warning'));
     plan.steps.forEach((step, index) => {
       const label = element('label', (index + 1) + '. ' + step.title);
       const input = element('textarea'); input.maxLength = 500; input.required = true; input.value = step.query; input.dataset.stepIndex = String(index);
       label.append(input); form.append(label);
     });
-    const note = element('p', 'Việc chạy kế hoạch gửi 5 truy vấn tới Hệ thống văn bản của Cổng Chính phủ. Không gọi LLM và không tiêu thụ token.', 'muted');
+    const note = element('p', 'AI chỉ đề xuất từ khóa khi tạo kế hoạch, không xác nhận luật. Bước tìm kiếm gửi 5 truy vấn bạn duyệt tới cổng nguồn đã cấu hình; bước OCR hoặc phân tích sau đó có thể dùng AI.', 'muted');
     const button = element('button', 'Bắt đầu nghiên cứu', 'button button-primary'); button.type = 'submit';
     form.append(note, button); form._researchPlan = plan; researchPlan.append(form);
   }
@@ -222,14 +235,56 @@
     const assessment = element('details'), view = element('div'); assessment.append(element('summary', 'Kiểm chứng khẳng định'), view);
     renderClaims({...bundle.model_assessment, evidence_snapshot: payload.evidence_snapshot}, view); target.append(assessment);
   }
+  async function readOfficial(url, target, pageStart = 1, useOcr = false, pageLimit = 5) {
+    target.replaceChildren(element('p', useOcr ? 'Đang đọc ảnh quét; cần đối chiếu lại bản gốc…' : 'Đang tải nội dung từ nguồn chính thức…'));
+    target.setAttribute('aria-busy', 'true');
+    const data = new FormData(); data.set('csrf_token', csrf); data.set('urls', url);
+    data.set('page_start', String(pageStart)); data.set('use_ocr', String(useOcr));
+    data.set('page_limit', String(pageLimit));
+    try {
+      const response = await fetch('/workspaces/' + workspaceId + '/analyses/sources', {method:'POST', body:data, credentials:'same-origin'});
+      const payload = await response.json();
+      if (!response.ok && !payload.result) {
+        const daily = JSON.stringify(payload).includes('daily_quota');
+        target.textContent = response.status === 429 ? (daily ? 'Đã hết quota hôm nay (UTC). Nguồn đã lưu vẫn đọc được; thử lại sau khi quota đặt lại.' : 'Đã chạm giới hạn lượt/phút. Vui lòng đợi rồi thử lại.') : 'Không đọc được nguồn. Kiểm tra phiên đăng nhập và thử lại.';
+      } else {
+        renderSources(payload, target);
+        if (payload.result?.errors?.length && pageLimit > 1) {
+          const retry = element('button', 'Thử đọc 1 trang', 'button button-quiet'); retry.type = 'button';
+          retry.addEventListener('click', () => readOfficial(url, target, pageStart, useOcr, 1)); target.append(retry);
+        }
+      }
+    } catch { target.textContent = 'Không đọc được nguồn do lỗi kết nối. Không có nội dung nào được suy đoán.'; }
+    finally { target.setAttribute('aria-busy', 'false'); }
+  }
   function renderSources(payload, target) {
     target.replaceChildren();
-    target.append(element('p', 'Nội dung HTML trích xuất từ nguồn; chưa xác minh hiệu lực hoặc tính đầy đủ của văn bản.', 'legal-warning'));
+    target.append(element('p', 'Nội dung trích xuất từ nguồn; chưa xác minh hiệu lực. OCR có thể đọc sai: đối chiếu bản gốc trước khi sử dụng.', 'legal-warning'));
     (payload.result?.sources || []).forEach((source,index) => {
       const card = element('details'), link = element('a', source.url);
       link.href = source.url; link.target = '_blank'; link.rel = 'noopener noreferrer';
-      card.append(element('summary', source.title || source.url), link, element('p', source.text));
-      if (source.truncated) card.append(element('p', `Chỉ lưu ${source.stored_characters}/${source.extracted_characters} ký tự.`, 'legal-warning'));
+      card.open = true;
+      card.append(element('summary', source.title || source.url), link);
+      if (source.attachment_url) {
+        const original = element('a', 'Mở PDF gốc'); original.href = source.attachment_url; original.target = '_blank'; original.rel = 'noopener noreferrer'; card.append(original);
+      }
+      (source.attachments || []).filter(url => url !== source.attachment_url).slice(0,10).forEach(url => {
+        const attachment = element('button', 'Đọc tệp đính kèm: ' + url.split('/').pop(), 'button button-quiet'); attachment.type = 'button';
+        attachment.addEventListener('click', () => readOfficial(url, target)); card.append(attachment);
+      });
+      if (source.page_count) card.append(element('p', `Đang đọc trang ${source.page_start}–${source.page_end}/${source.page_count}. Đây là phạm vi trang, không phải phần trăm đúng luật.`));
+      if (source.reported_effective_from) card.append(element('p', `Ngày hiệu lực nguồn ghi: ${source.reported_effective_from}. Chưa kiểm tra văn bản sửa đổi hoặc tình trạng hiện hành.`, 'legal-warning'));
+      if (source.parser_recovered) card.append(element('p', 'PDF có lỗi cấu trúc đã được trình đọc khôi phục. Hãy đối chiếu nội dung với bản gốc.', 'legal-warning'));
+      const text = element('pre', source.text || 'Chưa đọc được nội dung điều khoản.', 'source-excerpt'); card.append(text);
+      if (source.requires_ocr) {
+        const ocr = element('button', 'Đọc ảnh quét bằng OCR (tối đa 5 trang)', 'button button-primary'); ocr.type = 'button';
+        ocr.addEventListener('click', () => readOfficial(source.url, target, source.page_start || 1, true)); card.append(ocr);
+      }
+      if (source.next_page_start) {
+        const next = element('button', 'Đọc nhóm trang tiếp theo', 'button button-quiet'); next.type = 'button';
+        next.addEventListener('click', () => readOfficial(source.url, target, source.next_page_start, source.method === 'vertex_ocr')); card.append(next);
+      }
+      if (source.truncated && !source.page_count) card.append(element('p', `Chỉ lưu ${source.stored_characters}/${source.extracted_characters} ký tự.`, 'legal-warning'));
       // Pin only exact server-stored excerpts; requests include no replacement source body.
       const form = element('form'), quote = element('textarea'), button = element('button', 'Ghim trích đoạn', 'button button-quiet');
       quote.name = 'quote'; quote.maxLength = 3000; quote.required = true; quote.placeholder = 'Dán nguyên văn trích đoạn từ nội dung phía trên';
@@ -241,7 +296,7 @@
         catch { button.textContent = 'Chưa ghim được; kiểm tra trích đoạn rồi thử lại'; }
         finally { button.disabled = false; }
       });
-      if (payload.analysis_id) card.append(form); target.append(card);
+      if (payload.analysis_id && source.text?.trim()) card.append(form); target.append(card);
     });
     (payload.result?.errors || []).forEach(error => target.append(element('p', error.url + ' · ' + error.kind, 'legal-warning')));
     (payload.result?.duplicates || []).forEach(group => target.append(element('p', 'Nội dung trùng: ' + group.urls.join(' · '), 'muted')));

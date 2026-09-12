@@ -38,6 +38,15 @@ def test_message_template_has_visible_actions_and_honest_source_copy() -> None:
     assert "Liên kết bằng chứng" in html
 
 
+def test_missing_evidence_has_explicit_online_handoff():
+    from jinja2 import Environment, FileSystemLoader, select_autoescape
+    from types import SimpleNamespace
+    env=Environment(loader=FileSystemLoader(ROOT/'app/templates'),autoescape=select_autoescape())
+    html=env.get_template('chat_message.html').render(user_msg='Câu hỏi & phạm vi?',bot_msg='Chưa đủ nguồn',trace_id='t',evidence_views=[],claim_support=[],request=SimpleNamespace(cookies={}))
+    assert '/workspaces?question=' in html
+    assert 'Tìm nguồn chính thức trong hồ sơ' in html
+
+
 def test_local_css_covers_focus_touch_and_reduced_motion() -> None:
     css = "\n".join(
         path.read_text(encoding="utf-8")

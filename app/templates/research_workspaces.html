@@ -13,7 +13,7 @@
       <form class="research-form" data-product-form method="post" action="/workspaces">
         <h2>Tạo hồ sơ</h2><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <label>Tên chủ đề<input name="title" maxlength="120" required placeholder="Ví dụ: Thử việc và chấm dứt HĐLĐ"></label>
-        <label>Câu hỏi nghiên cứu<textarea name="description" maxlength="2000" rows="5" placeholder="Mục tiêu, phạm vi hoặc giả định cần kiểm tra"></textarea></label>
+        <label>Câu hỏi nghiên cứu<textarea name="description" maxlength="2000" rows="5" placeholder="Mục tiêu, phạm vi hoặc giả định cần kiểm tra">{{ initial_question or '' }}</textarea></label>
         <button class="button button-primary" type="submit">Tạo hồ sơ</button>
       </form>
       <section aria-labelledby="workspace-list-title"><div class="section-rule"><h2 id="workspace-list-title">Đang nghiên cứu</h2><span>{{ workspaces|length }} hồ sơ</span></div>
