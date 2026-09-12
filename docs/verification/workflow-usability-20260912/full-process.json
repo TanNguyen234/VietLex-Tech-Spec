@@ -1,0 +1,17 @@
+{
+  "command": [
+    ".venv/Scripts/python.exe",
+    "-m",
+    "pytest",
+    "tests",
+    "--ignore=tests/integration",
+    "--ignore=tests/visual",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "--basetemp=tmp/workflow-usability-20260912/pytest",
+    "--junitxml=tmp/workflow-usability-20260912/full.xml"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 308.85900000000015
+}

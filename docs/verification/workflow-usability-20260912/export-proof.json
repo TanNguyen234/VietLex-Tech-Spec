@@ -1,0 +1,9 @@
+{
+  "pages": 2,
+  "extracted_characters": 2902,
+  "has_report_title": true,
+  "has_edit_button": false,
+  "pdf_sha256": "193d818eb36a9fca7267d8338d9da415b2840f261a7011c00f785156c924324d",
+  "docx_sha256": "3ac0408f743830a26df084c40fac07824165122a8814fbd74b0e3a12ed5c0f2b",
+  "markdown_sha256": "cc0467aed36d136533b3f5dd328e627c114cfe7d094a66ab1205fc0613d4f198"
+}

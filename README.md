@@ -29,7 +29,7 @@ Trạng thái UI/API/tests và giới hạn chỉ được duy trì tại [FEATU
 | Hoàn tất pipeline | **50/50** generation `STOP` · **50/50** NeMo input/output safe · **50/50** Ragas · 0 lỗi kỹ thuật |
 | Verified retrieval subset | **40** case có toàn bộ required evidence đã xác minh · Document Recall@3 **1,0000**, micro **53/53** |
 | Dữ liệu v3 đã kiểm kê | **141.798** point remote · **14.962** document ID duy nhất · Supabase cùng **14.962** văn bản |
-| Automated verification | **1278 passed, 30 warnings** ngày 2026-09-12; sau sửa cuối CSS/template, **34 tests liên quan passed**. Suite không gọi provider, loại integration/visual |
+| Automated verification | **1283 passed, 30 warnings** ngày 2026-09-12; thêm **5 JavaScript tests passed**. Suite không gọi provider, loại integration/visual; [API và browser thật](docs/verification/workflow-usability-20260912/REPORT.md) được báo cáo riêng |
 | Online discovery ngoài corpus | **10/10** neo ban đầu + **3/3** holdout; đọc hai trang đầu **12/13** lần đầu, **13/13** sau một retry mạng. Chưa đánh giá độ đúng/đủ pháp lý của 13 câu rộng; xem JSON và giới hạn trong report |
 | Public SSR smoke | Vercel FastAPI/Jinja tại <https://vietlex-legal-rag.vercel.app>: SSR và readiness sẵn sàng; tìm kiếm Supabase và trang toàn văn đã được kiểm tra trực tiếp |
 
@@ -48,6 +48,14 @@ Bản đóng gói reviewer: [hướng dẫn](docs/REVIEWER_GUIDE.md) · [trạng
 ![Giao diện tra cứu Bộ luật Lao động 2019](docs/images/vietlex-search-20260912.png)
 
 Ảnh chụp ngày **2026-09-12** từ [production](https://vietlex-legal-rag.vercel.app), bản runtime `93ec75d`, bằng Chrome thật ở viewport 1440×1050; không mock dữ liệu hoặc sửa DOM. Trang tìm kiếm và toàn văn dùng Supabase. [Ảnh Evaluation Lab](docs/images/vietlex-metrics-20260912.png) và [báo cáo sau sửa](docs/verification/product-fixes-20260912.md) nêu rõ giới hạn kiểm chứng.
+
+### Hồ sơ theo công việc
+
+Tổng quan chỉ rõ bước tiếp theo; thư viện giữ bản đọc theo URL/hash và giải thích số trang đã trích xuất. Người dùng mở lại nguồn không gọi AI, giữ lựa chọn sau tải lại, ghi chú chỗ OCR cần kiểm tra, rồi mở báo cáo có dẫn nguồn và xuất phiên bản đã lưu.
+
+![Tổng quan hồ sơ thực với nguồn chính thức](docs/verification/workflow-usability-20260912/overview-desktop.png)
+
+Ảnh Chrome thật từ local API/MongoDB, ngày 12/09/2026. [Reader mobile thực tế](docs/verification/workflow-usability-20260912/reader-mobile.png) · [Kết quả, lệnh và giới hạn kiểm chứng](docs/verification/workflow-usability-20260912/REPORT.md). Không dùng mock cho các lượt live; test tự động provider-free được tách riêng.
 
 ## Năng lực cốt lõi
 

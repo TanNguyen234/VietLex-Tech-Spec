@@ -1,6 +1,10 @@
 # VietLex: chức năng hữu ích và khoảng trống workflow
 
-## Kết luận dựa trên thử nghiệm
+## Cập nhật sau sửa ngày 12/09
+
+Query planner và PDF reader đã có [13 neo discovery thực đạt sau sửa](evaluation/runs/official-online-20260912T140633Z/REPORT.md); kết quả 5/10 bên dưới là baseline lịch sử, không phải trạng thái mới nhất. [Nghiệm thu workflow tiếp theo](verification/workflow-usability-20260912/REPORT.md) bổ sung mở lại bản đọc, đối chiếu riêng quote gốc, giữ lựa chọn và báo cáo có preview. Các mục còn là đề xuất phải đọc cùng [FEATURE_STATUS](../FEATURE_STATUS.md); chưa hoàn tất full-text hay registry hiệu lực toàn corpus.
+
+## Kết luận từ baseline trước sửa
 
 Vấn đề không đơn thuần là user có ít nút. User chưa được dẫn từ một vấn đề chưa rõ đến một đầu ra có thể sử dụng. Thêm công cụ phân tích sẽ không giải quyết việc không tìm được nguồn ban đầu. Trong [10 câu thử online](verification/online-discovery-20260912/REPORT.md), 5 câu biết số hiệu tìm được nguồn; 5 câu diễn đạt tự nhiên không tìm được nguồn. Đây là ưu tiên cao hơn thêm model.
 

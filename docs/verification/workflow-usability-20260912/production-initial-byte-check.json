@@ -1,0 +1,77 @@
+{
+  "recorded_at": "2026-09-12T15:50:13.949679+00:00",
+  "base_url": "https://vietlex-legal-rag.vercel.app",
+  "checks": [
+    {
+      "path": "/healthz",
+      "status": 200,
+      "sha256": "39bcfc121f792d5490e728361dfb1a4ebe57956dfa841678110b1f3ee3748e6a",
+      "cache_control": "public, max-age=0, must-revalidate"
+    },
+    {
+      "path": "/readyz",
+      "status": 200,
+      "sha256": "0bc270a059af7a6a091cb3a4c789749882e90943dc5def6be358d39ba75eb995",
+      "cache_control": "public, max-age=0, must-revalidate"
+    },
+    {
+      "path": "/",
+      "status": 200,
+      "sha256": "8ea32cdadb08b96eae5feee38866a53e867c0786c81f9b83395d68857e27e1d5",
+      "cache_control": "public, max-age=0, must-revalidate"
+    },
+    {
+      "path": "/search?q=45%2F2019%2FQH14",
+      "status": 200,
+      "sha256": "d224f9501c2f29483e3bc3641793d8e171c55060c60d1ca6945f8a9a53a63230",
+      "cache_control": "public, max-age=0, must-revalidate"
+    },
+    {
+      "path": "/evaluation-lab",
+      "status": 200,
+      "sha256": "946c891d27aa5d006061013ddad0ef78ed021902eb6dafaf9e7c13abdfeab66c",
+      "cache_control": "public, max-age=0, must-revalidate"
+    },
+    {
+      "path": "/workspaces/5b0dfed5-8718-4db6-a4b0-96d3c2026678",
+      "status": 200,
+      "sha256": "cc716f2ee736cdb0415f9c1c9519a08899c492c1c4f53d261ca880d61bd2d9a1",
+      "cache_control": "no-store",
+      "source_library_rendered": true
+    },
+    {
+      "path": "/workspaces/5b0dfed5-8718-4db6-a4b0-96d3c2026678/sources/cdb49180-70b6-447a-a233-9476b4ce1c5e",
+      "status": 200,
+      "sha256": "9c471364ac85a84b2bce9c53702638503a475dc643247c3a3b27167ea5c44df5",
+      "cache_control": "no-store",
+      "saved_reader_rendered": true
+    },
+    {
+      "path": "/workspaces/fddc8168-4194-43f9-919b-e75d6465a963/reports/ff5b6da1-3b87-47c7-bee8-409465cf6596",
+      "status": 200,
+      "sha256": "b847182269d061c8ea54269d290603ddcf75aac27107f36bf732b9988283af8f",
+      "cache_control": "no-store",
+      "report_preview_rendered": true
+    },
+    {
+      "path": "app/static/css/research-workflow.css",
+      "status": 200,
+      "git_blob_match": false,
+      "sha256": "2e7c1ca4489de64a8cf0f8214275a31df46b4468394aa1263041bebc64debea7"
+    },
+    {
+      "path": "app/static/js/workflow-controls.js",
+      "status": 200,
+      "git_blob_match": false,
+      "sha256": "01d88b00caeef4c39a201249cd838e7317d79c4b640966e97a1f3c18bc6da674"
+    },
+    {
+      "path": "app/static/favicon.svg",
+      "status": 200,
+      "git_blob_match": false,
+      "sha256": "645de8a8c6e121c10034a40ea5d9b815eed214cfd152f65f70f010c2b1a7869e"
+    }
+  ],
+  "new_ai_calls": 0,
+  "mutations": 0
+}

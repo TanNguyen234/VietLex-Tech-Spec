@@ -4,3 +4,7 @@ docs/evaluation/runs/**/*.json binary
 docs/evaluation/runs/**/*.md binary
 docs/evaluation/comparisons/**/*.json binary
 docs/evaluation/comparisons/**/*.md binary
+
+# Preserve the exact bytes of the real downloaded Markdown deliverable.
+docs/verification/workflow-usability-20260912/report-export.md binary
+docs/verification/workflow-usability-20260912/*.log -whitespace

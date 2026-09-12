@@ -1,0 +1,15 @@
+{
+  "recorded_at": "2026-09-12T15:50:19.336805+00:00",
+  "runtime_commit": "6011dc37fd0e67e2e92db4ebd4c233017eba9351",
+  "deployment_id": "dpl_DUGQ79ycBNx1GKiR3xy9946RBcT9",
+  "deployment_url": "https://vietlex-legal-o2pn8hg6l-foxys-projects-5fe642e0.vercel.app",
+  "production_url": "https://vietlex-legal-rag.vercel.app",
+  "cli": "Vercel 59.14.0",
+  "ready_state": "READY",
+  "promote_exit_code": 0,
+  "package": "Git archive app, pyproject.toml, requirements-demo.lock, vercel.json, .vercelignore and the two canonical evaluation JSON files. No dirty workspace files.",
+  "commands": [
+    "vercel deploy --cwd tmp/product-deploy-workflow-final --prod --skip-domain --yes --scope foxys-projects-5fe642e0",
+    "vercel promote dpl_DUGQ79ycBNx1GKiR3xy9946RBcT9 --yes --scope foxys-projects-5fe642e0 --cwd tmp/product-deploy-workflow-final"
+  ]
+}

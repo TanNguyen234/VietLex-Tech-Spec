@@ -1,5 +1,7 @@
 # VietLex — Vietnamese Legal RAG
 
+Current feature status and limits are maintained in [FEATURE_STATUS.md](FEATURE_STATUS.md). The [September 12 workflow acceptance](docs/verification/workflow-usability-20260912/REPORT.md) separates provider-free tests from real MongoDB/API/Chrome checks: saved source reads, evidence review notes, retained selection, report versions and exports. These checks do not establish legal correctness or full-corpus coverage.
+
 <div align="center">
 
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
