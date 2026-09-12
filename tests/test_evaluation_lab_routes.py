@@ -4,6 +4,13 @@ import json
 from app.api.dependencies import require_admin
 
 
+def test_evaluation_artifacts_do_not_depend_on_working_directory(monkeypatch, tmp_path):
+    from app.api import evaluation_lab_routes as routes
+    monkeypatch.chdir(tmp_path)
+    assert routes.CURRENT_ANSWER_RUN.is_absolute()
+    assert (routes.CURRENT_ANSWER_RUN / 'manifest.json').is_file()
+
+
 def test_evaluation_lab_route_renders_artifact_provenance(monkeypatch) -> None:
     from app.api.evaluation_lab_routes import router
 

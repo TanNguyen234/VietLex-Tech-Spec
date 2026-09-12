@@ -140,11 +140,16 @@ def test_container_uses_persistent_corpus_paths_without_copying_data() -> None:
 def test_evaluation_lab_canonical_artifacts_are_in_deployment_bundle() -> None:
     from app.api.evaluation_lab_routes import CURRENT_ANSWER_RUN
 
-    run = CURRENT_ANSWER_RUN.as_posix()
+    run = CURRENT_ANSWER_RUN.relative_to(ROOT).as_posix()
     config = json.loads((ROOT / "vercel.json").read_text(encoding="utf-8"))
     ignore = (ROOT / ".vercelignore").read_text(encoding="utf-8")
     dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
     assert "docs/**" not in config["functions"]["app/server.py"]["excludeFiles"]
+    # Vercel traverses directory names without a trailing slash before files.
+    # A file exception is ineffective if its parent is pruned from the walk.
+    parts = run.split('/')
+    for end in range(2, len(parts) + 1):
+        assert '!' + '/'.join(parts[:end]) in ignore.splitlines()
     for name in ("manifest.json", "answer_results.json"):
         assert (ROOT / run / name).is_file()
         assert f"!{run}/{name}" in ignore

@@ -13,10 +13,10 @@ from app.api.dependencies import require_admin
 
 router = APIRouter()
 templates = Jinja2Templates(directory=APP_ROOT / "templates")
-CURRENT_ANSWER_RUN = Path(
+CURRENT_ANSWER_RUN = APP_ROOT.parent / Path(
     "docs/evaluation/runs/answer-v3-golden50-expanded14962-rrf-dbsf-20260903"
 )
-RUNS_ROOT = Path("docs/evaluation/runs")
+RUNS_ROOT = APP_ROOT.parent / "docs/evaluation/runs"
 
 
 def _available_runs() -> list[str]:
