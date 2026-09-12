@@ -157,6 +157,23 @@ async def pin_workspace_evidence(
     return result.modified_count > 0
 
 
+async def update_evidence_review(
+    workspace_id: str, evidence_id: str, review: dict, client_id: str,
+    *, user_id: str | None = None, expected_version: int = 0,
+) -> bool:
+    match = {'evidence_id': evidence_id}
+    if expected_version == 0:
+        match['$or'] = [{'review.version': {'$exists': False}}, {'review.version': 0}]
+    else:
+        match['review.version'] = expected_version
+    result = await get_db().research_workspaces.update_one(
+        {'_id': workspace_id, **_owner(client_id, user_id), 'expires_at': {'$gt': _now()},
+         'evidence': {'$elemMatch': match}, **_size_guard(review)},
+        {'$set': {'evidence.$.review': review, 'updated_at': _now()}},
+    )
+    return result.modified_count > 0
+
+
 async def unpin_workspace_evidence(
     workspace_id: str,
     evidence_id: str,

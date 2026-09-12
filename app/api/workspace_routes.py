@@ -50,6 +50,7 @@ from app.services.deep_research import (
 )
 from app.services.provider_runtime import capture_provider_usage, current_provider_calls
 from app.services.official_query_planner import prepare_research_plan
+from app.services.workspace_presenter import source_library, workspace_summary
 from app.services.workspace_ocr import extract_ocr_document
 from app.services.workspace_documents import (
     DocumentExtractionError,
@@ -122,6 +123,9 @@ def _evidence_snapshot(evidence: list[dict]) -> list[dict]:
         "source_kind",
         "workspace_document_id",
         "clause_id",
+        "source_sha256", "document_sha256", "attachment_url", "extraction_method",
+        "retrieved_at", "page_numbers", "page_window", "legal_effect_status",
+        "reported_effective_from", "review",
     }
     return [
         {key: value for key, value in item.items() if key in fields}
@@ -197,6 +201,8 @@ async def workspace_detail(
         "research_workspace.html",
         {
             "workspace": workspace,
+            "source_library": source_library(workspace),
+            "workspace_summary": workspace_summary(workspace),
             "workspace_user": current_user,
             "comparison_models": available_model_choices() if current_user and current_user.get("email_verified") else [],
             "official_web_coverage": "Tìm trên cổng Chính phủ và Brave Search, chỉ giữ domain pháp luật chính thức (nhánh Brave có dùng API)." if settings.OFFICIAL_BRAVE_SEARCH_ENABLED else "Tìm trực tiếp trên vanban.chinhphu.vn; tìm web đa nguồn chưa bật.",

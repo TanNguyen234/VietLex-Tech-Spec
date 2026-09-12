@@ -52,6 +52,20 @@
     invalid_evidence_id: 'Mã bằng chứng không hợp lệ.',
     evidence_linked: 'Đã liên kết căn cứ · cần kiểm chứng nội dung'
   };
+  const sourceErrors = {
+    source_transport_error: 'Nguồn phản hồi chậm hoặc mất kết nối. Có thể thử lại.',
+    source_body_too_large: 'Tệp nguồn vượt giới hạn đọc trực tuyến. Hãy mở bản gốc.',
+    source_page_out_of_range: 'Trang yêu cầu không nằm trong văn bản.',
+    source_page_window_text_limit: 'Nhóm trang có quá nhiều chữ. Hãy chọn ít trang hơn.',
+    source_malformed_pdf: 'Chưa đọc được cấu trúc PDF này. Hãy đối chiếu bản gốc.',
+    source_encrypted_pdf: 'PDF được bảo vệ; không thể trích xuất nội dung.',
+    ocr_file_limit: 'Nhóm trang quá lớn để OCR. Hãy chọn một trang.',
+    ocr_timeout: 'OCR chưa hoàn tất trong thời gian cho phép. Hãy thử nhóm nhỏ hơn.',
+    ocr_incomplete: 'OCR chưa trả đủ nội dung. Hãy thử từng trang.',
+    ocr_provider_error: 'Dịch vụ OCR chưa khả dụng. Nội dung không được suy đoán.',
+    source_http_403: 'Cổng nguồn đang từ chối truy cập. Hãy mở bản gốc.',
+    source_http_404: 'Không tìm thấy tệp tại địa chỉ nguồn.'
+  };
   function evidenceLinks(ids, payload) {
     const cell = element('td');
     ids.forEach(id => {
@@ -156,6 +170,11 @@
     });
     table.append(head, body); target.append(table);
   }
+  function operationError(payload, status) {
+    if (status === 429) return JSON.stringify(payload).includes('daily_quota') ? 'Đã hết lượt hôm nay (UTC). Nguồn và kết quả đã lưu vẫn đọc được.' : 'Đã chạm giới hạn lượt/phút. Hãy đợi rồi thử lại; nội dung nhập vẫn còn.';
+    if (status === 401 || status === 403) return 'Phiên đăng nhập đã thay đổi. Sao chép nội dung đang nhập rồi tải lại trang.';
+    return labels[payload.detail] || labels[payload.status] || 'Chưa hoàn tất được yêu cầu. Nội dung nhập vẫn còn để bạn thử lại.';
+  }
   function sourceLinks(ids, payload) {
     const group = element('div', undefined, 'analysis-source-links');
     const cell = evidenceLinks(ids, payload); group.append(...cell.childNodes); return group;
@@ -249,6 +268,9 @@
         target.textContent = response.status === 429 ? (daily ? 'Đã hết quota hôm nay (UTC). Nguồn đã lưu vẫn đọc được; thử lại sau khi quota đặt lại.' : 'Đã chạm giới hạn lượt/phút. Vui lòng đợi rồi thử lại.') : 'Không đọc được nguồn. Kiểm tra phiên đăng nhập và thử lại.';
       } else {
         renderSources(payload, target);
+        if (document.body.dataset.sourceReader && payload.analysis_id && payload.result?.sources?.length) {
+          history.replaceState(null, '', '/workspaces/' + workspaceId + '/sources/' + payload.analysis_id);
+        }
         if (payload.result?.errors?.length && pageLimit > 1) {
           const retry = element('button', 'Thử đọc 1 trang', 'button button-quiet'); retry.type = 'button';
           retry.addEventListener('click', () => readOfficial(url, target, pageStart, useOcr, 1)); target.append(retry);
@@ -262,6 +284,7 @@
     target.append(element('p', 'Nội dung trích xuất từ nguồn; chưa xác minh hiệu lực. OCR có thể đọc sai: đối chiếu bản gốc trước khi sử dụng.', 'legal-warning'));
     (payload.result?.sources || []).forEach((source,index) => {
       const card = element('details'), link = element('a', source.url);
+      card.id = 'stored-source-' + index;
       link.href = source.url; link.target = '_blank'; link.rel = 'noopener noreferrer';
       card.open = true;
       card.append(element('summary', source.title || source.url), link);
@@ -273,9 +296,25 @@
         attachment.addEventListener('click', () => readOfficial(url, target)); card.append(attachment);
       });
       if (source.page_count) card.append(element('p', `Đang đọc trang ${source.page_start}–${source.page_end}/${source.page_count}. Đây là phạm vi trang, không phải phần trăm đúng luật.`));
+      if (payload.analysis_id && !document.body.dataset.sourceReader) {
+        const reopen = element('a', 'Mở trong màn hình đọc nguồn');
+        reopen.href = '/workspaces/' + workspaceId + '/sources/' + payload.analysis_id + '#stored-source-' + index; card.append(reopen);
+      }
       if (source.reported_effective_from) card.append(element('p', `Ngày hiệu lực nguồn ghi: ${source.reported_effective_from}. Chưa kiểm tra văn bản sửa đổi hoặc tình trạng hiện hành.`, 'legal-warning'));
       if (source.parser_recovered) card.append(element('p', 'PDF có lỗi cấu trúc đã được trình đọc khôi phục. Hãy đối chiếu nội dung với bản gốc.', 'legal-warning'));
       const text = element('pre', source.text || 'Chưa đọc được nội dung điều khoản.', 'source-excerpt'); card.append(text);
+      text.tabIndex = 0; text.setAttribute('aria-label', 'Nội dung nguồn; chọn đoạn để ghim');
+      if (source.page_count) {
+        const controls = element('div', undefined, 'source-window-controls');
+        const startLabel = element('label', 'Đọc từ trang'), start = element('input'); start.type = 'number'; start.min = '1'; start.max = String(source.page_count); start.value = String(source.page_start || 1); startLabel.append(start);
+        const limitLabel = element('label', 'Số trang mỗi lượt'), limit = element('select');
+        [1,2,3,5].forEach(n => { const option = element('option', String(n)); option.value = String(n); option.selected = n === 2; limit.append(option); }); limitLabel.append(limit);
+        const modeLabel = element('label', 'Cách đọc'), mode = element('select');
+        [['false','Trích xuất chữ'],['true','OCR ảnh quét (dùng AI)']].forEach(([value,label]) => { const option = element('option', label); option.value=value; option.selected = value === String(source.method === 'vertex_ocr' || source.requires_ocr); mode.append(option); }); modeLabel.append(mode);
+        const go = element('button', 'Đọc nhóm trang', 'button button-quiet'); go.type = 'button';
+        go.addEventListener('click', () => { if (start.reportValidity() && Number.isInteger(Number(start.value))) readOfficial(source.url, target, Number(start.value), mode.value === 'true', Number(limit.value)); });
+        controls.append(startLabel, limitLabel, modeLabel, go); card.append(controls);
+      }
       if (source.requires_ocr) {
         const ocr = element('button', 'Đọc ảnh quét bằng OCR (tối đa 5 trang)', 'button button-primary'); ocr.type = 'button';
         ocr.addEventListener('click', () => readOfficial(source.url, target, source.page_start || 1, true)); card.append(ocr);
@@ -287,18 +326,30 @@
       if (source.truncated && !source.page_count) card.append(element('p', `Chỉ lưu ${source.stored_characters}/${source.extracted_characters} ký tự.`, 'legal-warning'));
       // Pin only exact server-stored excerpts; requests include no replacement source body.
       const form = element('form'), quote = element('textarea'), button = element('button', 'Ghim trích đoạn', 'button button-quiet');
+      const useSelection = element('button', 'Dùng đoạn đang bôi chọn', 'button button-quiet'); useSelection.type = 'button';
+      const selectionStatus = element('p', '', 'muted'); selectionStatus.setAttribute('role', 'status');
+      useSelection.addEventListener('click', () => {
+        const selection = window.getSelection();
+        const chosen = selection?.toString() || '';
+        if (!selection?.rangeCount || !text.contains(selection.anchorNode) || !text.contains(selection.focusNode) || !chosen.trim()) { selectionStatus.textContent = 'Bôi chọn một đoạn trong khung nội dung nguồn phía trên.'; return; }
+        if (chosen.length > 3000) { selectionStatus.textContent = 'Trích đoạn vượt 3.000 ký tự. Hãy chọn đoạn ngắn hơn.'; return; }
+        quote.value = chosen; selectionStatus.textContent = `Đã chọn ${chosen.length}/3.000 ký tự. Kiểm tra rồi ghim.`;
+      });
       quote.name = 'quote'; quote.maxLength = 3000; quote.required = true; quote.placeholder = 'Dán nguyên văn trích đoạn từ nội dung phía trên';
-      const label = element('label', 'Trích đoạn cần ghim'); label.append(quote); form.append(label, button);
+      const label = element('label', 'Trích đoạn cần ghim'); label.append(quote); form.append(useSelection, label, selectionStatus, button);
       form.addEventListener('submit', async event => {
         event.preventDefault(); button.disabled = true;
         const data = new FormData(form); data.set('csrf_token', csrf); data.set('analysis_id', payload.analysis_id); data.set('source_index', String(index));
-        try { const response = await fetch('/workspaces/' + workspaceId + '/sources/pin', {method:'POST',body:data}); if (!response.ok) throw new Error(); location.reload(); }
+        try { const response = await fetch('/workspaces/' + workspaceId + '/sources/pin', {method:'POST',body:data}); if (!response.ok) throw new Error(); location.assign('/workspaces/' + workspaceId + '#sources'); }
         catch { button.textContent = 'Chưa ghim được; kiểm tra trích đoạn rồi thử lại'; }
         finally { button.disabled = false; }
       });
       if (payload.analysis_id && source.text?.trim()) card.append(form); target.append(card);
     });
-    (payload.result?.errors || []).forEach(error => target.append(element('p', error.url + ' · ' + error.kind, 'legal-warning')));
+    (payload.result?.errors || []).forEach(error => {
+      target.append(element('p', sourceErrors[error.kind] || 'Chưa đọc được nguồn. Mở bản gốc hoặc thử nhóm trang nhỏ hơn.', 'legal-warning'));
+      const details = element('details'); details.append(element('summary', 'Thông tin lỗi nguồn'), element('p', error.url + ' · ' + error.kind)); target.append(details);
+    });
     (payload.result?.duplicates || []).forEach(group => target.append(element('p', 'Nội dung trùng: ' + group.urls.join(' · '), 'muted')));
   }
   function renderModels(payload, target) {
@@ -468,7 +519,7 @@
       if (result) { result.setAttribute('aria-busy', 'true'); result.textContent = 'Đang rà soát các điều khoản đã chọn…'; }
       try {
         const response = await fetch(contractForm.action, {method: 'POST', body: data});
-        const payload = await response.json(); renderAnalysis(payload);
+        const payload = await response.json(); if (!response.ok && !payload.analysis_id) { result.textContent = operationError(payload, response.status); return; } renderAnalysis(payload);
         if (!response.ok) throw new Error(payload.detail || payload.status || 'review_failed');
       } catch { if (result && !result.children.length) result.textContent = 'Không thể hoàn tất rà soát lúc này.'; }
       finally { pending = false; button.disabled = false; result?.setAttribute('aria-busy', 'false'); }
@@ -484,9 +535,9 @@
       try {
         const response = await fetch(planForm.action, {method: 'POST', body: new FormData(planForm)});
         const payload = await response.json();
-        if (!response.ok) throw new Error(payload.detail || 'plan_failed');
+        if (!response.ok) throw new Error(operationError(payload, response.status));
         renderPlan(payload);
-      } catch { if (researchPlan) researchPlan.textContent = 'Không thể tạo kế hoạch lúc này.'; }
+      } catch (error) { if (researchPlan) researchPlan.textContent = error.message || 'Không thể tạo kế hoạch lúc này.'; }
       finally { pending = false; button.disabled = false; }
       return;
     }
@@ -503,9 +554,9 @@
       try {
         const response = await fetch(runForm.action, {method: 'POST', body: data});
         const payload = await response.json();
-        if (!response.ok) throw new Error(payload.detail || 'research_failed');
+        if (!response.ok) throw new Error(operationError(payload, response.status));
         renderResearch(payload);
-      } catch { if (researchResult) researchResult.textContent = 'Không thể hoàn tất nghiên cứu lúc này.'; }
+      } catch (error) { if (researchResult) researchResult.textContent = error.message || 'Không thể hoàn tất nghiên cứu lúc này.'; }
       finally { pending = false; runForm.querySelector('button').disabled = false; researchResult?.setAttribute('aria-busy', 'false'); }
       return;
     }
@@ -525,7 +576,7 @@
     } else if (form.dataset.analysis === 'redline') {
       if (data.get('document_a_id') === data.get('document_b_id')) { result.textContent = 'Chọn hai tài liệu khác nhau.'; return; }
     } else {
-      if (!selected().length) { result.textContent = 'Chọn ít nhất một bằng chứng.'; return; }
+      if (!selected().length || selected().length > 10) { result.textContent = 'Chọn từ 1 đến 10 bằng chứng. Vào tab Nguồn để điều chỉnh phạm vi.'; return; }
       data.set('evidence_ids', selected().join(','));
     }
     pending = true;
@@ -533,7 +584,7 @@
     result.setAttribute('aria-busy', 'true'); result.textContent = 'Đang phân tích trong phạm vi bằng chứng đã chọn…';
     try {
       const response = await fetch(form.action, {method: 'POST', body: data});
-      const payload = await response.json(); renderAnalysis(payload);
+      const payload = await response.json(); if (!response.ok && !payload.analysis_id) { result.textContent = operationError(payload, response.status); return; } renderAnalysis(payload);
       if (payload.analysis_id) {
           const names = { selected_evidence: 'Phân tích bằng chứng', comparison: 'So sánh văn bản', obligation_matrix: 'Nghĩa vụ và quyền' };
           const entry = element('article'); entry.append(element('strong', names[payload.kind] || 'Kết quả phân tích'));
@@ -551,7 +602,6 @@
       document.querySelectorAll('[data-analysis] button').forEach(button => { button.disabled = false; });
     }
   });
-  const theme = localStorage.getItem('vietlex-theme');
-  if (theme) document.documentElement.dataset.theme = theme;
+  try { const theme = localStorage.getItem('vietlex-theme'); if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme; } catch { /* Selection and forms still work without browser storage. */ }
   showScope();
 })();

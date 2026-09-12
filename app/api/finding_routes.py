@@ -7,6 +7,7 @@ from app.api.workspace_routes import _owned_workspace, _validate_id, _workspace_
 from app.config import get_settings
 from app.rate_limit import limiter
 from app.research_database import update_finding_review
+from app.services.report_deliverables import report_sources
 
 router = APIRouter()
 settings = get_settings()
@@ -26,7 +27,9 @@ async def _review(request, workspace_id, analysis_id, current_user):
 @limiter.limit(settings.SESSION_RATE_LIMIT)
 async def finding_board(request: Request, workspace_id: str, analysis_id: str, current_user=Depends(optional_user)):
     analysis, _, _ = await _review(request, workspace_id, analysis_id, current_user)
-    return _workspace_page(request, "finding_board.html", {"analysis": analysis, "workspace_id": workspace_id})
+    sources = {source['id']: source for source in report_sources(analysis)}
+    return _workspace_page(request, "finding_board.html", {"analysis": analysis, "workspace_id": workspace_id,
+                                                          "sources": sources, "workspace_user": current_user})
 
 
 @router.post("/workspaces/{workspace_id}/findings/{analysis_id}/{finding_index}")

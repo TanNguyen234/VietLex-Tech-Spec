@@ -55,3 +55,16 @@ def test_print_view_escapes_user_content_and_unknown_format_is_rejected(client):
     assert response.status_code == 200
     assert "<script>" not in response.text
     assert client.get("/workspaces/w-1/reports/a-1/export?format=exe").status_code == 422
+
+
+def test_report_preview_has_source_anchors_and_escapes_active_content():
+    from app.services.report_deliverables import report_preview
+    analysis = _analysis()
+    analysis['markdown'] = '# Memo\n\n- **Check** [e-1]\n\n<script>alert(1)</script>\n[x](javascript:alert(2))'
+    html = report_preview(analysis)
+    assert '<h1>Memo</h1>' in html
+    assert '<strong>Check</strong>' in html
+    assert 'href="#report-source-e-1"' in html
+    assert '<script>' not in html
+    assert 'href="javascript:' not in html
+    assert analysis['markdown'].startswith('# Memo')

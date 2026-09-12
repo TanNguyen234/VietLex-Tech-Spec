@@ -26,6 +26,7 @@
       document.querySelectorAll('[data-workspace-panel]').forEach(panel => {
         panel.hidden = !panel.dataset.workspacePanel.split(' ').includes(view);
       });
+      document.body.dataset.workspaceView = view;
       views.forEach(link => {
         if (link.dataset.workspaceView === view) link.setAttribute('aria-current', 'page');
         else link.removeAttribute('aria-current');
@@ -70,14 +71,14 @@
       if (method === 'GET') url.search = new URLSearchParams(data).toString();
       const response = await fetch(url, {method, body: method === 'GET' ? undefined : data, credentials: 'same-origin'});
       if (!response.ok) {
-        message.textContent = response.status === 403 ? 'Phiên làm việc đã thay đổi. Tải lại trang rồi thử lại.' : response.status === 409 ? 'Không thể thực hiện thay đổi này. Kiểm tra trạng thái tài khoản và thử lại.' : response.status === 429 ? 'Bạn thao tác quá nhanh. Vui lòng đợi một lát.' : 'Không thể hoàn tất. Vui lòng thử lại sau.';
+        message.textContent = response.status === 403 ? 'Phiên làm việc đã thay đổi. Tải lại trang rồi thử lại.' : response.status === 409 ? 'Dữ liệu đã thay đổi hoặc chạm giới hạn lưu trữ. Sao chép nội dung đang sửa, tải lại trang rồi thử lại.' : response.status === 429 ? 'Bạn thao tác quá nhanh. Vui lòng đợi một lát.' : 'Không thể hoàn tất. Vui lòng thử lại sau.';
         return;
       }
       if (form.dataset.target) {
         const target = document.querySelector(form.dataset.target);
         // Only same-origin server-rendered, Jinja-escaped fragments are inserted.
         target.innerHTML = await response.text(); message.textContent = 'Đã cập nhật kết quả.';
-      } else if (response.redirected) location.assign(response.url);
+      } else if (response.redirected) { form.dataset.saved = 'true'; location.assign(response.url); }
       else { message.textContent = 'Đã lưu thay đổi.'; }
     } catch { message.textContent = 'Mất kết nối. Kiểm tra mạng và thử lại.'; }
     finally { delete form.dataset.busy; buttons.forEach(button => button.disabled = false); }

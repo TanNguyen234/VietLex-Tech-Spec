@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="vi" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Đọc nguồn đã lưu · VietLex</title>
+<link rel="stylesheet" href="/static/css/vietlex.css"><link rel="stylesheet" href="/static/css/vietlex-enhancements.css"><link rel="stylesheet" href="/static/css/vietlex-redesign.css"><link rel="stylesheet" href="/static/css/research-workflow.css">
+<script src="/static/js/research-workspace.js" defer></script><script src="/static/js/product.js" defer></script><link rel="icon" type="image/svg+xml" href="/static/favicon.svg"></head>
+<body data-workspace-id="{{ workspace.workspace_id }}" data-csrf-token="{{ csrf_token }}" data-source-reader="true">
+{% include "product_nav.html" %}
+<main class="source-reader-page"><a href="/workspaces/{{ workspace.workspace_id }}#sources">← Nguồn trong hồ sơ</a>
+<header class="reader-heading"><span class="eyebrow">Bản đọc đã lưu</span><h1>Đọc, đối chiếu và chọn căn cứ</h1><p>Mở lại bản đọc không gọi AI. Chọn đoạn cần dùng để ghim; chỉ đọc tiếp hoặc OCR khi bạn yêu cầu.</p></header>
+<section><div id="analysis-result" data-analysis-view class="analysis-result"></div><script type="application/json" data-saved-analysis>{{ {'analysis_id':analysis.analysis_id, 'kind':analysis.kind, 'status':analysis.status, 'result':analysis.result}|tojson }}</script>
+<noscript>{% for source in analysis.result.sources %}<h2>{{ source.title }}</h2><pre>{{ source.text }}</pre><a href="{{ source.url }}" rel="noopener noreferrer">Mở nguồn gốc</a>{% endfor %}<p>Bật JavaScript để chọn đoạn, OCR hoặc đọc trang tiếp theo.</p></noscript></section>
+</main></body></html>

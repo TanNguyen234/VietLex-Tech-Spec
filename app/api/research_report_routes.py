@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from fastapi.responses import Response, RedirectResponse
 from typing import Literal
 from app.api.workspace_routes import _workspace_page, _validate_id
-from app.services.report_deliverables import report_body, report_sources, report_markdown, report_docx
+from app.services.report_deliverables import report_body, report_sources, report_markdown, report_docx, report_preview
 
 from app.api.dependencies import optional_user, verify_csrf
 from app.api.workspace_routes import _evidence_snapshot, _owned_workspace, _selected
@@ -39,7 +39,7 @@ async def _owned_report(request, workspace_id, analysis_id, current_user):
 async def report_editor(request: Request, workspace_id: str, analysis_id: str, current_user=Depends(optional_user)):
     analysis, _, _ = await _owned_report(request, workspace_id, analysis_id, current_user)
     return _workspace_page(request, "report_editor.html", {"workspace_id": workspace_id, "analysis": analysis,
-        "body": report_body(analysis), "sources": report_sources(analysis), "workspace_user": current_user})
+        "body": report_body(analysis), "preview": report_preview(analysis), "sources": report_sources(analysis), "workspace_user": current_user})
 
 
 @router.post("/workspaces/{workspace_id}/reports/{analysis_id}")

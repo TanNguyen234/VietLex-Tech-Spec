@@ -6,6 +6,46 @@ from io import BytesIO
 from zipfile import ZipFile, ZIP_DEFLATED
 from xml.sax.saxutils import escape
 from urllib.parse import urlsplit
+from html import escape as html_escape
+
+
+def report_preview(analysis: dict) -> str:
+    """Render the report's headings, lists and source references; no active Markdown links/HTML."""
+    sources = {source['id']: source for source in report_sources(analysis)}
+
+    def inline(value):
+        value = html_escape(value)
+        value = re.sub(r'\*\*([^*]+)\*\*', r'<strong>\1</strong>', value)
+
+        def references(match):
+            ids = [item.strip() for item in match.group(1).split(',')]
+            if not ids or any(identifier not in sources for identifier in ids):
+                return match.group(0)
+            return ' · '.join(
+                '<a href="#report-source-' + html_escape(identifier, quote=True) + '">' +
+                html_escape(sources[identifier]['citation'] or identifier) + '</a>' for identifier in ids)
+        return re.sub(r'\[([A-Za-z0-9, -]+)\](?!\()', references, value)
+
+    blocks = []
+    in_list = False
+    for line in report_body(analysis).splitlines():
+        is_item = line.startswith('- ')
+        if in_list and not is_item:
+            blocks.append('</ul>')
+            in_list = False
+        if is_item:
+            if not in_list:
+                blocks.append('<ul>')
+                in_list = True
+            blocks.append('<li>' + inline(line[2:]) + '</li>')
+        elif match := re.match(r'^(#{1,4})\s+(.+)$', line):
+            tag = 'h' + str(len(match.group(1)))
+            blocks.append(f'<{tag}>' + inline(match.group(2)) + f'</{tag}>')
+        elif line.strip():
+            blocks.append('<p>' + inline(line) + '</p>')
+    if in_list:
+        blocks.append('</ul>')
+    return '\n'.join(blocks)
 
 
 def report_body(analysis: dict) -> str:

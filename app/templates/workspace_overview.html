@@ -1,0 +1,10 @@
+{% set summary = workspace_summary|default({}) %}
+<section id="overview" class="workflow-overview" data-workspace-panel="overview">
+<div class="overview-intro"><span class="eyebrow">Tiến độ hồ sơ</span><h2>Từ câu hỏi đến bản ghi nhớ có căn cứ</h2><p>Mỗi bước giữ nguồn và phần chưa rõ để tiếp tục công việc. Số lượng bên dưới là trạng thái hồ sơ, không phải điểm đúng luật.</p></div>
+<div class="workflow-steps">
+<a href="#sources"><span class="step-number">01</span><h3>Thu thập căn cứ</h3><strong>{{ summary.sources|default(0) }} trích đoạn</strong><p>Tìm nguồn ngoài kho, đọc bản gốc và ghim nội dung cần dùng.</p></a>
+<a href="#sources"><span class="step-number">02</span><h3>Đối chiếu nguồn</h3><strong>{{ summary.text_checked|default(0) }}/{{ summary.sources|default(0) }} đã đối chiếu chữ</strong><p>{{ summary.follow_up|default(0) }} cần làm rõ. Chưa xác nhận hiệu lực hiện hành.</p></a>
+<a href="#documents"><span class="step-number">03</span><h3>Rà soát tài liệu</h3><strong>{{ summary.documents|default(0) }} tài liệu</strong><p>Tách điều khoản, chọn căn cứ và theo dõi các phát hiện.</p></a>
+<a href="#reports"><span class="step-number">04</span><h3>Hoàn tất báo cáo</h3><strong>{{ summary.reports|default(0) }} bản đã lưu</strong><p>Chỉnh sửa, lưu phiên bản và xuất DOCX hoặc in PDF.</p></a></div>
+<div class="next-action"><div><h3>{% if not workspace.evidence %}Bắt đầu bằng một nguồn có thể kiểm tra{% elif summary.follow_up|default(0) %}Có căn cứ cần làm rõ{% else %}Chọn căn cứ cho câu hỏi tiếp theo{% endif %}</h3><p>Vào Nguồn để chọn trích đoạn, rồi chuyển sang Phân tích. Lựa chọn được giữ khi đổi tab.</p></div><a class="button button-primary" href="#sources">Mở nguồn nghiên cứu →</a></div>
+</section>

@@ -3,13 +3,15 @@
 import asyncio
 import hashlib
 import uuid
+from datetime import datetime, timezone
+from typing import Literal
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from app.api.dependencies import optional_user, verify_csrf
-from app.api.workspace_routes import _owned_workspace
+from app.api.workspace_routes import _owned_workspace, _validate_id, _workspace_page
 from app.config import get_settings
 from app.rate_limit import limiter
-from app.research_database import save_workspace_analysis, pin_workspace_evidence
+from app.research_database import save_workspace_analysis, pin_workspace_evidence, update_evidence_review
 from app.services.provider_runtime import capture_provider_usage, current_provider_calls
 from app.services.trusted_source_reader import (
     read_source,
@@ -19,6 +21,44 @@ from app.services.trusted_source_reader import (
 )
 
 router = APIRouter()
+
+
+@router.get('/workspaces/{workspace_id}/sources/{analysis_id}')
+@limiter.limit(get_settings().SESSION_RATE_LIMIT)
+async def saved_source_reader(request: Request, workspace_id: str, analysis_id: str,
+                              current_user=Depends(optional_user)):
+    _validate_id(analysis_id, 'analysis')
+    workspace, _, _ = await _owned_workspace(request, workspace_id, current_user)
+    analysis = next((item for item in workspace.get('analyses', [])
+                     if item.get('analysis_id') == analysis_id and item.get('kind') == 'trusted_sources'), None)
+    if analysis is None:
+        raise HTTPException(404, 'source_not_found')
+    return _workspace_page(request, 'source_reader.html', {
+        'workspace': workspace, 'analysis': analysis, 'workspace_user': current_user})
+
+
+@router.post('/workspaces/{workspace_id}/evidence/{evidence_id}/review')
+@limiter.limit(get_settings().SESSION_RATE_LIMIT)
+async def evidence_review(request: Request, workspace_id: str, evidence_id: str,
+                          status: Literal['to_check', 'text_checked', 'follow_up'] = Form(...),
+                          revision: int = Form(..., ge=0), note: str = Form('', max_length=2000),
+                          _csrf: str = Depends(verify_csrf), current_user=Depends(optional_user)):
+    _validate_id(evidence_id, 'evidence')
+    workspace, client_id, user_id = await _owned_workspace(request, workspace_id, current_user)
+    evidence = next((item for item in workspace.get('evidence', []) if item.get('evidence_id') == evidence_id), None)
+    if evidence is None:
+        raise HTTPException(404, 'evidence_not_found')
+    previous = evidence.get('review') or {}
+    if previous.get('version', 0) != revision:
+        raise HTTPException(409, 'evidence_changed_reload')
+    event = {'status': status, 'note': note.strip(), 'version': revision + 1,
+             'reviewed_at': datetime.now(timezone.utc).isoformat(), 'reviewer_id': user_id or client_id}
+    review = {**event, 'history': [*(previous.get('history') or [])[-9:], event]}
+    if not await update_evidence_review(workspace_id, evidence_id, review, client_id,
+                                        user_id=user_id, expected_version=revision):
+        raise HTTPException(409, 'evidence_changed_reload')
+    return RedirectResponse(f'/workspaces/{workspace_id}#evidence-{evidence_id}', status_code=303,
+                            headers={'Cache-Control': 'no-store'})
 
 
 @router.post("/workspaces/{workspace_id}/analyses/sources")
