@@ -78,23 +78,23 @@
   function scoreText(value){return typeof value==='number'?value.toFixed(3):'Chưa có điểm';}
 
   function renderCodeEvaluation(panel,evaluation){
-    panel.append(make('h3','Code evaluation — deterministic','evaluation-title'));
+    panel.append(make('h3','Kiểm tra tự động của lượt trả lời','evaluation-title'));
     const table=make('table',undefined,'evaluation-table');const body=document.createElement('tbody');
-    (evaluation.checks||[]).forEach(check=>{const row=document.createElement('tr');const badge=make('span',check.status==='pass'?'PASS':'FAIL',`check-badge ${check.status}`);const state=document.createElement('td');state.append(badge);row.append(make('th',check.label),state,make('td',String(check.value??'N/A')),make('td',check.meaning));body.append(row);});table.append(body);panel.append(table);
+    (evaluation.checks||[]).forEach(check=>{const row=document.createElement('tr');const badge=make('span',check.status==='pass'?'Đạt kiểm tra':'Không đạt',`check-badge ${check.status}`);const state=document.createElement('td');state.append(badge);row.append(make('th',check.label),state,make('td',String(check.value??'N/A')),make('td',check.meaning));body.append(row);});table.append(body);panel.append(table);
     if(evaluation.timings?.length){panel.append(make('h4','Thời gian quan sát'));const timing=make('table',undefined,'evaluation-table timing-table');const timingBody=document.createElement('tbody');evaluation.timings.forEach(item=>{const row=document.createElement('tr');row.append(make('th',item.label),make('td',`${Number(item.seconds).toFixed(4)}s`));timingBody.append(row);});timing.append(timingBody);panel.append(timing);}
     panel.append(make('p',evaluation.limitations?.[0]||'','muted'));
   }
 
   function renderRagas(panel,result){
-    const ragas=result.ragas||{};panel.append(make('h3','Ragas — LLM-as-a-judge','evaluation-title'));
-    if(ragas.status==='ok'){const grid=make('div',undefined,'metric-grid');grid.append(metricCard('Faithfulness',scoreText(ragas.faithfulness),'Được context hỗ trợ'),metricCard('Answer Relevance',scoreText(ragas.answer_relevance),'Trả lời đúng trọng tâm'));panel.append(grid);}
+    const ragas=result.ragas||{};panel.append(make('h3','Đánh giá tham khảo bằng AI (Ragas)','evaluation-title'));
+    if(ragas.status==='ok'){const grid=make('div',undefined,'metric-grid');grid.append(metricCard('Faithfulness',scoreText(ragas.faithfulness),'Mức bám sát đoạn nguồn, thang 0–1; không xác nhận hiệu lực hoặc độ đúng của nguồn.'),metricCard('Answer Relevance',scoreText(ragas.answer_relevance),'Mức trả lời đúng trọng tâm, thang 0–1; không phải xác nhận kết luận đúng luật.'));panel.append(grid);}
     else{panel.append(make('p','Không có điểm Ragas','ragas-empty'));const reason=ragas.error?.message||({disabled:'Deployment chưa bật Ragas.',quota_exceeded:'Đã hết quota Ragas hôm nay.',skipped_no_context:'Không có context để đánh giá.'}[ragas.status])||`Trạng thái: ${ragas.status||'unavailable'}`;panel.append(make('p',reason,'muted'));}
     const catalog=make('div',undefined,'metric-explainer');(result.ragas_metrics||[]).forEach(metric=>{const value=metric.applicable?scoreText(ragas[metric.key]):(metric.display_value||'N/A');const card=metricCard(metric.label,value,metric.meaning||'');if(!metric.applicable)card.append(make('small',metric.reason_not_applicable||''));card.append(make('small',`Giới hạn: ${metric.limitation||'Không có mô tả.'}`));catalog.append(card);});panel.append(catalog);
   }
 
   async function evaluateAnswer(button,runRagas=false){
     const panel=button.closest('.message-card').querySelector('.evaluation-panel');panel.hidden=false;panel.textContent=runRagas?'Đang chạy Ragas…':'Đang đọc số liệu request…';const data=new FormData();data.set('csrf_token',csrf());data.set('run_ragas',String(runRagas));
-    try{const response=await fetch(`/api/evaluation/${encodeURIComponent(button.dataset.traceId)}`,{method:'POST',body:data,credentials:'same-origin'});const result=await response.json();if(!result.code_evaluation){panel.textContent=response.status===429?'Đã đạt giới hạn đánh giá. Vui lòng thử lại sau.':'Không thể chạy đánh giá lúc này.';return;}panel.replaceChildren();renderCodeEvaluation(panel,result.code_evaluation);if(runRagas)renderRagas(panel,result);else{const ragas=make('button','Chạy Ragas (tùy chọn)','button button-quiet');ragas.type='button';ragas.addEventListener('click',()=>evaluateAnswer(button,true));panel.append(ragas);}}catch{panel.textContent='Không thể kết nối dịch vụ đánh giá.';}
+    try{const response=await fetch(`/api/evaluation/${encodeURIComponent(button.dataset.traceId)}`,{method:'POST',body:data,credentials:'same-origin'});const result=await response.json();if(!result.code_evaluation){panel.textContent=response.status===429?'Đã đạt giới hạn đánh giá. Vui lòng thử lại sau.':'Không thể chạy đánh giá lúc này.';return;}panel.replaceChildren();renderCodeEvaluation(panel,result.code_evaluation);if(runRagas)renderRagas(panel,result);else{const ragas=make('button','Nhờ AI đánh giá mức bám nguồn (tùy chọn)','button button-quiet');ragas.type='button';ragas.addEventListener('click',()=>evaluateAnswer(button,true));panel.append(ragas);}}catch{panel.textContent='Không thể kết nối dịch vụ đánh giá.';}
   }
 
   function renderRetrievalTrace(panel,trace){

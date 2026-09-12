@@ -10,6 +10,7 @@
 {% endmacro %}
 {% block content %}<div class="evaluation-content{{ ' evaluation-lab-page' if admin_view else '' }}">
   <header class="research-page-heading"><span class="eyebrow">Chất lượng và kiểm chứng</span><h1>Chất lượng được kiểm chứng như thế nào?</h1><p>Kết quả dưới đây được đọc từ lần đánh giá đã lưu. Mở trang này không chạy đánh giá mới.</p></header>
+  {% include 'metric_guide.html' %}
   {% if admin_view %}<form class="run-selector" method="get"><label for="evaluation-run">Lần đánh giá đã lưu</label><select id="evaluation-run" name="run">{% for run in runs %}<option value="{{ run }}" {% if run == selected_run %}selected{% endif %}>{{ run }}</option>{% endfor %}</select><button class="button button-primary" type="submit">Xem đánh giá</button></form>{% endif %}
   {% if lab.status == 'available' %}
   {% if lab.record_count is defined %}

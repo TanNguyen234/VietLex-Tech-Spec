@@ -9,6 +9,7 @@
 <article class="admin-kpi {{ 'admin-kpi-alert' if stats.get('technical_error_count',0) else '' }}"><span>Lỗi kỹ thuật</span><strong>{{ stats.get('technical_error_count',0) }}</strong><small><a href="/admin/usage">Kiểm tra bước và loại lỗi →</a></small><i aria-hidden="true">!</i></article>
 <article class="admin-kpi"><span>Độ trễ trung bình</span>{% set latency = stats.get('latency', {}) %}<strong>{{ '%.2f'|format(latency.avg) if latency.get('avg') is not none else 'N/A' }}<em> s</em></strong><small>{{ latency.get('count',0) }}/{{ stats.total_queries }} requests có đo</small><i aria-hidden="true">◷</i></article>
 </div>
+{% include 'metric_guide.html' %}
 <div class="admin-overview-grid">
 <section class="admin-section admin-traffic"><div class="section-heading"><div><span class="admin-overline">TRAFFIC</span><h2>Lưu lượng requests</h2></div><span class="admin-chip">Theo ngày UTC</span></div>
 <p class="muted">Tối đa 31 ngày có dữ liệu gần nhất trong phạm vi bộ lọc.</p>

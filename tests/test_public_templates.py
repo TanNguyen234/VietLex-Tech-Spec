@@ -56,7 +56,7 @@ def test_local_css_covers_focus_touch_and_reduced_motion() -> None:
 def test_evaluation_ui_names_code_metrics_and_handles_ragas_na() -> None:
     script = (ROOT / "app/static/js/vietlex.js").read_text(encoding="utf-8")
 
-    assert "Code evaluation — deterministic" in script
+    assert "Kiểm tra tự động của lượt trả lời" in script
     assert "Không có điểm Ragas" in script
     assert "reason_not_applicable" in script
     assert "timings" in script

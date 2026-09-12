@@ -1,0 +1,17 @@
+<details class="metric-explainer">
+  <summary>Các chỉ số này có nghĩa gì?</summary>
+  <p>Số liệu chỉ áp dụng cho những lượt và bộ lọc đang hiển thị. <strong>N/A</strong> là chưa có dữ liệu để đo, không phải điểm 0. <strong>Coverage</strong> là số lượt có số liệu chia cho tổng số lượt trong phạm vi đó; ví dụ 8/10 nghĩa là còn 2 lượt chưa được đo.</p>
+  <dl>
+    <dt><strong>Request · lượt yêu cầu</strong></dt><dd>Một tác vụ được ghi trong nhật ký, có thể là hỏi đáp hoặc phân tích. Một request có thể gọi AI nhiều lần; đây không phải số người dùng.</dd>
+    <dt><strong>Token · đơn vị xử lý văn bản</strong></dt><dd>Input là nội dung gửi vào AI; output là nội dung AI tạo ra; thinking là phần xử lý nội bộ nếu dịch vụ báo cáo. Token không bằng số từ. Không cộng thinking lần nữa vào tổng dịch vụ đã báo cáo, và không suy ra tiền từ token khi chưa có đơn giá thực tế.</dd>
+    <dt><strong>Độ trễ · latency</strong></dt><dd>Thời gian xử lý, đơn vị giây. Trung bình chỉ tính các lượt có thời gian được ghi; một số lượt chậm vẫn có thể bị che bởi số trung bình thấp.</dd>
+    <dt><strong>Cache hit · dùng lại kết quả</strong></dt><dd>Tỷ lệ lượt dùng kết quả đã lưu. Giúp giảm thời gian và số lần gọi AI; không chứng minh nguồn còn hiệu lực.</dd>
+    <dt><strong>Faithfulness · mức bám sát bằng chứng</strong></dt><dd>AI chấm mức độ câu trả lời được các đoạn nguồn hỗ trợ. Điểm cao không xác nhận nguồn đúng, đủ hoặc còn hiệu lực.</dd>
+    <dt><strong>Answer relevance · đúng trọng tâm</strong></dt><dd>AI chấm mức độ câu trả lời giải quyết câu hỏi. Một câu trả lời đúng trọng tâm vẫn có thể sai nội dung.</dd>
+    <dt><strong>Recall@K · tìm đủ căn cứ</strong></dt><dd>Trong K kết quả đầu, hệ thống tìm được bao nhiêu căn cứ chuẩn cần có. Chỉ đo được khi bộ kiểm tra có căn cứ tham chiếu; không đại diện mọi câu hỏi thực tế.</dd>
+    <dt><strong>MRR / nDCG · thứ tự kết quả</strong></dt><dd>MRR đánh giá vị trí kết quả đúng đầu tiên; nDCG đánh giá cách xếp các kết quả theo mức liên quan. Cao hơn là tốt hơn trong cùng một bộ kiểm tra.</dd>
+    <dt><strong>Precision / F1 / exact match</strong></dt><dd>Precision đo tỷ lệ phần khớp trong phần đã trả; recall đo phần chuẩn được tìm lại; F1 cân bằng hai tỷ lệ. Exact match yêu cầu khớp đáp án sau chuẩn hóa. Với token hoặc ký tự, đây là độ giống văn bản, không phải xác nhận đúng luật.</dd>
+    <dt><strong>Citation · dẫn chiếu / feedback</strong></dt><dd>Có citation nghĩa là nhận diện được dẫn chiếu, chưa chứng minh dẫn chiếu hỗ trợ kết luận. Feedback tích cực chỉ tính trong những lượt người dùng đã đánh giá, không phải tỷ lệ đúng trên mọi câu hỏi.</dd>
+    <dt><strong>Quality gate · ngưỡng kiểm tra</strong></dt><dd>Đạt các điều kiện đã đặt cho một lần đánh giá. Không phải chứng nhận sản phẩm sẵn sàng sử dụng cho mọi tình huống pháp lý.</dd>
+  </dl>
+</details>

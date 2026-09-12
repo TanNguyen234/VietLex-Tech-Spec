@@ -1,4 +1,5 @@
 <section class="admin-section"><h2>Độ đầy đủ của đánh giá và lỗi</h2><p class="muted">Mẫu số là request phù hợp bộ lọc. Không có điểm không đồng nghĩa điểm 0; không có reference thì chưa thể đo recall hoặc độ đúng pháp lý.</p>
+{% include 'metric_guide.html' %}
 <details><summary>Sử dụng theo tài khoản · 30 nhóm nhiều request nhất</summary><table class="admin-table"><thead><tr><th>User ID</th><th>Request</th><th>Token đã đo</th><th>Lần gọi có usage</th></tr></thead><tbody>{% for row in stats.get('user_usage', []) %}<tr><td>{% if row._id %}<code>{{ row._id }}</code>{% else %}Ẩn danh / chưa ghi nhận{% endif %}</td><td>{{ row.requests }}</td><td>{{ row.tokens if row.measured_calls else 'N/A' }}</td><td>{{ row.measured_calls }}</td></tr>{% endfor %}</tbody></table></details>
 <div class="admin-columns"><div><h3>Chất lượng đo được</h3><table class="admin-table"><thead><tr><th>Chỉ số</th><th>Kết quả</th><th>Có số liệu / request</th></tr></thead><tbody>
 <tr><td>Faithfulness · judge proxy</td><td>{{ stats.avg_faithfulness if stats.avg_faithfulness is not none else 'N/A' }}</td><td>{{ stats.get('avg_faithfulness_count', 0) }}/{{ stats.total_queries }}</td></tr>
