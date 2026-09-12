@@ -1,7 +1,7 @@
 {
   "published_at": "2026-09-12T14:24:08.186165+00:00",
   "git_sha": "e977ddbf17a0e08a543a46bd1dc739d89fc958ae",
-  "hash_encoding": "UTF-8 text with LF, matching Git blob normalization",
+  "hash_encoding": "Exact Git blob bytes; JSON files are marked binary by repository attributes and may retain CRLF",
   "reproduction": "Original scripts retained. Run from repository root; copy holdout.json to tmp/online-evidence-20260912/ before run_acceptance.py. api_workflow.py requires user-provided ignored credentials; never committed. Network/provider outputs may vary.",
   "test_summary": {
     "full_passed": 1278,
@@ -28,7 +28,7 @@
     "maritime-retry.json": "019b7639afd62e045f58a89157ff0b7e409b3e8953e720b849b4eb8b46ad2589",
     "maritime.json": "07bd167f98804f4db93b4d80205488c45c115602ebe17d14343118948080766c",
     "procurement.json": "862b23b2248ed97875547c0751574588cc5589384d98fbbbd374331f334bdd07",
-    "production-final.json": "20e1f79cec6cd27b327e773747e62d6f37659a9b498959b1b6240adf2ce13f13",
+    "production-final.json": "7aeb18aeb9cb76740370693e3fef80afe44cb1fbaa7f18d8863fac485b7d665c",
     "production-smoke.json": "ca6973017b00e84bca4869787c2920a47c877bf87eca8da1eae14c698232a49d",
     "REPORT.md": "ad60647555ff86d306d4e36900f6e858ee2574160284b9fefcbe437d959169e7",
     "reserves.json": "041a74355d1d5010175e47ddb4cbfcbe5e67e81ebabedace2f541ac52c43cf20",
@@ -38,11 +38,11 @@
     "serve_live.py": "c46768324c554e59d3373f2c19bef25a9d0ea12d4a3c87cf87289e479554392c",
     "summary.json": "09d75f21eb0fc6ce7af1dee2b94db120e9d78eaa2c25c18d26685d060ef7ea35",
     "telecom_resources.json": "44b54fdb2c77a94c043017ef89cb2f983346bf765fe71ca7d61072f02e2dbbc4",
-    "api\\analysis.json": "f233b6359f31ff5e4d11cc71a0645635fa9e0acc1ca31a6e45330f999b89ff16",
-    "api\\pin.json": "054e08b301cc05340d2650c05694280c20d343b566f959edfdf2ed636045a337",
-    "api\\plan.json": "cab005f090473338ae002b153e3fb7d6159f0e7085091721c5e1d947fd32bcb4",
-    "api\\read.json": "0150165f39d25c7ad124b7d0992cc16a47989cd332b29d1e67d44aa1d31c6899",
-    "api\\requests.jsonl": "d5159e309306fbac0287f94e9750a1fcc4b3de2afd1823daf53badbcc381fcb3",
-    "api\\search.json": "9db5b436441fda28c51bee667e972e4aa125479832c0c105f498615f0e425ce8"
+    "api/analysis.json": "f233b6359f31ff5e4d11cc71a0645635fa9e0acc1ca31a6e45330f999b89ff16",
+    "api/pin.json": "054e08b301cc05340d2650c05694280c20d343b566f959edfdf2ed636045a337",
+    "api/plan.json": "cab005f090473338ae002b153e3fb7d6159f0e7085091721c5e1d947fd32bcb4",
+    "api/read.json": "0150165f39d25c7ad124b7d0992cc16a47989cd332b29d1e67d44aa1d31c6899",
+    "api/requests.jsonl": "d5159e309306fbac0287f94e9750a1fcc4b3de2afd1823daf53badbcc381fcb3",
+    "api/search.json": "9db5b436441fda28c51bee667e972e4aa125479832c0c105f498615f0e425ce8"
   }
 }
