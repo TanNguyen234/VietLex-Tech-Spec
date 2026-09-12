@@ -20,7 +20,7 @@ OFFICIAL_SOURCE_DOMAINS = (
     "moj.gov.vn",
     "phapdien.moj.gov.vn",
 )
-_PLAN_VERSION = "official-web-v2"
+_PLAN_VERSION = "official-web-v3"
 _SPACE = re.compile(r"\s+")
 _QUERY_TOKEN = re.compile(r"[\w/-]+", re.UNICODE)
 _QUERY_STOPWORDS = {
@@ -53,7 +53,11 @@ class ResearchPlanStep(BaseModel):
 class ResearchPlan(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    version: Literal["official-web-v1", "official-web-v2"] = _PLAN_VERSION
+    version: Literal["official-web-v1", "official-web-v2", "official-web-v3"] = _PLAN_VERSION
+    query_method: Literal["literal", "model_keywords", "fallback"] = "literal"
+    planner_error: str | None = Field(default=None, max_length=100)
+    planner_provider: str | None = Field(default=None, max_length=100)
+    planner_model: str | None = Field(default=None, max_length=100)
     plan_id: str = Field(pattern=r"^[a-f0-9]{24}$")
     status: Literal["draft"] = "draft"
     question: str = Field(min_length=1, max_length=2_000)

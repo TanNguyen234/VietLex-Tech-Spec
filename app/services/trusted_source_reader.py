@@ -4,11 +4,12 @@ import asyncio
 from collections import defaultdict
 from datetime import datetime, timezone
 import hashlib
+import re
 from html.parser import HTMLParser
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, urljoin
 import httpx
 
-APPROVED_HOSTS = frozenset({"vanban.chinhphu.vn", "baochinhphu.vn"})
+APPROVED_HOSTS = frozenset({"vanban.chinhphu.vn", "baochinhphu.vn", "datafiles.chinhphu.vn"})
 _MAX_BYTES = 1_000_000
 _MAX_TEXT = 20_000
 _SEMAPHORE = asyncio.Semaphore(2)
@@ -40,8 +41,14 @@ class _TextParser(HTMLParser):
         self.in_title = False
         self.title = []
         self.parts = []
+        self.attachments = []
 
     def handle_starttag(self, tag, attrs):
+        values = dict(attrs)
+        if tag in {'a', 'iframe'}:
+            link = values.get('href') or values.get('src') or ''
+            if urlsplit(link).path.lower().endswith('.pdf'):
+                self.attachments.append(link)
         if tag in {"script", "style", "nav", "header", "footer", "noscript"}:
             self.hidden += 1
         if tag == "title":
@@ -84,37 +91,81 @@ def extract_page(html: str, url: str) -> dict:
     }
 
 
-async def read_source(url: str, *, client=None) -> dict:
+async def read_source(url: str, *, page_start: int = 1, use_ocr: bool = False,
+                      page_limit: int = 5, client=None) -> dict:
     validate_source_url(url)
 
-    async def fetch(session):
-        async with session.stream("GET", url, follow_redirects=False) as response:
+    async def fetch(session, target=url, *, title='', attachment=False):
+        validate_source_url(target)
+        async with session.stream("GET", target, follow_redirects=False) as response:
             if response.status_code != 200:
                 raise SourceReadError("source_http_" + str(response.status_code))
-            if response.headers.get("content-type", "").split(";")[0].strip() not in {
+            content_type = response.headers.get("content-type", "").split(";")[0].strip().lower()
+            is_pdf = content_type == 'application/pdf' or (
+                content_type == 'application/octet-stream' and urlsplit(target).path.lower().endswith('.pdf'))
+            if not is_pdf and content_type not in {
                 "text/html",
                 "application/xhtml+xml",
             }:
                 raise SourceReadError("source_content_type_unsupported")
             data = bytearray()
+            byte_limit = _MAX_BYTES
+            if is_pdf:
+                from app.services.official_document_reader import PDF_MAX_BYTES
+                byte_limit = PDF_MAX_BYTES
             async for chunk in response.aiter_bytes():
                 data.extend(chunk)
-                if len(data) > _MAX_BYTES:
+                if len(data) > byte_limit:
                     raise SourceReadError("source_body_too_large")
+            if is_pdf:
+                from app.services.official_document_reader import extract_official_pdf
+                return await extract_official_pdf(bytes(data), url=url, attachment_url=target,
+                                                  title=title, page_start=page_start, use_ocr=use_ocr,
+                                                  page_limit=page_limit)
             try:
                 html = bytes(data).decode("utf-8", errors="strict")
             except UnicodeDecodeError as error:
                 raise SourceReadError("source_encoding_unsupported") from error
-            return extract_page(html, url)
+            result = extract_page(html, url)
+            parser = _TextParser()
+            parser.feed(html)
+            if not attachment and urlsplit(target).hostname == 'vanban.chinhphu.vn':
+                metadata = {}
+                for index, part in enumerate(parser.parts[:-1]):
+                    key = {'Số ký hiệu': 'document_number', 'Ngày ban hành': 'issued_date',
+                           'Ngày có hiệu lực': 'reported_effective_from'}.get(part)
+                    value = parser.parts[index + 1]
+                    if key and len(value) <= 100 and (
+                        key == 'document_number' and '/' in value or
+                        key != 'document_number' and re.fullmatch(r'\d{2}[-/]\d{2}[-/]\d{4}', value)
+                    ):
+                        metadata[key] = value
+                approved = []
+                for link in parser.attachments:
+                    try:
+                        approved.append(validate_source_url(urljoin(target, link)))
+                    except ValueError:
+                        continue
+                if approved:
+                    result = await fetch(session, approved[0], title=result['title'], attachment=True)
+                    result['attachments'] = list(dict.fromkeys(approved))
+                elif 'docid=' in urlsplit(target).query.lower():
+                    # A catalogue/detail page without readable legislation is not legal evidence.
+                    result.update(text='', content_status='metadata_only', requires_ocr=False,
+                                  sha256=hashlib.sha256(b'').hexdigest(), stored_characters=0)
+                result.update(metadata)
+            return result
 
     async with _SEMAPHORE:
         try:
-            async with asyncio.timeout(20):
+            async with asyncio.timeout(100 if use_ocr else 30):
                 if client is not None:
                     return await fetch(client)
+                from app.config import system_ssl_context
                 async with httpx.AsyncClient(
                     timeout=10,
                     trust_env=False,
+                    verify=system_ssl_context(),
                     headers={"User-Agent": "VietLex-Reviewer/1.0"},
                 ) as session:
                     return await fetch(session)

@@ -49,6 +49,7 @@ from app.services.deep_research import (
     run_deep_research,
 )
 from app.services.provider_runtime import capture_provider_usage, current_provider_calls
+from app.services.official_query_planner import prepare_research_plan
 from app.services.workspace_ocr import extract_ocr_document
 from app.services.workspace_documents import (
     DocumentExtractionError,
@@ -143,7 +144,8 @@ async def workspace_list(request: Request, current_user=Depends(optional_user)):
     client_id, user_id = _identity(request, current_user)
     workspaces = await list_workspaces(client_id, user_id=user_id)
     return _workspace_page(
-        request, "research_workspaces.html", {"workspaces": workspaces}
+        request, "research_workspaces.html", {"workspaces": workspaces,
+            "initial_question": request.query_params.get('question','')[:2000]}
     )
 
 
@@ -522,16 +524,30 @@ async def workspace_contract_review(
 
 @router.post("/workspaces/{workspace_id}/research/plan")
 @limiter.limit(settings.SESSION_RATE_LIMIT)
+@capture_provider_usage
 async def deep_research_plan(
     request: Request,
     workspace_id: str,
     question: str = Form(..., min_length=1, max_length=2_000),
+    suggest_keywords: bool = Form(False),
     _csrf: str = Depends(verify_csrf),
     current_user=Depends(optional_user),
 ):
-    await _owned_workspace(request, workspace_id, current_user)
+    _workspace, client_id, user_id = await _owned_workspace(request, workspace_id, current_user)
     try:
-        return build_research_plan(question).model_dump(mode="json")
+        plan = await prepare_research_plan(question) if suggest_keywords else build_research_plan(question)
+        if suggest_keywords and plan.query_method != 'literal':
+            await log_interaction(
+                trace_id=str(uuid.uuid4()), user_query=question,
+                bot_response='\n'.join(step.query for step in plan.steps), contexts=[], cached=False,
+                session_id=workspace_id, client_id=client_id, user_id=user_id,
+                request_status='keyword_plan_' + plan.query_method,
+                observed_provider=plan.planner_provider, observed_model=plan.planner_model,
+                request_metadata={'method':'POST','path':request.url.path},
+            )
+        return plan.model_dump(mode="json")
+    except DeepResearchDisabled as error:
+        raise HTTPException(status_code=503, detail="official_web_research_disabled") from error
     except (ValidationError, ValueError) as error:
         raise HTTPException(status_code=422, detail="invalid_research_question") from error
 

@@ -10,6 +10,7 @@ from app.api.workspace_routes import _owned_workspace
 from app.config import get_settings
 from app.rate_limit import limiter
 from app.research_database import save_workspace_analysis, pin_workspace_evidence
+from app.services.provider_runtime import capture_provider_usage, current_provider_calls
 from app.services.trusted_source_reader import (
     read_source,
     validate_source_url,
@@ -22,10 +23,14 @@ router = APIRouter()
 
 @router.post("/workspaces/{workspace_id}/analyses/sources")
 @limiter.limit(get_settings().OFFICIAL_WEB_RESEARCH_RATE_LIMIT)
+@capture_provider_usage
 async def source_read(
     request: Request,
     workspace_id: str,
     urls: str = Form(..., max_length=6000),
+    page_start: int = Form(1, ge=1, le=200),
+    use_ocr: bool = Form(False),
+    page_limit: int = Form(5, ge=1, le=5),
     _csrf: str = Depends(verify_csrf),
     current_user=Depends(optional_user),
 ):
@@ -45,17 +50,19 @@ async def source_read(
 
     async def one(url):
         try:
-            return await read_source(url), None
+            return await read_source(url, page_start=page_start, use_ocr=use_ocr, page_limit=page_limit), None
         except SourceReadError as error:
             return None, {"url": url, "kind": error.kind}
 
     outcomes = await asyncio.gather(*(one(url) for url in selected))
     sources = [source for source, error in outcomes if source]
     errors = [error for source, error in outcomes if error]
+    readable = sum(bool(source.get('text','').strip()) for source in sources)
     analysis = {
         "analysis_id": str(uuid.uuid4()),
         "kind": "trusted_sources",
-        "status": "ok" if not errors else "partial" if sources else "source_error",
+        "status": ("metadata_only" if sources and not readable else
+                   "ok" if not errors else "partial" if sources else "source_error"),
         "result": {
             **reconcile_sources(sources),
             "errors": errors,
@@ -63,10 +70,13 @@ async def source_read(
                 "requested": len(selected),
                 "retrieved": len(sources),
                 "failed": len(errors),
+                "readable": readable,
+                "metadata_only": len(sources) - readable,
             },
         },
-        "provider": "approved_public_html",
+        "provider": "approved_public_document",
         "model": None,
+        "provider_calls": current_provider_calls() or [],
     }
     if not await save_workspace_analysis(
         workspace_id, analysis, client_id, user_id=user_id
@@ -117,13 +127,20 @@ async def pin_source(
         "source_kind": "official_web",
         "source_url": source["url"],
         "title": source["title"],
-        "citation": source["title"],
+        "citation": source.get('document_number') or source["title"],
+        "document_number": source.get('document_number'),
+        "reported_effective_from": source.get('reported_effective_from'),
         "excerpt": quote,
         "original": quote,
         "source_sha256": source["sha256"],
         "retrieved_at": source["retrieved_at"],
         "introduced_by_claim": "",
         "legal_effect_status": "unverified",
+        "attachment_url": source.get('attachment_url'),
+        "document_sha256": source.get('document_sha256'),
+        "extraction_method": source.get('method'),
+        "page_numbers": [page['page'] for page in source.get('pages',[]) if quote in page['text']],
+        "page_window": [source.get('page_start'), source.get('page_end')],
     }
     if not await pin_workspace_evidence(
         workspace_id, evidence, client_id, user_id=user_id

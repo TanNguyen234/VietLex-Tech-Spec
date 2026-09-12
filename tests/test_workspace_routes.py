@@ -397,6 +397,17 @@ def test_deep_research_plan_is_previewed_without_provider_call(client, monkeypat
     ).status_code == 422
 
 
+def test_keyword_planning_is_explicit_and_owner_scoped(client, monkeypatch):
+    from app.services.deep_research import build_research_plan
+    monkeypatch.setattr('app.api.workspace_routes.get_workspace',AsyncMock(return_value={'workspace_id':'w-1'}))
+    prepare=AsyncMock(return_value=build_research_plan('Câu hỏi'))
+    monkeypatch.setattr('app.api.workspace_routes.prepare_research_plan',prepare,raising=False)
+    monkeypatch.setattr('app.api.workspace_routes.log_interaction',AsyncMock(return_value={}))
+    response=client.post('/workspaces/w-1/research/plan',data={'question':'Câu hỏi','suggest_keywords':'true'})
+    assert response.status_code==200
+    prepare.assert_awaited_once_with('Câu hỏi')
+
+
 def test_deep_research_run_persists_owner_scoped_result_and_provider_calls(
     client, monkeypatch
 ) -> None:

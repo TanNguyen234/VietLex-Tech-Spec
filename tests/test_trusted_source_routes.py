@@ -51,3 +51,13 @@ def test_source_failure_is_persisted_without_fabricated_text(client, monkeypatch
     assert response.json()["result"]["sources"] == []
     assert response.json()["result"]["errors"][0]["kind"] == "source_http_403"
     routes.save_workspace_analysis.assert_awaited_once()
+
+
+def test_reader_forwards_explicit_page_and_ocr_and_reports_readable_coverage(client,monkeypatch):
+    import app.api.trusted_source_routes as routes
+    reader=AsyncMock(return_value={'url':'https://datafiles.chinhphu.vn/a.pdf','sha256':'a','text':'','document_number':None,'content_status':'metadata_only'})
+    monkeypatch.setattr(routes,'read_source',reader)
+    response=client.post('/workspaces/w/analyses/sources',data={'urls':'https://datafiles.chinhphu.vn/a.pdf','page_start':'6','use_ocr':'true'})
+    reader.assert_awaited_once_with('https://datafiles.chinhphu.vn/a.pdf',page_start=6,use_ocr=True,page_limit=5)
+    assert response.json()['result']['coverage']['readable']==0
+    assert response.json()['status']=='metadata_only'

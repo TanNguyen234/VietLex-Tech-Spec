@@ -17,7 +17,7 @@ from app.database import get_db
 _AUTH = {'/login', '/register', '/forgot-password', '/reset-password', '/verify-email'}
 _PROTECTIVE = re.compile(r'^/(?:logout|account/(?:delete|history/delete|sessions/(?:revoke-others|[^/]+/revoke)))$')
 _UPLOAD = re.compile(r'^/workspaces/[^/]+/documents$')
-_AI = re.compile(r'^/workspaces/[^/]+/(?:analyses/[^/]+|research/run|documents/[^/]+/review)$')
+_AI = re.compile(r'^/workspaces/[^/]+/(?:analyses/[^/]+|research/(?:plan|run)|documents/[^/]+/review)$')
 
 
 _DENIED = {}
