@@ -1,0 +1,137 @@
+{
+  "id": "agriculture",
+  "reference_number": "346/2026/NĐ-CP",
+  "topic": "Bảo hiểm nông nghiệp",
+  "question": "Bảo hiểm nông nghiệp được sửa đổi những nội dung gì theo Nghị định 346/2026/NĐ-CP?",
+  "reference_url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219420",
+  "reference_title": "Sửa đổi, bổ sung một số điều của Nghị định số 58/2018/NĐ-CР ngày 18 tháng 4 năm 2018 của Chính phủ về bảo hiểm nông nghiệp",
+  "reference_issued_date": "05/09/2026",
+  "local_reference_ids": [],
+  "supabase_reference_ids": [],
+  "absence_verified": true,
+  "plan": {
+    "version": "official-web-v2",
+    "plan_id": "7331c365148d889250bddbb3",
+    "status": "draft",
+    "question": "Bảo hiểm nông nghiệp được sửa đổi những nội dung gì theo Nghị định 346/2026/NĐ-CP?",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "kind": "legal_basis",
+        "title": "Căn cứ pháp lý trực tiếp",
+        "query": "346/2026/NĐ-CP"
+      },
+      {
+        "step_id": "conditions",
+        "kind": "conditions",
+        "title": "Điều kiện và thủ tục",
+        "query": "346/2026/NĐ-CP điều kiện"
+      },
+      {
+        "step_id": "exceptions",
+        "kind": "exceptions",
+        "title": "Ngoại lệ và giới hạn",
+        "query": "346/2026/NĐ-CP không được"
+      },
+      {
+        "step_id": "amendments",
+        "kind": "amendments",
+        "title": "Sửa đổi và tình trạng hiệu lực",
+        "query": "346/2026/NĐ-CP sửa đổi"
+      },
+      {
+        "step_id": "official_verification",
+        "kind": "official_verification",
+        "title": "Đối chiếu nguồn chính thức",
+        "query": "346/2026/NĐ-CP"
+      }
+    ]
+  },
+  "result": {
+    "status": "partial",
+    "question": "Bảo hiểm nông nghiệp được sửa đổi những nội dung gì theo Nghị định 346/2026/NĐ-CP?",
+    "plan_id": "7331c365148d889250bddbb3",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "title": "Căn cứ pháp lý trực tiếp",
+        "query": "346/2026/NĐ-CP",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "fc31625aeb900eb9ad735525",
+            "title": "Sửa đổi, bổ sung một số điều của Nghị định số 58/2018/NĐ-CР ngày 18 tháng 4 năm 2018 của Chính phủ về bảo hiểm nông nghiệp",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219420",
+            "document_number": "346/2026/NĐ-CP",
+            "issued_date": "05/09/2026",
+            "snippet": "Sửa đổi, bổ sung một số điều của Nghị định số 58/2018/NĐ-CР ngày 18 tháng 4 năm 2018 của Chính phủ về bảo hiểm nông nghiệp",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "346/2026/NĐ-CP"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "conditions",
+        "title": "Điều kiện và thủ tục",
+        "query": "346/2026/NĐ-CP điều kiện",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "346/2026/NĐ-CP điều kiện"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "exceptions",
+        "title": "Ngoại lệ và giới hạn",
+        "query": "346/2026/NĐ-CP không được",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "346/2026/NĐ-CP không được"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "amendments",
+        "title": "Sửa đổi và tình trạng hiệu lực",
+        "query": "346/2026/NĐ-CP sửa đổi",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "346/2026/NĐ-CP sửa đổi"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "official_verification",
+        "title": "Đối chiếu nguồn chính thức",
+        "query": "346/2026/NĐ-CP",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "fc31625aeb900eb9ad735525",
+            "title": "Sửa đổi, bổ sung một số điều của Nghị định số 58/2018/NĐ-CР ngày 18 tháng 4 năm 2018 của Chính phủ về bảo hiểm nông nghiệp",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219420",
+            "document_number": "346/2026/NĐ-CP",
+            "issued_date": "05/09/2026",
+            "snippet": "Sửa đổi, bổ sung một số điều của Nghị định số 58/2018/NĐ-CР ngày 18 tháng 4 năm 2018 của Chính phủ về bảo hiểm nông nghiệp",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "346/2026/NĐ-CP"
+        ],
+        "error_kind": null
+      }
+    ],
+    "provider": "chinhphu_official_portal",
+    "model": "webforms-search-v1"
+  },
+  "elapsed_seconds": 24.041
+}

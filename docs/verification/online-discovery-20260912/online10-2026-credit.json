@@ -1,0 +1,137 @@
+{
+  "id": "credit",
+  "reference_number": "46/2026/TT-NHNN",
+  "topic": "Tín dụng",
+  "question": "Hoạt động thông tin tín dụng có thay đổi gì theo Thông tư 46/2026/TT-NHNN?",
+  "reference_url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219435",
+  "reference_title": "Sửa đổi, bổ sung một số điều của Thông tư số 15/2023/TT-NHNN quy định về hoạt động thông tin tín dụng của Ngân hàng Nhà nước Việt Nam",
+  "reference_issued_date": "09/09/2026",
+  "local_reference_ids": [],
+  "supabase_reference_ids": [],
+  "absence_verified": true,
+  "plan": {
+    "version": "official-web-v2",
+    "plan_id": "d3b18a565c1bb5d4e9e6c3ab",
+    "status": "draft",
+    "question": "Hoạt động thông tin tín dụng có thay đổi gì theo Thông tư 46/2026/TT-NHNN?",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "kind": "legal_basis",
+        "title": "Căn cứ pháp lý trực tiếp",
+        "query": "46/2026/TT-NHNN"
+      },
+      {
+        "step_id": "conditions",
+        "kind": "conditions",
+        "title": "Điều kiện và thủ tục",
+        "query": "46/2026/TT-NHNN điều kiện"
+      },
+      {
+        "step_id": "exceptions",
+        "kind": "exceptions",
+        "title": "Ngoại lệ và giới hạn",
+        "query": "46/2026/TT-NHNN không được"
+      },
+      {
+        "step_id": "amendments",
+        "kind": "amendments",
+        "title": "Sửa đổi và tình trạng hiệu lực",
+        "query": "46/2026/TT-NHNN sửa đổi"
+      },
+      {
+        "step_id": "official_verification",
+        "kind": "official_verification",
+        "title": "Đối chiếu nguồn chính thức",
+        "query": "46/2026/TT-NHNN"
+      }
+    ]
+  },
+  "result": {
+    "status": "partial",
+    "question": "Hoạt động thông tin tín dụng có thay đổi gì theo Thông tư 46/2026/TT-NHNN?",
+    "plan_id": "d3b18a565c1bb5d4e9e6c3ab",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "title": "Căn cứ pháp lý trực tiếp",
+        "query": "46/2026/TT-NHNN",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "9feb8c94f0212720cb1e10c2",
+            "title": "Sửa đổi, bổ sung một số điều của Thông tư số 15/2023/TT-NHNN quy định về hoạt động thông tin tín dụng của Ngân hàng Nhà nước Việt Nam",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219435",
+            "document_number": "46/2026/TT-NHNN",
+            "issued_date": "09/09/2026",
+            "snippet": "Sửa đổi, bổ sung một số điều của Thông tư số 15/2023/TT-NHNN quy định về hoạt động thông tin tín dụng của Ngân hàng Nhà nước Việt Nam",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "46/2026/TT-NHNN"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "conditions",
+        "title": "Điều kiện và thủ tục",
+        "query": "46/2026/TT-NHNN điều kiện",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "46/2026/TT-NHNN điều kiện"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "exceptions",
+        "title": "Ngoại lệ và giới hạn",
+        "query": "46/2026/TT-NHNN không được",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "46/2026/TT-NHNN không được"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "amendments",
+        "title": "Sửa đổi và tình trạng hiệu lực",
+        "query": "46/2026/TT-NHNN sửa đổi",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "46/2026/TT-NHNN sửa đổi"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "official_verification",
+        "title": "Đối chiếu nguồn chính thức",
+        "query": "46/2026/TT-NHNN",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "9feb8c94f0212720cb1e10c2",
+            "title": "Sửa đổi, bổ sung một số điều của Thông tư số 15/2023/TT-NHNN quy định về hoạt động thông tin tín dụng của Ngân hàng Nhà nước Việt Nam",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219435",
+            "document_number": "46/2026/TT-NHNN",
+            "issued_date": "09/09/2026",
+            "snippet": "Sửa đổi, bổ sung một số điều của Thông tư số 15/2023/TT-NHNN quy định về hoạt động thông tin tín dụng của Ngân hàng Nhà nước Việt Nam",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "46/2026/TT-NHNN"
+        ],
+        "error_kind": null
+      }
+    ],
+    "provider": "chinhphu_official_portal",
+    "model": "webforms-search-v1"
+  },
+  "elapsed_seconds": 22.25
+}

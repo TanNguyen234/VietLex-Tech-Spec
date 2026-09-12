@@ -1,0 +1,23 @@
+{
+  "started_at": "2026-09-12T13:04:16.121956+00:00",
+  "finished_at": "2026-09-12T13:05:17.290667+00:00",
+  "collection": "vietlex-legal-rag-v3-vertex-1024",
+  "method": "unfiltered scroll, all pages, document_number payload only, no vectors",
+  "points_scanned": 141798,
+  "missing_document_number": 0,
+  "pages": 142,
+  "reached_end": true,
+  "stream_sha256": "75f735905c4a709e6d5454870fa7918b644d1d672f639e13fcd00d3c360bf03e",
+  "matches": {
+    "68/2026/TT-BXD": [],
+    "350/2026/NĐ-CP": [],
+    "349/2026/NĐ-CP": [],
+    "135/2026/TT-BTC": [],
+    "46/2026/TT-NHNN": [],
+    "348/2026/NĐ-CP": [],
+    "346/2026/NĐ-CP": [],
+    "56/2026/TT-BKHCN": [],
+    "345/2026/NĐ-CP": [],
+    "344/2026/NĐ-CP": []
+  }
+}

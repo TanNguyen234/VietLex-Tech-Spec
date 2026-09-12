@@ -1,0 +1,43 @@
+{
+  "published_at": "2026-09-12T12:36:20.489658+00:00",
+  "implementation_commit": "494f05d",
+  "execution": "local service, real official portal HTTP",
+  "mocks": false,
+  "qdrant_absence_scan": "COMPLETE: 141798 points, 142 pages, 0 missing numbers, 0 matches for ten anchors",
+  "files": {
+    "online10-2026-agriculture.json": "6f819c701500fdb3329c1ca49d2390a28cdb0ff88ca9c12440ae02ac4ac1bef1",
+    "online10-2026-aviation.json": "78dda09eca4d6168dda6dd61a318f415e739fdf95e8eb42467752fa3ac168a15",
+    "online10-2026-cases.json": "2b28f8889b91d817aa46dbc927d0392cb8b8e7d13040fb4fa8ff1f69a9b06d15",
+    "online10-2026-credit.json": "535642b2026c39c621e4666bf227c5d92ea571483a3d598cb1e746ba33565ad6",
+    "online10-2026-electricity.json": "a4542ea40b54fb46ca74db97b11304df37878dcbaad36f7382a0cf3e0a6103aa",
+    "online10-2026-health.json": "8b3c7b746f5afba106ddb45bdf9269d0034c762bc88f771dae79a5487ca92e41",
+    "online10-2026-imports.json": "251b9f6d7e76d7f3b2588b8265ad49f859b75026cd377e354908c115d43b70e5",
+    "online10-2026-maritime.json": "84f715f0754ee88437bdf5697e4e0a29195a7f53aa77ab9fcb39f9a12ec6769f",
+    "online10-2026-procurement.json": "4a0a4d5ac1af2e7fd1b9ead29fd93e63de08fc2b24a6e21bad28868b12cf207d",
+    "online10-2026-reserves.json": "7696d69df05c95c25b2a72ff5f22a21c3d2cfb0781296febe56726ece9e80aa3",
+    "online10-2026-resources_tax.json": "f27bfd3124f766bd136961f74b6cb9a053da17aae50fbe911416ad0f44b6e9c7",
+    "qdrant-absence-scan.json": "f0c85e9b7c6d9e15bcf39b9f0995292a349c5a87075fed22ddca78a965874426",
+    "REPORT.md": "e604205e12785e3b57d764bfc6b5b75b6db23be47b55eaad124f5ad2170e4525",
+    "run_online10_2026.py": "06a5ab799f52de584ae09a6b4ebbd055652be6595a4efe719f9c2a7b1c7de383",
+    "scan_online10_qdrant.py": "e5886af58785d8124f85eed464f38afffa94ed4e3070c77446ffe22f2b9a8048"
+  },
+  "execution_git_manifest": "Retrospective publication; full git/config fingerprint was not captured at the start of the original ten-case run.",
+  "pre_git_normalization_sha256": {
+    "online10-2026-agriculture.json": "c05aabd371e9bfef58ed91caab13d009c35ab12eb29c9fab760ce67ea9f5a455",
+    "online10-2026-aviation.json": "930976cd5d921e5204762a3a720ddbc95887360d62f3d86543b4ae2b00e795cb",
+    "online10-2026-cases.json": "5a1823703ef513adf86668d67fadeecde7be33a63d5ea46783f6a9967c6cbd65",
+    "online10-2026-credit.json": "7c6640f336ba2d459b0d923a51912971507d5558ed59b60e2be6af5a7e8245a1",
+    "online10-2026-electricity.json": "07076fc90c9b73f1c574dddd924cd0baedb13231bf176c967181aa43abd792c5",
+    "online10-2026-health.json": "12d44174b2a8850e1b84b283cbd7895448aa9e69fa3a903b44e11121600c730b",
+    "online10-2026-imports.json": "b3af97d8d7b2ac4cc25795d54691196ff937d111f52cbc98bf23b1cedfe8bd58",
+    "online10-2026-maritime.json": "f7cae1053e845231a85e0a1afb035e98bdb673852899b8eea84451ec40caf596",
+    "online10-2026-procurement.json": "b09f7c78dfe16d6ef42b8a24a4d3eedfac2f0bca28fb1bb1ea2f941586694816",
+    "online10-2026-reserves.json": "97b9d6b659f7fe8d575f5f4e2d86318e22d4f841f8410a051a86057c1dfeec72",
+    "online10-2026-resources_tax.json": "90af45fd699a8eed812129ffe1015989da20dfb800c0c7f40955cfe49f2e1c5e",
+    "qdrant-absence-scan.json": "2b0728b2f367f51f96786a631e3d49aec2fb8ec3c4c77425d427b13bdfc807b3",
+    "REPORT.md": "fb1b67e9f22694bfcda87aedd5648d5c943c278149518bd59d3cce1cde77a48c",
+    "run_online10_2026.py": "92be7658d69a0917c046b2a27bbdd5f3ecc50987294bb84467df146c3a4dc137",
+    "scan_online10_qdrant.py": "e5886af58785d8124f85eed464f38afffa94ed4e3070c77446ffe22f2b9a8048"
+  },
+  "hash_scope": "files: published Git blobs after repository LF normalization; pre_git_normalization_sha256: original local artifact bytes"
+}

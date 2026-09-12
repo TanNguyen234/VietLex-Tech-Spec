@@ -1,0 +1,120 @@
+{
+  "runtime_commit": "a1d3986",
+  "deployment_id": "dpl_DsfEQm4rwkgSaP4tNM8iMkovXttJ",
+  "requests": [
+    {
+      "label": "home",
+      "method": "GET",
+      "started_at": "2026-09-12T12:37:44.125726+00:00",
+      "http_status": 200,
+      "elapsed_seconds": 8.717,
+      "response_sha256": "977c964ad5eef7ebd834a04ebcefefe37820cf07db10a13609fc25d6d3184efc",
+      "response_bytes": 7226,
+      "vercel_request_id": "hkg1::iad1::ln2q2-1789217273951-6ca991ed6cd9",
+      "retry_after": null
+    },
+    {
+      "label": "scope",
+      "method": "POST",
+      "started_at": "2026-09-12T12:37:52.864804+00:00",
+      "http_status": 200,
+      "elapsed_seconds": 6.103,
+      "response_sha256": "0c8a51bf8b0e512b94e37a6efbd9c1e6d8cc87dac6dd70b95d210399374d2022",
+      "response_bytes": 6318,
+      "vercel_request_id": "hkg1::iad1::4q8td-1789217281976-f69adddcedef",
+      "retry_after": null
+    },
+    {
+      "label": "selected",
+      "method": "POST",
+      "started_at": "2026-09-12T12:37:58.990419+00:00",
+      "http_status": 200,
+      "elapsed_seconds": 6.01,
+      "response_sha256": "c6fc973e8d40e5832bb59765229865967ac026a4d4f76af39f84544588ed5eac",
+      "response_bytes": 6911,
+      "vercel_request_id": "hkg1::iad1::mjz95-1789217288097-d0d88c15ab73",
+      "retry_after": null
+    },
+    {
+      "label": "obligations",
+      "method": "POST",
+      "started_at": "2026-09-12T12:38:05.022225+00:00",
+      "http_status": 200,
+      "elapsed_seconds": 8.044,
+      "response_sha256": "5e81693cf6978e3802328b7ba063ceacabb5c864875ca62e0a1b2b96c0fc5756",
+      "response_bytes": 8672,
+      "vercel_request_id": "hkg1::iad1::hp46v-1789217294130-3ce3a7d13744",
+      "retry_after": null
+    },
+    {
+      "label": "compare",
+      "method": "POST",
+      "started_at": "2026-09-12T12:38:13.092199+00:00",
+      "http_status": 429,
+      "elapsed_seconds": 1.541,
+      "response_sha256": "9b482c1ecfb572cce14cef5489f454907e232ec6f16cc8627b0c797e2f8b35dc",
+      "response_bytes": 85,
+      "vercel_request_id": "hkg1::iad1::zszgh-1789217302199-d2439d52c170",
+      "retry_after": "60"
+    },
+    {
+      "label": "missing_article",
+      "method": "POST",
+      "started_at": "2026-09-12T12:38:14.659484+00:00",
+      "http_status": 429,
+      "elapsed_seconds": 1.295,
+      "response_sha256": "9b482c1ecfb572cce14cef5489f454907e232ec6f16cc8627b0c797e2f8b35dc",
+      "response_bytes": 85,
+      "vercel_request_id": "hkg1::iad1::6bffz-1789217303769-01144938fe57",
+      "retry_after": "60"
+    },
+    {
+      "label": "metric_guide",
+      "method": "GET",
+      "started_at": "2026-09-12T12:38:15.977488+00:00",
+      "http_status": 200,
+      "elapsed_seconds": 0.36,
+      "response_sha256": "b892b0375d6ffda453059a154dae861054d31c0fa60e3d30bf8b03defd24adcd",
+      "response_bytes": 5802,
+      "vercel_request_id": "hkg1::iad1::6bffz-1789217305083-b203efb0ea95",
+      "retry_after": null
+    },
+    {
+      "label": "compare_retry",
+      "method": "POST",
+      "started_at": "2026-09-12T12:41:10.542922+00:00",
+      "http_status": 200,
+      "elapsed_seconds": 6.352,
+      "response_sha256": "0cae1ab28392672e3236a2ec139a0edb9c339322cdfb59cfc4eb851427a3649e",
+      "response_bytes": 6425,
+      "vercel_request_id": "hkg1::iad1::qltzz-1789217480065-9aba3bd81fa2",
+      "retry_after": null
+    },
+    {
+      "label": "missing_article_retry",
+      "method": "POST",
+      "started_at": "2026-09-12T12:41:16.952472+00:00",
+      "http_status": 429,
+      "elapsed_seconds": 1.718,
+      "response_sha256": "52ccfab33ae45547801ffddcdfc72481dc0d99bacef8b0b407388d86e2c20a7a",
+      "response_bytes": 79,
+      "vercel_request_id": "hkg1::iad1::qltzz-1789217486075-cef275cf7ec2",
+      "retry_after": "86400"
+    }
+  ],
+  "pytest_xml_sha256": "c76eab2969d562e346d66d5c82a04e88e80556f99ce49c60a4a7d735ffd1ce87",
+  "screenshots": {
+    "vietlex-home-20260912.png": "ff44c8f0731c8ff9ae68c596d8dfd52355bd7880b297f454b9d3f967856bf501",
+    "vietlex-metrics-20260912.png": "5295dd3c3593986184c24c637f7e449250138a6046da5f436689d3fb314637f4",
+    "vietlex-search-20260912.png": "9a7943efa7689baac3725b205b2878b676413fc3893a248e6f87a766a4522bb2"
+  },
+  "final_runtime_commit": "93ec75d",
+  "final_deployment_id": "dpl_9CHPH6vTQAWpJXz1AzthFu4wQMP7",
+  "evaluation_lab_html_sha256": "d5b499c945bd137cfea35c3530b1bd5ef0e8e3cc6065a302216b6ffa76eb8f51",
+  "final_pytest_xml_sha256": "0b03d7cf2027202186e81b562700c595a99684f11ac86cca4cdac79a0c7b0e59",
+  "final_pytest_result": {
+    "passed": 1264,
+    "warnings": 30,
+    "seconds": 462.87
+  }
+}

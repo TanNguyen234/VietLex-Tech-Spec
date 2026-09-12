@@ -1,8 +1,8 @@
 # VietLex — trạng thái chức năng
 
-Cập nhật theo code local ngày 2026-09-11. Đây là nguồn trạng thái chức năng hiện tại; tài liệu review có ngày là lịch sử. Primary workflow: người nghiên cứu pháp lý/compliance tìm văn bản → tổ chức căn cứ → rà soát tài liệu → xử lý findings → xuất báo cáo.
+Cập nhật ngày 2026-09-12; production hiện tại 93ec75d đã triển khai sau sửa runtime, UX và packaging Evaluation Lab. Đây là nguồn trạng thái chức năng hiện tại; tài liệu review có ngày là lịch sử. Primary workflow: người nghiên cứu pháp lý/compliance tìm văn bản → tổ chức căn cứ → rà soát tài liệu → xử lý findings → xuất báo cáo.
 
-“Có” nghĩa là có implementation, không đồng nghĩa production verified. Tất cả thay đổi trong đợt này chưa triển khai; live-provider, live Mongo và nghiệm thu pháp lý: **NOT RUN**. Test bên dưới là điểm kiểm tra trong repository, không phải chứng nhận đúng luật. Corpus bên thứ ba và giới hạn 14.962 document ID của v3 không thay đổi.
+“Có” nghĩa là có implementation, không đồng nghĩa production verified. Bản af8c9f5 đã triển khai và có 71 request live: xem [báo cáo ngày 12/09](docs/verification/live-api-af8c9f5-20260912/LIVE_REPORT.md). Bảng dưới ghi trạng thái kiểm chứng của đợt 11/09 trước triển khai; không thay thế kết quả live mới. Bản sửa a1d3986 đã triển khai: xem [kết quả sau sửa](docs/verification/product-fixes-20260912.md); chưa nghiệm thu pháp lý. Test bên dưới là điểm kiểm tra trong repository, không phải chứng nhận đúng luật. Corpus bên thứ ba và giới hạn 14.962 document ID của v3 không thay đổi.
 
 | Chức năng | Trạng thái / UI / API | Test đối chiếu | Production verified trong đợt này | Giới hạn |
 |---|---|---|---|---|
@@ -40,3 +40,13 @@ Cập nhật theo code local ngày 2026-09-11. Đây là nguồn trạng thái c
 3. Findings đối chiếu v2 có clause identity ổn định, evidence link trong board/export; DOCX citation hyperlink và PDF server nếu yêu cầu xuất tự động.
 4. Admin ingestion/index job state, chỉnh metadata có audit, role editor/reviewer, cost budget và feedback adjudication/regression gate.
 5. Nghiệm thu live hai tài khoản, OCR, provider search, report export trong Word/browser và chất lượng pháp lý. Không coi test double hoặc preview synthetic là bằng chứng live.
+
+## Phát hiện live ngày 12/09/2026
+
+- Evaluation Lab có lỗi HTTP 200 nhưng thiếu artifact trên a1d3986. Commit 93ec75d sửa quy tắc ignore thư mục và đường dẫn; production đã hiển thị run canonical. Không coi HTTP 200 đơn thuần là kiểm chứng chức năng.
+
+- Scoped chat af8c9f5 trả 500 vì nhánh lexical phụ thuộc PyVi, không có trong gói online. Bản a1d3986 dùng fast_terms cho riêng scope; production trả 200 và đúng neo Điều 25 Khoản 2 trong câu thử.
+- Selected analysis, comparison, obligations bị JSON cắt vì MAX_TOKENS. Bản a1d3986 dùng MINIMAL thinking, ngân sách mặc định 4096 và giữ trạng thái truncated_output; cả ba endpoint production đã trả 200 status ok sau sửa.
+- Corpus có document ID không đồng nghĩa có mọi điều khoản: truy xuất trực tiếp 16 record đã lập chỉ mục của document 333670 không có Điều 25. Candidate pool của câu hỏi thử việc cũng không chứa văn bản này. Chưa thay đổi index hay ranking.
+- Official research vẫn có no_results/timeout sau sửa query; chưa đạt. Logfire xuất trace bị 401 là lỗi giám sát riêng, chưa sửa credentials.
+- Review đã bổ sung chỉ dẫn rõ nguồn chưa xác minh hiệu lực; prompt không phải bằng chứng bảo đảm mọi kết luận pháp lý đúng.

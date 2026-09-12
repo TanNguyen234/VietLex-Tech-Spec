@@ -1,0 +1,115 @@
+{
+  "id": "procurement",
+  "reference_number": "349/2026/NĐ-CP",
+  "topic": "Đấu thầu",
+  "question": "Quy định lựa chọn nhà thầu được sửa đổi ra sao trong tháng 9/2026?",
+  "reference_url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219431",
+  "reference_title": "Sửa đổi, bổ sung một số điều của các Nghị định quy định chi tiết một số điều và biện pháp thi hành Luật Đấu thầu về lựa chọn nhà thầu",
+  "reference_issued_date": "09/09/2026",
+  "local_reference_ids": [],
+  "supabase_reference_ids": [],
+  "absence_verified": true,
+  "plan": {
+    "version": "official-web-v2",
+    "plan_id": "e5f8439ad7c52576534a6113",
+    "status": "draft",
+    "question": "Quy định lựa chọn nhà thầu được sửa đổi ra sao trong tháng 9/2026?",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "kind": "legal_basis",
+        "title": "Căn cứ pháp lý trực tiếp",
+        "query": "sửa đổi tháng 9/2026"
+      },
+      {
+        "step_id": "conditions",
+        "kind": "conditions",
+        "title": "Điều kiện và thủ tục",
+        "query": "sửa đổi tháng 9/2026 điều kiện"
+      },
+      {
+        "step_id": "exceptions",
+        "kind": "exceptions",
+        "title": "Ngoại lệ và giới hạn",
+        "query": "sửa đổi tháng 9/2026 không được"
+      },
+      {
+        "step_id": "amendments",
+        "kind": "amendments",
+        "title": "Sửa đổi và tình trạng hiệu lực",
+        "query": "sửa đổi tháng 9/2026 sửa đổi"
+      },
+      {
+        "step_id": "official_verification",
+        "kind": "official_verification",
+        "title": "Đối chiếu nguồn chính thức",
+        "query": "sửa đổi tháng 9/2026"
+      }
+    ]
+  },
+  "result": {
+    "status": "failed",
+    "question": "Quy định lựa chọn nhà thầu được sửa đổi ra sao trong tháng 9/2026?",
+    "plan_id": "e5f8439ad7c52576534a6113",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "title": "Căn cứ pháp lý trực tiếp",
+        "query": "sửa đổi tháng 9/2026",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "sửa đổi tháng 9/2026"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "conditions",
+        "title": "Điều kiện và thủ tục",
+        "query": "sửa đổi tháng 9/2026 điều kiện",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "sửa đổi tháng 9/2026 điều kiện"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "exceptions",
+        "title": "Ngoại lệ và giới hạn",
+        "query": "sửa đổi tháng 9/2026 không được",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "sửa đổi tháng 9/2026 không được"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "amendments",
+        "title": "Sửa đổi và tình trạng hiệu lực",
+        "query": "sửa đổi tháng 9/2026 sửa đổi",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "sửa đổi tháng 9/2026 sửa đổi"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "official_verification",
+        "title": "Đối chiếu nguồn chính thức",
+        "query": "sửa đổi tháng 9/2026",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "sửa đổi tháng 9/2026"
+        ],
+        "error_kind": null
+      }
+    ],
+    "provider": "chinhphu_official_portal",
+    "model": "webforms-search-v1"
+  },
+  "elapsed_seconds": 24.203
+}

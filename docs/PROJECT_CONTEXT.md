@@ -1,6 +1,6 @@
 # PROJECT_CONTEXT.md — VietLex Legal RAG System Context
 
-> Current product capability status: [FEATURE_STATUS](../FEATURE_STATUS.md). Dated updates below describe their own change sets, not an exhaustive current feature inventory. Local product reliability changes have not been deployed or live-provider verified.
+> Current product capability status: [FEATURE_STATUS](../FEATURE_STATUS.md). Dated updates below describe their own change sets, not an exhaustive current feature inventory. Product reliability commit af8c9f5 was deployed and live tested on 2026-09-12; Runtime fixes a1d3986 were deployed and retested the same day; see FEATURE_STATUS for evidence and remaining limits.
 
 ## Admin and temporary originals update (2026-09-09)
 

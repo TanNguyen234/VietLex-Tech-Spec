@@ -1,0 +1,137 @@
+{
+  "id": "resources_tax",
+  "reference_number": "135/2026/TT-BTC",
+  "topic": "Thuế tài nguyên",
+  "question": "Hướng dẫn thuế tài nguyên thay đổi thế nào theo Thông tư 135/2026/TT-BTC?",
+  "reference_url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219437",
+  "reference_title": "Sửa đổi, bổ sung một số điều của Thông tư số 152/2015/TT-BTC ngày 02 tháng 10 năm 2015 của Bộ trưởng Bộ Tài chính hướng dẫn về thuế tài nguyên được sửa đổi, bổ sung bởi Thông tư số 41/2024/TT-BТС",
+  "reference_issued_date": "09/09/2026",
+  "local_reference_ids": [],
+  "supabase_reference_ids": [],
+  "absence_verified": true,
+  "plan": {
+    "version": "official-web-v2",
+    "plan_id": "f49b57a72204d945a12bfcff",
+    "status": "draft",
+    "question": "Hướng dẫn thuế tài nguyên thay đổi thế nào theo Thông tư 135/2026/TT-BTC?",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "kind": "legal_basis",
+        "title": "Căn cứ pháp lý trực tiếp",
+        "query": "135/2026/TT-BTC"
+      },
+      {
+        "step_id": "conditions",
+        "kind": "conditions",
+        "title": "Điều kiện và thủ tục",
+        "query": "135/2026/TT-BTC điều kiện"
+      },
+      {
+        "step_id": "exceptions",
+        "kind": "exceptions",
+        "title": "Ngoại lệ và giới hạn",
+        "query": "135/2026/TT-BTC không được"
+      },
+      {
+        "step_id": "amendments",
+        "kind": "amendments",
+        "title": "Sửa đổi và tình trạng hiệu lực",
+        "query": "135/2026/TT-BTC sửa đổi"
+      },
+      {
+        "step_id": "official_verification",
+        "kind": "official_verification",
+        "title": "Đối chiếu nguồn chính thức",
+        "query": "135/2026/TT-BTC"
+      }
+    ]
+  },
+  "result": {
+    "status": "partial",
+    "question": "Hướng dẫn thuế tài nguyên thay đổi thế nào theo Thông tư 135/2026/TT-BTC?",
+    "plan_id": "f49b57a72204d945a12bfcff",
+    "steps": [
+      {
+        "step_id": "legal_basis",
+        "title": "Căn cứ pháp lý trực tiếp",
+        "query": "135/2026/TT-BTC",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "95bb1a2918311bab01500c9d",
+            "title": "Sửa đổi, bổ sung một số điều của Thông tư số 152/2015/TT-BTC ngày 02 tháng 10 năm 2015 của Bộ trưởng Bộ Tài chính hướng dẫn về thuế tài nguyên được sửa đổi, bổ sung bởi Thông tư số 41/2024/TT-BТС",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219437",
+            "document_number": "135/2026/TT-BTC",
+            "issued_date": "09/09/2026",
+            "snippet": "Sửa đổi, bổ sung một số điều của Thông tư số 152/2015/TT-BTC ngày 02 tháng 10 năm 2015 của Bộ trưởng Bộ Tài chính hướng dẫn về thuế tài nguyên được sửa đổi, bổ sung bởi Thông tư số 41/2024/TT-BТС",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "135/2026/TT-BTC"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "conditions",
+        "title": "Điều kiện và thủ tục",
+        "query": "135/2026/TT-BTC điều kiện",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "135/2026/TT-BTC điều kiện"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "exceptions",
+        "title": "Ngoại lệ và giới hạn",
+        "query": "135/2026/TT-BTC không được",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "135/2026/TT-BTC không được"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "amendments",
+        "title": "Sửa đổi và tình trạng hiệu lực",
+        "query": "135/2026/TT-BTC sửa đổi",
+        "status": "no_results",
+        "sources": [],
+        "executed_queries": [
+          "135/2026/TT-BTC sửa đổi"
+        ],
+        "error_kind": null
+      },
+      {
+        "step_id": "official_verification",
+        "title": "Đối chiếu nguồn chính thức",
+        "query": "135/2026/TT-BTC",
+        "status": "results_found",
+        "sources": [
+          {
+            "source_id": "95bb1a2918311bab01500c9d",
+            "title": "Sửa đổi, bổ sung một số điều của Thông tư số 152/2015/TT-BTC ngày 02 tháng 10 năm 2015 của Bộ trưởng Bộ Tài chính hướng dẫn về thuế tài nguyên được sửa đổi, bổ sung bởi Thông tư số 41/2024/TT-BТС",
+            "domain": "vanban.chinhphu.vn",
+            "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219437",
+            "document_number": "135/2026/TT-BTC",
+            "issued_date": "09/09/2026",
+            "snippet": "Sửa đổi, bổ sung một số điều của Thông tư số 152/2015/TT-BTC ngày 02 tháng 10 năm 2015 của Bộ trưởng Bộ Tài chính hướng dẫn về thuế tài nguyên được sửa đổi, bổ sung bởi Thông tư số 41/2024/TT-BТС",
+            "source_type": "official_government"
+          }
+        ],
+        "executed_queries": [
+          "135/2026/TT-BTC"
+        ],
+        "error_kind": null
+      }
+    ],
+    "provider": "chinhphu_official_portal",
+    "model": "webforms-search-v1"
+  },
+  "elapsed_seconds": 27.138
+}
