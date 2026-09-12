@@ -50,7 +50,7 @@ Tạo hồ sơ công khai thử nghiệm → đề xuất từ khóa → tìm c�
 - Sau sửa cuối CSS/hướng dẫn PDF: `.venv/Scripts/python.exe -m pytest tests/test_public_templates.py tests/test_workspace_routes.py -q -p no:cacheprovider`: **34 passed**. Backend không thay đổi.
 - `node --check app/static/js/research-workspace.js`; `node --test tests/product_forms.test.cjs`: **5 passed**. Ruff trên các file Python thay đổi: passed.
 - Live: `.venv/Scripts/python.exe tmp/online-evidence-20260912/run_acceptance.py`, `api_workflow.py`, `final_checks.py`. Script thực chạy lưu kèm; không dùng test doubles.
-- Commits: `a1d7e10` backend/tests; `f221672` workflow/UI; `e977ddb` sửa UI qua ảnh thật. Đã push origin/main. `manifest.json` ghi trạng thái đầu lượt live khi source chưa commit; `source_hashes` giữ từng file Python. CSS/template sửa sau đó không thay đổi service đang đánh giá. Hash artifact xuất bản dùng LF trong `publication.json`.
+- Commits: `a1d7e10` backend/tests; `f221672` workflow/UI; `e977ddb` sửa UI qua ảnh thật. Đã push origin/main. `manifest.json` ghi trạng thái đầu lượt live khi source chưa commit; `source_hashes` giữ từng file Python. CSS/template sửa sau đó không thay đổi service đang đánh giá. Hash artifact xuất bản dùng byte Git thực trong `publication.json`.
 
 Production smoke bản `f221672`: health/readiness/JS trả 200 và có reader mới; xem `production-smoke.json`. Workflow có ghi dữ liệu trên production mới: **NOT RUN** (quota tài khoản demo đã hết ở lượt trước). Logfire token 401 còn tồn tại; không thay credentials khi chưa có quyền cho lớp thay đổi đó.
 
