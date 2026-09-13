@@ -125,7 +125,7 @@ def _evidence_snapshot(evidence: list[dict]) -> list[dict]:
         "clause_id",
         "source_sha256", "document_sha256", "attachment_url", "extraction_method",
         "retrieved_at", "page_numbers", "page_window", "legal_effect_status",
-        "reported_effective_from", "review",
+        "issued_date", "reported_effective_from", "review",
     }
     return [
         {key: value for key, value in item.items() if key in fields}

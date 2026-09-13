@@ -123,6 +123,17 @@ def parse_obligation_matrix(raw: str, selected_ids: set[str]) -> ObligationMatri
     return result
 
 
+def _source_metadata(item: dict) -> str:
+    fields = ("source_url", "retrieved_at", "issued_date", "reported_effective_from", "legal_effect_status")
+    metadata = {key: item[key] for key in fields if isinstance(item.get(key), str) and item[key]}
+    if not metadata:
+        return ""
+    return (
+        "\nMetadata nguồn (dữ liệu được cung cấp, không chứng nhận hiệu lực hiện hành): "
+        + json.dumps(metadata, ensure_ascii=False)
+    )
+
+
 def build_selected_evidence_prompt(question: str, evidence: list[dict]) -> str:
     if len(evidence) > 10:
         raise ValueError("evidence_scope_too_large")
@@ -132,6 +143,7 @@ def build_selected_evidence_prompt(question: str, evidence: list[dict]) -> str:
             f"[{str(item.get('evidence_id', ''))[:80]}] "
             f"{str(item.get('citation') or 'Không có dẫn chiếu')[:300]}\n"
             f"{str(item.get('excerpt') or item.get('original') or '')}"
+            + _source_metadata(item)
         )
     if (
         sum(len(block.split()) for block in blocks)
@@ -144,7 +156,11 @@ def build_selected_evidence_prompt(question: str, evidence: list[dict]) -> str:
         f"{str(question)[:2_000]}\n\n"
         "Phạm vi bằng chứng được phép sử dụng:\n"
         + "\n\n".join(blocks)
-        + "\n\nNếu bằng chứng không đủ, hãy nêu rõ là không đủ bằng chứng."
+        + "\n\nNếu bằng chứng không đủ, hãy nêu rõ là không đủ bằng chứng. "
+        "Ngày hiệu lực do nguồn công bố không chứng nhận tình trạng hiện hành. "
+        "Nếu câu hỏi có ngày áp dụng, đối chiếu với ngày hiệu lực được cung cấp, "
+        "phân biệt ngày ban hành và ngày có hiệu lực; nêu rõ phần chưa xác minh "
+        "về sửa đổi, bãi bỏ và quy định chuyển tiếp. Không tự suy ra hiệu lực khi thiếu dữ liệu."
     )
 
 
@@ -278,6 +294,7 @@ async def generate_contract_review(
     ] + [
         f"[LAW {item['evidence_id']}] {str(item.get('citation') or '')[:300]}\n"
         f"{str(item.get('excerpt') or item.get('original') or '')}"
+        + _source_metadata(item)
         for item in legal_evidence
     ]
     if (

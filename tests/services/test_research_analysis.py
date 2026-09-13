@@ -203,6 +203,8 @@ async def test_review_prompt_does_not_certify_current_law(monkeypatch):
     from app.services import research_analysis as analysis
     generate = AsyncMock(return_value=SimpleNamespace(status='success', text='{"findings":[]}', observed_provider='test', observed_model='test'))
     monkeypatch.setattr(analysis, '_generate', generate)
-    await analysis.generate_contract_review([{'clause_id':'c','text':'Điều khoản'}], [])
+    await analysis.generate_contract_review([{'clause_id':'c','text':'Điều khoản'}], [{'evidence_id':'law1','excerpt':'Nguồn','reported_effective_from':'01-01-2027','legal_effect_status':'unverified'}])
+    assert '01-01-2027' in generate.call_args.args[0]
+    assert 'unverified' in generate.call_args.args[0]
     assert 'chưa xác minh hiệu lực' in generate.call_args.args[1]
     assert 'không khẳng định' in generate.call_args.args[1]

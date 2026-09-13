@@ -167,6 +167,7 @@ async def pin_source(
         "title": source["title"],
         "citation": source.get('document_number') or source["title"],
         "document_number": source.get('document_number'),
+        "issued_date": source.get("issued_date"),
         "reported_effective_from": source.get('reported_effective_from'),
         "excerpt": quote,
         "original": quote,
