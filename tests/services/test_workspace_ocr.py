@@ -72,3 +72,22 @@ async def test_ocr_provider_failure_is_typed_and_not_retried(ocr):
     with pytest.raises(service.DocumentExtractionError, match='ocr_timeout'):
         await service.extract_ocr_document('scan.pdf','application/pdf',pdf_bytes())
     generate.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_invalid_ocr_is_recorded_as_failed_with_usage(ocr):
+    from app.services.provider_runtime import capture_provider_usage, current_provider_calls
+    service, generate = ocr
+    generate.return_value.text = json.dumps(service.OCRResponse.model_json_schema())
+
+    @capture_provider_usage
+    async def run():
+        with pytest.raises(service.DocumentExtractionError, match='ocr_invalid_response'):
+            await service.extract_ocr_document('scan.pdf', 'application/pdf', pdf_bytes())
+        return current_provider_calls()
+
+    calls = await run()
+    assert len(calls) == 1
+    assert calls[0]['success'] is False
+    assert calls[0]['error_kind'] == 'ocr_invalid_response'
+    assert calls[0]['total_token_count'] == 50

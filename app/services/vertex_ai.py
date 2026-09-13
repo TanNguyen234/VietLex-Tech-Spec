@@ -241,6 +241,7 @@ class VertexAIProvider:
         max_output_tokens: int = 1024,
         thinking_level: types.ThinkingLevel | None = None,
         response_mime_type: str | None = None,
+        response_json_schema: dict[str, Any] | None = None,
         pdf_bytes: bytes | None = None,
         max_retries: int | None = None,
     ) -> GenerationResult:
@@ -258,6 +259,7 @@ class VertexAIProvider:
             temperature=0.2,
             max_output_tokens=max_output_tokens,
             response_mime_type=response_mime_type,
+            response_json_schema=response_json_schema,
             http_options=(types.HttpOptions(retry_options=types.HttpRetryOptions(attempts=max_retries + 1))
                           if max_retries is not None else None),
             thinking_config=(
