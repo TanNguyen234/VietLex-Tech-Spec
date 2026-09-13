@@ -10,11 +10,13 @@ from datetime import datetime
 from pathlib import Path
 
 from app.evaluation.provider_catalog import JUDGE_PROVIDER_MODELS
-from run_retrieval_eval import DEFAULT_DATASET_PATH
 
 # Configure UTF-8 encoding for stdout to handle Vietnamese characters on Windows
 sys.stdout.reconfigure(encoding="utf-8")
 PROJECT_ROOT = Path(__file__).resolve().parent
+DEFAULT_DATASET_PATH = PROJECT_ROOT / json.loads(
+    (PROJECT_ROOT / "docs/evaluation/current_evaluation.json").read_text(encoding="utf-8")
+)["dataset_path"]
 
 
 DEFAULT_CHECKPOINT_PATH = PROJECT_ROOT / "docs/eval_checkpoints.json"

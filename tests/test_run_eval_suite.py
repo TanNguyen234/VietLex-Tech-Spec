@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 def test_help_does_not_boot_the_full_rag_application() -> None:
     completed = subprocess.run(
-        [sys.executable, "run_eval_suite.py", "--help"],
+        [sys.executable, "-c", "import runpy, sys\nsys.argv = ['run_eval_suite.py', '--help']\ntry:\n    runpy.run_path('run_eval_suite.py', run_name='__main__')\nexcept SystemExit as error:\n    assert error.code == 0\nassert 'app.config' not in sys.modules, 'help imported application configuration'"],
         cwd=run_eval_suite.PROJECT_ROOT,
         capture_output=True,
         text=True,
