@@ -16,3 +16,10 @@
 .evidence-row[hidden],.finding-card[hidden]{display:none!important}
 
 .case-header>a:first-child{display:block;width:fit-content;margin-bottom:12px}.analysis-result>details[id^="stored-source-"]>a{display:block;width:fit-content;margin:8px 0;overflow-wrap:anywhere}
+
+.saved-source-search { margin-block: 1.5rem; }
+.saved-source-search-controls { display: flex; gap: .75rem; flex-wrap: wrap; }
+.saved-source-search-controls input { flex: 1 1 16rem; min-width: 0; }
+.saved-source-results { display: grid; gap: 1rem; margin-block: 1.5rem; }
+.saved-source-quote { white-space: pre-wrap; overflow-wrap: anywhere; }
+.saved-source-quote mark { background: #f5df97; color: #30271d; }

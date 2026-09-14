@@ -1,5 +1,7 @@
 """Provider-free views of retained workspace state; never infer legal validity."""
 
+import re
+
 
 def source_library(workspace: dict) -> list[dict]:
     groups = {}
@@ -68,3 +70,46 @@ def workspace_summary(workspace: dict) -> dict:
         "reports": sum(item.get("kind") == "research_report" for item in analyses),
         "analyses": len(analyses),
     }
+
+
+def search_saved_sources(workspace: dict, query: str) -> dict:
+    if len(query) > 200:
+        raise ValueError("source_query_too_long")
+    query = " ".join(query.split())
+    response = {"query": query, "results": [], "total_matches": 0, "pages_searched": 0}
+    if not query:
+        return response
+    pattern = re.compile(r"\s+".join(re.escape(word) for word in query.split()), re.IGNORECASE)
+    seen = set()
+    for analysis in reversed((workspace.get("analyses") or [])[-50:]):
+        if analysis.get("kind") != "trusted_sources":
+            continue
+        for index, source in enumerate((analysis.get("result") or {}).get("sources", [])[:3]):
+            digest = source.get("document_sha256") or source.get("sha256") or analysis["analysis_id"]
+            pages = source.get("pages") or [{"page": None, "text": source.get("text", "")}]
+            for page in pages:
+                text = str(page.get("text") or "")
+                key = (source.get("url"), digest, page.get("page"))
+                if key in seen:
+                    continue
+                seen.add(key)
+                if not text.strip():
+                    continue
+                response["pages_searched"] += 1
+                match = pattern.search(text)
+                if not match:
+                    continue
+                response["total_matches"] += 1
+                if len(response["results"]) >= 20:
+                    continue
+                start, end = max(0, match.start() - 150), min(len(text), match.end() + 200)
+                quote = text[start:end]
+                response["results"].append({
+                    "analysis_id": analysis["analysis_id"], "source_index": index,
+                    "title": source.get("document_number") or source.get("title") or source.get("url"),
+                    "page": page.get("page"), "version_id": digest,
+                    "before": text[start:match.start()], "match": match.group(),
+                    "after": text[match.end():end], "quote": quote,
+                    "can_pin": len(quote) <= 3000 and quote in str(source.get("text") or ""),
+                })
+    return response

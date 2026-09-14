@@ -8,7 +8,7 @@ import uuid
 from dataclasses import asdict
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from app.paths import APP_ROOT
@@ -50,7 +50,7 @@ from app.services.deep_research import (
 )
 from app.services.provider_runtime import capture_provider_usage, current_provider_calls
 from app.services.official_query_planner import prepare_research_plan
-from app.services.workspace_presenter import source_library, workspace_summary
+from app.services.workspace_presenter import source_library, workspace_summary, search_saved_sources
 from app.services.workspace_ocr import extract_ocr_document
 from app.services.workspace_documents import (
     DocumentExtractionError,
@@ -189,7 +189,8 @@ async def workspace_create(
 @router.get("/workspaces/{workspace_id}", response_class=HTMLResponse)
 @limiter.limit(settings.SESSION_RATE_LIMIT)
 async def workspace_detail(
-    request: Request, workspace_id: str, current_user=Depends(optional_user)
+    request: Request, workspace_id: str, current_user=Depends(optional_user),
+    source_query: str = Query("", max_length=200),
 ):
     workspace, _client_id, _user_id = await _owned_workspace(
         request, workspace_id, current_user
@@ -202,6 +203,7 @@ async def workspace_detail(
         {
             "workspace": workspace,
             "source_library": source_library(workspace),
+            "source_search": search_saved_sources(workspace, source_query),
             "workspace_summary": workspace_summary(workspace),
             "workspace_user": current_user,
             "comparison_models": available_model_choices() if current_user and current_user.get("email_verified") else [],

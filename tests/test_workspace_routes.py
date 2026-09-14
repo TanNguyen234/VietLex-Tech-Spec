@@ -685,3 +685,20 @@ def test_contract_review_uses_selected_server_clauses_and_legal_evidence(
     )
     assert invalid_law.status_code == 422
     assert generate.await_count == 1
+
+
+def test_saved_source_search_is_owned_escaped_and_provider_free(client, monkeypatch):
+    workspace = {"workspace_id": "w-1", "title": "Hồ sơ", "evidence": [], "analyses": [{"analysis_id": "a", "kind": "trusted_sources", "status": "ok", "result": {"sources": [{"url": "https://vanban.chinhphu.vn/?docid=1", "title": "Văn bản", "sha256": "hash", "text": "phụ cấp <img src=x onerror=alert(1)>", "pages": []}]}}]}
+    get = AsyncMock(return_value=workspace)
+    generate = AsyncMock()
+    monkeypatch.setattr("app.api.workspace_routes.get_workspace", get)
+    monkeypatch.setattr("app.api.workspace_routes.generate_selected_evidence_answer", generate)
+    response = client.get("/workspaces/w-1", params={"source_query": "phụ cấp"})
+    assert response.status_code == 200 and response.headers["cache-control"] == "no-store"
+    assert "<mark>phụ cấp</mark>" in response.text
+    assert "<img src=x" not in response.text and "&lt;img" in response.text
+    get.assert_awaited_once_with("w-1", "owner-a", user_id=None)
+    generate.assert_not_awaited()
+    assert client.get("/workspaces/w-1", params={"source_query": "x" * 201}).status_code == 422
+    get.return_value = None
+    assert client.get("/workspaces/other", params={"source_query": "phụ cấp"}).status_code == 404
