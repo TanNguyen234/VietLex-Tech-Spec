@@ -81,3 +81,35 @@ def test_reopen_source_is_owned_and_never_refetches(monkeypatch):
     reader.assert_not_awaited()
     owned.assert_awaited_once()
     assert TestClient(app).get("/workspaces/w/sources/missing").status_code == 404
+
+
+
+def test_pin_accepts_browser_line_endings_but_preserves_saved_quote(monkeypatch):
+    import app.api.trusted_source_routes as routes
+    from app.services.trusted_source_reader import official_evidence_id
+
+    app = FastAPI()
+    app.include_router(routes.router)
+    routes.limiter._storage.reset()
+    app.dependency_overrides[routes.optional_user] = lambda: {"_id": "owner"}
+    app.dependency_overrides[routes.verify_csrf] = lambda: "csrf"
+    source = {"url": "https://vanban.chinhphu.vn/a", "title": "Source",
+              "text": "Before\nExact\nquote\nAfter", "sha256": "hash",
+              "retrieved_at": "2026-09-14"}
+    monkeypatch.setattr(routes, "_owned_workspace", AsyncMock(return_value=(
+        {"analyses": [{"analysis_id": "a", "kind": "trusted_sources",
+                       "result": {"sources": [source]}}]}, "client", "owner")))
+    pin = AsyncMock(return_value=True)
+    monkeypatch.setattr(routes, "pin_workspace_evidence", pin)
+    client = TestClient(app)
+    response = client.post("/workspaces/w/sources/pin", data={
+        "analysis_id": "a", "source_index": "0", "quote": "Exact\r\nquote"})
+    assert response.status_code == 200
+    evidence = pin.await_args.args[1]
+    assert evidence["original"] == "Exact\nquote"
+    assert evidence["evidence_id"] == official_evidence_id(source, "Exact\nquote")
+    pin.reset_mock()
+    response = client.post("/workspaces/w/sources/pin", data={
+        "analysis_id": "a", "source_index": "0", "quote": "Exact quote"})
+    assert response.status_code == 422
+    pin.assert_not_awaited()

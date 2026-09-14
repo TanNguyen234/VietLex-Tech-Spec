@@ -1,6 +1,7 @@
 """Bounded reads from approved public origins and explicit excerpt pinning."""
 
 import asyncio
+import re
 import uuid
 from datetime import datetime, timezone
 from typing import Literal
@@ -156,7 +157,16 @@ async def pin_source(
     if source_index >= len(sources):
         raise HTTPException(404, detail="source_not_found")
     source = sources[source_index]
-    if not quote.strip() or quote not in source["text"]:
+    if quote not in source["text"]:
+        # HTML form submission normalizes newlines. Recover the exact saved
+        # substring; do not normalize spaces, punctuation, or evidence identity.
+        parts = re.split(r"\r\n|\r|\n", quote)
+        pattern = r"(?:\r\n|\r|\n)".join(re.escape(part) for part in parts)
+        match = re.search(pattern, source["text"])
+        if match is None:
+            raise HTTPException(422, detail="quote_not_in_source")
+        quote = match.group(0)
+    if not quote.strip() or len(quote) > 3000:
         raise HTTPException(422, detail="quote_not_in_source")
     evidence = {
         "evidence_id": official_evidence_id(source, quote),
