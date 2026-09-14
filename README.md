@@ -32,7 +32,7 @@ Cập nhật kiểm chứng: [OCR production 502 → 200](docs/verification/ocr-
 | Hoàn tất pipeline | **50/50** generation `STOP` · **50/50** NeMo input/output safe · **50/50** Ragas · 0 lỗi kỹ thuật |
 | Verified retrieval subset | **40** case có toàn bộ required evidence đã xác minh · Document Recall@3 **1,0000**, micro **53/53** |
 | Dữ liệu v3 đã kiểm kê | **141.798** point remote · **14.962** document ID duy nhất · Supabase cùng **14.962** văn bản |
-| Automated verification | **1290 passed, 30 warnings** trên source `168ef58`; xem [log và giới hạn](docs/verification/source-temporal-20260913/REPORT.md). **5 JavaScript tests passed** ở lượt 12/09 (không chạy lại trong sửa backend này). Suite không gọi provider, loại integration/visual; [API và browser thật](docs/verification/workflow-usability-20260912/REPORT.md) được báo cáo riêng |
+| Automated verification | **1297 passed, 30 warnings** trên source được commit thành `bf6421d`; xem [lệnh, trạng thái Git và giới hạn](docs/verification/saved-source-search-20260914/REPORT.md). **5 JavaScript tests passed** ở lượt 12/09 (không chạy lại trong sửa backend này). Suite không gọi provider, loại integration/visual; [API và browser thật](docs/verification/workflow-usability-20260912/REPORT.md) được báo cáo riêng |
 | Online discovery ngoài corpus | **10/10** neo ban đầu + **3/3** holdout; đọc hai trang đầu **12/13** lần đầu, **13/13** sau một retry mạng. Chưa đánh giá độ đúng/đủ pháp lý của 13 câu rộng; xem JSON và giới hạn trong report |
 | Public SSR smoke | Vercel FastAPI/Jinja tại <https://vietlex-legal-rag.vercel.app>: SSR và readiness sẵn sàng; tìm kiếm Supabase và trang toàn văn đã được kiểm tra trực tiếp |
 
@@ -63,6 +63,11 @@ Tổng quan chỉ rõ bước tiếp theo; thư viện giữ bản đọc theo U
 ## Năng lực cốt lõi
 
 Khi thiếu căn cứ nội tại, người dùng có thể chuyển câu hỏi sang hồ sơ, chỉnh từ khóa tìm nguồn chính thức, đọc PDF/OCR từng nhóm trang, ghim trích đoạn rồi phân tích chỉ trên nguồn đã chọn. Hiệu lực vẫn chưa xác minh; OCR cần đối chiếu bản gốc.
+
+Nguồn đã đọc có tìm cụm từ, tô sáng đoạn khớp, mở đúng bản đọc và ghim nguyên văn. [Kiểm chứng production 14/09](docs/verification/saved-source-search-20260914/REPORT.md): tìm → ghim → đọc lại đúng nội dung. Phạm vi chỉ là bản đọc còn lưu trong hồ sơ.
+
+![Tìm và ghim nguồn đã đọc — mobile thật](docs/verification/saved-source-search-20260914/source-search-mobile.png)
+
 
 ![Hồ sơ với căn cứ ngoài corpus đã ghim](docs/images/vietlex-official-workflow-20260912.png)
 

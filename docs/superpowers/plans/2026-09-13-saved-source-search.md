@@ -8,4 +8,4 @@ UI: search form inside Sources library; server-rendered results usable without J
 
 Gates: pure RED tests for phrase/same-page dedup/version separation/empty/retention; route ownership and no-store; template escaping; actual saved public PDF search and pin through live local or production API; browser desktop/mobile check using real data. Do not claim production validation from fixture tests. Freeze implementation scope before editing.
 
-Status: plan only; implementation NOT STARTED.
+Status: delivered as `a8c5fa9` + `bf6421d`; real local and production search/pin/readback passed. See [verification](../../verification/saved-source-search-20260914/REPORT.md).

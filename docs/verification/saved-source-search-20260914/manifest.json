@@ -1,0 +1,22 @@
+{
+  "date": "2026-09-14",
+  "runtime_commit": "bf6421dd953714620f02089590afcb5a9ffb7004",
+  "production_deployment": "dpl_8M4cvWftfnSwuPyoRQLoLAfSuTb7",
+  "manual_ready_deployment": "dpl_39mdMBWb4qNj7iRAPQoMN28VmX43",
+  "production_commit_evidence": "Vercel build log: Cloning github.com/TanNguyen234/VietLex-Tech-Spec (Branch: main, Commit: bf6421d)",
+  "publication_scope": "Curated summary and public legal-source mobile screenshot only; raw logs, session files and workspace content remain local.",
+  "test_run_git_state": "Started on b33a0d7 with uncommitted source changes subsequently committed as a8c5fa9 and bf6421d. Pre-run diff hash NOT RECORDED; do not describe this as a clean-commit run.",
+  "local_evidence_sha256": {
+    "tmp\\saved-source-search-20260914\\browser-live-result.json": "83c6db02a273bac77544942722d80dca0d839a1ab3ac7030f99c927985b33af4",
+    "tmp\\saved-source-search-20260914\\browser-final-result.json": "4d137de6f68bda6725deacfda4b71e15c3a9ade4121366cf81592856dd8a394f",
+    "tmp\\saved-source-search-20260914\\production-result.json": "6dbbaf5cda9db5f64154a423f23baff7c8daa528093e85afe86e119c8fa59c29",
+    "tmp\\saved-source-search-20260914\\full-search.log": "b07e5b0fca35903cdc612aaef211efb58584254ceb4630cbd580e224fd2665eb",
+    "tmp\\saved-source-search-20260914\\full-search.xml": "df0a051acbb43e2963d36a4abf116d129ea5024ab321a61ea123abab0a9b633f",
+    "tmp\\saved-source-search-20260914\\full-search-process.json": "ac6ff34f67ee52d5472a76f71c911196a879322c393431c06742b2c941889b82",
+    "tmp\\saved-source-search-20260914\\production-build.log": "d5287eccba62b3fbc12dd1bd9df6779722b04775071bbde651936426a07dddd9",
+    "tmp\\saved-source-search-20260914\\deployment-inspect.json": "e1c29b555b00a1ea851d464d87aee31fccde3983f1b8ff548a2d90079bbcb7b6",
+    "tmp\\saved-source-search-20260914\\browser_live.py": "8fde1ea1528cb415c6d1fed9a308eab81fd59c4ae85793927d6e5979f51768d2",
+    "tmp\\saved-source-search-20260914\\browser_final.py": "a6044c01ba33ecaa0e9f4f9ff80395f4993383436a6c6069bef094a1103a471e",
+    "tmp\\saved-source-search-20260914\\production_browser.py": "1c5f1692ce6423856e862882d980df9461b0a9ca597b86b2b9e33f15f227fef0"
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "local_browser": {
+    "checks": [
+      {
+        "viewport": "desktop",
+        "horizontal_overflow": false
+      },
+      {
+        "viewport": "mobile",
+        "horizontal_overflow": false
+      }
+    ],
+    "page_errors": [],
+    "status": 200,
+    "matches": 2,
+    "summary": "2 trang/bản HTML khớp trong 2 trang/bản HTML có chữ đã xét. Hiển thị tối đa 20 kết quả; đây không phải số điều khoản hoặc độ đầy đủ của căn cứ.",
+    "submitted_quote_has_newlines": true,
+    "pin_status": 200,
+    "pin_ui_success": true,
+    "readback_status": 200,
+    "readback_exact_quote": true
+  },
+  "production_browser": {
+    "checks": [
+      {
+        "viewport": "desktop",
+        "horizontal_overflow": false
+      },
+      {
+        "viewport": "mobile",
+        "horizontal_overflow": false
+      }
+    ],
+    "page_errors": [],
+    "status": 200,
+    "matches": 1,
+    "summary": "1 trang/bản HTML khớp trong 1 trang/bản HTML có chữ đã xét. Hiển thị tối đa 20 kết quả; đây không phải số điều khoản hoặc độ đầy đủ của căn cứ.",
+    "submitted_quote_has_newlines": true,
+    "pin_status": 200,
+    "pin_ui_success": true,
+    "readback_status": 200,
+    "readback_exact_quote": true
+  },
+  "suite": {
+    "command": [
+      ".venv/Scripts/python.exe",
+      "-m",
+      "pytest",
+      "tests",
+      "--ignore=tests/integration",
+      "--ignore=tests/visual",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "--basetemp=tmp/saved-source-search-20260914/pytest-search-suite",
+      "--junitxml=tmp/saved-source-search-20260914/full-search.xml"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 322.57800000000003
+  }
+}
