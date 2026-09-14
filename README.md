@@ -15,7 +15,10 @@ Ngôn ngữ: **Tiếng Việt** | [English](README.en.md)
 
 VietLex hỗ trợ người nghiên cứu pháp lý và compliance đi từ câu hỏi đến hồ sơ có căn cứ: **tìm văn bản → đọc và ghim Điều/Khoản → phân tích nguồn → rà soát tài liệu và xử lý findings → chỉnh sửa, xuất báo cáo**. Đây vẫn là sản phẩm nghiên cứu đang được kiểm chứng, chưa đạt production readiness.
 
-Trạng thái UI/API/tests và giới hạn chỉ được duy trì tại [FEATURE_STATUS.md](FEATURE_STATUS.md). Xem [nghiệm thu nguồn ngoài corpus: 10 câu + 3 holdout](docs/evaluation/runs/official-online-20260912T140633Z/REPORT.md), [baseline trước sửa](docs/verification/online-discovery-20260912/REPORT.md) và [phân tích workflow](docs/PRODUCT_WORKFLOWS_20260912.md).
+Trạng thái UI/API/tests và giới hạn chỉ được duy trì tại [FEATURE_STATUS.md](FEATURE_STATUS.md).
+
+Cập nhật kiểm chứng: [OCR production 502 → 200](docs/verification/ocr-output-20260913/REPORT.md), [metadata ngày ban hành/hiệu lực qua ghim và phân tích](docs/verification/source-temporal-20260913/REPORT.md), [10 PDF / 178 trang có chữ](docs/evaluation/runs/official-full-reading-20260913T101800Z/REPORT.md), [10 câu phân tích trích đoạn thật](docs/evaluation/runs/source-temporal-ten-20260913T153643Z/REPORT.md). Đọc được trang và tìm đúng URL chưa chứng minh câu trả lời đủ: cả 10 câu ở phạm vi trích đoạn đều báo thiếu căn cứ. Full-text toàn corpus và registry hiệu lực vẫn chưa hoàn tất.
+ Xem [nghiệm thu nguồn ngoài corpus: 10 câu + 3 holdout](docs/evaluation/runs/official-online-20260912T140633Z/REPORT.md), [baseline trước sửa](docs/verification/online-discovery-20260912/REPORT.md) và [phân tích workflow](docs/PRODUCT_WORKFLOWS_20260912.md).
 
 > [!WARNING]
 > Corpus là dataset nghiên cứu của bên thứ ba [`vohuutridung/vietnamese-legal-documents`](https://huggingface.co/datasets/vohuutridung/vietnamese-legal-documents), không phải cơ sở dữ liệu pháp luật chính thức và không tự xác nhận hiệu lực hiện hành. Kết quả chỉ nhằm mục đích tham khảo thông tin, không phải tư vấn pháp lý; luôn đối chiếu với nguồn chính thức cập nhật.
@@ -29,7 +32,7 @@ Trạng thái UI/API/tests và giới hạn chỉ được duy trì tại [FEATU
 | Hoàn tất pipeline | **50/50** generation `STOP` · **50/50** NeMo input/output safe · **50/50** Ragas · 0 lỗi kỹ thuật |
 | Verified retrieval subset | **40** case có toàn bộ required evidence đã xác minh · Document Recall@3 **1,0000**, micro **53/53** |
 | Dữ liệu v3 đã kiểm kê | **141.798** point remote · **14.962** document ID duy nhất · Supabase cùng **14.962** văn bản |
-| Automated verification | **1283 passed, 30 warnings** ngày 2026-09-12; thêm **5 JavaScript tests passed**. Suite không gọi provider, loại integration/visual; [API và browser thật](docs/verification/workflow-usability-20260912/REPORT.md) được báo cáo riêng |
+| Automated verification | **1290 passed, 30 warnings** trên source `168ef58`; xem [log và giới hạn](docs/verification/source-temporal-20260913/REPORT.md). **5 JavaScript tests passed** ở lượt 12/09 (không chạy lại trong sửa backend này). Suite không gọi provider, loại integration/visual; [API và browser thật](docs/verification/workflow-usability-20260912/REPORT.md) được báo cáo riêng |
 | Online discovery ngoài corpus | **10/10** neo ban đầu + **3/3** holdout; đọc hai trang đầu **12/13** lần đầu, **13/13** sau một retry mạng. Chưa đánh giá độ đúng/đủ pháp lý của 13 câu rộng; xem JSON và giới hạn trong report |
 | Public SSR smoke | Vercel FastAPI/Jinja tại <https://vietlex-legal-rag.vercel.app>: SSR và readiness sẵn sàng; tìm kiếm Supabase và trang toàn văn đã được kiểm tra trực tiếp |
 

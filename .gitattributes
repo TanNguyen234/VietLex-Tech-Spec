@@ -8,3 +8,13 @@ docs/evaluation/comparisons/**/*.md binary
 # Preserve the exact bytes of the real downloaded Markdown deliverable.
 docs/verification/workflow-usability-20260912/report-export.md binary
 docs/verification/workflow-usability-20260912/*.log -whitespace
+
+# Preserve published artifact bytes; accept CRLF without masking other whitespace.
+docs/verification/data-integrity-20260913/* -text whitespace=cr-at-eol
+docs/verification/ocr-output-20260913/* -text whitespace=cr-at-eol
+docs/verification/source-temporal-20260913/* -text whitespace=cr-at-eol
+docs/evaluation/runs/official-full-reading-20260913T101800Z/** -text whitespace=cr-at-eol
+docs/evaluation/runs/source-temporal-ten-20260913T153643Z/** -text whitespace=cr-at-eol
+docs/verification/data-integrity-20260913/*.log -whitespace
+docs/verification/ocr-output-20260913/*.log -whitespace
+docs/verification/source-temporal-20260913/*.log -whitespace

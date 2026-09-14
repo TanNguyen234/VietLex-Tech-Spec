@@ -1,0 +1,367 @@
+[
+  {
+    "id": "aviation",
+    "question": "Chi phí trực tiếp và gián tiếp khi khai thác tài sản hạ tầng hàng không do Nhà nước đầu tư được phân bổ thế nào theo quy định tháng 9/2026?",
+    "reference_url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219442",
+    "total_pages": 4,
+    "readable_pages": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "missing_pages": [],
+    "document_hashes": [
+      "316352ed8a263d22b45e0653abc4d40dbb5a9b39ee3b1d6aaf2e847577add9e7"
+    ],
+    "errors": [],
+    "attempts": 1,
+    "same_document_version": true,
+    "legal_correctness": "NOT ASSESSED"
+  },
+  {
+    "id": "health",
+    "question": "Nhân viên y tế được hưởng phụ cấp ưu đãi nghề như thế nào theo quy định mới tháng 9/2026?",
+    "reference_url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219438",
+    "total_pages": 6,
+    "readable_pages": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "missing_pages": [],
+    "document_hashes": [
+      "0bbbaf871cbc9f7895466bfca92cac0cbb24c84ca8efd120f7ba3d954fba7f9c"
+    ],
+    "errors": [],
+    "attempts": 2,
+    "same_document_version": true,
+    "legal_correctness": "NOT ASSESSED"
+  },
+  {
+    "id": "procurement",
+    "question": "Quy định lựa chọn nhà thầu được sửa đổi ra sao trong tháng 9/2026?",
+    "reference_url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219431",
+    "total_pages": 23,
+    "readable_pages": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+    ],
+    "missing_pages": [],
+    "document_hashes": [
+      "b028a4c9732789ff1acda5f669fce6c8134169c87b3492982d61bf67d1d97cc8"
+    ],
+    "errors": [
+      {
+        "page": 11,
+        "limit": 5,
+        "kind": "source_transport_error",
+        "attempt": 3
+      }
+    ],
+    "attempts": 6,
+    "same_document_version": true,
+    "legal_correctness": "NOT ASSESSED"
+  },
+  {
+    "id": "resources_tax",
+    "question": "Hướng dẫn thuế tài nguyên thay đổi thế nào theo Thông tư 135/2026/TT-BTC?",
+    "reference_url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219437",
+    "total_pages": 3,
+    "readable_pages": [
+      1,
+      2,
+      3
+    ],
+    "missing_pages": [],
+    "document_hashes": [
+      "7ee8e04bac6e27436f7c700ef68555a80dba88ed93b91ecf9b80e1ef694cfbd7"
+    ],
+    "errors": [],
+    "attempts": 1,
+    "same_document_version": true,
+    "legal_correctness": "NOT ASSESSED"
+  },
+  {
+    "id": "credit",
+    "question": "Hoạt động thông tin tín dụng có thay đổi gì theo Thông tư 46/2026/TT-NHNN?",
+    "reference_url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219435",
+    "total_pages": 4,
+    "readable_pages": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "missing_pages": [],
+    "document_hashes": [
+      "e9fd8d162e022d2e3236aa3d23ca0b4cb43faca6e13277ed7dee7a001ff5e2c3"
+    ],
+    "errors": [],
+    "attempts": 1,
+    "same_document_version": true,
+    "legal_correctness": "NOT ASSESSED"
+  },
+  {
+    "id": "maritime",
+    "question": "Cơ sở đào tạo và tổ chức cung ứng thuyền viên phải đáp ứng điều kiện gì theo Nghị định 348/2026/NĐ-CP?",
+    "reference_url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219424",
+    "total_pages": 17,
+    "readable_pages": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17
+    ],
+    "missing_pages": [],
+    "document_hashes": [
+      "ee6480444a15f566701f69dac4d21b11929fceb88680ae78e17cec1552a2b4ff"
+    ],
+    "errors": [],
+    "attempts": 4,
+    "same_document_version": true,
+    "legal_correctness": "NOT ASSESSED"
+  },
+  {
+    "id": "agriculture",
+    "question": "Bảo hiểm nông nghiệp được sửa đổi những nội dung gì theo Nghị định 346/2026/NĐ-CP?",
+    "reference_url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219420",
+    "total_pages": 24,
+    "readable_pages": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24
+    ],
+    "missing_pages": [],
+    "document_hashes": [
+      "ee1d6b89362982bbe57c0455243b3b63d1a59ba8f5ed6215ce6f153d3bc1f63b"
+    ],
+    "errors": [],
+    "attempts": 5,
+    "same_document_version": true,
+    "legal_correctness": "NOT ASSESSED"
+  },
+  {
+    "id": "imports",
+    "question": "Nhập khẩu dây chuyền công nghệ đã qua sử dụng phải đáp ứng điều kiện gì theo quy định mới tháng 9/2026?",
+    "reference_url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219429",
+    "total_pages": 39,
+    "readable_pages": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39
+    ],
+    "missing_pages": [],
+    "document_hashes": [
+      "08e33a899b30ce0d145bf514abba8135aab66558754c8fd99104dd362c844e8f"
+    ],
+    "errors": [
+      {
+        "page": 36,
+        "limit": 5,
+        "kind": "ocr_incomplete",
+        "attempt": 8
+      },
+      {
+        "page": 36,
+        "limit": 5,
+        "kind": "source_transport_error",
+        "attempt": 9
+      }
+    ],
+    "attempts": 10,
+    "same_document_version": true,
+    "legal_correctness": "NOT ASSESSED"
+  },
+  {
+    "id": "reserves",
+    "question": "Quản lý và sử dụng hàng dự trữ quốc gia theo Nghị định 345/2026/NĐ-CP được quy định thế nào?",
+    "reference_url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219380",
+    "total_pages": 40,
+    "readable_pages": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40
+    ],
+    "missing_pages": [],
+    "document_hashes": [
+      "c21fd81af62dd8a9968aacc809a42e5e9168047395d24512860be92ae5aaf98d"
+    ],
+    "errors": [
+      {
+        "page": 16,
+        "limit": 5,
+        "kind": "ocr_technical",
+        "attempt": 4
+      }
+    ],
+    "attempts": 9,
+    "same_document_version": true,
+    "legal_correctness": "NOT ASSESSED"
+  },
+  {
+    "id": "electricity",
+    "question": "Quy định mới tháng 9/2026 hỗ trợ ứng dụng khoa học công nghệ và chế tạo trong lĩnh vực điện lực như thế nào?",
+    "reference_url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219377",
+    "total_pages": 18,
+    "readable_pages": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18
+    ],
+    "missing_pages": [],
+    "document_hashes": [
+      "7eb6ab635d9eb0c4d754af8e3eed9a12edad3325bfdbb6fb5ab6070dca5b3ff1"
+    ],
+    "errors": [],
+    "attempts": 4,
+    "same_document_version": true,
+    "legal_correctness": "NOT ASSESSED"
+  }
+]

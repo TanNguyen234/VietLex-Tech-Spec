@@ -1,0 +1,41 @@
+{
+  "recorded_at": "2026-09-13T15:29:40.709339+00:00",
+  "runtime_commit": "f1a1b2d8c6da0c3c7301cd200e8a4733cbb3c2a7",
+  "deployment_id": "dpl_EoXcRf4NroHzcxEScX3esUJYFQCR",
+  "production_url": "https://vietlex-legal-rag.vercel.app",
+  "production_provider_calls": [
+    {
+      "provider": "google_vertex_ai",
+      "model": "gemini-3.5-flash",
+      "use_case": "document_ocr",
+      "success": true,
+      "error_kind": null,
+      "latency_ms": 4799.655,
+      "fallback_used": false,
+      "timestamp": "2026-09-13T15:34:09.606006+00:00",
+      "prompt_token_count": 805,
+      "output_token_count": 652,
+      "thinking_token_count": null,
+      "total_token_count": 1457,
+      "call_kind": "llm",
+      "request_count": null
+    }
+  ],
+  "source_blobs": {
+    "app/services/workspace_ocr.py": "c7fc9e69ff0b64af0e3f9dcb84c62c92bf573abb2043bbc38b420144f7402475",
+    "app/services/vertex_ai.py": "e9bbdfda64b5a60f68dae24691ae84bbc8ea78511e927d63914dcc99df1d461a"
+  },
+  "publication_scope": "Curated report, aggregate assessment and source hashes only. Raw model responses, production responses, logs and runners remain local and are not published.",
+  "local_evidence_sha256": {
+    "aviation-first-page.pdf": "a0f81fe66e2e1ab42c33ffdda4e853462badbef7f2fd04508643b6dde52d4df4",
+    "before-ocr-fix-production-read_official_pdf.txt": "0009c905d849f9b5ba08414a68f7abc0b79c4e4afd1d50e241a2a96d2ce592a1",
+    "full-ocr-process.json": "ad8b534f65159a21cf75a8e3957304004c170b0f19d62d27128b2341fdcf07a2",
+    "full-ocr.log": "38bd02e3a01eef2d9a82b75a3c5ec2fefedfb0d7f473f933106767364e4877aa",
+    "ocr-single-page-baseline.json": "26b257439038f6a9c13fac10e3e562f28e40238b9f70df67f99ccf34c5b01154",
+    "ocr-single-page-treatment.json": "70f5af2dd6294118bd0c29715a4ca8de4e3a3bb184e71fe2e37cf4578e377757",
+    "probe_ocr_single.py": "283a1778404ad07ab0c50b7e7becf9dc2f25835c1dc5422746f1e2f174667b7f",
+    "probe_ocr_treatment.py": "d98161e86e0149ffc00d1245a9368e98e395e9cdb455d21a37dd6bb4df52a856",
+    "production-integrity.json": "3ddda918946cfa979e12709c01d56f637df8b7317c4041fdd7ac3009b5f19926",
+    "production-read_official_pdf.txt": "bf240c03df87ec0770808f66f214246bb1cf9e08d415857219516a33cf18a7be"
+  }
+}

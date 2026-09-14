@@ -1,0 +1,42 @@
+{
+  "method": "Assistant read each actual answer against supplied excerpts and metadata; no independent legal certification",
+  "technical_provider_success": {
+    "numerator": 10,
+    "denominator": 10
+  },
+  "valid_selected_ids": {
+    "numerator": 10,
+    "denominator": 10,
+    "limit": "IDs in selected set, not citation entailment or legal correctness"
+  },
+  "insufficient_evidence": {
+    "numerator": 10,
+    "denominator": 10
+  },
+  "future_date_handling": {
+    "numerator": 5,
+    "denominator": 5,
+    "coverage": "aviation, credit, maritime, agriculture, electricity",
+    "method": "Manual answer reading: all state the reported future date has not arrived as of 13/09/2026; no independent amendment audit"
+  },
+  "comprehensive_legal_correctness": {
+    "numerator": null,
+    "denominator": 10,
+    "assessed": 0,
+    "skipped": 10,
+    "reason": "Limited selected excerpts; full claim audit and historical applicable-law corpus not available"
+  },
+  "tokens_and_cost": "NOT RECORDED by this harness; not zero",
+  "cases": {
+    "aviation": "Nêu 01/01/2027 và chuyển tiếp sang Quyết định 2007/QĐ-TTg; thiếu nội dung quyết định đó và phương pháp phân bổ.",
+    "health": "Nêu ngày hiệu lực 09/09/2026 và ngày thực hiện mức phụ cấp 01/01/2026; thiếu mức hưởng/cách tính/đối tượng chi tiết.",
+    "procurement": "Nêu ngày metadata và một số sửa đổi; thiếu toàn bộ thay đổi, điều khoản hiệu lực, chuyển tiếp.",
+    "resources_tax": "Nêu hiệu lực 09/09/2026, kỳ thuế 2026; thiếu nội dung sửa đổi ở trang 2.",
+    "credit": "Nêu chưa đến ngày 01/11/2026; thiếu các khoản sửa đổi của Thông tư 15/2023/TT-NHNN.",
+    "maritime": "Nêu chưa đến ngày 01/11/2026; thiếu điều kiện hoạt động cụ thể.",
+    "agriculture": "Nêu chưa đến ngày 20/10/2026, một số loại bảo hiểm/thủ tục; thiếu toàn bộ sửa đổi và chuyển tiếp.",
+    "imports": "Nêu ngày do metadata công bố, thiếu điều kiện tại Điều 5/8 và điều khoản hiệu lực gốc.",
+    "reserves": "Nêu ngày metadata 04/09/2026; excerpt cắt ngay câu hiệu lực và thiếu phần quy trình quản lý.",
+    "electricity": "Nêu chưa đến ngày 20/10/2026; thiếu các chính sách hỗ trợ chi tiết."
+  }
+}

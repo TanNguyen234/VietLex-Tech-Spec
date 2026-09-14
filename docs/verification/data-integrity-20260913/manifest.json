@@ -1,0 +1,23 @@
+{
+  "runtime_commit": "d80abc27a95aaf1f550267c684d8149a09befe97",
+  "previous_commit": "66d4480b97ee6099644b9224f84779b3976c1f9f",
+  "source_git_blob_sha256": {
+    "app/api/trusted_source_routes.py": "12d386d8b27ce52d6f124ba88379e493b56b2060abf99a5e1ca319f6acca25da",
+    "app/research_database.py": "dc38790ad14eae48c6c1af63d2cc43aeee5eac3636a916f8db64ba6ed114a273",
+    "app/services/trusted_source_reader.py": "a1e7f951ebd9ddc9665e88016f7a12146b29ddf9c3809be0f8773a71543b4b91",
+    "tests/test_official_evidence_identity.py": "1fe0fe65cd2cf34abca269dfec8f26c2a3059012eafadc72a7fbdb6d82edcee7",
+    "tests/test_research_database.py": "24a4ac4c4235d8c37b2cac63da17232e8e6cf27bca65a826d6832ce736822579"
+  },
+  "live_database": "real configured MongoDB, no doubles",
+  "full_suite": "provider-free, includes pre-existing unit doubles; not live-provider proof",
+  "publication_scope": "Curated report, aggregate assessment and source hashes only. Raw model responses, production responses, logs and runners remain local and are not published.",
+  "local_evidence_sha256": {
+    "full-final-process.json": "410f2771ea51c9dd51d7a90da5c5d28db01ef1114710bc806f58675b449b968c",
+    "full-final.log": "53a7aec889ba265788040fa481f4379965b8caddb76a7e618f0a2183ec7ef80c",
+    "full-process.json": "f1d7a00e694dbdb26d1ad4d37d6e22de26cb6b65369e0887c46dcb39216a36e0",
+    "full.log": "48a039f4647747c2f1c4c1caecdcecc6c7aca839ac2ed57908dcd575b8da4aa5",
+    "green.json": "920b582a2aef733731f4eb73e82491ec36816727be028e76afcdd2c6d8765e22",
+    "mongo_probe.py": "baa30b9e27589713aebd5cf3a03d4bd63349851e6a5de12cb7905535c5de2918",
+    "red.json": "7f0358476c7f5889468494a094237c821bb4a38941eb1d12697daa7e23671b4e"
+  }
+}

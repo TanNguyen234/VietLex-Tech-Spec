@@ -1,0 +1,28 @@
+{
+  "verified_at": "2026-09-14T07:31:31.782661+00:00",
+  "runtime_commit": "168ef5814e6361138db0b5eb7f5264edff839555",
+  "deployment_id": "dpl_3ixYGDVEPdi9c4uUL3SVEpGgfVVA",
+  "production_url": "https://vietlex-legal-rag.vercel.app",
+  "source_git_blob_sha256": {
+    "app/services/research_analysis.py": "9bd685c6b1160d572f50c6cfbdf0d8f348cfa780ad2d3b75b36cb7f1bf99b543",
+    "app/api/trusted_source_routes.py": "c7e27ae24e0f43d8649635a83e2b974e96c44a494126cf73990c8b02becca7b4",
+    "app/api/workspace_routes.py": "162170e120d4f47ea5d7c0ba6ee97310f3931b9a3646be98b498df165b3d82e1",
+    "run_eval_suite.py": "af5152ba547899aff30a14cb15141057e1ba87fa13b51dfeca835976bac6769b"
+  },
+  "publication_scope": "Curated report, aggregate assessment and source hashes only. Raw model responses, production responses, logs and runners remain local and are not published.",
+  "local_evidence_sha256": {
+    "full-temporal-final-process.json": "695be70655e0aaf890ccb761f44689632209b93cb8046e7a385192ec66ec60de",
+    "full-temporal-final.log": "962b6c8ad762d8655e0038a9b08df3b67c34e6eb551119cdd42c5607c456b4e9",
+    "full-temporal-process.json": "7765a97a644183d75591695424bfa916f2f60dbbf09b41ebfd0b875c4eb59d12",
+    "full-temporal.log": "893eeebae895528aaf3e8e41fb60ae5ab5fff14db82757f207b5f26cba42c48e",
+    "production-temporal-analysis.json": "8cdf86008de1725b202affb7bcd1d8341d8d82d16ea8e74a318d33d167e21690",
+    "production-temporal-checks.json": "14f47337d2724fff5a411201cf1c4289be8e76aed69f44389cd7f6614d719ed8",
+    "production_temporal.py": "d51eb9ae3ef7b67e8a6b552614f28dbbaf7bcbfd83f9bc2946416be9f5a2dfe1",
+    "temporal-baseline.json": "e5dde075799f1c7bbc953b3d3ac4ce425ae1fdfe7241857599471ad99bab06c6",
+    "temporal-input.json": "642e8358e56abd0b0e05088205b5d41a7bd9af61d445fb28a43ae315e6afca1f",
+    "temporal-treatment.json": "1d7784a4115021005babc5ed6b0032de8bbf73244ba04fb4335a58665895e3eb",
+    "temporal_baseline.py": "2749855aa50ccf1ceca075cc1d2cddbb6578ff5cfc71e765ecdf12880e6ba506",
+    "temporal_treatment.py": "e252afdf8879bdac6b8617732a81b674084fa659484c801e2d079c9ead3d9714",
+    "vbpl-discovery-probe.json": "81cde6a15bf607782dd4cf6cbdf00304fb7c9898c0f33fd5e5564815c0f99498"
+  }
+}

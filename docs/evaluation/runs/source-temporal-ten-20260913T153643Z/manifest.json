@@ -1,0 +1,31 @@
+{
+  "started_at": "2026-09-13T15:36:43.308317+00:00",
+  "git_sha": "f1a1b2d8c6da0c3c7301cd200e8a4733cbb3c2a7",
+  "git_dirty": true,
+  "git_diff_sha256": "b01ec40583d43ef96791b83a9aaae052ef20d99319caa179adeb3aad69ebb868",
+  "source_sha256": {
+    "app/services/research_analysis.py": "c94b4631f5c73c3909e129d2a2cbe2ff710149dd770d85d91d736ec83e2854c2",
+    "app/services/direct_llm.py": "a3f2ec707497c6dbe1bbc8a59e95df74c3e6ce034d11ca43825cf72cb3e9a6f0",
+    "app/config.py": "b2dc95a2be5ba2324a723d98b9a048e599dad1efb9885d688542d43b484bdd9b"
+  },
+  "selection": "First 1200 characters of first page plus at most 1300 characters around first hieu luc occurrence in a page; otherwise last page. Actual OCR excerpts, two selected sources; not whole-document analysis.",
+  "as_of": "2026-09-13",
+  "method": "real service/provider; no mocks; URLs previously discovered; not fresh end-to-end web search",
+  "legal_correctness": "Requires manual assessment, not inferred from response status",
+  "finished_at": "2026-09-13T15:37:29.178692+00:00",
+  "publication_scope": "Curated report, aggregate assessment and source hashes only. Raw model responses, production responses, logs and runners remain local and are not published.",
+  "local_evidence_sha256": {
+    "agriculture.json": "9f7fe297b57533a3ca65b8a48880c74bf92e6603d3fe5659e32e9da00378e13a",
+    "artifact-hashes.json": "f82a9ef71a209c374d9b284557444e19a0aed691cdb6c33a0619e41e10ccbdb4",
+    "aviation.json": "f38d079a7afa944a9eba2be6cac3b96d10763c9491c50194ac05cfc52ffdfb07",
+    "credit.json": "3e09cc82905d5e363fb3472d8299b64cda13a4c3f26cbebc1218d61838e311a1",
+    "electricity.json": "ba23eb7ffaab58e20a1120c123d5780d86158e054b7a8929866d9c84f637285f",
+    "health.json": "81c6129a5b1e696a933d6da96bc1fe23bd817488c8aff7183e8402ff30dd68d3",
+    "imports.json": "86831b6a86d8d85e3d470aebb0895959ce9ee84a228fa06303e51c5a0d823898",
+    "maritime.json": "87e5413c9cb14c59ca65c4395b3bee9a5d41632782690e6cdaf5f1b917987255",
+    "procurement.json": "f59c1a4d2718858dbe445d617c76799657a9b7a2915fd97214a965ee7934daee",
+    "reserves.json": "478dc9c95af488b4aaecc64a54ac3b20d6203aad2640e825176937c3f7eb870d",
+    "resources_tax.json": "f0b09c7cd7f91063ed5318fca1671d6cb5ff33835afa04c67744436f4e398e21",
+    "run.py": "fcfc3244b2c394e3bb37248ccb1a35ec4a440a82c743c51239f43899a1038041"
+  }
+}
