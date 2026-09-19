@@ -15,7 +15,7 @@ Ngôn ngữ: **Tiếng Việt** | [English](README.en.md)
 
 VietLex hỗ trợ người nghiên cứu pháp lý và compliance đi từ câu hỏi đến hồ sơ có căn cứ: **tìm văn bản → đọc và ghim Điều/Khoản → phân tích nguồn → rà soát tài liệu và xử lý findings → chỉnh sửa, xuất báo cáo**. Đây vẫn là sản phẩm nghiên cứu đang được kiểm chứng, chưa đạt production readiness.
 
-Trạng thái UI/API/tests và giới hạn chỉ được duy trì tại [FEATURE_STATUS.md](FEATURE_STATUS.md).
+Trạng thái UI/API/tests và giới hạn chỉ được duy trì tại [FEATURE_STATUS.md](FEATURE_STATUS.md). Bản full-text cục bộ mới có [hướng dẫn dựng chỉ mục và bằng chứng UI](docs/verification/internal-fulltext-20260919/REPORT.md); chưa bật full-text trên production.
 
 Cập nhật kiểm chứng: [OCR production 502 → 200](docs/verification/ocr-output-20260913/REPORT.md), [metadata ngày ban hành/hiệu lực qua ghim và phân tích](docs/verification/source-temporal-20260913/REPORT.md), [10 PDF / 178 trang có chữ](docs/evaluation/runs/official-full-reading-20260913T101800Z/REPORT.md), [10 câu phân tích trích đoạn thật](docs/evaluation/runs/source-temporal-ten-20260913T153643Z/REPORT.md). Đọc được trang và tìm đúng URL chưa chứng minh câu trả lời đủ: cả 10 câu ở phạm vi trích đoạn đều báo thiếu căn cứ. Full-text toàn corpus và registry hiệu lực vẫn chưa hoàn tất.
  Xem [nghiệm thu nguồn ngoài corpus: 10 câu + 3 holdout](docs/evaluation/runs/official-online-20260912T140633Z/REPORT.md), [baseline trước sửa](docs/verification/online-discovery-20260912/REPORT.md) và [phân tích workflow](docs/PRODUCT_WORKFLOWS_20260912.md).
@@ -392,7 +392,7 @@ Metric deterministic trong code là mặc định. Retrieval metrics bao gồm D
 ### 1. Yêu cầu và tài nguyên
 
 - Python 3.12 và Git. CI vẫn giữ một lane tương thích dependency trên Python 3.10, nhưng package runtime trong `pyproject.toml` yêu cầu `>=3.12,<3.13`.
-- MongoDB local hoặc MongoDB Atlas; Supabase cho tra cứu toàn văn ở online-only.
+- MongoDB local hoặc MongoDB Atlas; Supabase cho tìm số hiệu/tiêu đề và đọc toàn văn ở online-only; chưa có tìm kiếm nội dung toàn văn online.
 - Qdrant Cloud và Google Cloud ADC để chạy v3 live. Pinecone chỉ cần cho đường legacy/free.
 - Bundle v3 đã có trong repository (khoảng 41,3 MB). Chỉ cần khoảng **8 GiB disk trống** nếu tự dựng full corpus 518.255 văn bản; build hiện tại khoảng 3,08 GiB content + 0,21 GiB FTS, chưa tính file tải và file tạm.
 

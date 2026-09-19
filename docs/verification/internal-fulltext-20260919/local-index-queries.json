@@ -1,0 +1,695 @@
+{
+  "coverage": {
+    "schema_version": 1,
+    "overlap_characters": 240,
+    "document_count": 4969,
+    "passage_count": 101857,
+    "built_at": "2026-09-19T14:21:42.120598+00:00",
+    "source_sha256": "11b71ddb5b44580d87f2ce6cdd9b16a896612d6c047e8c201250d0a75de95467"
+  },
+  "size_bytes": 263274496,
+  "queries": [
+    {
+      "query": "thời gian thử việc",
+      "seconds": 0.0595843999999488,
+      "hits": [
+        {
+          "document_id": 37901,
+          "document_number": "45-LCT/HĐNN8",
+          "title": "Pháp lệnh Hợp đồng lao động năm 1990 do Hội đồng Nhà nước ban hành",
+          "legal_type": "Pháp lệnh",
+          "issuing_authority": "Hội đồng Nhà nước",
+          "issuance_date": "1990-08-30",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Lao-dong-Tien-luong/Phap-lenh-Hop-dong-lao-dong-1990-45-LCT-HDNN8-37901.aspx",
+          "content_sha256": "38759030f3ffebd990fb3d194ab5490dd25ca83e82b46d3426834dab2decb17b",
+          "section_id": "section-15",
+          "section_title": "Điều 13",
+          "source_offset": 0,
+          "marked": "Điều 13\n\nKhi giao kết hợp đồng lao động, người sử dụng lao động và người lao động có thể thoả thuận việc làm thử và thời gian thử việc. Việc làm thử có thể được giao kết bằng một hợp đồng riêng.\n\nThời gian thử việc tuỳ … ",
+          "snippet_parts": [
+            {
+              "text": "Điều 13\n\nKhi giao kết hợp đồng lao động, người sử dụng lao động và người lao động có thể thoả thuận việc làm thử và ",
+              "match": false
+            },
+            {
+              "text": "thời gian thử việc",
+              "match": true
+            },
+            {
+              "text": ". Việc làm thử có thể được giao kết bằng một hợp đồng riêng.\n\n",
+              "match": false
+            },
+            {
+              "text": "Thời gian thử việc",
+              "match": true
+            },
+            {
+              "text": " tuỳ … ",
+              "match": false
+            }
+          ]
+        },
+        {
+          "document_id": 38702,
+          "document_number": "35-L/CTN",
+          "title": "Bộ luật Lao động 1994",
+          "legal_type": "Luật",
+          "issuing_authority": "Quốc hội",
+          "issuance_date": "1994-06-23",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Lao-dong-Tien-luong/Bo-luat-Lao-dong-1994-35-L-CTN-38702.aspx",
+          "content_sha256": "a971b3f0750c9ec4737e459d48e2cf8de7c99e0ef9d3b5cce7890a707eec0e17",
+          "section_id": "section-36",
+          "section_title": "Điều 32.",
+          "source_offset": 0,
+          "marked": " … Người sử dụng lao động và người lao động thoả thuận về việc làm thử, thời gian thử việc, về quyền, nghĩa vụ của hai bên. Tiền lương của người lao động trong thời gian thử việc ít nhất phải bằng 70% mức lương cấp bậc của công … ",
+          "snippet_parts": [
+            {
+              "text": " … Người sử dụng lao động và người lao động thoả thuận về việc làm thử, ",
+              "match": false
+            },
+            {
+              "text": "thời gian thử việc",
+              "match": true
+            },
+            {
+              "text": ", về quyền, nghĩa vụ của hai bên. Tiền lương của người lao động trong ",
+              "match": false
+            },
+            {
+              "text": "thời gian thử việc",
+              "match": true
+            },
+            {
+              "text": " ít nhất phải bằng 70% mức lương cấp bậc của công … ",
+              "match": false
+            }
+          ]
+        },
+        {
+          "document_id": 142187,
+          "document_number": "10/2012/QH13",
+          "title": "Bộ Luật lao động 2012",
+          "legal_type": "Luật",
+          "issuing_authority": "Quốc hội",
+          "issuance_date": "2012-06-18",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Lao-dong-Tien-luong/Bo-Luat-lao-dong-2012-142187.aspx",
+          "content_sha256": "ed2e35f5b4b0ffc392a009dd9f5bd8978b4c501881b42f1c864a4983e5d7f178",
+          "section_id": "section-31",
+          "section_title": "Điều 28. Tiền lương trong thời gian thử việc",
+          "source_offset": 0,
+          "marked": "Điều 28. Tiền lương trong thời gian thử việc\n\nTiền lương của người lao động trong thời gian thử việc do hai bên thoả thuận nhưng ít nhất phải bằng 85% mức lương của công việc đó.\n\n",
+          "snippet_parts": [
+            {
+              "text": "Điều 28. Tiền lương trong ",
+              "match": false
+            },
+            {
+              "text": "thời gian thử việc",
+              "match": true
+            },
+            {
+              "text": "\n\nTiền lương của người lao động trong ",
+              "match": false
+            },
+            {
+              "text": "thời gian thử việc",
+              "match": true
+            },
+            {
+              "text": " do hai bên thoả thuận nhưng ít nhất phải bằng 85% mức lương của công việc đó.\n\n",
+              "match": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "thu viec",
+      "seconds": 0.08439569999973173,
+      "hits": [
+        {
+          "document_id": 333670,
+          "document_number": "45/2019/QH14",
+          "title": "Bộ luật Lao động 2019",
+          "legal_type": "Luật",
+          "issuing_authority": "Quốc hội",
+          "issuance_date": "2019-11-20",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Lao-dong-Tien-luong/Bo-Luat-lao-dong-2019-333670.aspx",
+          "content_sha256": "f9ec6a0f8ad2503b740b133661583e35a508cd4438a3717de5540f9dd5ec19ee",
+          "section_id": "section-30",
+          "section_title": "Điều 27. Kết thúc thời gian thử việc",
+          "source_offset": 0,
+          "marked": " … Kết thúc thời gian thử việc\n\n1. Khi kết thúc thời gian thử việc, người sử dụng lao động phải thông báo kết quả thử việc cho người lao động.\n\nTrường hợp thử việc đạt yêu cầu thì người sử dụng lao động tiếp tục thực hiện hợp … ",
+          "snippet_parts": [
+            {
+              "text": " … Kết thúc thời gian ",
+              "match": false
+            },
+            {
+              "text": "thử việc",
+              "match": true
+            },
+            {
+              "text": "\n\n1. Khi kết thúc thời gian ",
+              "match": false
+            },
+            {
+              "text": "thử việc",
+              "match": true
+            },
+            {
+              "text": ", người sử dụng lao động phải thông báo kết quả ",
+              "match": false
+            },
+            {
+              "text": "thử việc",
+              "match": true
+            },
+            {
+              "text": " cho người lao động.\n\nTrường hợp ",
+              "match": false
+            },
+            {
+              "text": "thử việc",
+              "match": true
+            },
+            {
+              "text": " đạt yêu cầu thì người sử dụng lao động tiếp tục thực hiện hợp … ",
+              "match": false
+            }
+          ]
+        },
+        {
+          "document_id": 333670,
+          "document_number": "45/2019/QH14",
+          "title": "Bộ luật Lao động 2019",
+          "legal_type": "Luật",
+          "issuing_authority": "Quốc hội",
+          "issuance_date": "2019-11-20",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Lao-dong-Tien-luong/Bo-Luat-lao-dong-2019-333670.aspx",
+          "content_sha256": "f9ec6a0f8ad2503b740b133661583e35a508cd4438a3717de5540f9dd5ec19ee",
+          "section_id": "section-27",
+          "section_title": "Điều 24. Thử việc",
+          "source_offset": 0,
+          "marked": " … Người sử dụng lao động và người lao động có thể thỏa thuận nội dung thử việc ghi trong hợp đồng lao động hoặc thỏa thuận về thử việc bằng việc giao kết hợp đồng thử việc.\n\n2. Nội dung chủ yếu của hợp đồng thử việc gồm … ",
+          "snippet_parts": [
+            {
+              "text": " … Người sử dụng lao động và người lao động có thể thỏa thuận nội dung ",
+              "match": false
+            },
+            {
+              "text": "thử việc",
+              "match": true
+            },
+            {
+              "text": " ghi trong hợp đồng lao động hoặc thỏa thuận về ",
+              "match": false
+            },
+            {
+              "text": "thử việc",
+              "match": true
+            },
+            {
+              "text": " bằng việc giao kết hợp đồng ",
+              "match": false
+            },
+            {
+              "text": "thử việc",
+              "match": true
+            },
+            {
+              "text": ".\n\n2. Nội dung chủ yếu của hợp đồng ",
+              "match": false
+            },
+            {
+              "text": "thử việc",
+              "match": true
+            },
+            {
+              "text": " gồm … ",
+              "match": false
+            }
+          ]
+        },
+        {
+          "document_id": 142187,
+          "document_number": "10/2012/QH13",
+          "title": "Bộ Luật lao động 2012",
+          "legal_type": "Luật",
+          "issuing_authority": "Quốc hội",
+          "issuance_date": "2012-06-18",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Lao-dong-Tien-luong/Bo-Luat-lao-dong-2012-142187.aspx",
+          "content_sha256": "ed2e35f5b4b0ffc392a009dd9f5bd8978b4c501881b42f1c864a4983e5d7f178",
+          "section_id": "section-29",
+          "section_title": "Điều 26. Thử việc",
+          "source_offset": 0,
+          "marked": " … Người sử dụng lao động và người lao động có thể thoả thuận về việc làm thử, quyền, nghĩa vụ của hai bên trong thời gian thử việc. Nếu có thoả thuận về việc làm thử thì các bên có thể giao kết hợp đồng thử việc.\n\nNội … ",
+          "snippet_parts": [
+            {
+              "text": " … Người sử dụng lao động và người lao động có thể thoả thuận về việc làm thử, quyền, nghĩa vụ của hai bên trong thời gian ",
+              "match": false
+            },
+            {
+              "text": "thử việc",
+              "match": true
+            },
+            {
+              "text": ". Nếu có thoả thuận về việc làm thử thì các bên có thể giao kết hợp đồng ",
+              "match": false
+            },
+            {
+              "text": "thử việc",
+              "match": true
+            },
+            {
+              "text": ".\n\nNội … ",
+              "match": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "bảo vệ dữ liệu cá nhân",
+      "seconds": 0.09068400000069232,
+      "hits": [
+        {
+          "document_id": 346850,
+          "document_number": "107/2025/QH15",
+          "title": "Luật Lý lịch tư pháp sửa đổi 2025",
+          "legal_type": "Luật",
+          "issuing_authority": "Quốc hội",
+          "issuance_date": "2025-12-05",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Quyen-dan-su/Luat-Ly-lich-tu-phap-sua-doi-2025-so-107-2025-QH15-346850.aspx",
+          "content_sha256": "9a4d75c3cc1160c20e59955accb8ecd5caea4ac31a12e6f467206d1f971a4cb1",
+          "section_id": "section-3",
+          "section_title": "Điều 50b. Việc cung cấp thông tin lý lịch tư pháp",
+          "source_offset": 0,
+          "marked": " … Bộ Công án có trách nhiệm tổ chức việc kết nối, chia sẻ, khai thác thông tin lý lịch tư pháp của các cơ quan, tổ chức có yêu cầu, bảo đảm đúng mục đích, an ninh, an toàn thông tin, bảo vệ dữ liệu cá nhân.\n\n3 … ",
+          "snippet_parts": [
+            {
+              "text": " … Bộ Công án có trách nhiệm tổ chức việc kết nối, chia sẻ, khai thác thông tin lý lịch tư pháp của các cơ quan, tổ chức có yêu cầu, bảo đảm đúng mục đích, an ninh, an toàn thông tin, ",
+              "match": false
+            },
+            {
+              "text": "bảo vệ dữ liệu cá nhân",
+              "match": true
+            },
+            {
+              "text": ".\n\n3 … ",
+              "match": false
+            }
+          ]
+        },
+        {
+          "document_id": 346850,
+          "document_number": "107/2025/QH15",
+          "title": "Luật Lý lịch tư pháp sửa đổi 2025",
+          "legal_type": "Luật",
+          "issuing_authority": "Quốc hội",
+          "issuance_date": "2025-12-05",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Quyen-dan-su/Luat-Ly-lich-tu-phap-sua-doi-2025-so-107-2025-QH15-346850.aspx",
+          "content_sha256": "9a4d75c3cc1160c20e59955accb8ecd5caea4ac31a12e6f467206d1f971a4cb1",
+          "section_id": "section-1",
+          "section_title": "Điều 1. Sửa đổi, bổ sung một số điều của Luật Lý lịch tư pháp",
+          "source_offset": 4313,
+          "marked": " … Cơ sở dữ liệu lý lịch tư pháp được xây dựng theo tiêu chuẩn, quy chuẩn kỹ thuật công nghệ thông tin, định mức kinh tế - kỹ thuật, bảo đảm hoạt động ổn định, liên tục; bảo đảm an ninh, an toàn thông tin, bảo vệ dữ liệu … ",
+          "snippet_parts": [
+            {
+              "text": " … Cơ sở dữ liệu lý lịch tư pháp được xây dựng theo tiêu chuẩn, quy chuẩn kỹ thuật công nghệ thông tin, định mức kinh tế - kỹ thuật, bảo đảm hoạt động ổn định, liên tục; bảo đảm an ninh, an toàn thông tin, ",
+              "match": false
+            },
+            {
+              "text": "bảo vệ dữ liệu",
+              "match": true
+            },
+            {
+              "text": " … ",
+              "match": false
+            }
+          ]
+        },
+        {
+          "document_id": 346850,
+          "document_number": "107/2025/QH15",
+          "title": "Luật Lý lịch tư pháp sửa đổi 2025",
+          "legal_type": "Luật",
+          "issuing_authority": "Quốc hội",
+          "issuance_date": "2025-12-05",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Quyen-dan-su/Luat-Ly-lich-tu-phap-sua-doi-2025-so-107-2025-QH15-346850.aspx",
+          "content_sha256": "9a4d75c3cc1160c20e59955accb8ecd5caea4ac31a12e6f467206d1f971a4cb1",
+          "section_id": "section-1",
+          "section_title": "Điều 1. Sửa đổi, bổ sung một số điều của Luật Lý lịch tư pháp",
+          "source_offset": 0,
+          "marked": " … Thông tin lý lịch tư pháp, Phiếu lý lịch tư pháp được quản lý, sử dụng theo quy định của pháp luật về bảo vệ dữ liệu cá nhân đối với dữ liệu cá nhân nhạy cảm. Cơ quan, tổ chức, cá nhân không được yêu cầu cá … ",
+          "snippet_parts": [
+            {
+              "text": " … Thông tin lý lịch tư pháp, Phiếu lý lịch tư pháp được quản lý, sử dụng theo quy định của pháp luật về ",
+              "match": false
+            },
+            {
+              "text": "bảo vệ dữ liệu cá nhân",
+              "match": true
+            },
+            {
+              "text": " đối với dữ liệu cá nhân nhạy cảm. Cơ quan, tổ chức, cá nhân không được yêu cầu cá … ",
+              "match": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "đấu thầu",
+      "seconds": 0.17668520000006538,
+      "hits": [
+        {
+          "document_id": 40647,
+          "document_number": "58/L-CTN",
+          "title": "Luật Thương mại 1997",
+          "legal_type": "Luật",
+          "issuing_authority": "Quốc hội",
+          "issuance_date": "1997-05-10",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Thuong-mai/Luat-Thuong-mai-1997-58-L-CTN-40647.aspx",
+          "content_sha256": "07301d4b1fd4d44f4559b67a2f8586bf7082a17342acb4f5cca702b4a3ce7f4c",
+          "section_id": "section-147",
+          "section_title": "Điều 145. Hình thức đấu thầu",
+          "source_offset": 0,
+          "marked": " … Hình thức đấu thầu\n\n1- Đấu thầu hàng hoá gồm đấu thầu rộng rãi và đấu thầu hạn chế.\n\nĐấu thầu rộng rãi là hình thức đấu thầu mà bên mời thầu không hạn chế số lượng các bên dự thầu và thông báo công khai các điều … ",
+          "snippet_parts": [
+            {
+              "text": " … Hình thức ",
+              "match": false
+            },
+            {
+              "text": "đấu thầu",
+              "match": true
+            },
+            {
+              "text": "\n\n1- ",
+              "match": false
+            },
+            {
+              "text": "Đấu thầu",
+              "match": true
+            },
+            {
+              "text": " hàng hoá gồm ",
+              "match": false
+            },
+            {
+              "text": "đấu thầu",
+              "match": true
+            },
+            {
+              "text": " rộng rãi và ",
+              "match": false
+            },
+            {
+              "text": "đấu thầu",
+              "match": true
+            },
+            {
+              "text": " hạn chế.\n\n",
+              "match": false
+            },
+            {
+              "text": "Đấu thầu",
+              "match": true
+            },
+            {
+              "text": " rộng rãi là hình thức ",
+              "match": false
+            },
+            {
+              "text": "đấu thầu",
+              "match": true
+            },
+            {
+              "text": " mà bên mời thầu không hạn chế số lượng các bên dự thầu và thông báo công khai các điều … ",
+              "match": false
+            }
+          ]
+        },
+        {
+          "document_id": 223669,
+          "document_number": "09/VBHN-BTC",
+          "title": "Văn bản hợp nhất 09/VBHN-BTC năm 2014 hợp nhất Thông tư hướng dẫn phát hành trái phiếu Chính phủ tại thị trường trong nước do Bộ Tài chính ban hành",
+          "legal_type": "Văn bản hợp nhất",
+          "issuing_authority": "Bộ Tài chính",
+          "issuance_date": "2014-01-25",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Chung-khoan/Van-ban-hop-nhat-09-VBHN-BTC-phat-hanh-trai-phieu-Chinh-phu-thi-truong-trong-nuoc-223669.aspx",
+          "content_sha256": "e7936275eed88373a613f472e99e8e319586bdc1d7f18382698ccaf6f02c9aeb",
+          "section_id": "section-18",
+          "section_title": "Điều 15. Hình thức đấu thầu và phương thức xác định giá trúng thầu",
+          "source_offset": 0,
+          "marked": " … a) Đấu thầu cạnh tranh lãi suất;\n\nb) Đấu thầu kết hợp cạnh tranh lãi suất và không cạnh tranh lãi suất.\n\n2. Kết quả đấu thầu trái phiếu được xác định theo một (01) trong hai (02) phương thức sau:\n\na) Đấu thầu đơn giá;\n\nb) Đấu … ",
+          "snippet_parts": [
+            {
+              "text": " … a) ",
+              "match": false
+            },
+            {
+              "text": "Đấu thầu",
+              "match": true
+            },
+            {
+              "text": " cạnh tranh lãi suất;\n\nb) ",
+              "match": false
+            },
+            {
+              "text": "Đấu thầu",
+              "match": true
+            },
+            {
+              "text": " kết hợp cạnh tranh lãi suất và không cạnh tranh lãi suất.\n\n2. Kết quả ",
+              "match": false
+            },
+            {
+              "text": "đấu thầu",
+              "match": true
+            },
+            {
+              "text": " trái phiếu được xác định theo một (01) trong hai (02) phương thức sau:\n\na) ",
+              "match": false
+            },
+            {
+              "text": "Đấu thầu",
+              "match": true
+            },
+            {
+              "text": " đơn giá;\n\nb) ",
+              "match": false
+            },
+            {
+              "text": "Đấu",
+              "match": true
+            },
+            {
+              "text": " … ",
+              "match": false
+            }
+          ]
+        },
+        {
+          "document_id": 6915,
+          "document_number": "61/2005/QH11",
+          "title": "Luật Đấu thầu 2005",
+          "legal_type": "Luật",
+          "issuing_authority": "Quốc hội",
+          "issuance_date": "2005-11-29",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Xay-dung-Do-thi/Luat-dau-thau-2005-61-2005-QH11-6915.aspx",
+          "content_sha256": "e6a7470b73fac0d5604ab966cbc71551c8034510067b8f3c34fd382f8ebea3ab",
+          "section_id": "section-6",
+          "section_title": "Điều 5. Thông tin về đấu thầu",
+          "source_offset": 0,
+          "marked": " … Thông tin về đấu thầu\n\n1. Các thông tin sau đây về đấu thầu phải được đăng tải trên tờ báo về đấu thầu và trang thông tin điện tử về đấu thầu của cơ quan quản lý nhà nước về đấu thầu:\n\na) Kế hoạch đấu thầu … ",
+          "snippet_parts": [
+            {
+              "text": " … Thông tin về ",
+              "match": false
+            },
+            {
+              "text": "đấu thầu",
+              "match": true
+            },
+            {
+              "text": "\n\n1. Các thông tin sau đây về ",
+              "match": false
+            },
+            {
+              "text": "đấu thầu",
+              "match": true
+            },
+            {
+              "text": " phải được đăng tải trên tờ báo về ",
+              "match": false
+            },
+            {
+              "text": "đấu thầu",
+              "match": true
+            },
+            {
+              "text": " và trang thông tin điện tử về ",
+              "match": false
+            },
+            {
+              "text": "đấu thầu",
+              "match": true
+            },
+            {
+              "text": " của cơ quan quản lý nhà nước về ",
+              "match": false
+            },
+            {
+              "text": "đấu thầu",
+              "match": true
+            },
+            {
+              "text": ":\n\na) Kế hoạch ",
+              "match": false
+            },
+            {
+              "text": "đấu thầu",
+              "match": true
+            },
+            {
+              "text": " … ",
+              "match": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "thuế tài nguyên",
+      "seconds": 0.07239660000050208,
+      "hits": [
+        {
+          "document_id": 3705,
+          "document_number": "83/2005/TT-BTC",
+          "title": "Thông tư 83/2005/TT-BTC hướng dẫn thí điểm cơ sở sản xuất, kinh doanh tự khai, tự nộp thuế tài nguyên theo Quyết định 161/2005/QĐ-TTg do Bộ Tài chính ban hành",
+          "legal_type": "Thông tư",
+          "issuing_authority": "Bộ Tài chính",
+          "issuance_date": "2005-09-22",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Thue-Phi-Le-Phi/Thong-tu-83-2005-TT-BTC-huong-dan-thi-diem-co-so-san-xuat-kinh-doanh-tu-khai-tu-nop-thue-tai-nguyen-theo-Quyet-dinh-161-2005-QD-TTg-3705.aspx",
+          "content_sha256": "2cbc4f2f81fd9dd481a5bf8a8263c56d30c1383041ce4eea571ae5566e748707",
+          "section_id": "full-text",
+          "section_title": "Toàn văn",
+          "source_offset": 2157,
+          "marked": "n hành tính và kê khai thuế tài nguyên đầy đủ theo mẫu số 01/TNg ban hành kèm theo Thông tư này. Trường hợp cơ sở kinh doanh trong tháng không phát sinh thuế tài nguyên, cơ sở kinh doanh vẫn phải kê khai và nộp tờ … ",
+          "snippet_parts": [
+            {
+              "text": "n hành tính và kê khai ",
+              "match": false
+            },
+            {
+              "text": "thuế tài nguyên",
+              "match": true
+            },
+            {
+              "text": " đầy đủ theo mẫu số 01/TNg ban hành kèm theo Thông tư này. Trường hợp cơ sở kinh doanh trong tháng không phát sinh ",
+              "match": false
+            },
+            {
+              "text": "thuế tài nguyên",
+              "match": true
+            },
+            {
+              "text": ", cơ sở kinh doanh vẫn phải kê khai và nộp tờ … ",
+              "match": false
+            }
+          ]
+        },
+        {
+          "document_id": 3705,
+          "document_number": "83/2005/TT-BTC",
+          "title": "Thông tư 83/2005/TT-BTC hướng dẫn thí điểm cơ sở sản xuất, kinh doanh tự khai, tự nộp thuế tài nguyên theo Quyết định 161/2005/QĐ-TTg do Bộ Tài chính ban hành",
+          "legal_type": "Thông tư",
+          "issuing_authority": "Bộ Tài chính",
+          "issuance_date": "2005-09-22",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Thue-Phi-Le-Phi/Thong-tu-83-2005-TT-BTC-huong-dan-thi-diem-co-so-san-xuat-kinh-doanh-tu-khai-tu-nop-thue-tai-nguyen-theo-Quyet-dinh-161-2005-QD-TTg-3705.aspx",
+          "content_sha256": "2cbc4f2f81fd9dd481a5bf8a8263c56d30c1383041ce4eea571ae5566e748707",
+          "section_id": "full-text",
+          "section_title": "Toàn văn",
+          "source_offset": 4316,
+          "marked": "ai tự quyết toán thuế tài nguyên theo mẫu số 02/TNg. Tờ khai tự quyết toán thuế tài nguyên năm được lập và nộp cho cơ quan thuế để xác định số thuế tài nguyên thực tế phát sinh trong năm.\n\nThời hạn nộp Tờ khai tự … ",
+          "snippet_parts": [
+            {
+              "text": "ai tự quyết toán ",
+              "match": false
+            },
+            {
+              "text": "thuế tài nguyên",
+              "match": true
+            },
+            {
+              "text": " theo mẫu số 02/TNg. Tờ khai tự quyết toán ",
+              "match": false
+            },
+            {
+              "text": "thuế tài nguyên",
+              "match": true
+            },
+            {
+              "text": " năm được lập và nộp cho cơ quan thuế để xác định số ",
+              "match": false
+            },
+            {
+              "text": "thuế tài nguyên",
+              "match": true
+            },
+            {
+              "text": " thực tế phát sinh trong năm.\n\nThời hạn nộp Tờ khai tự … ",
+              "match": false
+            }
+          ]
+        },
+        {
+          "document_id": 8874,
+          "document_number": "05/2006/TT-BTC",
+          "title": "Thông tư 05/2006/TT-BTC hướng dẫn thuế tài nguyên đối với nước thiên nhiên dùng để sản xuất thuỷ điện do Bộ Tài chính ban hành",
+          "legal_type": "Thông tư",
+          "issuing_authority": "Bộ Tài chính",
+          "issuance_date": "2006-01-19",
+          "source_url": "https://thuvienphapluat.vn/van-ban/Thue-Phi-Le-Phi/Thong-tu-05-2006-TT-BTC-huong-dan-thue-tai-nguyen-nuoc-thien-nhien-san-xuat-thuy-dien-8874.aspx",
+          "content_sha256": "649ecade2ae39ec1753955735debd287717a0f638e5ff240c596cae1a0d3fb86",
+          "section_id": "full-text",
+          "section_title": "Toàn văn",
+          "source_offset": 0,
+          "marked": " … Thuế suất thuế tài nguyên đối với nước thiên nhiên dùng để sản xuất thuỷ điện là 2%.\n\nGiá tính thuế tài nguyên nước tính cho 1kwh thuỷ điện theo mức ấn định là 700 đồng.\n\nThuế tài nguyên nước sử dụng để sản xuất thuỷ điện | = | Sản … ",
+          "snippet_parts": [
+            {
+              "text": " … Thuế suất ",
+              "match": false
+            },
+            {
+              "text": "thuế tài nguyên",
+              "match": true
+            },
+            {
+              "text": " đối với nước thiên nhiên dùng để sản xuất thuỷ điện là 2%.\n\nGiá tính ",
+              "match": false
+            },
+            {
+              "text": "thuế tài nguyên",
+              "match": true
+            },
+            {
+              "text": " nước tính cho 1kwh thuỷ điện theo mức ấn định là 700 đồng.\n\n",
+              "match": false
+            },
+            {
+              "text": "Thuế tài nguyên",
+              "match": true
+            },
+            {
+              "text": " nước sử dụng để sản xuất thuỷ điện | = | Sản … ",
+              "match": false
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

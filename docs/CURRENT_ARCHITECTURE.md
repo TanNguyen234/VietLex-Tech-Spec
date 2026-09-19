@@ -304,3 +304,10 @@ On `SERVERLESS_ONLINE_ONLY=true`, opt-in chat self-checks use the versioned NeMo
 Workspace uploads have explicit opt-in inline-PDF OCR (maximum 5 pages, 3,700,000 bytes, 60 seconds, 8,192 output tokens, one Vertex request). Strict JSON/page coverage rejects partial output. Machine text retains page/hash/model provenance and is visibly unverified. Original bytes and text share the existing owner-scoped Mongo record and retention. Reviewer demo OCR reserves the AI budget; ordinary text extraction makes zero generation calls. No external worker, Files API, new storage collection or migration is required.
 
 The Groq primary is `qwen/qwen3.8-27b` after an identical-input two-case synthetic operational A/B (old alias HTTP 404, new alias 2/2 exact JSON). This is not evidence of legal-answer quality. NVIDIA original/candidate failed live and were not replaced; the old Groq secondary is also unverified/unavailable in the catalog. No retrieval model, embeddings, reranking or corpus changes.
+
+
+### Local passage full-text (2026-09-19)
+
+`LegalBrowser` can use an additive `legal_body_fts.sqlite3` beside its selected local content store. This is separate from retrieval's existing title/number FTS. Exact reader sections are split into 2,400-character windows with 240-character overlap; FTS5 phrase queries apply metadata filters before pagination. Snippets are escaped spans, not trusted HTML. Matched documents are hash-checked against the current reader store before results are shown. Missing/stale indexes fail explicitly. Coverage is the indexed snapshot, not verified current law.
+
+The verified local v3 slice contains 4,969 documents and 101,857 passages. Serverless online-only does not fall back to it. The additive PostgreSQL migration has a local PostgreSQL contract test, but has not been applied to Supabase or connected to the production search UI. See the [verification report](verification/internal-fulltext-20260919/REPORT.md).

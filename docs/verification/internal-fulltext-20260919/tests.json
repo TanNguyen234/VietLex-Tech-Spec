@@ -1,0 +1,27 @@
+{
+  "full_suite": {
+    "name": "pytest",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "4",
+    "tests": "1326",
+    "time": "312.315",
+    "timestamp": "2026-09-19T21:45:47.425176+07:00",
+    "hostname": "DESKTOP-HNF4ES8"
+  },
+  "command": ".venv/Scripts/python.exe -m pytest -q --junitxml=tmp/body-search-20260919/full-final.xml",
+  "focused": {
+    "passed": 27,
+    "warnings": 1
+  },
+  "initial_full_suite": {
+    "passed": 1319,
+    "failed": 2,
+    "skipped": 4,
+    "warnings": 30
+  },
+  "initial_failures_retry": {
+    "passed": 2,
+    "timeout_changed": false
+  }
+}

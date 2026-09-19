@@ -1,0 +1,19 @@
+{
+  "git_sha": "ea56518b62c0d5b15552ab5b4e438473ef07fdc3",
+  "git_dirty": true,
+  "git_diff_sha256": "9483dfe9d76b2bed966b57afe2ff3e6b3fc2155676121d1c6c4e0dd6fc156e13",
+  "source_sha256": {
+    "app/services/body_search.py": "672a3825312aff4af1840f2474cfecf8201ea726b3f4b4f18788c1f2408530de",
+    "app/services/document_structure.py": "9ca1292014a8e72456efe61ac0bdb25b4ffd26791bef4d4a5cd6a109c0c15ce3",
+    "app/services/legal_browser.py": "165e392da7d99c4f7acf7938bde8f9f29f057cdc046755821ee2845bf94163ab",
+    "app/api/legal_routes.py": "823e94eab2651cc003e6d9416a89c984b0253123538a86799a2c0cde07cb6042",
+    "app/ingestion/body_fts.py": "882ce34ba535cb0ed57b425d5048870a876c691fe5cd51fb3a6a60c8d7bd89d1",
+    "app/templates/legal_search.html": "0001b4dca40f700b2924e8637902823304f6629ec4e2c8fc1139684020866676",
+    "app/static/css/vietlex-enhancements.css": "3885a4637a511d65a6326745b7add83a846ca76e4ac634145cd55de914cd243a",
+    "tests/services/test_body_search.py": "7f2bcbf04f2b0b04ef79e11b6b7bdc253fc294d9ce7a80189d7009cada8e618a",
+    "migrations/20260919_legal_body_search.sql": "9a3a2d9fa771f0fb8a4554208e962654a4b71d1f158b335cc4c920cbbe276b24",
+    "tests/sql/body_search_contract.mjs": "3cc00a3f2345e509f3708f51dbcde50f563ef33172b1d7775efca79fc805e8a0"
+  },
+  "production_fulltext": "NOT RUN",
+  "existing_vector_indexes_changed": false
+}

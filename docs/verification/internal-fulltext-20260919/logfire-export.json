@@ -1,0 +1,11 @@
+{
+  "verification_id": "4140e923d5ad482cbf80eac4a51a6da5",
+  "force_flush": true,
+  "responses": [
+    {
+      "host": "logfire-us.pydantic.dev",
+      "path": "/v1/traces",
+      "status": 200
+    }
+  ]
+}

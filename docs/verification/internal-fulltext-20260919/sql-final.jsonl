@@ -1,0 +1,2 @@
+{"engine":"PGlite PostgreSQL","mock":false,"fixture":"synthetic SQL contract fixture; not live corpus proof","passed":7}
+{"fixture":"real local corpus","document_id":333670,"number":"45/2019/QH14","hash":"f9ec6a0f8ad2503b740b133661583e35a508cd4438a3717de5540f9dd5ec19ee","hits":1,"anchor":"section-27"}

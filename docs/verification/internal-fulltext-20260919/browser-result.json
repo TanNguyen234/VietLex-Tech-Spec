@@ -1,0 +1,16 @@
+{
+  "checks": [
+    {
+      "viewport": "desktop",
+      "no_horizontal_overflow": true
+    },
+    {
+      "viewport": "mobile",
+      "no_horizontal_overflow": true
+    }
+  ],
+  "reader_anchor": "/documents/333670#section-30",
+  "section_title": "Điều 27. Kết thúc thời gian thử việc",
+  "highlight_present": true,
+  "page_errors": []
+}
