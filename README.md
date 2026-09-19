@@ -576,3 +576,9 @@ python -u -m app.ingestion.hf_pipeline full --delete-existing --yes
 - [`docs/huggingface-ingestion-runbook.md`](docs/huggingface-ingestion-runbook.md) — ingestion operations
 
 Kiểm chứng 19/09: [ngân sách phân tích, phần chưa đủ căn cứ và 10 câu thật](docs/verification/selected-context-20260919/REPORT.md). Production cùng 995 từ: 422 → 200; benchmark vẫn còn lỗi suy đoán phạm vi nguồn. MEDIUM bị loại vì 5/10 câu cắt đầu ra.
+
+### Tìm thêm nguồn chính thức — 19/09
+
+Đã triển khai tìm trực tiếp ở Cổng văn bản Chính phủ và Công báo, kèm đọc PDF Công báo. [Báo cáo kiểm chứng](docs/verification/congbao-discovery-20260919/REPORT.md): 10 chủ đề có kết quả, production tìm/đọc đạt; xếp hạng truy vấn ngắn và độ đầy đủ pháp lý chưa đạt nghiệm thu.
+
+![Phạm vi tìm nguồn trên production mobile](docs/verification/congbao-discovery-20260919/discovery-mobile.png)

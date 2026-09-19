@@ -1,0 +1,28 @@
+{
+  "runtime_commit": "533547f",
+  "deployment_url": "https://vietlex-legal-qc6d6sdzb-foxys-projects-5fe642e0.vercel.app",
+  "canonical_url": "https://vietlex-legal-rag.vercel.app",
+  "local_evidence_sha256": {
+    "full.log": "2a8297a5e4fc1e5dc37a1466bd6622dbfe298379a975f2e6d95084e9f884cb73",
+    "full.xml": "de86ddc81ff36d4b994ce5404374d27f1a7f5892288054cae0367c3988008f6c",
+    "full-process.json": "23608429eaf40a0a80c9a41927f2a0e4ce7fdeafa04277eec88fc6f37588ed83",
+    "production-checks.json": "7e2660f462e457f7bf459d61a957552c518eecc4ee790c362b4ce301ec4e5a80",
+    "production-browser-result.json": "ef4ab5ae3a27c7b1bed4c9fcd9afa48bfe864a7b1389a31ecafc934353a5591a",
+    "production-research.json": "f0a8688969df7d410b2b26d9edcdc76f44eb17fdf9004f2c6c2f872f26e7d00b",
+    "production-read.json": "81225a0e1b22fb0dd5feb832f5c84e810d8be99689b55d0071a955591dcd5d43",
+    "federation.json": "51f0e51eec08acdca404880a983c2cfbc31f9a7de4ecac1310ec9d72af1bf08a",
+    "live-adapter/00.json": "2197fadc7fe01425bc85372ee1de045d6b309dfb49eda9bd951965301b6be3fd",
+    "live-adapter/01.json": "a74e54b0eb49eba628a5f25561a9f1959451bd01e7d9259cfaeb9c09a8b21f9e",
+    "live-adapter/02.json": "3024b605097920c7bebaa722b8e8bd5191fc9ede17052c6cf618567d29d244be",
+    "live-adapter/03.json": "cad85490172e6e6aa68cffc14bfdd87241717d7cfd97437522001cfdcfc88f75",
+    "live-adapter/04.json": "e0da13a5b9b13fc596fc6146d99c364185df76fa1473599810b5912dc78bc656",
+    "live-adapter/05.json": "bfcf55b24009fb20fecdd14fbba521a498e8048039fe768674766b3ee639c3c8",
+    "live-adapter/06.json": "ab6f53a74cd84d35a10cc6bb752b6a4d77167f6e6e85d463a683381c8c025ba6",
+    "live-adapter/07.json": "538f6ede099599046d8f1a0d33b35056884bb530cb84a0079b7b04f955bcecf1",
+    "live-adapter/08.json": "2715dcada77a771d9862b701ebd857043624c2fc28658fdab9fa96bfd3568b12",
+    "live-adapter/09.json": "ab292597a6036b8b97903898dadf5cec679e782fdf48fe925dd559af1a5ddd5d",
+    "live-adapter/read.json": "8c9b86ba4bae6664c689644f5e8e324be23161390514970fd24521dce7831b5c"
+  },
+  "raw_evidence_published": false,
+  "scope": "Discovery and one-page PDF reading; no legal-answer acceptance or corpus absence certification"
+}

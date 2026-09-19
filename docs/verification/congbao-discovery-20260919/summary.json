@@ -1,0 +1,39 @@
+{
+  "runtime_commit": "533547f",
+  "unit": {
+    "passed": 1310,
+    "skipped": 4,
+    "warnings": 30
+  },
+  "live_topic_queries": 10,
+  "queries_with_results": 10,
+  "legal_correctness_gate": "NOT_ESTABLISHED",
+  "production": {
+    "research": {
+      "http_status": 200,
+      "elapsed": 35.0630000000001,
+      "status": "complete",
+      "provider": "chinhphu_and_congbao"
+    },
+    "read": {
+      "http_status": 200,
+      "elapsed": 8.264999999999418,
+      "status": "ok",
+      "provider": "approved_public_document"
+    }
+  },
+  "browser": {
+    "checks": [
+      {
+        "viewport": "desktop",
+        "horizontal_overflow": false
+      },
+      {
+        "viewport": "mobile",
+        "horizontal_overflow": false
+      }
+    ],
+    "page_errors": []
+  },
+  "pdf_text_characters": 1727
+}
