@@ -1,0 +1,16 @@
+{
+  "checks": [
+    {
+      "viewport": "desktop",
+      "no_horizontal_overflow": true
+    },
+    {
+      "viewport": "mobile",
+      "no_horizontal_overflow": true
+    }
+  ],
+  "http_status": 200,
+  "unknown_without_published_events": true,
+  "date_form_submitted": true,
+  "page_errors": []
+}

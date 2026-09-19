@@ -1,0 +1,14 @@
+{
+  "http_status": 200,
+  "mutations": 0,
+  "checks": [
+    {
+      "viewport": "desktop",
+      "no_horizontal_overflow": true
+    },
+    {
+      "viewport": "mobile",
+      "no_horizontal_overflow": true
+    }
+  ]
+}

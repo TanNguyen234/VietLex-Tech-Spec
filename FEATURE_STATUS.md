@@ -6,7 +6,7 @@ Cập nhật ngày 2026-09-19; bổ sung thư viện nguồn đã đọc, đối
 
 | Chức năng | Trạng thái / UI / API | Test đối chiếu | Kiểm chứng live gần nhất (có phạm vi) | Giới hạn |
 |---|---|---|---|---|
-| Hiệu lực / sửa đổi / as-of | Có sự kiện reviewer trong hồ sơ; thêm amended và partially_effective | `tests/services/test_legal_effect.py`, `tests/test_legal_effect_routes.py` | NOT RUN | Không phải registry toàn corpus; không tự xác nhận nguồn, không chứng nhận lịch sử đầy đủ; unknown khi thiếu sự kiện |
+| Hiệu lực / sửa đổi / as-of | Registry Mongo dùng chung; admin công bố/thu hồi bản duyệt; user tra cứu theo ngày, xem quan hệ và trích dẫn | `tests/services/test_legal_registry.py`, `tests/services/test_legal_registry_store.py`, `tests/test_legal_registry_routes.py` | [19/09: đọc Mongo thật + Chrome desktop/mobile](docs/verification/shared-legal-registry-20260919/REPORT.md); live publish/withdraw NOT RUN | Chưa có sự kiện công bố; chưa phủ toàn corpus hay tích hợp lọc chat/search; không chứng nhận lịch sử đầy đủ; unknown khi thiếu sự kiện |
 | Search số hiệu/tiêu đề + filters | Có UI/API loại văn bản, cơ quan, ngày ban hành, sort ngày; lọc trước LIMIT | `tests/services/test_legal_browser.py`, `tests/test_legal_routes.py` | Production 12/09: lọc ngày đúng case 2019/2020; ngày sai 422 | Tối đa 20 kết quả UI; body search là chế độ riêng dưới đây; chưa sort semantic relevance |
 | Full-text Điều/Khoản nội bộ | SQLite FTS5 riêng, cụm từ không phân biệt dấu/hoa thường, filters, highlight an toàn, link Điều/Khoản, phân trang, kiểm tra hash nguồn | `tests/services/test_body_search.py` | [Local 19/09: 4.969 văn bản / 101.857 đoạn; Chrome desktop/mobile](docs/verification/internal-fulltext-20260919/REPORT.md) | Chưa bật online; chưa toàn corpus; RPC adapter/importer đã có; PostgreSQL chỉ kiểm chứng cục bộ; kết quả không xác nhận hiệu lực |
 | Tìm cụm từ trong nguồn đã đọc | UI SSR, highlight, trang/bản nguồn, mở lại và ghim nguyên văn | `tests/test_saved_source_search.py`, `tests/test_source_library.py`, route ownership/escaping | [Local + production 14/09: tìm → ghim 200 → đọc lại đúng](docs/verification/saved-source-search-20260914/REPORT.md) | Chỉ bản đọc còn lưu trong 50 phân tích; 20 kết quả; không thay thế full-text toàn corpus |
@@ -25,7 +25,7 @@ Cập nhật ngày 2026-09-19; bổ sung thư viện nguồn đã đọc, đối
 | Federated official discovery | Portal + Công báo mặc định; Brave opt-in; URL dedupe, partial-error, đọc PDF Công báo | `tests/services/test_congbao_search.py`, `tests/services/test_federated_official_search.py` | [Production 19/09: 5 bước tìm + đọc PDF; 10 chủ đề local](docs/verification/congbao-discovery-20260919/REPORT.md) | Có kết quả chưa chứng minh đúng đủ; query ngắn còn lệch thứ tự; Brave chưa live verified |
 | Trusted URL reader | Có đọc và ghim trích đoạn server lưu | `tests/services/test_trusted_source_reader.py`, `tests/test_trusted_source_routes.py` | Production 13/09 đọc PDF chính thức/ghim exact quote; không phải toàn bộ allowlist | Allowlist fetch riêng, tối đa 3 URL HTML; không tương đương discovery-domain coverage |
 | Model comparison / technical UI | API model comparison chỉ admin; UI theo role; safety checkbox đã bỏ | `tests/test_model_comparison_routes.py`, `tests/test_public_templates.py` | NOT RUN | Model experiment vẫn trong workspace admin, chưa chuyển thành trang lab riêng; chính sách guardrail do config quyết định |
-| Admin corpus | Có hàng đợi thiếu ngày ban hành/URL, phân trang 50 metadata | `tests/test_product_quality.py`, `tests/services/test_legal_browser.py` | Production 12/09 GET 200; read-only, chưa audit mọi dữ liệu | Read-only; chưa lifecycle registry, sửa metadata, ingestion jobs, reindex/rollback, counters healthy toàn corpus |
+| Admin corpus | Có hàng đợi thiếu ngày ban hành/URL, phân trang 50 metadata | `tests/test_product_quality.py`, `tests/services/test_legal_browser.py` | Production 12/09 GET 200; read-only, chưa audit mọi dữ liệu | Read-only; registry hiệu lực có luồng riêng; chưa sửa metadata, ingestion jobs, reindex/rollback, counters healthy toàn corpus |
 | Feedback triage → regression draft | Có category, assignee, state, history, CAS và JSON draft admin-only | `tests/test_product_quality.py` | Production 12/09 downvote → investigating → xuất draft 200 | Assignee là nhãn giao việc; expected answer để trống, cần người adjudicate; không tự thêm Golden case hoặc chạy regression gate |
 
 [Bằng chứng metadata và suite 1.290 tests](docs/verification/source-temporal-20260913/REPORT.md). Bằng chứng 13/09: [OCR production trước/sau sửa](docs/verification/ocr-output-20260913/REPORT.md), [expiry và ID phiên bản nguồn](docs/verification/data-integrity-20260913/REPORT.md), [đọc 10 PDF/178 trang](docs/evaluation/runs/official-full-reading-20260913T101800Z/REPORT.md). Các lượt live không dùng mock; unit tests có doubles được ghi riêng.
@@ -41,7 +41,7 @@ Cập nhật ngày 2026-09-19; bổ sung thư viện nguồn đã đọc, đối
 
 ## Việc còn lại để hoàn tất report
 
-1. Corpus lifecycle registry có provenance/review, quan hệ version/amendment và as-of dùng được trong search/chat; nhập dữ liệu chỉ sau quy trình kiểm chứng.
+1. Registry đã có công bố/thu hồi và tra cứu as-of riêng; còn dữ liệu đã duyệt và tích hợp filter trong search/chat. Nhập dữ liệu chỉ sau quy trình kiểm chứng.
 2. Chỉ mục body/article riêng, highlight và relevance/date pagination; kế hoạch build/readback/rollback và benchmark cùng bộ query trên local/online trước khi bật.
 3. Findings đối chiếu v2 có clause identity ổn định, evidence link trong board/export; DOCX citation hyperlink và PDF server nếu yêu cầu xuất tự động.
 4. Admin ingestion/index job state, chỉnh metadata có audit, role editor/reviewer, cost budget và feedback adjudication/regression gate.
@@ -54,7 +54,7 @@ Cập nhật ngày 2026-09-19; bổ sung thư viện nguồn đã đọc, đối
 - Scoped chat af8c9f5 trả 500 vì nhánh lexical phụ thuộc PyVi, không có trong gói online. Bản a1d3986 dùng fast_terms cho riêng scope; production trả 200 và đúng neo Điều 25 Khoản 2 trong câu thử.
 - Selected analysis, comparison, obligations bị JSON cắt vì MAX_TOKENS. Bản a1d3986 dùng MINIMAL thinking, ngân sách mặc định 4096 và giữ trạng thái truncated_output; cả ba endpoint production đã trả 200 status ok sau sửa.
 - Corpus có document ID không đồng nghĩa có mọi điều khoản: truy xuất trực tiếp 16 record đã lập chỉ mục của document 333670 không có Điều 25. Candidate pool của câu hỏi thử việc cũng không chứa văn bản này. Chưa thay đổi index hay ranking.
-- Official research vẫn có no_results/timeout sau sửa query; chưa đạt. Logfire: key mới ở local đã gửi `/v1/traces` HTTP 200 ngày 19/09; log production được đọc trong lượt này vẫn có invalid token/401. Chưa xác nhận key production được cập nhật.
+- Official research vẫn có no_results/timeout sau sửa query; chưa đạt. Logfire: lỗi 401 trước xoay key được giữ trong báo cáo lịch sử; key mới đã đồng bộ Vercel Production và hai request sau redeploy không còn 401 (xem bằng chứng 19/09 ở cuối).
 - Review đã bổ sung chỉ dẫn rõ nguồn chưa xác minh hiệu lực; prompt không phải bằng chứng bảo đảm mọi kết luận pháp lý đúng.
 
 ## Phân tích căn cứ — kiểm chứng 19/09
@@ -64,7 +64,7 @@ Cập nhật ngày 2026-09-19; bổ sung thư viện nguồn đã đọc, đối
 
 ## Trở ngại production phát hiện sau push 19/09
 
-[Smoke SHA 34422b9](docs/verification/internal-fulltext-20260919/REPORT.md): Vercel Ready nhưng tìm số hiệu/đọc văn bản 503. Supabase hostname trả NXDOMAIN ở hai resolver độc lập; chưa biết trạng thái Dashboard. Full-text local không được dùng để che lỗi online. Key Logfire mới local đã xuất trace 200; production secret propagation chưa nghiệm thu.
+[Smoke SHA 34422b9](docs/verification/internal-fulltext-20260919/REPORT.md): Vercel Ready nhưng tìm số hiệu/đọc văn bản 503. Supabase hostname trả NXDOMAIN ở hai resolver độc lập; chưa biết trạng thái Dashboard. Full-text local không được dùng để che lỗi online. Tại thời điểm smoke này, production secret propagation chưa nghiệm thu; lượt xoay key và đọc log tiếp theo đã xác minh bên dưới.
 
 
 [Online adapter 19/09](docs/verification/online-body-adapter-20260919/REPORT.md): 1.335 tests passed; 10 văn bản thật / 97 đoạn qua PostgreSQL cục bộ. Key Logfire mới đã cập nhật Vercel Production và redeploy; hai request được đối chiếu log không còn 401. Supabase vẫn là trở ngại độc lập; chưa bật full-text online.

@@ -1,0 +1,33 @@
+{
+  "recorded_at": "2026-09-19T16:07:18.132622+00:00",
+  "git_sha": "6c1be851ce5bb0a8dcec2dc7d8bb12a107b93237",
+  "git_dirty": true,
+  "git_diff_sha256": "c8e6ad9b06a42e8198fa31e1d29b30c16b370cfa1d848585ec96c751ab854e4c",
+  "source_sha256": {
+    "app/services/legal_registry.py": "87f3aa0298ce7e26630a88d8a8c54c2e93369c72ffc8c218027cf667357e8944",
+    "app/legal_registry_database.py": "8752484410e86baac52863e24b439f0820a1a195101d7895b997a24a1eed0dbd",
+    "app/api/legal_registry_routes.py": "5717e5e0ebf4e76f428aea6869a32d6896c7d61b73ce109afbf2e25497c30876",
+    "app/main.py": "4fc1f914ccbdfe7f6e3e5b48fe5995a49885a17319c397097a49bc5a59cdb3d5",
+    "app/templates/legal_status.html": "3cde8725e86034011035a9ecddc82412b0d27292224312863ddd26e85db215ba",
+    "app/templates/admin_legal_registry.html": "92a1d475a988aa86b9bde3dc4aef503e14c640f172ebd988fe033650e749a892",
+    "app/templates/admin_sidebar.html": "bc2c5ab72cae6f0f6fda20a900992ff6715145c82941119c13e68661d82a7037",
+    "app/templates/research_tools.html": "82a2afa6bf6ee5b207a62dfb1fcf69d4dcb4bfd3b933ecd37974b21d6e4abded",
+    "app/templates/legal_search.html": "b796ed14695c3a2bcc8287343f773ff17dfd2dfe1104d06ff670dcd333d10e89",
+    "app/templates/legal_document.html": "98d8ade1212e8be497fbcec28d459204bbb19c464543d1e29801bbf8ca0ebe24"
+  },
+  "unit": {
+    "passed": 1350,
+    "skipped": 4,
+    "warnings": 30,
+    "seconds": 236.93,
+    "log_sha256": "b8bd634566d346927c0e02c7f671d00ddde6b40fec15ee79be7188717cccb161",
+    "junit_sha256": "d5a1ddbfdc585c8a7e032065a70f138b571cba594779896fc17ba2fe095ce62c"
+  },
+  "live": {
+    "backend": "real configured MongoDB via local ASGI server",
+    "browser": "installed Chrome via Playwright",
+    "published_legal_events": 0,
+    "withdrawals": 0,
+    "production": "NOT RUN at report creation"
+  }
+}
