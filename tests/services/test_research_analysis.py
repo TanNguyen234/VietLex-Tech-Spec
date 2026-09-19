@@ -89,7 +89,7 @@ def test_structured_parsers_do_not_strip_markdown_fences() -> None:
 def test_selected_context_budget_rejects_instead_of_silently_truncating() -> None:
     with pytest.raises(ValueError, match="evidence_scope_too_large"):
         build_selected_evidence_prompt(
-            "Q", [{"evidence_id": "a", "excerpt": "word " * 721}]
+            "Q", [{"evidence_id": "a", "excerpt": "x " * 4001}]
         )
 
 
@@ -123,7 +123,7 @@ async def test_selected_answer_preserves_insufficient_evidence_state(
     generate = AsyncMock(
         return_value=SimpleNamespace(
             status="success",
-            text='{"status":"insufficient_evidence","text":"Không đủ bằng chứng","evidence_ids":[]}',
+            text='{"status":"insufficient_evidence","text":"Không đủ bằng chứng","evidence_ids":[],"unanswered_parts":["Q"]}',
             observed_provider="test",
             observed_model="test",
         )
@@ -135,7 +135,7 @@ async def test_selected_answer_preserves_insufficient_evidence_state(
     assert result["status"] == "insufficient_evidence"
 
     generate.return_value.text = (
-        '{"status":"ok","text":"Answer","evidence_ids":["forged"]}'
+        '{"status":"ok","text":"Answer","evidence_ids":["forged"],"unanswered_parts":[]}'
     )
     result = await generate_selected_evidence_answer(
         "Q", [{"evidence_id": "a", "excerpt": "A"}]
@@ -208,3 +208,42 @@ async def test_review_prompt_does_not_certify_current_law(monkeypatch):
     assert 'unverified' in generate.call_args.args[0]
     assert 'chưa xác minh hiệu lực' in generate.call_args.args[1]
     assert 'không khẳng định' in generate.call_args.args[1]
+
+
+
+def test_selected_context_is_independent_of_retrieval_budget():
+    from app.config import get_settings
+
+    assert get_settings().LLM_CONTEXT_MAX_TOKENS == 720
+    evidence = [{"evidence_id": f"source-{i}", "excerpt": (f"clause-{i} " * 300)}
+                for i in range(3)]
+    prompt = build_selected_evidence_prompt("Compare the selected clauses", evidence)
+    for item in evidence:
+        assert item["excerpt"] in prompt
+
+
+
+def test_selected_character_budget_rejects_long_unbroken_text():
+    with pytest.raises(ValueError, match="evidence_scope_too_large"):
+        build_selected_evidence_prompt("Q", [{"evidence_id": "a", "excerpt": "x" * 20001}])
+
+
+
+@pytest.mark.asyncio
+async def test_selected_answer_cannot_claim_ok_with_unanswered_parts(monkeypatch):
+    import json
+    from app.services import research_analysis as analysis
+
+    generate = AsyncMock(return_value=SimpleNamespace(
+        status="success", observed_provider="test", observed_model="test",
+        text=json.dumps({"status": "ok", "text": "Only the effective date is supported.",
+                         "evidence_ids": ["a"], "unanswered_parts": ["How costs are allocated"]})))
+    monkeypatch.setattr(analysis, "_generate", generate)
+    result = await analysis.generate_selected_evidence_answer(
+        "How are costs allocated?", [{"evidence_id": "a", "excerpt": "Effective date"}])
+    assert result["status"] == "insufficient_evidence"
+    assert result["unanswered_parts"] == ["How costs are allocated"]
+    generate.return_value.text = json.dumps({"status": "ok", "text": "Answer", "evidence_ids": ["a"]})
+    result = await analysis.generate_selected_evidence_answer(
+        "Q", [{"evidence_id": "a", "excerpt": "A"}])
+    assert result["status"] == "invalid_structured_response"

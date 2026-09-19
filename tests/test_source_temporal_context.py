@@ -16,7 +16,7 @@ def test_selected_source_keeps_reported_date_and_provenance_without_private_fiel
 
 def test_provenance_counts_toward_existing_context_budget():
     with pytest.raises(ValueError, match="evidence_scope_too_large"):
-        build_selected_evidence_prompt("Q", [{"evidence_id": "e1", "excerpt": "X", "source_url": "x " * 721}])
+        build_selected_evidence_prompt("Q", [{"evidence_id": "e1", "excerpt": "X", "source_url": "x " * 4001}])
 
 
 @pytest.mark.asyncio

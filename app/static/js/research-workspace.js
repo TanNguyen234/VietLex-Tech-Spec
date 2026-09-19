@@ -415,7 +415,15 @@
         technical.append(element('summary', 'Thông tin kỹ thuật'), element('p', (payload.provider || '—') + ' · ' + (payload.model || '—'), 'muted'));
         target.append(technical);
       }
+    if (payload.unanswered_parts?.length) {
+      const missing = element('section', undefined, 'legal-warning');
+      missing.append(element('h3', 'Phần chưa đủ căn cứ để trả lời'));
+      const list = element('ul');
+      payload.unanswered_parts.forEach(part => list.append(element('li', part)));
+      missing.append(list); target.append(missing);
+    }
     if (payload.text) target.append(element('p', payload.text));
+    if (payload.kind === 'selected_evidence' && payload.evidence_ids?.length) target.append(sourceLinks(payload.evidence_ids, payload));
     const rows = payload.result?.findings || payload.result?.rows;
     if (!rows) {
       if (!payload.text) target.append(element('p', labels[payload.detail] || 'Không thể hoàn tất phân tích. Vui lòng thử lại.'));

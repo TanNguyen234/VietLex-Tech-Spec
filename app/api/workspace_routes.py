@@ -204,6 +204,7 @@ async def workspace_detail(
             "workspace": workspace,
             "source_library": source_library(workspace),
             "source_search": search_saved_sources(workspace, source_query),
+            "research_context_max_words": settings.RESEARCH_CONTEXT_MAX_WORDS,
             "workspace_summary": workspace_summary(workspace),
             "workspace_user": current_user,
             "comparison_models": available_model_choices() if current_user and current_user.get("email_verified") else [],
