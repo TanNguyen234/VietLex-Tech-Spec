@@ -1,0 +1,7 @@
+{
+  "batch_id": "9a98984c-a55d-4b12-8751-5eec59580097",
+  "expected_documents": 10,
+  "expected_passages": 97,
+  "source_sha256": "40a453c4e92a249d542d9243bb2ba946e1fc0be3e60463c9957b7933fe2ad3c9",
+  "passages_sha256": "d5d3ecf094deadd738cf6fa601f5a3397475e2c74313b3605606440d81e04ba9"
+}

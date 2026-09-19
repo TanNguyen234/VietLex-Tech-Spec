@@ -1,0 +1,16 @@
+{
+  "git_sha": "c5afc734f7ab385a80c4007d5b80d6654877bcd4",
+  "git_dirty": true,
+  "git_diff_sha256": "24bc053e1c9fe625851b1ad51a235d0caedb527147b465173537238a21368985",
+  "source_sha256": {
+    "app/config.py": "2d85929067c0114566aa39367df598be85fde0e3bd1c3927a5c2dcdd105c3391",
+    "app/services/legal_browser.py": "d56739afc994fad86aa3dca2d22e6fb2a3274d591899f62d1e589a35f6890161",
+    "app/services/remote_body_search.py": "e9ae5f289c22bc0d260fc39de26ad27d0e5b49c34cefd9ce1171113ee5dbebde",
+    "app/ingestion/body_remote.py": "cfdbf164c48d923c8f2bd3615c00ad8df3d66f87a1f29f7df33cc15a0e2d8640",
+    "tests/services/test_remote_body_search.py": "62e1bc982cdbb50820635667c3652925584181724cef111256b8319861a662da",
+    "tests/ingestion/test_body_remote.py": "5a22381f9f6fd111f8a670e35ea65c01f6597bc545562090cbd6d09167ccd8d0",
+    "tests/sql/body_search_batch.mjs": "a8d9e92376aeb57c353b51b354a29b62e7c1a4fac60aec770f905a257ca5637e"
+  },
+  "supabase_runtime_acceptance": "NOT RUN; endpoint NXDOMAIN and no SQL admin connection",
+  "existing_corpus_or_vectors_modified": false
+}

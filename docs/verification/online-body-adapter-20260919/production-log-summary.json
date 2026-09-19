@@ -1,0 +1,20 @@
+[
+  {
+    "deployment": "dpl_BjUPSNgGo85erbcdPSMP8xacBEkB",
+    "time": 1789831304194,
+    "path": "/search",
+    "status": 503,
+    "logfire_401": false,
+    "invalid_token": false,
+    "log_count": 1
+  },
+  {
+    "deployment": "dpl_BjUPSNgGo85erbcdPSMP8xacBEkB",
+    "time": 1789831296718,
+    "path": "/",
+    "status": 200,
+    "logfire_401": false,
+    "invalid_token": false,
+    "log_count": 8
+  }
+]
