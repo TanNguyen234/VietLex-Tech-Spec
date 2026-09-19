@@ -1,0 +1,187 @@
+{
+  "method": "Real provider/service, same retained actual OCR inputs and questions as of 2026-09-13; no fresh online discovery, no production HTTP for ten cases. Offline experimental passage selection is not a runtime feature.",
+  "cases": [
+    {
+      "id": "agriculture",
+      "question": "Bảo hiểm nông nghiệp được sửa đổi những nội dung gì theo Nghị định 346/2026/NĐ-CP? Xét tại ngày 13/09/2026. Phân biệt ngày ban hành và ngày có hiệu lực; nêu rõ điều chưa đủ căn cứ.",
+      "status": "insufficient_evidence",
+      "unanswered_count": 2,
+      "selected_characters": 15571,
+      "available_characters": 41289,
+      "valid_ids": true,
+      "provider": "google_vertex_ai",
+      "model": "gemini-3.5-flash",
+      "review": "Không còn suy đoán tên Bộ Nông nghiệp và Phát triển nông thôn trong lượt cuối; còn diễn đạt sai về trang bị khuyết."
+    },
+    {
+      "id": "aviation",
+      "question": "Chi phí trực tiếp và gián tiếp khi khai thác tài sản hạ tầng hàng không do Nhà nước đầu tư được phân bổ thế nào theo quy định tháng 9/2026? Xét tại ngày 13/09/2026. Phân biệt ngày ban hành và ngày có hiệu lực; nêu rõ điều chưa đủ căn cứ.",
+      "status": "insufficient_evidence",
+      "unanswered_count": 1,
+      "selected_characters": 8142,
+      "available_characters": 8142,
+      "valid_ids": true,
+      "provider": "google_vertex_ai",
+      "model": "gemini-3.5-flash",
+      "review": "Đã đánh dấu thiếu căn cứ cốt lõi: cần nội dung Quyết định 2007/QĐ-TTg cho ngày áp dụng được hỏi."
+    },
+    {
+      "id": "credit",
+      "question": "Hoạt động thông tin tín dụng có thay đổi gì theo Thông tư 46/2026/TT-NHNN? Xét tại ngày 13/09/2026. Phân biệt ngày ban hành và ngày có hiệu lực; nêu rõ điều chưa đủ căn cứ.",
+      "status": "insufficient_evidence",
+      "unanswered_count": 2,
+      "selected_characters": 7350,
+      "available_characters": 7350,
+      "valid_ids": true,
+      "provider": "google_vertex_ai",
+      "model": "gemini-3.5-flash",
+      "review": "Còn lỗi: nói thiếu phần giữa trang 2/3 dù toàn bộ chữ lưu đã được cấp. Không đạt gate độ trung thực về phạm vi nguồn."
+    },
+    {
+      "id": "electricity",
+      "question": "Quy định mới tháng 9/2026 hỗ trợ ứng dụng khoa học công nghệ và chế tạo trong lĩnh vực điện lực như thế nào? Xét tại ngày 13/09/2026. Phân biệt ngày ban hành và ngày có hiệu lực; nêu rõ điều chưa đủ căn cứ.",
+      "status": "insufficient_evidence",
+      "unanswered_count": 1,
+      "selected_characters": 15032,
+      "available_characters": 34118,
+      "valid_ids": true,
+      "provider": "google_vertex_ai",
+      "model": "gemini-3.5-flash",
+      "review": "Nêu ngày hiệu lực tương lai; chưa trả lời đầy đủ phần hỗ trợ thực chất của câu hỏi."
+    },
+    {
+      "id": "health",
+      "question": "Nhân viên y tế được hưởng phụ cấp ưu đãi nghề như thế nào theo quy định mới tháng 9/2026? Xét tại ngày 13/09/2026. Phân biệt ngày ban hành và ngày có hiệu lực; nêu rõ điều chưa đủ căn cứ.",
+      "status": "ok",
+      "unanswered_count": 0,
+      "selected_characters": 11341,
+      "available_characters": 11341,
+      "valid_ids": true,
+      "provider": "google_vertex_ai",
+      "model": "gemini-3.5-flash",
+      "review": "Trả mức phụ cấp và phân biệt ngày hiệu lực/ngày thực hiện; chưa kiểm toán từng claim hoặc văn bản sửa đổi bên ngoài."
+    },
+    {
+      "id": "imports",
+      "question": "Nhập khẩu dây chuyền công nghệ đã qua sử dụng phải đáp ứng điều kiện gì theo quy định mới tháng 9/2026? Xét tại ngày 13/09/2026. Phân biệt ngày ban hành và ngày có hiệu lực; nêu rõ điều chưa đủ căn cứ.",
+      "status": "insufficient_evidence",
+      "unanswered_count": 2,
+      "selected_characters": 16460,
+      "available_characters": 72461,
+      "valid_ids": true,
+      "provider": "google_vertex_ai",
+      "model": "gemini-3.5-flash",
+      "review": "Nêu một số tiêu chí/giám định; thiếu đoạn điều khoản hiệu lực và tiêu chí chi tiết trong selection."
+    },
+    {
+      "id": "maritime",
+      "question": "Cơ sở đào tạo và tổ chức cung ứng thuyền viên phải đáp ứng điều kiện gì theo Nghị định 348/2026/NĐ-CP? Xét tại ngày 13/09/2026. Phân biệt ngày ban hành và ngày có hiệu lực; nêu rõ điều chưa đủ căn cứ.",
+      "status": "insufficient_evidence",
+      "unanswered_count": 1,
+      "selected_characters": 13462,
+      "available_characters": 28945,
+      "valid_ids": true,
+      "provider": "google_vertex_ai",
+      "model": "gemini-3.5-flash",
+      "review": "Có điều kiện cơ sở vật chất/giảng viên và ngày hiệu lực tương lai; chưa đủ toàn bộ căn cứ; còn cách diễn đạt khuyết trang."
+    },
+    {
+      "id": "procurement",
+      "question": "Quy định lựa chọn nhà thầu được sửa đổi ra sao trong tháng 9/2026? Xét tại ngày 13/09/2026. Phân biệt ngày ban hành và ngày có hiệu lực; nêu rõ điều chưa đủ căn cứ.",
+      "status": "insufficient_evidence",
+      "unanswered_count": 1,
+      "selected_characters": 15919,
+      "available_characters": 55340,
+      "valid_ids": true,
+      "provider": "google_vertex_ai",
+      "model": "gemini-3.5-flash",
+      "review": "Chỉ một phần văn bản được chọn; báo thiếu phần thay đổi còn lại. Cách gọi trang không được chọn là bị khuyết vẫn không chính xác về bản gốc."
+    },
+    {
+      "id": "reserves",
+      "question": "Quản lý và sử dụng hàng dự trữ quốc gia theo Nghị định 345/2026/NĐ-CP được quy định thế nào? Xét tại ngày 13/09/2026. Phân biệt ngày ban hành và ngày có hiệu lực; nêu rõ điều chưa đủ căn cứ.",
+      "status": "insufficient_evidence",
+      "unanswered_count": 1,
+      "selected_characters": 15020,
+      "available_characters": 78974,
+      "valid_ids": true,
+      "provider": "google_vertex_ai",
+      "model": "gemini-3.5-flash",
+      "review": "Phân biệt phần dự trữ chiến lược có ngày hiệu lực riêng; không đủ nội dung quản lý toàn văn trong selection."
+    },
+    {
+      "id": "resources_tax",
+      "question": "Hướng dẫn thuế tài nguyên thay đổi thế nào theo Thông tư 135/2026/TT-BTC? Xét tại ngày 13/09/2026. Phân biệt ngày ban hành và ngày có hiệu lực; nêu rõ điều chưa đủ căn cứ.",
+      "status": "ok",
+      "unanswered_count": 0,
+      "selected_characters": 6174,
+      "available_characters": 6174,
+      "valid_ids": true,
+      "provider": "google_vertex_ai",
+      "model": "gemini-3.5-flash",
+      "review": "Nêu nội dung sửa đổi, bãi bỏ và kỳ tính thuế; chưa chứng nhận tình trạng hiện hành."
+    }
+  ],
+  "provider_success": {
+    "numerator": 10,
+    "denominator": 10
+  },
+  "final_status_counts": {
+    "ok": 2,
+    "insufficient_evidence": 8
+  },
+  "tokens": {
+    "prompt_token_count": 60878,
+    "output_token_count": 8981,
+    "total_token_count": 69859
+  },
+  "legal_correctness_certified": false,
+  "claim_by_claim_legal_audit": "NOT RUN",
+  "medium_experiment": {
+    "cases": 10,
+    "truncated": 5,
+    "decision": "REJECTED; runtime remains MINIMAL"
+  },
+  "production_before": {
+    "base_url": "https://vietlex-legal-rag.vercel.app",
+    "label": "production-budget-red",
+    "page_status": 200,
+    "evidence_count": 2,
+    "excerpt_words_without_metadata": 995,
+    "budget_explanation_present": false,
+    "analysis_status": 422,
+    "elapsed_seconds": 3.2029999999999745,
+    "detail": "evidence_scope_too_large"
+  },
+  "production_after": {
+    "base_url": "https://vietlex-legal-rag.vercel.app",
+    "label": "production-budget-green",
+    "page_status": 200,
+    "evidence_count": 2,
+    "excerpt_words_without_metadata": 995,
+    "budget_explanation_present": true,
+    "analysis_status": 200,
+    "elapsed_seconds": 9.35899999999856,
+    "result_status": "insufficient_evidence",
+    "provider": "google_vertex_ai",
+    "model": "gemini-3.5-flash",
+    "provider_status": "success",
+    "snapshot_count": 2,
+    "snapshot_ids_exact": true
+  },
+  "production_browser": {
+    "checks": [
+      {
+        "viewport": "desktop",
+        "horizontal_overflow": false
+      },
+      {
+        "viewport": "mobile",
+        "horizontal_overflow": false
+      }
+    ],
+    "saved_unanswered_parts_exact": true,
+    "source_links": 2,
+    "page_errors": []
+  }
+}

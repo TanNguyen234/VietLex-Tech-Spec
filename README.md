@@ -32,7 +32,7 @@ Cập nhật kiểm chứng: [OCR production 502 → 200](docs/verification/ocr-
 | Hoàn tất pipeline | **50/50** generation `STOP` · **50/50** NeMo input/output safe · **50/50** Ragas · 0 lỗi kỹ thuật |
 | Verified retrieval subset | **40** case có toàn bộ required evidence đã xác minh · Document Recall@3 **1,0000**, micro **53/53** |
 | Dữ liệu v3 đã kiểm kê | **141.798** point remote · **14.962** document ID duy nhất · Supabase cùng **14.962** văn bản |
-| Automated verification | **1297 passed, 30 warnings** trên source được commit thành `bf6421d`; xem [lệnh, trạng thái Git và giới hạn](docs/verification/saved-source-search-20260914/REPORT.md). **5 JavaScript tests passed** ở lượt 12/09 (không chạy lại trong sửa backend này). Suite không gọi provider, loại integration/visual; [API và browser thật](docs/verification/workflow-usability-20260912/REPORT.md) được báo cáo riêng |
+| Automated verification | **1300 passed, 30 warnings** trên source được commit thành `f4fcb37`; xem [lệnh, trạng thái Git và giới hạn](docs/verification/selected-context-20260919/REPORT.md). **5 JavaScript tests passed** ở lượt 12/09 (không chạy lại trong sửa backend này). Suite không gọi provider, loại integration/visual; [API và browser thật](docs/verification/workflow-usability-20260912/REPORT.md) được báo cáo riêng |
 | Online discovery ngoài corpus | **10/10** neo ban đầu + **3/3** holdout; đọc hai trang đầu **12/13** lần đầu, **13/13** sau một retry mạng. Chưa đánh giá độ đúng/đủ pháp lý của 13 câu rộng; xem JSON và giới hạn trong report |
 | Public SSR smoke | Vercel FastAPI/Jinja tại <https://vietlex-legal-rag.vercel.app>: SSR và readiness sẵn sàng; tìm kiếm Supabase và trang toàn văn đã được kiểm tra trực tiếp |
 
@@ -574,3 +574,5 @@ python -u -m app.ingestion.hf_pipeline full --delete-existing --yes
 - [`docs/AGENT_WORKFLOW.md`](docs/AGENT_WORKFLOW.md) — engineering/evidence workflow
 - [`docs/evaluation/PORTFOLIO_EVIDENCE.md`](docs/evaluation/PORTFOLIO_EVIDENCE.md) — recruiter-safe evidence
 - [`docs/huggingface-ingestion-runbook.md`](docs/huggingface-ingestion-runbook.md) — ingestion operations
+
+Kiểm chứng 19/09: [ngân sách phân tích, phần chưa đủ căn cứ và 10 câu thật](docs/verification/selected-context-20260919/REPORT.md). Production cùng 995 từ: 422 → 200; benchmark vẫn còn lỗi suy đoán phạm vi nguồn. MEDIUM bị loại vì 5/10 câu cắt đầu ra.

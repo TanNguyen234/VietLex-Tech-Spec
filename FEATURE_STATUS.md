@@ -1,6 +1,6 @@
 # VietLex — trạng thái chức năng
 
-Cập nhật ngày 2026-09-14; bổ sung thư viện nguồn đã đọc, đối chiếu trích đoạn và giao diện báo cáo. [Nghiệm thu workflow mới](docs/verification/workflow-usability-20260912/REPORT.md) ghi riêng kiểm thử local và triển khai. Đây là nguồn trạng thái chức năng hiện tại; tài liệu review có ngày là lịch sử. [Nghiệm thu thực chạy](docs/evaluation/runs/official-online-20260912T140633Z/REPORT.md) phân biệt local API với production smoke. Primary workflow: người nghiên cứu pháp lý/compliance tìm văn bản → tổ chức căn cứ → rà soát tài liệu → xử lý findings → xuất báo cáo.
+Cập nhật ngày 2026-09-19; bổ sung thư viện nguồn đã đọc, đối chiếu trích đoạn và giao diện báo cáo. [Nghiệm thu workflow mới](docs/verification/workflow-usability-20260912/REPORT.md) ghi riêng kiểm thử local và triển khai. Đây là nguồn trạng thái chức năng hiện tại; tài liệu review có ngày là lịch sử. [Nghiệm thu thực chạy](docs/evaluation/runs/official-online-20260912T140633Z/REPORT.md) phân biệt local API với production smoke. Primary workflow: người nghiên cứu pháp lý/compliance tìm văn bản → tổ chức căn cứ → rà soát tài liệu → xử lý findings → xuất báo cáo.
 
 “Có” nghĩa là có implementation, không đồng nghĩa production verified. Bản af8c9f5 đã triển khai và có 71 request live: xem [báo cáo ngày 12/09](docs/verification/live-api-af8c9f5-20260912/LIVE_REPORT.md). Bảng dưới ghi phạm vi kiểm chứng gần nhất cho từng chức năng; HTTP 200 không đồng nghĩa nội dung đúng hoặc mọi nhánh đã đạt. Bản sửa a1d3986 đã triển khai: xem [kết quả sau sửa](docs/verification/product-fixes-20260912.md); chưa nghiệm thu pháp lý. Test bên dưới là điểm kiểm tra trong repository, không phải chứng nhận đúng luật. Corpus bên thứ ba và giới hạn 14.962 document ID của v3 không thay đổi.
 
@@ -55,3 +55,7 @@ Cập nhật ngày 2026-09-14; bổ sung thư viện nguồn đã đọc, đối
 - Corpus có document ID không đồng nghĩa có mọi điều khoản: truy xuất trực tiếp 16 record đã lập chỉ mục của document 333670 không có Điều 25. Candidate pool của câu hỏi thử việc cũng không chứa văn bản này. Chưa thay đổi index hay ranking.
 - Official research vẫn có no_results/timeout sau sửa query; chưa đạt. Logfire xuất trace bị 401 là lỗi giám sát riêng, chưa sửa credentials.
 - Review đã bổ sung chỉ dẫn rõ nguồn chưa xác minh hiệu lực; prompt không phải bằng chứng bảo đảm mọi kết luận pháp lý đúng.
+
+## Phân tích căn cứ — kiểm chứng 19/09
+
+[Runtime f4fcb37 và 10 câu thật](docs/verification/selected-context-20260919/REPORT.md): ngân sách riêng 4.000 từ cách trắng/20.000 ký tự/10 nguồn, UI và lịch sử có phần chưa trả lời + link căn cứ. Production 995 từ 422 → 200. 1.300 unit/route tests passed, 30 warnings. Benchmark MINIMAL: 2 ok / 8 thiếu căn cứ; còn suy đoán sai về độ đầy đủ nguồn, không phải nghiệm thu pháp lý. MEDIUM không được chọn (5/10 MAX_TOKENS).
