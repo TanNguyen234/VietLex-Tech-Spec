@@ -98,8 +98,21 @@
     (dossier.steps || []).forEach(step => {
       const card = element('article', undefined, 'research-step-result');
       card.append(element('h3', step.title), element('p', step.query, 'muted'));
-      card.append(element('span', step.status, 'support-state ' + step.status));
-      if (!(step.sources || []).length) card.append(element('p', 'Chưa có kết quả metadata từ nguồn chính thức.', 'muted'));
+      const searchStates = {
+        results_found: 'Có kết quả tìm kiếm',
+        partial_results: 'Có kết quả · một nguồn gặp lỗi',
+        no_results: 'Chưa tìm thấy với truy vấn này',
+        provider_error: 'Chưa truy cập được nguồn tìm kiếm'
+      };
+      card.append(element('span', searchStates[step.status] || 'Chưa xác định trạng thái', 'support-state ' + step.status));
+      if (step.status === 'provider_error' || step.status === 'partial_results') {
+        card.append(element('p', 'Một hoặc nhiều cổng nguồn chưa trả kết quả thành công. Bạn có thể thử lại; lỗi này không có nghĩa là không tồn tại quy định.', 'legal-warning'));
+        if (step.error_kind) {
+          const detail = element('details');
+          detail.append(element('summary', 'Chi tiết lỗi kết nối'), element('p', step.error_kind));
+          card.append(detail);
+        }
+      } else if (!(step.sources || []).length) card.append(element('p', 'Hãy thử cụm từ cụ thể hơn hoặc số hiệu văn bản. Không tìm thấy với truy vấn này chưa chứng minh không có quy định.', 'muted'));
       const sources = element('ul', undefined, 'official-source-list');
       (step.sources || []).forEach(source => {
         if (seen.has(source.url)) return;
@@ -120,6 +133,7 @@
         sources.append(item);
       });
       if (sources.children.length) card.append(sources);
+      else if ((step.sources || []).length) card.append(element('p', 'Các nguồn của bước này đã được hiển thị ở bước trước.', 'muted'));
       target.append(card);
     });
     if (payload.provider || dossier.provider || payload.model || dossier.model) {

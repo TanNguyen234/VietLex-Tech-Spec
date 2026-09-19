@@ -1,0 +1,101 @@
+{
+  "scope": "Same frozen queries, discovery only; corpus absence established 20260912 not rescanned 20260919",
+  "rows": [
+    {
+      "id": "aviation",
+      "portal_reference_url_hit": true,
+      "gazette_reference_number_hit": false,
+      "portal_status": "partial",
+      "gazette_status": "complete",
+      "gazette_sources": 15
+    },
+    {
+      "id": "health",
+      "portal_reference_url_hit": true,
+      "gazette_reference_number_hit": false,
+      "portal_status": "partial",
+      "gazette_status": "complete",
+      "gazette_sources": 15
+    },
+    {
+      "id": "procurement",
+      "portal_reference_url_hit": true,
+      "gazette_reference_number_hit": false,
+      "portal_status": "partial",
+      "gazette_status": "complete",
+      "gazette_sources": 15
+    },
+    {
+      "id": "resources_tax",
+      "portal_reference_url_hit": true,
+      "gazette_reference_number_hit": false,
+      "portal_status": "partial",
+      "gazette_status": "complete",
+      "gazette_sources": 13
+    },
+    {
+      "id": "credit",
+      "portal_reference_url_hit": true,
+      "gazette_reference_number_hit": false,
+      "portal_status": "partial",
+      "gazette_status": "partial",
+      "gazette_sources": 12
+    },
+    {
+      "id": "maritime",
+      "portal_reference_url_hit": true,
+      "gazette_reference_number_hit": false,
+      "portal_status": "partial",
+      "gazette_status": "complete",
+      "gazette_sources": 11
+    },
+    {
+      "id": "agriculture",
+      "portal_reference_url_hit": true,
+      "gazette_reference_number_hit": false,
+      "portal_status": "partial",
+      "gazette_status": "partial",
+      "gazette_sources": 10
+    },
+    {
+      "id": "imports",
+      "portal_reference_url_hit": true,
+      "gazette_reference_number_hit": false,
+      "portal_status": "partial",
+      "gazette_status": "complete",
+      "gazette_sources": 15
+    },
+    {
+      "id": "reserves",
+      "portal_reference_url_hit": true,
+      "gazette_reference_number_hit": false,
+      "portal_status": "partial",
+      "gazette_status": "partial",
+      "gazette_sources": 9
+    },
+    {
+      "id": "electricity",
+      "portal_reference_url_hit": true,
+      "gazette_reference_number_hit": false,
+      "portal_status": "partial",
+      "gazette_status": "complete",
+      "gazette_sources": 15
+    }
+  ],
+  "portal_reference_url_hits": 10,
+  "gazette_reference_number_hits": 0,
+  "local_raw_sha256": {
+    "agriculture.json": "a136aa814d7f8e07f6a4e220b62071e70adf2ff9cfcdf13844b9988929fe58b6",
+    "aviation.json": "4a15eb6258ffacd14320ea8e7996f737d915edabca60e66008d3fe0a4d09e7f2",
+    "credit.json": "6ec5003fc3e982e4943d8299114a886a6d8e01fc61e486e8b669d46b6aee44c4",
+    "electricity.json": "1f5a5379acda41bfaec9f2103ea747cc278e88839af575bdbf1e8d197eff077c",
+    "health.json": "01a2a6470d2165eb28781825558cf239194a6a515b6397ea8f8aeead173501eb",
+    "imports.json": "a9c91c5dcc6bb97cd7c5a34ea559699bf27423496e4c3ca93b60b6e2382e5716",
+    "manifest.json": "b50728ab1cd7ccb25a8319af445dc465a39231a94233e2c055559a23b48f1f61",
+    "maritime.json": "86698dbf255b035c3fa98d539a5b0a57e7b3fc7b4688926e5709aa61ed15ade1",
+    "procurement.json": "263aba02f8680df58ed426e5fc32e8439791bc52d4b4b100eb9e493dc6ed7aab",
+    "reserves.json": "b86dc6685a414e97f8e6bab3e3146d68993a24f34ce98526d08cd4559754b5ca",
+    "resources_tax.json": "ff5005a5c7d702ca20f9b7d1b84508375ba205599882cc32a1f50ae1dd8cfed7",
+    "summary.json": "8b99994e7b8ed3a01d49f51a2fe27dc53c03da7df0b257c92bfc1e08467426e3"
+  }
+}

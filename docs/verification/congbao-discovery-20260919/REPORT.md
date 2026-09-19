@@ -29,3 +29,13 @@ Ngày hiệu lực API Công báo có thể null; không tự xác nhận luật
 - `live_adapter.py`, `live_federation.py`, `production.py`, `browser.py`, `production_browser.py` trong thư mục raw local: HTTP/browser thật, không thay thế bằng test doubles.
 
 [Summary](summary.json) và [manifest](manifest.json) lưu aggregate/hash. Raw response, cookie, workspace ID và log riêng không xuất bản. Unit tests có test doubles để thử nhánh lỗi; không được dùng làm chứng cứ live.
+
+## So sánh thêm trên 10 câu gốc, cùng query
+
+[Aggregate](identical-ten-summary.json): giữ nguyên kế hoạch query đã lưu ngày 12/09, không dùng URL/đáp án để tạo query. Mỗi cổng chạy 5 query/câu, 10 câu; không generation/OCR. Cổng Chính phủ tìm đúng URL mốc **10/10**; Công báo tìm đúng số hiệu mốc **0/10**. Cả hai có thể trả tài liệu cùng chủ đề; có kết quả không đồng nghĩa tìm đúng quy định mới. Bộ này có bằng chứng vắng văn bản mốc trong SQLite/Supabase/Qdrant ngày 12/09, **không quét lại corpus ngày 19/09**. Không suy ra Công báo không chứa văn bản chỉ từ search miss.
+
+Vì vậy giữ cả hai nguồn, không thay portal hoặc tuyên bố khắc phục hoàn toàn thiếu dữ liệu. Kết quả cũng chưa chấm câu trả lời pháp lý. Script thật: `.venv\Scripts\python.exe tmp/congbao-probe-20260919/compare_ten.py`; raw local, hash trong aggregate. Discovery service không thay đổi trong lượt so sánh; cuối lượt chỉ sửa JS/template giải thích trạng thái.
+
+## Sửa UX tiếp theo
+
+Chrome production trước sửa phát hiện badge `results_found` lộ mã kỹ thuật. Đổi trạng thái sang tiếng Việt, phân biệt không tìm thấy với lỗi nguồn và giải thích nguồn trùng đã hiển thị trước. Cập nhật hướng dẫn đọc Công báo. Chrome local với dữ liệu Mongo thật sau sửa: desktop/mobile không tràn ngang/pageerror, badge tiếng Việt. `node --check`, 5 Node form tests và 24 route tests passed. Đây là kiểm chứng bổ sung UI, không ghi lại full suite 1.310 tests thành bằng chứng sau thay đổi JS/template.
