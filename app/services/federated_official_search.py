@@ -71,24 +71,32 @@ class BraveOfficialClient:
 
 
 class FederatedOfficialClient:
-    def __init__(self, *, portal, web):
-        self.portal, self.web = portal, web
+    def __init__(self, *, portal, web=None, gazette=None):
+        self.providers = [("chinhphu", portal)]
+        if gazette is not None:
+            self.providers.append(("congbao", gazette))
+        if web is not None:
+            self.providers.append(("brave", web))
+        self.provider = "_and_".join(name for name, _ in self.providers)
+        self.method = "federated-official-discovery-v1"
 
     async def search(self, query: str, *, limit: int = 3):
         started = time.perf_counter()
-        outcomes = await asyncio.gather(self.portal.search(query, limit=limit), self.web.search(query, limit=limit), return_exceptions=True)
+        limit = max(1, min(int(limit), 10))
+        outcomes = await asyncio.gather(*(provider.search(query, limit=limit) for _, provider in self.providers), return_exceptions=True)
         errors, records, count, seen = [], [], 0, set()
-        for name, result in zip(("chinhphu", "brave"), outcomes):
+        for (name, _), result in zip(self.providers, outcomes):
             count += getattr(result, "request_count", 0) or 0
             if isinstance(result, BaseException):
                 errors.append(name + ":" + str(getattr(result, "kind", type(result).__name__)))
                 continue
+            errors.extend(name + ":" + error for error in result.errors)
             for record in result.results:
                 url = urldefrag(record.url)[0]
                 if url not in seen:
                     records.append(record)
                     seen.add(url)
-        if len(errors) == 2:
+        if all(isinstance(result, BaseException) for result in outcomes):
             raise OfficialPortalError(";".join(errors), request_count=count, latency_ms=(time.perf_counter()-started)*1000)
-        return OfficialSearchResponse(tuple(records[:min(10, limit*2)]), "chinhphu_and_brave", (time.perf_counter()-started)*1000,
+        return OfficialSearchResponse(tuple(records[:min(10, limit*len(self.providers))]), self.provider, (time.perf_counter()-started)*1000,
                                       count, tuple(errors), "federated-official-discovery-v1")

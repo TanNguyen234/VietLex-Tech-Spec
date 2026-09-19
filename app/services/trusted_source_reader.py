@@ -9,7 +9,7 @@ from html.parser import HTMLParser
 from urllib.parse import urlsplit, urljoin
 import httpx
 
-APPROVED_HOSTS = frozenset({"vanban.chinhphu.vn", "baochinhphu.vn", "datafiles.chinhphu.vn"})
+APPROVED_HOSTS = frozenset({"vanban.chinhphu.vn", "baochinhphu.vn", "datafiles.chinhphu.vn", "congbao.chinhphu.vn", "congbaocdn.chinhphu.vn"})
 _MAX_BYTES = 1_000_000
 _MAX_TEXT = 20_000
 _SEMAPHORE = asyncio.Semaphore(2)
@@ -46,7 +46,7 @@ class _TextParser(HTMLParser):
     def handle_starttag(self, tag, attrs):
         values = dict(attrs)
         if tag in {'a', 'iframe'}:
-            link = values.get('href') or values.get('src') or ''
+            link = values.get('data-href') or values.get('href') or values.get('src') or ''
             if urlsplit(link).path.lower().endswith('.pdf'):
                 self.attachments.append(link)
         if tag in {"script", "style", "nav", "header", "footer", "noscript"}:
@@ -129,7 +129,7 @@ async def read_source(url: str, *, page_start: int = 1, use_ocr: bool = False,
             result = extract_page(html, url)
             parser = _TextParser()
             parser.feed(html)
-            if not attachment and urlsplit(target).hostname == 'vanban.chinhphu.vn':
+            if not attachment and urlsplit(target).hostname in {'vanban.chinhphu.vn', 'congbao.chinhphu.vn'}:
                 metadata = {}
                 for index, part in enumerate(parser.parts[:-1]):
                     key = {'Số ký hiệu': 'document_number', 'Ngày ban hành': 'issued_date',
@@ -149,7 +149,7 @@ async def read_source(url: str, *, page_start: int = 1, use_ocr: bool = False,
                 if approved:
                     result = await fetch(session, approved[0], title=result['title'], attachment=True)
                     result['attachments'] = list(dict.fromkeys(approved))
-                elif 'docid=' in urlsplit(target).query.lower():
+                elif 'docid=' in urlsplit(target).query.lower() or urlsplit(target).hostname == 'congbao.chinhphu.vn':
                     # A catalogue/detail page without readable legislation is not legal evidence.
                     result.update(text='', content_status='metadata_only', requires_ocr=False,
                                   sha256=hashlib.sha256(b'').hexdigest(), stored_characters=0)

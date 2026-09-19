@@ -17,6 +17,8 @@ OFFICIAL_SOURCE_DOMAINS = (
     "vbpl.moj.gov.vn",
     "vanban.chinhphu.vn",
     "datafiles.chinhphu.vn",
+    "congbao.chinhphu.vn",
+    "congbaocdn.chinhphu.vn",
     "moj.gov.vn",
     "phapdien.moj.gov.vn",
 )
@@ -201,18 +203,22 @@ async def run_deep_research(
     if provider is None:
         from app.services.official_web_search import OfficialPortalClient
 
-        provider = OfficialPortalClient(settings=settings)
+        from app.services.congbao_search import CongBaoClient
+        from app.services.federated_official_search import BraveOfficialClient, FederatedOfficialClient
+
+        web = None
         if getattr(settings, "OFFICIAL_BRAVE_SEARCH_ENABLED", False):
             if not getattr(settings, "BRAVE_SEARCH_API_KEY", None):
                 raise DeepResearchDisabled("brave_search_not_configured")
-            from app.services.federated_official_search import BraveOfficialClient, FederatedOfficialClient
-            provider = FederatedOfficialClient(portal=provider, web=BraveOfficialClient(settings=settings))
+            web = BraveOfficialClient(settings=settings)
+        provider = FederatedOfficialClient(portal=OfficialPortalClient(settings=settings),
+                                           gazette=CongBaoClient(settings=settings), web=web)
 
     # User-edited queries receive a new immutable identity at execution time.
     plan_id = _plan_id(plan.question, plan.steps)
     step_results: list[ResearchStepResult] = []
-    observed_provider = "chinhphu_official_portal"
-    observed_model = "webforms-search-v1"
+    observed_provider = getattr(provider, "provider", "chinhphu_official_portal")
+    observed_model = getattr(provider, "method", "webforms-search-v1")
     for step in plan.steps:
         try:
             result = await provider.search(step.query, limit=3)
@@ -220,8 +226,8 @@ async def run_deep_research(
             error_kind = str(getattr(error, "kind", type(error).__name__))[:80]
             record_provider_event(
                 ProviderEvent(
-                    provider="chinhphu_official_portal",
-                    model="webforms-search-v1",
+                    provider=observed_provider,
+                    model=observed_model,
                     use_case="deep_research",
                     call_kind="http",
                     success=False,

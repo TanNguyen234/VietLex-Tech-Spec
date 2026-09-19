@@ -34,3 +34,33 @@ async def test_federation_preserves_partial_failure_in_research_status():
     assert result.status == "partial"
     assert all(step.status == "partial_results" for step in result.steps)
     assert all(step.sources and step.error_kind for step in result.steps)
+
+
+@pytest.mark.asyncio
+async def test_federation_adds_gazette_without_losing_partial_errors():
+    from app.services.federated_official_search import FederatedOfficialClient
+    from app.services.official_web_search import OfficialSearchRecord, OfficialSearchResponse
+    def source(domain, errors=()):
+        record = OfficialSearchRecord("https://" + domain + "/law", domain, domain, "", "", "")
+        return SimpleNamespace(search=AsyncMock(return_value=OfficialSearchResponse((record,), domain, 1, 1, errors)))
+    provider = FederatedOfficialClient(portal=source("vanban.chinhphu.vn"),
+        gazette=source("congbao.chinhphu.vn", ("upstream:partial",)))
+    result = await provider.search("query")
+    assert {r.domain for r in result.results} == {"vanban.chinhphu.vn", "congbao.chinhphu.vn"}
+    assert result.request_count == 2
+    assert result.provider == "chinhphu_and_congbao"
+    assert result.errors == ("congbao:upstream:partial",)
+
+
+@pytest.mark.asyncio
+async def test_federation_total_failure_keeps_actual_provider_identity():
+    from app.services.federated_official_search import FederatedOfficialClient
+    from app.services.official_web_search import OfficialPortalError
+    from app.services.deep_research import build_research_plan, run_deep_research
+    failed = SimpleNamespace(search=AsyncMock(side_effect=OfficialPortalError("offline", request_count=1)))
+    result = await run_deep_research(build_research_plan("Test research"),
+        provider=FederatedOfficialClient(portal=failed, gazette=failed),
+        settings=SimpleNamespace(OFFICIAL_WEB_RESEARCH_ENABLED=True))
+    assert result.provider == "chinhphu_and_congbao"
+    assert result.model == "federated-official-discovery-v1"
+    assert result.status == "failed"
