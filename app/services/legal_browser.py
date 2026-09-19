@@ -11,6 +11,7 @@ import httpx
 
 from app.config import system_ssl_context
 from app.services.body_search import BodySearchIndex, BodySearchUnavailable
+from app.services.remote_body_search import SupabaseBodySearch
 from app.ingestion.content_store import ContentStore, StoredDocument, ContentIntegrityError
 from app.ingestion.legal_fts import LegalFtsIndex
 from app.ingestion.legal_text import DocumentMetadata
@@ -219,7 +220,14 @@ class LegalBrowser:
                     getattr(settings, "SUPABASE_PUBLISHABLE_KEY", None) or ""
                 ).strip(),
             )
-            return cls(store=store, index=store)
+            body_index = None
+            if getattr(settings, "SUPABASE_BODY_SEARCH_ENABLED", False):
+                body_index = SupabaseBodySearch(
+                    url=settings.SUPABASE_URL,
+                    publishable_key=settings.SUPABASE_PUBLISHABLE_KEY,
+                    client=store._client,
+                )
+            return cls(store=store, index=store, body_index=body_index)
         use_v3 = getattr(settings, "USE_LEGACY_FREE_PIPELINE", None) is False
         content_path = (
             settings.V3_CONTENT_STORE_PATH
@@ -254,6 +262,9 @@ class LegalBrowser:
         if self._body_index is None:
             raise BodySearchUnavailable("body_index_unavailable")
         hits = self._body_index.search(query, filters=filters, limit=limit, offset=offset)
+        if isinstance(self._body_index, SupabaseBodySearch):
+            # The RPC joins current source hashes under RLS before LIMIT.
+            return hits
         try:
             current = self._store.get_many(list({hit["document_id"] for hit in hits}))
         except (sqlite3.Error, ContentIntegrityError) as error:

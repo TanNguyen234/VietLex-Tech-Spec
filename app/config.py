@@ -157,6 +157,7 @@ class Settings(BaseSettings):
     SUPABASE_URL: Optional[str] = None
     SUPABASE_PUBLISHABLE_KEY: Optional[str] = None
     SUPABASE_SERVICE_ROLE_KEY: Optional[str] = None
+    SUPABASE_BODY_SEARCH_ENABLED: bool = False
 
     # Public web application security and opt-in evaluation controls.
     REVIEWER_DEMO_MODE: bool = False
