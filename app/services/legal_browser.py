@@ -10,7 +10,8 @@ from typing import Any
 import httpx
 
 from app.config import system_ssl_context
-from app.ingestion.content_store import ContentStore, StoredDocument
+from app.services.body_search import BodySearchIndex, BodySearchUnavailable
+from app.ingestion.content_store import ContentStore, StoredDocument, ContentIntegrityError
 from app.ingestion.legal_fts import LegalFtsIndex
 from app.ingestion.legal_text import DocumentMetadata
 
@@ -204,9 +205,10 @@ class SupabaseLegalStore:
 
 
 class LegalBrowser:
-    def __init__(self, *, store: Any, index: Any) -> None:
+    def __init__(self, *, store: Any, index: Any, body_index=None) -> None:
         self._store = store
         self._index = index
+        self._body_index = body_index
 
     @classmethod
     def from_settings(cls, settings: Any) -> "LegalBrowser":
@@ -232,12 +234,37 @@ class LegalBrowser:
         store = ContentStore(content_path)
         return cls(
             store=store,
+            body_index=BodySearchIndex(content_path.with_name("legal_body_fts.sqlite3")),
             index=LegalFtsIndex(
                 store=store,
                 path=fts_path,
                 dataset_revision=settings.DATASET_REVISION,
             ),
         )
+
+    def body_coverage(self):
+        if self._body_index is None:
+            return None
+        try:
+            return self._body_index.coverage()
+        except BodySearchUnavailable:
+            return None
+
+    def search_body(self, query, *, filters=None, limit=20, offset=0):
+        if self._body_index is None:
+            raise BodySearchUnavailable("body_index_unavailable")
+        hits = self._body_index.search(query, filters=filters, limit=limit, offset=offset)
+        try:
+            current = self._store.get_many(list({hit["document_id"] for hit in hits}))
+        except (sqlite3.Error, ContentIntegrityError) as error:
+            raise BodySearchUnavailable("body_source_unavailable") from error
+        if any(
+            hit["document_id"] not in current
+            or current[hit["document_id"]].content_sha256 != hit["content_sha256"]
+            for hit in hits
+        ):
+            raise BodySearchUnavailable("body_index_stale")
+        return hits
 
     def search(self, query: str, limit: int = 20, *, filters: SearchFilters | None = None) -> list[LegalSearchResult]:
         normalized = query.strip()

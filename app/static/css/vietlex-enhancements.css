@@ -75,3 +75,6 @@ body{background:var(--color-bg)}.topbar{height:auto;min-height:72px;gap:20px;pad
 .section-actions{margin:.75rem 0}
 .report-print pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit}
 @media print{.report-controls,.product-nav,.topbar{display:none!important}.report-print{display:block}.legal-page{max-width:none;margin:0;padding:0}a{overflow-wrap:anywhere}}
+
+.body-search-snippet { overflow-wrap: anywhere; line-height: 1.75; }
+.body-search-snippet mark { background: #fff0a6; color: #24372e; padding: 0 .08em; }

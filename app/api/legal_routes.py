@@ -2,14 +2,15 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
-import re
-from typing import Any
-from urllib.parse import urlparse
+from typing import Any, Literal
+from urllib.parse import urlparse, urlencode
 
 from fastapi import APIRouter, HTTPException, Request, Query, Form, Depends
 from app.api.dependencies import optional_user, verify_csrf
 from app.rate_limit import limiter
 from app.services.legal_browser import SearchFilters, LegalBrowserBackendError
+from app.services.document_structure import document_sections
+from app.services.body_search import BodySearchUnavailable
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from app.paths import APP_ROOT
@@ -20,36 +21,6 @@ from app.config import get_settings
 router = APIRouter()
 templates = Jinja2Templates(directory=APP_ROOT / "templates")
 browser: Any | None = None
-
-
-def document_sections(content: str) -> list[dict[str, str]]:
-    """Add navigable anchors without rewriting or dropping source characters."""
-    headings = list(
-        re.finditer(
-            r"(?m)^(?:Điều\s+\d+[a-zđ]?\b|Chương\s+[IVXLCDM\d]+\b)[^\r\n]*", content
-        )
-    )
-    sections = []
-    start = 0
-    for index, heading in enumerate(headings):
-        if index == 0 and heading.start():
-            sections.append(
-                {
-                    "id": "preamble",
-                    "title": "Mở đầu",
-                    "text": content[: heading.start()],
-                }
-            )
-        start = heading.start()
-        end = headings[index + 1].start() if index + 1 < len(headings) else len(content)
-        sections.append(
-            {
-                "id": f"section-{index + 1}",
-                "title": heading.group()[:180],
-                "text": content[start:end],
-            }
-        )
-    return sections or [{"id": "full-text", "title": "Toàn văn", "text": content}]
 
 
 def _get_browser() -> Any:
@@ -70,20 +41,38 @@ def _safe_source_url(value: str) -> str | None:
 
 @router.get("/search", response_class=HTMLResponse)
 async def legal_search(request: Request, q: str = "", legal_type: str = Query("", max_length=100),
-                       authority: str = Query("", max_length=200), issued_from: str = "", issued_to: str = "", sort: str = "default"):
+                       authority: str = Query("", max_length=200), issued_from: str = "", issued_to: str = "", sort: str = "default",
+                       scope: Literal["metadata", "body"] = "metadata", offset: int = Query(0, ge=0, le=1000)):
     query = q.strip()[:200]
     try:
         filters = SearchFilters(legal_type.strip(), authority.strip(), issued_from, issued_to, sort)
     except ValueError:
         raise HTTPException(422, "Bộ lọc ngày hoặc thứ tự không hợp lệ.") from None
+    current = _get_browser()
+    coverage = await asyncio.to_thread(current.body_coverage) if hasattr(current, "body_coverage") else None
+    next_page = previous_page = None
     try:
-        results = await asyncio.to_thread(_get_browser().search, query, 20, **({"filters": filters} if filters.active else {}))
+        if scope == "body":
+            results = await asyncio.to_thread(current.search_body, query, filters=filters, limit=21, offset=offset)
+            params = dict(request.query_params)
+            if len(results) > 20 and offset < 1000:
+                params["offset"] = str(min(offset + 20, 1000))
+                next_page = "/search?" + urlencode(params)
+            if offset:
+                params["offset"] = str(max(0, offset - 20))
+                previous_page = "/search?" + urlencode(params)
+            results = results[:20]
+        else:
+            results = await asyncio.to_thread(current.search, query, 20, **({"filters": filters} if filters.active else {}))
+    except BodySearchUnavailable:
+        raise HTTPException(503, "Chưa có chỉ mục toàn văn sẵn sàng cho kho dữ liệu này. Hãy tìm theo số hiệu/tiêu đề hoặc tìm nguồn chính thức.") from None
     except LegalBrowserBackendError:
         raise HTTPException(503, "Không đọc được kết quả tra cứu. Vui lòng thử lại.") from None
     return templates.TemplateResponse(
         request,
         "legal_search.html",
-        {"query": query, "results": results, "filters": filters},
+        {"query": query, "results": results, "filters": filters, "scope": scope, "body_coverage": coverage,
+         "next_page": next_page, "previous_page": previous_page},
     )
 
 
