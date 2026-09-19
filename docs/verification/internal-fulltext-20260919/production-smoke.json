@@ -1,0 +1,23 @@
+[
+  {
+    "path": "/search?q=45%2F2019%2FQH14",
+    "status": 503,
+    "expected_status": 200,
+    "seconds": 8.203,
+    "pass": false
+  },
+  {
+    "path": "/documents/333670",
+    "status": 503,
+    "expected_status": 200,
+    "seconds": 0.593,
+    "pass": false
+  },
+  {
+    "path": "/search?scope=body&q=thu+viec",
+    "status": 503,
+    "expected_status": 503,
+    "seconds": 0.391,
+    "pass": true
+  }
+]

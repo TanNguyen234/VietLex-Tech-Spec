@@ -1,0 +1,13 @@
+{
+  "git_sha": "34422b95ae8b42d2276d6af4cc451349a8350dcb",
+  "deployment_id": "dpl_g46HQB2Fr91yUu7VBux3ajcyG8rz",
+  "ready_state": "READY",
+  "canonical_alias_points_to_this_deployment": true,
+  "production_smoke": "FAILED: metadata search and document reader HTTP 503",
+  "local_supabase_connect": "ConnectError: getaddrinfo failed",
+  "public_dns_resolvers": [
+    "Cloudflare: NXDOMAIN",
+    "Google: NXDOMAIN"
+  ],
+  "new_deployment_log_entries_available_at_check": 0
+}

@@ -60,3 +60,8 @@ Cập nhật ngày 2026-09-19; bổ sung thư viện nguồn đã đọc, đối
 ## Phân tích căn cứ — kiểm chứng 19/09
 
 [Runtime f4fcb37 và 10 câu thật](docs/verification/selected-context-20260919/REPORT.md): ngân sách riêng 4.000 từ cách trắng/20.000 ký tự/10 nguồn, UI và lịch sử có phần chưa trả lời + link căn cứ. Production 995 từ 422 → 200. 1.300 unit/route tests passed, 30 warnings. Benchmark MINIMAL: 2 ok / 8 thiếu căn cứ; còn suy đoán sai về độ đầy đủ nguồn, không phải nghiệm thu pháp lý. MEDIUM không được chọn (5/10 MAX_TOKENS).
+
+
+## Trở ngại production phát hiện sau push 19/09
+
+[Smoke SHA 34422b9](docs/verification/internal-fulltext-20260919/REPORT.md): Vercel Ready nhưng tìm số hiệu/đọc văn bản 503. Supabase hostname trả NXDOMAIN ở hai resolver độc lập; chưa biết trạng thái Dashboard. Full-text local không được dùng để che lỗi online. Key Logfire mới local đã xuất trace 200; production secret propagation chưa nghiệm thu.

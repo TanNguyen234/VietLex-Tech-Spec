@@ -40,3 +40,12 @@ Registry hiệu lực toàn corpus và chất lượng trả lời đủ căn c�
 ## Provenance
 
 `manifest.json` lưu Git base, dirty flag, diff SHA-256 và hash từng source mới/sửa (bao gồm untracked). Kết quả browser, SQL, truy vấn index và trace là các file kèm theo. Dữ liệu thô chứa logs production/phiên làm việc nằm ở `tmp`, không commit. Các thay đổi skill/config có trước được giữ nguyên và không đưa vào commit này.
+
+
+## Sau push / production: chưa đạt
+
+Ba commit `d235654`, `5bc972a`, `34422b9` đã push lên main. Vercel deployment `dpl_g46HQB2Fr91yUu7VBux3ajcyG8rz` của SHA `34422b9` ở trạng thái Ready; alias chính trỏ đúng deployment này. Tuy nhiên smoke thật thất bại: tìm số hiệu và đọc văn bản đều **503**. Body search chưa bật trả 503 đúng hợp đồng; không được tính là tính năng online đã đạt.
+
+Kiểm tra trực tiếp Supabase từ local báo `getaddrinfo failed`. Cả Google và Cloudflare DNS-over-HTTPS trả DNS status **3 (NXDOMAIN)** cho hostname cấu hình; xem `supabase-dns.json`. Chưa truy cập được trạng thái project trong Dashboard nên không kết luận pause/xóa/sai URL. [Tài liệu Supabase về pause/restore](https://supabase.com/docs/guides/platform/free-project-pausing) và [chẩn đoán hostname](https://supabase.com/docs/guides/troubleshooting/resolving-database-hostname-and-managing-your-ip-address-pVlwE0) chỉ là hướng điều tra, không phải bằng chứng trạng thái project này.
+
+Runtime không đổi sang corpus local để che lỗi online. Cần xác minh/khôi phục endpoint Supabase trước khi nghiệm thu lại. Logfire key local đã xuất trace 200; log 401 đã đọc thuộc deployment trước, chưa có log khả dụng của deployment mới lúc kiểm tra. Việc đổi secret production đang chờ xác nhận riêng theo AGENTS.md. Các file `production-smoke.json` và `deployment.json` ghi riêng giới hạn này.

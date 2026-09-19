@@ -1,0 +1,17 @@
+{
+  "hostname": "jtldmpnghdzitvkbvald.supabase.co",
+  "dns": [
+    {
+      "resolver": "1.1.1.1",
+      "http_status": 200,
+      "dns_status": 3,
+      "answers": []
+    },
+    {
+      "resolver": "dns.google",
+      "http_status": 200,
+      "dns_status": 3,
+      "answers": []
+    }
+  ]
+}
