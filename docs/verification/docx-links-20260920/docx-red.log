@@ -1,0 +1,81 @@
+....FF                                                                   [100%]
+================================== FAILURES ===================================
+_________ test_docx_citations_link_to_snapshots_and_safe_original_url _________
+
+    def test_docx_citations_link_to_snapshots_and_safe_original_url():
+        from xml.etree import ElementTree as ET
+        from app.services.report_deliverables import report_docx
+        analysis = _analysis()
+        analysis['markdown'] = 'Known [e-1]; unknown [missing]. [click](javascript:alert(1))'
+        analysis['evidence_snapshot'][0]['source_url'] = 'https://vbpl.vn/test?a=1&b=2#article-1'
+        with ZipFile(BytesIO(report_docx(analysis))) as archive:
+            document = ET.fromstring(archive.read('word/document.xml'))
+>           relationships = ET.fromstring(archive.read('word/_rels/document.xml.rels'))
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_report_deliverables.py:81: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+D:\VI TINH THANH AN\AppData\Local\Programs\Python\Python312\Lib\zipfile\__init__.py:1567: in read
+    with self.open(name, "r", pwd) as fp:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+D:\VI TINH THANH AN\AppData\Local\Programs\Python\Python312\Lib\zipfile\__init__.py:1604: in open
+    zinfo = self.getinfo(name)
+            ^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <zipfile.ZipFile [closed]>, name = 'word/_rels/document.xml.rels'
+
+    def getinfo(self, name):
+        """Return the instance of ZipInfo given 'name'."""
+        info = self.NameToInfo.get(name)
+        if info is None:
+>           raise KeyError(
+                'There is no item named %r in the archive' % name)
+E           KeyError: "There is no item named 'word/_rels/document.xml.rels' in the archive"
+
+D:\VI TINH THANH AN\AppData\Local\Programs\Python\Python312\Lib\zipfile\__init__.py:1532: KeyError
+____ test_docx_unsafe_urls_and_duplicate_ids_do_not_create_ambiguous_links ____
+
+    def test_docx_unsafe_urls_and_duplicate_ids_do_not_create_ambiguous_links():
+        from xml.etree import ElementTree as ET
+        from app.services.report_deliverables import report_docx
+        analysis = _analysis()
+        analysis['evidence_snapshot'][0]['source_url'] = 'javascript:alert(1)'
+        analysis['evidence_snapshot'].append(dict(analysis['evidence_snapshot'][0], excerpt='Second snapshot'))
+        analysis['markdown'] = 'Control\x00 and [e-1]'
+        with ZipFile(BytesIO(report_docx(analysis))) as archive:
+            document = ET.fromstring(archive.read('word/document.xml'))
+>           relationships = ET.fromstring(archive.read('word/_rels/document.xml.rels'))
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_report_deliverables.py:103: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+D:\VI TINH THANH AN\AppData\Local\Programs\Python\Python312\Lib\zipfile\__init__.py:1567: in read
+    with self.open(name, "r", pwd) as fp:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+D:\VI TINH THANH AN\AppData\Local\Programs\Python\Python312\Lib\zipfile\__init__.py:1604: in open
+    zinfo = self.getinfo(name)
+            ^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <zipfile.ZipFile [closed]>, name = 'word/_rels/document.xml.rels'
+
+    def getinfo(self, name):
+        """Return the instance of ZipInfo given 'name'."""
+        info = self.NameToInfo.get(name)
+        if info is None:
+>           raise KeyError(
+                'There is no item named %r in the archive' % name)
+E           KeyError: "There is no item named 'word/_rels/document.xml.rels' in the archive"
+
+D:\VI TINH THANH AN\AppData\Local\Programs\Python\Python312\Lib\zipfile\__init__.py:1532: KeyError
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  D:\Download\ProfessionalLegalRAG\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_report_deliverables.py::test_docx_citations_link_to_snapshots_and_safe_original_url
+FAILED tests/test_report_deliverables.py::test_docx_unsafe_urls_and_duplicate_ids_do_not_create_ambiguous_links
+2 failed, 4 passed, 1 warning in 10.11s
