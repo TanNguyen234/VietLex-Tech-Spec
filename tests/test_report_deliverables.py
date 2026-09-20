@@ -68,3 +68,40 @@ def test_report_preview_has_source_anchors_and_escapes_active_content():
     assert '<script>' not in html
     assert 'href="javascript:' not in html
     assert analysis['markdown'].startswith('# Memo')
+
+
+def test_docx_citations_link_to_snapshots_and_safe_original_url():
+    from xml.etree import ElementTree as ET
+    from app.services.report_deliverables import report_docx
+    analysis = _analysis()
+    analysis['markdown'] = 'Known [e-1]; unknown [missing]. [click](javascript:alert(1))'
+    analysis['evidence_snapshot'][0]['source_url'] = 'https://vbpl.vn/test?a=1&b=2#article-1'
+    with ZipFile(BytesIO(report_docx(analysis))) as archive:
+        document = ET.fromstring(archive.read('word/document.xml'))
+        relationships = ET.fromstring(archive.read('word/_rels/document.xml.rels'))
+    ns = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+    w = '{' + ns['w'] + '}'
+    bookmarks = document.findall('.//w:bookmarkStart', ns)
+    assert len(bookmarks) == 1
+    links = document.findall('.//w:hyperlink', ns)
+    assert any(link.get(w+'anchor') == bookmarks[0].get(w+'name') for link in links)
+    assert [r.get('Target') for r in relationships] == ['https://vbpl.vn/test?a=1&b=2#article-1']
+    assert all(r.get('TargetMode') == 'External' for r in relationships)
+    assert '[missing]' in ''.join(document.itertext())
+    assert 'Snapshot' in ''.join(document.itertext())
+
+
+def test_docx_unsafe_urls_and_duplicate_ids_do_not_create_ambiguous_links():
+    from xml.etree import ElementTree as ET
+    from app.services.report_deliverables import report_docx
+    analysis = _analysis()
+    analysis['evidence_snapshot'][0]['source_url'] = 'javascript:alert(1)'
+    analysis['evidence_snapshot'].append(dict(analysis['evidence_snapshot'][0], excerpt='Second snapshot'))
+    analysis['markdown'] = 'Control\x00 and [e-1]'
+    with ZipFile(BytesIO(report_docx(analysis))) as archive:
+        document = ET.fromstring(archive.read('word/document.xml'))
+        relationships = ET.fromstring(archive.read('word/_rels/document.xml.rels'))
+    ns = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+    assert not list(relationships)
+    assert not document.findall('.//w:hyperlink', ns)
+    assert 'Second snapshot' in ''.join(document.itertext())
