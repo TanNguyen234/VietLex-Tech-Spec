@@ -4,7 +4,7 @@ Scope: citation IDs in report body link to saved evidence snapshots inside DOCX.
 
 TDD: two intended failures (missing relationships) → 6 focused tests passed. Ruff and focused git diff check passed. Full suite: **1.365 passed, 4 skipped, 30 warnings**, 460,03 seconds. Four skipped live tests are not counted as verified. Tests use synthetic adversarial data separately from the live export below.
 
-Actual saved public-law report from Mongo, local HTTP export 200/no-store: 3 bookmarks, 6 citation links, 3 external links, all anchors resolve. Bundled python-docx reopened the downloaded DOCX: 56 paragraphs, 9 hyperlinks. The application's venv lacks python-docx; first independent-parser attempt failed ModuleNotFoundError, then used the existing bundled document runtime. No production dependency was added. Microsoft Word UI NOT RUN; production export pending deployment.
+Actual saved public-law report from Mongo, local HTTP export 200/no-store: 3 bookmarks, 6 citation links, 3 external links, all anchors resolve. Bundled python-docx reopened the downloaded DOCX: 56 paragraphs, 9 hyperlinks. The application's venv lacks python-docx; first independent-parser attempt failed ModuleNotFoundError, then used the existing bundled document runtime. No production dependency was added. Microsoft Word UI NOT RUN; production export HTTP 200/no-store on deployment `dpl_F2J6BgqFucjWKm2cv4dkPGLx5PWf` (`aa3a16e`): 3 bookmarks, 6 citation links and 3 external links; every anchor resolves. Runtime `f1a5e25` and evidence `aa3a16e` pushed to origin/main.
 
 Commands:
 - `.venv/Scripts/python.exe -m pytest tests/test_report_deliverables.py -q`
@@ -15,3 +15,5 @@ Commands:
 Source: [Microsoft Wordprocessing Hyperlink](https://learn.microsoft.com/en-us/dotnet/api/documentformat.openxml.wordprocessing.hyperlink), [BookmarkStart](https://learn.microsoft.com/en-us/dotnet/api/documentformat.openxml.wordprocessing.bookmarkstart).
 
 Changed runtime: `app/services/report_deliverables.py`; tests: `tests/test_report_deliverables.py`. No provider, credential, schema or data mutation for export. Unrelated working-tree changes are preserved.
+
+Production command: `.venv/Scripts/python.exe tmp/continuation-20260920/docx_live.py https://vietlex-legal-rag.vercel.app`.

@@ -588,3 +588,5 @@ Kiểm chứng 19/09: [ngân sách phân tích, phần chưa đủ căn cứ và
 Đã triển khai tìm trực tiếp ở Cổng văn bản Chính phủ và Công báo, kèm đọc PDF Công báo. [Báo cáo kiểm chứng](docs/verification/congbao-discovery-20260919/REPORT.md): 10 chủ đề có kết quả, production tìm/đọc đạt; xếp hạng truy vấn ngắn và độ đầy đủ pháp lý chưa đạt nghiệm thu.
 
 ![Phạm vi tìm nguồn trên production mobile](docs/verification/congbao-discovery-20260919/discovery-mobile.png)
+
+Báo cáo DOCX có liên kết citation đến trích đoạn đã lưu và liên kết nguồn HTTP(S); [file xuất thật cùng kiểm tra local/production](docs/verification/docx-links-20260920/REPORT.md). Liên kết không tự chứng nhận hiệu lực hay tính đúng luật.
