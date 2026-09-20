@@ -27,6 +27,7 @@ from app.api.model_comparison_routes import router as model_comparison_router
 from app.api.full_document_review_routes import router as full_review_router
 from app.api.legal_effect_routes import router as legal_effect_router
 from app.api.legal_registry_routes import router as legal_registry_router
+from app.api.retained_source_routes import router as retained_source_router
 from app.api.evaluation_lab_routes import router as evaluation_lab_router
 from app.api.dependencies import optional_user
 from app.services.web_security import (
@@ -133,6 +134,7 @@ app.include_router(model_comparison_router)
 app.include_router(full_review_router)
 app.include_router(legal_effect_router)
 app.include_router(legal_registry_router)
+app.include_router(retained_source_router)
 app.include_router(evaluation_lab_router)
 
 @app.get("/", response_class=HTMLResponse)
