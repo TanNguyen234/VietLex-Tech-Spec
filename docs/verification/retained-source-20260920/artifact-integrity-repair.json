@@ -1,0 +1,8 @@
+{
+  "reason": "cb3bf93 formatted immutable run_capture.py; Git text normalization also changed CRLF on checkout",
+  "original_bytes_restored": true,
+  "manifest_unchanged": true,
+  "artifacts_checked": 24,
+  "all_match": true,
+  "formatted_copy": "run_capture_formatted.py"
+}

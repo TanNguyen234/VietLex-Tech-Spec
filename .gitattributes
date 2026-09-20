@@ -18,3 +18,6 @@ docs/evaluation/runs/source-temporal-ten-20260913T153643Z/** -text whitespace=cr
 docs/verification/data-integrity-20260913/*.log -whitespace
 docs/verification/ocr-output-20260913/*.log -whitespace
 docs/verification/source-temporal-20260913/*.log -whitespace
+
+# Hash-verified benchmark capture scripts must retain their original bytes.
+docs/evaluation/runs/retained-source-ten-20260919T163801Z/** -text whitespace=cr-at-eol

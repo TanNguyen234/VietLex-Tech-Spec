@@ -45,3 +45,7 @@ Runtime commit `4662e99`, evidence/docs `2d75af7` đã push `origin/main`. Nhữ
 ![Phân tích nguồn trên production mobile](production-retained-analysis-mobile.png)
 
 Lệnh production: `.venv/Scripts/python.exe tmp/continuation-20260920/production_retained.py`; `.venv/Scripts/python.exe tmp/continuation-20260920/production_browser.py`. Script chứa đường dẫn state đăng nhập cục bộ; chỉ output an toàn được lưu vào Git. Log pytest giữ nguyên whitespace gốc của cảnh báo.
+
+## Sửa tính bất biến của artifact
+
+Commit `cb3bf93` đã format `run_capture.py` làm lệch hash. Đã giữ bản format tại `run_capture_formatted.py`, phục hồi script gốc đúng SHA-256 trong manifest, và đặt Git `-text` để giữ CRLF nguyên bản trên mọi hệ điều hành. Ruff chỉ bỏ qua bốn rule style cho đúng script bất biến; runtime vẫn được lint. Manifest và raw provider results không đổi. Xem `artifact-integrity-repair.json`.
