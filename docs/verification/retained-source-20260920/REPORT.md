@@ -36,4 +36,12 @@ Runtime files: `app/services/retained_source_analysis.py`, `app/api/retained_sou
 
 ## Chưa nghiệm thu
 
-Production workflow mới chưa smoke tại thời điểm ghi báo cáo. Chưa có adjudication pháp lý đầy đủ theo claim; không có điểm “đúng luật”. OCR có thể sai; bản lưu và kết quả cùng retention hồ sơ, chỉ 50 phân tích gần nhất. Registry chưa có sự kiện được reviewer công bố. Full-text online cần Supabase hoạt động và quyền SQL; không chạy migration/ingestion remote khi thiếu kết nối.
+Production `2d75af7`, deployment `dpl_J4b16unoKXUJbpzbh34kk8wZTW5C` Ready: workspace 200 → POST phân tích 303 (10,156 giây) → GET kết quả 200/no-store, có căn cứ và scope. Chrome production desktop/mobile không tràn ngang, không page errors; form và citation hiện đúng. Không OCR lại. Xem `production-retained.json` và `production-retained-browser.json`. Chưa có adjudication pháp lý đầy đủ theo claim; không có điểm “đúng luật”. OCR có thể sai; bản lưu và kết quả cùng retention hồ sơ, chỉ 50 phân tích gần nhất. Registry chưa có sự kiện được reviewer công bố. Full-text online cần Supabase hoạt động và quyền SQL; không chạy migration/ingestion remote khi thiếu kết nối.
+
+## Production UI và trạng thái Git
+
+Runtime commit `4662e99`, evidence/docs `2d75af7` đã push `origin/main`. Những file không thuộc phạm vi thay đổi vẫn được giữ, working tree không được tuyên bố sạch.
+
+![Phân tích nguồn trên production mobile](production-retained-analysis-mobile.png)
+
+Lệnh production: `.venv/Scripts/python.exe tmp/continuation-20260920/production_retained.py`; `.venv/Scripts/python.exe tmp/continuation-20260920/production_browser.py`. Script chứa đường dẫn state đăng nhập cục bộ; chỉ output an toàn được lưu vào Git. Log pytest giữ nguyên whitespace gốc của cảnh báo.

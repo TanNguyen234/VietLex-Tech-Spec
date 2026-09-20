@@ -1,0 +1,25 @@
+{
+  "at": "2026-09-20T10:41:04.648393+00:00",
+  "requests": [
+    {
+      "operation": "workspace",
+      "status": 200,
+      "new_action_visible": true
+    },
+    {
+      "operation": "analyze_retained_source",
+      "status": 303,
+      "seconds": 10.156
+    },
+    {
+      "operation": "saved_answer",
+      "status": 200,
+      "has_citations": true,
+      "has_source_scope": true,
+      "provider_error_visible": false,
+      "cache_control": "no-store"
+    }
+  ],
+  "new_ocr_calls": 0,
+  "source": "existing public official credit PDF, four pages"
+}
