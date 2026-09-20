@@ -1,0 +1,29 @@
+{
+  "checked_at": "2026-09-19T16:20:00.957394+00:00",
+  "deployment": "dpl_8uPzUjG1mJgEYmG1ZUd4Di3yTtYA",
+  "git_sha": "4b4968a",
+  "requests": [
+    {
+      "case": "public_registry",
+      "status": 200,
+      "unknown_visible": true,
+      "registry_admin_visible": false,
+      "cache_control": "no-store"
+    },
+    {
+      "case": "admin_registry",
+      "status": 200,
+      "unknown_visible": false,
+      "registry_admin_visible": true,
+      "cache_control": "no-store"
+    },
+    {
+      "case": "metadata_search",
+      "status": 503,
+      "unknown_visible": false,
+      "registry_admin_visible": false,
+      "cache_control": "public, max-age=0, must-revalidate"
+    }
+  ],
+  "mutations": 0
+}

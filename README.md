@@ -46,9 +46,11 @@ Bản đóng gói reviewer: [hướng dẫn](docs/REVIEWER_GUIDE.md) · [trạng
 
 ![Giao diện hỏi đáp pháp luật VietLex trên production](docs/images/vietlex-home-20260912.png)
 
-### Tra cứu văn bản trên production
+### Tra cứu văn bản — ảnh production ngày 12/09
 
 ![Giao diện tra cứu Bộ luật Lao động 2019](docs/images/vietlex-search-20260912.png)
+
+**Trạng thái ngày 20/09:** search/reader đang lỗi do hostname Supabase không phân giải; ảnh dưới đây là bằng chứng lịch sử, không phải trạng thái hiện tại.
 
 Ảnh chụp ngày **2026-09-12** từ [production](https://vietlex-legal-rag.vercel.app), bản runtime `93ec75d`, bằng Chrome thật ở viewport 1440×1050; không mock dữ liệu hoặc sửa DOM. Trang tìm kiếm và toàn văn dùng Supabase. [Ảnh Evaluation Lab](docs/images/vietlex-metrics-20260912.png) và [báo cáo sau sửa](docs/verification/product-fixes-20260912.md) nêu rõ giới hạn kiểm chứng.
 
@@ -62,7 +64,11 @@ Tổng quan chỉ rõ bước tiếp theo; thư viện giữ bản đọc theo U
 
 ## Năng lực cốt lõi
 
-Khi thiếu căn cứ nội tại, người dùng có thể chuyển câu hỏi sang hồ sơ, chỉnh từ khóa tìm nguồn chính thức, đọc PDF/OCR từng nhóm trang, ghim trích đoạn rồi phân tích chỉ trên nguồn đã chọn. Hiệu lực vẫn chưa xác minh; OCR cần đối chiếu bản gốc.
+Khi thiếu căn cứ nội tại, người dùng chuyển câu hỏi sang hồ sơ, chỉnh từ khóa tìm nguồn chính thức và đọc PDF/OCR. Sau đó có thể ghim trích đoạn để phân tích phạm vi hẹp, hoặc chọn **Hỏi từ toàn bộ bản đọc đang lưu** để phân tích các trang cùng phiên bản nguồn, kèm căn cứ nguyên văn. Hiệu lực vẫn cần kiểm chứng; OCR cần đối chiếu bản gốc.
+
+[10 câu gốc ngoài corpus local](docs/evaluation/runs/retained-source-ten-20260919T163801Z/REPORT.md): 10 phản hồi hợp lệ, 142 ID căn cứ có thật; model đánh giá 9 đủ/1 thiếu. Đây không phải chứng nhận 10/10 câu đúng luật. [Workflow API/Mongo/Chrome thật và giới hạn](docs/verification/retained-source-20260920/REPORT.md).
+
+![Phân tích bản nguồn — mobile local thật](docs/verification/retained-source-20260920/retained-analysis-mobile.png)
 
 Nguồn đã đọc có tìm cụm từ, tô sáng đoạn khớp, mở đúng bản đọc và ghim nguyên văn. [Kiểm chứng production 14/09](docs/verification/saved-source-search-20260914/REPORT.md): tìm → ghim → đọc lại đúng nội dung. Phạm vi chỉ là bản đọc còn lưu trong hồ sơ.
 

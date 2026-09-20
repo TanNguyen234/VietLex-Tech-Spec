@@ -1,0 +1,11 @@
+{
+  "at": "2026-09-20T10:30:53.958264+00:00",
+  "operation": "query_points",
+  "collection": "vietlex-legal-rag-v3-vertex-1024",
+  "limit": 1,
+  "returned_points": 1,
+  "seconds": 2.344,
+  "success": true,
+  "mutations": 0,
+  "hibernation_timer_reset": "not independently observable"
+}

@@ -1,0 +1,92 @@
+{
+  "version": "retained-source-operational-v1",
+  "cases": 10,
+  "metrics": {
+    "valid_service_results": {
+      "numerator": 10,
+      "denominator": 10,
+      "coverage": 10,
+      "skipped_cases": 0,
+      "skip_reasons": []
+    },
+    "provider_success": {
+      "numerator": 10,
+      "denominator": 10,
+      "coverage": 10,
+      "skipped_cases": 0,
+      "skip_reasons": []
+    },
+    "known_passage_or_metadata_ids": {
+      "numerator": 142,
+      "denominator": 142,
+      "coverage": 142,
+      "skipped_cases": 0,
+      "skip_reasons": []
+    },
+    "readable_retained_pages": {
+      "numerator": 178,
+      "denominator": 178,
+      "coverage": 178,
+      "skipped_cases": 0,
+      "skip_reasons": []
+    }
+  },
+  "model_status_counts": {
+    "insufficient_evidence": 1,
+    "ok": 9
+  },
+  "provider_usage": {
+    "coverage": 10,
+    "input_tokens": 136896,
+    "output_tokens": 12557,
+    "total_tokens": 149453
+  },
+  "skipped": {
+    "retrieval_recall_mrr_ndcg_stage_survival": {
+      "numerator": null,
+      "denominator": 10,
+      "coverage": 0,
+      "skipped_cases": 10,
+      "skip_reason": "No corpus retrieval in this retained-source service run; discovery is a separate earlier run."
+    },
+    "answer_em_token_f1_chrf_rougel": {
+      "numerator": null,
+      "denominator": 10,
+      "coverage": 0,
+      "skipped_cases": 10,
+      "skip_reason": "No independently adjudicated reference answers; lexical metrics would not prove legal correctness."
+    },
+    "semantic_citation_precision_recall_coverage": {
+      "numerator": null,
+      "denominator": 10,
+      "coverage": 0,
+      "skipped_cases": 10,
+      "skip_reason": "Passage membership is structural; no complete independent claim-level legal adjudication."
+    },
+    "refusal_precision_recall": {
+      "numerator": null,
+      "denominator": 10,
+      "coverage": 0,
+      "skipped_cases": 10,
+      "skip_reason": "No adjudicated refusal labels for these ten questions."
+    },
+    "current_legal_validity": {
+      "numerator": null,
+      "denominator": 10,
+      "coverage": 0,
+      "skipped_cases": 10,
+      "skip_reason": "Official source publication and OCR do not establish complete amendment/repeal history."
+    },
+    "sdk_internal_retry_counts": {
+      "numerator": null,
+      "denominator": 10,
+      "coverage": 0,
+      "skipped_cases": 10,
+      "skip_reason": "Only service responses and reported usage captured; no invented HTTP-attempt count."
+    }
+  },
+  "citation_kinds": {
+    "retained_page_passages": 134,
+    "official_page_metadata": 8
+  }
+}

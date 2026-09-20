@@ -1,0 +1,107 @@
+{
+  "case": "aviation",
+  "result": {
+    "text": "Theo quy định tại Thông tư số 68/2026/TT-BXD:\n\n1. **Phân biệt ngày ban hành và ngày có hiệu lực**:\n- **Ngày ban hành**: Ngày 10 tháng 09 năm 2026 (theo thông tin từ trang nguồn và phần tiêu đề văn bản ban hành trong tháng 9 năm 2026).\n- **Ngày có hiệu lực**: Ngày 01 tháng 01 năm 2027.\n- **Xét tại ngày 13/09/2026**: Tại thời điểm này, Thông tư số 68/2026/TT-BXD đã được ban hành nhưng chưa đến ngày có hiệu lực thi hành (01/01/2027). Do đó, các quy định về phân bổ chi phí dưới đây là nội dung thay đổi đã được ban hành nhưng chưa chính thức áp dụng tại ngày 13/09/2026.\n\n2. **Quy định về chi phí trực tiếp và phân bổ chi phí gián tiếp**:\n- **Chi phí trực tiếp**: Là các khoản chi phí thực tế phát sinh để thực hiện các công việc khai thác tài sản kết cấu hạ tầng hàng không (như đánh giá tình trạng công trình, kiểm tra an toàn, vận hành hệ thống an toàn, cứu nạn, chữa cháy...) và thuế thu nhập doanh nghiệp phải nộp. Chi phí trực tiếp được xác định riêng biệt, không thực hiện phân bổ như chi phí gián tiếp.\n- **Chi phí gián tiếp**: Được phân bổ theo tiêu chí tỷ lệ doanh thu phát sinh theo quý và theo năm tài chính hiện hành, cụ thể:\n  + *Chi phí có liên quan không trực tiếp (phục vụ công tác quản lý, điều hành chung)*:\n    * Đối với người khai thác cảng được giao trực tiếp tổ chức khai thác: Phân bổ theo tỷ lệ giữa doanh thu từ việc cung cấp dịch vụ sử dụng tài sản kết cấu hạ tầng hàng không trên tổng doanh thu cung cấp dịch vụ tại cảng hàng không.\n    * Đối với doanh nghiệp kinh doanh, khai thác cảng: Phân bổ theo tỷ lệ giữa tổng doanh thu từ việc cung cấp dịch vụ sử dụng tài sản kết cấu hạ tầng hàng không trên tổng doanh thu cung cấp dịch vụ của doanh nghiệp.\n  + *Chi phí dùng chung (các công việc trực tiếp thực hiện đồng thời giữa tài sản nhà nước và tài sản doanh nghiệp nhưng không phân định riêng biệt được)*: Phân bổ theo tỷ lệ giữa doanh thu từ việc cung cấp dịch vụ sử dụng tài sản kết cấu hạ tầng hàng không trên tổng doanh thu cung cấp dịch vụ tại cảng hàng không.\n\n3. **Nêu rõ điều chưa đủ căn cứ**:\n- Phần ngày ban hành cụ thể trên bản scan PDF tại trang 1 bị khuyết phần ngày (\"Hà Nội, ngày tháng 9 năm 2026\"), tuy nhiên thông tin này đã được bổ sung đầy đủ dựa trên dữ liệu cổng nguồn công bố (ngày 10-09-2026).",
+    "citations": [
+      {
+        "passage_id": "source-metadata",
+        "page": 0,
+        "citation_kind": "metadata",
+        "quote": "Số hiệu: 68/2026/TT-BXD\nNgày ban hành theo trang nguồn: 10-09-2026\nNgày hiệu lực được trang nguồn công bố: 01-01-2027",
+        "analysis_id": "attempt-001",
+        "source_index": 0
+      },
+      {
+        "passage_id": "p1-s0",
+        "page": 1,
+        "quote": "BỘ XÂY DỰNG CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\nSố: /2026/TT-BXD Hà Nội, ngày tháng 9 năm 2026\nTHÔNG TƯ\nQuy định việc xác định chi phí trực tiếp, tiêu chí phân bổ chi phí gián tiếp,\ndùng chung liên quan đến việc khai thác tài sản kết cấu hạ tầng hàng không do\nNhà nước đầu tư, quản lý\nCăn cứ Nghị định số 33/2025/NĐ-CP của Chính phủ quy định chức năng,\nnhiệm vụ, quyền hạn và cơ cấu tổ chức của Bộ Xây dựng;\nCăn cứ Nghị định số 287/2025/NĐ-CP của Chính phủ quy định việc quản lý,\nsử dụng và khai thác tài sản kết cấu hạ tầng hàng không;\nTheo đề nghị của Cục trưởng Cục Hàng không Việt Nam;\nBộ trưởng Bộ Xây dựng ban hành Thông tư quy định việc xác định chi phí trực\ntiếp, tiêu chí phân bổ chi phí gián tiếp, dùng chung liên quan đến việc khai thác tài\nsản kết cấu hạ tầng hàng không do Nhà nước đầu tư, quản lý.\n\nĐiều 1. Phạm vi điều chỉnh và đối tượng áp dụng\n",
+        "analysis_id": "attempt-001",
+        "source_index": 0
+      },
+      {
+        "passage_id": "p2-s0",
+        "page": 2,
+        "quote": "2\ncủa tài sản kết cấu hạ tầng hàng không và chỉ phục vụ cho hoạt động khai thác tài\nsản kết cấu hạ tầng hàng không do Nhà nước đầu tư, quản lý.\n3. Chi phí gián tiếp gồm chi phí có liên quan không trực tiếp và chi phí\ndùng chung trong việc khai thác, vận hành tài sản, bao gồm:\na) Chi phí có liên quan không trực tiếp là các khoản chi phí phục vụ công\ntác quản lý, điều hành chung trong hoạt động khai thác cảng hàng không, bao gồm\nchi phí của bộ máy quản lý, điều hành của doanh nghiệp kinh doanh, khai thác\ncảng và các người khai thác cảng được phân bổ theo tiêu chí quy định tại khoản 1\n\nĐiều 5 Thông tư này;\nb) Chi phí dùng chung là các khoản chi để thực hiện các công việc trực tiếp\ncho hoạt động khai thác thường xuyên, liên tục được thực hiện đồng thời giữa tài\nsản kết cấu hạ tầng hàng không của Nhà nước và tài sản của doanh nghiệp nhưng\n",
+        "analysis_id": "attempt-001",
+        "source_index": 0
+      },
+      {
+        "passage_id": "p2-s846",
+        "page": 2,
+        "quote": "không phân định được chi phí cụ thể, riêng biệt. Các khoản chi này được phân bổ\ntheo tiêu chí quy định tại khoản 2 Điều 5 Thông tư này.\n4. Doanh thu cung cấp dịch vụ của doanh nghiệp kinh doanh, khai thác cảng\nlà doanh thu thuần từ hoạt động cung cấp dịch vụ được ghi nhận trên báo cáo tài\nchính của doanh nghiệp theo quy định của pháp luật về kế toán.\n5. Doanh thu cung cấp dịch vụ tại cảng hàng không là doanh thu thuần từ\nhoạt động cung cấp dịch vụ của các cảng hàng không.\n6. Doanh thu từ cung cấp dịch vụ sử dụng kết cấu hạ tầng hàng không là\ndoanh thu phát sinh từ hoạt động khai thác tài sản kết cấu hạ tầng hàng không\nđược giao doanh nghiệp kinh doanh, khai thác cảng theo hình thức không tính\nthành phần vốn nhà nước tại doanh nghiệp.\n\nĐiều 3. Quản lý, điều hành, khai thác tài sản kết cấu hạ tầng hàng\nkhông\n1. Khai thác tài sản kết cấu hạ tầng hàng không gồm các công việc sau:\n",
+        "analysis_id": "attempt-001",
+        "source_index": 0
+      },
+      {
+        "passage_id": "p3-s0",
+        "page": 3,
+        "quote": "3\nl) Tổ chức, điều phối khai thác, bảo đảm điều kiện hoạt động thường xuyên\nvà xử lý phát sinh tại các công trình trong sân bay.\n2. Quản lý, điều hành chung hoạt động khai thác cảng hàng không.\na) Tổ chức, chỉ đạo, điều phối, giám sát hoạt động khai thác cảng hàng\nkhông;\nb) Hỗ trợ chung cho hoạt động khai thác tại cảng hàng không.\n\nĐiều 4. Xác định chi phí trực tiếp\n1. Chi phí trực tiếp là các khoản chi phí thực tế phát sinh để thực hiện các\ncông việc quy định tại khoản 1 Điều 3 Thông tư này và thuế thu nhập doanh\nnghiệp phải nộp.\n2. Chi phí trực tiếp bao gồm:\na) Chi phí nhân công;\nb) Chi phí nguyên vật liệu, nhiên liệu;\nc) Chi phí dụng cụ, trang thiết bị, khấu hao;\nd) Chi phí dịch vụ mua ngoài;\nđ) Chi phí bằng tiền khác;\ne) Thuế thu nhập doanh nghiệp phải nộp đối với phần thu nhập chịu thuế\nphát sinh từ hoạt động khai thác tài sản kết cấu hạ tầng hàng không do Nhà nước\nđầu tư, quản lý.\n",
+        "analysis_id": "attempt-001",
+        "source_index": 0
+      },
+      {
+        "passage_id": "p3-s900",
+        "page": 3,
+        "quote": "\nĐiều 5. Tiêu chí phân bổ chi phí gián tiếp\n1. Các khoản chi phí có liên quan không trực tiếp đối với các công việc quy\ndịnh tại khoản 2 Điều 3 Thông tư này được phân bổ theo tiêu chí tỷ lệ doanh thu,\ncụ thể như sau:\na) Đối với người khai thác cảng được giao trực tiếp tổ chức khai thác: Chi\nphí được phân bổ theo tỷ lệ giữa doanh thu từ việc cung cấp dịch vụ sử dụng tài\nsản kết cấu hạ tầng hàng không trên tổng doanh thu cung cấp dịch vụ tại cảng\nhàng không;\nb) Đối với doanh nghiệp kinh doanh, khai thác cảng: Chi phí được phân bổ\ntheo tỷ lệ giữa tổng doanh thu từ việc cung cấp dịch vụ sử dụng tài sản kết cấu hạ\ntầng hàng không trên tổng doanh thu cung cấp dịch vụ của doanh nghiệp kinh\ndoanh, khai thác cảng.\n2. Chi phí dùng chung là các khoản chi phí liên quan đến các công việc quy\ndịnh tại khoản 1 Điều 3 Thông tư này được phân bổ theo tiêu chí tỷ lệ doanh thu\n",
+        "analysis_id": "attempt-001",
+        "source_index": 0
+      },
+      {
+        "passage_id": "p3-s1770",
+        "page": 3,
+        "quote": "từ việc cung cấp dịch vụ sử dụng tài sản kết cấu hạ tầng hàng không trên tổng\ndoanh thu cung cấp dịch vụ tại cảng hàng không.\n3. Doanh thu làm căn cứ xác định tiêu chí phân bổ chi phí gián tiếp là doanh\nthu phát sinh theo quý và theo năm tài chính hiện hành.",
+        "analysis_id": "attempt-001",
+        "source_index": 0
+      },
+      {
+        "passage_id": "p4-s0",
+        "page": 4,
+        "quote": "4\n\nĐiều 6. Trách nhiệm của các cơ quan, đơn vị\n1. Cục Hàng không Việt Nam có trách nhiệm:\nKiểm tra, giám sát việc thực hiện xác định chi phí trực tiếp, chi phí gián tiếp,\ndùng chung liên quan đến việc khai thác tài sản kết cấu hạ tầng hàng không do Nhà\nnước đầu tư, quản lý.\n2. Doanh nghiệp kinh doanh, khai thác cảng có trách nhiệm:\na) Xác định và hạch toán đầy đủ các khoản chi phí khai thác tài sản kết cấu\nhạ tầng hàng không theo quy định tại Điều 4 và Điều 5 Thông tư này;\nb) Ban hành quy chế nội bộ về xác định và phân bổ chi phí, bảo đảm phù hợp\nvới quy định tại Thông tư này;\nc) Chịu trách nhiệm trước pháp luật về tính đầy đủ, trung thực, chính xác của\nsố liệu, hồ sơ liên quan đến việc xác định chi phí khai thác tài sản kết cấu hạ tầng hàng\nkhông theo quy định của pháp luật.\n\nĐiều 7. Hiệu lực thi hành\n1. Thông tư có hiệu lực thi hành từ ngày 01 tháng 01 năm 2027.\n",
+        "analysis_id": "attempt-001",
+        "source_index": 0
+      }
+    ],
+    "unanswered_parts": [],
+    "status": "ok",
+    "provider": "google_vertex_ai",
+    "model": "gemini-3.5-flash",
+    "provider_status": "success"
+  },
+  "observed": [
+    {
+      "response": {
+        "text": "{\n  \"text\": \"Theo quy định tại Thông tư số 68/2026/TT-BXD:\\n\\n1. **Phân biệt ngày ban hành và ngày có hiệu lực**:\\n- **Ngày ban hành**: Ngày 10 tháng 09 năm 2026 (theo thông tin từ trang nguồn và phần tiêu đề văn bản ban hành trong tháng 9 năm 2026).\\n- **Ngày có hiệu lực**: Ngày 01 tháng 01 năm 2027.\\n- **Xét tại ngày 13/09/2026**: Tại thời điểm này, Thông tư số 68/2026/TT-BXD đã được ban hành nhưng chưa đến ngày có hiệu lực thi hành (01/01/2027). Do đó, các quy định về phân bổ chi phí dưới đây là nội dung thay đổi đã được ban hành nhưng chưa chính thức áp dụng tại ngày 13/09/2026.\\n\\n2. **Quy định về chi phí trực tiếp và phân bổ chi phí gián tiếp**:\\n- **Chi phí trực tiếp**: Là các khoản chi phí thực tế phát sinh để thực hiện các công việc khai thác tài sản kết cấu hạ tầng hàng không (như đánh giá tình trạng công trình, kiểm tra an toàn, vận hành hệ thống an toàn, cứu nạn, chữa cháy...) và thuế thu nhập doanh nghiệp phải nộp. Chi phí trực tiếp được xác định riêng biệt, không thực hiện phân bổ như chi phí gián tiếp.\\n- **Chi phí gián tiếp**: Được phân bổ theo tiêu chí tỷ lệ doanh thu phát sinh theo quý và theo năm tài chính hiện hành, cụ thể:\\n  + *Chi phí có liên quan không trực tiếp (phục vụ công tác quản lý, điều hành chung)*:\\n    * Đối với người khai thác cảng được giao trực tiếp tổ chức khai thác: Phân bổ theo tỷ lệ giữa doanh thu từ việc cung cấp dịch vụ sử dụng tài sản kết cấu hạ tầng hàng không trên tổng doanh thu cung cấp dịch vụ tại cảng hàng không.\\n    * Đối với doanh nghiệp kinh doanh, khai thác cảng: Phân bổ theo tỷ lệ giữa tổng doanh thu từ việc cung cấp dịch vụ sử dụng tài sản kết cấu hạ tầng hàng không trên tổng doanh thu cung cấp dịch vụ của doanh nghiệp.\\n  + *Chi phí dùng chung (các công việc trực tiếp thực hiện đồng thời giữa tài sản nhà nước và tài sản doanh nghiệp nhưng không phân định riêng biệt được)*: Phân bổ theo tỷ lệ giữa doanh thu từ việc cung cấp dịch vụ sử dụng tài sản kết cấu hạ tầng hàng không trên tổng doanh thu cung cấp dịch vụ tại cảng hàng không.\\n\\n3. **Nêu rõ điều chưa đủ căn cứ**:\\n- Phần ngày ban hành cụ thể trên bản scan PDF tại trang 1 bị khuyết phần ngày (\\\"Hà Nội, ngày tháng 9 năm 2026\\\"), tuy nhiên thông tin này đã được bổ sung đầy đủ dựa trên dữ liệu cổng nguồn công bố (ngày 10-09-2026).\",\n  \"citations\": [\n    \"source-metadata\",\n    \"p1-s0\",\n    \"p2-s0\",\n    \"p2-s846\",\n    \"p3-s0\",\n    \"p3-s900\",\n    \"p3-s1770\",\n    \"p4-s0\"\n  ],\n  \"unanswered_parts\": [],\n  \"status\": \"ok\"\n}",
+        "observed_provider": "google_vertex_ai",
+        "observed_model": "gemini-3.5-flash",
+        "observed": true,
+        "status": "success",
+        "location": "global",
+        "provider_latency_ms": 4692.291,
+        "fallback_used": false,
+        "primary_error_kind": null,
+        "finish_reason": "STOP",
+        "prompt_token_count": 3929,
+        "output_token_count": 780,
+        "thought_token_count": null,
+        "total_token_count": 4709,
+        "max_output_tokens": 4096,
+        "thinking_level": "MINIMAL"
+      },
+      "prompt_sha256": "5f515dadab1b549b0d0b130ed165c42518d9b98963591b4de9197f323360e809",
+      "system_sha256": "dabcedd07fdb9bf31a5da2cb82658270732b53940a4ff64b45c8f96bd156d7b8"
+    }
+  ],
+  "seconds": 4.686999999998079,
+  "coverage": {
+    "page_count": 4,
+    "readable_pages": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "missing_pages": [],
+    "characters": 8142,
+    "input_sha256": "560ba7ba7a3b03bb33b9ac2339f15eabfb09631f1fa9c2f594dbdfea915d16d2"
+  }
+}

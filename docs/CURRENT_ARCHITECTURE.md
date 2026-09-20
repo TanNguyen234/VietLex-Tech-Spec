@@ -316,3 +316,8 @@ The verified local v3 slice contains 4,969 documents and 101,857 passages. Serve
 ### Shared reviewed legal-event registry (2026-09-19)
 
 `legal_effect_registry` in Mongo stores explicitly published immutable human reviews independently of expiring workspaces. Publication revalidates quoted evidence snapshots; withdrawal atomically stores actor/reason/time and excludes the record from public projection. Admin publication is separate from workspace review. `/legal-status` calculates as-of states and directional relationships from published assertions only; unavailable storage is 503 and empty storage is unknown. No automatic promotion, legal certification, corpus enrichment, or search/chat status filtering. [Verification](verification/shared-legal-registry-20260919/REPORT.md).
+
+
+### Retained-source analysis (2026-09-20)
+
+A separate explicit workspace action aggregates readable retained pages of one URL/content version (last 50 analyses), never merges PDF hashes or fetches additional sources. Limits: 120,000 characters / 24,000 whitespace words; reject rather than truncate. Page passages have server IDs; generated citations select IDs and resolve to saved text. Official-page metadata has a separate citation kind. Answers retain scope/hash/read pointers and can be reopened without provider calls. This is distinct from selected-evidence analysis and does not certify legal validity. See [live verification](verification/retained-source-20260920/REPORT.md).

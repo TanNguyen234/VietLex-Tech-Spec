@@ -1,0 +1,17 @@
+{
+  "answer_status": 200,
+  "citations": 10,
+  "checks": [
+    {
+      "viewport": "desktop",
+      "no_horizontal_overflow": true
+    },
+    {
+      "viewport": "mobile",
+      "no_horizontal_overflow": true
+    }
+  ],
+  "provider_calls_on_view": 0,
+  "source_action_visible": true,
+  "page_errors": []
+}

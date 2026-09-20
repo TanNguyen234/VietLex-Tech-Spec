@@ -1,0 +1,27 @@
+{
+  "requests": [
+    {
+      "operation": "create_workspace",
+      "status": 303
+    },
+    {
+      "operation": "read_public_credit_pdf",
+      "status": 200,
+      "seconds": 17.01599999999962,
+      "pages": 4
+    },
+    {
+      "operation": "analyze_retained_source",
+      "status": 303,
+      "seconds": 8.65599999999904
+    },
+    {
+      "operation": "read_saved_answer",
+      "status": 200,
+      "has_citations": true,
+      "has_provider_error": false
+    }
+  ],
+  "source": "public official credit circular",
+  "mock": false
+}

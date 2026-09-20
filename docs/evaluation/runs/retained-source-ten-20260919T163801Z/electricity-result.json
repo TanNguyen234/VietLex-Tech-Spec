@@ -1,0 +1,149 @@
+{
+  "case": "electricity",
+  "result": {
+    "text": "Dựa trên Nghị định số 344/2026/NĐ-CP, các quy định hỗ trợ ứng dụng khoa học công nghệ và chế tạo trong lĩnh vực điện lực được quy định như sau:\n\n1. **Phân biệt ngày ban hành và ngày có hiệu lực**:\n- **Ngày ban hành**: Ngày 04 tháng 9 năm 2026 (p1-s0, source-metadata).\n- **Ngày có hiệu lực**: Ngày 20 tháng 10 năm 2026 (p18-s0, source-metadata).\n- **Xét tại ngày 13/09/2026**: Tại thời điểm này, Nghị định đã được ban hành nhưng **chưa phát sinh hiệu lực thi hành** (do chưa đến ngày 20/10/2026).\n\n2. **Nội dung các chính sách hỗ trợ, ưu đãi được quy định trong văn bản**:\n- **Ưu đãi chung cho doanh nghiệp sản xuất thiết bị điện**: Doanh nghiệp sản xuất thiết bị điện thuộc Danh mục quan trọng được hưởng các ưu đãi của ngành nghề sản xuất sản phẩm cơ khí trọng điểm (về đầu tư, thuế, đất đai, kế toán...). Dự án đáp ứng tiêu chí công nghệ cao, chuyển giao công nghệ hoặc tham gia chuỗi giá trị trong nước được hưởng ưu đãi và hỗ trợ đầu tư đặc biệt (p5-s899).\n- **Cơ chế đặt hàng và ưu đãi sản phẩm**: \n  + Sản phẩm thiết bị điện chế tạo trong nước đạt tiêu chuẩn hoặc hình thành từ kết quả nghiên cứu, đổi mới sáng tạo được xem xét giao thực hiện theo cơ chế đặt hàng (p6-s857, p6-s1693).\n  + Nhà cung cấp nhận đặt hàng được ưu đãi về giá (không quá 10% so với sản phẩm nhập khẩu tương tự), miễn yêu cầu về kinh nghiệm, và được loại trừ/miễn trách nhiệm hành chính, dân sự, hình sự nếu tuân thủ đầy đủ quy trình và không vụ lợi, gian lận (p7-s0).\n- **Hỗ trợ thử nghiệm, đánh giá**: Tổ chức, doanh nghiệp nghiên cứu công nghệ, phát triển thiết bị, dịch vụ tư vấn quan trọng được hỗ trợ 50% kinh phí sử dụng phòng thí nghiệm, phòng thử nghiệm, đo lường, kiểm định của Nhà nước (p7-s1744).\n- **Hỗ trợ nghiên cứu và chuyển đổi số**: Được hưởng các hỗ trợ theo pháp luật về khoa học, công nghệ, đổi mới sáng tạo và chuyển đổi số. Nhà nước hỗ trợ thành lập các Tổ hợp công nghiệp, dịch vụ năng lượng để tạo hệ sinh thái nghiên cứu, phát triển (p8-s0).\n- **Hỗ trợ nguồn nhân lực chất lượng cao**: Hỗ trợ không vượt quá 70% kinh phí thuê chuyên gia, nhà khoa học phục vụ nghiên cứu, thiết kế, chế tạo các thiết bị thuộc danh mục quan trọng (p8-s0).\n- **Hỗ trợ tài chính từ ngân sách**: Được hỗ trợ vay vốn tín dụng đầu tư của Nhà nước; ưu tiên vay từ các quỹ hỗ trợ đầu tư, quỹ phát triển khoa học và công nghệ (p8-s876).\n- **Ưu đãi trong Tổ hợp công nghiệp, dịch vụ năng lượng**: Các dự án sản xuất thiết bị điện, công nghiệp hỗ trợ trong Tổ hợp được Nhà nước cho thuê đất thu tiền một lần; ưu đãi thuế thu nhập doanh nghiệp, thuế nhập khẩu; miễn giảm tiền thuê đất; hỗ trợ chi phí đào tạo nhân lực và chi phí nghiên cứu phát triển (p11-s881).\n\n3. **Nêu rõ điều chưa đủ căn cứ**:\n- Văn bản không nêu rõ các tiêu chí cụ thể về quy mô vốn đầu tư và tiến độ giải ngân để được hưởng ưu đãi đặc biệt, mà chỉ ghi nhận thực hiện \"theo quy định của Chính phủ\" (p5-s899).\n- Danh mục chi tiết các hạng mục, thiết bị và dịch vụ tư vấn quan trọng được ưu tiên hỗ trợ chưa được ban hành trực tiếp trong văn bản này, mà giao Bộ Công Thương trình Thủ tướng Chính phủ ban hành theo từng thời kỳ (p3-s842).",
+    "citations": [
+      {
+        "passage_id": "source-metadata",
+        "page": 0,
+        "citation_kind": "metadata",
+        "quote": "Số hiệu: 344/2026/NĐ-CP\nNgày ban hành theo trang nguồn: 04-09-2026\nNgày hiệu lực được trang nguồn công bố: 20-10-2026",
+        "analysis_id": "attempt-001",
+        "source_index": 0
+      },
+      {
+        "passage_id": "p1-s0",
+        "page": 1,
+        "quote": "CHÍNH PHỦ\n\nCỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\n\nSố: 344/2026/NĐ-CP\n\nHà Nội, ngày 04 tháng 9 năm 2026\n\nNGHỊ ĐỊNH\nQuy định về ứng dụng khoa học, công nghệ và phát triển\ncông nghiệp chế tạo trong lĩnh vực điện lực\n\nCăn cứ Luật Tổ chức Chính phủ số 63/2025/QH15;\nCăn cứ Luật Điện lực số 61/2024/QH15;\nCăn cứ Luật Khoa học, công nghệ và đổi mới sáng tạo số 93/2025/QH15;\nCăn cứ Luật Thuế Thu nhập doanh nghiệp số 69/2025/QH15;\nCăn cứ Nghị quyết số 198/2025/QH15 của Quốc hội về một số cơ chế,\nchính sách đặc biệt phát triển kinh tế tư nhân;\nCăn cứ Nghị quyết số 253/2025/QH15 của Quốc hội về các cơ chế, chính\nsách phát triển năng lượng quốc gia giai đoạn 2026-2030;\nTheo đề nghị của Bộ trưởng Bộ Công Thương;\nChính phủ ban hành Nghị định quy định về ứng dụng khoa học, công\nnghệ và phát triển công nghiệp chế tạo trong lĩnh vực điện lực.\n\nChương I\nQUY ĐỊNH CHUNG\n\n",
+        "analysis_id": "attempt-001",
+        "source_index": 0
+      },
+      {
+        "passage_id": "p18-s0",
+        "page": 18,
+        "quote": "18\n\n3. Chế tài xử lý vi phạm\nTổ chức, cá nhân vi phạm quy định của Nghị định này hoặc không thực hiện đúng cam kết khi được hưởng ưu đãi, hỗ trợ thì bị thu hồi, truy thu các khoản ưu đãi, hỗ trợ đã được hưởng không đúng quy định; trường hợp có hành vi vi phạm hành chính thì bị xử phạt theo quy định của pháp luật về xử lý vi phạm hành chính trong lĩnh vực đầu tư, điện lực, môi trường và pháp luật có liên quan.\n\nĐiều 24. Điều khoản thi hành\n1. Nghị định này có hiệu lực thi hành kể từ ngày 20 tháng 10 năm 2026.\n2. Các Bộ trưởng, Thủ trưởng cơ quan ngang bộ, Chủ tịch Ủy ban nhân dân các tỉnh, thành phố và các tổ chức, cá nhân có liên quan chịu trách nhiệm thi hành Nghị định này.\nNơi nhận:\n- Ban Bí thư Trung ương Đảng;\n- Thủ tướng, các Phó Thủ tướng Chính phủ;\n- Các bộ, cơ quan ngang bộ;\n- HĐND, UBND các tỉnh, thành phố;\n- Văn phòng Trung ương và các Ban của Đảng;\n- Văn phòng Tổng Bí thư;\n",
+        "analysis_id": "attempt-004",
+        "source_index": 0
+      },
+      {
+        "passage_id": "p3-s842",
+        "page": 3,
+        "quote": "trong lĩnh vực điện lực, đáp ứng các tiêu chuẩn chất lượng quốc tế;\nc) Dịch vụ vận hành, bảo trì nhà máy điện, lưới điện và các công trình\nđiện lực quan trọng nhằm bảo đảm vận hành hệ thống điện an toàn, ổn định,\nliên tục và bảo đảm an ninh năng lượng quốc gia;\nd) Dịch vụ công nghệ, giải pháp bảo mật và an ninh cho hệ thống điều\nkhiển và vận hành lưới điện, bảo đảm an toàn vận hành lưới điện, bảo đảm cung\ncấp điện ổn định.\n2. Theo từng thời kỳ phù hợp với khả năng làm chủ công nghệ, sản xuất\ntrong nước và tình hình phát triển kinh tế - xã hội, Bộ Công Thương trình Thủ\ntướng Chính phủ ban hành:\na) Danh mục hạng mục, thiết bị và dịch vụ tư vấn quan trọng để duy trì\ncung cấp điện liên tục, bảo đảm an ninh năng lượng quốc gia phải được sản\nxuất và cung cấp trong nước ở một số công đoạn;\nb) Danh mục hạng mục, thiết bị và dịch vụ tư vấn trong lĩnh vực điện lực\n",
+        "analysis_id": "attempt-001",
+        "source_index": 0
+      },
+      {
+        "passage_id": "p5-s899",
+        "page": 5,
+        "quote": "PHỤC VỤ NGÀNH ĐIỆN LỰC\n\nĐiều 6. Ưu đãi chung cho các doanh nghiệp sản xuất thiết bị điện\ntrong lĩnh vực điện lực\n1. Doanh nghiệp sản xuất thiết bị điện thuộc Danh mục tại khoản 2 Điều\n4 Nghị định này được hưởng các ưu đãi của ngành nghề sản xuất sản phẩm cơ\nkhí trọng điểm theo quy định của pháp luật về đầu tư, thuế, đất đai, chế độ kế\ntoán và pháp luật có liên quan khác.\n2. Doanh nghiệp khi thực hiện Dự án đầu tư sản xuất thiết bị điện thuộc\nDanh mục tại khoản 2 Điều 4 Nghị định này có quy mô vốn đầu tư, tiến độ giải\nngân theo quy định của Chính phủ, đáp ứng các tiêu chí về công nghệ cao,\nchuyển giao công nghệ; doanh nghiệp Việt Nam tham gia chuỗi giá trị sản xuất\ntrong nước theo quy định của Thủ tướng Chính phủ được hưởng các hình thức\nưu đãi và hỗ trợ đầu tư đặc biệt theo quy định tại pháp luật đầu tư và quy định\nkhác của pháp luật có liên quan.",
+        "analysis_id": "attempt-001",
+        "source_index": 0
+      },
+      {
+        "passage_id": "p6-s857",
+        "page": 6,
+        "quote": "Điều 7. Cơ chế sử dụng hạng mục, thiết bị và dịch vụ tư vấn quan\ntrọng trong lĩnh vực điện lực\n1. Các hạng mục, thiết bị và dịch vụ tư vấn thuộc Danh mục quy định tại\nđiểm a khoản 2 Điều 4 của Nghị định này được đặt hàng theo quy định của\npháp luật về đấu thầu đối với trường hợp lần đầu được sản xuất, cung cấp trong\nnước.\n2. Tổ chức, doanh nghiệp, cá nhân có hạng mục, thiết bị và dịch vụ thuộc\nDanh mục quy định tại điểm a khoản 2 Điều 4 Nghị định này có trách nhiệm\nthông tin, chào hàng để phục vụ việc đặt hàng, cung ứng, sử dụng trong nước.\n\nĐiều 8. Cơ chế đặt hàng và ưu đãi đối với sản phẩm thiết bị điện\n1. Xem xét giao thực hiện theo cơ chế đặt hàng cho tổ chức, doanh\nnghiệp, cá nhân có hạng mục, sản phẩm thiết bị và dịch vụ thuộc trường hợp\nquy định tại khoản 1 Điều 7 Nghị định này khi đáp ứng một trong các tiêu chí\nsau:\n",
+        "analysis_id": "attempt-002",
+        "source_index": 0
+      },
+      {
+        "passage_id": "p6-s1693",
+        "page": 6,
+        "quote": "a) Sản xuất, chế tạo trong nước được đánh giá, thử nghiệm, kiểm định\nđạt tiêu chuẩn, quy chuẩn kỹ thuật, an toàn, bảo vệ môi trường theo quy định;\nb) Hình thành từ kết quả nghiên cứu, phát triển công nghệ hoặc đổi mới\nsáng tạo đáp ứng các điều kiện về tiêu chuẩn, quy chuẩn kỹ thuật, an toàn, bảo\nvệ môi trường và các điều kiện khác theo quy định của pháp luật có liên quan.\n2. Giá và khối lượng đặt hàng được xác định trên cơ sở chi phí sản xuất,\ncung ứng hợp lý, hợp lệ, cộng với một khoản lợi nhuận hợp lý theo quy định\ncủa pháp luật về giá. Nhà cung cấp có trách nhiệm hạch toán, theo dõi riêng các\nchi phí này và thực hiện kiểm toán độc lập đối với giá đặt hàng theo quy định.",
+        "analysis_id": "attempt-002",
+        "source_index": 0
+      },
+      {
+        "passage_id": "p7-s0",
+        "page": 7,
+        "quote": "7\n\n3. Nhà cung cấp nhận đặt hàng được hưởng các cơ chế sau đây:\na) Được ưu đãi về giá (không quá 10% so với giá thành sản phẩm nhập\nkhẩu tương tự) khi tính giá đặt hàng đối với sản phẩm nhận đặt hàng;\nb) Được miễn các yêu cầu, điều kiện về kinh nghiệm khi tham gia đặt\nhàng;\nc) Được loại trừ trách nhiệm hành chính, miễn trách nhiệm dân sự, loại\ntrừ trách nhiệm hình sự nếu đã tuân thủ đầy đủ quy trình, quy định về nghiên\ncứu khoa học, công nghệ, về đặt hàng và không có mục đích vụ lợi, không có\nhành vi gian lận hay cố ý vi phạm pháp luật trong trường hợp gây thiệt hại cho\nNhà nước.\n\nĐiều 9. Cung ứng hạng mục, thiết bị và dịch vụ được sản xuất trong nước\n1. Các hạng mục, thiết bị và dịch vụ tư vấn thuộc danh mục tại điểm a\nkhoản 2 Điều 4 Nghị định này đã được sản xuất, chế tạo trong nước, đáp ứng\ntiêu chuẩn kỹ thuật, an toàn, chất lượng theo quy định của pháp luật phải được\n",
+        "analysis_id": "attempt-002",
+        "source_index": 0
+      },
+      {
+        "passage_id": "p7-s1744",
+        "page": 7,
+        "quote": "thiết bị, dịch vụ tư vấn quan trọng quy định tại điểm a khoản 2 Điều 4 Nghị\nđịnh này được hỗ trợ 50% kinh phí sử dụng phòng thí nghiệm, phòng thử\nnghiệm, phòng hỗ trợ thiết kế và thiết bị nghiên cứu dùng chung, trung tâm thử\nnghiệm, đo lường, kiểm định, giám định của Nhà nước để phát triển sản phẩm.",
+        "analysis_id": "attempt-002",
+        "source_index": 0
+      },
+      {
+        "passage_id": "p8-s0",
+        "page": 8,
+        "quote": "8\n\nĐiều 11. Hỗ trợ nghiên cứu, ứng dụng khoa học, công nghệ và\nchuyển đổi số trong lĩnh vực điện lực\n1. Tổ chức, doanh nghiệp tiến hành các hoạt động ứng dụng khoa học,\ncông nghệ trong công nghiệp chế tạo phục vụ ngành điện lực được hưởng các\nhỗ trợ theo quy định của pháp luật về khoa học, công nghệ và đổi mới sáng tạo,\npháp luật về chuyển đổi số.\n2. Nhà nước hỗ trợ thành lập các Tổ hợp công nghiệp, dịch vụ năng lượng\nđể hình thành hệ sinh thái nghiên cứu và phát triển, ứng dụng khoa học, công\nnghệ, thương mại hóa các sản phẩm công nghiệp chế tạo và cung ứng các dịch\nvụ phụ trợ cho ngành điện lực.\n\nĐiều 12. Hỗ trợ về nguồn nhân lực chất lượng cao\nDoanh nghiệp sản xuất thiết bị điện được hỗ trợ không vượt quá 70%\nkinh phí thuê chuyên gia, nhà khoa học phục vụ nghiên cứu, thiết kế, chế tạo,\nsản xuất các hạng mục, thiết bị, công nghệ và dịch vụ tư vấn thuộc danh mục\n",
+        "analysis_id": "attempt-002",
+        "source_index": 0
+      },
+      {
+        "passage_id": "p8-s876",
+        "page": 8,
+        "quote": "quy định tại khoản 2 Điều 4 Nghị định này, trên cơ sở khả năng cân đối nguồn\nlực, theo chương trình, đề án được cấp có thẩm quyền phê duyệt và phù hợp\nvới quy định của pháp luật về ngân sách nhà nước và pháp luật có liên quan, để\nduy trì cung cấp điện liên tục, bảo đảm an ninh năng lượng quốc gia.\n\nĐiều 13. Hỗ trợ từ ngân sách nhà nước\nDoanh nghiệp sản xuất thiết bị điện được hưởng các hỗ trợ tín dụng như\nsau:\n1. Được hỗ trợ vay vốn tín dụng đầu tư theo quy định của pháp luật về\ntín dụng đầu tư của Nhà nước trong danh mục theo khoản 2 Điều 4.\n2. Được ưu tiên vay từ các quỹ hỗ trợ đầu tư theo quy định của pháp luật\nvề đầu tư, quỹ hỗ trợ về khoa học và công nghệ theo quy định của pháp luật về\nkhoa học, công nghệ và đổi mới sáng tạo để thực hiện các dự án nghiên cứu và\nphát triển, chế tạo thử nghiệm sản phẩm thiết bị điện.\n\nChương IV\nTỔ HỢP CÔNG NGHIỆP, DỊCH VỤ NĂNG LƯỢNG\n\n",
+        "analysis_id": "attempt-002",
+        "source_index": 0
+      },
+      {
+        "passage_id": "p11-s881",
+        "page": 11,
+        "quote": "trợ, dịch vụ logistics chuyên dụng, trung tâm đổi mới sáng tạo trong lĩnh vực\nđiện lực trong Tổ hợp công nghiệp, dịch vụ năng lượng được hưởng các ưu đãi,\nhỗ trợ sau:\n\na) Được Nhà nước cho thuê đất thu tiền thuê đất một lần cho cả thời gian\nthuê;\n\nb) Ưu đãi về thuế thu nhập doanh nghiệp, thuế nhập khẩu đối với máy\nmóc, thiết bị, nguyên liệu, vật tư, linh kiện phục vụ sản xuất theo quy định của\npháp luật về thuế, hải quan;\n\nc) Miễn, giảm tiền thuê đất, tiền sử dụng đất theo quy định của pháp luật\nvề đất đai;\n\nd) Hỗ trợ chi phí đào tạo và phát triển nguồn nhân lực chất lượng cao,\nbao gồm cả việc gửi chuyên gia đi đào tạo ở nước ngoài và mời chuyên gia\nnước ngoài về giảng dạy, chuyển giao công nghệ;\n\nđ) Hỗ trợ chi phí nghiên cứu phát triển, đổi mới công nghệ, ứng dụng các\ntiêu chuẩn kỹ thuật quốc tế.\n\nĐiều 18. Phát triển chuỗi cung ứng và dịch vụ phụ trợ nội địa cho\n",
+        "analysis_id": "attempt-003",
+        "source_index": 0
+      }
+    ],
+    "unanswered_parts": [],
+    "status": "ok",
+    "provider": "google_vertex_ai",
+    "model": "gemini-3.5-flash",
+    "provider_status": "success"
+  },
+  "observed": [
+    {
+      "response": {
+        "text": "{\n  \"text\": \"Dựa trên Nghị định số 344/2026/NĐ-CP, các quy định hỗ trợ ứng dụng khoa học công nghệ và chế tạo trong lĩnh vực điện lực được quy định như sau:\\n\\n1. **Phân biệt ngày ban hành và ngày có hiệu lực**:\\n- **Ngày ban hành**: Ngày 04 tháng 9 năm 2026 (p1-s0, source-metadata).\\n- **Ngày có hiệu lực**: Ngày 20 tháng 10 năm 2026 (p18-s0, source-metadata).\\n- **Xét tại ngày 13/09/2026**: Tại thời điểm này, Nghị định đã được ban hành nhưng **chưa phát sinh hiệu lực thi hành** (do chưa đến ngày 20/10/2026).\\n\\n2. **Nội dung các chính sách hỗ trợ, ưu đãi được quy định trong văn bản**:\\n- **Ưu đãi chung cho doanh nghiệp sản xuất thiết bị điện**: Doanh nghiệp sản xuất thiết bị điện thuộc Danh mục quan trọng được hưởng các ưu đãi của ngành nghề sản xuất sản phẩm cơ khí trọng điểm (về đầu tư, thuế, đất đai, kế toán...). Dự án đáp ứng tiêu chí công nghệ cao, chuyển giao công nghệ hoặc tham gia chuỗi giá trị trong nước được hưởng ưu đãi và hỗ trợ đầu tư đặc biệt (p5-s899).\\n- **Cơ chế đặt hàng và ưu đãi sản phẩm**: \\n  + Sản phẩm thiết bị điện chế tạo trong nước đạt tiêu chuẩn hoặc hình thành từ kết quả nghiên cứu, đổi mới sáng tạo được xem xét giao thực hiện theo cơ chế đặt hàng (p6-s857, p6-s1693).\\n  + Nhà cung cấp nhận đặt hàng được ưu đãi về giá (không quá 10% so với sản phẩm nhập khẩu tương tự), miễn yêu cầu về kinh nghiệm, và được loại trừ/miễn trách nhiệm hành chính, dân sự, hình sự nếu tuân thủ đầy đủ quy trình và không vụ lợi, gian lận (p7-s0).\\n- **Hỗ trợ thử nghiệm, đánh giá**: Tổ chức, doanh nghiệp nghiên cứu công nghệ, phát triển thiết bị, dịch vụ tư vấn quan trọng được hỗ trợ 50% kinh phí sử dụng phòng thí nghiệm, phòng thử nghiệm, đo lường, kiểm định của Nhà nước (p7-s1744).\\n- **Hỗ trợ nghiên cứu và chuyển đổi số**: Được hưởng các hỗ trợ theo pháp luật về khoa học, công nghệ, đổi mới sáng tạo và chuyển đổi số. Nhà nước hỗ trợ thành lập các Tổ hợp công nghiệp, dịch vụ năng lượng để tạo hệ sinh thái nghiên cứu, phát triển (p8-s0).\\n- **Hỗ trợ nguồn nhân lực chất lượng cao**: Hỗ trợ không vượt quá 70% kinh phí thuê chuyên gia, nhà khoa học phục vụ nghiên cứu, thiết kế, chế tạo các thiết bị thuộc danh mục quan trọng (p8-s0).\\n- **Hỗ trợ tài chính từ ngân sách**: Được hỗ trợ vay vốn tín dụng đầu tư của Nhà nước; ưu tiên vay từ các quỹ hỗ trợ đầu tư, quỹ phát triển khoa học và công nghệ (p8-s876).\\n- **Ưu đãi trong Tổ hợp công nghiệp, dịch vụ năng lượng**: Các dự án sản xuất thiết bị điện, công nghiệp hỗ trợ trong Tổ hợp được Nhà nước cho thuê đất thu tiền một lần; ưu đãi thuế thu nhập doanh nghiệp, thuế nhập khẩu; miễn giảm tiền thuê đất; hỗ trợ chi phí đào tạo nhân lực và chi phí nghiên cứu phát triển (p11-s881).\\n\\n3. **Nêu rõ điều chưa đủ căn cứ**:\\n- Văn bản không nêu rõ các tiêu chí cụ thể về quy mô vốn đầu tư và tiến độ giải ngân để được hưởng ưu đãi đặc biệt, mà chỉ ghi nhận thực hiện \\\"theo quy định của Chính phủ\\\" (p5-s899).\\n- Danh mục chi tiết các hạng mục, thiết bị và dịch vụ tư vấn quan trọng được ưu tiên hỗ trợ chưa được ban hành trực tiếp trong văn bản này, mà giao Bộ Công Thương trình Thủ tướng Chính phủ ban hành theo từng thời kỳ (p3-s842).\",\n  \"citations\": [\n    \"source-metadata\",\n    \"p1-s0\",\n    \"p18-s0\",\n    \"p3-s842\",\n    \"p5-s899\",\n    \"p6-s857\",\n    \"p6-s1693\",\n    \"p7-s0\",\n    \"p7-s1744\",\n    \"p8-s0\",\n    \"p8-s876\",\n    \"p11-s881\"\n  ],\n  \"unanswered_parts\": [],\n  \"status\": \"ok\"\n}",
+        "observed_provider": "google_vertex_ai",
+        "observed_model": "gemini-3.5-flash",
+        "observed": true,
+        "status": "success",
+        "location": "global",
+        "provider_latency_ms": 5512.644,
+        "fallback_used": false,
+        "primary_error_kind": null,
+        "finish_reason": "STOP",
+        "prompt_token_count": 12759,
+        "output_token_count": 1092,
+        "thought_token_count": null,
+        "total_token_count": 13851,
+        "max_output_tokens": 4096,
+        "thinking_level": "MINIMAL"
+      },
+      "prompt_sha256": "c45f5fe562633f2408a304668a5697a3dcb18d44c47320bea2626cddb0e1ab51",
+      "system_sha256": "dabcedd07fdb9bf31a5da2cb82658270732b53940a4ff64b45c8f96bd156d7b8"
+    }
+  ],
+  "seconds": 5.515999999999622,
+  "coverage": {
+    "page_count": 18,
+    "readable_pages": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18
+    ],
+    "missing_pages": [],
+    "characters": 34118,
+    "input_sha256": "4f26db166f3b9f52a05000db7fe1e1b51cafff68673e3731225cb6aa3e73e86d"
+  }
+}

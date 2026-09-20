@@ -1,0 +1,54 @@
+{
+  "checked_at": "2026-09-19T16:46:03.917632+00:00",
+  "comparison": "NFC + remove whitespace + Unicode casefold on document_number; metadata only",
+  "targets": {
+    "agriculture": "346/2026/NĐ-CP",
+    "aviation": "68/2026/TT-BXD",
+    "credit": "46/2026/TT-NHNN",
+    "electricity": "344/2026/NĐ-CP",
+    "health": "350/2026/NĐ-CP",
+    "imports": "56/2026/TT-BKHCN",
+    "maritime": "348/2026/NĐ-CP",
+    "procurement": "349/2026/NĐ-CP",
+    "reserves": "345/2026/NĐ-CP",
+    "resources_tax": "135/2026/TT-BTC"
+  },
+  "stores": [
+    {
+      "path": "data/huggingface/content_store.sqlite3",
+      "document_count": 518255,
+      "number_metadata_sha256": "141ce28557cb1549bc2667e04f2e2524a827c4789ecfc14e5ac1367c31318057",
+      "hits": {
+        "agriculture": [],
+        "aviation": [],
+        "credit": [],
+        "electricity": [],
+        "health": [],
+        "imports": [],
+        "maritime": [],
+        "procurement": [],
+        "reserves": [],
+        "resources_tax": []
+      }
+    },
+    {
+      "path": "data/v3/content_store.sqlite3",
+      "document_count": 4969,
+      "number_metadata_sha256": "82619cfb8d65694840cab8fdad4f7584163ebb56b8d2c8647cc6d52ea31b678e",
+      "hits": {
+        "agriculture": [],
+        "aviation": [],
+        "credit": [],
+        "electricity": [],
+        "health": [],
+        "imports": [],
+        "maritime": [],
+        "procurement": [],
+        "reserves": [],
+        "resources_tax": []
+      }
+    }
+  ],
+  "remote_supabase": "NOT RUN: configured hostname unavailable",
+  "remote_qdrant_pinecone": "NOT RUN: this check does not claim every remote index is absent"
+}

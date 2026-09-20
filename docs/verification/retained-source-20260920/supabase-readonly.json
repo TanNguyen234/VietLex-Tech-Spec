@@ -1,0 +1,21 @@
+{
+  "at": "2026-09-20T10:32:15.782378+00:00",
+  "host": "jtldmpnghdzitvkbvald.supabase.co",
+  "resolvers": [
+    {
+      "url": "https://cloudflare-dns.com/dns-query",
+      "http_status": 200,
+      "dns_status": 3,
+      "answer_count": 0
+    },
+    {
+      "url": "https://dns.google/resolve",
+      "http_status": 200,
+      "dns_status": 3,
+      "answer_count": 0
+    }
+  ],
+  "sql_connection_configured": false,
+  "sql_connection_in_dotenv": false,
+  "supabase_error_type": "ConnectError"
+}
