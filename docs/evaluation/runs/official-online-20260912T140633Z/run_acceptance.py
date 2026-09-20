@@ -1,11 +1,17 @@
 """Real services only. Expected URLs are used for scoring, never query construction."""
-import asyncio, hashlib, json, subprocess, sys, time
+import asyncio
 from datetime import datetime, timezone
+import hashlib
+import json
 from pathlib import Path
-sys.path.insert(0,str(Path.cwd()))
+import subprocess
+import sys
+import time
+
+sys.path.insert(0, str(Path.cwd()))
 from app.services.official_query_planner import prepare_research_plan
 from app.services.deep_research import run_deep_research
-from app.services.trusted_source_reader import read_source, SourceReadError
+from app.services.trusted_source_reader import SourceReadError, read_source
 
 def sha(data): return hashlib.sha256(data).hexdigest()
 def git(*args): return subprocess.check_output(['git','-c','safe.directory=D:/Download/ProfessionalLegalRAG',*args])
@@ -35,13 +41,16 @@ async def main():
                 if source.get('requires_ocr'):
                     source=await read_source(case['reference_url'],use_ocr=True,page_limit=2)
                 record['source']=source
-            except SourceReadError as error: record['read_error']=error.kind
-        else: record['read_skipped']='expected source not discovered'
+            except SourceReadError as error:
+                record['read_error']=error.kind
+        else:
+            record['read_skipped']='expected source not discovered'
         record['elapsed_seconds']=time.monotonic()-start
         write(out/(case['id']+'.json'),record)
         source=record.get('source',{})
         row={'id':case['id'],'hit':hit,'readable':source.get('content_status')=='readable','pages_read':len(source.get('pages',[])),'total_pages':source.get('page_count'),'error':record.get('read_error'),'query_method':plan.query_method}
-        rows.append(row);print(json.dumps(row),flush=True)
+        rows.append(row)
+        print(json.dumps(row),flush=True)
     write(out/'summary.json',rows)
     write(out/'completed.json',{'completed_at':datetime.now(timezone.utc).isoformat(),'files':{p.name:sha(p.read_bytes()) for p in out.glob('*.json')}})
 asyncio.run(main())
