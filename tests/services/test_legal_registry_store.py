@@ -44,3 +44,23 @@ async def test_publish_retry_does_not_reactivate_withdrawn_record(monkeypatch):
     with pytest.raises(ValueError, match="review_already_withdrawn"):
         await store.publish_review({"_id": "review-1", "state": "published"})
     assert "$setOnInsert" in col.update_one.call_args.args[1]
+
+
+@pytest.mark.asyncio
+async def test_registry_batch_is_published_bounded_and_rejects_truncation(monkeypatch):
+    from app import legal_registry_database as store
+    db = MagicMock()
+    cursor = db.legal_effect_registry.find.return_value
+    cursor.sort.return_value = cursor
+    cursor.limit.return_value = cursor
+    cursor.to_list = AsyncMock(return_value=[])
+    monkeypatch.setattr(store, 'get_db', lambda: db)
+    assert await store.registry_records_batch(['A/2020', 'a/2020']) == []
+    assert db.legal_effect_registry.find.call_args.args[0] == {
+        'state': 'published', 'document_numbers': {'$in': ['a/2020']}}
+    cursor.limit.assert_called_once_with(201)
+    cursor.to_list.return_value = [{}] * 201
+    with pytest.raises(store.RegistryUnavailable):
+        await store.registry_records_batch(['A/2020'])
+    with pytest.raises(ValueError):
+        await store.registry_records_batch([str(i) for i in range(21)])

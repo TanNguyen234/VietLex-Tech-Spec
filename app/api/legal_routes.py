@@ -2,6 +2,10 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import logging
+from datetime import date
+from app.legal_registry_database import registry_records_batch, RegistryUnavailable
+from app.services.legal_registry import registry_view, STATUS_LABELS
 from typing import Any, Literal
 from urllib.parse import urlparse, urlencode
 
@@ -39,10 +43,34 @@ def _safe_source_url(value: str) -> str | None:
     return None
 
 
+def _registry_day(value):
+    day = value or date.today().isoformat()
+    try:
+        if date.fromisoformat(day).isoformat() != day:
+            raise ValueError()
+    except ValueError:
+        raise HTTPException(422, "invalid_as_of_date") from None
+    return day
+
+
+async def _registry_context(numbers, day):
+    numbers = list(dict.fromkeys(number for number in numbers if number.strip()))
+    results, error = {}, None
+    try:
+        rows = await asyncio.wait_for(registry_records_batch(numbers), timeout=3)
+        results = {number: registry_view(number, day, rows) for number in numbers}
+    except (RegistryUnavailable, TimeoutError, ValueError) as exc:
+        logging.getLogger(__name__).warning("legal_registry_lookup_failed: %s", type(exc).__name__, extra={"error_type": type(exc).__name__})
+        error = "Không đọc được registry hoặc lịch sử vượt giới hạn. Chưa thể đối chiếu hiệu lực; nội dung văn bản vẫn đọc được."
+    return {"registry_results": results, "registry_error": error, "as_of": day, "status_labels": STATUS_LABELS}
+
+
 @router.get("/search", response_class=HTMLResponse)
 async def legal_search(request: Request, q: str = "", legal_type: str = Query("", max_length=100),
                        authority: str = Query("", max_length=200), issued_from: str = "", issued_to: str = "", sort: str = "default",
-                       scope: Literal["metadata", "body"] = "metadata", offset: int = Query(0, ge=0, le=1000)):
+                       scope: Literal["metadata", "body"] = "metadata", offset: int = Query(0, ge=0, le=1000),
+                       as_of: str = Query("", max_length=10)):
+    day = _registry_day(as_of)
     query = q.strip()[:200]
     try:
         filters = SearchFilters(legal_type.strip(), authority.strip(), issued_from, issued_to, sort)
@@ -72,12 +100,14 @@ async def legal_search(request: Request, q: str = "", legal_type: str = Query(""
         request,
         "legal_search.html",
         {"query": query, "results": results, "filters": filters, "scope": scope, "body_coverage": coverage,
-         "next_page": next_page, "previous_page": previous_page},
+         "next_page": next_page, "previous_page": previous_page, "as_of_query": as_of,
+         **await _registry_context([result["document_number"] if scope == "body" else result.document_number for result in results], day)},
     )
 
 
 @router.get("/documents/{document_id}", response_class=HTMLResponse)
-async def legal_document(request: Request, document_id: int):
+async def legal_document(request: Request, document_id: int, as_of: str = Query("", max_length=10)):
+    day = _registry_day(as_of)
     if document_id < 0:
         raise HTTPException(status_code=404, detail="Document not found")
     try:
@@ -94,6 +124,7 @@ async def legal_document(request: Request, document_id: int):
             "document": document,
             "sections": document_sections(document.content),
             "source_url": _safe_source_url(document.metadata.source_url),
+            **await _registry_context([document.metadata.document_number], day),
         },
     )
 

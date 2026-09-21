@@ -89,6 +89,8 @@ def test_body_search_route_highlights_escaped_source_and_links_anchor(
     monkeypatch.setattr(legal_routes, "browser", browser)
     app = FastAPI()
     app.include_router(legal_routes.router)
+    from unittest.mock import AsyncMock
+    monkeypatch.setattr(legal_routes, "registry_records_batch", AsyncMock(return_value=[]))
     response = TestClient(app).get("/search", params={"q": "thu viec", "scope": "body"})
     assert response.status_code == 200
     assert (

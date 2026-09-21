@@ -13,18 +13,11 @@ from app.legal_registry_database import (
     withdraw_review,
     RegistryUnavailable,
 )
-from app.services.legal_registry import publication_record, registry_view
+from app.services.legal_registry import publication_record, registry_view, STATUS_LABELS
 
 router = APIRouter()
 settings = get_settings()
-STATUS_LABELS = {
-    "unknown": "Chưa xác định",
-    "effective": "Có sự kiện bắt đầu hiệu lực",
-    "amended": "Có sự kiện sửa đổi",
-    "partially_effective": "Có sự kiện chấm dứt hiệu lực một phần",
-    "repealed": "Có sự kiện bãi bỏ",
-    "replaced": "Có sự kiện thay thế",
-}
+
 
 
 @router.get("/legal-status")

@@ -161,3 +161,13 @@ def registry_view(document_number, as_of, records):
     for relation in ("amends", "amended_by", "replaces", "replaced_by"):
         result[relation] = sorted(set(result[relation]))
     return result
+
+
+STATUS_LABELS = {
+    "unknown": "Chưa xác định",
+    "effective": "Có sự kiện bắt đầu hiệu lực",
+    "amended": "Có sự kiện sửa đổi",
+    "partially_effective": "Có sự kiện chấm dứt hiệu lực một phần",
+    "repealed": "Có sự kiện bãi bỏ",
+    "replaced": "Có sự kiện thay thế",
+}

@@ -68,6 +68,8 @@ def test_serverless_browser_uses_supabase_instead_of_local_files(monkeypatch) ->
 
 def _client(monkeypatch, *, source_url="https://example.gov.vn/7"):
     import app.api.legal_routes as routes
+    from unittest.mock import AsyncMock
+    monkeypatch.setattr(routes, "registry_records_batch", AsyncMock(return_value=[]))
 
     result = SimpleNamespace(
         document_id=7,
@@ -172,3 +174,76 @@ def test_privacy_and_terms_pages_are_public(monkeypatch) -> None:
     assert "Truy vấn pháp luật có thể chứa dữ liệu nhạy cảm" in privacy.text
     assert terms.status_code == 200
     assert "không thay thế tư vấn pháp lý" in terms.text
+
+
+def _registry_event():
+    return {'state': 'published', 'reviewed_at': '2026-09-20T00:00:00+00:00',
+            'assertions': [{'event_kind': 'repeal', 'effective_date': '2025-01-01',
+                'document_number': 'B/2024', 'target_document_number': '45/2019/QH14',
+                'scope': 'whole_document', 'exact_quote': 'Unit test event, not a real legal finding.',
+                'source_url': 'https://vanban.chinhphu.vn/?docid=1'}]}
+
+
+def test_reader_projects_registry_at_requested_date(monkeypatch):
+    from unittest.mock import AsyncMock
+    import app.api.legal_routes as routes
+    client = _client(monkeypatch)
+    lookup = AsyncMock(return_value=[_registry_event()])
+    monkeypatch.setattr(routes, 'registry_records_batch', lookup, raising=False)
+    before = client.get('/documents/7?as_of=2024-12-31')
+    after = client.get('/documents/7?as_of=2025-01-01')
+    assert before.status_code == after.status_code == 200
+    assert 'Có sự kiện bãi bỏ' not in before.text
+    assert 'Có sự kiện bãi bỏ' in after.text
+    assert 'as_of=2025-01-01' in after.text
+    assert 'lịch sử đầy đủ' in after.text
+    assert 'Unit test event' not in after.text
+
+
+def test_search_registry_is_batched_and_preserves_date(monkeypatch):
+    from unittest.mock import AsyncMock
+    import app.api.legal_routes as routes
+    client = _client(monkeypatch)
+    lookup = AsyncMock(return_value=[_registry_event()])
+    monkeypatch.setattr(routes, 'registry_records_batch', lookup, raising=False)
+    response = client.get('/search?q=lao&as_of=2025-01-01')
+    assert response.status_code == 200
+    assert 'Có sự kiện bãi bỏ' in response.text
+    assert '/documents/7?as_of=2025-01-01' in response.text
+    lookup.assert_awaited_once_with(['45/2019/QH14'])
+
+
+def test_registry_outage_preserves_reader_without_claiming_empty_history(monkeypatch, caplog):
+    from unittest.mock import AsyncMock
+    import app.api.legal_routes as routes
+    from app.legal_registry_database import RegistryUnavailable
+    client = _client(monkeypatch)
+    monkeypatch.setattr(routes, 'registry_records_batch', AsyncMock(side_effect=RegistryUnavailable()), raising=False)
+    response = client.get('/documents/7')
+    assert response.status_code == 200
+    assert 'Điều 25. Thời gian thử việc' in response.text
+    assert 'Không đọc được registry' in response.text
+    assert 'Chưa có sự kiện đã duyệt' not in response.text
+    assert 'RegistryUnavailable' in caplog.text
+
+
+def test_invalid_as_of_stops_registry_lookup(monkeypatch):
+    from unittest.mock import AsyncMock
+    import app.api.legal_routes as routes
+    client = _client(monkeypatch)
+    lookup = AsyncMock(return_value=[])
+    monkeypatch.setattr(routes, 'registry_records_batch', lookup, raising=False)
+    assert client.get('/documents/7?as_of=2025-02-30').status_code == 422
+    assert client.get('/search?as_of=20250101').status_code == 422
+    lookup.assert_not_awaited()
+
+
+def test_search_explains_registry_limits_once_for_multiple_results(monkeypatch):
+    import app.api.legal_routes as routes
+    client = _client(monkeypatch)
+    result = routes.browser.search('law', 20)[0]
+    routes.browser.search = lambda query, limit: [result, result]
+    response = client.get('/search?q=law')
+    assert response.status_code == 200
+    assert response.text.count('Registry chưa có lịch sử đầy đủ') == 1
+    assert response.text.count('Xem lịch sử và căn cứ kiểm chứng') == 2
