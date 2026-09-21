@@ -1,0 +1,9 @@
+{
+  "app/api/legal_routes.py": "e859dc5c167d8fccf4a5ca27c7d64670742596600e72663a3032c9a2942b7aba",
+  "app/api/legal_registry_routes.py": "6a274c68c2a757465538f38a4b765ca9e19e323d6aba98d4a5d9faa6b88928b3",
+  "app/legal_registry_database.py": "9536119a17994c803beb9ca11af2a04f27b865651a7da6fad4d2daaa2caa5191",
+  "app/services/legal_registry.py": "7c784ce43a7656c626f5b09de9677f5cbfb53b1d5ebd7de76fb772d1182455e2",
+  "app/templates/legal_document.html": "0dbb35da2ac9caa67e3b07f7aa2ddb1a4854d88aff2f919e23d63b374ba2558a",
+  "app/templates/legal_search.html": "2fdebe631de57994557d54b5c06a205b5a13cf878506239ee9fc802081734418",
+  "app/templates/legal_registry_summary.html": "55e9929b917b4a3d85c18e35d64814afe650653e95beb90f2fe98a27d0b82f82"
+}

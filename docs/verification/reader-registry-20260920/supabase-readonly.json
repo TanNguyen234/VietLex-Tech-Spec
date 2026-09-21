@@ -1,0 +1,19 @@
+{
+  "at": "2026-09-21T13:30:16.940419+00:00",
+  "host": "jtldmpnghdzitvkbvald.supabase.co",
+  "dns": [
+    {
+      "resolver": "cloudflare",
+      "http_status": 200,
+      "dns_status": 3,
+      "answers": 0
+    },
+    {
+      "resolver": "google",
+      "http_status": 200,
+      "dns_status": 3,
+      "answers": 0
+    }
+  ],
+  "rest_error_type": "ConnectError"
+}

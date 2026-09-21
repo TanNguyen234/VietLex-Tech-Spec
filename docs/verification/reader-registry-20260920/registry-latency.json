@@ -1,0 +1,78 @@
+{
+  "at": "2026-09-21T13:27:36.769842+00:00",
+  "observations": [
+    {
+      "round": 1,
+      "page": "search",
+      "status": 200,
+      "seconds": 0.219,
+      "registry_unavailable": false,
+      "unknown": true
+    },
+    {
+      "round": 1,
+      "page": "reader",
+      "status": 200,
+      "seconds": 0.219,
+      "registry_unavailable": false,
+      "unknown": true
+    },
+    {
+      "round": 1,
+      "page": "registry",
+      "status": 200,
+      "seconds": 0.172,
+      "registry_unavailable": false,
+      "unknown": true
+    },
+    {
+      "round": 2,
+      "page": "search",
+      "status": 200,
+      "seconds": 0.515,
+      "registry_unavailable": false,
+      "unknown": true
+    },
+    {
+      "round": 2,
+      "page": "reader",
+      "status": 200,
+      "seconds": 0.281,
+      "registry_unavailable": false,
+      "unknown": true
+    },
+    {
+      "round": 2,
+      "page": "registry",
+      "status": 200,
+      "seconds": 0.219,
+      "registry_unavailable": false,
+      "unknown": true
+    },
+    {
+      "round": 3,
+      "page": "search",
+      "status": 200,
+      "seconds": 0.219,
+      "registry_unavailable": false,
+      "unknown": true
+    },
+    {
+      "round": 3,
+      "page": "reader",
+      "status": 200,
+      "seconds": 0.234,
+      "registry_unavailable": false,
+      "unknown": true
+    },
+    {
+      "round": 3,
+      "page": "registry",
+      "status": 200,
+      "seconds": 0.141,
+      "registry_unavailable": false,
+      "unknown": true
+    }
+  ],
+  "note": "read-only actual HTTP/Mongo; earlier Chrome focus capture had registry-unavailable warnings"
+}

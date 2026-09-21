@@ -1,0 +1,46 @@
+{
+  "checks": [
+    {
+      "path": "/search?scope=body&q=thu%20viec&as_of=2026-01-01",
+      "status": 200,
+      "seconds": 2.437,
+      "unknown_registry": true,
+      "registry_unavailable": false
+    },
+    {
+      "path": "/search?q=45%2F2019%2FQH14&as_of=2026-01-01",
+      "status": 200,
+      "seconds": 1.219,
+      "unknown_registry": true,
+      "registry_unavailable": false
+    },
+    {
+      "path": "/documents/333670?as_of=2026-01-01",
+      "status": 200,
+      "seconds": 1.813,
+      "unknown_registry": true,
+      "registry_unavailable": false
+    },
+    {
+      "path": "/documents/333670?as_of=2025-02-30",
+      "status": 422,
+      "seconds": 1.078,
+      "unknown_registry": false,
+      "registry_unavailable": false
+    },
+    {
+      "page": "search",
+      "desktop_mobile_no_overflow": true,
+      "as_of_value": "2026-01-01",
+      "unknown_registry": true
+    },
+    {
+      "page": "reader",
+      "desktop_mobile_no_overflow": true,
+      "as_of_value": "2026-01-01",
+      "unknown_registry": true
+    }
+  ],
+  "page_errors": [],
+  "data": "real local corpus and Mongo registry; no event publication or provider call"
+}

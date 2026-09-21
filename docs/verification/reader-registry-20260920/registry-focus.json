@@ -1,0 +1,15 @@
+{
+  "at": "2026-09-21T13:31:28.108203+00:00",
+  "checks": [
+    {
+      "page": "reader",
+      "registry_unavailable": false,
+      "unknown": true
+    },
+    {
+      "page": "search",
+      "registry_unavailable": false,
+      "unknown": true
+    }
+  ]
+}

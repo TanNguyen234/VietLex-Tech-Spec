@@ -590,3 +590,7 @@ Kiểm chứng 19/09: [ngân sách phân tích, phần chưa đủ căn cứ và
 ![Phạm vi tìm nguồn trên production mobile](docs/verification/congbao-discovery-20260919/discovery-mobile.png)
 
 Báo cáo DOCX có liên kết citation đến trích đoạn đã lưu và liên kết nguồn HTTP(S); [file xuất thật cùng kiểm tra local/production](docs/verification/docx-links-20260920/REPORT.md). Liên kết không tự chứng nhận hiệu lực hay tính đúng luật.
+
+Reader và kết quả tra cứu hiển thị sự kiện hiệu lực đã duyệt tại ngày người dùng chọn. Không có sự kiện thì giữ trạng thái chưa xác định; lỗi registry được phân biệt với thiếu dữ liệu. [Bằng chứng local corpus/Mongo/Chrome và giới hạn production](docs/verification/reader-registry-20260920/REPORT.md).
+
+![Tra cứu trên mobile — dữ liệu local thật, registry chưa có sự kiện công bố](docs/verification/reader-registry-20260920/registry-search-status-mobile.png)

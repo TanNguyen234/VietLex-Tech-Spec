@@ -1,0 +1,108 @@
+........FFFF...F                                                         [100%]
+================================== FAILURES ===================================
+_______________ test_reader_projects_registry_at_requested_date _______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001529A731970>
+
+    def test_reader_projects_registry_at_requested_date(monkeypatch):
+        from unittest.mock import AsyncMock
+        import app.api.legal_routes as routes
+        client = _client(monkeypatch)
+        lookup = AsyncMock(return_value=[_registry_event()])
+        monkeypatch.setattr(routes, 'registry_records_batch', lookup, raising=False)
+        before = client.get('/documents/7?as_of=2024-12-31')
+        after = client.get('/documents/7?as_of=2025-01-01')
+        assert before.status_code == after.status_code == 200
+        assert 'C\xf3 s\u1ef1 ki\u1ec7n b\xe3i b\u1ecf' not in before.text
+>       assert 'C\xf3 s\u1ef1 ki\u1ec7n b\xe3i b\u1ecf' in after.text
+E       assert 'C\xf3 s\u1ef1 ki\u1ec7n b\xe3i b\u1ecf' in '<!doctype html>\\n<html lang="vi" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=...\xe0o h\u1ed3 s\u01a1. Ph\xe2n t\xedch \u201cch\u1ec9 t\u1eeb b\u1eb1ng ch\u1ee9ng \u0111\xe3 ch\u1ecdn\u201d s\u1ebd kh\xf4ng m\u1edf r\u1ed9ng truy xu\u1ea5t.</p></details></aside></main></body></html>'
+E        +  where '<!doctype html>\\n<html lang="vi" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=...\xe0o h\u1ed3 s\u01a1. Ph\xe2n t\xedch \u201cch\u1ec9 t\u1eeb b\u1eb1ng ch\u1ee9ng \u0111\xe3 ch\u1ecdn\u201d s\u1ebd kh\xf4ng m\u1edf r\u1ed9ng truy xu\u1ea5t.</p></details></aside></main></body></html>' = <Response [200 OK]>.text
+
+tests\test_legal_routes.py:195: AssertionError
+_____________ test_search_registry_is_batched_and_preserves_date ______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000152A51AF020>
+
+    def test_search_registry_is_batched_and_preserves_date(monkeypatch):
+        from unittest.mock import AsyncMock
+        import app.api.legal_routes as routes
+        client = _client(monkeypatch)
+        lookup = AsyncMock(return_value=[_registry_event()])
+        monkeypatch.setattr(routes, 'registry_records_batch', lookup, raising=False)
+        response = client.get('/search?q=lao&as_of=2025-01-01')
+        assert response.status_code == 200
+>       assert 'C\xf3 s\u1ef1 ki\u1ec7n b\xe3i b\u1ecf' in response.text
+E       assert 'C\xf3 s\u1ef1 ki\u1ec7n b\xe3i b\u1ecf' in '<!doctype html>\\n<html lang="vi" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=.../7">B\u1ed9 lu\u1eadt Lao \u0111\u1ed9ng 2019</a></h2><p>45/2019/QH14 \xb7 Qu\u1ed1c h\u1ed9i \xb7 2019-11-20</p></article></section></main></body></html>'
+E        +  where '<!doctype html>\\n<html lang="vi" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=.../7">B\u1ed9 lu\u1eadt Lao \u0111\u1ed9ng 2019</a></h2><p>45/2019/QH14 \xb7 Qu\u1ed1c h\u1ed9i \xb7 2019-11-20</p></article></section></main></body></html>' = <Response [200 OK]>.text
+
+tests\test_legal_routes.py:209: AssertionError
+____ test_registry_outage_preserves_reader_without_claiming_empty_history _____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000152A733A9C0>
+
+    def test_registry_outage_preserves_reader_without_claiming_empty_history(monkeypatch):
+        from unittest.mock import AsyncMock
+        import app.api.legal_routes as routes
+        from app.legal_registry_database import RegistryUnavailable
+        client = _client(monkeypatch)
+        monkeypatch.setattr(routes, 'registry_records_batch', AsyncMock(side_effect=RegistryUnavailable()), raising=False)
+        response = client.get('/documents/7')
+        assert response.status_code == 200
+        assert '\u0110i\u1ec1u 25. Th\u1eddi gian th\u1eed vi\u1ec7c' in response.text
+>       assert 'Kh\xf4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c registry' in response.text
+E       assert 'Kh\xf4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c registry' in '<!doctype html>\\n<html lang="vi" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=...\xe0o h\u1ed3 s\u01a1. Ph\xe2n t\xedch \u201cch\u1ec9 t\u1eeb b\u1eb1ng ch\u1ee9ng \u0111\xe3 ch\u1ecdn\u201d s\u1ebd kh\xf4ng m\u1edf r\u1ed9ng truy xu\u1ea5t.</p></details></aside></main></body></html>'
+E        +  where '<!doctype html>\\n<html lang="vi" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=...\xe0o h\u1ed3 s\u01a1. Ph\xe2n t\xedch \u201cch\u1ec9 t\u1eeb b\u1eb1ng ch\u1ee9ng \u0111\xe3 ch\u1ecdn\u201d s\u1ebd kh\xf4ng m\u1edf r\u1ed9ng truy xu\u1ea5t.</p></details></aside></main></body></html>' = <Response [200 OK]>.text
+
+tests\test_legal_routes.py:223: AssertionError
+__________________ test_invalid_as_of_stops_registry_lookup ___________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000152A7321880>
+
+    def test_invalid_as_of_stops_registry_lookup(monkeypatch):
+        from unittest.mock import AsyncMock
+        import app.api.legal_routes as routes
+        client = _client(monkeypatch)
+        lookup = AsyncMock(return_value=[])
+        monkeypatch.setattr(routes, 'registry_records_batch', lookup, raising=False)
+>       assert client.get('/documents/7?as_of=2025-02-30').status_code == 422
+E       AssertionError: assert 200 == 422
+E        +  where 200 = <Response [200 OK]>.status_code
+E        +    where <Response [200 OK]> = get('/documents/7?as_of=2025-02-30')
+E        +      where get = <starlette.testclient.TestClient object at 0x00000152A7322E70>.get
+
+tests\test_legal_routes.py:233: AssertionError
+_______ test_registry_batch_is_published_bounded_and_rejects_truncation _______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000152A74EE780>
+
+    @pytest.mark.asyncio
+    async def test_registry_batch_is_published_bounded_and_rejects_truncation(monkeypatch):
+        from app import legal_registry_database as store
+        db = MagicMock()
+        cursor = db.legal_effect_registry.find.return_value
+        cursor.sort.return_value = cursor
+        cursor.limit.return_value = cursor
+        cursor.to_list = AsyncMock(return_value=[])
+        monkeypatch.setattr(store, 'get_db', lambda: db)
+>       assert await store.registry_records_batch(['A/2020', 'a/2020']) == []
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'app.legal_registry_database' has no attribute 'registry_records_batch'. Did you mean: 'registry_records'?
+
+tests\services\test_legal_registry_store.py:58: AttributeError
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  D:\Download\ProfessionalLegalRAG\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+.venv\Lib\site-packages\starlette\testclient.py:53
+  D:\Download\ProfessionalLegalRAG\.venv\Lib\site-packages\starlette\testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_legal_routes.py::test_reader_projects_registry_at_requested_date
+FAILED tests/test_legal_routes.py::test_search_registry_is_batched_and_preserves_date
+FAILED tests/test_legal_routes.py::test_registry_outage_preserves_reader_without_claiming_empty_history
+FAILED tests/test_legal_routes.py::test_invalid_as_of_stops_registry_lookup
+FAILED tests/services/test_legal_registry_store.py::test_registry_batch_is_published_bounded_and_rejects_truncation
+5 failed, 11 passed, 2 warnings in 15.43s
