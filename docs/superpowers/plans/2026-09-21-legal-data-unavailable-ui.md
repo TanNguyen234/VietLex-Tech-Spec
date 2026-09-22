@@ -9,7 +9,7 @@ Files: app/api/legal_routes.py; new legal_data_unavailable.html; tests/test_lega
 - [x] Reuse research_workspaces initial_question and existing styles/nav; do not alter successful response or ingestion contract.
 - [x] Review stable diff and focused tests; Chrome local desktop/mobile verified against a real backend outage. Production check after deploy is recorded separately from local verification.
 - [x] Documentation and separate code/evidence commits; verify production outage recovery after push.
-- [ ] Restore/connect original Supabase project before online FTS can be published. This requires project-owner Dashboard access; production search success remains unverified.
+- [x] Project owner resumed the original Supabase project. Read-only REST and production Chrome confirmed metadata search/reader success on 22/09; see `docs/verification/supabase-resumed-20260922/REPORT.md`. Body-search migration/import remains unexecuted and requires separate authorization.
 
 Reviewed scope addition: successful internal search with zero matches must also offer the explicit query-to-workspace action, while retaining HTTP 200 and the no-match explanation. This is distinct from backend failure (503); no auto-discovery or provider call. Add focused RED and a real local out-of-corpus-number check.
 

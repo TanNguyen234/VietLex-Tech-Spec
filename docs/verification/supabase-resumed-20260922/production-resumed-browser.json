@@ -1,0 +1,32 @@
+{
+  "at": "2026-09-22T03:21:19.404572+00:00",
+  "base": "https://vietlex-legal-rag.vercel.app",
+  "requests": [
+    {
+      "path": "/search?q=45/2019/QH14",
+      "status": 200,
+      "result_count": 1,
+      "as_of": "2026-01-01"
+    },
+    {
+      "path": "/documents/333670?as_of=2026-01-01",
+      "status": 200,
+      "section_count": 238
+    },
+    {
+      "path": "/search?q=68/2026/TT-BXD",
+      "status": 200,
+      "result_count": 0
+    },
+    {
+      "path": "/legal-status?document_number=45/2019/QH14&as_of=2026-01-01",
+      "status": 200,
+      "has_document_number": true
+    }
+  ],
+  "page_errors": [],
+  "http_errors": [],
+  "request_failures": [],
+  "ai_actions_submitted": 0,
+  "workspace_prefill": true
+}

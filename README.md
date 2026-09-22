@@ -15,7 +15,7 @@ Ngôn ngữ: **Tiếng Việt** | [English](README.en.md)
 
 VietLex hỗ trợ người nghiên cứu pháp lý và compliance đi từ câu hỏi đến hồ sơ có căn cứ: **tìm văn bản → đọc và ghim Điều/Khoản → phân tích nguồn → rà soát tài liệu và xử lý findings → chỉnh sửa, xuất báo cáo**. Đây vẫn là sản phẩm nghiên cứu đang được kiểm chứng, chưa đạt production readiness.
 
-Trạng thái UI/API/tests và giới hạn chỉ được duy trì tại [FEATURE_STATUS.md](FEATURE_STATUS.md). [Tra cứu số hiệu và phục hồi khi kho lỗi](docs/verification/legal-search-recovery-20260922/REPORT.md) đã được kiểm tra với corpus/Mongo/Chrome local; Supabase online vẫn cần chủ project khôi phục. Registry có [ảnh UI và bằng chứng Mongo/Chrome thật](docs/verification/shared-legal-registry-20260919/REPORT.md). Bản full-text cục bộ có [hướng dẫn dựng chỉ mục và bằng chứng UI](docs/verification/internal-fulltext-20260919/REPORT.md); chưa bật full-text trên production.
+Trạng thái UI/API/tests và giới hạn chỉ được duy trì tại [FEATURE_STATUS.md](FEATURE_STATUS.md). [Tra cứu số hiệu và phục hồi khi kho lỗi](docs/verification/legal-search-recovery-20260922/REPORT.md) đã được kiểm tra với corpus/Mongo/Chrome local. Sau khi Supabase được khôi phục, [search/reader production đã được kiểm tra lại](docs/verification/supabase-resumed-20260922/REPORT.md). Registry có [ảnh UI và bằng chứng Mongo/Chrome thật](docs/verification/shared-legal-registry-20260919/REPORT.md). Bản full-text cục bộ có [hướng dẫn dựng chỉ mục và bằng chứng UI](docs/verification/internal-fulltext-20260919/REPORT.md); chưa bật full-text trên production.
 
 Cập nhật kiểm chứng: [OCR production 502 → 200](docs/verification/ocr-output-20260913/REPORT.md), [metadata ngày ban hành/hiệu lực qua ghim và phân tích](docs/verification/source-temporal-20260913/REPORT.md), [10 PDF / 178 trang có chữ](docs/evaluation/runs/official-full-reading-20260913T101800Z/REPORT.md), [10 câu phân tích trích đoạn thật](docs/evaluation/runs/source-temporal-ten-20260913T153643Z/REPORT.md). Đọc được trang và tìm đúng URL chưa chứng minh câu trả lời đủ: cả 10 câu ở phạm vi trích đoạn đều báo thiếu căn cứ. Full-text toàn corpus vẫn chưa hoàn tất. [Registry hiệu lực dùng chung](docs/verification/shared-legal-registry-20260919/REPORT.md) đã có luồng công bố/thu hồi thủ công và tra cứu theo ngày; chưa có dữ liệu đã công bố để xác nhận hiệu lực thực tế.
  Xem [nghiệm thu nguồn ngoài corpus: 10 câu + 3 holdout](docs/evaluation/runs/official-online-20260912T140633Z/REPORT.md), [baseline trước sửa](docs/verification/online-discovery-20260912/REPORT.md) và [phân tích workflow](docs/PRODUCT_WORKFLOWS_20260912.md).
@@ -50,13 +50,15 @@ Bản đóng gói reviewer: [hướng dẫn](docs/REVIEWER_GUIDE.md) · [trạng
 
 ![Giao diện tra cứu Bộ luật Lao động 2019](docs/images/vietlex-search-20260912.png)
 
-**Trạng thái ngày 22/09:** search/reader online vẫn bị chặn bởi hostname Supabase không phân giải; ảnh dưới đây là bằng chứng lịch sử, không phải trạng thái hiện tại. Ở local, số hiệu không có trong corpus nay có [empty state và đường chuyển hồ sơ](docs/verification/legal-search-recovery-20260922/local-empty-search-mobile.png). Khi backend lỗi có [trang 503 trên production](docs/verification/legal-search-recovery-20260922/production-outage-mobile.png), giúp người dùng chuyển query sang hồ sơ; đây không phải search online thành công.
+**Trạng thái sau khi Supabase được khôi phục ngày 22/09:** search số hiệu và reader online trả 200 trên Chrome thật; số hiệu vắng trong tập online trả 0 kết quả và giữ query khi chuyển sang hồ sơ. [Báo cáo và ảnh production hiện tại](docs/verification/supabase-resumed-20260922/REPORT.md). Full-text body online vẫn trả 503 vì RPC/index chưa triển khai. Ảnh empty state local và trang 503 dưới đây là bằng chứng cho các trạng thái đã kiểm tra trước khi Supabase hoạt động lại.
 
 ![Empty state cho số hiệu thiếu trong lát cắt local](docs/verification/legal-search-recovery-20260922/local-empty-search-mobile.png)
 
 ![Trang phục hồi khi kho production trả 503](docs/verification/legal-search-recovery-20260922/production-outage-mobile.png)
 
-Ảnh chụp ngày **2026-09-12** từ [production](https://vietlex-legal-rag.vercel.app), bản runtime `93ec75d`, bằng Chrome thật ở viewport 1440×1050; không mock dữ liệu hoặc sửa DOM. Trang tìm kiếm và toàn văn dùng Supabase. [Ảnh Evaluation Lab](docs/images/vietlex-metrics-20260912.png) và [báo cáo sau sửa](docs/verification/product-fixes-20260912.md) nêu rõ giới hạn kiểm chứng.
+![Tra cứu số hiệu trên production sau khi Supabase hoạt động lại](docs/verification/supabase-resumed-20260922/production-resumed-search-mobile.png)
+
+Ảnh đầu mục tra cứu chụp ngày **2026-09-12** từ [production](https://vietlex-legal-rag.vercel.app), bản runtime `93ec75d`, bằng Chrome thật ở viewport 1440×1050; không mock dữ liệu hoặc sửa DOM. Ảnh mobile cuối mục được chụp sau khi Supabase hoạt động lại ngày **2026-09-22**. Trang tìm kiếm và toàn văn dùng Supabase. [Ảnh Evaluation Lab](docs/images/vietlex-metrics-20260912.png) và [báo cáo sau sửa](docs/verification/product-fixes-20260912.md) nêu rõ giới hạn kiểm chứng.
 
 ### Hồ sơ theo công việc
 
