@@ -1,0 +1,43 @@
+{
+  "at": "2026-09-22T03:00:32.659452+00:00",
+  "environment": "production",
+  "requests": [
+    {
+      "path": "/search?q=th%E1%BB%AD+vi%E1%BB%87c",
+      "status": 503,
+      "content_type": "text/html; charset=utf-8",
+      "cache_control": "no-store",
+      "seconds": 0.734,
+      "has_workspace_recovery": true
+    },
+    {
+      "path": "/search?q=th%E1%BB%AD+vi%E1%BB%87c&scope=body",
+      "status": 503,
+      "content_type": "text/html; charset=utf-8",
+      "cache_control": "no-store",
+      "seconds": 0.297,
+      "has_workspace_recovery": true
+    },
+    {
+      "path": "/documents/333670",
+      "status": 503,
+      "content_type": "text/html; charset=utf-8",
+      "cache_control": "no-store",
+      "seconds": 0.313,
+      "has_workspace_recovery": true
+    }
+  ],
+  "browser": [
+    {
+      "viewport": "desktop",
+      "no_horizontal_overflow": true
+    },
+    {
+      "viewport": "mobile",
+      "no_horizontal_overflow": true
+    }
+  ],
+  "ai_actions_submitted": 0,
+  "query_carried_to_workspace": true,
+  "page_errors": []
+}

@@ -1,0 +1,9 @@
+{
+  "at": "2026-09-22T03:03:47.839106+00:00",
+  "url": "https://vietlex-legal-rag.vercel.app/search?q=68%2F2026%2FTT-BXD",
+  "status": 503,
+  "content_type": "text/html; charset=utf-8",
+  "cache_control": "no-store",
+  "has_recovery_action": true,
+  "source": "real production HTTP; Supabase outage; no mock"
+}
