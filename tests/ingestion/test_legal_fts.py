@@ -93,6 +93,21 @@ def test_exact_document_number_is_ranked_first(tmp_path) -> None:
     )[0] == 431147
 
 
+def test_full_document_number_never_falls_back_to_title_terms(tmp_path) -> None:
+    store = TinyContentStore()
+    store.documents[1] = _document(1, "68/2006/TT-BXD", "Thông tư về xây dựng 68/2026/TT-BXD", "Không liên quan.")
+    index = LegalFtsIndex(
+        store=store,
+        path=tmp_path / "legal_fts.sqlite3",
+        dataset_revision="revision-1",
+    )
+    index.ensure_built(batch_size=2)
+
+    assert index.search("68/2026/TT-BXD", limit=20) == []
+    assert index.search("45/2019/QH14", limit=20) == [333670]
+    assert index.search("Theo số 68/2026/TT-BXD", limit=20) == []
+
+
 def test_body_phrase_finds_relevant_legal_document(tmp_path) -> None:
     index = LegalFtsIndex(
         store=TinyContentStore(),

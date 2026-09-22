@@ -43,6 +43,19 @@ def _safe_source_url(value: str) -> str | None:
     return None
 
 
+def _legal_unavailable(request, message, *, query="", body_missing=False, reader=False):
+    params = dict(request.query_params)
+    retry_url = request.url.path + ("?" + urlencode(params) if params else "")
+    return templates.TemplateResponse(
+        request, "legal_data_unavailable.html",
+        {"message": message, "query": query, "body_missing": body_missing,
+         "reader": reader, "retry_url": retry_url,
+         "workspace_url": "/workspaces" + ("?" + urlencode({"question": query}) if query else ""),
+         "metadata_url": "/search" + ("?" + urlencode({"q": query}) if query else "")},
+        status_code=503, headers={"Cache-Control": "no-store"},
+    )
+
+
 def _registry_day(value):
     day = value or date.today().isoformat()
     try:
@@ -93,9 +106,9 @@ async def legal_search(request: Request, q: str = "", legal_type: str = Query(""
         else:
             results = await asyncio.to_thread(current.search, query, 20, **({"filters": filters} if filters.active else {}))
     except BodySearchUnavailable:
-        raise HTTPException(503, "Chưa có chỉ mục toàn văn sẵn sàng cho kho dữ liệu này. Hãy tìm theo số hiệu/tiêu đề hoặc tìm nguồn chính thức.") from None
+        return _legal_unavailable(request, "Chưa truy cập được chỉ mục toàn văn trong môi trường này.", query=query, body_missing=True)
     except LegalBrowserBackendError:
-        raise HTTPException(503, "Không đọc được kết quả tra cứu. Vui lòng thử lại.") from None
+        return _legal_unavailable(request, "Kho văn bản hiện chưa kết nối được. Chưa thể trả kết quả tra cứu từ kho này.", query=query)
     return templates.TemplateResponse(
         request,
         "legal_search.html",
@@ -113,7 +126,7 @@ async def legal_document(request: Request, document_id: int, as_of: str = Query(
     try:
         document = await asyncio.to_thread(_get_browser().get_document, document_id)
     except LegalBrowserBackendError:
-        raise HTTPException(503, "Không đọc được văn bản nguồn.") from None
+        return _legal_unavailable(request, "Chưa tải được văn bản từ kho dữ liệu.", reader=True)
     if document is None:
         raise HTTPException(status_code=404, detail="Document not found")
     from app.api.workspace_routes import _workspace_page

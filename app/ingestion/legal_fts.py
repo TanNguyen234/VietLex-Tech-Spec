@@ -444,7 +444,8 @@ class LegalFtsIndex:
                 uri=True,
             )
         ) as connection:
-            for reference in extract_legal_references(query):
+            references = extract_legal_references(query)
+            for reference in references:
                 rows = connection.execute(
                     "SELECT document_id FROM legal_documents "
                     "WHERE normalized_number = ? ORDER BY document_id",
@@ -457,6 +458,9 @@ class LegalFtsIndex:
                         seen.add(value)
                     if len(selected) >= limit:
                         return selected
+
+            if references:
+                return selected
 
             expression = _fts_query(query)
             if expression:

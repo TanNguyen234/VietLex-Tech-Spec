@@ -13,7 +13,7 @@ from app.config import system_ssl_context
 from app.services.body_search import BodySearchIndex, BodySearchUnavailable
 from app.services.remote_body_search import SupabaseBodySearch
 from app.ingestion.content_store import ContentStore, StoredDocument, ContentIntegrityError
-from app.ingestion.legal_fts import LegalFtsIndex
+from app.ingestion.legal_fts import LegalFtsIndex, extract_legal_references
 from app.ingestion.legal_text import DocumentMetadata
 
 
@@ -130,6 +130,7 @@ class SupabaseLegalStore:
         )
 
     def search(self, query: str, *, limit: int, filters: SearchFilters | None = None) -> list[int]:
+        references = list(dict.fromkeys(extract_legal_references(query)))
         safe_query = " ".join(
             query.replace("*", " ")
             .replace(",", " ")
@@ -138,19 +139,20 @@ class SupabaseLegalStore:
             .replace('"', " ")
             .split()
         )
-        if not safe_query and not (filters and filters.active):
+        if not safe_query and not references and not (filters and filters.active):
             return []
         params = {
                 "select": "document_id",
-                "or": (
-                    f"(document_number.ilike.*{safe_query}*,"
-                    f"title.ilike.*{safe_query}*)"
-                ),
                 "order": "document_id.asc",
                 "limit": str(limit),
             }
-        if not safe_query:
-            params.pop("or")
+        if references:
+            if len(references) == 1:
+                params["document_number"] = "ilike." + references[0]
+            else:
+                params["or"] = "(" + ",".join(f"document_number.ilike.{ref}" for ref in references) + ")"
+        elif safe_query:
+            params["or"] = f"(document_number.ilike.*{safe_query}*,title.ilike.*{safe_query}*)"
         if filters:
             if filters.legal_type:
                 params["legal_type"] = "eq." + filters.legal_type
@@ -328,7 +330,11 @@ class LegalBrowser:
     def _filtered_local_ids(self, query: str, filters: SearchFilters, limit: int) -> list[int]:
         # Filter the metadata relation before LIMIT; never scan/decompress bodies.
         clauses, values = [], []
-        if query:
+        references = list(dict.fromkeys(extract_legal_references(query)))
+        if references:
+            clauses.append("REPLACE(UPPER(document_number), ' ', '') IN (" + ",".join("?" for _ in references) + ")")
+            values.extend(references)
+        elif query:
             phrase = "%" + query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
             clauses.append("(document_number LIKE ? ESCAPE '\\' OR title LIKE ? ESCAPE '\\')")
             values.extend([phrase, phrase])

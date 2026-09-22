@@ -100,6 +100,36 @@ def test_local_filters_are_not_applied_to_an_already_truncated_page(tmp_path):
     assert [row.document_id for row in result] == [7]
 
 
+def test_local_full_number_filters_before_limit(tmp_path):
+    import sqlite3
+    from app.services.legal_browser import LegalBrowser, SearchFilters
+    store = _Store()
+    store.metadata[1] = SimpleNamespace(**{**store.metadata[7].__dict__, "document_id": 1, "document_number": "68/2006/TT-BXD", "title": "68/2026/TT-BXD", "legal_type": "Khác"})
+    store.metadata[2] = SimpleNamespace(**{**store.metadata[7].__dict__, "document_id": 2, "legal_type": "Khác"})
+    store.path = tmp_path / "content.sqlite3"
+    with sqlite3.connect(store.path) as connection:
+        connection.execute("CREATE TABLE metadata(document_id INTEGER, document_number TEXT, title TEXT, legal_type TEXT, issuing_authority TEXT, issuance_date TEXT)")
+        connection.execute("INSERT INTO metadata VALUES(1,'68/2006/TT-BXD','68/2026/TT-BXD','Khác','','2026-01-01')")
+        connection.execute("INSERT INTO metadata VALUES(2,'45/2019/QH14','Bộ luật Lao động 2019','Khác','','2019-01-01')")
+        connection.execute("INSERT INTO metadata VALUES(7,'45/2019/QH14','Bộ luật Lao động 2019','Bộ luật','Quốc hội','2019-11-20')")
+    browser = LegalBrowser(store=store, index=_Index([]))
+    assert browser.search("68/2026/TT-BXD", limit=1, filters=SearchFilters(sort="newest")) == []
+    assert [row.document_id for row in browser.search("45/2019/QH14", limit=1, filters=SearchFilters(legal_type="Bộ luật"))] == [7]
+
+
+def test_supabase_full_number_uses_number_only_before_limit():
+    from app.services.legal_browser import SupabaseLegalStore, SearchFilters
+    requests = []
+    client = httpx.Client(transport=httpx.MockTransport(lambda request: requests.append(request) or httpx.Response(200, json=[])))
+    store = SupabaseLegalStore(url="https://project.supabase.co", publishable_key="test", client=client)
+    store.search("Theo số 68/2026/TT-BXD", limit=1, filters=SearchFilters(legal_type="Bộ luật", sort="newest"))
+    params = requests[0].url.params
+    assert params["document_number"] == "ilike.68/2026/TT-BXD"
+    assert "or" not in params
+    assert params["legal_type"] == "eq.Bộ luật"
+    assert params["limit"] == "1"
+
+
 def test_supabase_legal_store_reads_search_and_full_document() -> None:
     from app.services.legal_browser import SupabaseLegalStore
 

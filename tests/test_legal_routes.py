@@ -247,3 +247,68 @@ def test_search_explains_registry_limits_once_for_multiple_results(monkeypatch):
     assert response.status_code == 200
     assert response.text.count('Registry chưa có lịch sử đầy đủ') == 1
     assert response.text.count('Xem lịch sử và căn cứ kiểm chứng') == 2
+
+
+def test_search_backend_outage_renders_safe_recovery_without_registry(monkeypatch):
+    from unittest.mock import AsyncMock
+    from urllib.parse import urlencode
+    import app.api.legal_routes as routes
+    client = _client(monkeypatch)
+    def offline(*args, **kwargs):
+        raise routes.LegalBrowserBackendError('backend offline')
+    routes.browser.search = offline
+    lookup = AsyncMock(return_value=[])
+    monkeypatch.setattr(routes, 'registry_records_batch', lookup)
+    query = '<script>alert(1)</script>'
+    response = client.get('/search', params={'q': query})
+    assert response.status_code == 503
+    assert response.headers['content-type'].startswith('text/html')
+    assert response.headers['cache-control'] == 'no-store'
+    assert '/workspaces?' + urlencode({'question': query}) in response.text
+    assert '<script>alert(1)</script>' not in response.text
+    assert 'nguồn chính thức' in response.text
+    lookup.assert_not_awaited()
+
+
+def test_missing_body_index_offers_explicit_metadata_search(monkeypatch):
+    import app.api.legal_routes as routes
+    client = _client(monkeypatch)
+    def missing(*args, **kwargs):
+        raise routes.BodySearchUnavailable('missing index')
+    routes.browser.search_body = missing
+    response = client.get('/search?q=trial&scope=body')
+    assert response.status_code == 503
+    assert response.headers['content-type'].startswith('text/html')
+    assert 'chỉ mục toàn văn' in response.text
+    assert 'href="/search?q=trial"' in response.text
+
+
+def test_reader_outage_is_html_with_retry_and_saved_source_action(monkeypatch):
+    import app.api.legal_routes as routes
+    client = _client(monkeypatch)
+    def offline(*args, **kwargs):
+        raise routes.LegalBrowserBackendError('backend offline')
+    routes.browser.get_document = offline
+    response = client.get('/documents/7?as_of=2026-01-01')
+    assert response.status_code == 503
+    assert response.headers['content-type'].startswith('text/html')
+    assert 'href="/documents/7?as_of=2026-01-01"' in response.text
+    assert 'href="/workspaces"' in response.text
+    assert 'Chưa tải được văn bản' in response.text
+
+
+def test_empty_search_keeps_200_and_offers_explicit_official_research(monkeypatch):
+    import re
+    from urllib.parse import urlsplit, parse_qs
+    from html import unescape
+    import app.api.legal_routes as routes
+    client = _client(monkeypatch)
+    routes.browser.search = lambda query, limit: []
+    response = client.get('/search', params={'q': '68/2026/TT-BXD'})
+    assert response.status_code == 200
+    match = re.search(r'href="(/workspaces\?question=[^"]+)"', response.text)
+    assert match is not None
+    assert parse_qs(urlsplit(unescape(match.group(1))).query)['question'] == ['68/2026/TT-BXD']
+    assert 'Chuyển câu hỏi sang hồ sơ' in response.text
+
+    assert "Registry chưa có lịch sử đầy đủ" not in response.text
