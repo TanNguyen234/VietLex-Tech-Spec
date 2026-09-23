@@ -35,7 +35,8 @@ Government source in the live case: <https://vanban.chinhphu.vn/?pageid=27160&do
 | Local live relevant answer | `.venv/Scripts/python.exe tmp/continuation-20260922/probe_local_relevant_answer.py` | `ok`; 10/13 passages, reported temporal state, 5 server-owned cited excerpts |
 | Production, first deployment `eb6ade3` | `.venv/Scripts/python.exe tmp/continuation-20260922/probe_postdeploy_web.py` | Natural query: correct source found; two result occurrences, no unrelated document numbers; `partial` because some other step queries had no results. Saved answer HTTP 200 with bounded-excerpt and as-of indicators, 5 citations, no provider error or missing-document claim. |
 | Production browser, first deployment | `.venv/Scripts/python.exe tmp/continuation-20260922/probe_postdeploy_browser.py` | Reader and answer HTTP 200; inline relevant form; 5 citations; zero JS page errors; no horizontal overflow at 1440 px/390 px. |
-| Production after final reading-order change | `NOT RUN` | Pending final deployment check |
+| Production after final reading-order change, `3f8d81f` | `.venv/Scripts/python.exe tmp/continuation-20260922/probe_postdeploy_web.py` | Vercel deployment `4gbiav5vhduAoT5nWc5KJKCS1omF` Ready. Natural query found `68/2026/TT-BXD`, 2 source occurrences, no other document numbers (`partial` because other step queries had no results). Saved answer HTTP 200; 10/13 excerpts, 5 citations, as-of status; described direct, indirect and common costs, issued/effective dates; no missing-document claim or provider error. |
+| Production browser after final change | `.venv/Scripts/python.exe tmp/continuation-20260922/probe_postdeploy_browser.py` | Reader and answer HTTP 200; inline relevant form; 5 citations; zero JS page errors; no horizontal overflow at 1440 px/390 px. |
 
 ## Remote ingestion state at user stop
 
