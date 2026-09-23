@@ -358,7 +358,21 @@
         catch { button.textContent = 'Chưa ghim được; kiểm tra trích đoạn rồi thử lại'; }
         finally { button.disabled = false; }
       });
-      if (payload.analysis_id && source.text?.trim()) card.append(form); target.append(card);
+      if (payload.analysis_id && source.text?.trim()) {
+        card.append(form);
+        const ask = element('form');
+        ask.method = 'post'; ask.action = '/workspaces/' + encodeURIComponent(workspaceId) + '/analyses/retained-source';
+        [['csrf_token', csrf], ['analysis_id', payload.analysis_id], ['source_index', String(index)], ['scope', 'relevant']].forEach(([name, value]) => {
+          const hidden = element('input'); hidden.type = 'hidden'; hidden.name = name; hidden.value = value; ask.append(hidden);
+        });
+        const questionLabel = element('label', 'Câu hỏi và mốc thời gian'), question = element('textarea');
+        question.name = 'question'; question.required = true; question.maxLength = 2000;
+        question.value = document.querySelector('[data-research-plan] textarea[name="question"]')?.value || '';
+        questionLabel.append(question);
+        ask.append(questionLabel, element('button', 'Trả lời từ các đoạn liên quan', 'button button-primary'));
+        card.append(ask);
+      }
+      target.append(card);
     });
     (payload.result?.errors || []).forEach(error => {
       target.append(element('p', sourceErrors[error.kind] || 'Chưa đọc được nguồn. Mở bản gốc hoặc thử nhóm trang nhỏ hơn.', 'legal-warning'));

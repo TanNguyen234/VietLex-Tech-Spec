@@ -47,6 +47,16 @@ def test_collects_server_owned_pages_and_saves_scope(setup):
     assert record["kind"] == "retained_source_answer"
 
 
+def test_relevant_scope_reaches_bounded_source_selector(setup):
+    client, _, generate, _ = setup
+    response = client.post('/workspaces/w/analyses/retained-source',
+                           data={'analysis_id': 'first', 'source_index': 0,
+                                 'question': 'First', 'scope': 'relevant'},
+                           follow_redirects=False)
+    assert response.status_code == 303
+    assert generate.await_args.kwargs['relevant_only'] is True
+
+
 def test_missing_or_oversize_source_calls_no_provider(setup):
     client, routes, generate, save = setup
     assert (

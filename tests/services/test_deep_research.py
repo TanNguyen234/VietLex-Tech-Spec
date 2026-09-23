@@ -154,3 +154,32 @@ def test_research_plan_preserves_named_law_across_steps():
 def test_research_plan_preserves_document_number_across_steps():
     plan = build_research_plan('Tìm sửa đổi 45/2019/QH14')
     assert all('45/2019/QH14' in step.query for step in plan.steps)
+
+
+def test_research_plan_uses_issue_terms_before_as_of_date():
+    question = ('Chi phí trực tiếp và gián tiếp khi khai thác tài sản kết cấu hạ tầng '
+                'hàng không được phân bổ thế nào? Xét tại ngày 13/09/2026.')
+    plan = build_research_plan(question)
+    assert plan.steps[0].query == 'chi phí trực tiếp'
+    assert all('13/09/2026' not in step.query for step in plan.steps)
+    prefixed = build_research_plan('Tại ngày 13/09/2026, chi phí trực tiếp khai thác hạ tầng hàng không được phân bổ ra sao?')
+    assert prefixed.steps[0].query.startswith('chi phí trực tiếp')
+
+
+@pytest.mark.asyncio
+async def test_natural_question_keeps_topical_official_document_and_removes_noise():
+    from unittest.mock import AsyncMock
+    from app.services.official_web_search import OfficialSearchRecord, OfficialSearchResponse
+    rows = (
+        OfficialSearchRecord('https://vanban.chinhphu.vn/a',
+            'Quy định chi phí trực tiếp, phân bổ chi phí gián tiếp khi khai thác tài sản kết cấu hạ tầng hàng không',
+            'vanban.chinhphu.vn', '', '68/2026/TT-BXD', '10/09/2026'),
+        OfficialSearchRecord('https://congbao.chinhphu.vn/b',
+            'Quy định chi phí phát hành trái phiếu Chính phủ',
+            'congbao.chinhphu.vn', '', '15/2018/TT-BTC', '01/01/2018'),
+    )
+    provider = SimpleNamespace(search=AsyncMock(return_value=OfficialSearchResponse(rows, 'official', 1)))
+    plan = build_research_plan('Chi phí trực tiếp và gián tiếp khai thác tài sản hạ tầng hàng không phân bổ thế nào?')
+    result = await run_deep_research(plan, provider=provider, settings=_settings())
+    assert all([source.document_number for source in step.sources] == ['68/2026/TT-BXD']
+               for step in result.steps)

@@ -30,6 +30,7 @@ _QUERY_STOPWORDS = {
     "được", "gì", "hiện", "hành", "khi", "là", "một", "nào", "những",
     "phải", "ra", "sao", "theo", "thì", "trong", "và", "về", "với",
 }
+_RELEVANCE_STOPWORDS = _QUERY_STOPWORDS | {"xét", "tại", "ngày", "tháng", "năm", "thế", "do", "nhà", "nước", "quản", "lý"}
 StepKind = Literal[
     "legal_basis",
     "conditions",
@@ -124,6 +125,15 @@ class DeepResearchResult(BaseModel):
     model: str | None = None
 
 
+def _title_relevance(question: str, source: OfficialResearchSource) -> float:
+    terms = {word for word in _QUERY_TOKEN.findall(question.casefold())
+             if len(word) > 1 and not word[0].isdigit() and word not in _RELEVANCE_STOPWORDS}
+    if not terms:
+        return 0.0
+    title = set(_QUERY_TOKEN.findall(source.title.casefold()))
+    return len(terms & title) / len(terms)
+
+
 def _clean(value: str, limit: int) -> str:
     return _SPACE.sub(" ", str(value or "")).strip()[:limit]
 
@@ -139,13 +149,18 @@ def build_research_plan(question: str) -> ResearchPlan:
         r"\b\d{1,4}/\d{4}/[A-ZĐ][A-ZĐ0-9-]{1,29}\b", question.upper()
     )
     named_law = re.search(r"\b(?:bộ luật|luật)\s+[^?!.;\n]{2,100}?\b(?:19|20)\d{2}\b", question.casefold())
+    as_of_pattern = r"\b(?:xét\s+)?tại\s+ngày\s+\d{1,2}[/.-]\d{1,2}[/.-]\d{4}"
+    has_as_of = bool(re.search(as_of_pattern, question, flags=re.I))
+    without_as_of = re.sub(as_of_pattern, " ", question, flags=re.I).strip(" ,.;?")
+    issue = (re.split(r"[?.;]|\bvà\b|\bnhưng\b", without_as_of, maxsplit=1, flags=re.I)[0]
+             if has_as_of else question)
     tokens = [
         token
-        for token in _QUERY_TOKEN.findall(question.casefold())
+        for token in _QUERY_TOKEN.findall(issue.casefold())
         if token not in _QUERY_STOPWORDS and len(token) > 1
     ]
     seed = (document_number.group(0) if document_number else
-            named_law.group(0) if named_law else " ".join(tokens[-4:]))
+            named_law.group(0) if named_law else " ".join(tokens[:4] if has_as_of else tokens[-4:]))
     seed = seed or question
     definitions: list[tuple[StepKind, str, str]] = [
         ("legal_basis", "Căn cứ pháp lý trực tiếp", seed),
@@ -301,6 +316,15 @@ async def run_deep_research(
             )
         )
 
+    if not re.search(r"\b\d{1,4}/\d{4}/[A-ZĐ][A-ZĐ0-9-]{1,29}\b", plan.question.upper()):
+        strongest = max((_title_relevance(plan.question, source)
+                         for step in step_results for source in step.sources), default=0.0)
+        if strongest >= 0.5:
+            for step in step_results:
+                step.sources = [source for source in step.sources
+                                if _title_relevance(plan.question, source) >= strongest * 0.5]
+                if not step.sources:
+                    step.status = "provider_error" if step.error_kind else "no_results"
     completed = sum(step.status == "results_found" for step in step_results)
     status = "complete" if completed == len(step_results) else ("partial" if any(step.sources for step in step_results) else "failed")
     return DeepResearchResult(

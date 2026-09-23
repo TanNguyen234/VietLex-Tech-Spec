@@ -186,3 +186,81 @@ def test_official_metadata_is_citable_but_not_presented_as_pdf_quote():
         source,
     )
     assert result["citations"][0]["analysis_id"] == "first"
+
+
+def test_relevant_passages_selects_cost_rules_and_date_with_bounded_context():
+    from app.services.retained_source_analysis import relevant_source_passages
+    source = {
+        "pages": [{"page": 1, "text": ("Mục lục và thủ tục chung. " * 45), "analysis_id": "a", "source_index": 0},
+                  {"page": 2, "text": ("Chi phí trực tiếp khi khai thác hạ tầng hàng không được xác định theo từng hoạt động. " * 12), "analysis_id": "a", "source_index": 0},
+                  {"page": 3, "text": ("Chi phí gián tiếp dùng chung được phân bổ theo tiêu chí sử dụng tài sản. " * 12), "analysis_id": "a", "source_index": 0},
+                  {"page": 4, "text": ("Quy định chuyển tiếp và trách nhiệm. " * 40), "analysis_id": "a", "source_index": 0}],
+        "document_number": "68/2026/TT-BXD", "issued_date": "10-09-2026",
+        "reported_effective_from": "01-01-2027", "origin_analysis_id": "a", "origin_source_index": 0,
+    }
+    question = 'Chi phí trực tiếp và gián tiếp được phân bổ thế nào tại ngày 13/09/2026?'
+    selected = relevant_source_passages(question, source, limit=3)
+    assert len(selected) == 3
+    assert {row['page'] for row in selected.values()} == {0, 2, 3}
+    assert 'source-metadata' in selected
+
+
+def test_relevant_passages_preserves_relevant_article_continuation(monkeypatch):
+    from app.services import retained_source_analysis as service
+    passages = {
+        'p1-s0': {'page': 1, 'quote': 'Tiêu đề chi phí gián tiếp và phân bổ.', 'analysis_id': 'a', 'source_index': 0},
+        'p2-s0': {'page': 2, 'quote': '\nĐiều 5. Tiêu chí phân bổ chi phí gián tiếp\nChi phí dùng chung được phân bổ theo tỷ lệ doanh thu', 'analysis_id': 'a', 'source_index': 0},
+        'p2-s900': {'page': 2, 'quote': 'từ việc cung cấp dịch vụ sử dụng tài sản kết cấu hạ tầng hàng không.', 'analysis_id': 'a', 'source_index': 0},
+    }
+    monkeypatch.setattr(service, 'source_passages', lambda source: dict(passages))
+    selected = service.relevant_source_passages('Chi phí gián tiếp phân bổ thế nào?', {}, limit=2)
+    assert list(selected) == ['p2-s0', 'p2-s900']
+
+
+def test_relevant_passages_keeps_article_continuation_across_page(monkeypatch):
+    from app.services import retained_source_analysis as service
+    rows = {
+        'p1-s0': {'page': 1, 'quote': 'Điều 4. Chi phí trực tiếp\nCác khoản chi phí bao gồm', 'analysis_id': 'a', 'source_index': 0},
+        'p2-s0': {'page': 2, 'quote': 'nhân công, nguyên vật liệu và dịch vụ mua ngoài.', 'analysis_id': 'a', 'source_index': 0},
+        'p2-s900': {'page': 2, 'quote': 'Quy định kiểm tra chung.', 'analysis_id': 'a', 'source_index': 0},
+    }
+    monkeypatch.setattr(service, 'source_passages', lambda source: dict(rows))
+    assert list(service.relevant_source_passages('Chi phí trực tiếp bao gồm gì?', {}, limit=2)) == ['p1-s0', 'p2-s0']
+
+
+def test_temporal_context_separates_issuance_from_reported_effective_date():
+    from app.services.retained_source_analysis import source_temporal_context
+    source = {'issued_date': '10-09-2026', 'reported_effective_from': '01-01-2027'}
+    result = source_temporal_context('Xét tại ngày 13/09/2026', source)
+    assert result['as_of'] == '2026-09-13'
+    assert result['status'] == 'issued_not_effective'
+    assert source_temporal_context('Xét tại ngày 09/09/2026', source)['status'] == 'not_issued'
+    assert source_temporal_context('Xét tại ngày 02/01/2027', source)['status'] == 'reported_effective_by_as_of'
+    assert source_temporal_context('Xét tại ngày 13/09/2026', {})['status'] == 'unknown'
+
+
+@pytest.mark.asyncio
+async def test_relevant_answer_sends_only_selected_excerpts_and_temporal_context(monkeypatch):
+    import json
+    from types import SimpleNamespace
+    from app.services import retained_source_analysis as service
+    source = {'pages': [
+        {'page': 1, 'text': 'Unrelated administration.' * 50, 'analysis_id': 'a', 'source_index': 0},
+        {'page': 2, 'text': 'Chi phí gián tiếp được phân bổ theo tiêu chí doanh thu.',
+         'analysis_id': 'a', 'source_index': 0}],
+        'issued_date': '10-09-2026', 'reported_effective_from': '01-01-2027',
+        'origin_analysis_id': 'a', 'origin_source_index': 0}
+    async def generate(prompt, system):
+        payload = json.loads(prompt)['source']
+        assert payload['temporal_context']['status'] == 'issued_not_effective'
+        ids = [row['passage_id'] for row in payload['passages']]
+        assert ids == ['source-metadata', 'p2-s0']
+        return SimpleNamespace(status='success', text=json.dumps({
+            'text': 'Chi phí gián tiếp được phân bổ theo tiêu chí doanh thu. [p2-s0]',
+            'status': 'ok', 'citations': ['p2-s0'], 'unanswered_parts': []}),
+            observed_provider='test', observed_model='test')
+    monkeypatch.setattr(service, '_generate', generate)
+    result = await service.analyze_retained_source(
+        'Chi phí gián tiếp được phân bổ thế nào xét tại ngày 13/09/2026?',
+        source, relevant_only=True)
+    assert result['context_selection'] == {'method': 'lexical_relevance_v1', 'selected': 2, 'available': 4}

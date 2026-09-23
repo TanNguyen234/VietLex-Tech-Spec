@@ -1,5 +1,6 @@
 import uuid
 import re
+from typing import Literal
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from app.api.dependencies import optional_user, verify_csrf
@@ -27,6 +28,7 @@ async def retained_source_answer(
     analysis_id: str = Form(..., max_length=100),
     source_index: int = Form(..., ge=0, le=2),
     question: str = Form(..., min_length=1, max_length=2000),
+    scope: Literal['full', 'relevant'] = Form('full'),
     _csrf=Depends(verify_csrf),
     current_user=Depends(optional_user),
 ):
@@ -59,7 +61,7 @@ async def retained_source_answer(
         response.status_code = 422
         return response
     try:
-        result = await analyze_retained_source(question, source)
+        result = await analyze_retained_source(question, source, relevant_only=scope == 'relevant')
     except RuntimeError as error:
         result = {"status": "provider_error", "error_type": type(error).__name__}
     identifier = str(uuid.uuid4())

@@ -64,3 +64,39 @@ async def test_federation_total_failure_keeps_actual_provider_identity():
     assert result.provider == "chinhphu_and_congbao"
     assert result.model == "federated-official-discovery-v1"
     assert result.status == "failed"
+
+
+@pytest.mark.asyncio
+async def test_federation_filters_reference_noise_before_limit_and_keeps_amendments():
+    from app.services.federated_official_search import FederatedOfficialClient
+    from app.services.official_web_search import OfficialSearchRecord, OfficialSearchResponse
+    def record(number, title="", url=None):
+        return OfficialSearchRecord(url or "https://vbpl.vn/" + number, title, "vbpl.vn", "", number, "")
+    rows = (
+        record("168/2026/TT-BXD"),
+        record("68/2026/TT-BXD1"),
+        record("68/2025/TT-BXD"),
+        record("20/2026/TT-BXD"),
+        record("99/2026/TT-BXD", "Sửa đổi 68/2026/TT-BXD"),
+        record("68/2026/TT-BXD", url="https://evil.test/law"),
+        record("68/2026/TT-BXD"),
+        record("68/2026/TT-BXD", url="https://vbpl.vn/68/2026/TT-BXD#article-1"),
+    )
+    provider = FederatedOfficialClient(portal=SimpleNamespace(search=AsyncMock(
+        return_value=OfficialSearchResponse(rows, "portal", 1, 2))))
+    result = await provider.search("Tìm 68 / 2026 / tt-bxd", limit=2)
+    assert [r.document_number for r in result.results] == ["68/2026/TT-BXD", "99/2026/TT-BXD"]
+    assert result.request_count == 2
+
+
+@pytest.mark.asyncio
+async def test_unrelated_official_results_do_not_make_research_successful():
+    from app.services.federated_official_search import FederatedOfficialClient
+    from app.services.official_web_search import OfficialSearchRecord, OfficialSearchResponse
+    from app.services.deep_research import build_research_plan, run_deep_research
+    row = OfficialSearchRecord("https://vbpl.vn/a", "Unrelated", "vbpl.vn", "", "20/2026/TT-BXD", "")
+    provider = FederatedOfficialClient(portal=SimpleNamespace(search=AsyncMock(
+        return_value=OfficialSearchResponse((row,), "portal", 1, 2))))
+    result = await run_deep_research(build_research_plan("68/2026/TT-BXD"), provider=provider,
+                                   settings=SimpleNamespace(OFFICIAL_WEB_RESEARCH_ENABLED=True))
+    assert all(step.status == "no_results" and not step.sources for step in result.steps)

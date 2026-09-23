@@ -16,6 +16,13 @@ from app.services.deep_research import OFFICIAL_SOURCE_DOMAINS, is_official_sour
 from app.services.official_web_search import OfficialSearchRecord, OfficialSearchResponse, OfficialPortalError
 
 
+_DOCUMENT_REFERENCE = re.compile(r"(?<![\w/-])\d{1,4}\s*/\s*\d{4}\s*/\s*[A-ZĐ][A-ZĐ0-9-]{1,29}(?![\w/-])")
+
+
+def _references(text: str) -> set[str]:
+    return {re.sub(r"\s+", "", match.group()) for match in _DOCUMENT_REFERENCE.finditer(text.upper())}
+
+
 class BraveOfficialClient:
     def __init__(self, *, settings, client=None):
         if not settings.BRAVE_SEARCH_API_KEY:
@@ -83,6 +90,7 @@ class FederatedOfficialClient:
     async def search(self, query: str, *, limit: int = 3):
         started = time.perf_counter()
         limit = max(1, min(int(limit), 10))
+        requested = _references(query)
         outcomes = await asyncio.gather(*(provider.search(query, limit=limit) for _, provider in self.providers), return_exceptions=True)
         errors, records, count, seen = [], [], 0, set()
         for (name, _), result in zip(self.providers, outcomes):
@@ -93,10 +101,20 @@ class FederatedOfficialClient:
             errors.extend(name + ":" + error for error in result.errors)
             for record in result.results:
                 url = urldefrag(record.url)[0]
+                if not is_official_source(url, record.domain):
+                    continue
+                # Metadata establishes discovery relevance only; originals still
+                # need reading before an answer can cite legal evidence.
+                if requested and not requested.intersection(_references(
+                    "\n".join((record.document_number, record.title, record.snippet))
+                )):
+                    continue
                 if url not in seen:
                     records.append(record)
                     seen.add(url)
         if all(isinstance(result, BaseException) for result in outcomes):
             raise OfficialPortalError(";".join(errors), request_count=count, latency_ms=(time.perf_counter()-started)*1000)
+        if requested:
+            records.sort(key=lambda record: not bool(requested.intersection(_references(record.document_number))))
         return OfficialSearchResponse(tuple(records[:min(10, limit*len(self.providers))]), self.provider, (time.perf_counter()-started)*1000,
                                       count, tuple(errors), "federated-official-discovery-v1")
