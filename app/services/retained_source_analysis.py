@@ -171,7 +171,8 @@ def relevant_source_passages(question, source, *, limit=10):
     ordered_ids = list(passages)
     def heading_match(passage):
         heading = re.search(r"(?im)^\s*Điều\s+\d+\.[^\n]{0,150}", passage["quote"])
-        return bool(heading and len(query_terms & _relevance_terms(heading.group())) >= 2)
+        overlap = len(query_terms & _relevance_terms(heading.group())) if heading else 0
+        return overlap if overlap >= 2 else 0
     candidates = [(identifier, passage, query_terms & _relevance_terms(passage["quote"]))
                   for identifier, passage in passages.items()]
     while candidates and len(selected) < limit:
@@ -185,17 +186,14 @@ def relevant_source_passages(question, source, *, limit=10):
             break
         selected[identifier] = passage
         covered.update(matched)
-        if (heading_match(passage) and len(selected) < limit
-                and passage["quote"].rstrip()[-1:] not in (".", ";", "?", "!")):
+        if heading_match(passage) and len(selected) < limit:
             following = ordered_ids.index(identifier) + 1
             if following < len(ordered_ids):
                 next_id = ordered_ids[following]
                 next_item = next((item for item in candidates if item[0] == next_id), None)
-                if next_item and (
-                    next_item[1]["page"] == passage["page"] or
-                    (next_item[1]["page"] == passage["page"] + 1 and
-                     not re.match(r"\s*(?:\d+\s*)?Điều\s+\d+", next_item[1]["quote"], re.I))
-                ):
+                if (next_item
+                        and next_item[1]["page"] in (passage["page"], passage["page"] + 1)
+                        and not re.match(r"\s*(?:\d+\s*)?Điều\s+\d+", next_item[1]["quote"], re.I)):
                     selected[next_id] = next_item[1]
                     covered.update(next_item[2])
                     candidates.remove(next_item)

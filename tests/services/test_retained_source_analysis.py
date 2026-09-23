@@ -228,6 +228,40 @@ def test_relevant_passages_keeps_article_continuation_across_page(monkeypatch):
     assert list(service.relevant_source_passages('Chi phí trực tiếp bao gồm gì?', {}, limit=2)) == ['p1-s0', 'p2-s0']
 
 
+def test_relevant_passages_keeps_conditions_after_numbered_article_heading(monkeypatch):
+    from app.services import retained_source_analysis as service
+    rows = {
+        'p3-s843': {'page': 3, 'quote': 'Điều 5. Tiêu chí nhập khẩu dây chuyền công nghệ đã qua sử dụng.', 'analysis_id': 'a', 'source_index': 0},
+        'p3-s1710': {'page': 3, 'quote': '2. Công suất tối thiểu; 3. Công nghệ không thuộc danh mục cấm.', 'analysis_id': 'a', 'source_index': 0},
+        'p16-s0': {'page': 16, 'quote': 'Nhập khẩu dây chuyền công nghệ đã qua sử dụng tại ngày này.', 'analysis_id': 'a', 'source_index': 0},
+    }
+    monkeypatch.setattr(service, 'source_passages', lambda source: dict(rows))
+    selected = service.relevant_source_passages('Tiêu chí nhập khẩu dây chuyền công nghệ đã qua sử dụng?', {}, limit=2)
+    assert list(selected) == ['p3-s843', 'p3-s1710']
+
+
+def test_relevant_passages_ranks_specific_article_heading_before_generic_heading(monkeypatch):
+    from app.services import retained_source_analysis as service
+    rows = {
+        'p1-s0': {'page': 1, 'quote': 'Điều 2. Nhập khẩu dây chuyền\nĐiều kiện công nghệ đã qua sử dụng được nhắc đến ở đây.', 'analysis_id': 'a', 'source_index': 0},
+        'p2-s0': {'page': 2, 'quote': 'Điều 5. Điều kiện nhập khẩu dây chuyền công nghệ đã qua sử dụng.', 'analysis_id': 'a', 'source_index': 0},
+    }
+    monkeypatch.setattr(service, 'source_passages', lambda source: dict(rows))
+    selected = service.relevant_source_passages('Điều kiện nhập khẩu dây chuyền công nghệ đã qua sử dụng?', {}, limit=1)
+    assert list(selected) == ['p2-s0']
+
+
+def test_relevant_passages_does_not_extend_into_next_article(monkeypatch):
+    from app.services import retained_source_analysis as service
+    rows = {
+        'p1-s0': {'page': 1, 'quote': 'Điều 5. Tiêu chí nhập khẩu dây chuyền công nghệ.', 'analysis_id': 'a', 'source_index': 0},
+        'p1-s900': {'page': 1, 'quote': 'Điều 6. Chế độ báo cáo.', 'analysis_id': 'a', 'source_index': 0},
+    }
+    monkeypatch.setattr(service, 'source_passages', lambda source: dict(rows))
+    selected = service.relevant_source_passages('Tiêu chí nhập khẩu dây chuyền công nghệ?', {}, limit=2)
+    assert list(selected) == ['p1-s0']
+
+
 def test_relevant_passages_restore_original_reading_order_after_ranking(monkeypatch):
     from app.services import retained_source_analysis as service
     rows = {
