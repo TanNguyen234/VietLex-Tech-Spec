@@ -199,7 +199,9 @@ def relevant_source_passages(question, source, *, limit=10):
                     selected[next_id] = next_item[1]
                     covered.update(next_item[2])
                     candidates.remove(next_item)
-    return selected
+    return {identifier: selected[identifier]
+            for identifier in (["source-metadata"] if metadata else []) + ordered_ids
+            if identifier in selected}
 
 
 def source_temporal_context(question, source):
@@ -296,6 +298,7 @@ async def analyze_retained_source(question, source, *, relevant_only=False):
         "không chứng minh bản gốc bị khuyết. Không suy đoán thiếu trang khác. OCR vẫn có thể sai. "
         "Khi chỉ có các passage liên quan, các khoảng giữa passage không chứng minh văn bản gốc thiếu nội dung; "
         "không nói Điều hoặc Khoản trong bản gốc bị khuyết chỉ vì passage đó không được chọn. "
+        "Cũng không khẳng định toàn văn không có phần thiếu hoặc đã được rà soát đầy đủ khi chỉ được cấp đoạn chọn. "
         "Phân biệt ngày ban hành, ngày có hiệu lực và ngày người dùng hỏi. Văn bản chưa đến ngày hiệu lực vẫn có thể được mô tả nội dung thay đổi. "
         "Yêu cầu nêu điều chưa đủ căn cứ không bắt buộc tạo ra phần thiếu khi câu hỏi đã được trả lời. "
         "Không tự mở rộng câu hỏi sang kiểm toán mọi văn bản cũ hoặc quy định chuyển tiếp chưa được hỏi. "

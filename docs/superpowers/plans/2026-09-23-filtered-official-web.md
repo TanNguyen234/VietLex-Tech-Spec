@@ -28,7 +28,7 @@
 
 - [x] RED: focused fixtures with wrong numbers, spoofed hosts, duplicate fragments, related amendments, date-tainted keyword fallback, noisy topical titles, passage selection and temporal status.
 - [x] GREEN: bounded filters and passage selection; focused tests passed.
-- [x] Review stable diff/error paths; full provider-free suite: 1,388 passed, 4 skipped.
+- [x] Review stable diff/error paths; final full provider-free suite: 1,389 passed, 4 skipped.
 - [x] Local live: natural question, official discovery/read and bounded answer; production follow-up remains.
 - [x] Durable report in `docs/verification/official-web-fallback-20260923/REPORT.md`.
 

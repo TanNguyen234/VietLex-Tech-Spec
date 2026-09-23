@@ -228,6 +228,17 @@ def test_relevant_passages_keeps_article_continuation_across_page(monkeypatch):
     assert list(service.relevant_source_passages('Chi phí trực tiếp bao gồm gì?', {}, limit=2)) == ['p1-s0', 'p2-s0']
 
 
+def test_relevant_passages_restore_original_reading_order_after_ranking(monkeypatch):
+    from app.services import retained_source_analysis as service
+    rows = {
+        'p1-s0': {'page': 1, 'quote': 'Chi phí trực tiếp được xác định riêng.', 'analysis_id': 'a', 'source_index': 0},
+        'p2-s0': {'page': 2, 'quote': 'Điều 5. Phân bổ chi phí gián tiếp theo tỷ lệ doanh thu.', 'analysis_id': 'a', 'source_index': 0},
+    }
+    monkeypatch.setattr(service, 'source_passages', lambda source: dict(rows))
+    selected = service.relevant_source_passages('Phân bổ chi phí gián tiếp và trực tiếp?', {}, limit=2)
+    assert list(selected) == ['p1-s0', 'p2-s0']
+
+
 def test_temporal_context_separates_issuance_from_reported_effective_date():
     from app.services.retained_source_analysis import source_temporal_context
     source = {'issued_date': '10-09-2026', 'reported_effective_from': '01-01-2027'}
