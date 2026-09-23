@@ -51,6 +51,10 @@ async def prepare_research_plan(question: str):
                 cleaned.append(query)
             if len(set(q.casefold() for q in cleaned)) != 5:
                 raise ValueError("duplicate_keywords")
+            verification = plan.steps[-1].query
+            if (verification != plan.steps[0].query
+                    and verification.casefold() not in {query.casefold() for query in cleaned}):
+                cleaned[-1] = verification
             steps = [
                 step.model_copy(
                     update={"query": query, "title": f"Tìm tiêu đề — cụm {index}"}

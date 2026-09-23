@@ -52,6 +52,25 @@ async def test_natural_question_uses_bounded_keywords_without_invented_law(monke
 
 
 @pytest.mark.asyncio
+async def test_model_keywords_keep_distinctive_subject_verification(monkeypatch):
+    generate = AsyncMock(return_value=SimpleNamespace(
+        status="success", finish_reason="STOP",
+        text=json.dumps({"queries": [
+            "nhập khẩu dây chuyền", "nhập khẩu công nghệ", "thiết bị cũ",
+            "nhập khẩu thiết bị", "dây chuyền công nghệ",
+        ]}),
+        observed_provider="observed", observed_model="observed-model",
+    ))
+    monkeypatch.setattr(planner, "_generate", generate)
+    plan = await planner.prepare_research_plan(
+        "Nhập khẩu dây chuyền công nghệ đã qua sử dụng phải đáp ứng điều kiện gì "
+        "theo quy định mới tháng 9/2026? Xét tại ngày 13/09/2026."
+    )
+    assert plan.query_method == "model_keywords"
+    assert plan.steps[-1].query == "dây chuyền công nghệ đã qua sử dụng"
+
+
+@pytest.mark.asyncio
 async def test_exact_reference_does_not_require_model(monkeypatch):
     generate = AsyncMock()
     monkeypatch.setattr(planner, "_generate", generate)

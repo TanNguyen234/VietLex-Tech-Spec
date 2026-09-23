@@ -166,6 +166,14 @@ def test_research_plan_uses_issue_terms_before_as_of_date():
     assert prefixed.steps[0].query.startswith('chi phí trực tiếp')
 
 
+def test_research_plan_tries_distinctive_subject_phrase_when_initial_terms_are_broad():
+    question = ('Nhập khẩu dây chuyền công nghệ đã qua sử dụng phải đáp ứng điều kiện gì '
+                'theo quy định mới tháng 9/2026? Xét tại ngày 13/09/2026.')
+    plan = build_research_plan(question)
+    assert plan.steps[0].query == 'nhập khẩu dây chuyền'
+    assert plan.steps[-1].query == 'dây chuyền công nghệ đã qua sử dụng'
+
+
 @pytest.mark.asyncio
 async def test_natural_question_keeps_topical_official_document_and_removes_noise():
     from unittest.mock import AsyncMock

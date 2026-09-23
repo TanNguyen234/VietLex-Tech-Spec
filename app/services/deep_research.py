@@ -162,12 +162,14 @@ def build_research_plan(question: str) -> ResearchPlan:
     seed = (document_number.group(0) if document_number else
             named_law.group(0) if named_law else " ".join(tokens[:4] if has_as_of else tokens[-4:]))
     seed = seed or question
+    verification = (" ".join(tokens[2:10]) if has_as_of and len(tokens) >= 8
+                    and not document_number and not named_law else seed)
     definitions: list[tuple[StepKind, str, str]] = [
         ("legal_basis", "Căn cứ pháp lý trực tiếp", seed),
         ("conditions", "Điều kiện và thủ tục", f"{seed} điều kiện"),
         ("exceptions", "Ngoại lệ và giới hạn", f"{seed} không được"),
         ("amendments", "Sửa đổi và tình trạng hiệu lực", f"{seed} sửa đổi"),
-        ("official_verification", "Đối chiếu nguồn chính thức", seed),
+        ("official_verification", "Đối chiếu nguồn chính thức", verification),
     ]
     steps = [
         ResearchPlanStep(
