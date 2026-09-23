@@ -7,13 +7,30 @@
 [![Dense embedding](https://img.shields.io/badge/V3%20Embedding-gemini--embedding--2%201024d-F59E0B)](https://cloud.google.com/vertex-ai/generative-ai/docs/embeddings/get-text-embeddings)
 [![Backend](https://img.shields.io/badge/Backend-FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 
-**Vietnamese Legal RAG với v3 Vertex/Qdrant mặc định và đường Pinecone toàn corpus không dùng Google Cloud được chọn tường minh.**
+**Trợ lý nghiên cứu pháp luật Việt Nam: tìm căn cứ, đọc nguồn chính thức, đối chiếu thời gian, rà soát tài liệu và xuất báo cáo có thể kiểm tra lại.**
 
 Ngôn ngữ: **Tiếng Việt** | [English](README.en.md)
 
 </div>
 
-VietLex hỗ trợ người nghiên cứu pháp lý và compliance đi từ câu hỏi đến hồ sơ có căn cứ: **tìm văn bản → đọc và ghim Điều/Khoản → phân tích nguồn → rà soát tài liệu và xử lý findings → chỉnh sửa, xuất báo cáo**. Đây vẫn là sản phẩm nghiên cứu đang được kiểm chứng, chưa đạt production readiness.
+VietLex hỗ trợ người nghiên cứu pháp lý và compliance đi từ câu hỏi đến hồ sơ có căn cứ: **tra cứu → kiểm tra mốc hiệu lực → đọc và lưu trích đoạn → phân tích → rà soát tài liệu và xử lý findings → xuất báo cáo**. [Dùng thử ứng dụng](https://vietlex-legal-rag.vercel.app). Đây vẫn là sản phẩm nghiên cứu đang được kiểm chứng, chưa đạt production readiness hoặc chứng nhận độ đúng pháp lý.
+
+## Bắt đầu với một câu hỏi
+
+1. Hỏi bằng ngôn ngữ tự nhiên trên trang chủ. Chat dùng Qdrant v3 trong phạm vi dữ liệu đã lập chỉ mục và hiển thị căn cứ truy xuất. Nếu thiếu căn cứ, chuyển nguyên câu hỏi sang **Hồ sơ nghiên cứu**.
+2. Trong tab **Nguồn**, xem và chỉnh kế hoạch tìm trên Cổng văn bản Chính phủ và Công báo rồi chạy tra cứu. Kết quả tìm kiếm chỉ giúp chọn văn bản; hãy mở bản gốc và đọc PDF/OCR trước khi kết luận.
+3. Dùng **Trả lời từ các đoạn liên quan** trên bản đọc đã lưu. Hệ thống chọn tối đa 10 đoạn theo câu hỏi, giữ thứ tự đọc, dẫn đúng trang và tách ngày ban hành, ngày hiệu lực khỏi ngày đang xét. Có thể mở toàn bộ bản đọc để rà soát rộng hơn.
+4. Ghim nguyên văn căn cứ cần dùng, tải tài liệu cần rà soát, xử lý findings và xuất báo cáo MD/DOCX từ hồ sơ. Trạng thái hiệu lực chỉ được xác nhận khi có sự kiện registry đã được người kiểm chứng công bố.
+
+| Phạm vi online hiện tại | Trạng thái |
+| :--- | :--- |
+| Chat Qdrant v3 và tra cứu Supabase | 14.962 document ID/văn bản theo lần kiểm kê; không đại diện toàn bộ 518.255 văn bản của dataset nguồn |
+| Tra cứu web chính thức | Gọi khi người dùng chạy kế hoạch trong hồ sơ; lọc domain và kết quả; bản gốc đã đọc mới được dùng cho câu trả lời |
+| Tìm nội dung Điều/Khoản trên Supabase | Chưa bật; lô thân văn bản từng nạp thử vẫn chưa công bố để tìm kiếm |
+| Hiệu lực pháp lý | Hiển thị ngày theo nguồn và registry nếu có; chưa có dữ liệu registry đã công bố để chứng nhận tình trạng hiện hành |
+| Chất lượng | Test và ca live có phạm vi; chưa có benchmark đủ rộng chứng minh trả lời đúng luật trên câu hỏi bất kỳ |
+
+Xem [trạng thái chức năng](FEATURE_STATUS.md), [kiểm chứng tra cứu web 23/09](docs/verification/official-web-fallback-20260923/REPORT.md), [kiến trúc hiện tại](docs/CURRENT_ARCHITECTURE.md) và [hướng dẫn chạy local](#chạy-dự-án-từ-một-máy-mới). Không cần nạp thêm corpus để thử đường tìm nguồn chính thức.
 
 Trạng thái UI/API/tests và giới hạn chỉ được duy trì tại [FEATURE_STATUS.md](FEATURE_STATUS.md). [Tra cứu số hiệu và phục hồi khi kho lỗi](docs/verification/legal-search-recovery-20260922/REPORT.md) đã được kiểm tra với corpus/Mongo/Chrome local. Sau khi Supabase được khôi phục, [search/reader production đã được kiểm tra lại](docs/verification/supabase-resumed-20260922/REPORT.md). Registry có [ảnh UI và bằng chứng Mongo/Chrome thật](docs/verification/shared-legal-registry-20260919/REPORT.md). Bản full-text cục bộ có [hướng dẫn dựng chỉ mục và bằng chứng UI](docs/verification/internal-fulltext-20260919/REPORT.md); chưa bật full-text trên production.
 
@@ -32,7 +49,7 @@ Cập nhật kiểm chứng: [OCR production 502 → 200](docs/verification/ocr-
 | Hoàn tất pipeline | **50/50** generation `STOP` · **50/50** NeMo input/output safe · **50/50** Ragas · 0 lỗi kỹ thuật |
 | Verified retrieval subset | **40** case có toàn bộ required evidence đã xác minh · Document Recall@3 **1,0000**, micro **53/53** |
 | Dữ liệu v3 đã kiểm kê | **141.798** point remote · **14.962** document ID duy nhất · Supabase cùng **14.962** văn bản |
-| Automated verification | **1300 passed, 30 warnings** trên source được commit thành `f4fcb37`; xem [lệnh, trạng thái Git và giới hạn](docs/verification/selected-context-20260919/REPORT.md). **5 JavaScript tests passed** ở lượt 12/09 (không chạy lại trong sửa backend này). Suite không gọi provider, loại integration/visual; [API và browser thật](docs/verification/workflow-usability-20260912/REPORT.md) được báo cáo riêng |
+| Automated verification | **1.392 passed, 4 skipped, 31 warnings** ở lượt 23/09 sau sửa chọn Điều/Khoản (commit `2962501`). Bản sửa truy vấn `0f0816f` có **22/22 test tập trung qua**; full suite chưa có kết quả hợp lệ vì máy hết bộ nhớ khi thu thập test. Test provider-free khác với API/browser thật; xem [báo cáo theo lần chạy](docs/verification/official-web-fallback-20260923/REPORT.md) |
 | Online discovery ngoài corpus | **10/10** neo ban đầu + **3/3** holdout; đọc hai trang đầu **12/13** lần đầu, **13/13** sau một retry mạng. Chưa đánh giá độ đúng/đủ pháp lý của 13 câu rộng; xem JSON và giới hạn trong report |
 | Public SSR smoke | Vercel FastAPI/Jinja tại <https://vietlex-legal-rag.vercel.app>: SSR và readiness sẵn sàng; tìm kiếm Supabase và trang toàn văn đã được kiểm tra trực tiếp |
 
@@ -70,7 +87,7 @@ Tổng quan chỉ rõ bước tiếp theo; thư viện giữ bản đọc theo U
 
 ## Năng lực cốt lõi
 
-Khi thiếu căn cứ nội tại, người dùng chuyển câu hỏi sang hồ sơ, chỉnh từ khóa tìm nguồn chính thức và đọc PDF/OCR. Sau đó có thể ghim trích đoạn để phân tích phạm vi hẹp, hoặc chọn **Hỏi từ toàn bộ bản đọc đang lưu** để phân tích các trang cùng phiên bản nguồn, kèm căn cứ nguyên văn. Hiệu lực vẫn cần kiểm chứng; OCR cần đối chiếu bản gốc.
+Khi thiếu căn cứ nội tại, người dùng chuyển câu hỏi sang hồ sơ, chỉnh từ khóa tìm nguồn chính thức và đọc PDF/OCR. Từ bản nguồn đã lưu, lựa chọn mặc định là **Trả lời từ các đoạn liên quan**; tùy chọn đọc toàn bộ bản đã lưu dành cho rà soát rộng hơn. Có thể ghim nguyên văn trích đoạn để tái sử dụng trong phân tích và báo cáo. Ngày ban hành/hiệu lực từ trang nguồn chỉ là thông tin được công bố; OCR và lịch sử sửa đổi vẫn cần đối chiếu.
 
 [10 câu gốc ngoài corpus local](docs/evaluation/runs/retained-source-ten-20260919T163801Z/REPORT.md): 10 phản hồi hợp lệ, 142 ID căn cứ có thật; model đánh giá 9 đủ/1 thiếu. Đây không phải chứng nhận 10/10 câu đúng luật. [Workflow API/Mongo/Chrome thật và giới hạn](docs/verification/retained-source-20260920/REPORT.md).
 

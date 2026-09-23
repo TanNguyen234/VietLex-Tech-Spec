@@ -41,3 +41,22 @@ Government source in the live case: <https://vanban.chinhphu.vn/?pageid=27160&do
 ## Remote ingestion state at user stop
 
 No more corpus data was uploaded after the stop instruction. A previously running chunk had just completed: 101,573 body passages staged in unpublished batch `288c184e-9761-4d2d-9298-f9b91966070a`; zero active batches; production body search flag off. Online `legal_documents` remained 14,962. The Supabase database measured 316,705,939 bytes on Free. `20260923_legal_body_expression_index.sql` had been applied; `20260923_legal_body_active_lookup.sql` was tested locally and remains unapplied remotely. No upload process remains. The partial batch is not a production search index.
+
+## Continuation: ordinary question and long scanned source
+
+The initial five deterministic searches for a natural import-machinery question repeated a broad phrase and missed `56/2026/TT-BKHCN` (14 official results). A direct official search for `dây chuyền công nghệ đã qua sử dụng` returned that document. Commit `0f0816f` retains this distinctive subject phrase as the final verification query, including when the UI's optional model keyword planner supplies broad alternatives. The model planner still supplies the other queries and never supplies legal evidence itself. The source-reading fix in `2962501` also keeps relevant Article 5 conditions within the bounded answer instead of treating a heading as the whole article.
+
+On the production domain, the UI-equivalent `suggest_keywords=true` plan found `56/2026/TT-BKHCN` among 18 official results, without a document number in the question. The selected [Government Portal record](https://vanban.chinhphu.vn/?pageid=27160&docid=219429) identified a 39-page PDF. Ordinary extraction yielded only 61 characters in the first five pages, so the probe explicitly retried those pages with OCR: `vertex_ocr`, 11,635 characters. The saved-source relevant-excerpt route returned HTTP 303 then a readable answer page with excerpt-scope, time-marker and citation sections; a 240-character Article 5 quote was pinned from the exact OCR text. These checks establish operational flow only: they do not certify OCR accuracy, citation sufficiency, legal effect or answer correctness.
+
+The same production workspace could not create a new research report: `POST /analyses/report` returned HTTP 429 `demo_daily_quota`; a later retry returned the same typed error. Current-case MD/DOCX export is therefore **NOT RUN**. Earlier report/export tests in this file remain historical evidence for that separate path. A new plan request after the new deployment also received the daily quota response, so the deployed deterministic query cannot be independently re-probed today. Vercel displayed commit `0f0816f` as **Ready**, **Latest**, **Production**, with `vietlex-legal-rag.vercel.app` assigned at deployment `3ZBrPwLY55QVVYQYwUumFgc5aJ7y`.
+
+| Gate | Exact command / observation | Result |
+| --- | --- | --- |
+| RED for model keyword loss | `.venv/Scripts/python.exe -m pytest -q tests/services/test_official_query_planner.py::test_model_keywords_keep_distinctive_subject_verification` | Expected assertion failure before fix |
+| Focused GREEN | `.venv/Scripts/python.exe -m pytest -q tests/services/test_official_query_planner.py tests/services/test_deep_research.py` | 22 passed |
+| Stable diff | `git diff --cached --check` | passed before commit |
+| Broad provider-free suite | `.venv/Scripts/python.exe -m pytest -x -q --basetemp tmp/continuation-20260922/pytest-temp-query-final2/cases --junitxml=tmp/continuation-20260922/query-final2.xml` with TEMP/TMP on D | **NOT PASSED**: `MemoryError` while collecting `google.genai` in `tests/evaluation/test_runtime_contracts.py`; C had ~234 MB free and free physical memory ~700 MB. No reliable new full-suite result. |
+| Production workflow | `.venv/Scripts/python.exe tmp/continuation-20260922/probe_imports_workflow.py` | Correct document found, OCR/read/answer/pin passed; report 429 daily quota |
+| Production report retry | `.venv/Scripts/python.exe tmp/continuation-20260922/resume_imports_report.py` | 429 `demo_daily_quota`; export **NOT RUN** |
+
+The live probe scripts and request summaries are in ignored `tmp/continuation-20260922/` and include private session state; they are intentionally not committed. The report preserves only bounded observations. No additional corpus upload, migration, vector rebuild, registry promotion or paid plan change was performed in this continuation.
