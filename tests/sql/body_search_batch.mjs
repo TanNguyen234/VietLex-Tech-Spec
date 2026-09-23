@@ -16,6 +16,8 @@ await db.exec(fs.readFileSync('migrations/20260919_legal_body_search.sql','utf8'
 for(const d of docs) {const x=d.metadata;await db.query('INSERT INTO legal_documents VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)',[x.document_id,x.document_number,x.title,x.source_url,x.legal_type,x.issuing_authority,x.issuance_date,d.content,d.content_sha256]);}
 await db.query('INSERT INTO legal_body_runs(batch_id,expected_documents,expected_passages,source_sha256) VALUES($1,$2,$3,$4)',[m.batch_id,m.expected_documents,m.expected_passages,m.source_sha256]);
 for(const r of rows) await db.query('INSERT INTO legal_body_passages VALUES($1,$2,$3,$4,$5,$6,$7,DEFAULT)',[r.batch_id,r.document_id,r.section_id,r.section_title,r.document_offset,r.content_sha256,r.body]);
+await db.exec(fs.readFileSync('migrations/20260923_legal_body_expression_index.sql','utf8'));
+assert.equal((await db.query('SELECT count(*)::int AS n FROM legal_body_passages')).rows[0].n, rows.length);
 const first=rows[0], query=first.body.trim().split(/\s+/).slice(0,5).join(' ');
 await db.exec('SET ROLE anon');
 assert.equal((await db.query('SELECT * FROM search_legal_body($1)',[query])).rows.length,0);

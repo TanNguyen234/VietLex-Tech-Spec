@@ -12,11 +12,19 @@ await db.exec(`CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_
 CREATE TABLE legal_documents(document_id bigint primary key,document_number text,title text,source_url text,legal_type text,issuing_authority text,issuance_date text,content text,content_sha256 text);
 GRANT SELECT ON legal_documents TO anon,authenticated,service_role;`);
 await db.exec(fs.readFileSync('migrations/20260919_legal_body_search.sql','utf8'));
+for (const name of fs.readdirSync('migrations').filter(name => name > '20260919_legal_body_search.sql' && name.includes('legal_body')).sort()) {
+  await db.exec(fs.readFileSync(`migrations/${name}`, 'utf8'));
+}
+assert.equal((await db.query("SELECT count(*)::int AS n FROM information_schema.columns WHERE table_schema='public' AND table_name='legal_body_passages' AND column_name='fts'")).rows[0].n, 0, 'body index must not duplicate a stored tsvector per passage');
 const batch='11111111-1111-4111-8111-111111111111', hash='a'.repeat(64), body='Điều 24. Thử việc. Người lao động được thỏa thuận thời gian thử việc.';
 await db.query('INSERT INTO legal_documents VALUES(1,$1,$2,$3,$4,$5,$6,$7,$8)',['test','Test fixture','','Luật','Test','2026-01-01',body,hash]);
 await db.query('INSERT INTO legal_body_runs(batch_id,expected_documents,expected_passages,source_sha256) VALUES($1,1,1,$2)',[batch,hash]);
 await db.query('INSERT INTO legal_body_passages(batch_id,document_id,section_id,section_title,document_offset,content_sha256,body) VALUES($1,1,$2,$3,0,$4,$5)',[batch,'section-1','Điều 24',hash,body]);
 await db.exec('SET ROLE anon');
+await db.exec('SET enable_seqscan=off');
+const unpublishedPlan=(await db.query('EXPLAIN SELECT document_id FROM legal_body_passages LIMIT 1')).rows.map(row=>row['QUERY PLAN']).join('\n');
+assert.match(unpublishedPlan, /Index Cond:.*batch_id/, 'RLS must seek the singleton active batch through the primary index');
+await db.exec('RESET enable_seqscan');
 assert.equal((await db.query("SELECT * FROM search_legal_body('thu viec')")).rows.length,0);
 await assert.rejects(db.query('SELECT publish_legal_body($1)',[batch]), /permission denied/);
 await db.exec('RESET ROLE; SET ROLE service_role');
@@ -37,7 +45,7 @@ if (process.argv[3]) {
   const b='22222222-2222-4222-8222-222222222222';
   await db.query('INSERT INTO legal_documents VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)',[f.document_id,f.number,f.title,f.source_url,f.legal_type,f.authority,f.issuance_date,f.content,f.hash]);
   await db.query('INSERT INTO legal_body_runs(batch_id,expected_documents,expected_passages,source_sha256) VALUES($1,1,1,$2)',[b,f.hash]);
-  await db.query('INSERT INTO legal_body_passages VALUES($1,$2,$3,$4,$5,$6,$7,DEFAULT)',[b,f.document_id,f.section_id,'Điều 24',f.offset,f.hash,f.body]);
+  await db.query('INSERT INTO legal_body_passages(batch_id,document_id,section_id,section_title,document_offset,content_sha256,body) VALUES($1,$2,$3,$4,$5,$6,$7)',[b,f.document_id,f.section_id,'Điều 24',f.offset,f.hash,f.body]);
   await db.exec('SET ROLE service_role');
   await db.query('SELECT publish_legal_body($1)',[b]);
   await db.exec('RESET ROLE; SET ROLE anon');
