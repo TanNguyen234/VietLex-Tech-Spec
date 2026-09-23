@@ -49,7 +49,7 @@ Cập nhật kiểm chứng: [OCR production 502 → 200](docs/verification/ocr-
 | Hoàn tất pipeline | **50/50** generation `STOP` · **50/50** NeMo input/output safe · **50/50** Ragas · 0 lỗi kỹ thuật |
 | Verified retrieval subset | **40** case có toàn bộ required evidence đã xác minh · Document Recall@3 **1,0000**, micro **53/53** |
 | Dữ liệu v3 đã kiểm kê | **141.798** point remote · **14.962** document ID duy nhất · Supabase cùng **14.962** văn bản |
-| Automated verification | **1.392 passed, 4 skipped, 31 warnings** ở lượt 23/09 sau sửa chọn Điều/Khoản (commit `2962501`). Bản sửa truy vấn `0f0816f` có **22/22 test tập trung qua**; full suite chưa có kết quả hợp lệ vì máy hết bộ nhớ khi thu thập test. Test provider-free khác với API/browser thật; xem [báo cáo theo lần chạy](docs/verification/official-web-fallback-20260923/REPORT.md) |
+| Automated verification | **1.392 passed, 4 skipped, 31 warnings** ở lượt 23/09 sau sửa chọn Điều/Khoản (commit `2962501`). Bản sửa truy vấn `0f0816f` có **22/22 test tập trung qua**; 9 test tạo/xuất báo cáo qua. Full suite mới chưa có kết quả hợp lệ vì máy hết bộ nhớ khi thu thập test. Test provider-free khác với API/browser thật; xem [báo cáo theo lần chạy](docs/verification/official-web-fallback-20260923/REPORT.md) |
 | Online discovery ngoài corpus | **10/10** neo ban đầu + **3/3** holdout; đọc hai trang đầu **12/13** lần đầu, **13/13** sau một retry mạng. Chưa đánh giá độ đúng/đủ pháp lý của 13 câu rộng; xem JSON và giới hạn trong report |
 | Public SSR smoke | Vercel FastAPI/Jinja tại <https://vietlex-legal-rag.vercel.app>: SSR và readiness sẵn sàng; tìm kiếm Supabase và trang toàn văn đã được kiểm tra trực tiếp |
 

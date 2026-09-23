@@ -54,6 +54,7 @@ The same production workspace could not create a new research report: `POST /ana
 | --- | --- | --- |
 | RED for model keyword loss | `.venv/Scripts/python.exe -m pytest -q tests/services/test_official_query_planner.py::test_model_keywords_keep_distinctive_subject_verification` | Expected assertion failure before fix |
 | Focused GREEN | `.venv/Scripts/python.exe -m pytest -q tests/services/test_official_query_planner.py tests/services/test_deep_research.py` | 22 passed |
+| Report/export focused gate | `.venv/Scripts/python.exe -m pytest -q tests/test_research_report_routes.py tests/test_report_deliverables.py` | 9 passed, 2 warnings; test path only, not a live report for this case |
 | Stable diff | `git diff --cached --check` | passed before commit |
 | Broad provider-free suite | `.venv/Scripts/python.exe -m pytest -x -q --basetemp tmp/continuation-20260922/pytest-temp-query-final2/cases --junitxml=tmp/continuation-20260922/query-final2.xml` with TEMP/TMP on D | **NOT PASSED**: `MemoryError` while collecting `google.genai` in `tests/evaluation/test_runtime_contracts.py`; C had ~234 MB free and free physical memory ~700 MB. No reliable new full-suite result. |
 | Production workflow | `.venv/Scripts/python.exe tmp/continuation-20260922/probe_imports_workflow.py` | Correct document found, OCR/read/answer/pin passed; report 429 daily quota |
