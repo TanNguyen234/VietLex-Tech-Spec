@@ -170,6 +170,25 @@ def test_structured_request_detail_shows_its_own_mode_and_bounded_counts(admin_p
     assert 'N/A · N/A' in response.text
 
 
+def test_older_structured_trace_explicitly_marks_unrecorded_finding_count(admin_pages, monkeypatch):
+    import app.api.routes as routes
+
+    client, _ = admin_pages
+    monkeypatch.setattr(routes, 'get_interaction', AsyncMock(return_value={
+        'trace_id': 'older-review-test', 'user_query': 'synthetic',
+        'bot_response': 'ok', 'contexts': [],
+        'retrieval_trace': {
+            'mode': 'bounded_full_document_review',
+            'clause_count': 5,
+            'selected_legal_evidence_count': 2,
+        },
+        'metrics': {'request_status': 'full_document_review_ok'},
+    }))
+    response = client.get('/admin/details/older-review-test')
+    assert response.status_code == 200
+    assert 'Findings đã tạo</dt><dd>Chưa ghi nhận' in response.text
+
+
 @pytest.mark.asyncio
 async def test_strict_audit_reader_does_not_hide_database_failure(monkeypatch):
     import app.database as database
