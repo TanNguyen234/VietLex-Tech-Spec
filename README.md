@@ -49,7 +49,7 @@ Cập nhật kiểm chứng: [OCR production 502 → 200](docs/verification/ocr-
 | Hoàn tất pipeline | **50/50** generation `STOP` · **50/50** NeMo input/output safe · **50/50** Ragas · 0 lỗi kỹ thuật |
 | Verified retrieval subset | **40** case có toàn bộ required evidence đã xác minh · Document Recall@3 **1,0000**, micro **53/53** |
 | Dữ liệu v3 đã kiểm kê | **141.798** point remote · **14.962** document ID duy nhất · Supabase cùng **14.962** văn bản |
-| Automated verification | **1.392 passed, 4 skipped, 31 warnings** ở lượt 23/09 sau sửa chọn Điều/Khoản (commit `2962501`). Bản sửa truy vấn `0f0816f` có **22/22 test tập trung qua**; 9 test tạo/xuất báo cáo qua. Full suite mới chưa có kết quả hợp lệ vì máy hết bộ nhớ khi thu thập test. Test provider-free khác với API/browser thật; xem [báo cáo theo lần chạy](docs/verification/official-web-fallback-20260923/REPORT.md) |
+| Automated verification | **1.395 passed, 4 skipped, 31 warnings** trên commit `30800d5` ngày 24/09; 24 test tập trung cho bản đọc và 9 test tạo/xuất báo cáo cũng qua. Test provider-free khác với API/browser thật; xem [lệnh, kết quả và giới hạn live](docs/verification/official-web-fallback-20260923/REPORT.md) |
 | Online discovery ngoài corpus | **10/10** neo ban đầu + **3/3** holdout; đọc hai trang đầu **12/13** lần đầu, **13/13** sau một retry mạng. Chưa đánh giá độ đúng/đủ pháp lý của 13 câu rộng; xem JSON và giới hạn trong report |
 | Public SSR smoke | Vercel FastAPI/Jinja tại <https://vietlex-legal-rag.vercel.app>: SSR và readiness sẵn sàng; tìm kiếm Supabase và trang toàn văn đã được kiểm tra trực tiếp |
 
@@ -230,7 +230,9 @@ API database cho biết schema và số vector/point, nhưng **không trả về
 3. Qdrant v2 có structural chunk tốt hơn nhưng chỉ phủ 827 văn bản. Bật nó không tự biến coverage thành toàn corpus.
 4. Qdrant v3 hiện có 141.798 point từ 14.962/518.255 văn bản. Nó là runtime mặc định, nhưng câu hỏi ngoài vùng đã migrate vẫn có thể không có candidate. Golden-50 cho thấy blend RRF+DBSF qua gate, còn Qdrant ColBERT làm giảm recall; coverage đại diện vẫn là bottleneck.
 
-## Migration sắp tới và mốc hết Google Cloud Trial
+## Lịch sử migration v3 và giới hạn dung lượng
+
+Người dùng đã dừng nạp thêm corpus và giữ Supabase Free. G2 và các mốc mở rộng dưới đây là phương án lịch sử để đánh giá dung lượng, **không phải lịch upload đang chạy hoặc kế hoạch đã được phê duyệt**. Đường web nguồn chính thức được dùng khi tập online không đủ căn cứ.
 
 Mục tiêu của migration v3 là tìm ở cấp **đoạn pháp lý/Điều/Khoản**, dùng `gemini-embedding-2` 1.024 chiều + sparse IDF + RRF, thay vì phụ thuộc hoàn toàn vào một vector đại diện cho cả văn bản. Điều này có khả năng cải thiện câu hỏi tự nhiên, nhưng chỉ khi chunk liên quan thật sự đã được upload và A/B benchmark chứng minh stage survival/Recall@K tốt hơn.
 
@@ -244,7 +246,7 @@ Mục tiêu của migration v3 là tìm ở cấp **đoạn pháp lý/Điều/Kh
 > [!CAUTION]
 > Code hiện tại lấy tối đa 16 chunk phân bố đều trên mỗi văn bản để giữ chi phí hữu hạn. Cách này có thể vẫn bỏ sót một Điều cụ thể, nên không được quảng bá là đã giải quyết hoàn toàn lỗi chat. Trước G2 cần chọn một trong hai contract: lưu đầy đủ Điều/Khoản cho tập văn bản ưu tiên, hoặc giữ Pinecone làm document router rồi chunk/rerank full text cục bộ theo request.
 
-Theo thông tin vận hành hiện tại, Google Cloud Trial còn khoảng **3 tháng** (mốc chính xác phải xác nhận ở Cloud Billing). Kế hoạch an toàn:
+Ước tính Google Cloud Trial còn khoảng **3 tháng** được ghi trong kế hoạch cũ; chưa kiểm tra lại mốc Billing ngày 24/09 và không dùng ước tính đó làm lịch triển khai. Kịch bản G2 dưới đây đang tạm dừng:
 
 1. **Tháng 1:** chạy G1 có checkpoint, đo Recall/MRR/nDCG và kiểm kê token/chi phí thật; chưa cutover.
 2. **Tháng 2:** quyết định giữ Vertex có billing hay chuyển sang embedding tự host/open-weight. Nếu đổi model, phải tạo collection mới và re-embed; không được query vector Vertex bằng model khác.
@@ -377,12 +379,12 @@ alter table public.legal_documents enable row level security;
 
 `SUPABASE_SERVICE_ROLE_KEY` chỉ được đặt ở backend/CLI, không đưa vào Vercel client hoặc biến `NEXT_PUBLIC_*`. Uploader chủ động từ chối publishable key.
 
-### 3. Kiểm tra kết nối & upload có chủ đích
+### 3. Kiểm tra kết nối và thao tác vận hành có phê duyệt riêng
 ```powershell
 # Kiểm tra kết nối và bảng
 python run_supabase_full_doc_upload.py --check-connection
 
-# Ví dụ upload đúng tập v3 hiện tại với streaming batch và checkpoint resumable
+# Ví dụ lịch sử cho operator; không chạy trong trạng thái dừng nạp dữ liệu hiện tại
 python run_supabase_full_doc_upload.py --document-ids-file data/migration/v3-expansion-10000-20260902-selection.json --max-documents 14962 --batch-size 50 --allow-remote-write
 ```
 
@@ -595,6 +597,8 @@ python -u -m app.ingestion.hf_pipeline full --delete-existing --yes
 - Kết quả evaluation là bounded slice; không chứng minh whole-corpus legal accuracy hoặc production readiness.
 - Vercel FastAPI SSR dùng progress registry process-local; nhiều replica cần shared event backend hoặc sticky routing.
 - Cross-lane final rerank vẫn được chủ ý tắt theo quyết định `KEEP_DISABLED`.
+- Nguồn web chính thức được đọc theo từng lượt tối đa 5 trang; phần chưa đọc không có nghĩa PDF gốc thiếu trang. Câu trả lời từ bản đọc là bản nghiên cứu có trích dẫn, không xác nhận lịch sử sửa đổi hay hiệu lực hiện hành.
+- Báo cáo AI có thể bị chặn khi model trích sai nguyên văn hoặc tham chiếu mã bằng chứng không được chọn. Bản nháp lỗi vẫn có thể được lưu và xuất với trạng thái cần rà soát; không được coi là báo cáo đã kiểm chứng.
 
 ## Tài liệu
 

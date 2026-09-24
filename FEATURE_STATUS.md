@@ -1,5 +1,7 @@
 # VietLex — trạng thái chức năng
 
+Cập nhật ngày 2026-09-24: suite provider-free trên commit `30800d5` đạt **1.395 passed, 4 skipped**. Production đã trả lời lại câu hỏi nhập khẩu từ 10/18 đoạn đã đọc, 5 trích dẫn, không còn gọi trang chưa đọc là bản gốc bị khuyết. Báo cáo AI với nguồn đã ghim bị từ chối có kiểu khi model đưa trích dẫn hoặc evidence ID không hợp lệ; bản nháp lưu và xuất MD/DOCX được nhưng vẫn chưa được kiểm chứng. [Bằng chứng và giới hạn](docs/verification/official-web-fallback-20260923/REPORT.md).
+
 Cập nhật ngày 2026-09-23: [tra cứu nguồn chính thức từ câu hỏi thường và trả lời theo đoạn liên quan](docs/verification/official-web-fallback-20260923/REPORT.md) đã chạy trên production. Trường hợp nhập khẩu tìm đúng Thông tư 56/2026/TT-BKHCN, OCR và ghim được nguồn; bước tạo báo cáo mới bị quota demo hằng ngày chặn, nên chưa nghiệm thu xuất báo cáo cho chính trường hợp đó. Bản `0f0816f` đã Ready trên Vercel. Không nạp thêm dữ liệu Supabase/Qdrant; tìm body online vẫn tắt. Full test sau bản sửa này chưa hợp lệ vì thiếu bộ nhớ lúc thu thập test; 22 test tập trung đã qua.
 
 Kiểm chứng mới ngày 2026-09-22: [số hiệu đầy đủ và đường tiếp tục khi kho lỗi](docs/verification/legal-search-recovery-20260922/REPORT.md); [Supabase hoạt động lại, search/reader production trả 200](docs/verification/supabase-resumed-20260922/REPORT.md). Số hiệu vắng trong tập online trả 0 kết quả; tìm nội dung body online vẫn trả 503 vì RPC/index chưa triển khai.

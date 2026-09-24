@@ -61,3 +61,23 @@ The same production workspace could not create a new research report: `POST /ana
 | Production report retry | `.venv/Scripts/python.exe tmp/continuation-20260922/resume_imports_report.py` | 429 `demo_daily_quota`; export **NOT RUN** |
 
 The live probe scripts and request summaries are in ignored `tmp/continuation-20260922/` and include private session state; they are intentionally not committed. The report preserves only bounded observations. No additional corpus upload, migration, vector rebuild, registry promotion or paid plan change was performed in this continuation.
+
+## Follow-up on 2026-09-24
+
+With the daily demo budget reset, the original report request proceeded but failed the claim verifier: HTTP 502, `invalid_structured_response`, `ClaimVerificationValidationError`, `invalid_evidence_quote`. It did **not** pass as a checked report. The server preserved a draft with that status. Read-only checks opened its editor (HTTP 200), exported Markdown (2,327 bytes), and exported a valid DOCX ZIP (2,369 bytes). Both exports retained the official source URL. A new report attempt from two longer, exact Article 5 excerpts was also rejected with `invalid_evidence_reference`. These typed failures protect against fabricated quotes/IDs; they mean model-verified report generation for this case remains unproven. The drafts can be edited and exported with the unverified status.
+
+The first saved-source answer called pages 6–39 “bị khuyết” even though those pages simply had not been read. Commit `30800d5` removes the `missing_pages` list from the model input while retaining `readable_pages` and the PDF page count, and tells the model to describe any relevant unreviewed pages as **chưa đọc**. The UI continues to display precise coverage and states that unread pages do not prove an incomplete PDF. A focused RED test reproduced the misleading input before the change; after it, 24 retained-source service/route tests passed. The stable full provider-free suite then completed: **1,395 passed, 4 skipped, 31 warnings in 495.27 s**.
+
+Vercel deployment `8ytLs4NXuFrL7QdgTnimgzunZBia` showed commit `30800d5` **Ready / Latest / Production** on `vietlex-legal-rag.vercel.app`. Reanalysis of the **same saved OCR source**, with the same natural question and `scope=relevant`, returned an answer page with status `ok`, 10/18 selected passages and five server-owned citation blocks. The answer no longer called unread pages missing; the page still explains that only 5/39 pages have text in the saved read. The model described the portal's reported start date as having taken effect by the user's date. This is a date comparison from one source, not an audit of amendments or legal effect; no human legal adjudication was performed.
+
+| Gate | Exact command / observation | Result |
+| --- | --- | --- |
+| Focused RED | `.venv/Scripts/python.exe -m pytest -q tests/services/test_retained_source_analysis.py::test_partial_read_prompt_describes_coverage_without_missing_page_claim` | failed before fix because `missing_pages` reached the model |
+| Focused GREEN | `.venv/Scripts/python.exe -m pytest -q tests/services/test_retained_source_analysis.py tests/test_retained_source_routes.py` | 24 passed, 2 warnings |
+| Full provider-free suite | `.venv/Scripts/python.exe -m pytest -q --basetemp D:/Download/ProfessionalLegalRAG/tmp/continuation-20260922/pytest-temp-final-20260924/cases --junitxml=tmp/continuation-20260922/full-final-20260924.xml` with TEMP/TMP on D and `PYTHONDONTWRITEBYTECODE=1` | 1,395 passed, 4 skipped, 31 warnings, 495.27 s |
+| Production saved-source reanalysis | `.venv/Scripts/python.exe tmp/continuation-20260922/recheck_imports_answer.py` | HTTP 303 then 200; `ok`, 10/18 passages, five citations, no false missing-page statement |
+| Production deterministic plan | `.venv/Scripts/python.exe tmp/continuation-20260922/probe_deployed_plan.py` | HTTP 200; fifth query was `dây chuyền công nghệ đã qua sử dụng` |
+| Production draft/export readback | `.venv/Scripts/python.exe tmp/continuation-20260922/inspect_imports_saved_reports.py` | editor 200, Markdown and valid DOCX with official URL; draft status `invalid_structured_response` |
+| Production two-excerpt report | `.venv/Scripts/python.exe tmp/continuation-20260922/complete_imports_report.py` | two exact quotes pinned; report rejected HTTP 502 `invalid_evidence_reference` |
+
+There was no new corpus ingestion, Supabase upgrade, vector migration or registry evidence promotion in this follow-up. The live model responses and the scoped test set do not establish accuracy across arbitrary Vietnamese legal questions; human review and a representative benchmark remain necessary before any production-readiness claim.
