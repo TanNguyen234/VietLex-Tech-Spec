@@ -57,6 +57,30 @@ def test_print_view_escapes_user_content_and_unknown_format_is_rejected(client):
     assert client.get("/workspaces/w-1/reports/a-1/export?format=exe").status_code == 422
 
 
+def test_invalid_evidence_report_is_clearly_unverified_in_editor_and_exports(client, monkeypatch):
+    analysis = _analysis()
+    analysis.update(status="invalid_structured_response", error_code="invalid_evidence_reference")
+    analysis["result"]["report"] = None
+    monkeypatch.setattr(
+        "app.api.workspace_routes.get_workspace",
+        AsyncMock(return_value={"analyses": [analysis]}),
+    )
+
+    editor = client.get("/workspaces/w-1/reports/a-1")
+    markdown = client.get("/workspaces/w-1/reports/a-1/export?format=md")
+    docx = client.get("/workspaces/w-1/reports/a-1/export?format=docx")
+
+    assert editor.status_code == markdown.status_code == docx.status_code == 200
+    assert "Bản nháp chưa xác minh" in editor.text
+    assert "mã bằng chứng" in editor.text
+    assert "Bản nháp chưa xác minh" in markdown.text
+    assert "mã bằng chứng" in markdown.text
+    with ZipFile(BytesIO(docx.content)) as archive:
+        document = archive.read("word/document.xml").decode()
+    assert "Bản nháp chưa xác minh" in document
+    assert "mã bằng chứng" in document
+
+
 def test_report_preview_has_source_anchors_and_escapes_active_content():
     from app.services.report_deliverables import report_preview
     analysis = _analysis()

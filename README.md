@@ -598,7 +598,7 @@ python -u -m app.ingestion.hf_pipeline full --delete-existing --yes
 - Vercel FastAPI SSR dùng progress registry process-local; nhiều replica cần shared event backend hoặc sticky routing.
 - Cross-lane final rerank vẫn được chủ ý tắt theo quyết định `KEEP_DISABLED`.
 - Nguồn web chính thức được đọc theo từng lượt tối đa 5 trang; phần chưa đọc không có nghĩa PDF gốc thiếu trang. Câu trả lời từ bản đọc là bản nghiên cứu có trích dẫn, không xác nhận lịch sử sửa đổi hay hiệu lực hiện hành.
-- Báo cáo AI có thể bị chặn khi model trích sai nguyên văn hoặc tham chiếu mã bằng chứng không được chọn. Bản nháp lỗi vẫn có thể được lưu và xuất với trạng thái cần rà soát; không được coi là báo cáo đã kiểm chứng.
+- Báo cáo AI có thể bị chặn khi model trích sai nguyên văn hoặc tham chiếu mã bằng chứng không được chọn. Bản nháp lỗi vẫn có thể được lưu và xuất, nhưng trang xem, bản in, Markdown và DOCX đều ghi rõ **“Bản nháp chưa xác minh”** cùng lý do tương ứng. Người dùng phải đối chiếu bản gốc trước khi sử dụng; không được coi bản nháp là báo cáo đã kiểm chứng.
 
 ## Tài liệu
 

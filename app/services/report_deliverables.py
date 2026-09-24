@@ -10,6 +10,24 @@ from urllib.parse import urlsplit
 from html import escape as html_escape
 
 
+def report_review_notice(analysis: dict) -> str:
+    status = str(analysis.get("status") or "")
+    if status == "ok":
+        return ""
+    reason = {
+        "invalid_evidence_reference": "Mô hình dùng mã bằng chứng không có trong nguồn đã chọn.",
+        "invalid_evidence_quote": "Câu trích của mô hình không khớp nguyên văn với nguồn đã chọn.",
+    }.get(str(analysis.get("error_code") or ""))
+    if reason is None:
+        reason = {
+            "human_edited_unverified": "Nội dung đã được chỉnh sửa và chưa kiểm chứng lại.",
+            "citation_mismatch": "Dẫn nguồn của một số khẳng định cần đối chiếu lại.",
+            "provider_error": "Dịch vụ tạo hoặc kiểm chứng báo cáo chưa hoàn tất.",
+            "insufficient_evidence": "Nguồn đã chọn chưa đủ để kết luận.",
+        }.get(status, "Báo cáo chưa vượt qua bước kiểm chứng.")
+    return "Bản nháp chưa xác minh. " + reason + " Cần đối chiếu bản gốc trước khi sử dụng."
+
+
 def report_preview(analysis: dict) -> str:
     """Render the report's headings, lists and source references; no active Markdown links/HTML."""
     sources = {source['id']: source for source in report_sources(analysis)}
@@ -27,7 +45,8 @@ def report_preview(analysis: dict) -> str:
                 html_escape(sources[identifier]['citation'] or identifier) + '</a>' for identifier in ids)
         return re.sub(r'\[([A-Za-z0-9, -]+)\](?!\()', references, value)
 
-    blocks = []
+    notice = report_review_notice(analysis)
+    blocks = ["<p class=\"legal-warning\">" + html_escape(notice) + "</p>"] if notice else []
     in_list = False
     for line in report_body(analysis).splitlines():
         is_item = line.startswith('- ')
@@ -81,7 +100,8 @@ def report_sources(analysis: dict) -> list[dict]:
 
 
 def report_markdown(analysis: dict) -> str:
-    lines = [report_body(analysis), "", "## Sources (saved snapshots)"]
+    notice = report_review_notice(analysis)
+    lines = (["> " + notice, ""] if notice else []) + [report_body(analysis), "", "## Sources (saved snapshots)"]
     for source in report_sources(analysis):
         lines.extend(["", f"### {source['id']} · {source['citation']}", source["url"], source["excerpt"]])
     lines.extend(["", "---", "Trạng thái: " + str(analysis.get("status", "unknown")),
@@ -124,7 +144,10 @@ def report_docx(analysis: dict) -> bytes:
         pieces.append(run(text[start:], bold))
         return '<w:p>' + ''.join(pieces) + '</w:p>'
 
-    paragraphs = [paragraph(line, citations=True) for line in report_body(analysis).splitlines()]
+    notice = report_review_notice(analysis)
+    paragraphs = ([paragraph(notice)] if notice else []) + [
+        paragraph(line, citations=True) for line in report_body(analysis).splitlines()
+    ]
     paragraphs.append(paragraph('## Sources (saved snapshots)'))
     for index, source in enumerate(sources):
         heading = run(f"{source['id']} · {source['citation']}", bold=True)
