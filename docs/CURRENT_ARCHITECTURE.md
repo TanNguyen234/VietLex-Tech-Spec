@@ -34,6 +34,8 @@ The owner subsequently approved deployment and implementation of the dated unfin
 - Full-document review is an explicit plan and one user-run batch per request. It respects existing context limits and reports oversized/skipped clauses. Successful batch storage atomically preserves bounded document-level progress for the latest three input fingerprints, independently of the 50-entry analysis history. Document deletion removes that progress and dependent private analyses.
 - Model comparison uses two configured direct-provider aliases, identical bounded input, separate observed usage/error records and no implicit cross-provider fallback. Missing reported model identity remains unobserved/partial. Text equality is not an accuracy ranking.
 - Account settings show advisory daily attempt quota and UTC reset, with owner-only projected reads and unavailable states. Admin admission counters are explicitly process-local since startup, not global WAF/Slowapi totals. Actual provider billing reconciliation remains unavailable.
+
+As of the 2026-09-24 production follow-up, effective-role admins bypass demo AI/write **daily** attempt quotas and see an exemption notice in account settings. Verified login, shared minute caps, body limits and provider quotas still apply. See [measured follow-up](verification/audit-remediation-20260924/REPORT.md); ordinary-account daily limits are unchanged.
 - OCR/large-object storage and full-corpus expansion are not implemented by this slice. Live model benchmarks, authenticated production workflow tests and edge WAF verification still require operational evidence; no production-readiness promotion follows from these implementations.
 
 ## Reviewer demo packaging (2026-09-08)
