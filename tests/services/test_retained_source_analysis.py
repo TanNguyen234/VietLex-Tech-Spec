@@ -309,3 +309,33 @@ async def test_relevant_answer_sends_only_selected_excerpts_and_temporal_context
         'Chi phí gián tiếp được phân bổ thế nào xét tại ngày 13/09/2026?',
         source, relevant_only=True)
     assert result['context_selection'] == {'method': 'lexical_relevance_v1', 'selected': 2, 'available': 4}
+
+
+@pytest.mark.asyncio
+async def test_partial_read_prompt_describes_coverage_without_missing_page_claim(monkeypatch):
+    import json
+    from types import SimpleNamespace
+    from app.services import retained_source_analysis as service
+
+    source = {
+        'url': 'https://vanban.chinhphu.vn/?pageid=27160&docid=219429',
+        'page_count': 39, 'readable_pages': [1, 2, 3, 4, 5],
+        'missing_pages': list(range(6, 40)),
+        'pages': [{'page': 3, 'text': 'Điều 5. Điều kiện nhập khẩu dây chuyền công nghệ.',
+                   'analysis_id': 'a', 'source_index': 0}],
+    }
+
+    async def generate(prompt, system):
+        payload = json.loads(prompt)['source']
+        assert 'missing_pages' not in payload
+        assert payload['readable_pages'] == [1, 2, 3, 4, 5]
+        assert 'trang chưa đọc' in system
+        return SimpleNamespace(status='success', text=json.dumps({
+            'text': 'Điều kiện nhập khẩu. [p3-s0]', 'status': 'ok',
+            'citations': ['p3-s0'], 'unanswered_parts': []}),
+            observed_provider='test', observed_model='test')
+
+    monkeypatch.setattr(service, '_generate', generate)
+    result = await service.analyze_retained_source(
+        'Điều kiện nhập khẩu dây chuyền?', source, relevant_only=True)
+    assert result['status'] == 'ok'
