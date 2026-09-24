@@ -47,8 +47,8 @@ async def test_report_propagates_verification_failure_stage(monkeypatch):
     from app.services import research_report
 
     raw = '''{"status":"ok", "issue":"I",
-      "analysis":[{"text":"Claim.","evidence_ids":["ev-1"]}],
-      "exceptions":[], "checklist":[], "sources":["ev-1"], "unknown":[]}'''
+      "analysis":[{"text":"Claim.","evidence_ids":["E1"]}],
+      "exceptions":[], "checklist":[], "sources":["E1"], "unknown":[]}'''
     monkeypatch.setattr(research_report, "_generate", AsyncMock(return_value=_generation(raw)))
     monkeypatch.setattr(research_report, "verify_claims", AsyncMock(return_value={
         "status": "invalid_structured_response",
@@ -85,10 +85,10 @@ async def test_generate_report_verifies_source_linked_claims(monkeypatch) -> Non
     raw = """{
       "status":"ok",
       "issue":"Nghĩa vụ thông báo",
-      "analysis":[{"text":"Người sử dụng lao động phải thông báo bằng văn bản.","evidence_ids":["ev-1"]}],
+      "analysis":[{"text":"Người sử dụng lao động phải thông báo bằng văn bản.","evidence_ids":["E1"]}],
       "exceptions":[],
-      "checklist":[{"text":"Kiểm tra việc thông báo.","evidence_ids":["ev-1"]}],
-      "sources":["ev-1"],
+      "checklist":[{"text":"Kiểm tra việc thông báo.","evidence_ids":["E1"]}],
+      "sources":["E1"],
       "unknown":["Chưa có thông tin về thời hạn thông báo."]
     }"""
     generate = AsyncMock(return_value=_generation(raw))
@@ -112,6 +112,40 @@ async def test_generate_report_verifies_source_linked_claims(monkeypatch) -> Non
         _evidence(),
     )
     assert generate.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_report_maps_short_prompt_aliases_back_to_selected_evidence(monkeypatch) -> None:
+    from app.services import research_report
+
+    evidence = [
+        {"evidence_id": "35c31ef1c69d8741bee69c11", "citation": "Điều 119", "excerpt": "Phải đăng ký."},
+        {"evidence_id": "c2f8681a721716f0378cd277", "citation": "Điều 121", "excerpt": "Có hiệu lực sau 15 ngày."},
+    ]
+    raw = '''{"status":"ok","issue":"Nội quy lao động",
+      "analysis":[{"text":"Phải đăng ký.","evidence_ids":["E1"]}],
+      "exceptions":[],
+      "checklist":[{"text":"Kiểm tra ngày có hiệu lực.","evidence_ids":["E2"]}],
+      "sources":["E1","E2"],"unknown":[]}'''
+    generate = AsyncMock(return_value=_generation(raw))
+    verify = AsyncMock(return_value={
+        "status": "ok", "result": {"coverage": {"assessed_claims": 2}},
+    })
+    monkeypatch.setattr(research_report, "_generate", generate)
+    monkeypatch.setattr(research_report, "verify_claims", verify)
+
+    result = await research_report.generate_research_report("Q", evidence)
+
+    prompt = generate.await_args.args[0]
+    assert "[E1]" in prompt and "[E2]" in prompt
+    assert all(item["evidence_id"] not in prompt for item in evidence)
+    assert result["status"] == "ok"
+    assert result["report"]["sources"] == [item["evidence_id"] for item in evidence]
+    assert result["report"]["analysis"][0]["evidence_ids"] == [evidence[0]["evidence_id"]]
+    assert result["report"]["checklist"][0]["evidence_ids"] == [evidence[1]["evidence_id"]]
+    verify.assert_awaited_once_with(
+        "Phải đăng ký.\nKiểm tra ngày có hiệu lực.", evidence,
+    )
 
 
 @pytest.mark.asyncio
@@ -145,8 +179,8 @@ async def test_generate_report_marks_verification_failure_without_certification(
 
     raw = """{
       "status":"ok", "issue":"I",
-      "analysis":[{"text":"Claim.","evidence_ids":["ev-1"]}],
-      "exceptions":[], "checklist":[], "sources":["ev-1"], "unknown":[]
+      "analysis":[{"text":"Claim.","evidence_ids":["E1"]}],
+      "exceptions":[], "checklist":[], "sources":["E1"], "unknown":[]
     }"""
     monkeypatch.setattr(
         research_report, "_generate", AsyncMock(return_value=_generation(raw))
@@ -177,8 +211,8 @@ async def test_generate_report_rejects_multi_sentence_claim_before_verification(
 
     raw = """{
       "status":"ok", "issue":"I",
-      "analysis":[{"text":"Claim one. Claim two.","evidence_ids":["ev-1"]}],
-      "exceptions":[], "checklist":[], "sources":["ev-1"], "unknown":[]
+      "analysis":[{"text":"Claim one. Claim two.","evidence_ids":["E1"]}],
+      "exceptions":[], "checklist":[], "sources":["E1"], "unknown":[]
     }"""
     monkeypatch.setattr(
         research_report, "_generate", AsyncMock(return_value=_generation(raw))
@@ -201,8 +235,8 @@ async def test_generate_report_marks_unlinked_verifier_quote_as_citation_mismatc
     evidence = _evidence() + [{"evidence_id": "ev-2", "excerpt": "Other evidence."}]
     raw = """{
       "status":"ok", "issue":"I",
-      "analysis":[{"text":"Claim.","evidence_ids":["ev-1"]}],
-      "exceptions":[], "checklist":[], "sources":["ev-1"], "unknown":[]
+      "analysis":[{"text":"Claim.","evidence_ids":["E1"]}],
+      "exceptions":[], "checklist":[], "sources":["E1"], "unknown":[]
     }"""
     monkeypatch.setattr(
         research_report, "_generate", AsyncMock(return_value=_generation(raw))

@@ -251,6 +251,23 @@ def test_relevant_passages_ranks_specific_article_heading_before_generic_heading
     assert list(selected) == ['p2-s0']
 
 
+@pytest.mark.parametrize('article', [47, 120])
+def test_relevant_passages_prefers_exact_article_number_and_continuation(monkeypatch, article):
+    from app.services import retained_source_analysis as service
+    rows = {
+        'p1-s0': {'page': 1, 'quote': 'Điều 12. Hồ sơ gồm nhiều tài liệu thông thường.', 'analysis_id': 'a', 'source_index': 0},
+        'p2-s0': {'page': 2, 'quote': f'Điều {article}. Hồ sơ đăng ký\n1. Văn bản đề nghị.', 'analysis_id': 'a', 'source_index': 0},
+        'p2-s900': {'page': 2, 'quote': '2. Bản nội quy và ý kiến đại diện.', 'analysis_id': 'a', 'source_index': 0},
+    }
+    monkeypatch.setattr(service, 'source_passages', lambda source: dict(rows))
+
+    selected = service.relevant_source_passages(
+        f'Hồ sơ tại Điều {article} gồm tài liệu nào?', {}, limit=2,
+    )
+
+    assert list(selected) == ['p2-s0', 'p2-s900']
+
+
 def test_relevant_passages_does_not_extend_into_next_article(monkeypatch):
     from app.services import retained_source_analysis as service
     rows = {

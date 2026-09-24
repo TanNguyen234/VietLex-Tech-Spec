@@ -63,6 +63,48 @@ def test_code_evaluation_reports_observations_without_claiming_correctness() -> 
     assert "accuracy" not in result["summary"]
 
 
+def test_structured_review_uses_its_status_without_chat_context_checks() -> None:
+    from app.services.public_evaluation import build_code_evaluation
+
+    result = build_code_evaluation({
+        "bot_response": "ok",
+        "contexts": [],
+        "retrieval_trace": {
+            "mode": "bounded_full_document_review",
+            "clause_count": 5,
+            "selected_legal_evidence_count": 2,
+        },
+        "metrics": {
+            "request_status": "full_document_review_ok",
+            "context_count": 7,
+            "citation_count": 0,
+            "technical_error": None,
+        },
+    })
+
+    checks = {item["key"]: item for item in result["checks"]}
+    assert checks["request_completed"]["status"] == "pass"
+    assert checks["context_present"]["status"] == "N/A"
+    assert checks["citation_present"]["status"] == "N/A"
+    assert "structured" in " ".join(result["limitations"]).lower()
+
+
+def test_structured_review_technical_failure_still_fails() -> None:
+    from app.services.public_evaluation import build_code_evaluation
+
+    result = build_code_evaluation({
+        "contexts": [],
+        "retrieval_trace": {"mode": "bounded_full_document_review"},
+        "metrics": {
+            "request_status": "full_document_review_provider_error",
+            "technical_error": {"stage": "full_document_review", "error_type": "provider_error"},
+        },
+    })
+    checks = {item["key"]: item for item in result["checks"]}
+    assert checks["request_completed"]["status"] == "fail"
+    assert checks["context_present"]["status"] == "N/A"
+
+
 def test_ragas_metric_catalog_marks_reference_metrics_not_applicable() -> None:
     from app.services.public_evaluation import ragas_metric_catalog
 

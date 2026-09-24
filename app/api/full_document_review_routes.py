@@ -169,6 +169,7 @@ async def run_full_document_review(
             "batch_id": batch_id,
             "clause_count": len(clauses),
             "selected_legal_evidence_count": len(evidence),
+            "finding_count": len(result.get("findings") or []) if result else 0,
             "context_sha256": [
                 hashlib.sha256(str(item.get("text") or "").encode()).hexdigest()
                 for item in clauses

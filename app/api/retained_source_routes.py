@@ -7,6 +7,7 @@ from app.api.dependencies import optional_user, verify_csrf
 from app.api.workspace_routes import _owned_workspace, _validate_id, _workspace_page
 from app.services.report_deliverables import report_preview
 from app.config import get_settings
+from app.database import log_interaction, update_interaction_request_status
 from app.rate_limit import limiter
 from app.research_database import save_workspace_analysis
 from app.services.provider_runtime import capture_provider_usage, current_provider_calls
@@ -28,7 +29,7 @@ async def retained_source_answer(
     analysis_id: str = Form(..., max_length=100),
     source_index: int = Form(..., ge=0, le=2),
     question: str = Form(..., min_length=1, max_length=2000),
-    scope: Literal['full', 'relevant'] = Form('full'),
+    scope: Literal['full', 'relevant'] = Form('relevant'),
     _csrf=Depends(verify_csrf),
     current_user=Depends(optional_user),
 ):
@@ -77,9 +78,40 @@ async def retained_source_answer(
         "provider_calls": current_provider_calls() or [],
         **result,
     }
+    selection = result.get("context_selection") or {}
+    selected_count = int(selection.get("selected") or 0)
+    logged = await log_interaction(
+        trace_id=identifier,
+        user_query="Retained-source analysis over saved official pages",
+        bot_response=str(record["status"]),
+        contexts=[],
+        cached=False,
+        session_id=workspace_id,
+        client_id=client_id,
+        user_id=user_id,
+        request_status=f"retained_source_{record['status']}",
+        observed_provider=record.get("provider"),
+        observed_model=record.get("model"),
+        context_count=selected_count,
+        no_evidence=not bool(selected_count),
+        technical_error={
+            "stage": "retained_source", "error_type": record["status"],
+        } if record["status"] in {"provider_error", "degraded", "invalid_structured_response"} else None,
+        retrieval_trace={
+            "mode": "retained_source_analysis",
+            "selection_method": selection.get("method") or scope,
+            "selected_passage_count": selected_count,
+            "available_passage_count": int(selection.get("available") or 0),
+            "source_input_sha256": source["input_sha256"],
+            "readable_page_count": len(source.get("readable_pages") or []),
+        },
+        request_metadata={"method": "POST", "path": request.url.path},
+    )
+    record["admin_trace_status"] = "persisted" if logged else "unavailable"
     if not await save_workspace_analysis(
         workspace_id, record, client_id, user_id=user_id
     ):
+        await update_interaction_request_status(identifier, "workspace_changed")
         raise HTTPException(409, "workspace_changed")
     return RedirectResponse(
         f"/workspaces/{workspace_id}/source-analysis/{identifier}", status_code=303

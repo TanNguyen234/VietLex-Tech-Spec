@@ -1,0 +1,21 @@
+{
+  "audit_id": "production-20260924T144859Z",
+  "started_at_utc": "2026-09-24T14:48:59Z",
+  "production_url": "https://vietlex-legal-rag.vercel.app",
+  "production_deployment_commit": "chưa xác định",
+  "local_git_head": "2da3d125dcf3febe22126b3fe9f9572e67c3921c",
+  "local_git_state_at_start": "dirty: .codex/config.toml modified; pre-existing untracked files present; three .tmp-eval paths were inaccessible to git status",
+  "repository": "D:/Download/ProfessionalLegalRAG",
+  "browser": "Codex in-app browser, real production session; viewport 1366x768 desktop and 390x844 mobile",
+  "audit_mode": "production UI plus read-only local source review; no source/config/data edits, commit, push or deploy",
+  "test_workspace_id": "deb03296-8210-4a31-b06f-8f737926b968",
+  "isolation_test_workspace_id": "e7076484-04a6-4afb-8160-b217e41fad7f",
+  "official_source": "https://congbaocdn.chinhphu.vn/CongBaoCP/VanBan/2019/11/30232/29070-1-2019993-99445-2019-qh14.pdf",
+  "limitations": [
+    "Production deployment SHA was not established; local source is diagnostic evidence only.",
+    "Current amendment, repeal and transition history at 2026-09-24 was not fully verified.",
+    "Provider-reported input/output token counts were observed in admin details for scoped chat, one review batch and one failed report; the retained-source call's token count and raw server-side payloads were not visible.",
+    "Markdown and DOCX download events occurred, but downloaded bytes were not accessible for inspection through the in-app browser.",
+    "No destructive, role-changing, migration, ingestion or quota-exhaustion tests were attempted."
+  ]
+}

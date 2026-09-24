@@ -163,6 +163,11 @@ def relevant_source_passages(question, source, *, limit=10):
     """Choose bounded, diverse excerpts from an already read source version."""
     passages = source_passages(source)
     query_terms = _relevance_terms(question)
+    article_numbers = {
+        int(number) for number in re.findall(
+            r"\b(?:điều|dieu)\s+(\d{1,4})\b", question, re.I
+        )
+    }
     selected = {}
     metadata = passages.pop("source-metadata", None)
     if metadata and limit > 0:
@@ -170,8 +175,10 @@ def relevant_source_passages(question, source, *, limit=10):
     covered = set()
     ordered_ids = list(passages)
     def heading_match(passage):
-        heading = re.search(r"(?im)^\s*Điều\s+\d+\.[^\n]{0,150}", passage["quote"])
+        heading = re.search(r"(?im)^\s*Điều\s+(\d+)\.[^\n]{0,150}", passage["quote"])
         overlap = len(query_terms & _relevance_terms(heading.group())) if heading else 0
+        if heading and int(heading.group(1)) in article_numbers:
+            return 100 + overlap
         return overlap if overlap >= 2 else 0
     candidates = [(identifier, passage, query_terms & _relevance_terms(passage["quote"]))
                   for identifier, passage in passages.items()]

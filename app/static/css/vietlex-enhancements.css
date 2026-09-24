@@ -78,3 +78,4 @@ body{background:var(--color-bg)}.topbar{height:auto;min-height:72px;gap:20px;pad
 
 .body-search-snippet { overflow-wrap: anywhere; line-height: 1.75; }
 .body-search-snippet mark { background: #fff0a6; color: #24372e; padding: 0 .08em; }
+.legal-search-page .legal-results .eyebrow { text-transform: none; }

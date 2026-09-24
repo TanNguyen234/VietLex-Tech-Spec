@@ -11,6 +11,12 @@ from app.evaluation.legal_citations import parse_legal_citations
 _CODE_LIMITATION = (
     "Code evaluation không chứng minh kết luận pháp lý đúng hoặc văn bản còn hiệu lực."
 )
+_STRUCTURED_MODES = frozenset({
+    "bounded_full_document_review", "selected_evidence_research_report",
+    "retained_source_analysis", "selected_evidence_claim_verification",
+    "selected_evidence_model_comparison", "human_admin_reviewed_legal_effect",
+    "user_document_review", "official_web",
+})
 
 _TIMING_LABELS = {
     "t_guardrails_input": "NeMo input guardrail",
@@ -64,8 +70,10 @@ def build_code_evaluation(interaction: Mapping[str, Any]) -> dict[str, Any]:
     context_count = len(contexts) if isinstance(contexts, list) else 0
     observed_context_count = int(metrics.get("context_count", context_count) or 0)
     parsed_citation_count = len(parse_legal_citations(response))
-    request_status = metrics.get("request_status") or "unobserved"
+    request_status = str(metrics.get("request_status") or "unobserved")
     technical_error = metrics.get("technical_error") is not None
+    retrieval = interaction.get("retrieval_trace")
+    structured = isinstance(retrieval, Mapping) and retrieval.get("mode") in _STRUCTURED_MODES
     timings = [
         {
             "key": key,
@@ -93,27 +101,27 @@ def build_code_evaluation(interaction: Mapping[str, Any]) -> dict[str, Any]:
             {
                 "key": "request_completed",
                 "label": "Request hoàn tất",
-                "status": "pass" if request_status in {"ok", "cache_hit"} and not technical_error else "fail",
+                "status": "pass" if (request_status in {"ok", "cache_hit"} or request_status.endswith("_ok")) and not technical_error else "fail",
                 "value": request_status,
                 "meaning": "Backend hoàn thành request mà không ghi nhận lỗi kỹ thuật.",
             },
             {
                 "key": "context_present",
                 "label": "Có context",
-                "status": "pass" if observed_context_count > 0 else "fail",
-                "value": observed_context_count,
-                "meaning": "Số đoạn bằng chứng được đưa vào bước tạo câu trả lời.",
+                "status": "N/A" if structured else "pass" if observed_context_count > 0 else "fail",
+                "value": "N/A" if structured else observed_context_count,
+                "meaning": "Chỉ áp dụng cho chat lưu context." if structured else "Số đoạn bằng chứng được đưa vào bước tạo câu trả lời.",
             },
             {
                 "key": "citation_present",
                 "label": "Có trích dẫn",
-                "status": "pass" if parsed_citation_count > 0 else "fail",
-                "value": parsed_citation_count,
-                "meaning": "Số trích dẫn pháp lý được code nhận diện trong câu trả lời.",
+                "status": "N/A" if structured else "pass" if parsed_citation_count > 0 else "fail",
+                "value": "N/A" if structured else parsed_citation_count,
+                "meaning": "Chỉ áp dụng cho chat lưu câu trả lời." if structured else "Số trích dẫn pháp lý được code nhận diện trong câu trả lời.",
             },
         ],
         "timings": timings,
-        "limitations": [_CODE_LIMITATION],
+        "limitations": [_CODE_LIMITATION] + (["Structured workflows lưu kết quả riêng; kiểm tra context/trích dẫn chat không áp dụng."] if structured else []),
     }
 
 

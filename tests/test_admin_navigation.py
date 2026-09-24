@@ -145,6 +145,31 @@ def test_guardrail_failure_detail_does_not_show_success_defaults(admin_pages, mo
     assert 'Input: True' not in response.text
 
 
+def test_structured_request_detail_shows_its_own_mode_and_bounded_counts(admin_pages, monkeypatch):
+    import app.api.routes as routes
+
+    client, _ = admin_pages
+    monkeypatch.setattr(routes, 'get_interaction', AsyncMock(return_value={
+        'trace_id': 'full-review-test', 'user_query': 'synthetic',
+        'bot_response': 'synthetic', 'contexts': [],
+        'retrieval_trace': {
+            'mode': 'bounded_full_document_review',
+            'clause_count': 5,
+            'finding_count': 3,
+            'selected_legal_evidence_count': 2,
+        },
+        'metrics': {'request_status': 'full_document_review_ok'},
+    }))
+    response = client.get('/admin/details/full-review-test')
+    assert response.status_code == 200
+    assert 'Rà soát toàn văn có giới hạn' in response.text
+    assert 'Điều khoản đã xét</dt><dd>5' in response.text
+    assert 'Findings đã tạo</dt><dd>3' in response.text
+    assert 'Căn cứ pháp lý đã chọn</dt><dd>2' in response.text
+    assert 'pass · full_document_review_ok' in response.text
+    assert 'N/A · N/A' in response.text
+
+
 @pytest.mark.asyncio
 async def test_strict_audit_reader_does_not_hide_database_failure(monkeypatch):
     import app.database as database

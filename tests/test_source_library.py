@@ -43,6 +43,8 @@ def test_library_counts_readable_unique_pages_without_merging_versions():
     assert old["read_pages"] == [1, 3]
     assert old["missing_pages"] == [2, 4]
     assert old["readable_count"] == 2
+    assert old["unread_pages"] == [4]
+    assert old["unreadable_pages"] == [2]
     assert len(old["reads"]) == 2
 
 

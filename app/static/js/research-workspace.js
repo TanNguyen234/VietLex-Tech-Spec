@@ -354,7 +354,7 @@
       form.addEventListener('submit', async event => {
         event.preventDefault(); button.disabled = true;
         const data = new FormData(form); data.set('csrf_token', csrf); data.set('analysis_id', payload.analysis_id); data.set('source_index', String(index));
-        try { const response = await fetch('/workspaces/' + workspaceId + '/sources/pin', {method:'POST',body:data}); if (!response.ok) throw new Error(); location.assign('/workspaces/' + workspaceId + '#sources'); }
+        try { const response = await fetch('/workspaces/' + workspaceId + '/sources/pin', {method:'POST',body:data}); if (!response.ok) throw new Error(); if (location.pathname === '/workspaces/' + workspaceId) { location.hash = 'sources'; location.reload(); } else location.assign('/workspaces/' + workspaceId + '#sources'); }
         catch { button.textContent = 'Chưa ghim được; kiểm tra trích đoạn rồi thử lại'; }
         finally { button.disabled = false; }
       });

@@ -23,6 +23,7 @@ def source_library(workspace: dict) -> list[dict]:
                     if isinstance(count, int) and 1 <= count <= 200
                     else None,
                     "read_pages": set(),
+                    "attempted_pages": set(),
                     "reads": [],
                     "document_number": source.get("document_number"),
                 }
@@ -43,15 +44,21 @@ def source_library(workspace: dict) -> list[dict]:
                     row["page_count"]
                     and isinstance(number, int)
                     and 1 <= number <= row["page_count"]
-                    and str(page.get("text") or "").strip()
                 ):
-                    row["read_pages"].add(number)
+                    row["attempted_pages"].add(number)
+                    if str(page.get("text") or "").strip():
+                        row["read_pages"].add(number)
     for row in groups.values():
         row["readable_count"] = len(row["read_pages"])
         row["missing_pages"] = sorted(
             set(range(1, (row["page_count"] or 0) + 1)) - row["read_pages"]
         )
+        row["unread_pages"] = sorted(
+            set(range(1, (row["page_count"] or 0) + 1)) - row["attempted_pages"]
+        )
+        row["unreadable_pages"] = sorted(row["attempted_pages"] - row["read_pages"])
         row["read_pages"] = sorted(row["read_pages"])
+        row["attempted_pages"] = sorted(row["attempted_pages"])
     return list(groups.values())
 
 

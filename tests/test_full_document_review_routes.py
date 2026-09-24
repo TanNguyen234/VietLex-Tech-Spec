@@ -149,7 +149,7 @@ def test_run_success_uses_atomic_clause_progress(client, monkeypatch) -> None:
         "app.api.full_document_review_routes.generate_contract_review",
         AsyncMock(
             return_value=(
-                type("R", (), {"model_dump": lambda self, **_: {"findings": []}})(),
+                type("R", (), {"model_dump": lambda self, **_: {"findings": [{"id": "one"}, {"id": "two"}]}})(),
                 {},
             )
         ),
@@ -158,10 +158,8 @@ def test_run_success_uses_atomic_clause_progress(client, monkeypatch) -> None:
     monkeypatch.setattr(
         "app.api.full_document_review_routes.save_full_document_review_batch", save
     )
-    monkeypatch.setattr(
-        "app.api.full_document_review_routes.log_interaction",
-        AsyncMock(return_value={}),
-    )
+    log = AsyncMock(return_value={})
+    monkeypatch.setattr("app.api.full_document_review_routes.log_interaction", log)
     monkeypatch.setattr(
         "app.api.full_document_review_routes.aggregate_full_document_review",
         lambda *_: {"status": "review_incomplete"},
@@ -179,6 +177,7 @@ def test_run_success_uses_atomic_clause_progress(client, monkeypatch) -> None:
     assert response.status_code == 200
     assert response.headers["cache-control"] == "no-store"
     assert save.await_args.kwargs["completed_clause_ids"] == ["a" * 24 + "-001"]
+    assert log.await_args.kwargs["retrieval_trace"]["finding_count"] == 2
 
 
 @pytest.mark.parametrize("error,status", [

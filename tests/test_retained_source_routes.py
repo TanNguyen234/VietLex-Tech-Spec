@@ -23,11 +23,13 @@ def setup(monkeypatch):
             "text": "Answer",
             "citations": [],
             "unanswered_parts": [],
+            "context_selection": {"method": "lexical_relevance_v1", "selected": 2, "available": 3},
         }
     )
     save = AsyncMock(return_value=True)
     monkeypatch.setattr(routes, "analyze_retained_source", generate)
     monkeypatch.setattr(routes, "save_workspace_analysis", save)
+    monkeypatch.setattr(routes, "log_interaction", AsyncMock(return_value={"trace_id": "saved"}), raising=False)
     return TestClient(app), routes, generate, save
 
 
@@ -45,6 +47,15 @@ def test_collects_server_owned_pages_and_saves_scope(setup):
     assert record["source_scope"]["characters"] == 8
     assert record["source_scope"]["input_sha256"]
     assert record["kind"] == "retained_source_answer"
+    assert record["admin_trace_status"] == "persisted"
+    assert generate.await_args.kwargs["relevant_only"] is True
+    logged = routes.log_interaction.await_args.kwargs
+    assert logged["trace_id"] == record["analysis_id"]
+    assert logged["request_status"] == "retained_source_ok"
+    assert logged["retrieval_trace"]["selected_passage_count"] == 2
+    assert logged["retrieval_trace"]["available_passage_count"] == 3
+    assert "Explain" not in str(logged)
+    assert "Answer" not in str(logged)
 
 
 def test_relevant_scope_reaches_bounded_source_selector(setup):
@@ -55,6 +66,50 @@ def test_relevant_scope_reaches_bounded_source_selector(setup):
                            follow_redirects=False)
     assert response.status_code == 303
     assert generate.await_args.kwargs['relevant_only'] is True
+
+
+def test_explicit_full_scope_remains_available(setup):
+    client, _, generate, _ = setup
+    response = client.post('/workspaces/w/analyses/retained-source',
+                           data={'analysis_id': 'first', 'source_index': 0,
+                                 'question': 'First', 'scope': 'full'},
+                           follow_redirects=False)
+    assert response.status_code == 303
+    assert generate.await_args.kwargs['relevant_only'] is False
+
+
+def test_workspace_change_marks_retained_source_trace(setup, monkeypatch):
+    client, routes, _, save = setup
+    save.return_value = False
+    update = AsyncMock(return_value=True)
+    monkeypatch.setattr(routes, "update_interaction_request_status", update)
+
+    response = client.post('/workspaces/w/analyses/retained-source',
+                           data={'analysis_id': 'first', 'source_index': 0,
+                                 'question': 'Explain'}, follow_redirects=False)
+
+    assert response.status_code == 409
+    update.assert_awaited_once_with(
+        save.await_args.args[1]['analysis_id'], 'workspace_changed',
+    )
+
+
+def test_retained_source_failure_has_typed_admin_error(setup):
+    client, routes, generate, _ = setup
+    generate.return_value = {
+        'status': 'invalid_structured_response',
+        'error_type': 'SourceAnswerValidationError',
+    }
+
+    response = client.post('/workspaces/w/analyses/retained-source',
+                           data={'analysis_id': 'first', 'source_index': 0,
+                                 'question': 'Explain'}, follow_redirects=False)
+
+    assert response.status_code == 303
+    assert routes.log_interaction.await_args.kwargs['technical_error'] == {
+        'stage': 'retained_source',
+        'error_type': 'invalid_structured_response',
+    }
 
 
 def test_missing_or_oversize_source_calls_no_provider(setup):
