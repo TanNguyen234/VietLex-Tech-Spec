@@ -225,6 +225,19 @@ def test_settings_quota_is_owner_scoped_and_not_cached(client, monkeypatch):
     assert 'còn 13' in response.text
     assert quota.await_args.args[0] == 'owner'
 
+
+def test_admin_settings_explain_daily_quota_exemption(client, monkeypatch):
+    import app.api.account_routes as routes
+    client.app.dependency_overrides[routes.require_user] = lambda: {
+        '_id': 'developer', 'email': 'dev@example.com', 'role': 'admin'}
+    monkeypatch.setattr(routes, 'list_auth_sessions', AsyncMock(return_value=[]))
+    quota = AsyncMock(return_value={'status': 'exempt'})
+    monkeypatch.setattr(routes, 'get_demo_quota', quota)
+    response = client.get('/settings')
+    assert response.status_code == 200
+    assert quota.await_args.kwargs == {'is_admin': True}
+    assert 'không áp dụng cho tài khoản admin' in response.text
+
 def test_account_export_is_not_cached(client, monkeypatch):
     import app.api.account_routes as routes
     client.app.dependency_overrides[routes.require_user] = lambda: {'_id': 'owner'}

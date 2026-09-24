@@ -11,7 +11,7 @@ from pymongo.errors import DuplicateKeyError
 from starlette.requests import Request
 from starlette.responses import HTMLResponse, JSONResponse
 
-from app.account_database import resolve_auth_session
+from app.account_database import effective_role, resolve_auth_session
 from app.database import get_db
 
 _AUTH = {'/login', '/register', '/forgot-password', '/reset-password', '/verify-email'}
@@ -28,10 +28,16 @@ def demo_admission_snapshot() -> dict:
     return {'scope': 'process_since_start', 'started_at': _STARTED_AT, 'denied': dict(_DENIED)}
 
 
-async def get_demo_quota(subject: str, settings) -> dict:
+def is_demo_daily_exempt(user: dict) -> bool:
+    return effective_role(user) == 'admin'
+
+
+async def get_demo_quota(subject: str, settings, *, is_admin: bool = False) -> dict:
     """Advisory daily attempt snapshot; admission remains atomic in middleware."""
     if not settings.REVIEWER_DEMO_MODE:
         return {'status': 'disabled'}
+    if is_admin:
+        return {'status': 'exempt'}
     now = datetime.now(timezone.utc)
     digest = hashlib.sha256(subject.encode()).hexdigest()
     reset = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
@@ -125,7 +131,9 @@ class ReviewerDemoMiddleware:
                 total = self.settings.DEMO_AI_GLOBAL_DAILY_LIMIT if expensive else 1000
                 per_minute = 3 if expensive else 15
             # Shared work quota must never lock users out of privacy/session controls.
-            budgets = [] if _PROTECTIVE.fullmatch(path) else [(True, per_minute, 60), (False, personal, total)]
+            budgets = [] if _PROTECTIVE.fullmatch(path) else [(True, per_minute, 60)]
+            if budgets and (path in _AUTH or not is_demo_daily_exempt(user)):
+                budgets.append((False, personal, total))
             for minute, own, global_cap in budgets:
                 allowed = await asyncio.wait_for(reserve_demo_budget(
                     subject, category, own, global_cap, minute=minute), timeout=3)

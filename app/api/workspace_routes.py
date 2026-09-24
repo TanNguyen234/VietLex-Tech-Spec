@@ -265,11 +265,14 @@ async def workspace_document_upload(
         )
 
     if ocr_enabled and settings.REVIEWER_DEMO_MODE:
-        from app.services.reviewer_demo import reserve_demo_budget
+        from app.services.reviewer_demo import is_demo_daily_exempt, reserve_demo_budget
         if not current_user or not current_user.get('email_verified'):
             raise HTTPException(401, 'demo_login_required')
         try:
-            for minute, own, total in [(True, 3, 60), (False, settings.DEMO_AI_DAILY_LIMIT, settings.DEMO_AI_GLOBAL_DAILY_LIMIT)]:
+            budgets = [(True, 3, 60)]
+            if not is_demo_daily_exempt(current_user):
+                budgets.append((False, settings.DEMO_AI_DAILY_LIMIT, settings.DEMO_AI_GLOBAL_DAILY_LIMIT))
+            for minute, own, total in budgets:
                 if not await asyncio.wait_for(reserve_demo_budget(str(current_user['_id']), 'ai', own, total, minute=minute), timeout=3):
                     raise HTTPException(429, 'demo_minute_quota' if minute else 'demo_daily_quota')
         except HTTPException:

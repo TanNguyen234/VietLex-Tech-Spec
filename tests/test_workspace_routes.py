@@ -560,6 +560,29 @@ def test_ocr_reserves_ai_quota_before_generation(client, monkeypatch):
     ocr.assert_not_awaited()
 
 
+def test_admin_ocr_keeps_minute_limit_without_daily_quota(client, monkeypatch):
+    import app.api.workspace_routes as routes
+    from app.services.workspace_documents import ExtractedWorkspaceDocument, WorkspaceClause
+    monkeypatch.setattr(routes.settings, 'REVIEWER_DEMO_MODE', True)
+    client.app.dependency_overrides[optional_user] = lambda: {
+        '_id': 'developer', 'email_verified': True, 'status': 'active', 'role': 'admin'}
+    monkeypatch.setattr(routes, 'get_workspace', AsyncMock(return_value={'documents': []}))
+    quota = AsyncMock(return_value=True)
+    monkeypatch.setattr('app.services.reviewer_demo.reserve_demo_budget', quota)
+    extracted = ExtractedWorkspaceDocument(
+        document_id='a' * 24, filename='scan.pdf', file_type='pdf',
+        media_type='application/pdf', sha256='a' * 64, size_bytes=9,
+        extracted_characters=6, clauses=[WorkspaceClause(
+            clause_id=f"{'a' * 24}-001", title='Điều 1', text='sample', order=1)])
+    monkeypatch.setattr(routes, 'extract_ocr_document', AsyncMock(return_value=extracted))
+    monkeypatch.setattr(routes, 'save_workspace_document', AsyncMock())
+    monkeypatch.setattr(routes, 'log_interaction', AsyncMock())
+    client.post('/workspaces/w-1/documents', data={'csrf_token':'valid','ocr_enabled':'true'},
+                files={'document':('scan.pdf',b'%PDF-test','application/pdf')})
+    assert quota.await_count == 1
+    assert quota.await_args.kwargs == {'minute': True}
+
+
 def test_original_download_is_owner_scoped_and_forces_attachment(client, monkeypatch):
     monkeypatch.setattr('app.api.workspace_routes.get_workspace', AsyncMock(return_value={'documents': []}))
     original = AsyncMock(return_value={'filename': 'hợp đồng.txt', 'original_bytes': b'private original'})

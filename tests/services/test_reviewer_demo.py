@@ -54,7 +54,9 @@ def test_public_rate_limit_is_not_reset_by_cookie():
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("user", [None, {"_id":"u", "email_verified":False}, {"_id":"u", "email_verified":True, "status":"disabled"}])
+@pytest.mark.parametrize("user", [None, {"_id":"u", "email_verified":False},
+                                  {"_id":"u", "email_verified":True, "status":"disabled"},
+                                  {"_id":"u", "email_verified":True, "status":"disabled", "role":"admin"}])
 async def test_all_mutations_require_verified_active_account(monkeypatch, user):
     import app.services.reviewer_demo as demo
     monkeypatch.setattr(demo, "resolve_auth_session", AsyncMock(return_value=user))
@@ -81,6 +83,38 @@ async def test_authenticated_request_preserves_body_and_reserves_ai_budget(monke
     assert received == [message]
     assert reserve.await_args_list[0].args == ("u", "ai", 3, 60)
     assert reserve.await_args_list[1].args == ("u", "ai", 20, 100)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("path", ["/chat", "/workspaces/w/documents"])
+async def test_admin_keeps_minute_limit_without_demo_daily_quota(monkeypatch, path):
+    import app.services.reviewer_demo as demo
+    monkeypatch.setattr(demo, "resolve_auth_session", AsyncMock(return_value={
+        "_id": "developer", "email_verified": True, "status": "active", "role": "admin"}))
+    reserve = AsyncMock(return_value=True)
+    monkeypatch.setattr(demo, "reserve_demo_budget", reserve)
+    downstream = AsyncMock()
+    await demo.ReviewerDemoMiddleware(downstream, settings=settings())(
+        {"type": "http", "method": "POST", "path": path, "headers": []},
+        AsyncMock(return_value={"type": "http.request", "body": b"", "more_body": False}), AsyncMock())
+    downstream.assert_awaited_once()
+    assert reserve.await_count == 1
+    assert reserve.await_args.kwargs == {"minute": True}
+
+
+@pytest.mark.asyncio
+async def test_admin_minute_exhaustion_still_blocks_request(monkeypatch):
+    import app.services.reviewer_demo as demo
+    monkeypatch.setattr(demo, "resolve_auth_session", AsyncMock(return_value={
+        "_id": "developer", "email_verified": True, "status": "active", "role": "admin"}))
+    reserve = AsyncMock(return_value=False)
+    monkeypatch.setattr(demo, "reserve_demo_budget", reserve)
+    downstream, send = AsyncMock(), AsyncMock()
+    await demo.ReviewerDemoMiddleware(downstream, settings=settings())(
+        {"type": "http", "method": "POST", "path": "/chat", "headers": []}, AsyncMock(), send)
+    assert send.await_args_list[0].args[0]["status"] == 429
+    downstream.assert_not_awaited()
+    assert reserve.await_count == 1
 
 
 @pytest.mark.asyncio
@@ -156,6 +190,13 @@ async def test_disabled_quota_does_not_access_database(monkeypatch):
     config = settings()
     config.REVIEWER_DEMO_MODE = False
     assert await demo.get_demo_quota('u', config) == {'status': 'disabled'}
+
+
+@pytest.mark.asyncio
+async def test_admin_quota_snapshot_does_not_read_daily_usage(monkeypatch):
+    import app.services.reviewer_demo as demo
+    monkeypatch.setattr(demo, 'get_db', lambda: pytest.fail('daily usage should not be read'))
+    assert await demo.get_demo_quota('developer', settings(), is_admin=True) == {'status': 'exempt'}
 
 @pytest.mark.asyncio
 async def test_denial_counters_are_bounded_and_contain_no_subject(monkeypatch):

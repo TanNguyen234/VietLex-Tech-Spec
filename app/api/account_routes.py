@@ -18,6 +18,7 @@ from app.account_database import (
     create_user,
     delete_account,
     delete_account_history,
+    effective_role,
     export_account,
     get_user_by_email,
     list_auth_sessions,
@@ -289,7 +290,8 @@ async def account_settings(request: Request, user=Depends(require_user)):
         request,
         "settings.html",
         {"user": user, "sessions": sessions, "csrf_token": csrf_token,
-         "demo_quota": await get_demo_quota(str(user["_id"]), settings)},
+         "demo_quota": await get_demo_quota(str(user["_id"]), settings,
+                                             is_admin=effective_role(user) == "admin")},
     )
     response.headers["Cache-Control"] = "no-store"
     response.set_cookie(
