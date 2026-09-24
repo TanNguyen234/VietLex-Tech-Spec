@@ -146,6 +146,7 @@ async def retained_source_result(
     )
     preview = report_preview(
         {
+            "status": analysis.get("status"),
             "markdown": markdown,
             "evidence_snapshot": [
                 {

@@ -184,4 +184,5 @@ def test_saved_answer_renders_safe_text_and_links_to_server_quote(setup, monkeyp
     assert 'href="#report-source-p1-s0"' in response.text
     assert "<script>bad()</script>" not in response.text
     assert "&lt;script&gt;" in response.text
+    assert "Báo cáo chưa vượt qua bước kiểm chứng." not in response.text
     generate.assert_not_awaited()
