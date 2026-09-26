@@ -158,6 +158,8 @@ class Settings(BaseSettings):
     SUPABASE_PUBLISHABLE_KEY: Optional[str] = None
     SUPABASE_SERVICE_ROLE_KEY: Optional[str] = None
     SUPABASE_BODY_SEARCH_ENABLED: bool = False
+    QDRANT_FULL_DOC_BODY_SEARCH_ENABLED: bool = True
+    QDRANT_FULL_DOC_BODY_COLLECTION: str = "vietlex-legal-body-search-v1"
 
     # Public web application security and opt-in evaluation controls.
     REVIEWER_DEMO_MODE: bool = False

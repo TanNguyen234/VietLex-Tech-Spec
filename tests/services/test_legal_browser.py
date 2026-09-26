@@ -3,6 +3,23 @@ from types import SimpleNamespace
 import httpx
 
 
+def test_supabase_store_counts_full_documents_from_exact_head():
+    from app.services.legal_browser import SupabaseLegalStore
+
+    def respond(request):
+        assert request.method == "HEAD"
+        assert request.url.params["limit"] == "0"
+        assert request.headers["prefer"] == "count=exact"
+        return httpx.Response(206, headers={"content-range": "*/14962"})
+
+    store = SupabaseLegalStore(
+        url="https://project.supabase.co", publishable_key="test",
+        client=httpx.Client(transport=httpx.MockTransport(respond)),
+    )
+
+    assert store.count_documents() == 14962
+
+
 class _Index:
     def __init__(self, ids):
         self.ids = ids
@@ -59,6 +76,19 @@ def test_legal_browser_blank_query_and_missing_document_are_empty() -> None:
     assert browser.search("   ", limit=20) == []
     assert browser.get_document(999) is None
     assert browser.get_document(7).content == "Điều 25..."
+
+
+def test_supabase_metadata_search_uses_bounded_offset():
+    from app.services.legal_browser import SupabaseLegalStore
+
+    requests = []
+    client = httpx.Client(transport=httpx.MockTransport(lambda request: requests.append(request) or httpx.Response(200, json=[])))
+    store = SupabaseLegalStore(url="https://project.supabase.co", publishable_key="test", client=client)
+
+    store.search("Bo luat", limit=21, offset=20)
+
+    assert requests[0].url.params["limit"] == "21"
+    assert requests[0].url.params["offset"] == "20"
 
 
 def test_supabase_filters_are_applied_before_limit():

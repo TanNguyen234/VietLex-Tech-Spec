@@ -314,6 +314,10 @@ The Groq primary is `qwen/qwen3.8-27b` after an identical-input two-case synthet
 
 The verified local v3 slice contains 4,969 documents and 101,857 passages. Serverless online-only does not fall back to it. The additive PostgreSQL migration has a local PostgreSQL contract test, but has not been applied to Supabase. The runtime RPC adapter and bounded importer are implemented behind `SUPABASE_BODY_SEARCH_ENABLED=false`; remote acceptance is pending actual database access. See the [verification report](verification/internal-fulltext-20260919/REPORT.md).
 
+### Online full-document phrase search (2026-09-26)
+
+The online S08 path now uses payload-only Qdrant collection `vietlex-legal-body-search-v1`: one indexed full body per Supabase document, keyed by document ID and SHA-256. Its 14,962 source bodies were individually hash-checked before upload and all 14,962 destination bodies were checked again after upload. The collection has no vectors and does not affect v3 retrieval. Phrase search returns bounded document IDs; the web adapter fetches selected bodies from Supabase, verifies the hash, then resolves reader section anchors and snippets. `QDRANT_FULL_DOC_BODY_SEARCH_ENABLED=true` selects this path in online-only mode. Local passage FTS remains separate. The Supabase GIN/RPC alternative is deployed to the database but disabled because a representative query exceeded its statement timeout. This code path still requires deployment and live web acceptance; see [closure report](audits/production-closure-20260925/REPORT.md).
+
 
 ### Shared reviewed legal-event registry (2026-09-19)
 

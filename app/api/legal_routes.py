@@ -104,7 +104,15 @@ async def legal_search(request: Request, q: str = "", legal_type: str = Query(""
                 previous_page = "/search?" + urlencode(params)
             results = results[:20]
         else:
-            results = await asyncio.to_thread(current.search, query, 20, **({"filters": filters} if filters.active else {}))
+            results = await asyncio.to_thread(current.search, query, 21, **({"filters": filters} if filters.active else {}), **({"offset": offset} if offset else {}))
+            params = dict(request.query_params)
+            if len(results) > 20 and offset < 1000:
+                params["offset"] = str(min(offset + 20, 1000))
+                next_page = "/search?" + urlencode(params)
+            if offset:
+                params["offset"] = str(max(0, offset - 20))
+                previous_page = "/search?" + urlencode(params)
+            results = results[:20]
     except BodySearchUnavailable:
         return _legal_unavailable(request, "Chưa truy cập được chỉ mục toàn văn trong môi trường này.", query=query, body_missing=True)
     except LegalBrowserBackendError:

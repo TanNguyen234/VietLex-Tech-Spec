@@ -12,6 +12,8 @@ import httpx
 from app.config import system_ssl_context
 from app.services.body_search import BodySearchIndex, BodySearchUnavailable
 from app.services.remote_body_search import SupabaseBodySearch
+from app.services.full_doc_body_search import SupabaseFullDocBodySearch
+from app.services.qdrant_full_doc_body_search import QdrantFullDocBodySearch
 from app.ingestion.content_store import ContentStore, StoredDocument, ContentIntegrityError
 from app.ingestion.legal_fts import LegalFtsIndex, extract_legal_references
 from app.ingestion.legal_text import DocumentMetadata
@@ -112,6 +114,21 @@ class SupabaseLegalStore:
             )
         return payload
 
+    def count_documents(self) -> int:
+        try:
+            response = self._client.head(
+                self._endpoint,
+                params={"select": "document_id", "limit": "0"},
+                headers={"Prefer": "count=exact"},
+            )
+            response.raise_for_status()
+            count = response.headers.get("content-range", "").split("/")[-1]
+            if not count.isdecimal():
+                raise ValueError("invalid_source_count")
+            return int(count)
+        except (httpx.HTTPError, ValueError) as error:
+            raise LegalBrowserBackendError("Supabase legal-document count failed.") from error
+
     @staticmethod
     def _metadata(row: dict[str, Any]) -> DocumentMetadata:
         return DocumentMetadata(
@@ -129,7 +146,7 @@ class SupabaseLegalStore:
             ),
         )
 
-    def search(self, query: str, *, limit: int, filters: SearchFilters | None = None) -> list[int]:
+    def search(self, query: str, *, limit: int, filters: SearchFilters | None = None, offset: int = 0) -> list[int]:
         references = list(dict.fromkeys(extract_legal_references(query)))
         safe_query = " ".join(
             query.replace("*", " ")
@@ -146,6 +163,8 @@ class SupabaseLegalStore:
                 "order": "document_id.asc",
                 "limit": str(limit),
             }
+        if offset:
+            params["offset"] = str(offset)
         if references:
             if len(references) == 1:
                 params["document_number"] = "ilike." + references[0]
@@ -223,8 +242,15 @@ class LegalBrowser:
                 ).strip(),
             )
             body_index = None
-            if getattr(settings, "SUPABASE_BODY_SEARCH_ENABLED", False):
-                body_index = SupabaseBodySearch(
+            if getattr(settings, "QDRANT_FULL_DOC_BODY_SEARCH_ENABLED", False):
+                body_index = QdrantFullDocBodySearch(
+                    url=settings.QDRANT_URL,
+                    api_key=settings.QDRANT_API_KEY,
+                    collection=settings.QDRANT_FULL_DOC_BODY_COLLECTION,
+                    store=store,
+                )
+            elif getattr(settings, "SUPABASE_BODY_SEARCH_ENABLED", False):
+                body_index = SupabaseFullDocBodySearch(
                     url=settings.SUPABASE_URL,
                     publishable_key=settings.SUPABASE_PUBLISHABLE_KEY,
                     client=store._client,
@@ -264,8 +290,8 @@ class LegalBrowser:
         if self._body_index is None:
             raise BodySearchUnavailable("body_index_unavailable")
         hits = self._body_index.search(query, filters=filters, limit=limit, offset=offset)
-        if isinstance(self._body_index, SupabaseBodySearch):
-            # The RPC joins current source hashes under RLS before LIMIT.
+        if isinstance(self._body_index, (SupabaseBodySearch, SupabaseFullDocBodySearch, QdrantFullDocBodySearch)):
+            # The remote adapter validates the current source before returning results.
             return hits
         try:
             current = self._store.get_many(list({hit["document_id"] for hit in hits}))
@@ -279,15 +305,20 @@ class LegalBrowser:
             raise BodySearchUnavailable("body_index_stale")
         return hits
 
-    def search(self, query: str, limit: int = 20, *, filters: SearchFilters | None = None) -> list[LegalSearchResult]:
+    def search(self, query: str, limit: int = 20, *, filters: SearchFilters | None = None, offset: int = 0) -> list[LegalSearchResult]:
         normalized = query.strip()
         bounded_limit = max(1, min(int(limit), 50))
+        if not 0 <= offset <= 1000:
+            raise ValueError("invalid_search_offset")
         if not normalized and not (filters and filters.active):
             return []
         if filters and filters.active:
-            document_ids = self._index.search(normalized, limit=bounded_limit, filters=filters) if isinstance(self._index, SupabaseLegalStore) else self._filtered_local_ids(normalized, filters, bounded_limit)
+            document_ids = self._index.search(normalized, limit=bounded_limit, filters=filters, offset=offset) if isinstance(self._index, SupabaseLegalStore) else self._filtered_local_ids(normalized, filters, bounded_limit, offset)
         else:
-            document_ids = self._index.search(normalized, limit=bounded_limit)
+            if isinstance(self._index, SupabaseLegalStore):
+                document_ids = self._index.search(normalized, limit=bounded_limit, offset=offset)
+            else:
+                document_ids = self._index.search(normalized, limit=bounded_limit + offset)[offset:]
         metadata = self._store.get_metadata_many(document_ids)
         return [
             LegalSearchResult(
@@ -327,7 +358,7 @@ class LegalBrowser:
         except sqlite3.Error as error:
             raise LegalBrowserBackendError("Local quality queue unavailable.") from error
 
-    def _filtered_local_ids(self, query: str, filters: SearchFilters, limit: int) -> list[int]:
+    def _filtered_local_ids(self, query: str, filters: SearchFilters, limit: int, offset: int = 0) -> list[int]:
         # Filter the metadata relation before LIMIT; never scan/decompress bodies.
         clauses, values = [], []
         references = list(dict.fromkeys(extract_legal_references(query)))
@@ -343,11 +374,11 @@ class LegalBrowser:
                 clauses.append(f"{column} {operator} ?")
                 values.append(value)
         order = {"default": "document_id ASC", "newest": "issuance_date IS NULL, issuance_date DESC, document_id ASC", "oldest": "issuance_date IS NULL, issuance_date ASC, document_id ASC"}[filters.sort]
-        sql = "SELECT document_id FROM metadata WHERE " + (" AND ".join(clauses) or "1") + f" ORDER BY {order} LIMIT ?"
+        sql = "SELECT document_id FROM metadata WHERE " + (" AND ".join(clauses) or "1") + f" ORDER BY {order} LIMIT ? OFFSET ?"
         try:
             with closing(sqlite3.connect(self._store.path.resolve().as_uri() + "?mode=ro", uri=True)) as connection:
                 deadline = time.monotonic() + 3.0
                 connection.set_progress_handler(lambda: time.monotonic() > deadline, 10_000)
-                return [row[0] for row in connection.execute(sql, [*values, limit])]
+                return [row[0] for row in connection.execute(sql, [*values, limit, offset])]
         except sqlite3.Error as error:
             raise LegalBrowserBackendError("Local filtered search failed.") from error

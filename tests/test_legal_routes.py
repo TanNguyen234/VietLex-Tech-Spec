@@ -101,6 +101,27 @@ def test_search_page_links_to_document_detail(monkeypatch) -> None:
     assert 'href="/documents/7"' in response.text
 
 
+def test_metadata_search_paginates_and_preserves_query(monkeypatch) -> None:
+    import app.api.legal_routes as routes
+
+    client = _client(monkeypatch)
+    result = routes.browser.search("x", 20)[0]
+    records = [SimpleNamespace(**{**vars(result), "document_id": number}) for number in range(45)]
+    routes.browser.search = lambda query, limit, offset=0, filters=None: records[offset : offset + limit]
+
+    first = client.get("/search?q=Bo+luat&sort=newest")
+    second = client.get("/search?q=Bo+luat&sort=newest&offset=20")
+    last = client.get("/search?q=Bo+luat&sort=newest&offset=40")
+
+    assert first.status_code == second.status_code == last.status_code == 200
+    assert 'href="/documents/0"' in first.text
+    assert 'offset=20' in first.text and 'sort=newest' in first.text
+    assert 'href="/documents/20"' in second.text and 'href="/documents/0"' not in second.text
+    assert 'offset=40' in second.text and 'Trang trước' in second.text
+    assert 'href="/documents/40"' in last.text and 'href="/documents/20"' not in last.text
+    assert 'Trang tiếp' not in last.text and 'Trang trước' in last.text
+
+
 def test_reader_pin_resolves_source_on_server_and_checks_workspace_owner(monkeypatch):
     from unittest.mock import AsyncMock
     from app.api import workspace_routes

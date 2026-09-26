@@ -19,7 +19,7 @@ MAX_DOCX_ENTRIES = 500
 MAX_DOCX_UNCOMPRESSED_BYTES = 20_000_000
 _WORD_NAMESPACE = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 _HEADING = re.compile(
-    r"^(?P<title>(?:điều|chương|mục|phần)\s+[\wIVXLCDM.-]+(?:[^\n]{0,180})?)$",
+    r"^(?P<title>(?:(?:điều|dieu)\s+\d+[\w.-]*|(?:chương|mục|phần)\s+[\wIVXLCDM.-]+)(?:[^\n]{0,180})?)$",
     re.IGNORECASE,
 )
 _CONTROL = re.compile(r"[\x00-\x1f\x7f]+")

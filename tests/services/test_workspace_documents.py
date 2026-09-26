@@ -41,6 +41,30 @@ def test_txt_and_docx_extract_bounded_clause_records() -> None:
     assert txt.extracted_characters > 0
 
 
+def test_ascii_dieu_headings_split_without_treating_prose_as_heading() -> None:
+    from app.services.workspace_documents import extract_workspace_document
+
+    result = extract_workspace_document(
+        "noi-quy.txt",
+        "text/plain",
+        (
+            "Dieu 1. Pham vi\n"
+            "Quy dinh nay dieu chinh cong viec.\n"
+            "Dieu nay khong la tieu de.\n"
+            "Điều này cũng không là tiêu đề.\n"
+            "Dieu 2. Hieu luc\n"
+            "Ap dung tu ngay ky."
+        ).encode(),
+    )
+
+    assert [clause.title for clause in result.clauses] == [
+        "Dieu 1. Pham vi",
+        "Dieu 2. Hieu luc",
+    ]
+    assert "Dieu nay khong la tieu de." in result.clauses[0].text
+    assert "Điều này cũng không là tiêu đề." in result.clauses[0].text
+
+
 @pytest.mark.parametrize(
     ("name", "content_type", "payload", "kind"),
     [
