@@ -6,13 +6,13 @@
 
 | Trạng thái | Trước | Sau |
 | --- | ---: | ---: |
-| PASS | 41 | 61 |
-| PARTIAL | 18 | 21 |
+| PASS | 41 | 62 |
+| PARTIAL | 18 | 20 |
 | FAIL | 1 | 0 |
 | NOT_TESTED | 33 | 14 |
 | BLOCKED | 6 | 3 |
 
-Độ phủ ca đã chạy: `82/99 = 82,8%`. Điểm chứng minh toàn danh mục: `(61 + 0,5×21)/99 = 72,2%`. Tỷ lệ đạt theo điểm quy ước trong 82 ca có quan sát: `71,5/82 = 87,2%`. S07, S08 và D02 được nâng lên PASS sau khi bản vá `d032b1d` lên production và ca live đạt; các mục chưa chạy vẫn không cộng điểm.
+Độ phủ ca đã chạy: `82/99 = 82,8%`. Điểm chứng minh toàn danh mục: `(62 + 0,5×20)/99 = 72,7%`. Tỷ lệ đạt theo điểm quy ước trong 82 ca có quan sát: `72/82 = 87,8%`. S07, S08 và D02 được nâng lên PASS sau khi bản vá `d032b1d` lên production và ca live đạt; các mục chưa chạy vẫn không cộng điểm.
 
 ## Quan sát live bổ sung
 
@@ -28,6 +28,8 @@ Một tài khoản thường tổng hợp đã xác minh đăng nhập 303, tạ
 Hai tài khoản thử tiếp theo được dùng cho các ca riêng. Tài khoản thứ nhất đăng nhập ở hai client: tạo hội thoại 200, đổi tên và thấy tên mới trong danh sách 200, export Markdown 200 chứa tên mới, xóa hội thoại 200 và export lại 404. Feedback `up` cho một tương tác tổng hợp thuộc chính tài khoản trả 200 và readback Mongo khớp. Thu hồi các phiên khác trả 303: client còn lại bị 401, client hiện tại vẫn 200. Sau đăng nhập lại, xóa lịch sử trả 303 và không còn chat session/evaluation log/workspace theo user ID; xóa tài khoản trả 303, user còn 0 bản ghi và settings 401. Tài khoản thử thứ hai xác nhận thu hồi chính phiên hiện tại trả 303 rồi settings 401; đăng nhập lại và logout trả 303 rồi settings 401. Hai tài khoản/phiên thử đã được dọn sạch. Các ca này không gửi email xác minh hay đặt lại mật khẩu, không tạo câu trả lời bằng model; export của hội thoại rỗng chưa chứng minh tính đầy đủ của cuộc hội thoại có nội dung.
 
 Một workspace thử khác tải lên hai phiên bản TXT, gọi redline xác định đúng một điều khoản thay đổi với `provider=null` (không gọi AI). Bảng finding mở 200 với một finding tổng hợp được seed riêng cho kiểm thử. Ghi quyết định `resolved` và note trả 303; đọc lại thấy `version=1`, một sự kiện history; ghi lại revision cũ trả 409. Workspace và tài khoản thử đã được xóa. Ca finding chứng minh luồng lưu quyết định/lịch sử, không chứng minh nội dung finding do model tạo là đúng pháp lý.
+
+Ngày 05/10, P04 được kiểm byte trên production bằng một báo cáo tổng hợp thuộc tài khoản thường đã xác minh: Markdown và DOCX đều trả 200, `Cache-Control: no-store`, `X-Content-Type-Options: nosniff`. Markdown chứa excerpt và URL nguồn; ZIP DOCX mở hợp lệ, `word/document.xml` chứa tiêu đề và excerpt, quan hệ liên kết chứa URL nguồn. Workspace, tài khoản và phiên thử đều được xóa. Nội dung báo cáo được seed chỉ để kiểm export; ca này không chứng minh chất lượng báo cáo do model sinh.
 
 ## Bản vá và nghiệm thu production
 

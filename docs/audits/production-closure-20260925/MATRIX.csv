@@ -62,7 +62,7 @@
 "P01","Report","Generate grounded draft","PARTIAL","C07;F03-postdeploy","Earlier failures and one later success; reliability unmeasured"
 "P02","Report","Edit and version draft","PASS","C08","One edited version persisted with earlier link"
 "P03","Report","Open saved draft with citation links","PASS","live-20260925-report","One saved report reopened with two source anchors"
-"P04","Report","Markdown and DOCX export integrity","PARTIAL","C09","Download events observed; bytes not inspected"
+"P04","Report","Markdown and DOCX export integrity","PASS","live-20261005-p04","Synthetic owner report exports 200; Markdown excerpt/link and DOCX XML/relationship bytes verified; no-store and nosniff"
 "P05","Report","Print or save PDF","NOT_TESTED","UI-20260925","Print artifact not inspected"
 "I01","Identity","Existing authenticated account and settings","PASS","live-20260925-settings","One admin account; no second role"
 "I02","Identity","Register and email verification","NOT_TESTED","route-inventory","No regular account exists"
