@@ -32,7 +32,7 @@
 "O03","Official source","Read official PDF with extracted text","PASS","C03;F01-postdeploy","12 of 94 pages sampled"
 "O04","Official source","Continue PDF in bounded page groups","PASS","C03","Three groups gave 12 unique pages"
 "O05","Official source","Read-versus-unread page labeling","PASS","F01-postdeploy","12 read and 82 unread distinguished"
-"O06","Official source","Read full official HTML body","PARTIAL","live-20261005-o06","Official inline law page readable after deploy, but stored 20000/64854 characters and marked truncated"
+"O06","Official source","Read full official HTML body","PARTIAL","live-20261005-o06;live-20261005-o06-full","Sample law stored 64854/64854 characters after second deploy; HTML above 120000 characters can still truncate"
 "O07","Official source","OCR scanned official PDF","NOT_TESTED","COVERAGE-20260924","No known scan used live"
 "O08","Official source","Reopen saved source without AI","PASS","C03;E01","One retained source"
 "O09","Official source","Pin exact quote and refresh count","PASS","F02-postdeploy","Two successive pins changed 3 to 4 to 5 and persisted"
