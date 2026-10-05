@@ -11,7 +11,7 @@ import httpx
 
 APPROVED_HOSTS = frozenset({"vanban.chinhphu.vn", "baochinhphu.vn", "datafiles.chinhphu.vn", "congbao.chinhphu.vn", "congbaocdn.chinhphu.vn"})
 _MAX_BYTES = 1_000_000
-_MAX_TEXT = 20_000
+_MAX_TEXT = 120_000
 _SEMAPHORE = asyncio.Semaphore(2)
 
 

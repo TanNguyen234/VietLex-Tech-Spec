@@ -31,6 +31,21 @@ def test_extract_page_excludes_scripts_and_requires_text():
     assert result["legal_effect_status"] == "unverified"
 
 
+def test_extract_page_retains_complete_mid_size_law_for_bounded_analysis():
+    from app.services.retained_source_analysis import collect_retained_source, relevant_source_passages
+
+    html = "<html><body><p>Điều 1. Phạm vi</p>" + "<p>Nội dung pháp luật mẫu.</p>" * 2500 + "<p>Điều 2. Hiệu lực</p></body></html>"
+    result = extract_page(html, "https://vanban.chinhphu.vn/default.aspx?docid=123")
+    assert 20_000 < result["extracted_characters"] < 120_000
+    assert result["stored_characters"] == result["extracted_characters"]
+    assert result["truncated"] is False
+    workspace = {"analyses": [{"kind": "trusted_sources", "analysis_id": "a1", "result": {"sources": [result]}}]}
+    source = collect_retained_source(workspace, "a1", 0)
+    passages = relevant_source_passages("Điều 2 hiệu lực", source, limit=10)
+    assert source["characters"] == result["extracted_characters"]
+    assert len(passages) <= 10
+
+
 def test_reconciliation_keeps_different_sources_and_flags_text_difference():
     rows = [
         {
@@ -115,7 +130,7 @@ async def test_docid_page_does_not_mark_articles_beyond_retained_text_as_readabl
     from app.services.trusted_source_reader import read_source
 
     html = (
-        "<html><body><p>" + "Danh mục văn bản. " * 1300 + "</p>"
+        "<html><body><p>" + "Danh mục văn bản. " * 8000 + "</p>"
         "<p>Điều 1. Phạm vi</p><p>Nội dung một.</p>"
         "<p>Điều 2. Hiệu lực</p><p>Nội dung hai.</p></body></html>"
     )
