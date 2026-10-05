@@ -5,7 +5,7 @@ These rules apply to every coding agent in this repository. Current code and tes
 ## Agent model routing
 
 - Routine implementation: GPT-6 Luna (`gpt-6-luna`), `xhigh` reasoning, Fast service tier. The project Codex config sets this as the default for new turns. Fast is the supported speed tier; it does not guarantee an exact 1.5× speedup.
-- Before writing a plan, analyzing repository code or change impact, reviewing a diff, or interpreting test/live-check results, select GPT-6 Sol (`gpt-6-sol`) with `medium` reasoning. Use `high` for complex failures, security or legal correctness, migration/release decisions, and final verification judgments.
+- Before writing a plan, analyzing repository code or change impact, reviewing a diff, interpreting test/live-check results, or making final verification judgments, select GPT-6.1 Sol (`gpt-6.1-sol`) with `high` reasoning.
 - Project config cannot automatically switch models by activity. Make the model choice at each phase boundary when the host supports it; never report that a phase used Sol unless it actually did. If switching is unavailable in an active turn, state the limitation and continue the required work with the current model.
 
 ## Objective and status

@@ -5,6 +5,9 @@ approvals_reviewer = "auto_review"
 sandbox_mode = "workspace-write"
 service_tier = "fast"
 
+[features]
+fast_mode = true
+
 [sandbox_workspace_write]
 network_access = false
 

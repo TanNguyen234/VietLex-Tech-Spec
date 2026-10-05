@@ -71,3 +71,57 @@ async def test_reader_rejects_redirect_and_oversized_body_without_following():
     ) as client:
         with pytest.raises(SourceReadError, match="source_body_too_large"):
             await read_source("https://vanban.chinhphu.vn/a", client=client)
+
+
+@pytest.mark.asyncio
+async def test_docid_page_with_inline_articles_is_readable_without_pdf():
+    import httpx
+    from app.services.trusted_source_reader import read_source
+
+    html = (
+        "<html><title>Luật mẫu</title><body>"
+        "<p><b>Điều 1. Phạm vi</b></p><p>Áp dụng cho tổ chức.</p>"
+        "<p><b>Điều 2. Hiệu lực</b></p><p>Có hiệu lực từ ngày ban hành.</p>"
+        "</body></html>"
+    )
+    async with httpx.AsyncClient(transport=httpx.MockTransport(
+        lambda _: httpx.Response(200, headers={"content-type": "text/html"}, content=html.encode())
+    )) as client:
+        result = await read_source("https://vanban.chinhphu.vn/default.aspx?docid=123", client=client)
+
+    assert result["method"] == "visible_html_text"
+    assert "Điều 2. Hiệu lực" in result["text"]
+    assert result.get("content_status") != "metadata_only"
+
+
+@pytest.mark.asyncio
+async def test_docid_metadata_page_without_articles_remains_unreadable():
+    import httpx
+    from app.services.trusted_source_reader import read_source
+
+    html = "<html><title>Chi tiết văn bản</title><body>Số ký hiệu 12/2026/QH15. Tải văn bản để xem nội dung.</body></html>"
+    async with httpx.AsyncClient(transport=httpx.MockTransport(
+        lambda _: httpx.Response(200, headers={"content-type": "text/html"}, content=html.encode())
+    )) as client:
+        result = await read_source("https://vanban.chinhphu.vn/default.aspx?docid=456", client=client)
+
+    assert result["content_status"] == "metadata_only"
+    assert result["text"] == ""
+
+
+@pytest.mark.asyncio
+async def test_docid_page_does_not_mark_articles_beyond_retained_text_as_readable():
+    import httpx
+    from app.services.trusted_source_reader import read_source
+
+    html = (
+        "<html><body><p>" + "Danh mục văn bản. " * 1300 + "</p>"
+        "<p>Điều 1. Phạm vi</p><p>Nội dung một.</p>"
+        "<p>Điều 2. Hiệu lực</p><p>Nội dung hai.</p></body></html>"
+    )
+    async with httpx.AsyncClient(transport=httpx.MockTransport(
+        lambda _: httpx.Response(200, headers={"content-type": "text/html"}, content=html.encode())
+    )) as client:
+        result = await read_source("https://vanban.chinhphu.vn/default.aspx?docid=789", client=client)
+
+    assert result["content_status"] == "metadata_only"

@@ -67,6 +67,15 @@ class _TextParser(HTMLParser):
             self.parts.append(data.strip())
 
 
+def _contains_inline_articles(parts: list[str]) -> bool:
+    numbers = {
+        int(match.group(1))
+        for part in parts
+        if (match := re.match(r"^\s*(?:Điều|Dieu)\s+(\d{1,4})\b\s*[.:]?", part, re.IGNORECASE))
+    }
+    return len(numbers) >= 2
+
+
 def extract_page(html: str, url: str) -> dict:
     validate_source_url(url)
     if len(html.encode("utf-8")) > _MAX_BYTES:
@@ -149,7 +158,7 @@ async def read_source(url: str, *, page_start: int = 1, use_ocr: bool = False,
                 if approved:
                     result = await fetch(session, approved[0], title=result['title'], attachment=True)
                     result['attachments'] = list(dict.fromkeys(approved))
-                elif 'docid=' in urlsplit(target).query.lower() or urlsplit(target).hostname == 'congbao.chinhphu.vn':
+                elif ('docid=' in urlsplit(target).query.lower() or urlsplit(target).hostname == 'congbao.chinhphu.vn') and not _contains_inline_articles(result['text'].splitlines()):
                     # A catalogue/detail page without readable legislation is not legal evidence.
                     result.update(text='', content_status='metadata_only', requires_ocr=False,
                                   sha256=hashlib.sha256(b'').hexdigest(), stored_characters=0)
