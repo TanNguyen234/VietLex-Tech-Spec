@@ -23,6 +23,7 @@ def test_v3_browser_uses_packaged_v3_data_paths(monkeypatch) -> None:
     monkeypatch.setattr(legal_browser, "LegalFtsIndex", index)
     legal_browser.LegalBrowser.from_settings(
         SimpleNamespace(
+            APP_ENV="production",
             USE_LEGACY_FREE_PIPELINE=False,
             CONTENT_STORE_PATH=Path("full.sqlite3"),
             LEGAL_FTS_PATH=Path("full-fts.sqlite3"),

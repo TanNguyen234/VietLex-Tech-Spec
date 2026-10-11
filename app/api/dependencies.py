@@ -38,11 +38,23 @@ async def verify_csrf_header(
     return csrf_token
 
 
+async def require_online_persistence():
+    if get_settings().APP_ENV == "development":
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "code": "online_persistence_required",
+                "message": "Chức năng lưu trữ này chỉ khả dụng trên bản online.",
+            },
+        )
+
+
 async def require_admin(
     request: Request,
     credentials: HTTPBasicCredentials | None = Depends(_admin_basic),
 ):
     settings = get_settings()
+    await require_online_persistence()
     user = await resolve_auth_session(
         request.cookies.get(settings.AUTH_COOKIE_NAME)
     )

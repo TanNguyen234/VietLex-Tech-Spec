@@ -12,6 +12,7 @@ def _client(monkeypatch, user):
         dependencies,
         "get_settings",
         lambda: SimpleNamespace(
+            APP_ENV="production",
             AUTH_COOKIE_NAME="vietlex_auth",
             LEGACY_ADMIN_BASIC_ENABLED=False,
         ),

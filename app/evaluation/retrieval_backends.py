@@ -139,8 +139,57 @@ async def retrieve_for_evaluation(
                 diagnostics["reranker_error_type"] = type(rerank_error).__name__
         elif ranking not in {"raw-rrf", "dbsf", "rrf-dbsf"}:
             raise ValueError(f"unsupported v3 ranking mode: {ranking}")
+
+        article_expansion = None
+        if ranking in {"raw-rrf", "dbsf", "rrf-dbsf"} and outcome.status == "ok":
+            from app.services.v3_article_expansion import expand_v3_evidence
+
+            try:
+                article_expansion = await expand_v3_evidence(
+                    sparse_query,
+                    outcome.evidence,
+                    selected,
+                    settings=get_settings(),
+                    max_documents=profile.final_evidence_limit,
+                    max_evidence=profile.final_evidence_limit,
+                )
+                latency["v3_article_expansion"] = article_expansion.latency_seconds
+                diagnostics["article_expansion"] = {
+                    **article_expansion.diagnostics,
+                    "status": article_expansion.status,
+                    "latency_seconds": article_expansion.latency_seconds,
+                }
+                if article_expansion.status == "expanded":
+                    selected = list(article_expansion.selected_evidence)
+                elif article_expansion.status in {"unavailable", "integrity_error"}:
+                    status = "partial_retrieval_error"
+                    error = f"V3 article expansion {article_expansion.status}"
+            except Exception as expansion_error:
+                status = "partial_retrieval_error"
+                error = "V3 article expansion failed"
+                diagnostics["article_expansion"] = {
+                    "status": "error",
+                    "error_type": type(expansion_error).__name__,
+                }
+
         trace = diagnostics.get("stage_trace")
         if trace is not None:
+            from app.evaluation.schemas import StageCandidate
+
+            def to_stage_candidate(item: Any, *, source: str) -> StageCandidate:
+                return StageCandidate(
+                    document_id=item.document_id,
+                    document_number=item.document_number,
+                    title=item.title,
+                    source_url=item.source_url,
+                    citation=item.citation,
+                    article=item.article,
+                    clause=item.clause,
+                    text=item.text,
+                    score=getattr(item, "score", None),
+                    source=source,
+                )
+
             source_candidates = list(trace.structural_chunks_generated)
             trace.reranker_input_chunks = source_candidates
             trace.reranker_output_chunks = [
@@ -148,7 +197,22 @@ async def retrieve_for_evaluation(
                 for index in selected_indices
                 if index < len(source_candidates)
             ]
-            trace.final_evidence_chunks = list(trace.reranker_output_chunks)
+            if article_expansion is not None and article_expansion.status == "expanded":
+                trace.locally_selected_chunks.extend(
+                    to_stage_candidate(item, source="v3-article-expansion")
+                    for item in article_expansion.added_evidence
+                )
+            original_candidates = {
+                (candidate.document_id, candidate.citation, candidate.text): candidate
+                for candidate in source_candidates
+            }
+            trace.final_evidence_chunks = [
+                original_candidates.get(
+                    (item.document_id, item.citation, item.text)
+                )
+                or to_stage_candidate(item, source="v3-article-expansion")
+                for item in selected
+            ]
         return RetrievalOutcome(
             evidence=selected,
             latency=latency,

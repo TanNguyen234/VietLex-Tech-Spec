@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from uuid import NAMESPACE_URL, UUID, uuid5
 
 
@@ -51,6 +51,11 @@ class EvidenceChunk:
     citation: str
     text: str
     token_count: int
+    source_content_sha256: str | None = field(
+        default=None,
+        repr=False,
+        compare=False,
+    )
 
     def formatted_context(self) -> str:
         return (

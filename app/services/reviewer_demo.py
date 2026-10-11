@@ -28,13 +28,20 @@ def demo_admission_snapshot() -> dict:
     return {'scope': 'process_since_start', 'started_at': _STARTED_AT, 'denied': dict(_DENIED)}
 
 
+def is_reviewer_demo_enabled(settings) -> bool:
+    return bool(
+        getattr(settings, 'APP_ENV', None) == 'production'
+        and settings.REVIEWER_DEMO_MODE
+    )
+
+
 def is_demo_daily_exempt(user: dict) -> bool:
     return effective_role(user) == 'admin'
 
 
 async def get_demo_quota(subject: str, settings, *, is_admin: bool = False) -> dict:
     """Advisory daily attempt snapshot; admission remains atomic in middleware."""
-    if not settings.REVIEWER_DEMO_MODE:
+    if not is_reviewer_demo_enabled(settings):
         return {'status': 'disabled'}
     if is_admin:
         return {'status': 'exempt'}
@@ -91,7 +98,10 @@ class ReviewerDemoMiddleware:
         self.active_bodies = 0
 
     async def __call__(self, scope, receive, send):
-        if scope.get('type') != 'http' or not self.settings.REVIEWER_DEMO_MODE:
+        if (
+            scope.get('type') != 'http'
+            or not is_reviewer_demo_enabled(self.settings)
+        ):
             await self.app(scope, receive, send)
             return
         path = scope.get('path', '').rstrip('/') or '/'

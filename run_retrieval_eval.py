@@ -488,6 +488,7 @@ async def evaluate_single_retrieval_case(
                 "reranker_provider",
                 "reranker_model",
                 "reranker_error_type",
+                "article_expansion",
             )
             if key in outcome.diagnostics
         },

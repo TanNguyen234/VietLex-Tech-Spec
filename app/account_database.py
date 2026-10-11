@@ -131,7 +131,7 @@ async def create_auth_session(
 
 
 async def resolve_auth_session(token: str | None) -> dict[str, Any] | None:
-    if not token:
+    if not token or get_settings().APP_ENV == "development":
         return None
     database = get_db()
     session = await database.auth_sessions.find_one(

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from types import SimpleNamespace
 
 import pytest
@@ -197,6 +198,168 @@ async def test_explicit_vertex_backend_calls_only_vertex_adapter(monkeypatch) ->
 
     assert result.status == "no_candidate"
     assert calls == [("dense", "original", 5)]
+
+
+@pytest.mark.asyncio
+async def test_v3_expansion_runs_after_candidate_pool_and_traces_added_evidence(
+    monkeypatch,
+) -> None:
+    from app.evaluation import retrieval_backends
+    from app.evaluation.candidate_pool import build_candidate_pool
+    from app.evaluation.schemas import RetrievalStageTrace, StageCandidate
+    from app.ingestion.legal_text import EvidenceChunk
+    from app.services.retrieval import RetrievalOutcome
+
+    source = EvidenceChunk(
+        document_id=10,
+        document_number="10/2020/QH14",
+        title="Test law",
+        source_url="https://example.test/law",
+        heading_path="Điều 164",
+        article="Điều 164",
+        clause="5",
+        citation="10/2020/QH14, Điều 164, Khoản 5",
+        text="Thành viên chịu trách nhiệm.",
+        token_count=4,
+        source_content_sha256="a" * 64,
+    )
+    sibling = replace(
+        source,
+        clause="3",
+        citation="10/2020/QH14, Điều 164, Khoản 3",
+        text="Thông báo bằng văn bản trong 07 ngày làm việc.",
+    )
+    structural = StageCandidate(
+        document_id=10,
+        document_number=source.document_number,
+        title=source.title,
+        source_url=source.source_url,
+        citation=source.citation,
+        article=source.article,
+        clause=source.clause,
+        text=source.text,
+        score=0.9,
+        source="vertex-qdrant-v3",
+    )
+    trace = RetrievalStageTrace(structural_chunks_generated=[structural])
+    settings = SimpleNamespace(
+        VERTEX_QDRANT_COLLECTION_NAME="v3",
+        VERTEX_EMBEDDING_MODEL="embedding",
+        VERTEX_QDRANT_VECTOR_SIZE=1024,
+        SERVERLESS_ONLINE_ONLY=True,
+    )
+    expansion_calls = []
+
+    class Retriever:
+        async def retrieve_detailed(self, dense_query, *, sparse_query, limit, **kwargs):
+            return RetrievalOutcome(
+                evidence=[source],
+                latency={"qdrant": 0.2},
+                status="ok",
+                diagnostics={"stage_trace": trace},
+            )
+
+    async def expand(query, candidates, selected, **kwargs):
+        expansion_calls.append((query, candidates, selected, kwargs))
+        return SimpleNamespace(
+            status="expanded",
+            selected_evidence=[source, sibling],
+            added_evidence=[sibling],
+            diagnostics={"status": "expanded", "evidence_added": 1},
+            latency_seconds=0.015,
+        )
+
+    monkeypatch.setattr(retrieval_backends, "get_settings", lambda: settings)
+    monkeypatch.setattr(retrieval_backends, "get_vertex_qdrant_retriever", lambda: Retriever())
+    monkeypatch.setattr("app.services.v3_article_expansion.expand_v3_evidence", expand)
+
+    result = await retrieval_backends.retrieve_for_evaluation(
+        "vertex-qdrant-v3",
+        dense_query="rewritten query",
+        sparse_query="Trong thời gian bao lâu?",
+        profile=SimpleNamespace(final_evidence_limit=2, rerank_input_limit=24),
+        ranking="rrf-dbsf",
+        case_id="case-043",
+    )
+
+    expected_pool = build_candidate_pool(
+        "case-043", [source], "v3|embedding|1024", scores=[0.9]
+    )
+    assert len(expansion_calls) == 1
+    assert expansion_calls[0][0] == "Trong thời gian bao lâu?"
+    assert expansion_calls[0][1] == [source]
+    assert expansion_calls[0][2] == [source]
+    assert expansion_calls[0][3]["max_documents"] == 2
+    assert expansion_calls[0][3]["max_evidence"] == 2
+    assert [item.clause for item in result.evidence] == ["5", "3"]
+    assert result.diagnostics["candidate_pool"]["candidate_ids_sha256"] == (
+        expected_pool.candidate_ids_sha256
+    )
+    assert result.diagnostics["article_expansion"]["status"] == "expanded"
+    assert result.latency["v3_article_expansion"] == pytest.approx(0.015)
+    assert trace.structural_chunks_generated == [structural]
+    assert trace.locally_selected_chunks[0].source == "v3-article-expansion"
+    assert trace.final_evidence_chunks[-1].clause == "3"
+
+
+@pytest.mark.asyncio
+async def test_v3_expansion_integrity_error_keeps_qdrant_evidence(monkeypatch) -> None:
+    from app.evaluation import retrieval_backends
+    from app.ingestion.legal_text import EvidenceChunk
+    from app.services.retrieval import RetrievalOutcome
+
+    source = EvidenceChunk(
+        document_id=10,
+        document_number="10/2020/QH14",
+        title="Test law",
+        source_url="https://example.test/law",
+        heading_path="Điều 164",
+        article="Điều 164",
+        clause="5",
+        citation="10/2020/QH14, Điều 164, Khoản 5",
+        text="Thành viên chịu trách nhiệm.",
+        token_count=4,
+        source_content_sha256="a" * 64,
+    )
+    settings = SimpleNamespace(
+        VERTEX_QDRANT_COLLECTION_NAME="v3",
+        VERTEX_EMBEDDING_MODEL="embedding",
+        VERTEX_QDRANT_VECTOR_SIZE=1024,
+        SERVERLESS_ONLINE_ONLY=True,
+    )
+
+    class Retriever:
+        async def retrieve_detailed(self, dense_query, *, sparse_query, limit):
+            return RetrievalOutcome(
+                evidence=[source], latency={"qdrant": 0.2}, status="ok"
+            )
+
+    async def fail_integrity(*_args, **_kwargs):
+        return SimpleNamespace(
+            status="integrity_error",
+            selected_evidence=[source],
+            added_evidence=[],
+            diagnostics={"error_type": "SourceContentHashMismatch"},
+            latency_seconds=0.01,
+        )
+
+    monkeypatch.setattr(retrieval_backends, "get_settings", lambda: settings)
+    monkeypatch.setattr(retrieval_backends, "get_vertex_qdrant_retriever", lambda: Retriever())
+    monkeypatch.setattr("app.services.v3_article_expansion.expand_v3_evidence", fail_integrity)
+
+    result = await retrieval_backends.retrieve_for_evaluation(
+        "vertex-qdrant-v3",
+        dense_query="query",
+        sparse_query="Trong thời gian bao lâu?",
+        profile=SimpleNamespace(final_evidence_limit=2, rerank_input_limit=24),
+    )
+
+    assert result.status == "partial_retrieval_error"
+    assert result.evidence == [source]
+    assert result.error == "V3 article expansion integrity_error"
+    assert result.diagnostics["article_expansion"]["error_type"] == (
+        "SourceContentHashMismatch"
+    )
 
 
 @pytest.mark.asyncio

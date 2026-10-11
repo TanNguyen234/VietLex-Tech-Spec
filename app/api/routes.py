@@ -27,6 +27,7 @@ from app.evaluation.online_metrics import build_online_metrics, sanitize_error_m
 from app.api.dependencies import (
     optional_user,
     require_admin,
+    require_online_persistence,
     verify_csrf,
     verify_csrf_header,
 )
@@ -73,6 +74,7 @@ from app.account_database import (
 router = APIRouter()
 templates = Jinja2Templates(directory=APP_ROOT / "templates")
 settings = get_settings()
+templates.env.globals["local_stateless_mode"] = settings.APP_ENV == "development"
 _public_ragas_quota = DailyRagasQuota(
     client_limit=settings.PUBLIC_RAGAS_CLIENT_DAILY_LIMIT,
     global_limit=settings.PUBLIC_RAGAS_GLOBAL_DAILY_LIMIT,
@@ -146,12 +148,16 @@ async def check_output_guardrails(response: str, contexts: list[str], query: str
 
 
 async def check_semantic_cache(message: str):
+    if settings.APP_ENV == "development":
+        return None
     from app.services.semantic_cache import check_semantic_cache as implementation
 
     return await implementation(message)
 
 
 async def save_to_semantic_cache(*args, **kwargs):
+    if settings.APP_ENV == "development":
+        return None
     from app.services.semantic_cache import save_to_semantic_cache as implementation
 
     return await implementation(*args, **kwargs)
@@ -227,7 +233,10 @@ async def chat_progress_status(request: Request, request_id: str):
 @router.get("/api/interactions/{trace_id}/retrieval")
 @limiter.limit(settings.SESSION_RATE_LIMIT)
 async def retrieval_inspector(
-    request: Request, trace_id: str, current_user=Depends(optional_user)
+    request: Request,
+    trace_id: str,
+    _persistence=Depends(require_online_persistence),
+    current_user=Depends(optional_user),
 ):
     if len(trace_id) > 100:
         raise HTTPException(status_code=422, detail="Invalid trace ID")
@@ -907,6 +916,7 @@ async def feedback(
     rating: str = Form(...),
     csrf_token: str = Form(...),
     csrf_valid: str = Depends(verify_csrf),
+    _persistence=Depends(require_online_persistence),
     current_user=Depends(optional_user),
 ):
     if rating not in {"up", "down"}:
@@ -931,6 +941,7 @@ async def public_evaluation(
     run_ragas: bool = Form(False),
     csrf_token: str = Form(...),
     csrf_valid: str = Depends(verify_csrf),
+    _persistence=Depends(require_online_persistence),
     current_user=Depends(optional_user),
 ):
     client_id = getattr(request.state, "client_id", "legacy")

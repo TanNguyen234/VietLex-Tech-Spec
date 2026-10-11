@@ -267,14 +267,43 @@ class LegalBrowser:
             if use_v3
             else settings.LEGAL_FTS_PATH
         )
-        store = ContentStore(content_path)
+        store = None
+        index = None
+        full_corpus_selected = not use_v3
+        if use_v3 and getattr(settings, "APP_ENV", None) == "development":
+            full_content_path = settings.CONTENT_STORE_PATH
+            full_fts_path = settings.LEGAL_FTS_PATH
+            if full_content_path.is_file() and full_fts_path.is_file():
+                full_store = ContentStore(full_content_path)
+                full_index = LegalFtsIndex(
+                    store=full_store,
+                    path=full_fts_path,
+                    dataset_revision=settings.DATASET_REVISION,
+                )
+                if full_index.is_ready():
+                    content_path = full_content_path
+                    fts_path = full_fts_path
+                    store = full_store
+                    index = full_index
+                    full_corpus_selected = True
+        if store is None:
+            store = ContentStore(content_path)
+        body_index_path = content_path.with_name("legal_body_fts.sqlite3")
+        if (
+            full_corpus_selected
+            and getattr(settings, "APP_ENV", None) == "development"
+        ):
+            v3_body_index_path = settings.V3_CONTENT_STORE_PATH.with_name(
+                "legal_body_fts.sqlite3"
+            )
+            if v3_body_index_path.is_file():
+                body_index_path = v3_body_index_path
         return cls(
             store=store,
-            body_index=BodySearchIndex(content_path.with_name("legal_body_fts.sqlite3")),
-            index=LegalFtsIndex(
-                store=store,
-                path=fts_path,
-                dataset_revision=settings.DATASET_REVISION,
+            body_index=BodySearchIndex(body_index_path),
+            index=index
+            or LegalFtsIndex(
+                store=store, path=fts_path, dataset_revision=settings.DATASET_REVISION
             ),
         )
 

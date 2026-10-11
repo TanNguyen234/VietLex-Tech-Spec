@@ -10,13 +10,25 @@ settings = get_settings()
 client: Optional[AsyncIOMotorClient] = None
 db = None
 
+
+class LocalPersistenceUnavailable(RuntimeError):
+    """Mongo-backed application state is intentionally online-only."""
+
+
 def get_db():
     global client, db
+    if settings.APP_ENV == "development":
+        raise LocalPersistenceUnavailable("online_persistence_required")
     if client is None:
         if not settings.MONGO_URL:
             raise ValueError("MONGO_URL is not configured in settings!")
         logfire.info("Connecting to MongoDB...")
-        client = AsyncIOMotorClient(settings.MONGO_URL)
+        client = AsyncIOMotorClient(
+            settings.MONGO_URL,
+            serverSelectionTimeoutMS=settings.MONGO_TIMEOUT_MS,
+            connectTimeoutMS=settings.MONGO_TIMEOUT_MS,
+            socketTimeoutMS=settings.MONGO_TIMEOUT_MS,
+        )
         # client.get_default_database() automatically retrieves the DB from the connection string
         # e.g., the part after '/' like 'Legal-RAG'
         db = client.get_default_database()
@@ -93,9 +105,6 @@ async def log_interaction(
     retrieval_trace: Optional[Dict[str, Any]] = None,
     request_metadata: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    database = get_db()
-    collection = database.evaluation_logs
-
     ctx_count = context_count if context_count is not None else len(contexts)
     cit_count = citation_count if citation_count is not None else 0
     from app.services.provider_runtime import current_provider_calls
@@ -169,6 +178,9 @@ async def log_interaction(
         document['metrics']['external_calls'] = external_calls
         document['metrics']['token_usage'] = summarize_usage(llm_calls)
         document['metrics']['usage_scope'] = 'reported_llm_results_excludes_embedding_reranker_unreported_attempts'
+    if settings.APP_ENV == "development":
+        return document
+    collection = get_db().evaluation_logs
     try:
         await collection.replace_one({"_id": trace_id}, document, upsert=True)
         logfire.info("Saved interaction to MongoDB: {trace_id}", trace_id=trace_id)
@@ -203,6 +215,8 @@ async def update_evaluation(
     executed: bool = True,
     provider_calls: Optional[List[Dict[str, Any]]] = None,
 ) -> bool:
+    if settings.APP_ENV == "development":
+        return False
     database = get_db()
     collection = database.evaluation_logs
 
@@ -247,6 +261,8 @@ async def update_feedback(
     *,
     user_id: Optional[str] = None,
 ) -> bool:
+    if settings.APP_ENV == "development":
+        return False
     database = get_db()
     collection = database.evaluation_logs
     
@@ -478,6 +494,8 @@ async def get_admin_inventory() -> dict:
         return {'status': 'unavailable', 'error_kind': type(error).__name__}
 
 async def get_interaction(trace_id: str, *, strict: bool = False) -> Optional[Dict[str, Any]]:
+    if settings.APP_ENV == "development":
+        return None
     try:
         collection = get_db().evaluation_logs
         log = await collection.find_one({"_id": trace_id})
@@ -493,6 +511,8 @@ async def get_interaction(trace_id: str, *, strict: bool = False) -> Optional[Di
 async def get_owned_interaction(
     trace_id: str, client_id: str, *, user_id: Optional[str] = None
 ) -> Optional[Dict[str, Any]]:
+    if settings.APP_ENV == "development":
+        return None
     database = get_db()
     try:
         owner = {"user_id": user_id} if user_id else {"client_id": client_id}
@@ -512,8 +532,6 @@ async def create_session(
     *,
     user_id: Optional[str] = None,
 ) -> Dict[str, Any]:
-    database = get_db()
-    collection = database.chat_sessions
     document = {
         "_id": session_id,
         "session_id": session_id,
@@ -525,6 +543,9 @@ async def create_session(
             days=settings.DATA_RETENTION_DAYS
         ),
     }
+    if settings.APP_ENV == "development":
+        return document
+    collection = get_db().chat_sessions
     try:
         await collection.replace_one({"_id": session_id}, document, upsert=True)
         return document
@@ -538,8 +559,9 @@ async def get_sessions(
     *,
     user_id: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
-    database = get_db()
-    collection = database.chat_sessions
+    if settings.APP_ENV == "development":
+        return []
+    collection = get_db().chat_sessions
     try:
         query: Dict[str, Any] = {}
         if user_id is not None:
@@ -564,8 +586,9 @@ async def get_session_messages(
     *,
     user_id: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
-    database = get_db()
-    collection = database.evaluation_logs
+    if settings.APP_ENV == "development":
+        return []
+    collection = get_db().evaluation_logs
     try:
         query: Dict[str, Any] = {"session_id": session_id}
         if user_id is not None:
@@ -585,6 +608,8 @@ async def delete_session(
     *,
     user_id: Optional[str] = None,
 ) -> bool:
+    if settings.APP_ENV == "development":
+        return False
     database = get_db()
     sessions_coll = database.chat_sessions
     logs_coll = database.evaluation_logs
@@ -611,6 +636,8 @@ async def rename_session(
     *,
     user_id: Optional[str] = None,
 ) -> bool:
+    if settings.APP_ENV == "development":
+        return False
     database = get_db()
     collection = database.chat_sessions
     try:

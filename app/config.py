@@ -152,6 +152,7 @@ class Settings(BaseSettings):
     
     # MongoDB Connection URL
     MONGO_URL: Optional[str] = None
+    MONGO_TIMEOUT_MS: int = Field(default=9_000, ge=1_000, le=30_000)
 
     # Server-only Supabase target for explicit full-document export jobs.
     SUPABASE_URL: Optional[str] = None

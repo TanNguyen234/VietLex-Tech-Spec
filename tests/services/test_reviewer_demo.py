@@ -6,7 +6,7 @@ from starlette.requests import Request
 
 
 def settings():
-    return SimpleNamespace(REVIEWER_DEMO_MODE=True, AUTH_COOKIE_NAME="auth",
+    return SimpleNamespace(APP_ENV="production", REVIEWER_DEMO_MODE=True, AUTH_COOKIE_NAME="auth",
         DEMO_AI_DAILY_LIMIT=20, DEMO_AI_GLOBAL_DAILY_LIMIT=100)
 
 

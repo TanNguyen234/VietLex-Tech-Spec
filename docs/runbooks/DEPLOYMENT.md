@@ -4,7 +4,11 @@ Updated: 2026-09-02.
 
 The active Vercel contract runs `app/server.py` directly as an online-only FastAPI/Jinja SSR function. Set `SERVERLESS_ONLINE_ONLY=true` and `USE_LEGACY_FREE_PIPELINE=false`; the function uses Qdrant v3 payload evidence for chat, Supabase for legal browsing, and never packages the local legal corpus. The verified public alias is <https://vietlex-legal-rag.vercel.app>.
 
-The online-only function requires:
+The online-only function requires `APP_ENV=production`; this keeps Mongo startup,
+account/session routes, and production admission active. Local runs should use
+`APP_ENV=development`, which intentionally disables Mongo-backed app state.
+
+The online-only function also requires:
 
 - Qdrant credentials for collection `vietlex-legal-rag-v3-vertex-1024`;
 - Google Cloud project and ADC for v3 query embeddings and primary generation;

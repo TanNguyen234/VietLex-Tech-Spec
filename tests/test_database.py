@@ -6,6 +6,25 @@ import pytest
 from app.database import log_interaction, update_evaluation
 
 
+def test_get_db_uses_bounded_connection_timeouts(monkeypatch) -> None:
+    import app.database as database
+
+    fake_database = MagicMock()
+    fake_client = MagicMock()
+    fake_client.get_default_database.return_value = fake_database
+    monkeypatch.setattr(database, "client", None)
+    monkeypatch.setattr(database, "db", None)
+
+    with patch("app.database.AsyncIOMotorClient", return_value=fake_client) as create:
+        assert database.get_db() is fake_database
+
+    assert create.call_args.kwargs == {
+        "serverSelectionTimeoutMS": database.settings.MONGO_TIMEOUT_MS,
+        "connectTimeoutMS": database.settings.MONGO_TIMEOUT_MS,
+        "socketTimeoutMS": database.settings.MONGO_TIMEOUT_MS,
+    }
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("request_status,expected", [
     ("full_document_review_invalid_structured_response", {"stage":"full_document_review", "error_type":"invalid_structured_response"}),

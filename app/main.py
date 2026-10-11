@@ -29,7 +29,7 @@ from app.api.legal_effect_routes import router as legal_effect_router
 from app.api.legal_registry_routes import router as legal_registry_router
 from app.api.retained_source_routes import router as retained_source_router
 from app.api.evaluation_lab_routes import router as evaluation_lab_router
-from app.api.dependencies import optional_user
+from app.api.dependencies import optional_user, require_online_persistence
 from app.services.web_security import (
     AnonymousClientMiddleware,
     resolve_web_session_secret,
@@ -41,7 +41,7 @@ from app.services.http_security import (
 from app.services.workspace_documents import MAX_UPLOAD_BYTES
 from app.rate_limit import limiter
 from app.services.observability import configure_observability
-from app.services.reviewer_demo import ReviewerDemoMiddleware
+from app.services.reviewer_demo import ReviewerDemoMiddleware, is_reviewer_demo_enabled
 
 # Load environment variables from .env before settings/observability initialization.
 load_dotenv()
@@ -67,11 +67,16 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event():
-    from app.services.semantic_cache import ensure_semantic_cache_collection
+    if settings.APP_ENV == "production":
+        from app.services.semantic_cache import ensure_semantic_cache_collection
 
-    await init_db()
-    await ensure_semantic_cache_collection()
-    if settings.PUBLIC_NEMO_DEFAULT_ENABLED and not settings.SERVERLESS_ONLINE_ONLY:
+        await init_db()
+        await ensure_semantic_cache_collection()
+    if (
+        settings.APP_ENV == "production"
+        and settings.PUBLIC_NEMO_DEFAULT_ENABLED
+        and not settings.SERVERLESS_ONLINE_ONLY
+    ):
         from app.services.guardrails import warm_guardrails
 
         await warm_guardrails()
@@ -106,10 +111,11 @@ app.add_middleware(
 )
 
 app.add_middleware(ReviewerDemoMiddleware, settings=settings)
-app.state.reviewer_demo_mode = settings.REVIEWER_DEMO_MODE
+app.state.reviewer_demo_mode = is_reviewer_demo_enabled(settings)
 app.state.demo_ai_daily_limit = settings.DEMO_AI_DAILY_LIMIT
 
 templates = Jinja2Templates(directory=APP_ROOT / "templates")
+templates.env.globals["local_stateless_mode"] = settings.APP_ENV == "development"
 app.mount("/static", StaticFiles(directory=APP_ROOT / "static"), name="static")
 
 # CSRF helper function
@@ -120,22 +126,31 @@ def get_csrf_token(request: Request) -> str:
 
 # Include router
 app.include_router(api_router)
-app.include_router(account_router)
 app.include_router(legal_router)
-app.include_router(finding_router)
-app.include_router(product_quality_router)
-app.include_router(workspace_router)
-app.include_router(timeline_router)
-app.include_router(claim_router)
-app.include_router(redline_router)
-app.include_router(research_report_router)
-app.include_router(source_router)
-app.include_router(model_comparison_router)
-app.include_router(full_review_router)
-app.include_router(legal_effect_router)
-app.include_router(legal_registry_router)
-app.include_router(retained_source_router)
 app.include_router(evaluation_lab_router)
+
+
+def include_online_state_router(router):
+    app.include_router(router, dependencies=[Depends(require_online_persistence)])
+
+
+for stateful_router in (
+    account_router,
+    finding_router,
+    product_quality_router,
+    workspace_router,
+    timeline_router,
+    claim_router,
+    redline_router,
+    research_report_router,
+    source_router,
+    model_comparison_router,
+    full_review_router,
+    legal_effect_router,
+    legal_registry_router,
+    retained_source_router,
+):
+    include_online_state_router(stateful_router)
 
 @app.get("/", response_class=HTMLResponse)
 async def get_index(request: Request, current_user=Depends(optional_user), document_id: int | None = Query(None, ge=0)):

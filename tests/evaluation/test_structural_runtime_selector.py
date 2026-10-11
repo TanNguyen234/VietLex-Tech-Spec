@@ -73,3 +73,55 @@ async def test_evaluator_uses_configured_structural_runtime(monkeypatch) -> None
     )
     assert result.status == "ok"
     assert result.retrieved_evidence[0].article == "Điều 1"
+
+
+@pytest.mark.asyncio
+async def test_evaluator_preserves_bounded_article_expansion_diagnostics() -> None:
+    settings = SimpleNamespace()
+    case = GoldenCase(
+        case_id="case_v3_expansion",
+        question="Trong thời gian bao lâu?",
+        question_type="factoid",
+        answerable=True,
+        reference_answer="Theo Điều 1.",
+    )
+    evidence = EvidenceChunk(
+        document_id=1,
+        document_number="1/2026/QH15",
+        title="Luật thử nghiệm",
+        source_url="https://example.invalid/1",
+        heading_path="Điều 1",
+        article="Điều 1",
+        clause="2",
+        citation="1/2026/QH15, Điều 1, Khoản 2",
+        text="Thực hiện trong 07 ngày.",
+        token_count=5,
+    )
+    outcome = RetrievalOutcome(
+        evidence=[evidence],
+        latency={"v3_article_expansion": 0.01},
+        status="ok",
+        diagnostics={
+            "article_expansion": {
+                "status": "expanded",
+                "documents_expanded": 1,
+                "evidence_added": 1,
+                "latency_seconds": 0.01,
+            }
+        },
+    )
+
+    result = await evaluate_single_retrieval_case(
+        case,
+        settings,
+        get_evaluation_profile("separated_intent"),
+        backend="vertex-qdrant-v3",
+        precomputed_outcome=outcome,
+    )
+
+    assert result.retrieval_diagnostics["article_expansion"] == {
+        "status": "expanded",
+        "documents_expanded": 1,
+        "evidence_added": 1,
+        "latency_seconds": 0.01,
+    }

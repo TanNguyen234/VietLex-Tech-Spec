@@ -155,6 +155,11 @@ class VertexQdrantRetriever:
             citation=str(payload["citation"]),
             text=str(payload["body"]),
             token_count=int(payload["token_count"]),
+            source_content_sha256=(
+                str(payload["content_sha256"])
+                if payload.get("content_sha256")
+                else None
+            ),
         )
         candidate = StageCandidate(
             document_id=evidence.document_id,

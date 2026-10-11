@@ -78,6 +78,108 @@ def test_legal_browser_blank_query_and_missing_document_are_empty() -> None:
     assert browser.get_document(7).content == "Điều 25..."
 
 
+def test_development_uses_complete_local_corpus_when_pinned_fts_is_ready(
+    monkeypatch, tmp_path
+):
+    from pathlib import Path
+
+    from app.services import legal_browser
+
+    full_store_path = tmp_path / "full" / "content_store.sqlite3"
+    full_fts_path = tmp_path / "full" / "legal_fts.sqlite3"
+    v3_store_path = tmp_path / "v3" / "content_store.sqlite3"
+    v3_fts_path = tmp_path / "v3" / "legal_fts.sqlite3"
+    v3_body_path = tmp_path / "v3" / "legal_body_fts.sqlite3"
+    for path in (full_store_path, full_fts_path, v3_store_path, v3_fts_path, v3_body_path):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.touch()
+
+    class Store:
+        def __init__(self, path):
+            self.path = Path(path)
+
+    class Index:
+        def __init__(self, *, store, path, dataset_revision):
+            self.store = store
+            self.path = Path(path)
+            self.dataset_revision = dataset_revision
+
+        def is_ready(self):
+            return self.path == full_fts_path
+
+    monkeypatch.setattr(legal_browser, "ContentStore", Store)
+    monkeypatch.setattr(legal_browser, "LegalFtsIndex", Index)
+    monkeypatch.setattr(legal_browser, "BodySearchIndex", lambda path: Store(path))
+
+    browser = legal_browser.LegalBrowser.from_settings(
+        SimpleNamespace(
+            APP_ENV="development",
+            SERVERLESS_ONLINE_ONLY=False,
+            USE_LEGACY_FREE_PIPELINE=False,
+            CONTENT_STORE_PATH=full_store_path,
+            LEGAL_FTS_PATH=full_fts_path,
+            V3_CONTENT_STORE_PATH=v3_store_path,
+            V3_LEGAL_FTS_PATH=v3_fts_path,
+            DATASET_REVISION="pinned-revision",
+        )
+    )
+
+    assert browser._store.path == full_store_path
+    assert browser._index.path == full_fts_path
+    assert browser._index.dataset_revision == "pinned-revision"
+    assert browser._body_index.path == v3_body_path
+
+
+def test_development_falls_back_to_v3_when_full_fts_is_not_ready(
+    monkeypatch, tmp_path
+):
+    from pathlib import Path
+
+    from app.services import legal_browser
+
+    full_store_path = tmp_path / "full" / "content_store.sqlite3"
+    full_fts_path = tmp_path / "full" / "legal_fts.sqlite3"
+    v3_store_path = tmp_path / "v3" / "content_store.sqlite3"
+    v3_fts_path = tmp_path / "v3" / "legal_fts.sqlite3"
+    v3_body_path = tmp_path / "v3" / "legal_body_fts.sqlite3"
+    for path in (full_store_path, full_fts_path, v3_store_path, v3_fts_path, v3_body_path):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.touch()
+
+    class Store:
+        def __init__(self, path):
+            self.path = Path(path)
+
+    class Index:
+        def __init__(self, *, store, path, dataset_revision):
+            self.store = store
+            self.path = Path(path)
+
+        def is_ready(self):
+            return False
+
+    monkeypatch.setattr(legal_browser, "ContentStore", Store)
+    monkeypatch.setattr(legal_browser, "LegalFtsIndex", Index)
+    monkeypatch.setattr(legal_browser, "BodySearchIndex", lambda path: Store(path))
+
+    browser = legal_browser.LegalBrowser.from_settings(
+        SimpleNamespace(
+            APP_ENV="development",
+            SERVERLESS_ONLINE_ONLY=False,
+            USE_LEGACY_FREE_PIPELINE=False,
+            CONTENT_STORE_PATH=full_store_path,
+            LEGAL_FTS_PATH=full_fts_path,
+            V3_CONTENT_STORE_PATH=v3_store_path,
+            V3_LEGAL_FTS_PATH=v3_fts_path,
+            DATASET_REVISION="pinned-revision",
+        )
+    )
+
+    assert browser._store.path == v3_store_path
+    assert browser._index.path == v3_fts_path
+    assert browser._body_index.path == v3_body_path
+
+
 def test_supabase_metadata_search_uses_bounded_offset():
     from app.services.legal_browser import SupabaseLegalStore
 

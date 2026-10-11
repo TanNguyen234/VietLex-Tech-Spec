@@ -115,11 +115,18 @@ async def test_online_only_readiness_does_not_require_local_corpus(tmp_path: Pat
             USE_LEGACY_FREE_PIPELINE=False,
             SERVERLESS_ONLINE_ONLY=True,
             QDRANT_URL="https://qdrant.example",
+            QDRANT_API_KEY="qdrant-test",
+            VERTEX_QDRANT_COLLECTION_NAME="v3-test",
+            QDRANT_FULL_DOC_BODY_COLLECTION="body-test",
             GOOGLE_CLOUD_PROJECT="project-id",
             SUPABASE_URL="https://project.supabase.co",
             SUPABASE_PUBLISHABLE_KEY="publishable-test",
+            QDRANT_FULL_DOC_BODY_SEARCH_ENABLED=True,
         ),
         mongo_ping=lambda: _async_value(True),
+        online_retrieval_ping=lambda: _async_value(True),
+        supabase_documents_ping=lambda: _async_value(True),
+        body_search_ping=lambda: _async_value(True),
     )
 
     assert result["status"] == "ready"
@@ -128,8 +135,43 @@ async def test_online_only_readiness_does_not_require_local_corpus(tmp_path: Pat
         "legal_fts": "not_required",
         "online_retrieval": "ready",
         "supabase_documents": "ready",
+        "body_search_index": "ready",
         "mongodb": "ready",
     }
+
+
+@pytest.mark.asyncio
+async def test_online_readiness_fails_when_configured_dependencies_are_unavailable(tmp_path: Path) -> None:
+    from app.services.readiness import build_readiness
+
+    result = await build_readiness(
+        SimpleNamespace(
+            CONTENT_STORE_PATH=tmp_path / "missing.sqlite3",
+            LEGAL_FTS_PATH=tmp_path / "missing-fts.sqlite3",
+            V3_CONTENT_STORE_PATH=tmp_path / "missing-v3.sqlite3",
+            V3_LEGAL_FTS_PATH=tmp_path / "missing-v3-fts.sqlite3",
+            MONGO_URL="mongodb://configured",
+            USE_LEGACY_FREE_PIPELINE=False,
+            SERVERLESS_ONLINE_ONLY=True,
+            QDRANT_URL="https://qdrant.example",
+            QDRANT_API_KEY="qdrant-test",
+            VERTEX_QDRANT_COLLECTION_NAME="v3-test",
+            QDRANT_FULL_DOC_BODY_COLLECTION="body-test",
+            GOOGLE_CLOUD_PROJECT="project-id",
+            SUPABASE_URL="https://project.supabase.co",
+            SUPABASE_PUBLISHABLE_KEY="publishable-test",
+            QDRANT_FULL_DOC_BODY_SEARCH_ENABLED=True,
+        ),
+        mongo_ping=lambda: _async_value(True),
+        online_retrieval_ping=lambda: _async_value(False),
+        supabase_documents_ping=_async_timeout,
+        body_search_ping=lambda: _async_value(False),
+    )
+
+    assert result["status"] == "not_ready"
+    assert result["checks"]["online_retrieval"] == "unavailable"
+    assert result["checks"]["supabase_documents"] == "unavailable"
+    assert result["checks"]["body_search_index"] == "unavailable"
 
 
 @pytest.mark.asyncio
@@ -159,3 +201,7 @@ async def test_online_only_readiness_requires_supabase_document_store(tmp_path: 
 
 async def _async_value(value: bool) -> bool:
     return value
+
+
+async def _async_timeout() -> bool:
+    raise TimeoutError("probe did not finish")
