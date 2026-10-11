@@ -12,6 +12,8 @@ def test_get_db_uses_bounded_connection_timeouts(monkeypatch) -> None:
     fake_database = MagicMock()
     fake_client = MagicMock()
     fake_client.get_default_database.return_value = fake_database
+    monkeypatch.setattr(database.settings, "APP_ENV", "production")
+    monkeypatch.setattr(database.settings, "MONGO_URL", "mongodb://example.invalid/vietlex")
     monkeypatch.setattr(database, "client", None)
     monkeypatch.setattr(database, "db", None)
 

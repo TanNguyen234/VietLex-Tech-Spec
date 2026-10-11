@@ -235,12 +235,22 @@ def test_local_home_explains_stateless_and_online_only_features(monkeypatch):
     assert "lượt AI/ngày UTC" not in response.text
 
 
-def test_local_asgi_lifespan_serves_health_without_mongo(monkeypatch):
+def test_local_asgi_lifespan_serves_health_without_mongo(monkeypatch, tmp_path):
     import app.database as database
+    import app.api.routes as routes
     import app.main as main
 
     monkeypatch.setattr(main.settings, "APP_ENV", "development")
+    monkeypatch.setitem(main.templates.env.globals, "local_stateless_mode", True)
     monkeypatch.setattr(main.settings, "MONGO_URL", None)
+    monkeypatch.setattr(main.settings, "SERVERLESS_ONLINE_ONLY", False)
+    monkeypatch.setattr(main.settings, "USE_LEGACY_FREE_PIPELINE", False)
+    monkeypatch.setattr(
+        routes.settings, "V3_CONTENT_STORE_PATH", tmp_path / "missing-content.sqlite3"
+    )
+    monkeypatch.setattr(
+        routes.settings, "V3_LEGAL_FTS_PATH", tmp_path / "missing-fts.sqlite3"
+    )
     monkeypatch.setattr(main.settings, "PUBLIC_NEMO_DEFAULT_ENABLED", False)
     monkeypatch.setattr(main.settings, "REVIEWER_DEMO_MODE", False)
     monkeypatch.setattr(database, "client", None)
@@ -256,8 +266,10 @@ def test_local_asgi_lifespan_serves_health_without_mongo(monkeypatch):
 
     motor.assert_not_called()
     assert health.status_code == 200
-    assert readiness.status_code == 200
+    assert readiness.status_code == 503
     assert readiness.json()["checks"]["mongodb"] == "not_required"
+    assert readiness.json()["checks"]["content_store"] == "missing"
+    assert readiness.json()["checks"]["legal_fts"] == "missing"
     assert "không lưu hội thoại" in home.text.lower()
 
 
