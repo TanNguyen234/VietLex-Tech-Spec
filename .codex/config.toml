@@ -12,10 +12,17 @@ fast_mode = true
 network_access = false
 
 [mcp_servers.crg]
+command = 'D:\Projects\AI_Paper\pythonProject\.venv\Scripts\python.exe'
+args = ["-m", "code_review_graph", "serve"]
+startup_timeout_sec = 300
 enabled = true
 required = false
-enabled_tools = ["get_minimal_context_tool", "build_or_update_graph_tool", "detect_changes_tool", "query_graph_tool", "semantic_search_nodes_tool", "list_graph_stats_tool"]
+enabled_tools = ["get_minimal_context_tool", "build_or_update_graph_tool", "detect_changes_tool", "query_graph_tool", "semantic_search_nodes_tool", "list_graph_stats_tool", "get_affected_flows_tool", "get_review_context_tool", "get_impact_radius_tool"]
 default_tools_approval_mode = "auto"
+
+[mcp_servers.crg.env]
+HF_HUB_OFFLINE = "1"
+TRANSFORMERS_OFFLINE = "1"
 
 [mcp_servers.context7]
 enabled = true

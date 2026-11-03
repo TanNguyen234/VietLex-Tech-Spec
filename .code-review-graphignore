@@ -1,0 +1,6 @@
+# Keep disposable helpers and immutable copied source snapshots out of CRG.
+# Application/tests/scripts remain eligible during incremental updates,
+# including working-tree files that have not been committed.
+/.tmp*
+/tmp/
+/docs/evaluation/runs/

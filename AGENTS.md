@@ -25,7 +25,7 @@ Use this source order: current code/tests → `app/config.py` → `docs/PROJECT_
 - Original query feeds sparse/exact retrieval; rewritten query may feed dense retrieval. Pinecone hybrid and local FTS run concurrently.
 - Resolved documents are structurally chunked at 220 approximate whitespace tokens with overlap 24; final evidence is up to 3 chunks / 720 context tokens.
 - Legacy/free primary reranker is Qdrant `answerdotai/answerai-colbert-small-v1`; fallback is Pinecone `bge-reranker-v2-m3`. V3 uses the Golden-50-gated RRF+DBSF rank blend; ColBERT remains rejected because its A/B was worse. Provider changes require an A/B benchmark on identical inputs.
-- Guardrails must support `off`, `shadow`, and `enforce`; technical guardrail failures are never hallucination blocks.
+- Public chat guardrails must always enforce in local and online environments; legacy client/config switches cannot disable them. Explicit isolated offline experiments retain `off`, `shadow`, and `enforce` for reproducibility. Technical guardrail failures are never hallucination blocks.
 - A config declaration is not runtime proof. Dirty-tree evaluation manifests require `git_dirty=true` and the Git diff SHA-256.
 
 ## Change workflow
