@@ -10,8 +10,29 @@ from urllib.parse import urlsplit
 from html import escape as html_escape
 
 
+def report_assessed_claims(analysis: dict) -> list[dict]:
+    # An edited version has not been assessed against its new text.
+    if "markdown" in analysis:
+        return []
+    assessment = ((analysis.get("result") or {}).get("model_assessment")
+                  or analysis.get("model_assessment") or {})
+    return (assessment.get("result") or {}).get("claims") or []
+
+
+def report_display_status(analysis: dict) -> str:
+    status = str(analysis.get("status") or "unknown")
+    if status == "ok" and any(item.get("verdict") in {"contradicted", "insufficient"}
+           for item in report_assessed_claims(analysis)):
+        return "insufficient_evidence"
+    return status
+
+
 def report_review_notice(analysis: dict) -> str:
     status = str(analysis.get("status") or "")
+    if status in {"ok", "insufficient_evidence"} and any(item.get("verdict") in {"contradicted", "insufficient"}
+           for item in report_assessed_claims(analysis)):
+        return ("Bản nháp chưa xác minh. Có nhận định bị mô hình đánh giá mâu thuẫn "
+                "hoặc chưa đủ bằng chứng. Xem đánh giá từng nhận định và đối chiếu bản gốc.")
     if status == "ok":
         return ""
     reason = {
@@ -80,6 +101,13 @@ def report_body(analysis: dict) -> str:
             lines.append(f"- {claim.get('text', '')} [{ids}]")
     lines.extend(["", "## Risks / Unknown"])
     lines.extend("- " + str(value) for value in report.get("unknown") or [])
+    assessments = report_assessed_claims(analysis)
+    if assessments:
+        lines.extend(["", "## Đánh giá từng nhận định (mô hình, chưa chứng nhận pháp lý)"])
+        for claim in assessments:
+            lines.append(f"- {claim.get('claim_id', '')}: {claim.get('verdict', 'unknown')} · {claim.get('text', '')}")
+            for quote in claim.get("quotes") or []:
+                lines.append(f"  - [{quote.get('evidence_id', '')}] {quote.get('quote', '')}")
     return "\n".join(lines)
 
 
@@ -104,7 +132,7 @@ def report_markdown(analysis: dict) -> str:
     lines = (["> " + notice, ""] if notice else []) + [report_body(analysis), "", "## Sources (saved snapshots)"]
     for source in report_sources(analysis):
         lines.extend(["", f"### {source['id']} · {source['citation']}", source["url"], source["excerpt"]])
-    lines.extend(["", "---", "Trạng thái: " + str(analysis.get("status", "unknown")),
+    lines.extend(["", "---", "Trạng thái: " + report_display_status(analysis),
                   "Nội dung giới hạn trong nguồn đã chọn; chưa chứng nhận tính đúng luật hoặc hiệu lực hiện hành."])
     return "\n".join(lines) + "\n"
 
@@ -159,7 +187,7 @@ def report_docx(analysis: dict) -> bytes:
             relationships.append(f'<Relationship Id="{rid}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" Target={quoteattr(source["url"])} TargetMode="External"/>')
             paragraphs.append(f'<w:p><w:hyperlink r:id="{rid}">{run(source["url"], link=True)}</w:hyperlink></w:p>')
         paragraphs.extend(paragraph(line) for line in source['excerpt'].splitlines())
-    paragraphs.append(paragraph('Trạng thái: ' + str(analysis.get('status', 'unknown'))))
+    paragraphs.append(paragraph('Trạng thái: ' + report_display_status(analysis)))
     paragraphs.append(paragraph('Nội dung giới hạn trong nguồn đã chọn; chưa chứng nhận tính đúng luật hoặc hiệu lực hiện hành.'))
     document = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><w:body>' + "".join(paragraphs) + '<w:sectPr/></w:body></w:document>'
     output = BytesIO()

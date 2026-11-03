@@ -129,3 +129,35 @@ def test_docx_unsafe_urls_and_duplicate_ids_do_not_create_ambiguous_links():
     assert not list(relationships)
     assert not document.findall('.//w:hyperlink', ns)
     assert 'Second snapshot' in ''.join(document.itertext())
+
+
+@pytest.mark.parametrize("verdict", ["contradicted", "insufficient"])
+def test_old_ok_reports_retain_adverse_assessment_in_editor_and_exports(client, monkeypatch, verdict):
+    analysis = _analysis()
+    analysis["result"]["model_assessment"] = {"status": "ok", "result": {"claims": [
+        {"claim_id": "claim-1", "text": "A claim <script>", "verdict": verdict,
+         "quotes": [{"evidence_id": "e-1", "quote": "Snapshot"}]}]}}
+    monkeypatch.setattr("app.api.workspace_routes.get_workspace", AsyncMock(return_value={"analyses": [analysis]}))
+    editor = client.get("/workspaces/w-1/reports/a-1").text
+    markdown = client.get("/workspaces/w-1/reports/a-1/export?format=md").text
+    response = client.get("/workspaces/w-1/reports/a-1/export?format=docx")
+    with ZipFile(BytesIO(response.content)) as archive:
+        from xml.etree import ElementTree as ET
+        document_text = "".join(ET.fromstring(archive.read("word/document.xml")).itertext())
+    for rendered in (editor, markdown, document_text):
+        assert "Bản nháp chưa xác minh" in rendered
+        assert verdict in rendered
+        assert "claim-1" in rendered
+        assert "Snapshot" in rendered
+    assert "A claim <script>" not in editor
+    assert "Trạng thái: ok" not in markdown
+    assert "Trạng thái: ok" not in document_text
+@pytest.mark.parametrize('status', ['citation_mismatch', 'provider_error'])
+def test_report_adverse_claims_do_not_hide_technical_or_citation_failure(status):
+    from app.services.report_deliverables import report_display_status, report_review_notice
+    analysis = _analysis()
+    analysis['status'] = status
+    analysis['result']['model_assessment'] = {'result': {'claims': [{'verdict': 'insufficient'}]}}
+    assert report_display_status(analysis) == status
+    notice = report_review_notice(analysis)
+    assert ('Dẫn nguồn' if status == 'citation_mismatch' else 'Dịch vụ') in notice

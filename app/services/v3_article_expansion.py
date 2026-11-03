@@ -13,6 +13,10 @@ import httpx
 from app.config import system_ssl_context
 from app.ingestion.content_store import ContentStore, StoredDocument
 from app.ingestion.legal_text import EvidenceChunk, chunk_document
+from app.services.legal_topic_terms import (
+    extract_official_topic_phrases,
+    fold_topic_text,
+)
 from app.services.retrieval import INTENT_PATTERNS, select_rerank_candidates
 
 
@@ -24,6 +28,8 @@ _DURATION_EVIDENCE_RE = re.compile(
     r"(?:ngay(?:\s+lam\s+viec)?|tuan|thang|nam|gio|phut)\b",
     re.IGNORECASE,
 )
+_PERCENT_RE = re.compile(r"(?<!\d)\d+(?:[.,]\d+)?\s*%")
+_SOURCE_DOCUMENT_LOAD_TIMEOUT_SECONDS = 5.0
 
 
 @dataclass(frozen=True)
@@ -45,6 +51,10 @@ class SourceContentHashMissing(ValueError):
 
 class SourceDocumentMissing(LookupError):
     """A candidate document is absent from its configured full-text source."""
+
+
+class SourceDocumentLoadTimeout(TimeoutError):
+    """The configured deadline elapsed while loading source documents."""
 
 
 def _fold(value: str) -> str:
@@ -85,10 +95,184 @@ def _has_numeric_duration(text: str) -> bool:
     return bool(_DURATION_EVIDENCE_RE.search(_fold(text)))
 
 
-def _load_source_documents(settings: Any, document_ids: list[int]) -> dict[int, StoredDocument]:
-    if getattr(settings, "SERVERLESS_ONLINE_ONLY", False):
-        from app.services.legal_browser import SupabaseLegalStore
+def _local_rescue_topic(query: str) -> tuple[str, ...] | None:
+    phrases = extract_official_topic_phrases(query, limit=4)
+    terms = tuple(
+        dict.fromkeys(
+            term
+            for phrase in phrases
+            for term in fold_topic_text(phrase).split()
+        )
+    )
+    return terms or None
 
+
+def _local_rescue_document_ids(
+    topic_terms: tuple[str, ...],
+    candidates: list[EvidenceChunk],
+    *,
+    max_documents: int,
+    include_unmatched: bool = False,
+) -> list[int]:
+    scores: dict[int, int] = {}
+    for candidate in candidates:
+        folded = _fold(" ".join((candidate.title, candidate.text)))
+        score = sum(term in folded for term in topic_terms)
+        if score:
+            document_id = int(candidate.document_id)
+            scores[document_id] = max(scores.get(document_id, 0), score)
+    order = {
+        int(candidate.document_id): index
+        for index, candidate in reversed(list(enumerate(candidates)))
+    }
+    ranked = [
+        document_id
+        for document_id, score in sorted(
+            scores.items(), key=lambda item: (-item[1], order[item[0]])
+        )[: max(0, max_documents)]
+        if score > 0
+    ]
+    if include_unmatched and len(ranked) < max(0, max_documents):
+        seen = set(ranked)
+        for candidate in candidates:
+            document_id = int(candidate.document_id)
+            if document_id in seen:
+                continue
+            ranked.append(document_id)
+            seen.add(document_id)
+            if len(ranked) >= max(0, max_documents):
+                break
+    return ranked
+
+
+def _choose_local_rescue_clause(
+    query: str,
+    topic_terms: tuple[str, ...],
+    chunks_by_group: dict[tuple[int, str], list[EvidenceChunk]],
+    group_order: list[tuple[int, str]],
+    selected: list[EvidenceChunk],
+    *,
+    require_numeric_duration: bool = False,
+    max_aggregate_tokens: int = 220,
+) -> tuple[EvidenceChunk | None, dict[str, Any]]:
+    candidates_by_score: list[tuple[int, EvidenceChunk]] = []
+    percentage_question = bool(_PERCENT_RE.search(query))
+    for group in group_order:
+        for chunk in chunks_by_group.get(group, []):
+            folded = _fold(chunk.text)
+            coverage = sum(term in folded for term in topic_terms)
+            if 2 * coverage > len(topic_terms) and (
+                not require_numeric_duration or _has_numeric_duration(chunk.text)
+            ):
+                score = 2 * coverage + 3 * bool(
+                    percentage_question and _PERCENT_RE.search(chunk.text)
+                )
+                candidates_by_score.append((score, chunk))
+    if not candidates_by_score:
+        diagnostics = (
+            {
+                "duration_group_complete": False,
+                "duration_group_chunks_found": 0,
+                "duration_group_chunks_omitted": 0,
+            }
+            if require_numeric_duration
+            else {}
+        )
+        return None, diagnostics
+
+    max_score = max(score for score, _chunk in candidates_by_score)
+    candidates = [
+        chunk
+        for score, chunk in candidates_by_score
+        if score == max_score
+    ]
+
+    ranked = select_rerank_candidates(
+        query,
+        candidates,
+        limit=len(candidates),
+        per_document_limit=max(1, len(candidates)),
+    )
+    incomplete_selection: tuple[EvidenceChunk, dict[str, Any]] | None = None
+    for candidate in ranked:
+        already_selected = any(
+            int(item.document_id) == int(candidate.document_id)
+            and item.citation == candidate.citation
+            and item.text == candidate.text
+            for item in selected
+        )
+        if require_numeric_duration:
+            candidate_group = (
+                int(candidate.document_id),
+                _article_number(candidate.article) or "",
+            )
+            related_chunks = list(
+                dict.fromkeys(
+                    chunk
+                    for _score, chunk in candidates_by_score
+                    if (
+                        int(chunk.document_id),
+                        _article_number(chunk.article) or "",
+                    )
+                    == candidate_group
+                )
+            )
+            if len(related_chunks) > 1:
+                combined_text = "\n".join(chunk.text for chunk in related_chunks)
+                combined_token_count = len(combined_text.split())
+                complete = combined_token_count <= max_aggregate_tokens
+                selection_diagnostics = {
+                    "duration_group_complete": complete,
+                    "duration_group_chunks_found": len(related_chunks),
+                    "duration_group_chunks_omitted": (
+                        0 if complete else len(related_chunks) - 1
+                    ),
+                }
+                if complete:
+                    article = candidate.article or ""
+                    return (
+                        replace(
+                            candidate,
+                            clause=None,
+                            citation=f"{candidate.document_number}, {article}",
+                            text=combined_text,
+                            token_count=combined_token_count,
+                        ),
+                        selection_diagnostics,
+                    )
+                if not already_selected:
+                    return candidate, selection_diagnostics
+                if incomplete_selection is None:
+                    incomplete_selection = (candidate, selection_diagnostics)
+                continue
+            if already_selected:
+                continue
+            return candidate, {
+                "duration_group_complete": True,
+                "duration_group_chunks_found": len(related_chunks),
+                "duration_group_chunks_omitted": 0,
+            }
+        if already_selected:
+            continue
+        return candidate, {}
+    if incomplete_selection is not None:
+        return incomplete_selection
+    return None, {}
+
+
+def _load_source_documents(settings: Any, document_ids: list[int]) -> dict[int, StoredDocument]:
+    from app.services.legal_browser import (
+        SupabaseLegalStore,
+        local_legal_paths,
+        should_use_supabase_legal_store,
+    )
+
+    local_content_path, local_fts_path, _ = local_legal_paths(settings)
+    if should_use_supabase_legal_store(
+        settings,
+        local_content_path=local_content_path,
+        local_fts_path=local_fts_path,
+    ):
         with httpx.Client(
             verify=system_ssl_context(),
             timeout=httpx.Timeout(10.0),
@@ -99,7 +283,25 @@ def _load_source_documents(settings: Any, document_ids: list[int]) -> dict[int, 
                 client=client,
             )
             return store.get_many(document_ids)
-    return ContentStore(settings.CONTENT_STORE_PATH).get_many(document_ids)
+    return ContentStore(local_content_path).get_many(document_ids)
+
+
+async def _load_source_documents_bounded(
+    loader: Callable[[list[int]], dict[int, StoredDocument]],
+    document_ids: list[int],
+) -> dict[int, StoredDocument]:
+    task = asyncio.create_task(asyncio.to_thread(loader, document_ids))
+    try:
+        done, _pending = await asyncio.wait(
+            {task}, timeout=_SOURCE_DOCUMENT_LOAD_TIMEOUT_SECONDS
+        )
+    except asyncio.CancelledError:
+        task.cancel()
+        raise
+    if task not in done:
+        task.cancel()
+        raise SourceDocumentLoadTimeout
+    return task.result()
 
 
 def _candidate_groups(
@@ -233,7 +435,13 @@ async def expand_v3_evidence(
             latency_seconds=time.perf_counter() - started,
         )
     explicit = _explicit_reference(query)
-    if not explicit and not _asks_for_duration(query):
+    local_topic = _local_rescue_topic(query)
+    duration_intent = _asks_for_duration(query)
+    local_rescue = (
+        local_topic is not None
+        and explicit is None
+    )
+    if not explicit and not duration_intent and not local_rescue:
         return V3ArticleExpansion(
             status="not_needed",
             selected_evidence=list(selected_evidence),
@@ -258,11 +466,29 @@ async def expand_v3_evidence(
                 latency_seconds=time.perf_counter() - started,
             )
 
-    document_ids, group_order = _candidate_groups(
-        expansion_candidates,
-        max_documents=max(0, int(max_documents)),
-    )
-    if not document_ids or not group_order:
+    if local_rescue and local_topic is not None:
+        document_ids = _local_rescue_document_ids(
+            local_topic,
+            expansion_candidates,
+            max_documents=max(0, int(max_documents)),
+            include_unmatched=duration_intent,
+        )
+        _candidate_document_ids, candidate_group_order = _candidate_groups(
+            expansion_candidates,
+            max_documents=max(0, int(max_documents)),
+        )
+        loaded_document_ids = set(document_ids)
+        group_order = [
+            group
+            for group in candidate_group_order
+            if group[0] in loaded_document_ids
+        ]
+    else:
+        document_ids, group_order = _candidate_groups(
+            expansion_candidates,
+            max_documents=max(0, int(max_documents)),
+        )
+    if not document_ids or (not group_order and not local_rescue):
         return V3ArticleExpansion(
             status="not_found",
             selected_evidence=list(selected_evidence),
@@ -275,7 +501,7 @@ async def expand_v3_evidence(
         lambda ids: _load_source_documents(settings, ids)
     )
     try:
-        documents = await asyncio.to_thread(loader, document_ids)
+        documents = await _load_source_documents_bounded(loader, document_ids)
         verified_hashes = _verify_document_hashes(
             document_ids,
             candidate_evidence,
@@ -307,6 +533,23 @@ async def expand_v3_evidence(
             latency_seconds=time.perf_counter() - started,
         )
 
+    from app.services.source_quality import assess_source_quality
+    rejected_documents = {
+        document_id for document_id in document_ids
+        if not assess_source_quality(documents[document_id].content,
+                                     source_sha256=documents[document_id].content_sha256)["usable_as_evidence"]
+    }
+    if rejected_documents:
+        selected_evidence = [chunk for chunk in selected_evidence
+                             if int(chunk.document_id) not in rejected_documents]
+        document_ids = [value for value in document_ids if value not in rejected_documents]
+        group_order = [group for group in group_order if group[0] not in rejected_documents]
+        if not document_ids:
+            return V3ArticleExpansion(
+                status="not_found", selected_evidence=list(selected_evidence), added_evidence=[],
+                diagnostics={"status": "source_quality_rejected", "rejected_document_count": len(rejected_documents)},
+                latency_seconds=time.perf_counter() - started,
+            )
     chunks_by_group: dict[tuple[int, str], list[EvidenceChunk]] = {
         group: [] for group in group_order
     }
@@ -315,6 +558,9 @@ async def expand_v3_evidence(
         chunks = chunk_document(
             document.metadata,
             document.content,
+            preserve_unit_max_tokens=min(
+                480, max(1, int(getattr(settings, "LLM_CONTEXT_MAX_TOKENS", 720)) - 80)
+            ),
             max_tokens=int(
                 getattr(settings, "QUERY_CHUNK_MAX_TOKENS", 220)
             ),
@@ -324,6 +570,9 @@ async def expand_v3_evidence(
         )
         for chunk in chunks:
             group = (document_id, _article_number(chunk.article) or "")
+            if local_rescue and group not in chunks_by_group:
+                group_order.append(group)
+                chunks_by_group[group] = []
             if group not in chunks_by_group:
                 continue
             chunks_by_group[group].append(
@@ -333,12 +582,26 @@ async def expand_v3_evidence(
                 )
             )
 
-    additional = _choose_additional_evidence(
-        query,
-        selected_evidence,
-        chunks_by_group,
-        group_order,
-    )
+    duration_selection_diagnostics: dict[str, Any] = {}
+    if local_rescue and local_topic is not None:
+        additional, duration_selection_diagnostics = _choose_local_rescue_clause(
+            query,
+            local_topic,
+            chunks_by_group,
+            group_order,
+            selected_evidence,
+            require_numeric_duration=duration_intent,
+            max_aggregate_tokens=int(
+                getattr(settings, "QUERY_CHUNK_MAX_TOKENS", 220)
+            ),
+        )
+    else:
+        additional = _choose_additional_evidence(
+            query,
+            selected_evidence,
+            chunks_by_group,
+            group_order,
+        )
     if additional is None:
         return V3ArticleExpansion(
             status="not_found",
@@ -348,6 +611,7 @@ async def expand_v3_evidence(
                 "status": "no_matching_sibling_clause",
                 "documents_expanded": len(documents),
                 "articles_expanded": len(group_order),
+                **duration_selection_diagnostics,
             },
             latency_seconds=time.perf_counter() - started,
         )
@@ -362,17 +626,51 @@ async def expand_v3_evidence(
             status="not_found",
             selected_evidence=list(selected_evidence),
             added_evidence=[],
-            diagnostics={"status": "sibling_already_selected"},
+            diagnostics={
+                "status": "sibling_already_selected",
+                **duration_selection_diagnostics,
+            },
             latency_seconds=time.perf_counter() - started,
         )
 
-    expanded_selected = list(selected_evidence)
-    if limit <= 0:
-        expanded_selected = []
-    elif len(expanded_selected) < limit:
-        expanded_selected.append(additional)
+    additional_article = _article_number(additional.article)
+    replace_same_duration_group = (
+        duration_intent
+        and local_rescue
+        and additional_article is not None
+        and any(
+            int(item.document_id) == int(additional.document_id)
+            and _article_number(item.article) == additional_article
+            for item in selected_evidence
+        )
+    )
+    if replace_same_duration_group:
+        first_same_group = next(
+            index
+            for index, item in enumerate(selected_evidence)
+            if int(item.document_id) == int(additional.document_id)
+            and _article_number(item.article) == additional_article
+        )
+        expanded_selected = [
+            item
+            for item in selected_evidence
+            if not (
+                int(item.document_id) == int(additional.document_id)
+                and _article_number(item.article) == additional_article
+            )
+        ]
+        expanded_selected.insert(
+            min(first_same_group, len(expanded_selected)), additional
+        )
+        expanded_selected = expanded_selected[:limit]
     else:
-        expanded_selected = expanded_selected[: limit - 1] + [additional]
+        expanded_selected = list(selected_evidence)
+        if limit <= 0:
+            expanded_selected = []
+        elif len(expanded_selected) < limit:
+            expanded_selected.append(additional)
+        else:
+            expanded_selected = expanded_selected[: limit - 1] + [additional]
 
     return V3ArticleExpansion(
         status="expanded",
@@ -384,6 +682,7 @@ async def expand_v3_evidence(
             "articles_expanded": len(group_order),
             "chunks_considered": sum(len(chunks) for chunks in chunks_by_group.values()),
             "evidence_added": 1,
+            **duration_selection_diagnostics,
         },
         latency_seconds=time.perf_counter() - started,
     )

@@ -108,7 +108,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             "geolocation=(), camera=(), microphone=()"
         )
         response.headers["X-Frame-Options"] = "DENY"
-        if request.url.path == '/admin' or request.url.path.startswith('/admin/'):
+        if not request.url.path.startswith("/static/"):
             response.headers['Cache-Control'] = 'no-store'
         forwarded_proto = request.headers.get("x-forwarded-proto", "")
         if request.url.scheme == "https" or forwarded_proto.split(",")[0].strip() == "https":

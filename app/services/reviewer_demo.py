@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 import hashlib
 import re
 import logging
+from math import ceil
 
 from pymongo.errors import DuplicateKeyError
 from starlette.requests import Request
@@ -18,6 +19,7 @@ _AUTH = {'/login', '/register', '/forgot-password', '/reset-password', '/verify-
 _PROTECTIVE = re.compile(r'^/(?:logout|account/(?:delete|history/delete|sessions/(?:revoke-others|[^/]+/revoke)))$')
 _UPLOAD = re.compile(r'^/workspaces/[^/]+/documents$')
 _AI = re.compile(r'^/workspaces/[^/]+/(?:analyses/[^/]+|research/(?:plan|run)|documents/[^/]+/review)$')
+_FREE_RESEARCH = re.compile(r'^/workspaces/[^/]+/research/read$')
 
 
 _DENIED = {}
@@ -106,7 +108,7 @@ class ReviewerDemoMiddleware:
             return
         path = scope.get('path', '').rstrip('/') or '/'
         mutation = scope.get('method') not in {'GET', 'HEAD', 'OPTIONS'}
-        if not mutation and path != '/verify-email':
+        if not mutation:
             await self.app(scope, receive, send)
             return
         request = Request(scope)
@@ -115,7 +117,11 @@ class ReviewerDemoMiddleware:
             _DENIED[kind] = min(_DENIED.get(kind, 0) + 1, 2**63 - 1)
             headers = {'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff'}
             if status == 429:
-                headers['Retry-After'] = '60' if kind == 'demo_minute_quota' else '86400'
+                now = datetime.now(timezone.utc)
+                reset = ((now + timedelta(minutes=1)).replace(second=0, microsecond=0)
+                         if kind == 'demo_minute_quota' else
+                         (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0))
+                headers['Retry-After'] = str(max(1, ceil((reset - now).total_seconds())))
             if request.headers.get('hx-request') or 'text/html' in request.headers.get('accept', ''):
                 response = HTMLResponse('<div role="alert">' + message +
                     ' <a href="/account">Tài khoản</a></div>', status_code=status, headers=headers)
@@ -135,11 +141,14 @@ class ReviewerDemoMiddleware:
                     await deny(401, 'demo_login_required', 'Đăng nhập tài khoản đã xác minh để dùng chức năng này.')
                     return
                 subject = str(user['_id'])
-                expensive = path == '/chat' or path.startswith('/api/evaluation/') or bool(_AI.fullmatch(path))
-                category = 'ai' if expensive else 'write'
-                personal = self.settings.DEMO_AI_DAILY_LIMIT if expensive else 100
-                total = self.settings.DEMO_AI_GLOBAL_DAILY_LIMIT if expensive else 1000
-                per_minute = 3 if expensive else 15
+                if _FREE_RESEARCH.fullmatch(path):
+                    category, personal, total, per_minute = 'free_research', 100, 1000, 2
+                else:
+                    expensive = path == '/chat' or path.startswith('/api/evaluation/') or bool(_AI.fullmatch(path))
+                    category = 'ai' if expensive else 'write'
+                    personal = self.settings.DEMO_AI_DAILY_LIMIT if expensive else 100
+                    total = self.settings.DEMO_AI_GLOBAL_DAILY_LIMIT if expensive else 1000
+                    per_minute = 3 if expensive else 15
             # Shared work quota must never lock users out of privacy/session controls.
             budgets = [] if _PROTECTIVE.fullmatch(path) else [(True, per_minute, 60)]
             if budgets and (path in _AUTH or not is_demo_daily_exempt(user)):

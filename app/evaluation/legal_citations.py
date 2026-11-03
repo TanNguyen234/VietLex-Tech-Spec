@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 
 DOC_PATTERN = re.compile(
-    r"\b\d{1,4}/\d{4}/[A-ZĐ0-9-]+\b",
+    r"\b(?:\d{1,4}/\d{4}/[A-ZĐ0-9-]+|\d{1,5}/(?:VBHN|QĐ)[A-ZĐ0-9-]*)\b",
     re.IGNORECASE,
 )
 ARTICLE_PATTERN = re.compile(

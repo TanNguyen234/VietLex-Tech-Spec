@@ -6,6 +6,36 @@ from types import SimpleNamespace
 import pytest
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("legacy_free", [False, True])
+async def test_production_evaluation_uses_runtime_boolean_router(monkeypatch, legacy_free):
+    from unittest.mock import AsyncMock
+    from app.evaluation.profiles import get_evaluation_profile
+    from app.evaluation.schemas import GoldenCase
+    from app.services.retrieval import RetrievalOutcome
+    from run_retrieval_eval import evaluate_single_retrieval_case
+
+    route = AsyncMock(return_value=RetrievalOutcome(
+        evidence=[], latency={}, status="no_candidate",
+    ))
+    monkeypatch.setattr("app.services.rag_pipeline.retrieve_configured_legal_evidence", route)
+    monkeypatch.setattr(
+        "app.services.retrieval.get_legal_retriever",
+        lambda: (_ for _ in ()).throw(AssertionError("bypassed runtime selector")),
+    )
+    case = GoldenCase(
+        case_id="routing-case", question="Câu hỏi kiểm thử", question_type="factoid",
+        answerable=True, reference_answer="",
+    )
+    profile = get_evaluation_profile("separated_intent")
+    result = await evaluate_single_retrieval_case(
+        case, SimpleNamespace(USE_LEGACY_FREE_PIPELINE=legacy_free, STRUCTURAL_BACKEND_ENABLED=False),
+        profile, backend="production",
+    )
+    assert result.status == "no_candidate"
+    route.assert_awaited_once_with(case.question, case.question, profile)
+
+
 def test_evaluation_parsers_expose_explicit_backend() -> None:
     from run_answer_eval import build_parser as answer_parser
     from run_retrieval_eval import build_parser as retrieval_parser
@@ -168,6 +198,149 @@ def test_online_only_vertex_retriever_does_not_open_local_store(monkeypatch) -> 
         979.1241640033913
     )
     retrieval_backends.get_vertex_qdrant_retriever.cache_clear()
+
+
+def test_local_v3_retriever_uses_configured_sparse_average_without_corpus(
+    monkeypatch, tmp_path
+) -> None:
+    from app.evaluation import retrieval_backends
+
+    settings = SimpleNamespace(
+        APP_ENV="development",
+        SERVERLESS_ONLINE_ONLY=False,
+        USE_LEGACY_FREE_PIPELINE=False,
+        CONTENT_STORE_PATH=tmp_path / "missing-full.sqlite3",
+        LEGAL_FTS_PATH=tmp_path / "missing-full-fts.sqlite3",
+        V3_CONTENT_STORE_PATH=tmp_path / "missing-v3.sqlite3",
+        V3_LEGAL_FTS_PATH=tmp_path / "missing-v3-fts.sqlite3",
+        SUPABASE_URL="https://project.supabase.co",
+        SUPABASE_PUBLISHABLE_KEY="publishable-test",
+        V3_AVERAGE_SPARSE_DOCUMENT_LENGTH=979.1241640033913,
+        QDRANT_URL="https://qdrant.example",
+        QDRANT_API_KEY="key",
+        STRUCTURAL_QDRANT_TIMEOUT_SECONDS=10.0,
+        PINECONE_SPARSE_MAX_NONZERO=64,
+        VERTEX_QDRANT_COLLECTION_NAME="collection",
+        VERTEX_EMBEDDING_MODEL="model",
+        VERTEX_QDRANT_VECTOR_SIZE=1024,
+        DATASET_REVISION="revision",
+    )
+    captured = {}
+
+    monkeypatch.setattr(retrieval_backends, "get_settings", lambda: settings)
+    monkeypatch.setattr(
+        retrieval_backends,
+        "ContentStore",
+        lambda _path: (_ for _ in ()).throw(AssertionError("local store opened")),
+    )
+    monkeypatch.setattr(retrieval_backends, "get_vertex_provider", object)
+    monkeypatch.setattr(retrieval_backends, "AsyncQdrantClient", lambda **_kw: object())
+
+    class Retriever:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    monkeypatch.setattr(retrieval_backends, "VertexQdrantRetriever", Retriever)
+    retrieval_backends.get_vertex_qdrant_retriever.cache_clear()
+    retrieval_backends.get_vertex_qdrant_retriever()
+
+    assert captured["sparse_encoder"].average_document_length == pytest.approx(
+        settings.V3_AVERAGE_SPARSE_DOCUMENT_LENGTH
+    )
+    retrieval_backends.get_vertex_qdrant_retriever.cache_clear()
+
+
+def test_local_v3_retriever_uses_configured_average_when_only_full_corpus_exists(
+    monkeypatch, tmp_path
+) -> None:
+    from app.evaluation import retrieval_backends
+    from app.services import legal_browser
+
+    full_content_path = tmp_path / "full" / "content.sqlite3"
+    full_fts_path = tmp_path / "full" / "fts.sqlite3"
+    full_content_path.parent.mkdir(parents=True)
+    full_content_path.touch()
+    full_fts_path.touch()
+    settings = SimpleNamespace(
+        APP_ENV="development",
+        SERVERLESS_ONLINE_ONLY=False,
+        USE_LEGACY_FREE_PIPELINE=False,
+        CONTENT_STORE_PATH=full_content_path,
+        LEGAL_FTS_PATH=full_fts_path,
+        V3_CONTENT_STORE_PATH=tmp_path / "missing-v3.sqlite3",
+        V3_LEGAL_FTS_PATH=tmp_path / "missing-v3-fts.sqlite3",
+        SUPABASE_URL="https://project.supabase.co",
+        SUPABASE_PUBLISHABLE_KEY="publishable-test",
+        V3_AVERAGE_SPARSE_DOCUMENT_LENGTH=979.1241640033913,
+        QDRANT_URL="https://qdrant.example",
+        QDRANT_API_KEY="key",
+        STRUCTURAL_QDRANT_TIMEOUT_SECONDS=10.0,
+        PINECONE_SPARSE_MAX_NONZERO=64,
+        VERTEX_QDRANT_COLLECTION_NAME="collection",
+        VERTEX_EMBEDDING_MODEL="model",
+        VERTEX_QDRANT_VECTOR_SIZE=1024,
+        DATASET_REVISION="revision",
+    )
+    captured = {}
+
+    monkeypatch.setattr(retrieval_backends, "get_settings", lambda: settings)
+    monkeypatch.setattr(
+        legal_browser, "local_legal_index_ready", lambda *_args: True
+    )
+    monkeypatch.setattr(
+        retrieval_backends,
+        "ContentStore",
+        lambda _path: pytest.fail("missing V3 content store must not be opened"),
+    )
+    monkeypatch.setattr(retrieval_backends, "get_vertex_provider", object)
+    monkeypatch.setattr(
+        retrieval_backends, "AsyncQdrantClient", lambda **_kwargs: object()
+    )
+
+    class Retriever:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    monkeypatch.setattr(retrieval_backends, "VertexQdrantRetriever", Retriever)
+    retrieval_backends.get_vertex_qdrant_retriever.cache_clear()
+    try:
+        retrieval_backends.get_vertex_qdrant_retriever()
+    finally:
+        retrieval_backends.get_vertex_qdrant_retriever.cache_clear()
+
+    assert captured["sparse_encoder"].average_document_length == pytest.approx(
+        settings.V3_AVERAGE_SPARSE_DOCUMENT_LENGTH
+    )
+
+
+def test_legacy_selector_blocks_v3_before_qdrant_client_creation(monkeypatch) -> None:
+    from app.evaluation import retrieval_backends
+    from app.services import vertex_ai
+
+    settings = SimpleNamespace(
+        USE_LEGACY_FREE_PIPELINE=True,
+        SERVERLESS_ONLINE_ONLY=True,
+        V3_AVERAGE_SPARSE_DOCUMENT_LENGTH=979.1241640033913,
+    )
+    monkeypatch.setattr(retrieval_backends, "get_settings", lambda: settings)
+    monkeypatch.setattr(vertex_ai, "get_settings", lambda: settings)
+    monkeypatch.setattr(
+        retrieval_backends,
+        "AsyncQdrantClient",
+        lambda **_kwargs: pytest.fail("Qdrant client must not be constructed"),
+    )
+    monkeypatch.setattr(
+        vertex_ai,
+        "VertexAIProvider",
+        lambda: pytest.fail("Vertex client must not be constructed"),
+    )
+    retrieval_backends.get_vertex_qdrant_retriever.cache_clear()
+
+    try:
+        with pytest.raises(vertex_ai.VertexDisabledError):
+            retrieval_backends.get_vertex_qdrant_retriever()
+    finally:
+        retrieval_backends.get_vertex_qdrant_retriever.cache_clear()
 
 
 @pytest.mark.asyncio

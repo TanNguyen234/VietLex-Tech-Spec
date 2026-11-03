@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field
+from pydantic import Field, field_validator
 from typing import Optional, Literal
 from functools import lru_cache
 from pathlib import Path
@@ -15,6 +15,8 @@ _SYSTEM_TRUST_LOCK = threading.Lock()
 
 class Settings(BaseSettings):
     APP_ENV: Literal["development", "test", "production"] = "development"
+    VERCEL_GIT_COMMIT_SHA: Optional[str] = None
+    VERCEL_DEPLOYMENT_ID: Optional[str] = None
     HOST: str = "0.0.0.0"
     PORT: int = 8000
     FRONTEND_URL: str = "http://localhost:8000"
@@ -117,11 +119,12 @@ class Settings(BaseSettings):
     # GOOGLE_APPLICATION_CREDENTIALS is intentionally consumed by google-auth,
     # not modeled or serialized by application settings.
     GOOGLE_CLOUD_PROJECT: Optional[str] = None
+    GOOGLE_CLOUD_QUOTA_PROJECT: Optional[str] = None
     GOOGLE_CLOUD_LOCATION: str = "global"
     USE_LEGACY_FREE_PIPELINE: bool = False
     SERVERLESS_ONLINE_ONLY: bool = False
     VERTEX_LLM_MODEL: str = "gemini-3.5-flash"
-    ANSWER_PROMPT_VERSION: str = "legal-grounded-v3"
+    ANSWER_PROMPT_VERSION: str = "legal-grounded-v4"
     VERTEX_EMBEDDING_MODEL: str = "gemini-embedding-2"
     VERTEX_QDRANT_COLLECTION_NAME: str = (
         "vietlex-legal-rag-v3-vertex-1024"
@@ -140,11 +143,30 @@ class Settings(BaseSettings):
     VERTEX_QDRANT_SHADOW_TIMEOUT_SECONDS: float = Field(default=5.0, gt=0)
     VERTEX_REQUEST_TIMEOUT_SECONDS: float = Field(default=30.0, gt=0)
     VERTEX_MAX_RETRIES: int = Field(default=2, ge=0, le=5)
+    PROVIDER_HTTP_ATTEMPT_LIMIT: Optional[int] = Field(default=None, ge=1)
     OFFICIAL_WEB_RESEARCH_ENABLED: bool = True
     OFFICIAL_BRAVE_SEARCH_ENABLED: bool = False
     BRAVE_SEARCH_API_KEY: Optional[str] = None
     OFFICIAL_WEB_SEARCH_TIMEOUT_SECONDS: float = Field(default=20.0, gt=0, le=60)
     OFFICIAL_WEB_RESEARCH_RATE_LIMIT: str = "2/minute"
+    FREE_WEB_RESEARCH_ENABLED: bool = True
+    # Production must explicitly attest the foreground 180-second budget for
+    # the deployed runtime; a provider-free code path alone is not proof.
+    FREE_WEB_RESEARCH_PRODUCTION_LIMIT_VERIFIED: bool = False
+    FREE_WEB_RESEARCH_RATE_LIMIT: str = "2/minute"
+    FREE_WEB_RESEARCH_TOTAL_BUDGET_SECONDS: float = Field(default=180.0, gt=0, le=180)
+    FREE_WEB_RESEARCH_DISCOVERY_BUDGET_SECONDS: float = Field(default=60.0, gt=0, le=60)
+    FREE_WEB_RESEARCH_READ_BUDGET_SECONDS: float = Field(default=105.0, gt=0, le=105)
+    FREE_WEB_RESEARCH_SAVE_BUDGET_SECONDS: float = Field(default=15.0, gt=0, le=15)
+    FREE_WEB_RESEARCH_PROVIDER_TIMEOUT_SECONDS: float = Field(default=10.0, gt=0, le=10)
+    FREE_WEB_RESEARCH_NETWORK_CONCURRENCY: int = Field(default=2, ge=1, le=2)
+    FREE_WEB_RESEARCH_MAX_READ_ATTEMPTS: int = Field(default=3, ge=1, le=3)
+    FREE_WEB_RESEARCH_PAGE_LIMIT: int = Field(default=5, ge=1, le=5)
+    CHAT_OFFICIAL_WEB_SUPPLEMENT_ENABLED: bool = True
+    CHAT_OFFICIAL_DEEP_READING_ENABLED: bool = True
+    CHAT_OFFICIAL_WEB_SUPPLEMENT_TIMEOUT_SECONDS: float = Field(
+        default=8.0, gt=0, le=8.0
+    )
     
     # Logfire Token
     LOGFIRE_TOKEN: Optional[str] = None
@@ -184,7 +206,19 @@ class Settings(BaseSettings):
     PUBLIC_BASE_URL: str = "http://localhost:8000"
     AUTH_COOKIE_NAME: str = "vietlex_auth"
     AUTH_SESSION_DAYS: int = Field(default=30, ge=1, le=365)
-    PUBLIC_NEMO_DEFAULT_ENABLED: bool = False
+    PUBLIC_NEMO_DEFAULT_ENABLED: bool = True
+    PUBLIC_GUARDRAIL_MODE: Literal["off", "shadow", "enforce"] | None = "enforce"
+
+    # Retain old environment names without allowing them to weaken public chat.
+    @field_validator("PUBLIC_NEMO_DEFAULT_ENABLED")
+    @classmethod
+    def _mandatory_guardrails_enabled(cls, value):
+        return True
+
+    @field_validator("PUBLIC_GUARDRAIL_MODE")
+    @classmethod
+    def _mandatory_guardrail_mode(cls, value):
+        return "enforce"
     PUBLIC_RAGAS_ENABLED: bool = False
     PUBLIC_RAGAS_CLIENT_DAILY_LIMIT: int = Field(default=3, ge=1, le=20)
     PUBLIC_RAGAS_GLOBAL_DAILY_LIMIT: int = Field(default=20, ge=1, le=1_000)
@@ -199,6 +233,9 @@ class Settings(BaseSettings):
     EXPECTED_DOCUMENT_COUNT: int = 518_255
     DATASET_ROOT: Path = Path("data/huggingface")
     CONTENT_STORE_PATH: Path = Path("data/huggingface/content_store.sqlite3")
+    CLEAN_CONTENT_STORE_PATH: Path = Path(
+        "data/huggingface/clean-v1/content_store.sqlite3"
+    )
     V3_CONTENT_STORE_PATH: Path = Path("data/v3/content_store.sqlite3")
     INGESTION_STATE_PATH: Path = Path("data/huggingface/ingestion_state.sqlite3")
     INGESTION_REPORT_PATH: Path = Path("data/huggingface/ingestion_report.json")
@@ -248,7 +285,8 @@ class Settings(BaseSettings):
     QUERY_REWRITE_MAX_CHARACTERS: int = 2_000
     QUERY_REWRITE_MAX_OUTPUT_TOKENS: int = 96
     QUERY_REWRITE_TIMEOUT_SECONDS: float = 8.0
-    GUARDRAIL_TIMEOUT_SECONDS: float = 8.0
+    # Bound each mandatory check while allowing measured provider latency tails.
+    GUARDRAIL_TIMEOUT_SECONDS: float = 20.0
 
     # Online Ragas evaluation control (off | sample | all)
     RAGAS_EVALUATION_MODE: Literal["off", "sample", "all"] = "off"
@@ -256,6 +294,13 @@ class Settings(BaseSettings):
 
     # Retained for deployments that still provide the old environment name.
     LEXICAL_CHUNK_LIMIT: int = 64
+
+    @field_validator("PROVIDER_HTTP_ATTEMPT_LIMIT", mode="before")
+    @classmethod
+    def _reject_boolean_provider_http_attempt_limit(cls, value):
+        if isinstance(value, bool):
+            raise ValueError("provider_http_attempt_limit_must_be_positive_integer")
+        return value
 
     @property
     def pinecone_api_key(self) -> Optional[str]:

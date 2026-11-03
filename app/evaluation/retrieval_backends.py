@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from pathlib import Path
 from typing import Any, Literal
 
 from qdrant_client import AsyncQdrantClient
@@ -21,9 +22,17 @@ RetrievalBackend = Literal[
 @lru_cache(maxsize=1)
 def get_vertex_qdrant_retriever() -> VertexQdrantRetriever:
     settings = get_settings()
+    from app.services.legal_browser import should_use_supabase_legal_store
+
+    use_online_legal_data = should_use_supabase_legal_store(settings)
+    use_configured_sparse_average = (
+        settings.SERVERLESS_ONLINE_ONLY
+        or use_online_legal_data
+        or not Path(settings.V3_CONTENT_STORE_PATH).exists()
+    )
     average_sparse_document_length = (
         settings.V3_AVERAGE_SPARSE_DOCUMENT_LENGTH
-        if settings.SERVERLESS_ONLINE_ONLY
+        if use_configured_sparse_average
         else ContentStore(
             settings.V3_CONTENT_STORE_PATH
         ).build_report().average_sparse_document_length
@@ -219,6 +228,7 @@ async def retrieve_for_evaluation(
             status=status,
             diagnostics=diagnostics,
             error=error,
+            candidate_evidence=list(outcome.evidence),
         )
     if backend == "pinecone-v1":
         from app.services.retrieval import get_legal_retriever

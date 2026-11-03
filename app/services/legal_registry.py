@@ -35,7 +35,9 @@ def publication_record(analysis, publisher_id):
         raise ValueError("human_review_required")
     try:
         events = [
-            {key: row[key] for key in _EVENT_FIELDS} for row in original["assertions"]
+            {**{key: row[key] for key in _EVENT_FIELDS},
+             **({'effective_until': row['effective_until']} if 'effective_until' in row else {})}
+            for row in original["assertions"]
         ]
         checked = review_legal_effect(
             analysis["evidence_snapshot"], original["as_of"], events
@@ -123,11 +125,20 @@ def registry_view(document_number, as_of, records):
             and (start is None or e["effective_date"] >= start)
         }
     )
+    inclusive_ends = [e['effective_until'] for e in own
+                      if e['event_kind'] == 'effective' and e['effective_date'] == start
+                      and e.get('effective_until')]
+    end = min([*ends, *inclusive_ends], default=None)
+    bounds_at_start = {e.get('effective_until') for e in own
+                       if e['event_kind'] == 'effective' and e['effective_date'] == start}
+    if len(bounds_at_start) > 1 or 'conflicting_effect_events' in effect['reasons']:
+        end = None
     result = {
         **effect,
         "document_number": target,
         "effective_from": start,
-        "effective_to": min(ends, default=None),
+        "effective_to": end,
+        "effective_to_inclusive": bool(end in inclusive_ends and end not in ends),
         "source_verified_at": max(
             (e["source_verified_at"] for e in events), default=None
         ),
@@ -170,4 +181,5 @@ STATUS_LABELS = {
     "partially_effective": "Có sự kiện chấm dứt hiệu lực một phần",
     "repealed": "Có sự kiện bãi bỏ",
     "replaced": "Có sự kiện thay thế",
+    "expired": "Đã qua ngày cuối hiệu lực được ghi nhận",
 }

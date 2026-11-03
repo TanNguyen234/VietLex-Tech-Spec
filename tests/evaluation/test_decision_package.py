@@ -14,12 +14,29 @@ from app.evaluation.decision_package import (
 )
 from app.evaluation.gold_sidecar import load_gold_sidecar
 from app.evaluation.case_selection import build_cases, select_evaluation_cases
+from app.evaluation.provenance import GitProvenance
 
 
 APPROVED_DATASET_PATH = Path("app/data/namsyntax_legal_qa_420_curated_v1.json")
 APPROVED_SIDECAR_PATH = Path(
     "docs/evaluation/adjudication/promotions/gold-adjudication-promotion-curated-v4_20260809_151015_227377/labels_v2.json"
 )
+
+
+@pytest.fixture(autouse=True)
+def isolated_builder_provenance(monkeypatch: pytest.MonkeyPatch) -> GitProvenance:
+    # Collector integration lives in test_provenance.py; do not hash the user's
+    # entire checkout for every decision-policy unit test.
+    provenance = GitProvenance(
+        status="ok", repository_root="synthetic-unit-checkout",
+        git_sha="unit-test-builder", git_dirty=False,
+        git_tracked_dirty=False, git_staged_dirty=False, git_untracked_dirty=False,
+        git_diff_sha256=None, git_diff_status="clean", source_state_sha256="a" * 64,
+    )
+    monkeypatch.setattr(
+        "app.evaluation.decision_package.collect_git_provenance", lambda: provenance
+    )
+    return provenance
 
 
 def _create_minimal_dataset(tmp_path: Path) -> Path:
@@ -810,7 +827,9 @@ def test_benchmark_case_set_mismatch_is_not_readiness_eligible(tmp_path: Path) -
 # H. Provenance & Determinism Tests
 # ==============================================================================
 
-def test_artifact_contains_builder_and_input_hash_provenance(tmp_path: Path) -> None:
+def test_artifact_contains_builder_and_input_hash_provenance(
+    tmp_path: Path, isolated_builder_provenance: GitProvenance,
+) -> None:
     dataset_file = _create_minimal_dataset(tmp_path)
     sidecar_file = _create_minimal_sidecar(tmp_path)
     out_dir = tmp_path / "out"
@@ -823,6 +842,7 @@ def test_artifact_contains_builder_and_input_hash_provenance(tmp_path: Path) -> 
     provenance = pkg.decision_dict["provenance"]
 
     assert "builder_git_sha" in provenance
+    assert provenance["builder_git_sha"] == isolated_builder_provenance.git_sha
     assert "dataset_sha256" in provenance
     assert "sidecar_sha256" in provenance
     assert "gold_policy" in provenance

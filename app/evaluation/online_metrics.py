@@ -167,6 +167,8 @@ def build_online_metrics(
         refusal_category = "guardrail_input"
     elif not output_safe:
         refusal_category = "guardrail_output"
+    elif request_status in {"clarification", "unsupported_intent"}:
+        refusal_category = request_status
     elif request_status == "no_evidence" or (
         not contexts and not cached and input_safe and output_safe and not technical_error
     ):

@@ -4,6 +4,35 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def test_favicon_uses_the_local_svg_asset() -> None:
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    response = TestClient(app).get("/favicon.ico")
+
+    assert response.status_code == 200
+    assert response.history
+    assert response.history[0].status_code == 307
+    assert response.url.path == "/static/favicon.svg"
+    assert response.headers["content-type"].startswith("image/svg+xml")
+
+
+def test_index_reuses_existing_csrf_cookie() -> None:
+    from fastapi.testclient import TestClient
+    from app.main import app
+
+    client = TestClient(app)
+    token = "a" * 64
+    client.cookies.set("csrf_token", token)
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert response.headers["cache-control"] == "no-store"
+    assert response.cookies.get("csrf_token") == token
+    assert f'name="csrf_token" value="{token}"' in response.text
+
+
 def test_index_uses_local_assets_and_exposes_accessible_controls() -> None:
     html = (ROOT / "app/templates/index.html").read_text(encoding="utf-8")
 
@@ -36,6 +65,125 @@ def test_message_template_has_visible_actions_and_honest_source_copy() -> None:
     assert 'data-action="pin-evidence"' in html
     assert 'data-action="inspect-retrieval"' in html
     assert "Liên kết bằng chứng" in html
+
+
+def test_external_official_evidence_is_labeled_in_current_and_saved_chat() -> None:
+    from jinja2 import Environment, FileSystemLoader, select_autoescape
+    from types import SimpleNamespace
+    from app.services.evidence_presenter import (
+        TrustedOfficialEvidenceContext,
+        present_context,
+    )
+
+    context = (
+        "[Nguồn chính thức ngoài VietLex · 45/2019/QH14]\n"
+        "Nguồn: https://vanban.chinhphu.vn/default.aspx?docid=123\n"
+        "Nguồn loại: official_external\n"
+        "Hiệu lực pháp lý: unverified\n"
+        "SHA-256 nguồn: " + "a" * 64 + "\n"
+        "Thời điểm đọc: 2026-10-15T10:00:00+00:00\n"
+        "Phương thức đọc: visible_html_text\n"
+        "Tiêu đề: Bộ luật Lao động\n"
+        "Mức lương thử việc ít nhất bằng 85%."
+    )
+    view = present_context(TrustedOfficialEvidenceContext(context))
+    env = Environment(
+        loader=FileSystemLoader(ROOT / "app/templates"),
+        autoescape=select_autoescape(),
+    )
+    current = env.get_template("chat_message.html").render(
+        user_msg="Câu hỏi",
+        bot_msg="Câu trả lời",
+        trace_id="trace-1",
+        evidence_views=[view],
+        claim_support=[],
+        request=SimpleNamespace(cookies={}),
+    )
+    history = env.get_template("chat_history_messages.html").render(
+        messages=[
+            SimpleNamespace(
+                user_query="Câu hỏi",
+                bot_response="Câu trả lời",
+                trace_id="trace-1",
+                evidence_views=[view],
+                claim_support=[],
+                cached=False,
+                feedback=None,
+            )
+        ],
+        request=SimpleNamespace(cookies={}),
+    )
+
+    for html in (current, history):
+        assert "Nguồn chính thức ngoài VietLex" in html
+        assert "Hiệu lực chưa xác minh" in html
+        assert "https://vanban.chinhphu.vn/default.aspx?docid=123" in html
+        assert "2026-10-15T10:00:00+00:00" in html
+        assert "SHA-256 nguồn: " + "a" * 64 in html
+        assert "SHA-256 tệp PDF" not in html
+        assert "a" * 64 in html
+
+
+def test_pdf_provenance_is_rendered_in_current_and_saved_chat() -> None:
+    from jinja2 import Environment, FileSystemLoader, select_autoescape
+    from types import SimpleNamespace
+    from app.services.evidence_presenter import (
+        TrustedOfficialEvidenceContext,
+        present_context,
+    )
+
+    context = (
+        "[Nguồn chính thức ngoài VietLex · 12/2025/QH14]\n"
+        "Nguồn: https://congbao.chinhphu.vn/van-ban/law.htm\n"
+        "Nguồn loại: official_external\n"
+        "Hiệu lực pháp lý: unverified\n"
+        "SHA-256 nội dung trích xuất: " + "a" * 64 + "\n"
+        "SHA-256 tệp PDF: " + "b" * 64 + "\n"
+        "Tệp PDF: https://datafiles.chinhphu.vn/law.pdf\n"
+        "Phạm vi trang PDF: 1-5/12\n"
+        "Đọc một phần PDF: có\n"
+        "Thời điểm đọc: 2026-10-15T10:00:00+00:00\n"
+        "Phương thức đọc: pdf_text\n"
+        "Tiêu đề: <img src=x onerror=alert(1)>\n"
+        "Quy định về nhập khẩu phế liệu."
+    )
+    view = present_context(TrustedOfficialEvidenceContext(context))
+    env = Environment(
+        loader=FileSystemLoader(ROOT / "app/templates"),
+        autoescape=select_autoescape(),
+    )
+    current = env.get_template("chat_message.html").render(
+        user_msg="Câu hỏi",
+        bot_msg="Câu trả lời",
+        trace_id="trace-pdf",
+        evidence_views=[view],
+        claim_support=[],
+        request=SimpleNamespace(cookies={}),
+    )
+    history = env.get_template("chat_history_messages.html").render(
+        messages=[
+            SimpleNamespace(
+                user_query="Câu hỏi",
+                bot_response="Câu trả lời",
+                trace_id="trace-pdf",
+                evidence_views=[view],
+                claim_support=[],
+                cached=False,
+                feedback=None,
+            )
+        ],
+        request=SimpleNamespace(cookies={}),
+    )
+
+    for html in (current, history):
+        assert "SHA-256 nội dung trích xuất: " + "a" * 64 in html
+        assert "SHA-256 tệp PDF: " + "b" * 64 in html
+        assert 'href="https://congbao.chinhphu.vn/van-ban/law.htm"' in html
+        assert 'href="https://datafiles.chinhphu.vn/law.pdf"' in html
+        assert "Phạm vi trang PDF: 1-5/12" in html
+        assert "Đọc một phần PDF: có" in html
+        assert "<img src=x onerror=alert(1)>" not in html
+        assert "&lt;img src=x onerror=alert(1)&gt;" in html
 
 
 def test_missing_evidence_has_explicit_online_handoff():

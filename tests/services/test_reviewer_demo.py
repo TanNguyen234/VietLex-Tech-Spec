@@ -1,8 +1,32 @@
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
+from datetime import datetime, timezone
 
 import pytest
 from starlette.requests import Request
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('daily', [False, True])
+async def test_retry_after_is_remaining_UTC_window_not_a_full_window(monkeypatch, daily):
+    import app.services.reviewer_demo as demo
+
+    class Clock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return cls(2026, 11, 2, 23, 59, 50, 250000, tzinfo=timezone.utc)
+
+    monkeypatch.setattr(demo, 'datetime', Clock)
+    monkeypatch.setattr(demo, 'reserve_demo_budget', AsyncMock(
+        side_effect=[True, False] if daily else [False]))
+    downstream, send = AsyncMock(), AsyncMock()
+    await demo.ReviewerDemoMiddleware(downstream, settings=settings())(
+        {'type': 'http', 'method': 'POST', 'path': '/login', 'headers': [],
+         'client': ('peer', 1)}, AsyncMock(), send)
+    start = send.await_args_list[0].args[0]
+    assert start['status'] == 429
+    assert dict(start['headers'])[b'retry-after'] == b'10'
+    downstream.assert_not_awaited()
 
 
 def settings():
@@ -43,6 +67,50 @@ async def test_public_read_does_not_require_login(monkeypatch):
     downstream = AsyncMock()
     await demo.ReviewerDemoMiddleware(downstream, settings=settings())(
         {"type":"http", "method":"GET", "path":"/evaluation-lab", "headers":[]}, AsyncMock(), AsyncMock())
+    downstream.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_email_verification_gets_do_not_reserve_auth_budget(monkeypatch):
+    import app.services.reviewer_demo as demo
+    resolve = AsyncMock(side_effect=AssertionError("GET should not resolve auth"))
+    reserve = AsyncMock(side_effect=AssertionError("GET should not reserve auth budget"))
+    monkeypatch.setattr(demo, "resolve_auth_session", resolve)
+    monkeypatch.setattr(demo, "reserve_demo_budget", reserve)
+    downstream = AsyncMock()
+    middleware = demo.ReviewerDemoMiddleware(downstream, settings=settings())
+
+    for _ in range(3):
+        await middleware(
+            {"type": "http", "method": "GET", "path": "/verify-email", "headers": [],
+             "client": ("peer", 1)},
+            AsyncMock(),
+            AsyncMock(),
+        )
+
+    assert downstream.await_count == 3
+    resolve.assert_not_awaited()
+    reserve.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_email_verification_post_still_reserves_auth_budget(monkeypatch):
+    import app.services.reviewer_demo as demo
+    reserve = AsyncMock(return_value=True)
+    monkeypatch.setattr(demo, "reserve_demo_budget", reserve)
+    downstream = AsyncMock()
+
+    await demo.ReviewerDemoMiddleware(downstream, settings=settings())(
+        {"type": "http", "method": "POST", "path": "/verify-email", "headers": [],
+         "client": ("peer", 1)},
+        AsyncMock(return_value={"type": "http.request", "body": b"csrf_token=x", "more_body": False}),
+        AsyncMock(),
+    )
+
+    assert reserve.await_args_list[0].args == ("peer", "auth", 5, 60)
+    assert reserve.await_args_list[0].kwargs == {"minute": True}
+    assert reserve.await_args_list[1].args == ("peer", "auth", 15, 200)
+    assert reserve.await_args_list[1].kwargs == {"minute": False}
     downstream.assert_awaited_once()
 
 

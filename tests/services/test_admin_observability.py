@@ -207,6 +207,63 @@ async def test_external_http_calls_do_not_pollute_llm_token_usage(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_provider_http_attempts_are_persisted_separately_from_llm_usage(
+    monkeypatch,
+):
+    from types import SimpleNamespace
+    from unittest.mock import AsyncMock
+
+    import httpx
+
+    import app.database as database
+    from app.services.provider_http_budget import ProviderHttpAsyncTransport
+    from app.services.provider_runtime import capture_provider_usage
+
+    collection = SimpleNamespace(replace_one=AsyncMock())
+    monkeypatch.setattr(
+        database, "get_db", lambda: SimpleNamespace(evaluation_logs=collection)
+    )
+
+    @capture_provider_usage
+    async def request():
+        async with httpx.AsyncClient(
+            transport=ProviderHttpAsyncTransport(
+                httpx.MockTransport(
+                    lambda request: httpx.Response(503, request=request)
+                ),
+                boundary="direct_llm_httpx_async",
+                provider="openrouter",
+            )
+        ) as client:
+            await client.post(
+                "https://example.invalid/model",
+                headers={"Authorization": "Bearer local-test-secret"},
+                content="local test prompt",
+            )
+        return await database.log_interaction(
+            "trace-http-budget",
+            "synthetic query",
+            "synthetic answer",
+            [],
+            False,
+        )
+
+    document = await request()
+    metrics = document["metrics"]
+    assert metrics["provider_http_budget"]["attempt_count"] == 1
+    assert metrics["provider_http_budget"]["failure_count"] == 1
+    assert metrics["provider_http_budget"]["coverage"]["supported"] == [
+        "vertex_model_httpx_sync",
+        "vertex_model_httpx_async",
+        "direct_llm_httpx_async",
+    ]
+    assert metrics["llm_calls"] == []
+    assert metrics["token_usage"]["calls"] == 0
+    assert metrics["token_usage"]["total_token_count"] is None
+    assert "local-test-secret" not in str(metrics["provider_http_budget"])
+
+
+@pytest.mark.asyncio
 async def test_stats_connection_failure_is_unavailable_not_zero(monkeypatch):
     import app.database as database
 

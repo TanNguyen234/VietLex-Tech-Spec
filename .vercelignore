@@ -3,7 +3,9 @@
 .secrets/
 .tmp/
 .pytest_cache/
-data/
+/data/
+namsyntax_legal_qa_420.json
+namsyntax_legal_qa_420_curated_v1.json
 docs/*
 !docs/evaluation
 docs/evaluation/*

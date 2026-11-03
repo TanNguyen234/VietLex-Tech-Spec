@@ -73,7 +73,7 @@ def main() -> int:
     print(
         json.dumps(
             audit_gold_distribution(sidecar.labels, legal_types=legal_types),
-            ensure_ascii=False,
+            ensure_ascii=True,
             indent=2,
         )
     )

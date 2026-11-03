@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import secrets
 
 import logfire
 from fastapi import APIRouter, Depends, Form, Request
@@ -29,7 +28,7 @@ from app.account_database import (
     revoke_other_auth_sessions,
     update_password,
 )
-from app.api.dependencies import optional_user, require_user, verify_csrf
+from app.api.dependencies import get_or_create_csrf_token, optional_user, require_user, verify_csrf
 from app.config import get_settings
 from app.services.accounts import (
     hash_password,
@@ -62,8 +61,10 @@ def _form_response(
     message: str = "",
     token: str = "",
     status_code: int = 200,
+    form_enabled: bool = True,
+    unavailable_title: str = "",
 ) -> HTMLResponse:
-    csrf_token = secrets.token_hex(32)
+    csrf_token = get_or_create_csrf_token(request)
     response = templates.TemplateResponse(
         request,
         "account_form.html",
@@ -72,9 +73,12 @@ def _form_response(
             "message": message,
             "token": token,
             "csrf_token": csrf_token,
+            "form_enabled": form_enabled,
+            "unavailable_title": unavailable_title,
         },
         status_code=status_code,
     )
+    response.headers["Cache-Control"] = "no-store"
     response.set_cookie(
         "csrf_token",
         csrf_token,
@@ -89,8 +93,33 @@ def _valid_password(password: str) -> bool:
     return 10 <= len(password) <= 256
 
 
+def _development_account_page(request: Request, *, mode: str) -> HTMLResponse | None:
+    if settings.APP_ENV != "development":
+        return None
+    return _form_response(
+        request,
+        mode=mode,
+        message="Tài khoản và xác minh email chỉ khả dụng trên môi trường trực tuyến.",
+        status_code=503,
+        form_enabled=False,
+        unavailable_title="Cần môi trường trực tuyến",
+    )
+
+
 @router.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):
+    unavailable = _development_account_page(request, mode="register")
+    if unavailable:
+        return unavailable
+    if not settings.ACCOUNT_EMAIL_ENABLED:
+        return _form_response(
+            request,
+            mode="register",
+            message="Đăng ký email hiện chưa được cấu hình.",
+            status_code=503,
+            form_enabled=False,
+            unavailable_title="Đăng ký hiện chưa khả dụng",
+        )
     return _form_response(request, mode="register")
 
 
@@ -102,12 +131,17 @@ async def register(
     password: str = Form(...),
     _csrf: str = Depends(verify_csrf),
 ):
+    unavailable = _development_account_page(request, mode="register")
+    if unavailable:
+        return unavailable
     if not settings.ACCOUNT_EMAIL_ENABLED:
         return _form_response(
             request,
             mode="register",
             message="Đăng ký email hiện chưa được cấu hình.",
             status_code=503,
+            form_enabled=False,
+            unavailable_title="Đăng ký hiện chưa khả dụng",
         )
     try:
         normalized = normalize_email(email)
@@ -145,6 +179,9 @@ async def register(
 
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
+    unavailable = _development_account_page(request, mode="login")
+    if unavailable:
+        return unavailable
     return _form_response(request, mode="login")
 
 
@@ -204,6 +241,28 @@ async def logout(
 
 @router.get("/verify-email", response_class=HTMLResponse)
 async def verify_email(request: Request, token: str = ""):
+    unavailable = _development_account_page(request, mode="message")
+    if unavailable:
+        return unavailable
+    if not token:
+        return _form_response(
+            request,
+            mode="message",
+            message="Liên kết xác minh không hợp lệ hoặc đã hết hạn.",
+        )
+    return _form_response(request, mode="verify_email", token=token)
+
+
+@router.post("/verify-email", response_class=HTMLResponse)
+@limiter.limit(settings.SESSION_RATE_LIMIT, key_func=authentication_rate_limit_key)
+async def verify_email_submit(
+    request: Request,
+    token: str = Form(default=""),
+    _csrf: str = Depends(verify_csrf),
+):
+    unavailable = _development_account_page(request, mode="message")
+    if unavailable:
+        return unavailable
     user_id = await consume_account_token(token, "verify_email") if token else None
     if user_id and await mark_user_verified(user_id):
         message = "Email của bạn đã được xác minh. Bạn có thể đăng nhập."
@@ -214,6 +273,9 @@ async def verify_email(request: Request, token: str = ""):
 
 @router.get("/forgot-password", response_class=HTMLResponse)
 async def forgot_password_page(request: Request):
+    unavailable = _development_account_page(request, mode="forgot")
+    if unavailable:
+        return unavailable
     return _form_response(request, mode="forgot")
 
 
@@ -246,6 +308,9 @@ async def forgot_password(
 
 @router.get("/reset-password", response_class=HTMLResponse)
 async def reset_password_page(request: Request, token: str = ""):
+    unavailable = _development_account_page(request, mode="reset")
+    if unavailable:
+        return unavailable
     return _form_response(request, mode="reset", token=token)
 
 
@@ -281,7 +346,7 @@ async def account_entry(user=Depends(optional_user)):
 
 @router.get("/settings", response_class=HTMLResponse)
 async def account_settings(request: Request, user=Depends(require_user)):
-    csrf_token = secrets.token_hex(32)
+    csrf_token = get_or_create_csrf_token(request)
     sessions = await list_auth_sessions(
         str(user["_id"]),
         current_token=request.cookies.get(settings.AUTH_COOKIE_NAME),

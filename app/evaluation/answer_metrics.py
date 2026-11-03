@@ -5,7 +5,7 @@ import unicodedata
 from collections import Counter
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from app.evaluation.legal_citations import LegalCitation, parse_legal_citations
+from app.evaluation.legal_citations import DOC_PATTERN, LegalCitation, parse_legal_citations
 
 
 ANSWER_QUALITY_SKIP_STATUSES = {
@@ -13,7 +13,64 @@ ANSWER_QUALITY_SKIP_STATUSES = {
     "output_guardrail_error",
     "retrieval_error",
     "reranker_error",
+    "generation_error",
 }
+
+ANSWER_METRIC_VERSION = "3.3.0"
+
+
+def _entity_mentions(text: str, expected: list[str]) -> list[str]:
+    """Lexical mentions, not NER or proof of a claim about an entity.
+
+    Gold names can include lowercase words (Bộ Tài chính). Match those whole
+    labels first; retain other capitalized names to count extra mentions.
+    """
+    text = unicodedata.normalize("NFC", text)
+    matched = []
+    mentions = []
+    for entity in expected:
+        pattern = r"(?<!\w)" + r"\s+".join(re.escape(w) for w in entity.split()) + r"(?!\w)"
+        for match in re.finditer(pattern, text, re.IGNORECASE):
+            matched.append(match.span())
+            mentions.append(entity)
+    unmatched = text
+    for left, right in sorted(matched, reverse=True):
+        unmatched = unmatched[:left] + " " * (right - left) + unmatched[right:]
+    words = list(re.finditer(r"[^\W\d_]+", unmatched))
+    index = 0
+    while index < len(words):
+        word = words[index]
+        if not word.group()[0].isupper():
+            index += 1
+            continue
+        start, end = word.span()
+        index += 1
+        while (index < len(words) and words[index].group()[0].isupper()
+               and text[end:words[index].start()].isspace()):
+            end = words[index].end()
+            index += 1
+        mentions.append(" ".join(text[start:end].split()))
+    return mentions
+
+ANSWER_CASE_METRIC_KEYS = (
+    "exact_match",
+    "token_precision",
+    "token_recall",
+    "token_f1",
+    "char_f1",
+    "rouge_l",
+    "chrf",
+    "number_precision",
+    "number_recall",
+    "date_precision",
+    "date_recall",
+    "entity_precision",
+    "entity_recall",
+    "citation_precision",
+    "citation_recall",
+    "citation_coverage",
+    "invalid_citation_rate",
+)
 
 
 def normalize_text_for_metrics(text: str) -> str:
@@ -133,7 +190,6 @@ REFUSAL_PHRASES = [
     "tài liệu không đề cập",
     "xin lỗi",
     "không thể cung cấp",
-    "không được quy định",
 ]
 
 DISCLAIMER_PHRASES = [
@@ -174,10 +230,12 @@ def classify_response_refusal(
     if any(sig in resp_lower for sig in ERROR_SIGNATURES):
         return "technical_error", False
 
-    if not retrieved_contexts or "không tìm thấy bằng chứng pháp luật đủ tin cậy" in resp_lower:
-        return "no_evidence", True
-
-    has_refusal_phrase = any(phrase in resp_lower for phrase in REFUSAL_PHRASES)
+    no_evidence_fallback = (
+        "không tìm thấy bằng chứng pháp luật đủ tin cậy" in resp_lower
+    )
+    has_refusal_phrase = no_evidence_fallback or any(
+        phrase in resp_lower for phrase in REFUSAL_PHRASES
+    )
     has_disclaimer = any(phrase in resp_lower for phrase in DISCLAIMER_PHRASES)
 
     # Detect legal citations or factual assertions (e.g. "Điều X", "Khoản Y", "Luật Z")
@@ -188,9 +246,15 @@ def classify_response_refusal(
         if len(citations) >= 1 or len(words) > 50:
             # Answer contains factual claims or citations alongside refusal phrase
             return "mixed_claim_refusal", False
+        if not retrieved_contexts or no_evidence_fallback:
+            return "no_evidence", True
         else:
             # Pure short refusal
             return "pure_refusal", True
+
+    if not retrieved_contexts:
+        # Missing evidence describes retrieval state, not an answer refusal.
+        return "no_evidence", False
 
     if has_disclaimer:
         return "disclaimer", False
@@ -200,13 +264,18 @@ def classify_response_refusal(
 
 def extract_entities_dates_numbers(text: str) -> Dict[str, List[str]]:
     """Extract numbers, dates, and legal entity names from text."""
-    numbers = re.findall(r"\b\d+(?:[\.,]\d+)?\b", text)
-    dates = re.findall(r"\b\d{1,2}/\d{1,2}/\d{4}\b|\bngày\s+\d+\s+tháng\s+\d+\s+năm\s+\d{4}\b", text, re.IGNORECASE)
-    entities = re.findall(r"\b[A-ZĐ][a-zđ]+(?:\s+[A-ZĐ][a-zđ]+)*\b", text)
+    date_pattern = (
+        r"\b\d{1,2}/\d{1,2}/\d{4}\b|"
+        r"\bngày\s+\d+\s+tháng\s+\d+\s+năm\s+\d{4}\b"
+    )
+    dates = re.findall(date_pattern, text, re.IGNORECASE)
+    text_without_dates = re.sub(date_pattern, " ", text, flags=re.IGNORECASE)
+    numbers = re.findall(r"\b\d+(?:[\.,]\d+)?\b", text_without_dates)
+    entities = _entity_mentions(text, [])
     return {
         "numbers": numbers,
         "dates": dates,
-        "entities": [e for e in entities if len(e) > 3]
+        "entities": entities
     }
 
 
@@ -250,6 +319,85 @@ def _parsed_citation_set(text: str) -> set[LegalCitation]:
     return set(parse_legal_citations(text))
 
 
+def _answer_citations(text: str, contexts: List[str]) -> set[LegalCitation]:
+    """Resolve explicit prompt indices without rewriting explicit legal IDs.
+
+    This validates locator/address containment, not claim support or legal effect.
+    Unresolvable headers remain unqualified; nonexistent/conflicting indices
+    remain invalid rather than borrowing a nearby document from another source.
+    """
+    from app.services.evidence_presenter import present_context
+
+    invalid: set[LegalCitation] = set()
+    paragraphs = []
+    for paragraph in re.split(r"\n\s*\n", text):
+        explicit = {match.group().upper() for match in DOC_PATTERN.finditer(paragraph)}
+
+        def resolve(match: re.Match[str]) -> str:
+            digits = match.group(1).lstrip("0") or "0"
+            if digits.startswith("-") or len(digits) > len(str(len(contexts))):
+                invalid.add(LegalCitation(document_number=match.group()))
+                return match.group()
+            index = int(digits)
+            if not 1 <= index <= len(contexts):
+                invalid.add(LegalCitation(document_number=match.group()))
+                return match.group()
+            header = present_context(str(contexts[index - 1])).citation or ""
+            documents = {c.document_number for c in parse_legal_citations(header)
+                         if c.document_number}
+            if len(documents) != 1:
+                return match.group()
+            document = documents.pop()
+            if explicit:
+                if len(explicit) == 1 and document.upper() not in explicit:
+                    invalid.add(LegalCitation(document_number=match.group()))
+                return match.group()
+            return document
+
+        paragraphs.append(re.sub(
+            r"Tài\s+liệu\s+tham\s+khảo\s*#\s*(-?\d+)(?![\d.])",
+            resolve, paragraph, flags=re.IGNORECASE,
+        ))
+    return _parsed_citation_set("\n\n".join(paragraphs)) | invalid
+
+
+def _evidence_citations(context: str) -> set[LegalCitation]:
+    """Observe locators in supplied text, not legal validity or faithfulness."""
+    from app.services.evidence_presenter import present_context
+
+    # Use serialized text semantics too, so replay does not depend on a str
+    # subclass that carries online provenance outside the saved JSON.
+    context = str(context)
+    citations = _parsed_citation_set(context)
+    view = present_context(context)
+    headers = parse_legal_citations(view.citation or "")
+    if len(headers) != 1 or not headers[0].article or headers[0].clause:
+        return citations
+    own = headers[0]
+    heading = re.search(
+        rf"(?m)^\s*{re.escape(own.article)}\s*[.:]\s*", view.excerpt,
+        re.IGNORECASE,
+    )
+    if heading is None:
+        return citations
+    body = re.split(
+        r"(?mi)^\s*Điều\s+\d+[a-z]?\s*[.:]", view.excerpt[heading.end():],
+        maxsplit=1,
+    )[0]
+    next_clause = 1
+    for marker in re.finditer(r"(?<!\S)(\d{1,2})\.\s+", body):
+        if re.search(r"\b(?:khoản|điều|mục|chương|số)\s*$",
+                     body[max(0, marker.start() - 20):marker.start()], re.IGNORECASE):
+            continue
+        if int(marker.group(1)) != next_clause:
+            continue
+        citations.add(LegalCitation(
+            own.document_number, own.article, f"Khoản {next_clause}"
+        ))
+        next_clause += 1
+    return citations
+
+
 def calculate_case_answer_metrics(
     pred_response: str,
     ref_answer: str,
@@ -279,14 +427,18 @@ def calculate_case_answer_metrics(
     extracted = extract_entities_dates_numbers(pred_response)
     num_p, num_r = calculate_pattern_precision_recall(extracted["numbers"], expected_numbers or [])
     date_p, date_r = calculate_pattern_precision_recall(extracted["dates"], expected_dates or [])
-    ent_p, ent_r = calculate_pattern_precision_recall(extracted["entities"], expected_entities or [])
+    entity_labels = [" ".join(unicodedata.normalize("NFC", value).split())
+                     for value in (expected_entities or []) if value.strip()]
+    ent_p, ent_r = calculate_pattern_precision_recall(
+        _entity_mentions(pred_response, entity_labels), entity_labels
+    )
 
     # Legal citation metrics
-    pred_cites = _parsed_citation_set(pred_response)
+    pred_cites = _answer_citations(pred_response, retrieved_contexts)
     ref_cites = _parsed_citation_set(ref_answer)
     evidence_cites: set[LegalCitation] = set()
     for context in retrieved_contexts:
-        evidence_cites.update(parse_legal_citations(context))
+        evidence_cites.update(_evidence_citations(context))
 
     supported_pred_cites = {
         citation
@@ -331,13 +483,36 @@ def calculate_case_answer_metrics(
     else:
         cite_rec, cite_cov = None, None
 
+    metric_skip_reasons: Dict[str, str] = {}
+    for name, plural, expected in (
+        ("number", "numbers", expected_numbers),
+        ("date", "dates", expected_dates),
+        ("entity", "entities", expected_entities),
+    ):
+        if not expected:
+            reason = f"no_expected_{plural}"
+            metric_skip_reasons[f"{name}_precision"] = reason
+            metric_skip_reasons[f"{name}_recall"] = reason
+    if not evidence_cites:
+        metric_skip_reasons["citation_precision"] = (
+            "no_retrieved_evidence_citations"
+        )
+        metric_skip_reasons["invalid_citation_rate"] = (
+            "no_retrieved_evidence_citations"
+        )
+    if not ref_cites:
+        metric_skip_reasons["citation_recall"] = "no_reference_citations"
+        metric_skip_reasons["citation_coverage"] = "no_reference_citations"
+
     return {
         "applicable": status not in ANSWER_QUALITY_SKIP_STATUSES,
+        "answer_metric_version": ANSWER_METRIC_VERSION,
         "skip_reason": (
             status if status in ANSWER_QUALITY_SKIP_STATUSES else None
         ),
         "refusal_category": category,
         "is_refusal": is_refusal,
+        "metric_skip_reasons": metric_skip_reasons,
         "exact_match": exact_match,
         "token_precision": tok_prec,
         "token_recall": tok_rec,
@@ -361,8 +536,6 @@ def calculate_case_answer_metrics(
 def aggregate_answer_metrics(case_results: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Aggregate answer metrics across all test cases."""
     total = len(case_results)
-    if total == 0:
-        return {}
 
     def applicable(case: Dict[str, Any]) -> bool:
         metrics = case.get("metrics", {})
@@ -382,20 +555,30 @@ def aggregate_answer_metrics(case_results: List[Dict[str, Any]]) -> Dict[str, An
     unanswerable = [c for c in scored if not c.get("answerable", False)]
 
     # Refusal stats
-    categories = Counter(
-        c.get("refusal_category", "normal_answer") for c in scored
-    )
-    correct_unanswerable_refusals = sum(
-        1 for c in unanswerable if c.get("refusal_category") in ("pure_refusal", "no_evidence")
-    )
-    all_refusals = sum(
-        1
-        for c in scored
-        if c.get("metrics", {}).get(
-            "is_refusal",
-            c.get("is_refusal", False),
+    def refusal_category(case: Dict[str, Any]) -> str:
+        return (
+            case.get("refusal_category")
+            or case.get("metrics", {}).get("refusal_category")
+            or "normal_answer"
         )
+
+    def is_refusal(case: Dict[str, Any]) -> bool:
+        metrics = case.get("metrics", {})
+        if "is_refusal" in metrics:
+            return bool(metrics["is_refusal"])
+        if "is_refusal" in case:
+            return bool(case["is_refusal"])
+        # A pure refusal category is unambiguous; no_evidence alone is not.
+        return refusal_category(case) == "pure_refusal"
+
+    categories = Counter(refusal_category(c) for c in scored)
+    correct_unanswerable_refusals = sum(
+        1
+        for c in unanswerable
+        if refusal_category(c) in ("pure_refusal", "no_evidence")
+        and is_refusal(c)
     )
+    all_refusals = sum(1 for c in scored if is_refusal(c))
 
     refusal_precision = (correct_unanswerable_refusals / all_refusals) if all_refusals else None
     refusal_recall = (correct_unanswerable_refusals / len(unanswerable)) if unanswerable else None
@@ -407,15 +590,140 @@ def aggregate_answer_metrics(case_results: List[Dict[str, Any]]) -> Dict[str, An
     )
     answer_similarity_pass_rate = (answerable_correct / len(answerable)) if answerable else None
 
-    def avg_metric(key: str) -> Optional[float]:
-        vals = [
-            c["metrics"][key]
-            for c in scored
-            if "metrics" in c
-            and key in c["metrics"]
-            and c["metrics"][key] is not None
-        ]
-        return round(sum(vals) / len(vals), 4) if vals else None
+    def case_skip_reason(case: Dict[str, Any], key: str | None = None) -> str:
+        metrics = case.get("metrics", {})
+        if not applicable(case):
+            return (
+                metrics.get("skip_reason")
+                or case.get("status")
+                or "unspecified_skip_reason"
+            )
+        if key is None:
+            return "not_applicable_to_metric"
+        if key not in metrics:
+            return "metric_missing"
+        return (metrics.get("metric_skip_reasons") or {}).get(
+            key, "metric_unavailable"
+        )
+
+    def metric_detail(
+        *,
+        value: Optional[float],
+        numerator: float,
+        denominator: int,
+        scored_count: int,
+        skip_reasons: Counter[str],
+        aggregation: str,
+        reason: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        return {
+            "value": value,
+            "numerator": round(numerator, 6),
+            "denominator": denominator,
+            "coverage": round(scored_count / total, 4) if total else 0.0,
+            "scored_cases": scored_count,
+            "skipped_cases": total - scored_count,
+            "skip_reasons": dict(sorted(skip_reasons.items())),
+            "aggregation": aggregation,
+            "reason": reason,
+        }
+
+    metric_details: Dict[str, Dict[str, Any]] = {}
+    for key in ANSWER_CASE_METRIC_KEYS:
+        values: List[float] = []
+        reasons: Counter[str] = Counter()
+        for case in case_results:
+            metrics = case.get("metrics", {})
+            if not applicable(case):
+                reasons[case_skip_reason(case, key)] += 1
+                continue
+            if key not in metrics:
+                reasons["metric_missing"] += 1
+                continue
+            value = metrics[key]
+            if value is None:
+                reasons[case_skip_reason(case, key)] += 1
+                continue
+            values.append(float(value))
+        numerator = sum(values)
+        denominator = len(values)
+        metric_details[key] = metric_detail(
+            value=round(numerator / denominator, 4) if denominator else None,
+            numerator=numerator,
+            denominator=denominator,
+            scored_count=denominator,
+            skip_reasons=reasons,
+            aggregation="macro_case_mean",
+            reason=(
+                None
+                if denominator
+                else "no_cases"
+                if not total
+                else "no_applicable_values"
+            ),
+        )
+
+    def case_rate_detail(
+        *,
+        numerator: int,
+        eligible: List[Dict[str, Any]],
+        denominator_reason: str,
+        excluded_reason: str,
+        aggregation: str = "case_count_ratio",
+    ) -> Dict[str, Any]:
+        reasons: Counter[str] = Counter(skip_reason_counts)
+        eligible_ids = {id(case) for case in eligible}
+        for case in scored:
+            if id(case) not in eligible_ids:
+                reasons[excluded_reason] += 1
+        denominator = len(eligible)
+        return metric_detail(
+            value=round(numerator / denominator, 4) if denominator else None,
+            numerator=numerator,
+            denominator=denominator,
+            scored_count=denominator,
+            skip_reasons=reasons,
+            aggregation=aggregation,
+            reason=(
+                None
+                if denominator
+                else "no_cases"
+                if not total
+                else denominator_reason
+            ),
+        )
+
+    predicted_refusals = [case for case in scored if is_refusal(case)]
+    metric_details["answer_similarity_pass_rate"] = case_rate_detail(
+        numerator=answerable_correct,
+        eligible=answerable,
+        denominator_reason="no_answerable_cases",
+        excluded_reason="unanswerable_case",
+    )
+    metric_details["unanswerable_accuracy"] = case_rate_detail(
+        numerator=correct_unanswerable_refusals,
+        eligible=unanswerable,
+        denominator_reason="no_unanswerable_cases",
+        excluded_reason="answerable_case",
+    )
+    metric_details["refusal_precision"] = case_rate_detail(
+        numerator=correct_unanswerable_refusals,
+        eligible=predicted_refusals,
+        denominator_reason="no_predicted_refusals",
+        excluded_reason="not_predicted_refusal",
+    )
+    metric_details["refusal_recall"] = case_rate_detail(
+        numerator=correct_unanswerable_refusals,
+        eligible=unanswerable,
+        denominator_reason="no_unanswerable_cases",
+        excluded_reason="answerable_case",
+    )
+    metric_details["mixed_claim_refusal_rate"] = case_rate_detail(
+        numerator=categories["mixed_claim_refusal"],
+        eligible=scored,
+        denominator_reason="no_scored_cases",
+        excluded_reason="not_applicable_to_metric",
+    )
 
     return {
         "total_cases": total,
@@ -430,18 +738,13 @@ def aggregate_answer_metrics(case_results: List[Dict[str, Any]]) -> Dict[str, An
             if scored
             else None
         ),
+        "metric_details": metric_details,
         "refusal_precision": round(refusal_precision, 4) if refusal_precision is not None else None,
         "refusal_recall": round(refusal_recall, 4) if refusal_recall is not None else None,
         "unanswerable_accuracy": round(unanswerable_accuracy, 4) if unanswerable_accuracy is not None else None,
         "answer_similarity_pass_rate": round(answer_similarity_pass_rate, 4) if answer_similarity_pass_rate is not None else None,
-        "exact_match": avg_metric("exact_match"),
-        "token_precision": avg_metric("token_precision"),
-        "token_recall": avg_metric("token_recall"),
-        "token_f1": avg_metric("token_f1"),
-        "char_f1": avg_metric("char_f1"),
-        "rouge_l": avg_metric("rouge_l"),
-        "chrf": avg_metric("chrf"),
-        "citation_precision": avg_metric("citation_precision"),
-        "citation_recall": avg_metric("citation_recall"),
-        "invalid_citation_rate": avg_metric("invalid_citation_rate"),
+        **{
+            key: metric_details[key]["value"]
+            for key in ANSWER_CASE_METRIC_KEYS
+        },
     }

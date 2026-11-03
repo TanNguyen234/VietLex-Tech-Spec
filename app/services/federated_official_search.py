@@ -78,20 +78,48 @@ class BraveOfficialClient:
 
 
 class FederatedOfficialClient:
-    def __init__(self, *, portal, web=None, gazette=None):
+    def __init__(
+        self,
+        *,
+        portal,
+        web=None,
+        gazette=None,
+        max_wait_seconds: float | None = None,
+        provider_timeouts: dict[str, float] | None = None,
+    ):
+        if max_wait_seconds is not None and max_wait_seconds <= 0:
+            raise ValueError("max_wait_seconds must be positive")
         self.providers = [("chinhphu", portal)]
         if gazette is not None:
             self.providers.append(("congbao", gazette))
         if web is not None:
             self.providers.append(("brave", web))
+        provider_names = {name for name, _ in self.providers}
+        provider_timeouts = provider_timeouts or {}
+        if set(provider_timeouts) - provider_names:
+            raise ValueError("provider_timeouts contains an unknown provider")
+        if any(timeout <= 0 for timeout in provider_timeouts.values()):
+            raise ValueError("provider timeouts must be positive")
         self.provider = "_and_".join(name for name, _ in self.providers)
         self.method = "federated-official-discovery-v1"
+        self.max_wait_seconds = max_wait_seconds
+        self.provider_timeouts = dict(provider_timeouts)
 
     async def search(self, query: str, *, limit: int = 3):
         started = time.perf_counter()
         limit = max(1, min(int(limit), 10))
         requested = _references(query)
-        outcomes = await asyncio.gather(*(provider.search(query, limit=limit) for _, provider in self.providers), return_exceptions=True)
+        async def search_one(name, provider):
+            request = provider.search(query, limit=limit)
+            timeout = self.provider_timeouts.get(name, self.max_wait_seconds)
+            if timeout is None:
+                return await request
+            return await asyncio.wait_for(request, timeout=timeout)
+
+        outcomes = await asyncio.gather(
+            *(search_one(name, provider) for name, provider in self.providers),
+            return_exceptions=True,
+        )
         errors, records, count, seen = [], [], 0, set()
         for (name, _), result in zip(self.providers, outcomes):
             count += getattr(result, "request_count", 0) or 0

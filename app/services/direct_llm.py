@@ -20,6 +20,12 @@ from app.evaluation.provider_catalog import (
 )
 from app.services.vertex_ai import VertexAIError, get_vertex_provider
 from app.services.provider_runtime import record_generation_result
+from app.services.provider_http_budget import (
+    ProviderHttpAsyncTransport,
+    ProviderHttpAttemptBudgetExceeded,
+    _wrap_client_transports,
+    provider_identity_scope,
+)
 
 
 settings = get_settings()
@@ -70,14 +76,34 @@ def provider_cooldown_snapshot() -> dict[str, float]:
 def get_direct_client() -> httpx.AsyncClient:
     global _http_client
     if _http_client is None or _http_client.is_closed:
-        _http_client = httpx.AsyncClient(
-            timeout=30.0,
-            limits=httpx.Limits(
-                max_keepalive_connections=20,
-                max_connections=50,
-            ),
-        )
+        _http_client = create_direct_httpx_client()
     return _http_client
+
+
+def create_direct_httpx_client() -> httpx.AsyncClient:
+    client = httpx.AsyncClient(
+        timeout=30.0,
+        limits=httpx.Limits(
+            max_keepalive_connections=20,
+            max_connections=50,
+        ),
+        trust_env=True,
+    )
+    _wrap_client_transports(
+        client,
+        ProviderHttpAsyncTransport,
+        boundary="direct_llm_httpx_async",
+        provider=None,
+    )
+    return client
+
+
+async def close_direct_client() -> None:
+    global _http_client
+    client = _http_client
+    _http_client = None
+    if client is not None and not client.is_closed:
+        await client.aclose()
 
 
 def _record_secondary_failure(provider: str, error: BaseException) -> None:
@@ -111,17 +137,18 @@ async def _call_openai_compatible_api(
         messages.append({"role": "system", "content": system_prompt})
     messages.append({"role": "user", "content": prompt})
     try:
-        response = await get_direct_client().post(
-            url,
-            headers=headers,
-            json={
-                "model": model,
-                "messages": messages,
-                "temperature": 0.2,
-                "max_tokens": max_output_tokens,
-            },
-            timeout=25.0,
-        )
+        with provider_identity_scope(provider):
+            response = await get_direct_client().post(
+                url,
+                headers=headers,
+                json={
+                    "model": model,
+                    "messages": messages,
+                    "temperature": 0.2,
+                    "max_tokens": max_output_tokens,
+                },
+                timeout=25.0,
+            )
         if response.status_code in {429, 502, 503, 504}:
             _cooldowns[provider] = time.time() + 30.0
             logfire.warning(
@@ -143,6 +170,8 @@ async def _call_openai_compatible_api(
                 'thought_token_count': details.get('reasoning_tokens'),
                 'total_token_count': usage.get('total_tokens'),
             }) if text.strip() else None
+    except ProviderHttpAttemptBudgetExceeded:
+        raise
     except Exception as error:
         _record_secondary_failure(provider, error)
     return None
@@ -190,24 +219,25 @@ async def call_gemini_api(
         )
     contents.append({"role": "user", "parts": [{"text": prompt}]})
     try:
-        response = await get_direct_client().post(
-            (
-                "https://generativelanguage.googleapis.com/v1beta/models/"
-                f"{model}:generateContent"
-            ),
-            headers={
-                "Content-Type": "application/json",
-                "x-goog-api-key": api_key,
-            },
-            json={
-                "contents": contents,
-                "generationConfig": {
-                    "temperature": 0.2,
-                    "maxOutputTokens": max_output_tokens,
+        with provider_identity_scope("gemini"):
+            response = await get_direct_client().post(
+                (
+                    "https://generativelanguage.googleapis.com/v1beta/models/"
+                    f"{model}:generateContent"
+                ),
+                headers={
+                    "Content-Type": "application/json",
+                    "x-goog-api-key": api_key,
                 },
-            },
-            timeout=25.0,
-        )
+                json={
+                    "contents": contents,
+                    "generationConfig": {
+                        "temperature": 0.2,
+                        "maxOutputTokens": max_output_tokens,
+                    },
+                },
+                timeout=25.0,
+            )
         if response.status_code in {429, 502, 503, 504}:
             _cooldowns["gemini"] = time.time() + 30.0
             logfire.warning(
@@ -229,6 +259,8 @@ async def call_gemini_api(
                     'thought_token_count': usage.get('thoughtsTokenCount'),
                     'total_token_count': usage.get('totalTokenCount'),
                 }) if text else None
+    except ProviderHttpAttemptBudgetExceeded:
+        raise
     except Exception as error:
         _record_secondary_failure("gemini", error)
     return None

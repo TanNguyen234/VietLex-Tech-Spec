@@ -46,3 +46,49 @@ def test_feedback_triage_requires_admin_and_exports_only_unverified_draft(monkey
     assert draft.json()["status"] == "needs_human_adjudication"
     save.return_value = False
     assert client.post("/admin/feedback/t-1", data={"category": "outdated_law", "status": "resolved", "revision": "0"}).status_code == 409
+
+
+def test_feedback_triage_rejects_csrf_and_unauthenticated_posts(monkeypatch):
+    from app.api import product_quality_routes as routes
+
+    app = FastAPI()
+    app.include_router(routes.router)
+    app.dependency_overrides[require_admin] = lambda: {
+        "_id": "admin",
+        "role": "admin",
+    }
+    read = AsyncMock()
+    save = AsyncMock()
+    monkeypatch.setattr(routes, "get_interaction", read)
+    monkeypatch.setattr(routes, "save_feedback_triage", save)
+    client = TestClient(app)
+    client.cookies.set("csrf_token", "cookie-token")
+
+    response = client.post(
+        "/admin/feedback/t-1",
+        data={
+            "csrf_token": "different-token",
+            "category": "outdated_law",
+            "status": "investigating",
+            "revision": "0",
+        },
+    )
+
+    assert response.status_code == 403
+    read.assert_not_awaited()
+    save.assert_not_awaited()
+
+    app.dependency_overrides.pop(require_admin)
+    response = client.post(
+        "/admin/feedback/t-1",
+        data={
+            "csrf_token": "cookie-token",
+            "category": "outdated_law",
+            "status": "investigating",
+            "revision": "0",
+        },
+    )
+
+    assert response.status_code == 401
+    read.assert_not_awaited()
+    save.assert_not_awaited()

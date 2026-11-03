@@ -81,6 +81,29 @@ def test_obligation_schema_preserves_modality_and_rejects_unknown_evidence() -> 
         parse_obligation_matrix(raw, set())
 
 
+@pytest.mark.parametrize('subject,action,modality', [
+    ('Người sử dụng lao động', 'Không quá 60 ngày', 'prohibited'),
+    ('Thời gian thử việc đối với công việc cần cao đẳng', 'Thỏa thuận thử việc', 'required'),
+    ('Employer', 'Not exceed 60 days', 'prohibited'),
+    ('Người sử dụng lao động', 'Thử việc không quá 60 ngày', 'prohibited'),
+    ('Employer', 'Set probation not exceeding 60 days', 'prohibited'),
+])
+def test_obligation_rows_reject_inverted_prohibition_and_non_actor(subject, action, modality):
+    import json
+    raw = json.dumps({'rows': [{'subject': subject, 'action': action, 'modality': modality,
+        'evidence_ids': ['law'], 'support_state': 'directly_supported'}]})
+    with pytest.raises(ValidationError):
+        parse_obligation_matrix(raw, {'law'})
+
+
+def test_obligation_prohibition_keeps_positive_action_and_actor():
+    raw = ('{"rows":[{"subject":"Người sử dụng lao động","action":"Thử việc vượt quá 60 ngày",'
+           '"modality":"prohibited","condition":"Công việc yêu cầu cao đẳng trở lên",'
+           '"evidence_ids":["law"],"support_state":"directly_supported"}]}')
+    result = parse_obligation_matrix(raw, {'law'})
+    assert result.rows[0].action == 'Thử việc vượt quá 60 ngày'
+
+
 def test_structured_parsers_do_not_strip_markdown_fences() -> None:
     with pytest.raises(ValidationError):
         parse_comparison('```json\n{"findings": []}\n```', set())

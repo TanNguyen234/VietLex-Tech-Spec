@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import dataclasses
+import hashlib
 import sys
 import time
 from pathlib import Path
@@ -182,6 +183,44 @@ def format_candidate_context(chunk: CandidateChunk) -> str:
     return "\n".join(parts)
 
 
+def _chat_retrieval_result(case: GoldenCase, metadata: dict) -> RetrievalCaseResult:
+    """Adapt the already observed corpus retrieval; calculate metrics offline."""
+    from app.evaluation.schemas import RetrievalStageTrace
+
+    outcome = metadata.get("retrieval_outcome")
+    trace = (outcome.diagnostics.get("stage_trace") if outcome is not None else None)
+    return RetrievalCaseResult(
+        case_id=case.case_id, question=case.question, question_type=case.question_type,
+        answerable=case.answerable, original_query=case.question,
+        query_used=metadata.get("rewritten_query") or case.question,
+        status=metadata.get("retrieval_status", "not_run"),
+        retrieved_evidence=[CandidateChunk(
+            document_id=e.document_id, document_number=e.document_number, title=e.title,
+            source_url=e.source_url, citation=e.citation, article=e.article, clause=e.clause,
+            text=e.text, token_count=e.token_count,
+        ) for e in (outcome.evidence if outcome is not None else [])],
+        stage_trace=trace if isinstance(trace, RetrievalStageTrace) else RetrievalStageTrace(),
+        latency={k: metadata[k] for k in ("t_rewrite", "t_retrieval") if isinstance(metadata.get(k), (int, float))},
+        error=outcome.error if outcome is not None else None,
+        retrieval_diagnostics={"metric_scope": "corpus_retrieval_before_chat_augmentation"},
+    )
+
+
+def _prompt_evidence(contexts: list[str]) -> list[dict]:
+    from app.services.evidence_presenter import present_context
+
+    receipts = []
+    for context in contexts:
+        view = present_context(context)
+        receipts.append({
+            "sha256": hashlib.sha256(str(context).encode("utf-8")).hexdigest(),
+            "whitespace_tokens": len(context.split()), "document_id": view.document_id,
+            "document_number": view.document_number, "citation": view.citation,
+            "source_url": view.source_url, "source_type": view.source_type,
+        })
+    return receipts
+
+
 async def run_stage_a_online(
     case: GoldenCase,
     settings: Any,
@@ -191,10 +230,10 @@ async def run_stage_a_online(
     ranking: str = "raw-rrf",
     precomputed_retrieval: RetrievalCaseResult | None = None,
 ) -> Dict[str, Any]:
-    from app.services.guardrails import (
-        check_input_guardrails,
-        check_output_guardrails,
-    )
+    if getattr(settings, "SERVERLESS_ONLINE_ONLY", False):
+        from app.services.serverless_guardrails import check_input_guardrails, check_output_guardrails
+    else:
+        from app.services.guardrails import check_input_guardrails, check_output_guardrails
     from app.services.rag_pipeline import generate_response_with_metadata
 
     started = time.perf_counter()
@@ -299,51 +338,70 @@ async def run_stage_a_online(
                     "retrieval_result": empty_retrieval_res,
                 }
 
-    # 1. Single retrieval pass
-    if precomputed_retrieval is not None:
-        retrieval_res = precomputed_retrieval
-    elif backend == "production":
-        retrieval_res = await evaluate_single_retrieval_case(
-            case, settings, effective_profile
-        )
-    else:
-        retrieval_res = await evaluate_single_retrieval_case(
-            case,
-            settings,
-            effective_profile,
-            backend=backend,
-            ranking=ranking,
-        )
-    technical_errors.update(retrieval_res.technical_errors)
-    if online_status == "ok" and retrieval_res.status in {
-        "no_candidate",
-        "retrieval_error",
-        "reranker_error",
-    }:
-        online_status = retrieval_res.status
-    contexts = [format_candidate_context(c) for c in retrieval_res.retrieved_evidence]
+    chat_service = (backend == "production" and precomputed_retrieval is None
+                    and getattr(settings, "USE_LEGACY_FREE_PIPELINE", None) is not None)
+    pipeline_diagnostics = {}
+    if chat_service:
+        from app.services.rag_pipeline import run_advanced_rag
+        from app.services.runtime_errors import RetrievalPipelineError
+        from app.services.provider_http_budget import ProviderHttpAttemptBudgetExceeded
 
-    # 2. Real 3-argument generation call with observed provider metadata.
-    rewritten_q = retrieval_res.rewritten_query or retrieval_res.query_used or case.question
-    generation = await generate_response_with_metadata(
-        case.question,
-        rewritten_q,
-        contexts,
-    )
-    bot_response = generation.text
-    generation_metadata = {
-        "provider": generation.observed_provider,
-        "model": generation.observed_model,
-        "observed": generation.observed,
-        "status": generation.status,
-        "finish_reason": generation.finish_reason,
-        "prompt_token_count": generation.prompt_token_count,
-        "output_token_count": generation.output_token_count,
-        "thought_token_count": generation.thought_token_count,
-        "total_token_count": generation.total_token_count,
-        "max_output_tokens": generation.max_output_tokens,
-        "thinking_level": generation.thinking_level,
-    }
+        try:
+            bot_response, contexts, metadata = await run_advanced_rag(
+                case.question, rewrite_mode=effective_profile.rewrite_mode, profile=effective_profile,
+            )
+        except (RetrievalPipelineError, ProviderHttpAttemptBudgetExceeded) as error:
+            online_status = error.status if isinstance(error, RetrievalPipelineError) else "generation_error"
+            technical_errors["pipeline"] = type(error).__name__
+            bot_response, contexts = "Hệ thống gặp lỗi kỹ thuật khi xử lý yêu cầu.", []
+            metadata = {"retrieval_status": online_status, "generation_status": "error"}
+        retrieval_res = _chat_retrieval_result(case, metadata)
+        generation_metadata = (metadata.get("provider_usage") or {}).get("answer_generation") or {
+            "provider": metadata.get("observed_provider", "unobserved"),
+            "model": metadata.get("observed_model", "unobserved"),
+            "observed": False, "status": metadata.get("generation_status", "not_run"),
+        }
+        if metadata.get("generation_status") not in {"success", "no_contexts"} and online_status == "ok":
+            online_status = "generation_error"
+            technical_errors["generation"] = str(metadata.get("generation_status", "unobserved"))
+        diagnostics = metadata.get("retrieval_diagnostics") or {}
+        pipeline_diagnostics = {k: diagnostics[k] for k in (
+            "backend", "ranking", "context_stages", "context_profile", "source_quality", "situation_filter",
+            "article_expansion", "v3_article_expansion", "topic_coverage",
+        ) if k in diagnostics}
+        pipeline_diagnostics["corpus_retrieval_profile"] = effective_profile.to_dict()
+        pipeline_diagnostics["pipeline"] = "chat_service_v1"
+    else:
+        if precomputed_retrieval is not None:
+            retrieval_res = precomputed_retrieval
+        elif backend == "production":
+            retrieval_res = await evaluate_single_retrieval_case(case, settings, effective_profile)
+        else:
+            retrieval_res = await evaluate_single_retrieval_case(
+                case, settings, effective_profile, backend=backend, ranking=ranking,
+            )
+        from app.services.rag_pipeline import fit_contexts_under_budget
+        contexts = fit_contexts_under_budget(
+            [format_candidate_context(c) for c in retrieval_res.retrieved_evidence],
+            max_evidence=len(retrieval_res.retrieved_evidence),
+            max_tokens=getattr(settings, "LLM_CONTEXT_MAX_TOKENS", effective_profile.final_context_token_limit),
+        )
+        rewritten_q = retrieval_res.rewritten_query or retrieval_res.query_used or case.question
+        generation = await generate_response_with_metadata(case.question, rewritten_q, contexts)
+        bot_response = generation.text
+        generation_metadata = {
+            "provider": generation.observed_provider, "model": generation.observed_model,
+            "observed": generation.observed, "status": generation.status,
+            "finish_reason": generation.finish_reason, "prompt_token_count": generation.prompt_token_count,
+            "output_token_count": generation.output_token_count, "thought_token_count": generation.thought_token_count,
+            "total_token_count": generation.total_token_count, "max_output_tokens": generation.max_output_tokens,
+            "thinking_level": generation.thinking_level,
+        }
+    technical_errors.update(retrieval_res.technical_errors)
+    if online_status == "ok" and retrieval_res.status in {"no_candidate", "retrieval_error", "reranker_error", "partial_retrieval_error"}:
+        online_status = retrieval_res.status
+        if chat_service and retrieval_res.error:
+            technical_errors["retrieval"] = retrieval_res.error
 
     # Output guardrails execution
     final_response = bot_response
@@ -369,6 +427,7 @@ async def run_stage_a_online(
     t_total = time.perf_counter() - started
     raw_latency = {
         **retrieval_res.latency,
+        **({k: v for k, v in metadata.items() if k.startswith("t_")} if chat_service else {}),
         "t_input_guardrail": input_guardrail_latency,
         "t_output_guardrail": output_guardrail_latency,
         "t_total": t_total,
@@ -392,6 +451,8 @@ async def run_stage_a_online(
         "technical_errors": technical_errors,
         "latency": numeric_latency,
         "retrieval_result": retrieval_res,
+        "prompt_evidence": _prompt_evidence(contexts),
+        "pipeline_diagnostics": pipeline_diagnostics,
     }
 
 
@@ -407,6 +468,15 @@ async def run_stage_b_offline(
     latency = stage_a_result["latency"]
     retrieval_case_res: RetrievalCaseResult = stage_a_result["retrieval_result"]
     status = stage_a_result.get("status", "ok")
+
+    diagnostics = stage_a_result.get("pipeline_diagnostics", {})
+    if diagnostics.get("pipeline") == "chat_service_v1":
+        profile = EvaluationProfile(**diagnostics["corpus_retrieval_profile"])
+        retrieval_case_res.metrics = calculate_case_retrieval_metrics(
+            case.gold_evidence, retrieval_case_res.retrieved_evidence,
+            stage_trace=retrieval_case_res.stage_trace,
+            capacities=build_stage_capacities(profile, settings), status=retrieval_case_res.status,
+        )
 
     det_metrics = calculate_case_answer_metrics(
         pred_response=final_response,
@@ -452,6 +522,9 @@ async def run_stage_b_offline(
         raw_response=raw_response,
         final_response=final_response,
         generation_metadata=stage_a_result.get("generation_metadata", {}),
+        prompt_evidence=stage_a_result.get("prompt_evidence", []),
+        prompt_contexts=list(contexts),
+        pipeline_diagnostics=diagnostics,
         input_safe=stage_a_result["input_safe"],
         output_safe=stage_a_result["output_safe"],
         refusal_category=det_metrics["refusal_category"],
@@ -479,7 +552,7 @@ async def run_answer_evaluation(arguments=None) -> Dict[str, Any]:
         raise ValueError("--case-ids and --limit cannot be used together.")
 
     settings = get_settings()
-    if args.guardrails in {"shadow", "enforce"}:
+    if args.guardrails in {"shadow", "enforce"} and not getattr(settings, "SERVERLESS_ONLINE_ONLY", False):
         from app.services.guardrails import warm_guardrails
 
         await warm_guardrails()

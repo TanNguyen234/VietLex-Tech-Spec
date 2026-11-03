@@ -1,1 +1,7 @@
-{% if request is defined and request.app.state.reviewer_demo_mode|default(false) %}<p class="muted" role="status">Demo reviewer: chưa đăng nhập có thể tra cứu và xem benchmark. <a href="/account">Đăng nhập</a> để dùng chức năng hiện có; tài khoản thường có tối đa {{ request.app.state.demo_ai_daily_limit }} lượt AI/ngày UTC, admin được miễn quota demo theo ngày; AI tối đa 3 lượt/phút, còn tùy quota nhà cung cấp. Upload dưới 4 MB.</p>{% endif %}
+{% if request is defined and request.app.state.reviewer_demo_mode|default(false) %}
+{% set demo_user = workspace_user|default(none) or user|default(none) %}
+<div class="demo-notice muted" role="note" data-demo-notice="{{ 'signed-in' if demo_user else 'guest' }}">
+  <p>Demo reviewer: {% if demo_user %}Đã đăng nhập. <a href="/settings">Xem hạn mức tài khoản</a>.{% else %}<a href="/account">Đăng nhập</a> để dùng AI và hồ sơ. Tra cứu văn bản và xem benchmark không cần đăng nhập.{% endif %}</p>
+  <details><summary>Giới hạn AI và tải tệp</summary><p>Tài khoản thường có tối đa {{ request.app.state.demo_ai_daily_limit }} lượt AI/ngày UTC; admin được miễn quota demo theo ngày. AI tối đa 3 lượt/phút, còn tùy hạn mức chung và quota nhà cung cấp. Xem giới hạn tệp tại biểu mẫu tải lên.</p></details>
+</div>
+{% endif %}

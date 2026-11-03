@@ -282,6 +282,10 @@
         target.textContent = response.status === 429 ? (daily ? 'Đã hết quota hôm nay (UTC). Nguồn đã lưu vẫn đọc được; thử lại sau khi quota đặt lại.' : 'Đã chạm giới hạn lượt/phút. Vui lòng đợi rồi thử lại.') : 'Không đọc được nguồn. Kiểm tra phiên đăng nhập và thử lại.';
       } else {
         renderSources(payload, target);
+        if (payload.analysis_id && document.querySelector('#workspace-source-library')) {
+          const readback = await refreshWorkspaceState({analysisId: payload.analysis_id});
+          if (readback.status === 'failed') showWorkspaceReadbackFailure(target, {analysisId: payload.analysis_id});
+        }
         if (document.body.dataset.sourceReader && payload.analysis_id && payload.result?.sources?.length) {
           history.replaceState(null, '', '/workspaces/' + workspaceId + '/sources/' + payload.analysis_id);
         }
@@ -295,7 +299,27 @@
   }
   function renderSources(payload, target) {
     target.replaceChildren();
-    target.append(element('p', 'Nội dung trích xuất từ nguồn; chưa xác minh hiệu lực. OCR có thể đọc sai: đối chiếu bản gốc trước khi sử dụng.', 'legal-warning'));
+    const freeResearch = payload.research_mode === 'free_web_research';
+    const researchResult = payload.result || {};
+    if (freeResearch) {
+      const terminal = researchResult.terminal || payload.terminal || {};
+      const status = terminal.status || payload.status || researchResult.status || 'interrupted';
+      const messages = {
+        complete: 'Đã hoàn tất lượt tìm và đọc giới hạn. Điều này không xác nhận đã trả lời câu hỏi hoặc bao phủ đầy đủ pháp luật.',
+        partial: 'Đã lưu kết quả một phần. Việc hoàn tất lượt tìm và đọc không xác nhận câu trả lời hoặc độ bao phủ pháp luật.',
+        failed: 'Lượt tìm và đọc chưa hoàn tất. Các nguồn đã lưu vẫn có thể xem bên dưới.',
+        cancelled: 'Lượt đọc đã bị hủy. Các nguồn đã lưu vẫn có thể xem bên dưới.',
+        interrupted: 'Lượt đọc bị gián đoạn. Các nguồn đã lưu vẫn có thể xem bên dưới.'
+      };
+      target.append(element('p', messages[status] || messages.interrupted, status === 'complete' ? 'muted' : 'legal-warning'));
+      target.append(element('p', 'Không dùng lượt AI/OCR; thông tin kết quả tìm kiếm chưa phải nội dung văn bản.', 'muted'));
+      (researchResult.source_errors || []).forEach(error => {
+        const label = error.url ? `${error.url} · ` : '';
+        target.append(element('p', `${label}${error.error_kind || error.kind || 'Không đọc được nguồn chính thức.'}`, 'legal-warning'));
+      });
+    } else {
+      target.append(element('p', 'Nội dung trích xuất từ nguồn; chưa xác minh hiệu lực. OCR có thể đọc sai: đối chiếu bản gốc trước khi sử dụng.', 'legal-warning'));
+    }
     (payload.result?.sources || []).forEach((source,index) => {
       const card = element('details'), link = element('a', source.url);
       card.id = 'stored-source-' + index;
@@ -304,6 +328,10 @@
       card.append(element('summary', source.title || source.url), link);
       if (source.attachment_url) {
         const original = element('a', 'Mở PDF gốc'); original.href = source.attachment_url; original.target = '_blank'; original.rel = 'noopener noreferrer'; card.append(original);
+      }
+      if (freeResearch) {
+        const readAt = source.snapshot_timestamp || source.retrieved_at;
+        if (readAt) card.append(element('p', `${source.snapshot_reused ? 'Bản đọc đã lưu' : 'Đọc lúc'} · ${readAt}`, 'muted'));
       }
       (source.attachments || []).filter(url => url !== source.attachment_url).slice(0,10).forEach(url => {
         const attachment = element('button', 'Đọc tệp đính kèm: ' + url.split('/').pop(), 'button button-quiet'); attachment.type = 'button';
@@ -318,7 +346,7 @@
       if (source.parser_recovered) card.append(element('p', 'PDF có lỗi cấu trúc đã được trình đọc khôi phục. Hãy đối chiếu nội dung với bản gốc.', 'legal-warning'));
       const text = element('pre', source.text || 'Chưa đọc được nội dung điều khoản.', 'source-excerpt'); card.append(text);
       text.tabIndex = 0; text.setAttribute('aria-label', 'Nội dung nguồn; chọn đoạn để ghim');
-      if (source.page_count) {
+      if (source.page_count && !freeResearch) {
         const controls = element('div', undefined, 'source-window-controls');
         const startLabel = element('label', 'Đọc từ trang'), start = element('input'); start.type = 'number'; start.min = '1'; start.max = String(source.page_count); start.value = String(source.page_start || 1); startLabel.append(start);
         const limitLabel = element('label', 'Số trang mỗi lượt'), limit = element('select');
@@ -329,7 +357,7 @@
         go.addEventListener('click', () => { if (start.reportValidity() && Number.isInteger(Number(start.value))) readOfficial(source.url, target, Number(start.value), mode.value === 'true', Number(limit.value)); });
         controls.append(startLabel, limitLabel, modeLabel, go); card.append(controls);
       }
-      if (source.requires_ocr) {
+      if (source.requires_ocr && !freeResearch) {
         const ocr = element('button', 'Đọc ảnh quét bằng OCR (tối đa 5 trang)', 'button button-primary'); ocr.type = 'button';
         ocr.addEventListener('click', () => readOfficial(source.url, target, source.page_start || 1, true)); card.append(ocr);
       }
@@ -420,7 +448,7 @@
   function renderLegalEffect(payload, target) {
     target.replaceChildren(); const effect = payload.result || payload;
     target.append(element('p', 'Tình trạng theo các sự kiện đã được quản trị viên đối chiếu trong hồ sơ này; chưa chứng nhận tính đầy đủ của lịch sử pháp luật.', 'legal-warning'));
-    (effect.effects || []).forEach(row => target.append(element('p', row.target_document_number + ' · ' + row.as_of + ' · ' + ({effective:'Có hiệu lực theo hồ sơ',amended:'Đã sửa đổi theo hồ sơ',partially_effective:'Hết hiệu lực một phần theo hồ sơ',repealed:'Đã bãi bỏ theo hồ sơ',replaced:'Đã thay thế theo hồ sơ',unknown:'Chưa xác định'}[row.status] || row.status))));
+    (effect.effects || []).forEach(row => target.append(element('p', row.target_document_number + ' · ' + row.as_of + ' · ' + ({effective:'Có hiệu lực theo hồ sơ',amended:'Đã sửa đổi theo hồ sơ',partially_effective:'Hết hiệu lực một phần theo hồ sơ',repealed:'Đã bãi bỏ theo hồ sơ',replaced:'Đã thay thế theo hồ sơ',expired:'Hết thời hạn hiệu lực theo hồ sơ',unknown:'Chưa xác định'}[row.status] || row.status))));
     (effect.assertions || []).forEach(row => { const card = element('article'); card.append(element('h3', row.effective_date + ' · ' + row.event_kind), element('blockquote', row.exact_quote), sourceLinks([row.evidence_id], payload)); target.append(card); });
     (effect.reasons || []).forEach(reason => target.append(element('p', reason, 'muted')));
   }
@@ -479,6 +507,308 @@
     filter.addEventListener('change', () => [...body.rows].forEach(row => { row.hidden = filter.value !== 'all' && row.dataset.kind !== filter.value; }));
     target.append(filter, table);
   }
+  let freeResearchController = null;
+  let freeResearchPending = false;
+  let freeResearchCancelRecorded = false;
+  function renderFreeSource(source, analysisId, index, target) {
+    const card = element('article', undefined, 'free-research-source');
+    const title = element('h3', source.title || source.document_number || source.url);
+    const link = element('a', source.url);
+    link.href = source.url; link.target = '_blank'; link.rel = 'noopener noreferrer';
+    const state = source.snapshot_reused ? 'Bản đọc đã lưu trong 15 phút gần đây.' : 'Đã tải và trích xuất nội dung mới.';
+    card.append(title, element('p', state + ' · Đọc lúc ' + (source.retrieved_at || source.snapshot_timestamp || 'không rõ'), 'muted'));
+    card.append(element('p', [source.document_number, source.issued_date, source.domain].filter(Boolean).join(' · '), 'muted'));
+    card.append(element('p', 'Nội dung nguồn đã đọc; tình trạng hiệu lực chưa xác minh.', 'legal-warning'));
+    if (source.page_count) card.append(element('p', `Đọc các trang ${source.page_start}–${source.page_end}/${source.page_count}; đã kiểm tra ${source.inspected_page_count ?? 'không rõ'} trang.`));
+    card.append(element('pre', source.text || (source.pages || []).map(page => page.text || '').join('\n\n') || 'Không có nội dung đọc được.', 'source-excerpt'));
+    if (source.discovery_snippet) {
+      const metadata = element('details');
+      metadata.append(element('summary', 'Thông tin từ kết quả tìm kiếm (chưa phải nội dung văn bản)'), element('p', source.discovery_snippet));
+      card.append(metadata);
+    }
+    if (analysisId) {
+      const reopen = element('a', 'Mở bản đọc để ghim trích đoạn');
+      reopen.href = '/workspaces/' + encodeURIComponent(workspaceId) + '/sources/' + encodeURIComponent(analysisId) + '#stored-source-' + index;
+      card.append(reopen);
+    }
+    target.append(card);
+  }
+  function renderFreeResearchEvent(event, target, analysisId) {
+    if (event.type === 'started') {
+      target.replaceChildren(element('p', 'Đang tìm trên Cổng Chính phủ và Công báo; không dùng lượt AI/OCR.', 'muted'));
+    } else if (event.type === 'query') {
+      const state = {results_found:'Có kết quả tìm kiếm',partial_results:'Có kết quả, một nguồn tìm kiếm gặp lỗi',no_results:'Không tìm thấy với truy vấn này',provider_error:'Nguồn tìm kiếm chưa phản hồi'}[event.status] || event.status;
+      const row = element('p', `${event.query} · ${state}`);
+      target.append(row);
+    } else if (event.type === 'source' && event.status === 'readable') {
+      const index = target.querySelectorAll('.free-research-source').length;
+      renderFreeSource(event.source || {}, analysisId, index, target);
+    } else if (event.type === 'source') {
+      let text = `Chưa đọc được ${event.url}: ${event.error_kind || 'source_unreadable'}.`;
+      if (Array.isArray(event.inspected_pages)) text += ` Đã xét ${event.inspected_page_count ?? event.inspected_pages.length} trang.`;
+      target.append(element('p', text, 'legal-warning'));
+    } else if (event.type === 'terminal') {
+      const messages = {
+        complete: 'Đã đọc xong các nguồn được chọn. Đây không phải kết luận pháp lý.',
+        partial: 'Đã lưu kết quả một phần. Hãy kiểm tra lỗi và mở bản nguồn.',
+        failed: 'Không đọc được nguồn chính thức nào. Kết quả này không chứng minh không có quy định.',
+        cancelled: 'Yêu cầu đã dừng trước khi đọc được nguồn; trạng thái đã lưu.',
+        interrupted: 'Phiên chạy bị gián đoạn; trạng thái đã lưu có thể mở lại.'
+      };
+      const counts = `Đọc mới: ${event.fetched_count ?? 0} · Dùng lại bản lưu: ${event.reused_count ?? 0} · Nguồn có chữ: ${event.source_count ?? 0}.`;
+      target.append(element('p', messages[event.status] || 'Phiên tra cứu đã kết thúc.', 'legal-warning'), element('p', counts, 'muted'));
+      refreshAfterResearch(analysisId, target);
+    }
+  }
+  let workspaceReadbackSequence = 0;
+  const workspaceReadbackRuns = new Set();
+  function preserveWorkspaceFragmentState(currentNode, nextNode) {
+    const currentControls = [...currentNode.querySelectorAll('[data-readback-preserve]')];
+    const currentDetails = [...currentNode.querySelectorAll('details[data-readback-key]')];
+    const focusedControl = currentControls.find(control => control === document.activeElement);
+    const controlsByKey = new Map(
+      [...nextNode.querySelectorAll('[data-readback-preserve]')]
+        .map(control => [control.dataset.readbackPreserve, control])
+    );
+    currentControls.forEach(control => {
+      const replacement = controlsByKey.get(control.dataset.readbackPreserve);
+      if (!replacement) return;
+      if ('value' in control) replacement.value = control.value;
+      if ('checked' in control) replacement.checked = control.checked;
+      if (Number.isInteger(control.selectionStart) && Number.isInteger(control.selectionEnd)) {
+        try { replacement.setSelectionRange(control.selectionStart, control.selectionEnd); }
+        catch { /* Select/number controls do not support text selection. */ }
+      }
+    });
+    const detailsByKey = new Map(
+      [...nextNode.querySelectorAll('details[data-readback-key]')]
+        .map(detail => [detail.dataset.readbackKey, detail])
+    );
+    currentDetails.forEach(detail => {
+      const replacement = detailsByKey.get(detail.dataset.readbackKey);
+      if (replacement) replacement.open = detail.open;
+    });
+    return {
+      activeKey: focusedControl?.dataset.readbackPreserve,
+      selectionStart: focusedControl?.selectionStart,
+      selectionEnd: focusedControl?.selectionEnd,
+      scrollX: window.scrollX,
+      scrollY: window.scrollY
+    };
+  }
+  function restoreWorkspaceFragmentFocus(node, state) {
+    if (state.activeKey) {
+      const control = [...node.querySelectorAll('[data-readback-preserve]')]
+        .find(candidate => candidate.dataset.readbackPreserve === state.activeKey);
+      if (control) {
+        control.focus({preventScroll: true});
+        if (Number.isInteger(state.selectionStart) && Number.isInteger(state.selectionEnd)) {
+          control.setSelectionRange(state.selectionStart, state.selectionEnd);
+        }
+      }
+    }
+    window.scrollTo(state.scrollX, state.scrollY);
+  }
+  function dedupeWorkspaceItems(root, selector, key) {
+    const seen = new Set();
+    [...root.querySelectorAll(selector)].forEach(node => {
+      const value = node.dataset[key];
+      if (!value || seen.has(value)) node.remove();
+      else seen.add(value);
+    });
+  }
+  async function refreshWorkspaceState({runId, analysisId} = {}) {
+    const sequence = ++workspaceReadbackSequence;
+    const isCurrent = () => sequence === workspaceReadbackSequence && (
+      !runId || freeResearchForm?.querySelector('[name="run_id"]')?.value === runId
+    );
+    try {
+      const response = await fetch('/workspaces/' + encodeURIComponent(workspaceId), {
+        method: 'GET', credentials: 'same-origin', cache: 'no-store',
+        headers: {Accept: 'text/html'}
+      });
+      if (!isCurrent()) return {status: 'stale'};
+      if (!response.ok) return {status: 'failed'};
+      const html = await response.text();
+      if (!isCurrent()) return {status: 'stale'};
+      const latest = new DOMParser().parseFromString(html, 'text/html');
+      if (latest.body?.dataset.workspaceId !== workspaceId) return {status: 'failed'};
+      const revision = latest.body.dataset.workspaceRevision || '';
+      const currentRevision = document.body.dataset.workspaceRevision || '';
+      if (revision && currentRevision && Date.parse(revision) < Date.parse(currentRevision)) {
+        return {status: 'stale'};
+      }
+      if (analysisId && ![...latest.querySelectorAll('[data-analysis-id]')]
+        .some(node => node.dataset.analysisId === analysisId)) return {status: 'failed'};
+      const selectors = [
+        '#workspace-source-library [data-source-library-count]',
+        '#workspace-source-library .source-library-grid',
+        '#workspace-reports',
+        '#activity',
+        '#overview'
+      ];
+      const current = selectors.map(selector => document.querySelector(selector));
+      const incoming = selectors.map(selector => latest.querySelector(selector));
+      if (current.some(node => !node) || incoming.some(node => !node)) return {status: 'failed'};
+      const [currentCount, currentGrid, currentReports, currentHistory, currentOverview] = current;
+      const [latestCount, latestGrid, latestReports, latestHistory, latestOverview] = incoming;
+      const nextGrid = latestGrid.cloneNode(true);
+      const state = preserveWorkspaceFragmentState(currentGrid, nextGrid);
+      const nextReports = latestReports.cloneNode(true);
+      const nextHistory = latestHistory.cloneNode(true);
+      const nextOverview = latestOverview.cloneNode(true);
+      nextReports.hidden = currentReports.hidden;
+      nextHistory.hidden = currentHistory.hidden;
+      nextOverview.hidden = currentOverview.hidden;
+      dedupeWorkspaceItems(nextGrid, '[data-source-library-key]', 'sourceLibraryKey');
+      dedupeWorkspaceItems(nextReports, '[data-report-id]', 'reportId');
+      dedupeWorkspaceItems(nextHistory, '[data-analysis-id]', 'analysisId');
+      currentCount.textContent = latestCount.textContent;
+      currentGrid.replaceWith(nextGrid);
+      currentReports.replaceWith(nextReports);
+      currentHistory.replaceWith(nextHistory);
+      currentOverview.replaceWith(nextOverview);
+      nextHistory.querySelectorAll('[data-saved-analysis]').forEach(node => {
+        try { renderAnalysis(JSON.parse(node.textContent), node.parentElement.querySelector('[data-analysis-view]')); }
+        catch { /* Keep the server-rendered legacy details readable. */ }
+      });
+      restoreWorkspaceFragmentFocus(nextGrid, state);
+      if (revision) document.body.dataset.workspaceRevision = revision;
+      return {status: 'updated'};
+    } catch {
+      return isCurrent() ? {status: 'failed'} : {status: 'stale'};
+    }
+  }
+  function showWorkspaceReadbackFailure(target, options = {}) {
+    if (!target) return;
+    const notice = element('p', 'Đã ghi nhận kết quả, nhưng chưa cập nhật được thư viện và danh sách đã lưu.', 'legal-warning');
+    notice.setAttribute('role', 'status');
+    const retry = element('button', 'Cập nhật danh sách', 'button button-quiet');
+    retry.type = 'button';
+    retry.addEventListener('click', async () => {
+      retry.disabled = true;
+      const result = await refreshWorkspaceState(options);
+      if (result.status === 'updated') {
+        notice.replaceWith(element('p', 'Danh sách đã được cập nhật từ hồ sơ.', 'muted'));
+      } else if (result.status === 'failed') {
+        retry.disabled = false;
+      }
+    });
+    target.append(notice, retry);
+  }
+  function refreshAfterResearch(runId, target) {
+    if (!runId || workspaceReadbackRuns.has(runId)) return;
+    workspaceReadbackRuns.add(runId);
+    void refreshWorkspaceState({runId}).then(result => {
+      if (result.status === 'failed' && freeResearchForm?.querySelector('[name="run_id"]')?.value === runId) {
+        showWorkspaceReadbackFailure(target, {runId});
+      }
+    });
+  }
+  const freeResearchForm = document.querySelector('[data-free-web-research]');
+  const freeResearchResult = document.querySelector('#free-web-research-result');
+  const freeCancelButton = freeResearchForm?.querySelector('[data-cancel-free-research]');
+  freeCancelButton?.addEventListener('click', async () => {
+    const controller = freeResearchController;
+    const runId = freeResearchForm?.querySelector('[name="run_id"]')?.value;
+    if (!controller || !runId || freeCancelButton.disabled) return;
+    const isCurrentCancel = () => freeResearchController === controller && freeResearchForm?.querySelector('[name="run_id"]')?.value === runId;
+    freeCancelButton.disabled = true;
+    try {
+      const cancelData = new FormData();
+      cancelData.set('csrf_token', csrf);
+      const cancelPath = '/workspaces/' + encodeURIComponent(workspaceId) + '/research/runs/' + encodeURIComponent(runId) + '/cancel';
+      const response = await fetch(cancelPath, {
+        method: 'POST', body: cancelData, credentials: 'same-origin'
+      });
+      if (!isCurrentCancel()) return;
+      let payload = {};
+      try { payload = await response.json(); } catch { /* Keep the typed HTTP status. */ }
+      if (!isCurrentCancel()) return;
+      if (!response.ok) {
+        if (response.status === 409 && payload.detail?.code === 'research_run_not_running') {
+          freeResearchResult?.append(element('p', 'Phiên đã kết thúc với trạng thái ' + (payload.detail.status || 'đã lưu') + '. Kết quả hiện có vẫn được giữ nguyên.', 'muted'));
+          return;
+        }
+        throw new Error(operationError(payload, response.status));
+      }
+      if (payload.outcome !== 'cancelled' || !['partial', 'cancelled'].includes(payload.status)) {
+        throw new Error('cancel_ack_invalid');
+      }
+      if (!isCurrentCancel()) return;
+      freeResearchCancelRecorded = true;
+      const savedCount = Number.isInteger(payload.source_count) ? payload.source_count : 0;
+      const savedStatus = payload.status === 'partial' ? `${savedCount} nguồn đã lưu` : 'chưa có nguồn nào được lưu';
+      freeResearchResult?.append(element('p', `Đã ghi nhận hủy phiên; ${savedStatus} tại thời điểm hủy. Kết quả đã lưu được giữ lại.`, 'muted'));
+      if (!isCurrentCancel()) return;
+      refreshAfterResearch(runId, freeResearchResult);
+      controller.abort();
+    } catch (error) {
+      if (!isCurrentCancel()) return;
+      freeResearchResult?.append(element('p', `Chưa xác nhận được hủy (${error.message || 'lỗi kết nối'}). Luồng vẫn mở; có thể thử lại.`, 'legal-warning'));
+      if (freeResearchController === controller) freeCancelButton.disabled = false;
+    }
+  });
+  freeResearchForm?.addEventListener('submit', async event => {
+    event.preventDefault();
+    if (freeResearchPending) return;
+    freeResearchPending = true;
+    freeResearchController = new AbortController();
+    freeResearchCancelRecorded = false;
+    const button = freeResearchForm.querySelector('button[type="submit"]');
+    const data = new FormData(freeResearchForm);
+    const runId = crypto.randomUUID();
+    data.set('csrf_token', csrf);
+    data.set('run_id', runId);
+    if (!data.has('refresh')) data.set('refresh', 'false');
+    freeResearchForm.querySelector('[name="run_id"]').value = runId;
+    button.disabled = true;
+    if (freeCancelButton) { freeCancelButton.hidden = false; freeCancelButton.disabled = true; }
+    freeResearchResult?.setAttribute('aria-busy', 'true');
+    freeResearchResult?.replaceChildren(element('p', 'Đang chuẩn bị phiên tra cứu…', 'muted'));
+    try {
+      const response = await fetch(freeResearchForm.action, {
+        method: 'POST', body: data, credentials: 'same-origin', signal: freeResearchController.signal
+      });
+      if (!response.ok) {
+        let payload = {};
+        try { payload = await response.json(); } catch { /* Typed status remains useful without JSON. */ }
+        throw new Error(operationError(payload, response.status));
+      }
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('Trình duyệt không hỗ trợ luồng kết quả này.');
+      const decoder = new TextDecoder();
+      let buffer = '';
+      const consume = line => {
+        if (!line.trim()) return;
+        try {
+          const parsed = JSON.parse(line);
+          renderFreeResearchEvent(parsed, freeResearchResult, runId);
+          if (parsed.type === 'started' && freeCancelButton) freeCancelButton.disabled = false;
+          if (parsed.type === 'terminal' && freeCancelButton) freeCancelButton.disabled = true;
+        }
+        catch { freeResearchResult.append(element('p', 'Bỏ qua một sự kiện kết quả không đọc được.', 'legal-warning')); }
+      };
+      while (true) {
+        const {value, done} = await reader.read();
+        buffer += decoder.decode(value || new Uint8Array(), {stream: !done});
+        const lines = buffer.split('\n'); buffer = lines.pop() || '';
+        lines.forEach(consume);
+        if (done) break;
+      }
+      consume(buffer);
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        if (!freeResearchCancelRecorded) freeResearchResult?.append(element('p', 'Đã hủy kết nối. Các sự kiện đã nhận được lưu trong hồ sơ; tải lại để xem trạng thái.', 'legal-warning'));
+      } else freeResearchResult?.append(element('p', error.message || 'Không thể kết nối tới nguồn tìm kiếm.', 'legal-warning'));
+    } finally {
+      freeResearchPending = false;
+      freeResearchController = null;
+      button.disabled = false;
+      if (freeCancelButton) { freeCancelButton.hidden = true; freeCancelButton.disabled = false; }
+      freeResearchResult?.setAttribute('aria-busy', 'false');
+    }
+  });
   document.querySelectorAll('[data-saved-analysis]').forEach(node => {
     try { renderAnalysis(JSON.parse(node.textContent), node.parentElement.querySelector('[data-analysis-view]')); }
     catch { /* The server-rendered record remains readable for older schemas. */ }
@@ -602,7 +932,7 @@
     if (pending) return;
     const data = new FormData(form);
     if (form.dataset.analysis === 'legal-effect') {
-      const event = {}; ['event_kind','effective_date','document_number','target_document_number','exact_quote'].forEach(key => event[key] = data.get(key)); event.evidence_id = data.get('event_evidence_id'); event.scope = data.get('event_scope'); data.set('events',JSON.stringify([event])); data.set('evidence_ids',event.evidence_id);
+      const event = {}; ['event_kind','effective_date','document_number','target_document_number','exact_quote'].forEach(key => event[key] = data.get(key)); event.evidence_id = data.get('event_evidence_id'); event.scope = data.get('event_scope'); if (data.get('effective_until')) event.effective_until = data.get('effective_until'); data.set('events',JSON.stringify([event])); data.set('evidence_ids',event.evidence_id);
     } else if (form.dataset.analysis === 'compare') {
       const a = group('a'), b = group('b');
       if (!a.length || !b.length) { result.textContent = 'Chọn bằng chứng cho cả nhóm A và nhóm B.'; return; }
@@ -631,6 +961,8 @@
         entries.slice(50).forEach(node => node.remove());
         const count = document.querySelector('.analysis-history .section-rule>span');
         if (count) count.textContent = Math.min(entries.length, 50) + ' lần chạy';
+        const readback = await refreshWorkspaceState({analysisId: payload.analysis_id});
+        if (readback.status === 'failed') showWorkspaceReadbackFailure(result, {analysisId: payload.analysis_id});
       }
     } catch { result.textContent = 'Không thể hoàn tất phân tích lúc này.'; }
     finally {

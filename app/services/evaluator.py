@@ -106,7 +106,10 @@ async def _score_ragas_metrics(
         await client.close()
 
 
-@logfire.instrument("Chạy đánh giá chất lượng Ragas proxy (LLM-as-a-judge)")
+@logfire.instrument(
+    "Chạy đánh giá chất lượng Ragas proxy (LLM-as-a-judge)",
+    extract_args=False,
+)
 @capture_provider_usage
 async def run_llm_as_judge(
     user_query: str,

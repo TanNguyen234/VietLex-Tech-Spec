@@ -77,6 +77,9 @@ def generate_markdown_report(
         ),
         "",
         f"Metric schema: `{summary.metric_version}`",
+        f"Answer metric version: `{manifest.answer_metric_version or 'historical_unrecorded'}`",
+        f"Answer pipeline: `{manifest.configuration.get('answer_pipeline') or 'historical_unrecorded'}`",
+        f"Runtime environment: `{manifest.configuration.get('runtime_environment', 'historical_unrecorded')}`",
         f"Scored / Total: `{summary.scored_cases} / {summary.total_cases}`",
         f"Skipped cases: `{summary.skipped_cases}`",
         f"Skip reasons: `{fmt_counts(summary.skip_reason_counts)}`",
@@ -235,25 +238,83 @@ def generate_markdown_report(
                     f"{fmt_counts(answer_summary.get('skip_reason_counts', {}))}`"
                 ),
                 "",
-                "| Metric | Value |",
-                "| :--- | ---: |",
             ]
         )
-        for key in (
-            "answer_similarity_pass_rate",
-            "unanswerable_accuracy",
-            "refusal_precision",
-            "refusal_recall",
-            "token_f1",
-            "char_f1",
-            "rouge_l",
-            "chrf",
-            "citation_precision",
-            "invalid_citation_rate",
-        ):
-            lines.append(
-                f"| `{key}` | {fmt_val(answer_summary.get(key))} |"
+        metric_details = answer_summary.get("metric_details")
+        if isinstance(metric_details, dict) and metric_details:
+            lines.extend(
+                [
+                    (
+                        "| Metric | Value | Aggregation | Numerator | Denominator | "
+                        "Coverage | Scored / Skipped | Skip reasons | Reason |"
+                    ),
+                    (
+                        "| :--- | ---: | :--- | ---: | ---: | ---: | "
+                        "---: | :--- | :--- |"
+                    ),
+                ]
             )
+            answer_metric_order = (
+                "exact_match",
+                "token_precision",
+                "token_recall",
+                "token_f1",
+                "char_f1",
+                "rouge_l",
+                "chrf",
+                "number_precision",
+                "number_recall",
+                "date_precision",
+                "date_recall",
+                "entity_precision",
+                "entity_recall",
+                "citation_precision",
+                "citation_recall",
+                "citation_coverage",
+                "invalid_citation_rate",
+                "answer_similarity_pass_rate",
+                "unanswerable_accuracy",
+                "refusal_precision",
+                "refusal_recall",
+                "mixed_claim_refusal_rate",
+            )
+            for key in answer_metric_order:
+                detail = metric_details.get(key)
+                if not isinstance(detail, dict):
+                    continue
+                lines.append(
+                    f"| `{key}` | {fmt_val(detail.get('value'))} | "
+                    f"{fmt_val(detail.get('aggregation'))} | "
+                    f"{fmt_val(detail.get('numerator'), decimals=6)} | "
+                    f"{fmt_val(detail.get('denominator'), decimals=0)} | "
+                    f"{fmt_val(detail.get('coverage'), is_pct=True)} | "
+                    f"{fmt_val(detail.get('scored_cases'), decimals=0)} / "
+                    f"{fmt_val(detail.get('skipped_cases'), decimals=0)} | "
+                    f"{fmt_counts(detail.get('skip_reasons') or {})} | "
+                    f"{fmt_val(detail.get('reason'))} |"
+                )
+        else:
+            lines.extend(
+                [
+                    "| Metric | Value |",
+                    "| :--- | ---: |",
+                ]
+            )
+            for key in (
+                "answer_similarity_pass_rate",
+                "unanswerable_accuracy",
+                "refusal_precision",
+                "refusal_recall",
+                "token_f1",
+                "char_f1",
+                "rouge_l",
+                "chrf",
+                "citation_precision",
+                "invalid_citation_rate",
+            ):
+                lines.append(
+                    f"| `{key}` | {fmt_val(answer_summary.get(key))} |"
+                )
 
     if case_results:
         total_answers = len(case_results)

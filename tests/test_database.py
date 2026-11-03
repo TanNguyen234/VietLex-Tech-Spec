@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+from datetime import timedelta
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
-from app.database import log_interaction, update_evaluation
+from app.database import log_interaction, update_evaluation, update_feedback
 
 
 def test_get_db_uses_bounded_connection_timeouts(monkeypatch) -> None:
@@ -46,6 +48,8 @@ async def test_structured_failures_are_visible_in_admin_error_metrics(request_st
 
 @pytest.mark.asyncio
 async def test_log_interaction_persists_all_operational_fields() -> None:
+    import app.database as database
+
     fake_collection = AsyncMock()
     fake_db = MagicMock()
     fake_db.evaluation_logs = fake_collection
@@ -80,6 +84,10 @@ async def test_log_interaction_persists_all_operational_fields() -> None:
         )
 
     assert doc["_id"] == "trace-db-test-01"
+    assert doc["timestamp"].utcoffset() == timedelta(0)
+    assert doc["expires_at"] - doc["timestamp"] == timedelta(
+        days=database.settings.DATA_RETENTION_DAYS
+    )
     assert doc['request_metadata']['guardrail_engine'] == 'direct_self_check'
     metrics = doc["metrics"]
     assert metrics["request_status"] == "ok"
@@ -163,6 +171,110 @@ async def test_update_evaluation_sets_ragas_executed_and_proxy_metrics() -> None
     assert set_data["metrics.ragas_status"] == "ok"
     assert set_data["metrics.ragas_executed"] is True
     assert set_data["metrics.ragas_error"] is None
+    assert set_data["metrics.evaluated_at"].utcoffset() == timedelta(0)
     # Ensure ambiguous aliases are NOT in update
     assert "metrics.faithfulness" not in set_data
     assert "metrics.answer_relevance" not in set_data
+
+
+@pytest.mark.asyncio
+async def test_update_feedback_uses_utc_aware_timestamp() -> None:
+    fake_collection = AsyncMock()
+    fake_collection.update_one.return_value = MagicMock(modified_count=1)
+    fake_db = MagicMock()
+    fake_db.evaluation_logs = fake_collection
+
+    with patch("app.database.get_db", return_value=fake_db):
+        assert await update_feedback("trace-feedback-01", "up", client_id="client-1")
+
+    query, update = fake_collection.update_one.call_args.args
+    assert query == {"_id": "trace-feedback-01", "client_id": "client-1"}
+    assert update["$set"]["feedback.updated_at"].utcoffset() == timedelta(0)
+
+
+@pytest.mark.asyncio
+async def test_admin_inventory_uses_utc_aware_session_cutoff() -> None:
+    import app.database as database
+
+    users = SimpleNamespace(count_documents=AsyncMock(return_value=0))
+    auth_sessions = SimpleNamespace(count_documents=AsyncMock(return_value=0))
+    chat_sessions = SimpleNamespace(count_documents=AsyncMock(return_value=0))
+    workspaces = SimpleNamespace(count_documents=AsyncMock(return_value=0))
+    fake_db = SimpleNamespace(
+        users=users,
+        auth_sessions=auth_sessions,
+        chat_sessions=chat_sessions,
+        research_workspaces=workspaces,
+    )
+
+    with patch("app.database.get_db", return_value=fake_db):
+        result = await database.get_admin_inventory()
+
+    cutoff = auth_sessions.count_documents.call_args.args[0]["expires_at"]["$gt"]
+    assert result["status"] == "available"
+    assert cutoff.utcoffset() == timedelta(0)
+
+
+@pytest.mark.asyncio
+async def test_session_history_roundtrip_keeps_official_provenance_sidecar(monkeypatch) -> None:
+    import app.database as database
+    from app.services.evidence_presenter import (
+        TrustedOfficialEvidenceContext,
+        present_context,
+    )
+
+    trusted = TrustedOfficialEvidenceContext(
+        "[Nguồn chính thức ngoài VietLex · 45/2019/QH14]\n"
+        "Nguồn: https://vanban.chinhphu.vn/default.aspx?docid=123\n"
+        "Nguồn loại: official_external\n"
+        "Hiệu lực pháp lý: unverified\n"
+        f"SHA-256 nguồn: {'b' * 64}\n"
+        "Thời điểm đọc: 2026-10-15T10:00:00+00:00\n"
+        "Phương thức đọc: visible_html_text\n"
+        "Tiêu đề: Bộ luật Lao động\n"
+        "Mức lương thử việc ít nhất bằng 85%."
+    )
+    plain = str(trusted)
+    cursor = MagicMock()
+    cursor.sort.return_value = cursor
+    cursor.to_list = AsyncMock()
+    collection = MagicMock()
+    collection.replace_one = AsyncMock()
+    collection.find.return_value = cursor
+    fake_db = SimpleNamespace(evaluation_logs=collection)
+    monkeypatch.setattr(database.settings, "APP_ENV", "production")
+
+    with patch("app.database.get_db", return_value=fake_db):
+        stored = await database.log_interaction(
+            trace_id="trace-official-context",
+            user_query="Câu hỏi",
+            bot_response="Câu trả lời",
+            contexts=[trusted, plain],
+            cached=False,
+            session_id="session-official-context",
+        )
+        cursor.to_list.return_value = [{
+            **stored,
+            "contexts": [str(value) for value in stored["contexts"]],
+            "context_provenance": list(stored["context_provenance"]),
+        }]
+        messages = await database.get_session_messages(
+            "session-official-context", "client-1"
+        )
+
+    assert stored["contexts"] == [str(trusted), plain]
+    assert stored["context_provenance"][0] == {
+        "kind": "trusted_official_evidence_v1",
+        "source_type": "official_external",
+        "legal_effect_status": "unverified",
+        "source_url": "https://vanban.chinhphu.vn/default.aspx?docid=123",
+        "source_sha256": "b" * 64,
+        "retrieved_at": "2026-10-15T10:00:00+00:00",
+        "read_method": "visible_html_text",
+    }
+    assert stored["context_provenance"][1] is None
+    restored = messages[0]["contexts"]
+    assert isinstance(restored[0], TrustedOfficialEvidenceContext)
+    assert present_context(restored[0]).source_url == "https://vanban.chinhphu.vn/default.aspx?docid=123"
+    assert present_context(restored[0]).source_sha256 == "b" * 64
+    assert present_context(restored[1]).source_type is None

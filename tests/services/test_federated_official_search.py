@@ -1,3 +1,5 @@
+import asyncio
+import time
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 import httpx
@@ -50,6 +52,36 @@ async def test_federation_adds_gazette_without_losing_partial_errors():
     assert result.request_count == 2
     assert result.provider == "chinhphu_and_congbao"
     assert result.errors == ("congbao:upstream:partial",)
+
+
+@pytest.mark.asyncio
+async def test_federation_can_bound_slow_provider_without_losing_fast_gazette() -> None:
+    from app.services.federated_official_search import FederatedOfficialClient
+    from app.services.official_web_search import OfficialSearchRecord, OfficialSearchResponse
+
+    async def slow_portal(_query: str, *, limit: int):
+        await asyncio.sleep(0.2)
+        return OfficialSearchResponse((), "portal", 200, 1)
+
+    gazette_record = OfficialSearchRecord(
+        "https://congbao.chinhphu.vn/van-ban/amendment.htm",
+        "Luật sửa đổi", "congbao.chinhphu.vn", "", "146/2025/QH15", "2025-07-01",
+    )
+    gazette = SimpleNamespace(search=AsyncMock(return_value=OfficialSearchResponse(
+        (gazette_record,), "gazette", 1, 1,
+    )))
+    provider = FederatedOfficialClient(
+        portal=SimpleNamespace(search=slow_portal),
+        gazette=gazette,
+        max_wait_seconds=0.02,
+    )
+
+    started = time.perf_counter()
+    result = await provider.search("sửa đổi Luật Bảo vệ môi trường")
+
+    assert time.perf_counter() - started < 0.15
+    assert result.results == (gazette_record,)
+    assert "chinhphu:TimeoutError" in result.errors
 
 
 @pytest.mark.asyncio

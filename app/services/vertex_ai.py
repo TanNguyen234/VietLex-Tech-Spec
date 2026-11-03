@@ -13,12 +13,23 @@ import httpx
 import requests
 from google import auth as google_auth
 from google.auth import exceptions as google_auth_exceptions
+from google.auth.transport import mtls
 from google import genai
 from google.genai import types
 from google.oauth2 import service_account
 from dotenv import dotenv_values, find_dotenv
 
-from app.config import Settings, get_settings, install_system_trust_store
+from app.config import (
+    Settings,
+    get_settings,
+    install_system_trust_store,
+    system_ssl_context,
+)
+from app.services.provider_http_budget import (
+    ProviderHttpAttemptBudgetExceeded,
+    create_vertex_httpx_clients,
+    current_provider_http_budget,
+)
 
 
 PROVIDER_NAME = "google_vertex_ai"
@@ -77,6 +88,18 @@ class VertexNetworkError(VertexAIError):
 
 class VertexInvalidResponseError(VertexAIError):
     kind = "invalid_response"
+
+
+class VertexMTLSUnsupportedError(VertexAIError):
+    kind = "unsupported_transport_configuration"
+
+
+def _mtls_required_for_default_client() -> bool:
+    """Whether the SDK would select its client-certificate mTLS path."""
+
+    return bool(
+        mtls.should_use_client_cert() and mtls.has_default_client_cert_source()
+    )
 
 
 def _mapped_error(error: BaseException) -> VertexAIError:
@@ -172,12 +195,22 @@ class VertexAIProvider:
         self.settings = settings or get_settings()
         self._credentials_loader = credentials_loader or _load_adc
         self._client_factory = client_factory or genai.Client
+        self._uses_default_client_factory = self._client_factory is genai.Client
         self._client: Any | None = None
         self._project: str | None = None
+        self._owned_httpx_clients: tuple[httpx.Client, httpx.AsyncClient] | None = None
 
     def _get_client(self) -> Any:
+        if getattr(self.settings, "USE_LEGACY_FREE_PIPELINE", False):
+            raise VertexDisabledError(
+                "Google Cloud is disabled by USE_LEGACY_FREE_PIPELINE."
+            )
         if self._client is not None:
             return self._client
+        if self._uses_default_client_factory and _mtls_required_for_default_client():
+            raise VertexMTLSUnsupportedError(
+                "Vertex HTTP attempt accounting does not support the configured mTLS client certificate."
+            )
         install_system_trust_store()
         dotenv_path = find_dotenv(usecwd=True)
         if dotenv_path and "GOOGLE_APPLICATION_CREDENTIALS" not in os.environ:
@@ -202,14 +235,36 @@ class VertexAIProvider:
             raise VertexAuthenticationError(
                 "ADC was discovered but no Google Cloud project could be resolved."
             )
+        quota_project = getattr(
+            self.settings, "GOOGLE_CLOUD_QUOTA_PROJECT", None
+        )
+        if quota_project:
+            try:
+                credentials = credentials.with_quota_project(quota_project)
+            except Exception:
+                raise VertexAuthenticationError(
+                    "Google Cloud quota project could not be applied to credentials."
+                ) from None
         retry_options = types.HttpRetryOptions(
             attempts=self.settings.VERTEX_MAX_RETRIES + 1,
         )
-        http_options = types.HttpOptions(
-            api_version="v1",
-            timeout=int(self.settings.VERTEX_REQUEST_TIMEOUT_SECONDS * 1000),
-            retry_options=retry_options,
-        )
+        options: dict[str, Any] = {
+            "api_version": "v1",
+            "timeout": int(self.settings.VERTEX_REQUEST_TIMEOUT_SECONDS * 1000),
+            "retry_options": retry_options,
+        }
+        if self._uses_default_client_factory:
+            if self._owned_httpx_clients is None:
+                try:
+                    self._owned_httpx_clients = create_vertex_httpx_clients(
+                        timeout_seconds=self.settings.VERTEX_REQUEST_TIMEOUT_SECONDS,
+                        verify=system_ssl_context(),
+                    )
+                except Exception as error:
+                    raise _mapped_error(error) from None
+            options["httpx_client"] = self._owned_httpx_clients[0]
+            options["httpx_async_client"] = self._owned_httpx_clients[1]
+        http_options = types.HttpOptions(**options)
         try:
             self._client = self._client_factory(
                 vertexai=True,
@@ -223,6 +278,30 @@ class VertexAIProvider:
         self._project = project
         return self._client
 
+    async def close(self) -> None:
+        client = self._client
+        self._client = None
+        clients = self._owned_httpx_clients
+        self._owned_httpx_clients = None
+        try:
+            if client is not None:
+                close = getattr(client, "close", None)
+                if callable(close):
+                    close()
+                aio = getattr(client, "aio", None)
+                aclose = getattr(aio, "aclose", None)
+                if callable(aclose):
+                    await aclose()
+        finally:
+            if clients is not None:
+                sync_client, async_client = clients
+                try:
+                    if not sync_client.is_closed:
+                        sync_client.close()
+                finally:
+                    if not async_client.is_closed:
+                        await async_client.aclose()
+
     def _metadata(self, model: str, started: float) -> ProviderMetadata:
         return ProviderMetadata(
             provider=PROVIDER_NAME,
@@ -232,6 +311,15 @@ class VertexAIProvider:
             status="success",
             latency_ms=round((time.perf_counter() - started) * 1000, 3),
         )
+
+    @staticmethod
+    def _ensure_async_model_capacity() -> None:
+        budget = current_provider_http_budget()
+        if budget is not None:
+            budget.ensure_capacity(
+                boundary="vertex_model_httpx_async",
+                provider=PROVIDER_NAME,
+            )
 
     async def generate(
         self,
@@ -252,6 +340,7 @@ class VertexAIProvider:
             raise ValueError("invalid_pdf_payload")
         if max_retries is not None and not 0 <= max_retries <= 5:
             raise ValueError("invalid_retry_limit")
+        self._ensure_async_model_capacity()
         started = time.perf_counter()
         client = self._get_client()
         config = types.GenerateContentConfig(
@@ -274,6 +363,8 @@ class VertexAIProvider:
                 contents=prompt if pdf_bytes is None else [prompt, types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf")],
                 config=config,
             )
+        except ProviderHttpAttemptBudgetExceeded:
+            raise
         except Exception as error:
             raise _mapped_error(error) from None
         text = (getattr(response, "text", None) or "").strip()
@@ -316,6 +407,7 @@ class VertexAIProvider:
         max_output_tokens: int = 768,
     ) -> Any:
         """Generate a schema-constrained object for offline judge metrics."""
+        self._ensure_async_model_capacity()
         client = self._get_client()
         config = types.GenerateContentConfig(
             temperature=0,
@@ -332,6 +424,8 @@ class VertexAIProvider:
                 contents=prompt,
                 config=config,
             )
+        except ProviderHttpAttemptBudgetExceeded:
+            raise
         except Exception as error:
             raise _mapped_error(error) from None
         parsed = getattr(response, "parsed", None)
@@ -381,6 +475,7 @@ class VertexAIProvider:
     ) -> EmbeddingResult:
         if not 128 <= output_dimensionality <= 3072:
             raise ValueError("output_dimensionality must be between 128 and 3072")
+        self._ensure_async_model_capacity()
         started = time.perf_counter()
         client = self._get_client()
         try:
@@ -391,6 +486,8 @@ class VertexAIProvider:
                     output_dimensionality=output_dimensionality,
                 ),
             )
+        except ProviderHttpAttemptBudgetExceeded:
+            raise
         except Exception as error:
             raise _mapped_error(error) from None
         embeddings = getattr(response, "embeddings", None) or []
@@ -431,3 +528,15 @@ def get_vertex_provider() -> VertexAIProvider:
     if _provider is None:
         _provider = VertexAIProvider()
     return _provider
+
+
+async def close_vertex_provider(
+    provider: VertexAIProvider | None = None,
+) -> None:
+    global _provider
+    target = provider or _provider
+    if target is None:
+        return
+    await target.close()
+    if target is _provider:
+        _provider = None

@@ -353,7 +353,10 @@ async def evaluate_single_retrieval_case(
         if precomputed_outcome is not None:
             outcome = precomputed_outcome
         elif backend == "production":
-            if getattr(settings, "STRUCTURAL_BACKEND_ENABLED", False):
+            if (
+                getattr(settings, "USE_LEGACY_FREE_PIPELINE", None) is not None
+                or getattr(settings, "STRUCTURAL_BACKEND_ENABLED", False)
+            ):
                 from app.services.rag_pipeline import (
                     retrieve_configured_legal_evidence,
                 )

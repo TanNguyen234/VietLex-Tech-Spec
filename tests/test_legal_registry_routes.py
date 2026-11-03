@@ -26,6 +26,23 @@ def test_public_lookup_is_unknown_without_reviewed_events(client, monkeypatch):
     assert response.headers["cache-control"] == "no-store"
 
 
+def test_finite_registry_view_explains_inclusive_end_date(client, monkeypatch):
+    from tests.services.test_legal_effect import _finite_review_data
+    from app.services.legal_effect import review_legal_effect
+    from app.services.legal_registry import publication_record
+    evidence, event = _finite_review_data()
+    analysis = dict(analysis_id='finite', kind='legal_effect_review', reviewer_id='human',
+                    reviewed_at='2026-10-30T00:00:00+00:00', evidence_snapshot=evidence,
+                    **review_legal_effect(evidence, '2026-10-30', [event]))
+    record = publication_record(analysis, 'human')
+    monkeypatch.setattr('app.api.legal_registry_routes.registry_records', AsyncMock(return_value=[record]))
+    response = client.get('/legal-status?document_number=A/2026&as_of=2027-03-01')
+    assert response.status_code == 200
+    assert 'Đã qua ngày cuối hiệu lực' in response.text
+    assert '2027-02-28' in response.text and 'bao gồm ngày này' in response.text
+    assert 'chưa bao phủ đầy đủ' in response.text
+
+
 def test_lookup_database_failure_does_not_look_like_no_events(client, monkeypatch):
     from app.legal_registry_database import RegistryUnavailable
 
@@ -95,6 +112,30 @@ def test_publication_rechecks_owned_review_and_only_then_writes(client, monkeypa
     record = write.await_args.args[0]
     assert record["published_by"] == "admin"
     assert "private-evidence" not in str(record)
+
+
+def test_withdrawal_requires_csrf_and_reports_stale_review(client, monkeypatch):
+    from app.api.dependencies import verify_csrf
+
+    withdraw = AsyncMock(return_value=True)
+    monkeypatch.setattr("app.api.legal_registry_routes.withdraw_review", withdraw)
+    path = "/admin/legal-registry/review-1/withdraw"
+    data = {"reason": "Sai trích dẫn", "csrf_token": "forged"}
+
+    rejected = client.post(path, data=data, follow_redirects=False)
+    assert rejected.status_code == 403
+    withdraw.assert_not_awaited()
+
+    client.app.dependency_overrides[verify_csrf] = lambda: "valid"
+    accepted = client.post(path, data=data, follow_redirects=False)
+    assert accepted.status_code == 303
+    assert accepted.headers["location"] == "/admin/legal-registry"
+    withdraw.assert_awaited_once_with("review-1", "admin", "Sai trích dẫn")
+
+    withdraw.return_value = False
+    stale = client.post(path, data=data, follow_redirects=False)
+    assert stale.status_code == 409
+    assert stale.json()["detail"] == "review_not_published_reload"
 
 
 def test_registry_admin_requires_admin_role(client, monkeypatch):

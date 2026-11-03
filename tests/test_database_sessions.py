@@ -1,3 +1,4 @@
+from datetime import timedelta
 from types import SimpleNamespace
 
 import pytest
@@ -67,6 +68,11 @@ async def test_session_queries_are_scoped_to_owner(monkeypatch) -> None:
     await database.rename_session("s-1", "Tên mới", "owner-a")
     await database.delete_session("s-1", "owner-a")
 
+    stored_session = sessions.replace_documents[0][1]
+    assert stored_session["timestamp"].utcoffset() == timedelta(0)
+    assert stored_session["expires_at"] - stored_session["timestamp"] == timedelta(
+        days=database.settings.DATA_RETENTION_DAYS
+    )
     assert sessions.replace_documents[0][1]["client_id"] == "owner-a"
     assert sessions.find_queries == [
         {

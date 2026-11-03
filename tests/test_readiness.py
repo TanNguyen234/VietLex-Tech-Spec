@@ -5,8 +5,15 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_readiness_reports_each_dependency_without_provider_calls(tmp_path: Path) -> None:
+async def test_readiness_reports_each_dependency_without_provider_calls(
+    tmp_path: Path, monkeypatch
+) -> None:
     from app.services.readiness import build_readiness
+    from app.services import legal_browser
+
+    monkeypatch.setattr(
+        legal_browser, "local_legal_index_ready", lambda *_args: True
+    )
 
     content = tmp_path / "content.sqlite3"
     fts = tmp_path / "fts.sqlite3"
@@ -32,6 +39,8 @@ async def test_readiness_reports_each_dependency_without_provider_calls(tmp_path
         "runtime": {
             "retrieval_backend": "pinecone-v1",
             "google_cloud_calls_enabled": False,
+            "serverless_online_only": False,
+            "legal_document_source": "local_sqlite",
             "vertex_qdrant_shadow_enabled": False,
             "pinecone_configured": False,
             "qdrant_configured": False,
@@ -130,6 +139,8 @@ async def test_online_only_readiness_does_not_require_local_corpus(tmp_path: Pat
     )
 
     assert result["status"] == "ready"
+    assert result["runtime"]["serverless_online_only"] is True
+    assert result["runtime"]["legal_document_source"] == "supabase"
     assert result["checks"] == {
         "content_store": "not_required",
         "legal_fts": "not_required",
@@ -138,6 +149,129 @@ async def test_online_only_readiness_does_not_require_local_corpus(tmp_path: Pat
         "body_search_index": "ready",
         "mongodb": "ready",
     }
+
+
+@pytest.mark.asyncio
+async def test_development_readiness_uses_online_sources_when_local_corpus_is_missing(
+    tmp_path: Path,
+) -> None:
+    from app.services.readiness import build_readiness
+
+    result = await build_readiness(
+        SimpleNamespace(
+            APP_ENV="development",
+            CONTENT_STORE_PATH=tmp_path / "missing-full.sqlite3",
+            LEGAL_FTS_PATH=tmp_path / "missing-full-fts.sqlite3",
+            V3_CONTENT_STORE_PATH=tmp_path / "missing-v3.sqlite3",
+            V3_LEGAL_FTS_PATH=tmp_path / "missing-v3-fts.sqlite3",
+            MONGO_URL=None,
+            USE_LEGACY_FREE_PIPELINE=False,
+            SERVERLESS_ONLINE_ONLY=False,
+            QDRANT_URL="https://qdrant.example",
+            QDRANT_API_KEY="qdrant-test",
+            VERTEX_QDRANT_COLLECTION_NAME="v3-test",
+            QDRANT_FULL_DOC_BODY_COLLECTION="body-test",
+            GOOGLE_CLOUD_PROJECT="project-id",
+            SUPABASE_URL="https://project.supabase.co",
+            SUPABASE_PUBLISHABLE_KEY="publishable-test",
+            QDRANT_FULL_DOC_BODY_SEARCH_ENABLED=True,
+        ),
+        mongo_ping=lambda: _async_value(True),
+        online_retrieval_ping=lambda: _async_value(True),
+        supabase_documents_ping=lambda: _async_value(True),
+        body_search_ping=lambda: _async_value(True),
+    )
+
+    assert result["status"] == "ready"
+    assert result["runtime"]["serverless_online_only"] is False
+    assert result["runtime"]["legal_document_source"] == "supabase"
+    assert result["checks"] == {
+        "content_store": "not_required",
+        "legal_fts": "not_required",
+        "mongodb": "not_required",
+        "online_retrieval": "ready",
+        "supabase_documents": "ready",
+        "body_search_index": "ready",
+    }
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("pipeline_switch", [False, True])
+async def test_development_readiness_rejects_existing_but_invalid_local_fts(
+    tmp_path: Path, pipeline_switch: bool
+) -> None:
+    from app.services.readiness import build_readiness
+
+    content_path = tmp_path / "content.sqlite3"
+    fts_path = tmp_path / "legal_fts.sqlite3"
+    content_path.touch()
+    fts_path.touch()
+    result = await build_readiness(
+        SimpleNamespace(
+            APP_ENV="development",
+            CONTENT_STORE_PATH=content_path,
+            LEGAL_FTS_PATH=fts_path,
+            V3_CONTENT_STORE_PATH=content_path,
+            V3_LEGAL_FTS_PATH=fts_path,
+            MONGO_URL=None,
+            USE_LEGACY_FREE_PIPELINE=pipeline_switch,
+            SERVERLESS_ONLINE_ONLY=False,
+            pinecone_api_key="pinecone-test",
+            QDRANT_URL="https://qdrant.example",
+            QDRANT_API_KEY="qdrant-test",
+            VERTEX_QDRANT_COLLECTION_NAME="v3-test",
+            QDRANT_FULL_DOC_BODY_COLLECTION="body-test",
+            GOOGLE_CLOUD_PROJECT="project-id",
+            SUPABASE_URL="https://project.supabase.co",
+            SUPABASE_PUBLISHABLE_KEY="publishable-test",
+            QDRANT_FULL_DOC_BODY_SEARCH_ENABLED=True,
+        ),
+        mongo_ping=lambda: _async_value(True),
+        online_retrieval_ping=lambda: _async_value(True),
+        supabase_documents_ping=lambda: _async_value(True),
+        body_search_ping=lambda: _async_value(True),
+    )
+
+    assert result["status"] == "ready"
+    assert result["runtime"]["legal_document_source"] == "supabase"
+    assert result["checks"] == {
+        "content_store": "not_required",
+        "legal_fts": "not_required",
+        "mongodb": "not_required",
+        "online_retrieval": "ready",
+        "supabase_documents": "ready",
+        "body_search_index": "ready",
+    }
+
+
+@pytest.mark.asyncio
+async def test_development_readiness_does_not_accept_invalid_local_fts_without_fallback(
+    tmp_path: Path,
+) -> None:
+    from app.services.readiness import build_readiness
+
+    content_path = tmp_path / "content.sqlite3"
+    fts_path = tmp_path / "legal_fts.sqlite3"
+    content_path.touch()
+    fts_path.touch()
+    result = await build_readiness(
+        SimpleNamespace(
+            APP_ENV="development",
+            CONTENT_STORE_PATH=tmp_path / "missing-full.sqlite3",
+            LEGAL_FTS_PATH=tmp_path / "missing-full-fts.sqlite3",
+            V3_CONTENT_STORE_PATH=content_path,
+            V3_LEGAL_FTS_PATH=fts_path,
+            MONGO_URL=None,
+            USE_LEGACY_FREE_PIPELINE=False,
+            SERVERLESS_ONLINE_ONLY=False,
+        ),
+        mongo_ping=lambda: _async_value(True),
+    )
+
+    assert result["status"] == "not_ready"
+    assert result["runtime"]["legal_document_source"] == "local_sqlite"
+    assert result["checks"]["content_store"] == "unavailable"
+    assert result["checks"]["legal_fts"] == "unavailable"
 
 
 @pytest.mark.asyncio

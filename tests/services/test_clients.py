@@ -48,3 +48,22 @@ async def test_http_client_is_reused_and_closed_by_lifecycle() -> None:
     replacement = clients.get_http_client()
     assert replacement is not first
     await clients.close_clients()
+
+
+@pytest.mark.asyncio
+async def test_lifecycle_closes_dedicated_provider_http_clients(monkeypatch) -> None:
+    clients = _clients_module()
+    from app.services import direct_llm, vertex_ai
+
+    direct_client = direct_llm.create_direct_httpx_client()
+    monkeypatch.setattr(direct_llm, "_http_client", direct_client)
+    vertex_closed: list[bool] = []
+
+    async def close_vertex():
+        vertex_closed.append(True)
+
+    monkeypatch.setattr(vertex_ai, "close_vertex_provider", close_vertex)
+    await clients.close_clients()
+
+    assert direct_client.is_closed
+    assert vertex_closed == [True]

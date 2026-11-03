@@ -60,6 +60,7 @@ async def test_smtp_sender_uses_starttls_and_builds_verification_link() -> None:
     assert smtp.login_args == ("mailer@example.com", "app-password")
     message = smtp.messages[0]
     assert message["To"] == "person@example.com"
+    assert "Mở liên kết sau rồi xác nhận địa chỉ email" in message.get_content()
     assert "https://vietlex.example/verify-email?token=verify-token" in message.get_content()
     assert "app-password" not in message.as_string()
 

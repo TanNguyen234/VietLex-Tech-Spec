@@ -6,13 +6,15 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.api.dependencies import require_admin, verify_csrf, verify_csrf_header
-from app.api.routes import router as api_router
+from app.api.routes import router as api_router, check_input_guardrails as real_input_guardrail
 from app.config import get_settings
 from app.rate_limit import limiter
 
 
 @pytest.fixture
-def client():
+def client(monkeypatch):
+    monkeypatch.setattr('app.api.routes.check_input_guardrails', AsyncMock(return_value=(True, '')))
+    monkeypatch.setattr('app.api.routes.check_output_guardrails', AsyncMock(return_value=(True, '')))
     limiter._storage.reset()
     test_app = FastAPI()
     test_app.dependency_overrides[verify_csrf] = lambda: "valid_token"
@@ -198,7 +200,7 @@ def test_admin_stats_and_details_display_proxy_labels(client, monkeypatch) -> No
     assert "proxy" in details_resp.text.lower() or "đánh giá ragas" in details_resp.text.lower()
 
 
-def test_chat_route_cache_hit_measures_real_latency_and_persists_status(client, monkeypatch) -> None:
+def test_chat_mandatory_guards_bypass_unchecked_cache_and_measure_real_latency(client, monkeypatch) -> None:
     from app.services.semantic_cache import SemanticCacheHit
 
     monkeypatch.setattr(
@@ -216,6 +218,7 @@ def test_chat_route_cache_hit_measures_real_latency_and_persists_status(client, 
     )
     monkeypatch.setattr("app.api.routes.create_session", AsyncMock())
 
+    monkeypatch.setattr('app.api.routes.run_advanced_rag', AsyncMock(return_value=('Fresh checked answer', ['Fresh evidence'], {})))
     logged = {}
 
     async def fake_log(**kwargs):
@@ -230,10 +233,10 @@ def test_chat_route_cache_hit_measures_real_latency_and_persists_status(client, 
         data={"message": "Câu hỏi cache", "csrf_token": "valid_token", "session_id": "test-session"},
     )
     assert resp.status_code == 200
-    assert "Câu trả lời từ cache." in resp.text
-    assert logged.get("request_status") == "cache_hit"
-    assert logged.get("cached") is True
-    assert logged.get("contexts") == ["[Luật 1, Điều 1]\nCăn cứ cache."]
+    assert "Fresh checked answer" in resp.text
+    assert logged.get("request_status") == "ok"
+    assert logged.get("cached") is False
+    assert logged.get("contexts") == ["Fresh evidence"]
     assert "t_total" in logged.get("latency", {})
     assert logged["latency"]["t_total"] > 0.0
 
@@ -270,6 +273,8 @@ def test_chat_route_rejects_unsafe_input_before_using_cache(client, monkeypatch)
 def test_chat_missing_guardrail_dependency_fails_closed(client, monkeypatch) -> None:
     import builtins
 
+    monkeypatch.setattr('app.api.routes.check_input_guardrails', real_input_guardrail)
+    monkeypatch.setattr('app.api.routes.settings.SERVERLESS_ONLINE_ONLY', False)
     original_import = builtins.__import__
 
     def without_guardrails(name, *args, **kwargs):
@@ -392,6 +397,108 @@ def test_chat_route_retrieval_pipeline_error_persists_technical_error(client, mo
     assert logged.get("request_status") == "technical_error"
     assert logged.get("technical_error") is not None
     assert logged["technical_error"]["stage"] == "retrieval_error"
+
+
+def test_chat_route_persists_provider_budget_exhaustion_after_contexts(
+    client, monkeypatch
+) -> None:
+    from collections import deque
+
+    import httpx
+
+    from app import database
+    from app.config import get_settings
+    from app.services import provider_runtime
+    from app.services.chat_progress import chat_progress
+    from app.services.provider_http_budget import (
+        ProviderHttpAsyncTransport,
+        ProviderHttpAttemptBudgetExceeded,
+    )
+
+    request_id = "provider-budget-cap-route"
+    contexts_ready: list[str] = []
+    sent: list[str] = []
+    persisted: dict = {}
+
+    monkeypatch.setattr(get_settings(), "PROVIDER_HTTP_ATTEMPT_LIMIT", 1)
+    monkeypatch.setattr(database.settings, "APP_ENV", "development")
+    monkeypatch.setattr("app.api.routes.check_semantic_cache", AsyncMock(return_value=None))
+    monkeypatch.setattr("app.api.routes.check_input_guardrails", AsyncMock(return_value=(True, "")))
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        sent.append(request.url.path)
+        return httpx.Response(200, request=request, json={"ok": True})
+
+    async def fail_during_final_generation(*_args, **_kwargs):
+        contexts_ready.append("retrieved synthetic legal context")
+        async with httpx.AsyncClient(
+            transport=ProviderHttpAsyncTransport(
+                httpx.MockTransport(handler),
+                boundary="vertex_model_httpx_async",
+                provider="google_vertex_ai",
+            )
+        ) as provider_client:
+            await provider_client.post("https://vertex.example/retrieval")
+            await provider_client.post("https://vertex.example/final-generation")
+        raise AssertionError("the second provider attempt must be denied")
+
+    monkeypatch.setattr(
+        "app.api.routes.run_advanced_rag", AsyncMock(side_effect=fail_during_final_generation)
+    )
+    monkeypatch.setattr("app.api.routes.create_session", AsyncMock())
+
+    real_log_interaction = database.log_interaction
+
+    async def capture_persisted_interaction(**kwargs):
+        nonlocal persisted
+        persisted = await real_log_interaction(**kwargs)
+        return persisted
+
+    monkeypatch.setattr("app.api.routes.log_interaction", capture_persisted_interaction)
+
+    good_event = provider_runtime.ProviderEvent(
+        provider="google_vertex_ai",
+        model="gemini-test",
+        use_case="answer",
+        success=True,
+        error_kind=None,
+        latency_ms=1,
+        fallback_used=False,
+        timestamp="synthetic",
+    )
+    monkeypatch.setattr(provider_runtime, "_events", deque([good_event]))
+
+    response = client.post(
+        "/chat",
+        data={
+            "message": "Câu hỏi kiểm tra",
+            "csrf_token": "valid_token",
+            "session_id": "test-session",
+            "request_id": request_id,
+        },
+    )
+
+    assert contexts_ready
+    assert sent == ["/retrieval"]
+    assert response.status_code in (500, 503)
+    assert "Hệ thống tra cứu văn bản pháp luật gặp sự cố kỹ thuật" in response.text
+    assert "không tìm thấy" not in response.text.lower()
+    assert persisted["metrics"]["request_status"] == "technical_error"
+    assert persisted["metrics"]["technical_error"]["error_type"] == (
+        ProviderHttpAttemptBudgetExceeded.__name__
+    )
+    snapshot = persisted["metrics"]["provider_http_budget"]
+    assert snapshot["attempt_count"] == 1
+    assert snapshot["denied_count"] == 1
+    assert snapshot["failure_count"] == 0
+    progress = chat_progress.get(request_id, "legacy")
+    assert progress["complete"] is True
+    assert progress["status"] == "technical_error"
+    vertex_status = next(
+        row for row in provider_runtime.provider_status_snapshot(get_settings())
+        if row["provider"] == "google_vertex_ai"
+    )
+    assert vertex_status["state"] == "HEALTHY"
 
 
 def test_chat_route_no_evidence_persists_no_evidence_status(client, monkeypatch) -> None:
@@ -595,7 +702,7 @@ def test_chat_route_answer_generation_authentication_failure_persists_technical_
         "/chat",
         data={"message": "Câu hỏi", "csrf_token": "valid_token", "session_id": "test-session", "nemo_enabled": "true"},
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 503
     assert logged.get("request_status") == "technical_error"
     assert logged.get("technical_error") is not None
     assert logged["technical_error"]["stage"] == "answer_generation"

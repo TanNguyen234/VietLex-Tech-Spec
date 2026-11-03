@@ -216,10 +216,10 @@ def test_ragas_evaluation_mode_default_is_off() -> None:
     assert settings.RAGAS_SAMPLE_RATE == 0.1
 
 
-def test_public_web_features_default_to_safe_off() -> None:
+def test_public_guards_are_mandatory_and_optional_judge_stays_off() -> None:
     settings = Settings(_env_file=None)
 
-    assert settings.PUBLIC_NEMO_DEFAULT_ENABLED is False
+    assert settings.PUBLIC_NEMO_DEFAULT_ENABLED is True
     assert settings.PUBLIC_RAGAS_ENABLED is False
     assert settings.PUBLIC_RAGAS_CLIENT_DAILY_LIMIT == 3
     assert settings.PUBLIC_RAGAS_GLOBAL_DAILY_LIMIT == 20
@@ -253,6 +253,7 @@ def test_vertex_defaults_are_narrow_and_do_not_model_adc_credentials() -> None:
 
     assert settings.USE_LEGACY_FREE_PIPELINE is False
     assert settings.GOOGLE_CLOUD_PROJECT is None
+    assert settings.GOOGLE_CLOUD_QUOTA_PROJECT is None
     assert settings.GOOGLE_CLOUD_LOCATION == "global"
     assert settings.VERTEX_LLM_MODEL == "gemini-3.5-flash"
     assert settings.VERTEX_EMBEDDING_MODEL == "gemini-embedding-2"
@@ -265,6 +266,17 @@ def test_vertex_defaults_are_narrow_and_do_not_model_adc_credentials() -> None:
     assert settings.VERTEX_MAX_RETRIES == 2
     assert "GOOGLE_APPLICATION_CREDENTIALS" not in Settings.model_fields
     assert "GOOGLE_SERVICE_ACCOUNT_JSON" not in Settings.model_fields
+
+
+def test_google_cloud_quota_project_is_optional_and_env_parsed(monkeypatch) -> None:
+    monkeypatch.delenv("GOOGLE_CLOUD_QUOTA_PROJECT", raising=False)
+    assert Settings(_env_file=None).GOOGLE_CLOUD_QUOTA_PROJECT is None
+
+    monkeypatch.setenv("GOOGLE_CLOUD_QUOTA_PROJECT", "quota-project")
+    assert (
+        Settings(_env_file=None).GOOGLE_CLOUD_QUOTA_PROJECT
+        == "quota-project"
+    )
 
 
 def test_legacy_free_pipeline_switch_is_boolean() -> None:

@@ -868,6 +868,12 @@ def test_provider_free_cli_writes_audit_and_blocks_unproven_capacity(
     expected_exit: int,
 ) -> None:
     import app.ingestion.structural_qdrant as structural_qdrant
+    import app.ingestion.structural_pilot as structural_pilot
+
+    # This CLI unit fixture already supplies a FakeStore/settings/client. Bind
+    # deterministic test provenance too: an unrelated dirty checkout (including
+    # an active runner log or multi-GB untracked corpus) is not its test input.
+    monkeypatch.setattr(structural_pilot, "collect_git_provenance", _provenance)
 
     monkeypatch.setattr(run_structural_index_pilot, "get_settings", _settings)
     monkeypatch.setattr(

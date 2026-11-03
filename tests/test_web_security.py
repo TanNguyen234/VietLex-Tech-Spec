@@ -150,22 +150,48 @@ def test_csrf_header_dependency_accepts_matching_cookie() -> None:
 
 def test_security_headers_are_set_and_hsts_requires_https() -> None:
     from app.services.http_security import SecurityHeadersMiddleware
+    from fastapi.responses import HTMLResponse, Response
 
     app = FastAPI()
     app.add_middleware(SecurityHeadersMiddleware)
 
     @app.get("/")
     async def home():
+        return HTMLResponse("<main>home</main>")
+
+    @app.post("/chat")
+    async def chat():
+        return Response("event", media_type="text/event-stream")
+
+    @app.get("/api")
+    async def api():
+        return {"ok": True}
+
+    @app.get("/static/app.js")
+    async def static_asset():
+        return Response("console.log('static')", media_type="application/javascript")
+
+    @app.get("/admin/health")
+    async def admin_health():
         return {"ok": True}
 
     client = TestClient(app)
     http = client.get("/")
     https = client.get("/", headers={"X-Forwarded-Proto": "https"})
+    chat_response = client.post("/chat")
+    api_response = client.get("/api")
+    static_response = client.get("/static/app.js")
+    admin_response = client.get("/admin/health")
 
     assert "default-src 'self'" in http.headers["Content-Security-Policy"]
     assert http.headers["X-Content-Type-Options"] == "nosniff"
     assert http.headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
     assert http.headers["Permissions-Policy"] == "geolocation=(), camera=(), microphone=()"
     assert http.headers["X-Frame-Options"] == "DENY"
+    assert http.headers["Cache-Control"] == "no-store"
+    assert chat_response.headers["Cache-Control"] == "no-store"
+    assert admin_response.headers["Cache-Control"] == "no-store"
+    assert api_response.headers["Cache-Control"] == "no-store"
+    assert "Cache-Control" not in static_response.headers
     assert "Strict-Transport-Security" not in http.headers
     assert https.headers["Strict-Transport-Security"] == "max-age=31536000"

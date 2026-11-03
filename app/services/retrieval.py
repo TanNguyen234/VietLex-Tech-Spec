@@ -39,6 +39,8 @@ class RetrievalOutcome:
     status: str = "ok"
     diagnostics: dict[str, Any] = field(default_factory=dict)
     error: str | None = None
+    # Request-only original candidates for expansion; not a public diagnostic.
+    candidate_evidence: list[EvidenceChunk] = field(default_factory=list, repr=False, compare=False)
 
 
 class HybridRetrievalError(RuntimeError):
@@ -547,6 +549,9 @@ class LegalRetriever:
                     != document.content_sha256
                 ):
                     continue
+            from app.services.source_quality import assess_source_quality
+            if not assess_source_quality(document.content, source_sha256=document.content_sha256)["usable_as_evidence"]:
+                continue
             document_chunks = chunk_document(
                 document.metadata,
                 document.content,
@@ -622,7 +627,7 @@ class LegalRetriever:
             )
         return result
 
-    @logfire.instrument("Retrieve grounded legal evidence")
+    @logfire.instrument("Retrieve grounded legal evidence", extract_args=False)
     async def retrieve_detailed(
         self,
         query: str,
@@ -692,8 +697,8 @@ class LegalRetriever:
                     return value, time.perf_counter() - started, None
                 except Exception as error:
                     logfire.warning(
-                        "Optional legal FTS search failed: {error}",
-                        error=str(error),
+                        "Optional legal FTS search failed",
+                        error_kind=type(error).__name__,
                     )
                     return [], time.perf_counter() - started, str(error)
 
@@ -808,8 +813,8 @@ class LegalRetriever:
                     6,
                 )
                 logfire.error(
-                    "Legal reranking failed: {error}",
-                    error=str(error),
+                    "Legal reranking failed",
+                    error_kind=type(error).__name__,
                 )
                 diagnostics["stage_trace"] = stage_trace
                 return RetrievalOutcome(
@@ -868,8 +873,8 @@ class LegalRetriever:
             )
         except Exception as error:
             logfire.error(
-                "Legal retrieval failed closed: {error}",
-                error=str(error),
+                "Legal retrieval failed closed",
+                error_kind=type(error).__name__,
             )
             diagnostics["stage_trace"] = stage_trace
             return RetrievalOutcome(

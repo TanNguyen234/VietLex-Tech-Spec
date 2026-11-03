@@ -7,10 +7,18 @@ from app.config import get_settings
 from app.ingestion.legal_text import chunk_document
 from app.ingestion.pinecone_store import fast_terms
 from app.services.retrieval import RetrievalOutcome, lexical_prefilter, select_ranked_evidence
+from app.services.source_quality import assess_source_quality
 
 
 def document_evidence(query: str, document) -> RetrievalOutcome:
     settings = get_settings()
+    quality = assess_source_quality(document.content)
+    if not quality["usable_as_evidence"]:
+        return RetrievalOutcome(evidence=[], latency={}, diagnostics={
+            "retrieval_backend": "document_lexical_v1",
+            "document_id": document.metadata.document_id, "scope": "document",
+            "scope_expanded": False, "candidate_count": 0, "source_quality": quality,
+        })
     chunks = chunk_document(document.metadata, document.content,
                             max_tokens=settings.QUERY_CHUNK_MAX_TOKENS,
                             overlap_tokens=settings.QUERY_CHUNK_OVERLAP_TOKENS)

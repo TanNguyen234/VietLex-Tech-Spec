@@ -1,7 +1,6 @@
 import logfire
 import hashlib
 import json
-import re
 import asyncio
 import os
 from typing import Tuple, List
@@ -15,17 +14,37 @@ from app.services.direct_llm import (
     generate_llm_response,
     generate_llm_response_with_metadata,
 )
-from app.services.pii import redact_pii as redact_pii
 from app.services.runtime_errors import (
     GUARDRAIL_UNAVAILABLE_MESSAGE as GUARDRAIL_UNAVAILABLE_MESSAGE,
     GuardrailUnavailableError,
+    guardrail_error_reason,
 )
+from app.services.guardrail_prompts import output_guardrail_evidence, parse_guardrail_decision
 
 settings = get_settings()
 
 def _normalize_guardrail_decision(text: str) -> str:
-    match = re.search(r"\b(yes|no)\b\s*[.!]?\s*$", text, re.IGNORECASE)
-    return match.group(1).lower() if match else text
+    return parse_guardrail_decision(text, "model")
+
+
+def _guardrail_failure(stage: str, error: Exception) -> GuardrailUnavailableError:
+    # NeMo wraps model exceptions once. Read only our typed cause, never raw text.
+    cause = error if isinstance(error, GuardrailUnavailableError) else error.__cause__
+    reason = cause.reason if isinstance(cause, GuardrailUnavailableError) else type(error).__name__
+    return GuardrailUnavailableError(stage, guardrail_error_reason(reason))
+
+
+def _guardrail_response_content(result) -> str:
+    responses = getattr(result, "response", None)
+    if (
+        not isinstance(responses, list)
+        or not responses
+        or not isinstance(responses[0], dict)
+        or not isinstance(responses[0].get("content"), str)
+        or not responses[0]["content"].strip()
+    ):
+        raise ValueError("invalid_guardrail_response")
+    return responses[0]["content"]
 
 def parse_json_safely(text: str) -> dict:
     """
@@ -39,15 +58,21 @@ def parse_json_safely(text: str) -> dict:
             if start != -1 and end != -1:
                 clean_text = clean_text[start:end+1]
         return json.loads(clean_text)
-    except Exception as e:
-        logfire.warning("Không thể parse JSON từ LLM Guardrails: {error}. Raw text: {text}", error=str(e), text=text)
+    except Exception as error:
+        logfire.warning(
+            "Không thể parse JSON từ LLM Guardrails",
+            error_kind=type(error).__name__,
+            response_length=len(text),
+        )
         return {}
 
 async def call_llm_guard(prompt: str) -> str:
     try:
         return await generate_llm_response(prompt, use_case=LLMUseCase.GUARDRAIL)
-    except Exception as e:
-        logfire.warning("LLM Guard call failed: {err}", err=str(e))
+    except Exception as error:
+        logfire.warning(
+            "LLM Guard call failed", error_kind=type(error).__name__
+        )
         return ""
 
 _rails_instance = None
@@ -82,6 +107,14 @@ class VertexPrimaryGuardrailModel(BaseChatModel):
             thinking_level="MINIMAL",
             use_case=LLMUseCase.GUARDRAIL,
         )
+        if (
+            not isinstance(getattr(result, "text", None), str)
+            or not result.text.strip()
+            or getattr(result, "status", None) != "success"
+            or not hasattr(result, "finish_reason")
+            or result.finish_reason not in {None, "STOP", "stop"}
+        ):
+            raise GuardrailUnavailableError("model", "generation_incomplete")
         return ChatResult(
             generations=[
                 ChatGeneration(
@@ -122,6 +155,13 @@ def get_rails():
         config_dir = os.path.abspath(os.path.join(current_dir, "..", "..", "guardrails_config"))
         
         config = RailsConfig.from_path(config_dir)
+        for stage, required_flow in (
+            ("input", "self check input"),
+            ("output", "self check facts custom"),
+        ):
+            rail = getattr(getattr(config, "rails", None), stage, None)
+            if required_flow not in (getattr(rail, "flows", None) or []):
+                raise GuardrailUnavailableError("model", "configuration_invalid")
         
         _rails_instance = LLMRails(
             config,
@@ -134,7 +174,7 @@ async def warm_guardrails() -> None:
     """Initialize NeMo and prime the Vertex input rail before evaluation."""
     try:
         rails = await asyncio.to_thread(get_rails)
-        await asyncio.wait_for(
+        result = await asyncio.wait_for(
             rails.generate_async(
                 messages=[
                     {
@@ -149,31 +189,22 @@ async def warm_guardrails() -> None:
                 settings.VERTEX_REQUEST_TIMEOUT_SECONDS,
             ),
         )
+        _guardrail_response_content(result)
     except Exception as error:
         logfire.error(
-            "Guardrails startup warm-up failed: {error}",
-            error=str(error),
+            "Guardrails startup warm-up failed",
+            error_kind=type(error).__name__,
         )
         raise
 
-# Fast pattern detection for obvious out-of-scope non-legal queries
-OUT_OF_SCOPE_PATTERNS = [
-    r"mã nguồn python", r"bún bò huế", r"bài thơ", r"phương trình bậc hai",
-    r"thủ đô của nước pháp", r"hack into a database", r"virus máy tính",
-    r"bánh mì việt nam", r"bộ phim chiếu rạp", r"mã javascript"
-]
-
-@logfire.instrument("Kiểm tra an toàn Input Guardrails")
+@logfire.instrument("Kiểm tra an toàn Input Guardrails", extract_args=False)
 async def check_input_guardrails(message: str) -> Tuple[bool, str]:
-    logfire.info("Đang kiểm tra bảo mật đầu vào cho câu hỏi: {msg}", msg=message)
-    msg_lower = message.lower()
-    
-    # 1. Fast regex pattern match (Instant < 1ms)
-    for pattern in OUT_OF_SCOPE_PATTERNS:
-        if re.search(pattern, msg_lower):
-            return False, "Hệ thống chỉ hỗ trợ giải đáp các thắc mắc liên quan đến pháp luật Việt Nam. Vui lòng đặt câu hỏi phù hợp."
-            
-    # 2. NeMo Guardrails check with strict timeout (5s max)
+    logfire.info(
+        "Đang kiểm tra bảo mật đầu vào",
+        message_length=len(message),
+    )
+    # Assess the whole question: legal questions can legitimately mention code,
+    # violence or other keywords that also occur in off-topic requests.
     try:
         rails = get_rails()
         res = await asyncio.wait_for(
@@ -184,9 +215,7 @@ async def check_input_guardrails(message: str) -> Tuple[bool, str]:
             timeout=settings.GUARDRAIL_TIMEOUT_SECONDS,
         )
         
-        response_content = ""
-        if hasattr(res, "response") and res.response:
-            response_content = res.response[0].get("content", "")
+        response_content = _guardrail_response_content(res)
             
         if response_content == "I'm sorry, I can't respond to that.":
             return False, "Hệ thống chỉ hỗ trợ giải đáp các thắc mắc liên quan đến pháp luật Việt Nam. Vui lòng đặt câu hỏi phù hợp."
@@ -199,16 +228,16 @@ async def check_input_guardrails(message: str) -> Tuple[bool, str]:
         )
         raise GuardrailUnavailableError("input", "timeout") from error
     except Exception as e:
-        logfire.error("Lỗi khi chạy Input Guardrails: {error}", error=str(e))
-        raise GuardrailUnavailableError("input", str(e)) from e
+        error_kind = type(e).__name__
+        logfire.error(
+            "Lỗi khi chạy Input Guardrails", error_kind=error_kind
+        )
+        raise _guardrail_failure("input", e) from None
 
-@logfire.instrument("Kiểm tra an toàn Output Guardrails")
+@logfire.instrument("Kiểm tra an toàn Output Guardrails", extract_args=False)
 async def check_output_guardrails(response: str, context: List[str], user_query: str = "") -> Tuple[bool, str]:
     logfire.info("Đang kiểm tra an toàn câu trả lời đầu ra")
-    if not context:
-        return True, ""
-        
-    context_str = "\n\n".join([doc[:3000] for doc in context])
+    context_str = output_guardrail_evidence(context, user_query)
     try:
         rails = get_rails()
         res = await asyncio.wait_for(
@@ -227,9 +256,7 @@ async def check_output_guardrails(response: str, context: List[str], user_query:
             timeout=settings.GUARDRAIL_TIMEOUT_SECONDS,
         )
         
-        response_content = ""
-        if hasattr(res, "response") and res.response:
-            response_content = res.response[0].get("content", "")
+        response_content = _guardrail_response_content(res)
             
         if response_content == "I'm sorry, I can't respond to that.":
             logfire.warning(
@@ -239,7 +266,7 @@ async def check_output_guardrails(response: str, context: List[str], user_query:
                 ).hexdigest(),
                 context_count=len(context),
             )
-            return False, "Hệ thống phát hiện nội dung câu trả lời không đồng nhất với tài liệu pháp luật chính thống. Vui lòng thử lại sau."
+            return False, "Kiểm tra tự động phát hiện câu trả lời chưa được tài liệu hỗ trợ đầy đủ. Vui lòng kiểm chứng nguồn."
             
         return True, ""
     except asyncio.TimeoutError as error:
@@ -249,5 +276,8 @@ async def check_output_guardrails(response: str, context: List[str], user_query:
         )
         raise GuardrailUnavailableError("output", "timeout") from error
     except Exception as e:
-        logfire.error("Lỗi khi chạy Output Guardrails: {error}", error=str(e))
-        raise GuardrailUnavailableError("output", str(e)) from e
+        error_kind = type(e).__name__
+        logfire.error(
+            "Lỗi khi chạy Output Guardrails", error_kind=error_kind
+        )
+        raise _guardrail_failure("output", e) from None

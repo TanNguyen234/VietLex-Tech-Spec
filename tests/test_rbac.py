@@ -33,12 +33,14 @@ def _client(monkeypatch, user):
 
 def test_normal_account_cannot_access_admin(monkeypatch) -> None:
     client = _client(monkeypatch, {"_id": "user-1", "role": "user", "status": "active"})
-    assert client.get("/admin-test", cookies={"vietlex_auth": "token"}).status_code == 403
+    client.cookies.set("vietlex_auth", "token")
+    assert client.get("/admin-test").status_code == 403
 
 
 def test_admin_account_can_access_admin(monkeypatch) -> None:
     client = _client(monkeypatch, {"_id": "admin-1", "role": "admin", "status": "active"})
-    response = client.get("/admin-test", cookies={"vietlex_auth": "token"})
+    client.cookies.set("vietlex_auth", "token")
+    response = client.get("/admin-test")
     assert response.status_code == 200
     assert response.json() == {"id": "admin-1"}
 

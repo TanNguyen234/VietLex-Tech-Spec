@@ -13,7 +13,7 @@ from app.services.deep_research import OFFICIAL_SOURCE_DOMAINS
 
 
 EventKind = Literal["effective", "repeal", "amend", "replace"]
-EffectStatus = Literal["effective", "amended", "partially_effective", "repealed", "replaced", "unknown"]
+EffectStatus = Literal["effective", "amended", "partially_effective", "repealed", "replaced", "expired", "unknown"]
 
 
 class LegalEffectEvent(BaseModel):
@@ -21,6 +21,7 @@ class LegalEffectEvent(BaseModel):
 
     event_kind: EventKind
     effective_date: date
+    effective_until: date | None = None
     document_number: str = Field(min_length=1, max_length=100)
     target_document_number: str = Field(min_length=1, max_length=100)
     evidence_id: str = Field(min_length=1, max_length=80)
@@ -55,8 +56,13 @@ def _quote_has_date(quote: str, value: date) -> bool:
         f"ngày {value.day} tháng {value.month} năm {value.year}",
         f"ngày {value.day:02d} tháng {value.month:02d} năm {value.year}",
     }
+    for day in {str(value.day), f'{value.day:02d}'}:
+        for month in {str(value.month), f'{value.month:02d}'}:
+            variants.update({f'{day}/{month}/{value.year}', f'{day}-{month}-{value.year}',
+                             f'ngày {day} tháng {month} năm {value.year}'})
     normalized = _normalize(quote)
-    return any(_normalize(variant) in normalized for variant in variants)
+    return any(re.search(r'(?<!\d)' + re.escape(_normalize(variant)) + r'(?!\d)', normalized)
+               for variant in variants)
 
 
 def _validated_events(
@@ -86,6 +92,11 @@ def _validated_events(
             or not _quote_has_date(quote, event.effective_date)
             or _normalize(event.document_number) not in _normalize(quote)
             or _normalize(event.target_document_number) not in _normalize(quote)
+            or (event.effective_until is not None and (
+                event.event_kind != 'effective' or event.scope != 'whole_document'
+                or event.effective_until < event.effective_date
+                or not _quote_has_date(quote, event.effective_until)
+            ))
         ):
             raise ValueError("invalid_legal_effect_event")
         assertions.append(
@@ -105,6 +116,8 @@ def _validated_events(
                 },
             }
         )
+        if event.effective_until is not None:
+            assertions[-1]['effective_until'] = event.effective_until.isoformat()
     selected_sources = [
         {
             "evidence_id": evidence_id,
@@ -148,9 +161,11 @@ def _effect_for_target(
         )
         status: EffectStatus = "unknown"
     else:
-        by_date: dict[str, set[str]] = defaultdict(set)
+        by_date: dict[str, set[tuple[str, str | None]]] = defaultdict(set)
         for assertion in status_events:
-            by_date[assertion["effective_date"]].add(assertion["event_kind"])
+            by_date[assertion["effective_date"]].add(
+                (assertion['event_kind'], assertion.get('effective_until'))
+            )
         if any(len(kinds) > 1 for kinds in by_date.values()):
             status = "unknown"
             reasons.append("conflicting_effect_events")
@@ -174,6 +189,9 @@ def _effect_for_target(
                 elif any(event["event_kind"] == "amend" for event in changes):
                     status = "amended"
                     reasons.append("amendment_in_reviewed_events")
+                if latest.get('effective_until') and as_of > date.fromisoformat(latest['effective_until']):
+                    status = 'expired'
+                    reasons = ['explicit_validity_period_ended']
     return {
         "target_document_number": target_document_number,
         "as_of": as_of.isoformat(),

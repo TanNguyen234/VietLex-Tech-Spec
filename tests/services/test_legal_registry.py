@@ -2,6 +2,53 @@ import pytest
 from app.services.legal_effect import review_legal_effect
 
 
+def test_finite_bound_survives_human_review_publication_and_registry():
+    from tests.services.test_legal_effect import _finite_review_data
+    from app.services.legal_registry import publication_record, registry_view
+    evidence, event = _finite_review_data()
+    analysis = dict(analysis_id='finite-review', kind='legal_effect_review', reviewer_id='human',
+                    reviewed_at='2026-10-30T00:00:00+00:00', evidence_snapshot=evidence,
+                    **review_legal_effect(evidence, '2026-10-30', [event]))
+    published = publication_record(analysis, 'human-publisher')
+    last = registry_view('A/2026', '2027-02-28', [published])
+    after = registry_view('A/2026', '2027-03-01', [published])
+    assert last['status'] == 'effective' and after['status'] == 'expired'
+    assert after['effective_to'] == '2027-02-28'
+    assert after['effective_to_inclusive'] is True
+    assert after['history_complete'] is False
+    analysis['result']['assertions'][0]['effective_until'] = '2027-03-30'
+    with pytest.raises(ValueError, match='review_snapshot_invalid|review_snapshot_changed'):
+        publication_record(analysis, 'human-publisher')
+
+
+@pytest.mark.parametrize('as_of', ['2026-06-30', '2026-07-01', '2027-03-01'])
+def test_conflicting_bounds_are_not_projected_as_a_known_end_date(as_of):
+    from tests.services.test_legal_effect import _finite_review_data
+    from app.services.legal_registry import registry_view
+    evidence, event = _finite_review_data()
+    first = review_legal_effect(evidence, '2026-10-30', [event])['result']['assertions'][0]
+    record = dict(state='published', reviewed_at='2026-10-30T00:00:00+00:00',
+                  assertions=[first, {**first, 'effective_until': '2027-03-31'}])
+    result = registry_view('A/2026', as_of, [record])
+    assert result['status'] == 'unknown'
+    assert result['effective_to'] is None
+    assert result['effective_to_inclusive'] is False
+
+
+def test_earlier_reviewed_repeal_takes_precedence_over_inclusive_expiry():
+    from tests.services.test_legal_effect import _finite_review_data
+    from app.services.legal_registry import registry_view
+    evidence, event = _finite_review_data()
+    first = review_legal_effect(evidence, '2026-10-30', [event])['result']['assertions'][0]
+    record = dict(state='published', reviewed_at='2026-10-30T00:00:00+00:00',
+                  assertions=[first, {**first, 'event_kind': 'repeal',
+                    'effective_date': '2027-01-01'}])
+    result = registry_view('A/2026', '2027-01-01', [record])
+    assert result['status'] == 'repealed'
+    assert result['effective_to'] == '2027-01-01'
+    assert result['effective_to_inclusive'] is False
+
+
 def review():
     text = "Văn bản A/2020 có hiệu lực từ ngày 01/01/2021. Văn bản B/2024 bãi bỏ A/2020 từ ngày 01/01/2024."
     evidence = [

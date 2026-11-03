@@ -338,6 +338,42 @@ def test_answer_report_exposes_generation_guardrail_and_ragas_coverage() -> None
     assert "| `case_002` | `ok` | `MAX_TOKENS` | `no` | `judge` |" in text
 
 
+def test_answer_report_renders_per_metric_denominators_and_coverage() -> None:
+    summary = RetrievalAggregateMetrics.model_validate(
+        aggregate_retrieval_metrics(aggregate_fixture())
+    )
+    text = generate_markdown_report(
+        report_manifest(),
+        summary.model_dump(mode="json"),
+        {},
+        {},
+        answer_summary={
+            "scored_cases": 1,
+            "total_cases": 2,
+            "metric_details": {
+                "number_precision": {
+                    "value": 0.5,
+                    "numerator": 0.5,
+                    "denominator": 1,
+                    "coverage": 0.5,
+                    "scored_cases": 1,
+                    "skipped_cases": 1,
+                    "skip_reasons": {"no_expected_numbers": 1},
+                }
+            },
+        },
+    )
+
+    assert (
+        "| Metric | Value | Aggregation | Numerator | Denominator | Coverage | "
+        "Scored / Skipped | Skip reasons | Reason |"
+    ) in text
+    assert (
+        "| `number_precision` | 0.5000 | N/A | 0.500000 | 1 | 50.0% | "
+        "1 / 1 | no_expected_numbers=1 | N/A |"
+    ) in text
+
+
 def test_report_rejects_legacy_metric_keys() -> None:
     with pytest.raises(EvaluationSchemaError) as captured:
         generate_markdown_report(

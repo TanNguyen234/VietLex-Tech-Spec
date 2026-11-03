@@ -7,8 +7,7 @@ import secrets
 import csv
 import io
 from datetime import date
-from functools import partial
-from typing import Dict
+from typing import Dict, Literal
 import logfire
 
 from fastapi import APIRouter, Request, Depends, Form, BackgroundTasks, HTTPException, Query
@@ -39,11 +38,15 @@ from app.services.public_evaluation import (
 )
 from app.services.conversation_export import render_conversation_markdown
 from app.services.readiness import build_readiness
+from app.services.runtime_identity import runtime_identity
+from app.services.chat_intent import deterministic_guidance
+from app.services.conversation_context import followup_context, is_explicit_followup
 from app.rate_limit import limiter
 from app.services.evidence_presenter import present_context
 from app.services.provider_runtime import provider_status_snapshot, capture_provider_usage
 from app.services.admin_observability import present_interaction, AdminDataUnavailable
 from app.services.direct_llm import provider_cooldown_snapshot
+from app.services.provider_http_budget import ProviderHttpAttemptBudgetExceeded
 from app.services.chat_progress import chat_progress
 from app.services.research_presenter import (
     build_claim_support,
@@ -56,6 +59,7 @@ from app.services.runtime_errors import (
     GUARDRAIL_UNAVAILABLE_MESSAGE,
     GuardrailUnavailableError,
     RetrievalPipelineError,
+    guardrail_error_reason,
 )
 from app.database import (
     log_interaction, update_feedback, get_admin_logs, get_admin_stats, get_interaction,
@@ -163,6 +167,14 @@ async def save_to_semantic_cache(*args, **kwargs):
     return await implementation(*args, **kwargs)
 
 
+def semantic_cache_query_allowed(message: str) -> bool:
+    if settings.APP_ENV == "development":
+        return False
+    from app.services.semantic_cache import is_cacheable_query
+
+    return is_cacheable_query(message)
+
+
 async def run_advanced_rag(message: str, **kwargs):
     from app.services.rag_pipeline import run_advanced_rag as implementation
 
@@ -181,29 +193,50 @@ async def _owned_interaction(trace_id: str, client_id: str, user_id: str | None)
     return await get_owned_interaction(trace_id, client_id)
 
 
-async def _optional_input_guardrail(
-    message: str, enabled: bool
-) -> tuple[bool, str, float]:
-    if not enabled:
-        return True, "", 0.0
-    started = time.perf_counter()
-    safe, rejection = await check_input_guardrails(message)
-    return safe, rejection, round(time.perf_counter() - started, 4)
+def _guardrail_state(mode: str) -> dict:
+    return {
+        "mode": mode, "requested": mode != "off", "executed": False,
+        "status": "not_run", "input_safe": None, "output_safe": None,
+        "stages": {stage: {"status": "not_run", "safe": None, "error": None}
+                   for stage in ("input", "output")},
+    }
 
 
-async def _optional_output_guardrail(
-    response: str, contexts: list[str], query: str, enabled: bool
-) -> tuple[bool, str, float]:
-    if not enabled:
+async def _run_guardrail(stage: str, mode: str, state: dict, check, *args):
+    if mode == "off":
         return True, "", 0.0
     started = time.perf_counter()
-    safe, fallback = await check_output_guardrails(response, contexts, query)
-    return safe, fallback, round(time.perf_counter() - started, 4)
+    state["executed"] = True
+    result = state["stages"][stage]
+    try:
+        safe, fallback = await check(*args)
+        if type(safe) is not bool:
+            raise GuardrailUnavailableError(stage, "invalid_decision")
+        result.update(status="passed" if safe else "rejected", safe=safe)
+    except Exception as error:
+        if not isinstance(error, GuardrailUnavailableError):
+            error = GuardrailUnavailableError(stage, type(error).__name__)
+        reason = guardrail_error_reason(getattr(error, "reason", None))
+        result.update(status="error", safe=None, error={
+            "type": "GuardrailUnavailableError", "stage": stage, "reason": reason,
+        })
+        if mode == "enforce":
+            raise error
+        safe, fallback = True, ""
+    finally:
+        state[f"{stage}_safe"] = result["safe"]
+        statuses = [item["status"] for item in state["stages"].values()]
+        state["status"] = ("error" if "error" in statuses else "rejected" if "rejected" in statuses
+                           else "passed" if all(item == "passed" for item in statuses) else "not_run")
+    if mode == "shadow" and result["status"] != "passed":
+        logfire.warning("Shadow guardrail observation", stage=stage, status=result["status"],
+                        error_kind=(result["error"] or {}).get("reason"))
+    return safe if mode == "enforce" else True, fallback, round(time.perf_counter() - started, 4)
 
 
 @router.get("/healthz")
 async def healthz():
-    return {"status": "ok", "service": "vietlex"}
+    return {"status": "ok", "service": "vietlex", "identity": runtime_identity(settings)}
 
 
 @router.get("/readyz")
@@ -249,6 +282,7 @@ async def retrieval_inspector(
 
 
 @router.get("/api/progress/{request_id}/stream")
+@limiter.limit(settings.PUBLIC_PROGRESS_RATE_LIMIT)
 async def chat_progress_stream(request: Request, request_id: str):
     client_id = getattr(request.state, "client_id", "legacy")
 
@@ -284,37 +318,31 @@ async def chat(
     csrf_token: str = Form(...),
     session_id: str = Form(None),
     nemo_enabled: bool = Form(False),
+    guardrail_mode: Literal["off", "shadow", "enforce"] | None = Form(None),
     document_id: int | None = Form(None, ge=0),
     request_id: str = Form(""),
     csrf_valid: str = Depends(verify_csrf),
     current_user=Depends(optional_user),
 ):
     request_started = time.perf_counter()
-    # A legacy client may request stricter checks, never disable server policy.
-    nemo_enabled = settings.PUBLIC_NEMO_DEFAULT_ENABLED or nemo_enabled
+    # Public policy is mandatory in every environment, including legacy clients.
+    mode = "enforce"
+    guardrail_state = _guardrail_state(mode)
+    nemo_enabled = mode != "off"
     message = redact_pii(message)
     trace_id = str(uuid.uuid4())
     client_id = getattr(request.state, "client_id", "legacy")
     user_id = str(current_user["_id"]) if current_user else None
     scoped_outcome = None
-    if document_id is not None:
-        from app.api.legal_routes import _get_browser
-        from app.services.document_scope import document_evidence
-        from app.services.legal_browser import LegalBrowserBackendError
-
-        try:
-            document = await asyncio.to_thread(_get_browser().get_document, document_id)
-        except LegalBrowserBackendError:
-            raise HTTPException(503, "Không đọc được văn bản đã chọn.") from None
-        if document is None:
-            raise HTTPException(404, "Không tìm thấy văn bản đã chọn.")
-        scoped_outcome = await asyncio.to_thread(document_evidence, message, document)
-    persist_interaction = partial(
-        log_interaction, client_id=client_id, user_id=user_id,
-        request_metadata={'method': 'POST', 'path': '/chat', 'nemo_requested': nemo_enabled,
-                          'guardrail_engine': 'direct_self_check' if settings.SERVERLESS_ONLINE_ONLY else 'nemo',
-                          'scope': 'document' if document_id is not None else 'corpus', 'document_id': document_id},
-    )
+    async def persist_interaction(**kwargs):
+        kwargs.update(input_safe=guardrail_state["input_safe"],
+                      output_safe=guardrail_state["output_safe"], guardrail_state=guardrail_state)
+        return await log_interaction(
+            **kwargs, client_id=client_id, user_id=user_id,
+            request_metadata={'method': 'POST', 'path': '/chat', 'nemo_requested': nemo_enabled,
+                              'guardrail_engine': 'direct_self_check' if settings.SERVERLESS_ONLINE_ONLY else 'nemo',
+                              'scope': 'document' if document_id is not None else 'corpus', 'document_id': document_id},
+        )
     if request_id:
         chat_progress.start(request_id, client_id, nemo_enabled=nemo_enabled)
     is_new_session = False
@@ -337,11 +365,11 @@ async def chat(
                 request_id,
                 client_id,
                 "input_guardrail",
-                "Đang kiểm tra NeMo input" if nemo_enabled else "NeMo input đang tắt",
+                "Đang kiểm tra an toàn đầu vào",
             )
         try:
             input_safe, rejection_message, t_guardrails_input = (
-                await _optional_input_guardrail(message, nemo_enabled)
+                await _run_guardrail("input", mode, guardrail_state, check_input_guardrails, message)
             )
         except GuardrailUnavailableError as error:
             t_guardrails_input = round(time.perf_counter() - request_started, 4)
@@ -353,7 +381,7 @@ async def chat(
             }
             logfire.error(
                 "Input guardrail unavailable",
-                error=str(error),
+                error_kind=type(error).__name__,
                 trace_id=trace_id,
             )
             latency_record = {
@@ -461,13 +489,40 @@ async def chat(
                 chat_progress.complete(request_id, client_id, status="blocked_input")
             return response
 
+        if document_id is not None:
+            from app.api.legal_routes import _get_browser
+            from app.services.document_scope import document_evidence
+            from app.services.legal_browser import LegalBrowserBackendError
+
+            try:
+                document = await asyncio.to_thread(_get_browser().get_document, document_id)
+            except LegalBrowserBackendError:
+                raise HTTPException(503, "Không đọc được văn bản đã chọn.") from None
+            if document is None:
+                raise HTTPException(404, "Không tìm thấy văn bản đã chọn.")
+            scoped_outcome = await asyncio.to_thread(document_evidence, message, document)
+
         # Step 3: Check Semantic Cache only after the input is approved.
         if request_id:
             chat_progress.advance(
                 request_id, client_id, "semantic_cache", "Đang kiểm tra semantic cache"
             )
         cache_started = time.perf_counter()
-        cached_response = None if scoped_outcome is not None or nemo_enabled else await check_semantic_cache(message)
+        followup_requested = scoped_outcome is None and is_explicit_followup(message)
+        previous_user_query = None
+        if followup_requested and not is_new_session:
+            previous_user_query = followup_context(message, await get_session_messages(
+                session_id, client_id, user_id=user_id, recent_limit=8,
+            ))
+        cacheable_query = (
+            scoped_outcome is None and deterministic_guidance(message) is None
+            and not followup_requested and semantic_cache_query_allowed(message)
+        )
+        cached_response = (
+            await check_semantic_cache(message)
+            if cacheable_query and not nemo_enabled
+            else None
+        )
         t_cache = round(time.perf_counter() - cache_started, 4)
 
         if cached_response:
@@ -554,31 +609,41 @@ async def chat(
             )
         try:
             bot_response, context_used, latency_info = await run_advanced_rag(
-                message, **({"scoped_outcome": scoped_outcome} if scoped_outcome is not None else {})
+                message, **({"scoped_outcome": scoped_outcome} if scoped_outcome is not None else
+                            {"previous_user_query": previous_user_query} if previous_user_query else {})
             )
-        except RetrievalPipelineError as error:
+        except (RetrievalPipelineError, ProviderHttpAttemptBudgetExceeded) as error:
             t_total = round(time.perf_counter() - request_started, 4)
             tech_error = {
-                "stage": getattr(error, "status", "retrieval_error"),
+                "stage": (
+                    "answer_generation"
+                    if isinstance(error, ProviderHttpAttemptBudgetExceeded)
+                    else getattr(error, "status", "retrieval_error")
+                ),
                 "error_type": error.__class__.__name__,
                 "message": sanitize_error_message(error),
             }
             error_response = "Hệ thống tra cứu văn bản pháp luật gặp sự cố kỹ thuật. Vui lòng thử lại sau."
-            logfire.error("Retrieval pipeline failed", error=str(error), trace_id=trace_id)
+            logfire.error(
+                "Retrieval pipeline failed",
+                error_kind=type(error).__name__,
+                trace_id=trace_id,
+            )
             err_latency: Dict[str, float] = {
                 "t_total": t_total,
                 "t_cache": t_cache,
                 "t_guardrails_input": t_guardrails_input,
             }
-            if error.latency:
-                for k, v in error.latency.items():
+            error_latency = getattr(error, "latency", None)
+            if isinstance(error_latency, dict):
+                for k, v in error_latency.items():
                     if isinstance(v, (int, float)):
                         err_latency[k] = float(v)
             err_latency["t_total"] = t_total
 
-            err_provider_usage = error.latency.get("provider_usage") if isinstance(error.latency, dict) else None
-            err_observed_prov = error.latency.get("observed_provider") if isinstance(error.latency, dict) else None
-            err_observed_mod = error.latency.get("observed_model") if isinstance(error.latency, dict) else None
+            err_provider_usage = error_latency.get("provider_usage") if isinstance(error_latency, dict) else None
+            err_observed_prov = error_latency.get("observed_provider") if isinstance(error_latency, dict) else None
+            err_observed_mod = error_latency.get("observed_model") if isinstance(error_latency, dict) else None
 
             metrics = build_online_metrics(
                 trace_id=trace_id,
@@ -702,6 +767,7 @@ async def chat(
                     "contexts": context_used,
                     "evidence_views": [present_context(item) for item in context_used],
                 },
+                status_code=503,
             )
             if is_new_session:
                 response.headers["HX-Trigger"] = "load-sessions"
@@ -715,15 +781,16 @@ async def chat(
                 request_id,
                 client_id,
                 "output_guardrail",
-                "Đang kiểm tra NeMo output" if nemo_enabled else "NeMo output đang tắt",
+                "Đang kiểm tra câu trả lời với nguồn",
             )
         try:
             output_safe, fallback_response, t_guardrails_output = (
-                await _optional_output_guardrail(
+                await _run_guardrail(
+                    "output", mode, guardrail_state, check_output_guardrails,
                     bot_response,
                     context_used,
-                    message,
-                    nemo_enabled,
+                    (f"Dữ kiện trước do người dùng cung cấp: {previous_user_query}\n"
+                     f"Câu hỏi tiếp theo: {message}" if previous_user_query else message),
                 )
             )
         except GuardrailUnavailableError as error:
@@ -736,7 +803,7 @@ async def chat(
             }
             logfire.error(
                 "Output guardrail unavailable",
-                error=str(error),
+                error_kind=type(error).__name__,
                 trace_id=trace_id,
             )
             err_latency = {
@@ -809,10 +876,13 @@ async def chat(
         rejection_reason = None if output_safe else "Hallucination or unsafe output detected"
         
         # Build online operational metrics
-        if not context_used:
-            req_status = "no_evidence"
-        elif not output_safe:
+        response_kind = latency_info.get("response_kind") if isinstance(latency_info, dict) else None
+        if not output_safe:
             req_status = "blocked_output"
+        elif response_kind in {"clarification", "unsupported_intent"}:
+            req_status = response_kind
+        elif not context_used:
+            req_status = "no_evidence"
         else:
             req_status = "ok"
 
@@ -884,7 +954,7 @@ async def chat(
         )
         
         # Cache only grounded, output-approved answers and preserve their evidence.
-        if req_status == "ok" and context_used and scoped_outcome is None:
+        if req_status == "ok" and context_used and cacheable_query and not nemo_enabled:
             background_tasks.add_task(
                 save_to_semantic_cache,
                 message,

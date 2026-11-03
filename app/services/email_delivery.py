@@ -23,7 +23,7 @@ class SmtpEmailSender:
             self._send,
             email,
             "Xác minh tài khoản VietLex",
-            "Xác minh email của bạn tại:\n"
+            "Mở liên kết sau rồi xác nhận địa chỉ email để hoàn tất đăng ký:\n"
             + self._link("/verify-email", token),
         )
 

@@ -180,6 +180,350 @@ def test_development_falls_back_to_v3_when_full_fts_is_not_ready(
     assert browser._body_index.path == v3_body_path
 
 
+def test_development_uses_supabase_when_local_corpus_is_missing(
+    monkeypatch, tmp_path
+):
+    from app.services import legal_browser
+
+    missing_content = tmp_path / "missing" / "content.sqlite3"
+    missing_fts = tmp_path / "missing" / "fts.sqlite3"
+    settings = SimpleNamespace(
+        APP_ENV="development",
+        SERVERLESS_ONLINE_ONLY=False,
+        USE_LEGACY_FREE_PIPELINE=False,
+        CONTENT_STORE_PATH=tmp_path / "full" / "content.sqlite3",
+        LEGAL_FTS_PATH=tmp_path / "full" / "fts.sqlite3",
+        V3_CONTENT_STORE_PATH=missing_content,
+        V3_LEGAL_FTS_PATH=missing_fts,
+        DATASET_REVISION="pinned-revision",
+        SUPABASE_URL="https://project.supabase.co",
+        SUPABASE_PUBLISHABLE_KEY="public-test-key",
+        QDRANT_FULL_DOC_BODY_SEARCH_ENABLED=True,
+        QDRANT_URL="https://qdrant.example",
+        QDRANT_API_KEY="test-key",
+        QDRANT_FULL_DOC_BODY_COLLECTION="legal-body",
+    )
+    remote = object()
+    body_index = object()
+
+    monkeypatch.setattr(
+        legal_browser,
+        "SupabaseLegalStore",
+        lambda **_kwargs: remote,
+    )
+    monkeypatch.setattr(
+        legal_browser,
+        "QdrantFullDocBodySearch",
+        lambda **_kwargs: body_index,
+    )
+    monkeypatch.setattr(
+        legal_browser,
+        "ContentStore",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("missing local SQLite must not be opened")
+        ),
+    )
+
+    browser = legal_browser.LegalBrowser.from_settings(settings)
+
+    assert browser._store is remote
+    assert browser._index is remote
+    assert browser._body_index is body_index
+    assert not missing_content.exists()
+    assert not missing_fts.exists()
+
+
+def test_development_uses_supabase_when_local_fts_exists_but_is_invalid(
+    tmp_path,
+):
+    from app.services.legal_browser import should_use_supabase_legal_store
+
+    content_path = tmp_path / "content.sqlite3"
+    fts_path = tmp_path / "legal_fts.sqlite3"
+    content_path.touch()
+    fts_path.touch()
+    settings = SimpleNamespace(
+        APP_ENV="development",
+        SERVERLESS_ONLINE_ONLY=False,
+        USE_LEGACY_FREE_PIPELINE=True,
+        CONTENT_STORE_PATH=content_path,
+        LEGAL_FTS_PATH=fts_path,
+        V3_CONTENT_STORE_PATH=tmp_path / "v3-content.sqlite3",
+        V3_LEGAL_FTS_PATH=tmp_path / "v3-fts.sqlite3",
+        DATASET_REVISION="pinned-revision",
+        SUPABASE_URL="https://project.supabase.co",
+        SUPABASE_PUBLISHABLE_KEY="public-test-key",
+    )
+
+    assert should_use_supabase_legal_store(settings)
+
+
+def test_supabase_fallback_requires_development_and_public_credentials(tmp_path):
+    from app.services.legal_browser import should_use_supabase_legal_store
+
+    settings = SimpleNamespace(
+        APP_ENV="development",
+        SERVERLESS_ONLINE_ONLY=False,
+        USE_LEGACY_FREE_PIPELINE=False,
+        CONTENT_STORE_PATH=tmp_path / "full-content.sqlite3",
+        LEGAL_FTS_PATH=tmp_path / "full-fts.sqlite3",
+        V3_CONTENT_STORE_PATH=tmp_path / "v3-content.sqlite3",
+        V3_LEGAL_FTS_PATH=tmp_path / "v3-fts.sqlite3",
+    )
+    assert not should_use_supabase_legal_store(settings)
+
+    settings.SUPABASE_URL = "https://project.supabase.co"
+    settings.SUPABASE_PUBLISHABLE_KEY = "public-test-key"
+    settings.APP_ENV = "test"
+    assert not should_use_supabase_legal_store(settings)
+
+    settings.APP_ENV = "development"
+    assert should_use_supabase_legal_store(settings)
+
+
+def _write_clean_derivative_metadata(
+    clean_path,
+    *,
+    base_path,
+    revision="pinned-revision",
+    overlay_sha="a" * 64,
+    overlay_count=189,
+):
+    import json
+    import sqlite3
+
+    with sqlite3.connect(clean_path) as db:
+        db.execute("CREATE TABLE build_metadata(key TEXT PRIMARY KEY,value TEXT NOT NULL)")
+        report = {
+            "joined_count": 4,
+            "metadata_count": 4,
+            "content_count": 4,
+            "average_sparse_document_length": 979.1241640033913,
+        }
+        metadata = {
+            "status": "complete",
+            "build_report": json.dumps(report),
+            "raw_build_report": json.dumps(report),
+            "clean_derivative_status": "complete",
+            "clean_dataset_revision": revision,
+            "clean_base_store_path": str(base_path.resolve()),
+            "clean_overlay_manifest_sha256": overlay_sha,
+            "clean_overlay_document_count": str(overlay_count),
+            "clean_body_index_document_count": "4989",
+            "clean_body_index_passage_count": "2",
+            "clean_body_index_source_sha256": "b" * 64,
+        }
+        db.executemany("INSERT INTO build_metadata VALUES (?,?)", metadata.items())
+
+
+def test_development_prefers_lineage_verified_clean_store_and_body_index(
+    monkeypatch, tmp_path
+):
+    import sqlite3
+    from pathlib import Path
+
+    from app.services import legal_browser
+
+    base = tmp_path / "raw" / "content.sqlite3"
+    clean = tmp_path / "clean" / "content_store.sqlite3"
+    raw_fts = tmp_path / "raw" / "legal_fts.sqlite3"
+    body_path = clean.with_name("legal_body_fts.sqlite3")
+    v3_store = tmp_path / "v3" / "content.sqlite3"
+    v3_fts = tmp_path / "v3" / "legal_fts.sqlite3"
+    v3_body = v3_store.with_name("legal_body_fts.sqlite3")
+    for path in (base, clean, raw_fts, body_path, v3_store, v3_fts, v3_body):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.touch()
+    _write_clean_derivative_metadata(clean, base_path=base)
+
+    class Store:
+        def __init__(self, path):
+            self.path = Path(path)
+
+        def build_report(self):
+            return SimpleNamespace(joined_count=4)
+
+    class Index:
+        def __init__(self, *, store, path, dataset_revision):
+            self.store = store
+            self.path = Path(path)
+            self.dataset_revision = dataset_revision
+
+        def is_ready(self):
+            return self.path == raw_fts
+
+    class BodyIndex:
+        def __init__(self, path):
+            self.path = Path(path)
+
+        def coverage(self):
+            return {
+                "schema_version": 1,
+                "overlap_characters": 240,
+                "document_count": 4989,
+                "passage_count": 2,
+                "source_sha256": "b" * 64,
+            }
+
+    monkeypatch.setattr(legal_browser, "ContentStore", Store)
+    monkeypatch.setattr(legal_browser, "LegalFtsIndex", Index)
+    monkeypatch.setattr(legal_browser, "BodySearchIndex", BodyIndex)
+    settings = SimpleNamespace(
+        APP_ENV="development",
+        SERVERLESS_ONLINE_ONLY=False,
+        USE_LEGACY_FREE_PIPELINE=False,
+        CONTENT_STORE_PATH=base,
+        CLEAN_CONTENT_STORE_PATH=clean,
+        LEGAL_FTS_PATH=raw_fts,
+        V3_CONTENT_STORE_PATH=v3_store,
+        V3_LEGAL_FTS_PATH=v3_fts,
+        DATASET_REVISION="pinned-revision",
+        EXPECTED_DOCUMENT_COUNT=4,
+        V3_AVERAGE_SPARSE_DOCUMENT_LENGTH=979.1241640033913,
+    )
+
+    browser = legal_browser.LegalBrowser.from_settings(settings)
+
+    assert browser._store.path == clean
+    assert browser._index.path == raw_fts
+    assert browser._body_index.path == body_path
+    with sqlite3.connect(clean) as db:
+        db.execute(
+            "UPDATE build_metadata SET value=? "
+            "WHERE key='clean_body_index_source_sha256'",
+            ("c" * 64,),
+        )
+    fallback = legal_browser.LegalBrowser.from_settings(settings)
+    assert fallback._store.path == clean
+    assert fallback._body_index.path == v3_body
+
+
+def test_clean_content_store_setting_defaults_to_separate_v1_derivative():
+    from pathlib import Path
+
+    from app.config import Settings
+
+    assert Settings.model_fields["CLEAN_CONTENT_STORE_PATH"].default == Path(
+        "data/huggingface/clean-v1/content_store.sqlite3"
+    )
+
+
+def test_clean_derivative_wrong_lineage_never_supersedes_raw_store(
+    monkeypatch, tmp_path
+):
+    import sqlite3
+    from pathlib import Path
+
+    from app.services import legal_browser
+
+    base = tmp_path / "raw" / "content.sqlite3"
+    clean = tmp_path / "clean" / "content_store.sqlite3"
+    raw_fts = tmp_path / "raw" / "legal_fts.sqlite3"
+    v3_store = tmp_path / "v3" / "content.sqlite3"
+    v3_fts = tmp_path / "v3" / "legal_fts.sqlite3"
+    for path in (base, clean, raw_fts, v3_store, v3_fts):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.touch()
+    _write_clean_derivative_metadata(clean, base_path=base, revision="other-revision")
+
+    class Store:
+        def __init__(self, path):
+            self.path = Path(path)
+
+        def build_report(self):
+            return SimpleNamespace(joined_count=4)
+
+    class Index:
+        def __init__(self, *, store, path, dataset_revision):
+            self.path = Path(path)
+
+        def is_ready(self):
+            return self.path == raw_fts
+
+    monkeypatch.setattr(legal_browser, "ContentStore", Store)
+    monkeypatch.setattr(legal_browser, "LegalFtsIndex", Index)
+    settings = SimpleNamespace(
+        APP_ENV="development",
+        USE_LEGACY_FREE_PIPELINE=False,
+        CONTENT_STORE_PATH=base,
+        CLEAN_CONTENT_STORE_PATH=clean,
+        LEGAL_FTS_PATH=raw_fts,
+        V3_CONTENT_STORE_PATH=v3_store,
+        V3_LEGAL_FTS_PATH=v3_fts,
+        DATASET_REVISION="pinned-revision",
+        EXPECTED_DOCUMENT_COUNT=4,
+        V3_AVERAGE_SPARSE_DOCUMENT_LENGTH=979.1241640033913,
+    )
+
+    assert legal_browser.local_legal_paths(settings) == (base, raw_fts, True)
+    with sqlite3.connect(clean) as db:
+        db.execute(
+            "UPDATE build_metadata SET value=? WHERE key='clean_base_store_path'",
+            (str(base.resolve()),),
+        )
+        db.execute(
+            "UPDATE build_metadata SET value=? "
+            "WHERE key='clean_overlay_document_count'",
+            ("188",),
+        )
+    assert legal_browser.local_legal_paths(settings) == (base, raw_fts, True)
+    with sqlite3.connect(clean) as db:
+        db.execute(
+            "UPDATE build_metadata SET value=? WHERE key='clean_dataset_revision'",
+            ("pinned-revision",),
+        )
+        db.execute(
+            "UPDATE build_metadata SET value=? WHERE key='clean_base_store_path'",
+            (str((tmp_path / "other-base.sqlite3").resolve()),),
+        )
+    assert legal_browser.local_legal_paths(settings) == (base, raw_fts, True)
+
+
+def test_legacy_local_paths_remain_raw_with_clean_derivative_present(
+    monkeypatch, tmp_path
+):
+    from pathlib import Path
+
+    from app.services import legal_browser
+
+    base = tmp_path / "raw.sqlite3"
+    clean = tmp_path / "clean.sqlite3"
+    raw_fts = tmp_path / "raw-fts.sqlite3"
+    v3_store = tmp_path / "v3.sqlite3"
+    v3_fts = tmp_path / "v3-fts.sqlite3"
+    for path in (base, clean, raw_fts, v3_store, v3_fts):
+        path.touch()
+    _write_clean_derivative_metadata(clean, base_path=base)
+
+    class Store:
+        def __init__(self, path):
+            self.path = Path(path)
+
+    class Index:
+        def __init__(self, *, store, path, dataset_revision):
+            self.path = Path(path)
+
+        def is_ready(self):
+            return True
+
+    monkeypatch.setattr(legal_browser, "ContentStore", Store)
+    monkeypatch.setattr(legal_browser, "LegalFtsIndex", Index)
+    settings = SimpleNamespace(
+        APP_ENV="development",
+        USE_LEGACY_FREE_PIPELINE=True,
+        CONTENT_STORE_PATH=base,
+        CLEAN_CONTENT_STORE_PATH=clean,
+        LEGAL_FTS_PATH=raw_fts,
+        V3_CONTENT_STORE_PATH=v3_store,
+        V3_LEGAL_FTS_PATH=v3_fts,
+        DATASET_REVISION="pinned-revision",
+        EXPECTED_DOCUMENT_COUNT=4,
+        V3_AVERAGE_SPARSE_DOCUMENT_LENGTH=979.1241640033913,
+    )
+
+    assert legal_browser.local_legal_paths(settings) == (base, raw_fts, True)
+
+
 def test_supabase_metadata_search_uses_bounded_offset():
     from app.services.legal_browser import SupabaseLegalStore
 

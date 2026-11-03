@@ -259,6 +259,12 @@ async def generate_research_report(question: str, evidence: list[dict]) -> dict:
     citation_mismatches = _normalise_citation_mismatches(assessment, claims)
     assessment_status = str(assessment["status"])
     coverage = (assessment.get("result") or {}).get("coverage") or {}
+    verdicts = [item.get("verdict") for item in
+                (assessment.get("result") or {}).get("claims", [])]
+    if assessment_status == "ok" and any(
+        verdict != "supported" for verdict in verdicts
+    ):
+        report.status = "insufficient_evidence"
     return {
         "status": (
             "citation_mismatch"
@@ -270,7 +276,12 @@ async def generate_research_report(question: str, evidence: list[dict]) -> dict:
         "report": report.model_dump(mode="json"),
         "coverage": {
             "report_claims": len(claims),
-            "verified_claims": int(coverage.get("assessed_claims", 0)),
+            # Compatibility field: model-supported claims, never legal certification.
+            "verified_claims": verdicts.count("supported"),
+            "assessed_claims": int(coverage.get("assessed_claims", 0)),
+            "supported_claims": verdicts.count("supported"),
+            "contradicted_claims": verdicts.count("contradicted"),
+            "insufficient_claims": verdicts.count("insufficient"),
         },
         "unknown": report.unknown,
         "model_assessment": assessment,

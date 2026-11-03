@@ -36,17 +36,29 @@ _request_calls: ContextVar[list[dict[str, Any]] | None] = ContextVar(
 
 
 def capture_provider_usage(operation):
-    """Bind telemetry to one request; child tasks share its bounded event list."""
+    """Bind usage and supported HTTP accounting to one request."""
 
     @wraps(operation)
     async def wrapped(*args, **kwargs):
-        token = _request_calls.set([])
-        try:
-            return await operation(*args, **kwargs)
-        finally:
-            _request_calls.reset(token)
+        from app.config import get_settings
+        from app.services.provider_http_budget import provider_http_budget_scope
 
+        limit = getattr(get_settings(), "PROVIDER_HTTP_ATTEMPT_LIMIT", None)
+        with provider_http_budget_scope(limit=limit):
+            token = _request_calls.set([])
+            try:
+                return await operation(*args, **kwargs)
+            finally:
+                _request_calls.reset(token)
     return wrapped
+
+
+def current_provider_http_budget():
+    """Return the active HTTP ledger without mixing it into LLM usage events."""
+
+    from app.services.provider_http_budget import current_provider_http_budget as current
+
+    return current()
 
 
 def current_provider_calls() -> list[dict[str, Any]] | None:

@@ -23,6 +23,7 @@ def _module():
 def _settings(**overrides):
     values = {
         "GOOGLE_CLOUD_PROJECT": "vietlex-test-project",
+        "GOOGLE_CLOUD_QUOTA_PROJECT": None,
         "GOOGLE_CLOUD_LOCATION": "global",
         "VERTEX_LLM_MODEL": "gemini-3.5-flash",
         "VERTEX_EMBEDDING_MODEL": "gemini-embedding-2",
@@ -142,6 +143,105 @@ async def test_generation_returns_typed_vertex_metadata_without_credentials() ->
     assert "credentials" not in result.metadata.to_dict()
     generation_config = models.generation_calls[0]["config"]
     assert generation_config.thinking_config.thinking_level == "MINIMAL"
+
+
+@pytest.mark.asyncio
+async def test_quota_project_credentials_are_applied_before_client_creation() -> None:
+    vertex_ai = _module()
+    events = []
+    quota_credentials = object()
+
+    class Credentials:
+        def with_quota_project(self, quota_project):
+            events.append(("quota_project", quota_project))
+            return quota_credentials
+
+    def client_factory(**kwargs):
+        events.append(("client", kwargs["credentials"], kwargs["project"]))
+        return _Client(_Models())
+
+    provider = vertex_ai.VertexAIProvider(
+        settings=_settings(GOOGLE_CLOUD_QUOTA_PROJECT="billing-project"),
+        credentials_loader=lambda: (Credentials(), "adc-project"),
+        client_factory=client_factory,
+    )
+
+    result = await provider.generate("Câu hỏi")
+
+    assert events == [
+        ("quota_project", "billing-project"),
+        ("client", quota_credentials, "vietlex-test-project"),
+    ]
+    assert result.metadata.project == "vietlex-test-project"
+
+
+@pytest.mark.asyncio
+async def test_unset_quota_project_preserves_discovered_credentials() -> None:
+    vertex_ai = _module()
+    credentials = object()
+    captured = {}
+
+    def client_factory(**kwargs):
+        captured.update(kwargs)
+        return _Client(_Models())
+
+    provider = vertex_ai.VertexAIProvider(
+        settings=_settings(GOOGLE_CLOUD_QUOTA_PROJECT=None),
+        credentials_loader=lambda: (credentials, "adc-project"),
+        client_factory=client_factory,
+    )
+
+    await provider.generate("Câu hỏi")
+
+    assert captured["credentials"] is credentials
+
+
+def test_settings_like_object_without_quota_project_preserves_credentials() -> None:
+    vertex_ai = _module()
+    credentials = object()
+    captured = {}
+    settings = _settings()
+    delattr(settings, "GOOGLE_CLOUD_QUOTA_PROJECT")
+
+    def client_factory(**kwargs):
+        captured.update(kwargs)
+        return _Client(_Models())
+
+    provider = vertex_ai.VertexAIProvider(
+        settings=settings,
+        credentials_loader=lambda: (credentials, "adc-project"),
+        client_factory=client_factory,
+    )
+
+    provider._get_client()
+
+    assert captured["credentials"] is credentials
+
+
+def test_quota_project_application_failure_is_typed_and_sanitized() -> None:
+    vertex_ai = _module()
+    secret = "private-token-and-key.json"
+
+    class Credentials:
+        def with_quota_project(self, _quota_project):
+            raise RuntimeError(secret)
+
+    provider = vertex_ai.VertexAIProvider(
+        settings=_settings(GOOGLE_CLOUD_QUOTA_PROJECT="billing-project"),
+        credentials_loader=lambda: (Credentials(), "adc-project"),
+        client_factory=lambda **_kwargs: pytest.fail(
+            "client must not be built after quota project application fails"
+        ),
+    )
+
+    with pytest.raises(vertex_ai.VertexAuthenticationError) as captured:
+        provider._get_client()
+
+    assert captured.value.kind == "authentication"
+    assert str(captured.value) == (
+        "Google Cloud quota project could not be applied to credentials."
+    )
+    assert secret not in str(captured.value)
 
 
 @pytest.mark.asyncio

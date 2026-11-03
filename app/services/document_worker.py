@@ -8,13 +8,6 @@ from pathlib import Path
 import subprocess
 import sys
 
-from app.services.workspace_documents import (
-    DocumentExtractionError,
-    ExtractedWorkspaceDocument,
-    MAX_UPLOAD_BYTES,
-    extract_workspace_document,
-)
-
 _MEMORY_BYTES = 256 * 1024 * 1024
 
 
@@ -58,6 +51,12 @@ def _limit_memory():
 
 
 def extract_isolated(filename: str, media_type: str, payload: bytes):
+    from app.services.workspace_documents import (
+        DocumentExtractionError,
+        ExtractedWorkspaceDocument,
+        MAX_UPLOAD_BYTES,
+    )
+
     if len(payload) > MAX_UPLOAD_BYTES:
         raise DocumentExtractionError('document_too_large')
     request = json.dumps({'filename': filename[:180], 'media_type': media_type[:160],
@@ -87,6 +86,11 @@ def extract_isolated(filename: str, media_type: str, payload: bytes):
 
 
 def main():
+    from app.services.workspace_documents import (
+        DocumentExtractionError,
+        extract_workspace_document,
+    )
+
     try:
         job = _limit_memory()
         request = json.loads(sys.stdin.buffer.read(14_000_001))

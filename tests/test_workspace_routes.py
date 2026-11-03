@@ -86,6 +86,31 @@ def test_workspace_list_and_detail_render_empty_states(client, monkeypatch) -> N
     assert "Tra cứu nguồn pháp luật chính thức" in detail.text
 
 
+def test_workspace_options_use_authenticated_owner_and_return_bounded_projection(
+    client, monkeypatch
+) -> None:
+    client.app.dependency_overrides[optional_user] = lambda: {"_id": "user-1"}
+    workspaces = [
+        {
+            "workspace_id": f"w-{index}",
+            "title": "x" * 130,
+            "description": "private content",
+            "evidence": [{"excerpt": "private evidence"}],
+        }
+        for index in range(101)
+    ]
+    list_owned = AsyncMock(return_value=workspaces)
+    monkeypatch.setattr("app.api.workspace_routes.list_workspaces", list_owned)
+
+    response = client.get("/api/workspaces")
+
+    assert response.status_code == 200
+    list_owned.assert_awaited_once_with("owner-a", user_id="user-1")
+    result = response.json()["workspaces"]
+    assert len(result) == 100
+    assert result[0] == {"workspace_id": "w-0", "title": "x" * 120}
+
+
 def test_workspace_hides_official_research_when_feature_is_disabled(
     client, monkeypatch
 ) -> None:
@@ -134,6 +159,80 @@ def test_pin_evidence_resolves_owned_trace_and_index(client, monkeypatch) -> Non
     assert evidence["document_id"] == 123
     assert evidence["note"] == "Quan trọng"
     assert evidence["introduced_by_claim"] == "Theo Điều 25..."
+
+
+@pytest.mark.parametrize("ephemeral", [False, True])
+def test_pin_restores_trusted_context_from_mongo_provenance(client, monkeypatch, ephemeral) -> None:
+    from types import SimpleNamespace
+
+    import app.database as database
+    from app.services.evidence_presenter import (
+        TrustedOfficialEvidenceContext,
+        EphemeralOfficialEvidenceContext,
+        evidence_context_provenance,
+    )
+
+    context_type = EphemeralOfficialEvidenceContext if ephemeral else TrustedOfficialEvidenceContext
+    trusted = context_type(
+        "[Nguồn chính thức ngoài VietLex · 45/2019/QH14]\n"
+        "Nguồn: https://vanban.chinhphu.vn/default.aspx?docid=123\n"
+        "Nguồn loại: official_external\n"
+        "Hiệu lực pháp lý: unverified\n"
+        f"SHA-256 nguồn: {'b' * 64}\n"
+        "Thời điểm đọc: 2026-10-15T10:00:00+00:00\n"
+        "Phương thức đọc: visible_html_text\n"
+        "Tiêu đề: Bộ luật Lao động\n"
+        "Mức lương thử việc ít nhất bằng 85%."
+    )
+    plain_lookalike = str(trusted)
+    row = {
+        "_id": "trace-official-context",
+        "trace_id": "trace-official-context",
+        "client_id": "owner-a",
+        "bot_response": "Theo nguồn chính thức...",
+        # Mongo/BSON returns these as strings plus a plain metadata sidecar.
+        "contexts": [str(trusted), plain_lookalike],
+        "context_provenance": [evidence_context_provenance(trusted), None],
+    }
+    logs = SimpleNamespace(
+        find_one=AsyncMock(side_effect=[dict(row), dict(row)])
+    )
+    monkeypatch.setattr(database.settings, "APP_ENV", "production")
+    monkeypatch.setattr(
+        database, "get_db", lambda: SimpleNamespace(evaluation_logs=logs)
+    )
+    monkeypatch.setattr(
+        "app.api.workspace_routes.get_owned_interaction", database.get_owned_interaction
+    )
+    monkeypatch.setattr(
+        "app.api.workspace_routes.get_workspace",
+        AsyncMock(return_value={"workspace_id": "w-1", "evidence": []}),
+    )
+    pin = AsyncMock(return_value=True)
+    monkeypatch.setattr("app.api.workspace_routes.pin_workspace_evidence", pin)
+
+    trusted_response = client.post(
+        "/workspaces/w-1/evidence",
+        data={"trace_id": "trace-official-context", "evidence_index": "0"},
+    )
+    plain_response = client.post(
+        "/workspaces/w-1/evidence",
+        data={"trace_id": "trace-official-context", "evidence_index": "1"},
+    )
+
+    assert trusted_response.status_code == 200
+    trusted_evidence = pin.await_args_list[0].args[1]
+    assert trusted_evidence["source_type"] == "official_external"
+    assert trusted_evidence["legal_effect_status"] == "unverified"
+    assert trusted_evidence["source_sha256"] == "b" * 64
+    assert trusted_evidence["retrieved_at"] == "2026-10-15T10:00:00+00:00"
+    assert trusted_evidence["read_method"] == "visible_html_text"
+
+    assert plain_response.status_code == 200
+    plain_evidence = pin.await_args_list[1].args[1]
+    assert plain_evidence["source_type"] is None
+    assert plain_evidence["legal_effect_status"] is None
+    assert plain_evidence["source_sha256"] is None
 
 
 def test_pin_rejects_invalid_evidence_index(client, monkeypatch) -> None:

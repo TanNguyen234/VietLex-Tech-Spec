@@ -1,8 +1,14 @@
+import hashlib
 import pytest
 from app.services.trusted_source_reader import (
     validate_source_url,
     extract_page,
     reconcile_sources,
+)
+
+G7_STREAM_URL = (
+    "https://g7.cdnchinhphu.vn/api/download/stream?"
+    "Url=abc_DEF-123~~&file_name=2025_301+%2B+302_64-2024-TT-NHNN.pdf"
 )
 
 
@@ -17,6 +23,28 @@ from app.services.trusted_source_reader import (
     ],
 )
 def test_rejects_unapproved_origin_credentials_and_port(url):
+    with pytest.raises(ValueError):
+        validate_source_url(url)
+
+
+def test_accepts_official_g7_stream_pdf_url():
+    assert validate_source_url(G7_STREAM_URL) == G7_STREAM_URL
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://g7.cdnchinhphu.vn.evil.test/api/download/stream?Url=opaque&file_name=law.pdf",
+        "https://g7.cdnchinhphu.vn:443/api/download/stream?Url=opaque&file_name=law.pdf",
+        "https://g7.cdnchinhphu.vn/other?Url=opaque&file_name=law.pdf",
+        "https://g7.cdnchinhphu.vn/api/download/stream?Url=https%3A%2F%2Fevil.test%2Fa.pdf&file_name=a.pdf",
+        "https://g7.cdnchinhphu.vn/api/download/stream?Url=opaque&file_name=../law.pdf",
+        "https://g7.cdnchinhphu.vn/api/download/stream?Url=opaque&file_name=law.pdf&extra=1",
+        "https://g7.cdnchinhphu.vn/api/download/stream?Url=one&Url=two&file_name=law.pdf",
+        "https://g7.cdnchinhphu.vn/api/download/stream?Url=opaque&file_name=law.txt",
+    ],
+)
+def test_rejects_unbounded_g7_stream_urls(url):
     with pytest.raises(ValueError):
         validate_source_url(url)
 
@@ -44,6 +72,20 @@ def test_extract_page_retains_complete_mid_size_law_for_bounded_analysis():
     passages = relevant_source_passages("Điều 2 hiệu lực", source, limit=10)
     assert source["characters"] == result["extracted_characters"]
     assert len(passages) <= 10
+
+
+def test_extract_page_hash_matches_truncated_retained_text():
+    full_text = "x" * 120_001
+    result = extract_page(
+        f"<article>{full_text}</article>",
+        "https://vanban.chinhphu.vn/default.aspx?docid=large-html",
+    )
+
+    assert result["truncated"] is True
+    assert len(result["text"]) == 120_000
+    assert result["sha256"] == hashlib.sha256(result["text"].encode()).hexdigest()
+    html = f"<article>{full_text}</article>"
+    assert result["document_sha256"] == hashlib.sha256(html.encode()).hexdigest()
 
 
 def test_reconciliation_keeps_different_sources_and_flags_text_difference():
@@ -86,6 +128,127 @@ async def test_reader_rejects_redirect_and_oversized_body_without_following():
     ) as client:
         with pytest.raises(SourceReadError, match="source_body_too_large"):
             await read_source("https://vanban.chinhphu.vn/a", client=client)
+
+
+@pytest.mark.asyncio
+async def test_reader_extracts_g7_stream_pdf_attachment(monkeypatch):
+    import httpx
+    from unittest.mock import AsyncMock
+    from app.services.trusted_source_reader import read_source
+
+    extractor = AsyncMock(return_value={"text": "PDF text", "method": "pdf_text"})
+    monkeypatch.setattr("app.services.official_document_reader.extract_official_pdf", extractor)
+    detail = "https://congbao.chinhphu.vn/van-ban/law-1.htm"
+    requests = []
+
+    def respond(request):
+        requests.append(str(request.url))
+        if str(request.url) == detail:
+            return httpx.Response(
+                200,
+                headers={"content-type": "text/html"},
+                text=f'<title>Law</title><a href="{G7_STREAM_URL}">PDF</a>',
+            )
+        return httpx.Response(
+            200,
+            headers={"content-type": "application/octet-stream"},
+            content=b"%PDF-test",
+        )
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(respond)) as client:
+        result = await read_source(
+            detail,
+            question="Trách nhiệm người sử dụng lao động",
+            smart_pages=True,
+            client=client,
+        )
+
+    assert requests == [detail, G7_STREAM_URL]
+    assert result["attachments"] == [G7_STREAM_URL]
+    assert result["text"] == "PDF text"
+    assert extractor.await_args.kwargs["attachment_url"] == G7_STREAM_URL
+    assert extractor.await_args.kwargs["question"] == "Trách nhiệm người sử dụng lao động"
+    assert extractor.await_args.kwargs["smart_pages"] is True
+
+
+@pytest.mark.asyncio
+async def test_reader_does_not_fetch_arbitrary_url_from_g7_stream_parameter():
+    import httpx
+    from app.services.trusted_source_reader import read_source
+
+    detail = "https://congbao.chinhphu.vn/van-ban/law-2.htm"
+    unsafe = (
+        "https://g7.cdnchinhphu.vn/api/download/stream?"
+        "Url=https%3A%2F%2F127.0.0.1%2Fprivate.pdf&file_name=private.pdf"
+    )
+    requests = []
+
+    def respond(request):
+        requests.append(str(request.url))
+        return httpx.Response(
+            200,
+            headers={"content-type": "text/html"},
+            text=f'<title>Law</title><a href="{unsafe}">PDF</a>',
+        )
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(respond)) as client:
+        result = await read_source(detail, client=client)
+
+    assert requests == [detail]
+    assert result["content_status"] == "metadata_only"
+    assert result["text"] == ""
+
+
+@pytest.mark.asyncio
+async def test_reader_does_not_follow_g7_stream_redirect():
+    import httpx
+    from app.services.trusted_source_reader import read_source, SourceReadError
+
+    requests = []
+
+    def redirect(request):
+        requests.append(str(request.url))
+        return httpx.Response(302, headers={"location": "http://127.0.0.1/private"})
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(redirect)) as client:
+        with pytest.raises(SourceReadError, match="source_http_302"):
+            await read_source(G7_STREAM_URL, client=client)
+
+    assert requests == [G7_STREAM_URL]
+
+
+@pytest.mark.asyncio
+async def test_reader_follows_bounded_official_pdf_redirect_without_deep_mode(monkeypatch):
+    import httpx
+    from unittest.mock import AsyncMock
+    from app.services.trusted_source_reader import read_source
+    extractor = AsyncMock(return_value={'text': 'Điều 328. Fixture text', 'method': 'pdf_text'})
+    monkeypatch.setattr('app.services.official_document_reader.extract_official_pdf', extractor)
+    destination = 'https://datafiles.chinhphu.vn/law.pdf'
+    seen = []
+    def respond(request):
+        seen.append(str(request.url))
+        return (httpx.Response(302, headers={'location': destination}) if len(seen) == 1
+                else httpx.Response(200, headers={'content-type': 'application/pdf'}, content=b'%PDF-fixture'))
+    async with httpx.AsyncClient(transport=httpx.MockTransport(respond)) as client:
+        result = await read_source(G7_STREAM_URL, client=client)
+    assert seen == [G7_STREAM_URL, destination]
+    assert result['text'] == 'Điều 328. Fixture text'
+    assert extractor.await_args.kwargs['attachment_url'] == destination
+
+
+@pytest.mark.asyncio
+async def test_reader_transport_failure_has_sanitized_boundary_diagnostic():
+    import httpx
+    from app.services.trusted_source_reader import read_source, SourceReadError
+    def fail(request):
+        raise httpx.ConnectTimeout('private raw credential=do-not-expose', request=request)
+    async with httpx.AsyncClient(transport=httpx.MockTransport(fail)) as client:
+        with pytest.raises(SourceReadError) as failure:
+            await read_source(G7_STREAM_URL, client=client)
+    assert failure.value.kind == 'source_transport_error'
+    assert getattr(failure.value, 'transport_kind', None) == 'connect_timeout'
+    assert 'do-not-expose' not in str(failure.value)
 
 
 @pytest.mark.asyncio

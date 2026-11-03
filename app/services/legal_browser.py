@@ -3,6 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 from contextlib import closing
+from pathlib import Path
+import json
+import re
 import sqlite3
 import time
 from typing import Any
@@ -14,7 +17,12 @@ from app.services.body_search import BodySearchIndex, BodySearchUnavailable
 from app.services.remote_body_search import SupabaseBodySearch
 from app.services.full_doc_body_search import SupabaseFullDocBodySearch
 from app.services.qdrant_full_doc_body_search import QdrantFullDocBodySearch
-from app.ingestion.content_store import ContentStore, StoredDocument, ContentIntegrityError
+from app.ingestion.content_store import (
+    ContentIntegrityError,
+    ContentStore,
+    ContentStoreError,
+    StoredDocument,
+)
 from app.ingestion.legal_fts import LegalFtsIndex, extract_legal_references
 from app.ingestion.legal_text import DocumentMetadata
 
@@ -226,6 +234,162 @@ class SupabaseLegalStore:
         return {item.metadata.document_id: item for item in documents}
 
 
+def local_legal_index_ready(
+    settings: Any, content_path: Path, fts_path: Path
+) -> bool:
+    content_path = Path(content_path)
+    fts_path = Path(fts_path)
+    if not content_path.is_file() or not fts_path.is_file():
+        return False
+    try:
+        return LegalFtsIndex(
+            store=ContentStore(content_path),
+            path=fts_path,
+            dataset_revision=getattr(settings, "DATASET_REVISION", ""),
+        ).is_ready()
+    except ContentStoreError:
+        return False
+
+
+def clean_derivative_matches_settings(settings: Any, content_path: Path) -> bool:
+    """Accept only a complete derivative of this configured base and revision."""
+    content_path = Path(content_path)
+    base_path = getattr(settings, "CONTENT_STORE_PATH", None)
+    if not content_path.is_file() or base_path is None:
+        return False
+    try:
+        with closing(
+            sqlite3.connect(content_path.resolve().as_uri() + "?mode=ro", uri=True)
+        ) as connection:
+            metadata = dict(
+                connection.execute("SELECT key,value FROM build_metadata").fetchall()
+            )
+        report = json.loads(metadata["build_report"])
+        raw_report = json.loads(metadata["raw_build_report"])
+        raw_count = int(raw_report["joined_count"])
+        raw_sparse_average = float(raw_report["average_sparse_document_length"])
+        expected_count = int(getattr(settings, "EXPECTED_DOCUMENT_COUNT"))
+        overlay_count = int(metadata["clean_overlay_document_count"])
+        return (
+            metadata.get("status") == "complete"
+            and metadata.get("clean_derivative_status") == "complete"
+            and metadata.get("clean_dataset_revision")
+            == getattr(settings, "DATASET_REVISION", None)
+            and Path(metadata["clean_base_store_path"]).resolve()
+            == Path(base_path).resolve()
+            and re.fullmatch(
+                r"[0-9a-f]{64}", metadata["clean_overlay_manifest_sha256"]
+            ) is not None
+            and overlay_count == 189
+            and isinstance(raw_report, dict)
+            and raw_count == expected_count
+            and raw_sparse_average
+            == float(getattr(settings, "V3_AVERAGE_SPARSE_DOCUMENT_LENGTH"))
+            and int(report["joined_count"]) == expected_count
+            and int(report["metadata_count"]) == expected_count
+            and int(report["content_count"]) == expected_count
+            and float(report["average_sparse_document_length"])
+            == raw_sparse_average
+        )
+    except (OSError, sqlite3.Error, KeyError, TypeError, ValueError):
+        return False
+
+
+def clean_body_index_ready(
+    content_path: Path, body_index_path: Path
+) -> bool:
+    """Match adjacent body FTS coverage to the derivative's ready metadata."""
+    content_path = Path(content_path)
+    body_index_path = Path(body_index_path)
+    if not body_index_path.is_file():
+        return False
+    try:
+        with closing(
+            sqlite3.connect(content_path.resolve().as_uri() + "?mode=ro", uri=True)
+        ) as connection:
+            metadata = dict(
+                connection.execute("SELECT key,value FROM build_metadata").fetchall()
+            )
+        coverage = BodySearchIndex(body_index_path).coverage()
+        return (
+            metadata.get("clean_derivative_status") == "complete"
+            and int(coverage["document_count"]) == 4_989
+            and int(metadata["clean_body_index_document_count"])
+            == int(coverage["document_count"])
+            and int(metadata["clean_body_index_passage_count"])
+            == int(coverage["passage_count"])
+            and metadata["clean_body_index_source_sha256"]
+            == coverage["source_sha256"]
+            and re.fullmatch(r"[0-9a-f]{64}", coverage["source_sha256"])
+            is not None
+        )
+    except (
+        OSError,
+        sqlite3.Error,
+        KeyError,
+        TypeError,
+        ValueError,
+        BodySearchUnavailable,
+    ):
+        return False
+
+
+def local_legal_paths(settings: Any) -> tuple[Path, Path, bool]:
+    use_v3 = getattr(settings, "USE_LEGACY_FREE_PIPELINE", None) is False
+    content_path = (
+        settings.V3_CONTENT_STORE_PATH if use_v3 else settings.CONTENT_STORE_PATH
+    )
+    fts_path = settings.V3_LEGAL_FTS_PATH if use_v3 else settings.LEGAL_FTS_PATH
+    full_corpus_selected = not use_v3
+    if use_v3 and getattr(settings, "APP_ENV", None) == "development":
+        clean_content_path = getattr(settings, "CLEAN_CONTENT_STORE_PATH", None)
+        if (
+            clean_content_path is not None
+            and clean_derivative_matches_settings(settings, clean_content_path)
+        ):
+            full_fts_path = settings.LEGAL_FTS_PATH
+            if local_legal_index_ready(settings, clean_content_path, full_fts_path):
+                return Path(clean_content_path), full_fts_path, True
+        full_content_path = settings.CONTENT_STORE_PATH
+        full_fts_path = settings.LEGAL_FTS_PATH
+        if local_legal_index_ready(settings, full_content_path, full_fts_path):
+            return full_content_path, full_fts_path, True
+    return content_path, fts_path, full_corpus_selected
+
+
+def should_use_supabase_legal_store(
+    settings: Any,
+    *,
+    local_content_path: Path | None = None,
+    local_fts_path: Path | None = None,
+    local_index_ready: bool | None = None,
+) -> bool:
+    if getattr(settings, "SERVERLESS_ONLINE_ONLY", False):
+        return True
+    if getattr(settings, "APP_ENV", None) != "development":
+        return False
+    if not (
+        (getattr(settings, "SUPABASE_URL", None) or "").strip()
+        and (getattr(settings, "SUPABASE_PUBLISHABLE_KEY", None) or "").strip()
+    ):
+        return False
+    if local_content_path is None or local_fts_path is None:
+        local_content_path, local_fts_path, full_corpus_selected = (
+            local_legal_paths(settings)
+        )
+        if (
+            local_index_ready is None
+            and getattr(settings, "USE_LEGACY_FREE_PIPELINE", None) is False
+            and full_corpus_selected
+        ):
+            local_index_ready = True
+    if local_index_ready is None:
+        local_index_ready = local_legal_index_ready(
+            settings, local_content_path, local_fts_path
+        )
+    return not local_index_ready
+
+
 class LegalBrowser:
     def __init__(self, *, store: Any, index: Any, body_index=None) -> None:
         self._store = store
@@ -234,7 +398,7 @@ class LegalBrowser:
 
     @classmethod
     def from_settings(cls, settings: Any) -> "LegalBrowser":
-        if getattr(settings, "SERVERLESS_ONLINE_ONLY", False):
+        def supabase_browser() -> "LegalBrowser":
             store = SupabaseLegalStore(
                 url=(getattr(settings, "SUPABASE_URL", None) or "").strip(),
                 publishable_key=(
@@ -256,53 +420,49 @@ class LegalBrowser:
                     client=store._client,
                 )
             return cls(store=store, index=store, body_index=body_index)
-        use_v3 = getattr(settings, "USE_LEGACY_FREE_PIPELINE", None) is False
-        content_path = (
-            settings.V3_CONTENT_STORE_PATH
-            if use_v3
-            else settings.CONTENT_STORE_PATH
+        if getattr(settings, "SERVERLESS_ONLINE_ONLY", False):
+            return supabase_browser()
+        content_path, fts_path, full_corpus_selected = local_legal_paths(settings)
+        local_index_was_validated = (
+            getattr(settings, "APP_ENV", None) == "development"
+            and getattr(settings, "USE_LEGACY_FREE_PIPELINE", None) is False
+            and full_corpus_selected
         )
-        fts_path = (
-            settings.V3_LEGAL_FTS_PATH
-            if use_v3
-            else settings.LEGAL_FTS_PATH
-        )
-        store = None
-        index = None
-        full_corpus_selected = not use_v3
-        if use_v3 and getattr(settings, "APP_ENV", None) == "development":
-            full_content_path = settings.CONTENT_STORE_PATH
-            full_fts_path = settings.LEGAL_FTS_PATH
-            if full_content_path.is_file() and full_fts_path.is_file():
-                full_store = ContentStore(full_content_path)
-                full_index = LegalFtsIndex(
-                    store=full_store,
-                    path=full_fts_path,
-                    dataset_revision=settings.DATASET_REVISION,
-                )
-                if full_index.is_ready():
-                    content_path = full_content_path
-                    fts_path = full_fts_path
-                    store = full_store
-                    index = full_index
-                    full_corpus_selected = True
-        if store is None:
-            store = ContentStore(content_path)
+        if should_use_supabase_legal_store(
+            settings,
+            local_content_path=content_path,
+            local_fts_path=fts_path,
+            local_index_ready=True if local_index_was_validated else None,
+        ):
+            return supabase_browser()
+        store = ContentStore(content_path)
         body_index_path = content_path.with_name("legal_body_fts.sqlite3")
         if (
             full_corpus_selected
             and getattr(settings, "APP_ENV", None) == "development"
         ):
+            clean_content_path = getattr(settings, "CLEAN_CONTENT_STORE_PATH", None)
+            clean_body_ready = (
+                clean_content_path is not None
+                and Path(content_path).resolve() == Path(clean_content_path).resolve()
+                and clean_body_index_ready(
+                    content_path,
+                    Path(content_path).with_name("legal_body_fts.sqlite3"),
+                )
+            )
+            if clean_body_ready:
+                body_index_path = Path(content_path).with_name(
+                    "legal_body_fts.sqlite3"
+                )
             v3_body_index_path = settings.V3_CONTENT_STORE_PATH.with_name(
                 "legal_body_fts.sqlite3"
             )
-            if v3_body_index_path.is_file():
+            if v3_body_index_path.is_file() and not clean_body_ready:
                 body_index_path = v3_body_index_path
         return cls(
             store=store,
             body_index=BodySearchIndex(body_index_path),
-            index=index
-            or LegalFtsIndex(
+            index=LegalFtsIndex(
                 store=store, path=fts_path, dataset_revision=settings.DATASET_REVISION
             ),
         )

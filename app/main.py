@@ -1,9 +1,9 @@
-import secrets
 import asyncio
+from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Request, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.paths import APP_ROOT
 from fastapi.staticfiles import StaticFiles
@@ -28,8 +28,9 @@ from app.api.full_document_review_routes import router as full_review_router
 from app.api.legal_effect_routes import router as legal_effect_router
 from app.api.legal_registry_routes import router as legal_registry_router
 from app.api.retained_source_routes import router as retained_source_router
+from app.api.free_web_research_routes import router as free_web_research_router
 from app.api.evaluation_lab_routes import router as evaluation_lab_router
-from app.api.dependencies import optional_user, require_online_persistence
+from app.api.dependencies import get_or_create_csrf_token, optional_user, require_online_persistence
 from app.services.web_security import (
     AnonymousClientMiddleware,
     resolve_web_session_secret,
@@ -50,7 +51,16 @@ settings = get_settings()
 validate_production_settings(settings)
 configure_observability(settings)
 
-app = FastAPI(title="VietLex Advanced Legal RAG")
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    await startup_event()
+    try:
+        yield
+    finally:
+        await shutdown_event()
+
+
+app = FastAPI(title="VietLex Advanced Legal RAG", lifespan=lifespan)
 
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(
@@ -65,7 +75,6 @@ app.add_middleware(
     max_age=settings.ANONYMOUS_COOKIE_MAX_AGE_SECONDS,
 )
 
-@app.on_event("startup")
 async def startup_event():
     if settings.APP_ENV == "production":
         from app.services.semantic_cache import ensure_semantic_cache_collection
@@ -81,7 +90,6 @@ async def startup_event():
 
         await warm_guardrails()
 
-@app.on_event("shutdown")
 async def shutdown_event():
     from app.services.clients import close_clients
     from app.services.retrieval import reset_retriever
@@ -113,6 +121,14 @@ app.add_middleware(
 app.add_middleware(ReviewerDemoMiddleware, settings=settings)
 app.state.reviewer_demo_mode = is_reviewer_demo_enabled(settings)
 app.state.demo_ai_daily_limit = settings.DEMO_AI_DAILY_LIMIT
+app.state.free_web_research_enabled = bool(
+    settings.FREE_WEB_RESEARCH_ENABLED
+    and settings.OFFICIAL_WEB_RESEARCH_ENABLED
+    and (
+        settings.APP_ENV != "production"
+        or settings.FREE_WEB_RESEARCH_PRODUCTION_LIMIT_VERIFIED
+    )
+)
 
 templates = Jinja2Templates(directory=APP_ROOT / "templates")
 templates.env.globals["local_stateless_mode"] = settings.APP_ENV == "development"
@@ -149,6 +165,7 @@ for stateful_router in (
     legal_effect_router,
     legal_registry_router,
     retained_source_router,
+    free_web_research_router,
 ):
     include_online_state_router(stateful_router)
 
@@ -165,7 +182,7 @@ async def get_index(request: Request, current_user=Depends(optional_user), docum
         if scoped_document is None:
             raise HTTPException(404, "Không tìm thấy văn bản đã chọn.")
     # CSRF generation
-    token = secrets.token_hex(32)
+    token = get_or_create_csrf_token(request)
     progress_transport = (
         "polling"
         if request.query_params.get("gateway") == "vercel"
@@ -190,4 +207,10 @@ async def get_index(request: Request, current_user=Depends(optional_user), docum
         secure=settings.APP_ENV == "production" or request.url.scheme == "https",
         samesite="strict",
     )
+    response.headers["Cache-Control"] = "no-store"
     return response
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return RedirectResponse("/static/favicon.svg")

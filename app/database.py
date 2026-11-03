@@ -1,14 +1,24 @@
 import logfire
 import re
 from motor.motor_asyncio import AsyncIOMotorClient
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Optional, List, Dict, Any
 from app.config import get_settings
+from app.services.evidence_presenter import (
+    EphemeralOfficialEvidenceContext,
+    evidence_context_provenance,
+    present_context,
+    restore_evidence_contexts,
+)
 
 settings = get_settings()
 
 client: Optional[AsyncIOMotorClient] = None
 db = None
+
+
+def _utc_now() -> datetime:
+    return datetime.now(UTC)
 
 
 class LocalPersistenceUnavailable(RuntimeError):
@@ -72,7 +82,10 @@ async def init_db():
         
         logfire.info("MongoDB database and indexes initialized successfully.")
     except Exception as e:
-        logfire.error("Failed to initialize MongoDB database: {error}", error=str(e))
+        logfire.error(
+            "Failed to initialize MongoDB database",
+            error_kind=type(e).__name__,
+        )
         raise e
 
 async def log_interaction(
@@ -81,8 +94,8 @@ async def log_interaction(
     bot_response: str, 
     contexts: List[str], 
     cached: bool,
-    input_safe: bool = True,
-    output_safe: bool = True,
+    input_safe: bool | None = True,
+    output_safe: bool | None = True,
     rejection_reason: Optional[str] = None,
     session_id: str = "default",
     *,
@@ -104,8 +117,36 @@ async def log_interaction(
     user_id: Optional[str] = None,
     retrieval_trace: Optional[Dict[str, Any]] = None,
     request_metadata: Optional[Dict[str, Any]] = None,
+    guardrail_state: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     ctx_count = context_count if context_count is not None else len(contexts)
+    # Public web bodies remain excluded from shared caches. Owner chat snapshots
+    # reuse the existing TTL and provenance sidecar, without promoting legal effect.
+    from app.services.official_search_plan import DEEP_READING
+
+    retained, excluded = [], []
+    snapshot_count = snapshot_words = snapshot_bytes = 0
+    for index, context in enumerate(contexts):
+        if isinstance(context, EphemeralOfficialEvidenceContext):
+            reason = None
+            words, size = len(context.split()), len(context.encode("utf-8"))
+            if not (client_id or user_id):
+                reason = "snapshot_owner_required"
+            elif (snapshot_count >= DEEP_READING.evidence_limit
+                  or snapshot_words + words > DEEP_READING.context_tokens
+                  or snapshot_bytes + size > 256_000):
+                reason = "public_snapshot_budget_exceeded"
+            elif (evidence_context_provenance(context) is None
+                  or not present_context(context).excerpt):
+                reason = "invalid_official_provenance"
+            if reason:
+                excluded.append({"index": index, "reason": reason})
+                continue
+            snapshot_count += 1
+            snapshot_words += words
+            snapshot_bytes += size
+        retained.append(context)
+    contexts = retained
     cit_count = citation_count if citation_count is not None else 0
     from app.services.provider_runtime import current_provider_calls
     from app.services.admin_observability import summarize_usage
@@ -123,19 +164,18 @@ async def log_interaction(
                 if request_status == f"{stage}_{kind}":
                     technical_error = {"stage": stage, "error_type": kind}
 
+    now = _utc_now()
     document = {
         "_id": trace_id,
         "trace_id": trace_id,
         "session_id": session_id,
         "client_id": client_id,
         "user_id": user_id,
-        "timestamp": datetime.utcnow(),
-        "expires_at": datetime.utcnow() + timedelta(
-            days=settings.DATA_RETENTION_DAYS
-        ),
+        "timestamp": now,
+        "expires_at": now + timedelta(days=settings.DATA_RETENTION_DAYS),
         "user_query": user_query,
         "bot_response": bot_response,
-        "contexts": contexts,
+        "contexts": [str(context) for context in contexts],
         "cached": cached,
         "retrieval_trace": retrieval_trace,
         "request_metadata": {key: value for key, value in (request_metadata or {}).items()
@@ -172,12 +212,32 @@ async def log_interaction(
             "updated_at": None
         }
     }
+    context_provenance = [
+        evidence_context_provenance(context) for context in contexts
+    ]
+    if any(item is not None for item in context_provenance):
+        document["context_provenance"] = context_provenance
+    if snapshot_count or excluded:
+        document["metrics"]["evidence_persistence"] = {
+            "status": "partial" if excluded else "complete",
+            "public_snapshot_count": snapshot_count,
+            "persisted_context_count": len(contexts),
+            "excluded_contexts": excluded,
+        }
+    if guardrail_state is not None:
+        document["guardrail_state"] = guardrail_state
 
     if calls is not None:
         document['metrics']['llm_calls'] = llm_calls
         document['metrics']['external_calls'] = external_calls
         document['metrics']['token_usage'] = summarize_usage(llm_calls)
         document['metrics']['usage_scope'] = 'reported_llm_results_excludes_embedding_reranker_unreported_attempts'
+    from app.services.provider_http_budget import (
+        current_provider_http_budget_snapshot,
+    )
+    provider_http_budget = current_provider_http_budget_snapshot()
+    if provider_http_budget is not None:
+        document["metrics"]["provider_http_budget"] = provider_http_budget
     if settings.APP_ENV == "development":
         return document
     collection = get_db().evaluation_logs
@@ -186,7 +246,11 @@ async def log_interaction(
         logfire.info("Saved interaction to MongoDB: {trace_id}", trace_id=trace_id)
         return document
     except Exception as e:
-        logfire.error("Failed to log interaction to MongoDB: {error}", error=str(e), trace_id=trace_id)
+        logfire.error(
+            "Failed to log interaction to MongoDB",
+            error_kind=type(e).__name__,
+            trace_id=trace_id,
+        )
         return {}
 
 
@@ -200,8 +264,8 @@ async def update_interaction_request_status(trace_id: str, status: str) -> bool:
         return result.matched_count > 0
     except Exception as error:
         logfire.error(
-            "Failed to update interaction status: {error}",
-            error=str(error),
+            "Failed to update interaction status",
+            error_kind=type(error).__name__,
             trace_id=trace_id,
         )
         return False
@@ -226,7 +290,7 @@ async def update_evaluation(
         "metrics.ragas_status": status,
         "metrics.ragas_executed": executed,
         "metrics.ragas_error": error,
-        "metrics.evaluated_at": datetime.utcnow(),
+        "metrics.evaluated_at": _utc_now(),
     }
 
     try:
@@ -249,7 +313,11 @@ async def update_evaluation(
             logfire.warning("No interaction found to update evaluation for trace: {trace_id}", trace_id=trace_id)
             return False
     except Exception as e:
-        logfire.error("Failed to update evaluation in MongoDB: {error}", error=str(e), trace_id=trace_id)
+        logfire.error(
+            "Failed to update evaluation in MongoDB",
+            error_kind=type(e).__name__,
+            trace_id=trace_id,
+        )
         return False
 
 
@@ -268,7 +336,7 @@ async def update_feedback(
     
     update_data = {
         "feedback.rating": rating,
-        "feedback.updated_at": datetime.utcnow()
+        "feedback.updated_at": _utc_now()
     }
     
     try:
@@ -288,7 +356,11 @@ async def update_feedback(
             logfire.warning("No interaction found to update feedback for trace: {trace_id}", trace_id=trace_id)
             return False
     except Exception as e:
-        logfire.error("Failed to update feedback in MongoDB: {error}", error=str(e), trace_id=trace_id)
+        logfire.error(
+            "Failed to update feedback in MongoDB",
+            error_kind=type(e).__name__,
+            trace_id=trace_id,
+        )
         return False
 
 async def get_admin_logs(
@@ -475,7 +547,7 @@ async def get_admin_stats(*, filters=None) -> Dict[str, Any]:
 
 async def get_admin_inventory() -> dict:
     import asyncio
-    now = datetime.utcnow()
+    now = _utc_now()
     try:
         database = get_db()
         queries = {
@@ -516,11 +588,21 @@ async def get_owned_interaction(
     database = get_db()
     try:
         owner = {"user_id": user_id} if user_id else {"client_id": client_id}
-        return await database.evaluation_logs.find_one({"_id": trace_id, **owner})
+        interaction = await database.evaluation_logs.find_one(
+            {"_id": trace_id, **owner}
+        )
+        if isinstance(interaction, dict):
+            contexts = interaction.get("contexts")
+            if isinstance(contexts, list):
+                interaction["contexts"] = restore_evidence_contexts(
+                    contexts, interaction.get("context_provenance")
+                )
+            interaction.pop("context_provenance", None)
+        return interaction
     except Exception as e:
         logfire.error(
-            "Failed to fetch owned interaction: {error}",
-            error=str(e),
+            "Failed to fetch owned interaction",
+            error_kind=type(e).__name__,
             trace_id=trace_id,
         )
         return None
@@ -532,16 +614,15 @@ async def create_session(
     *,
     user_id: Optional[str] = None,
 ) -> Dict[str, Any]:
+    now = _utc_now()
     document = {
         "_id": session_id,
         "session_id": session_id,
         "title": title,
         "client_id": client_id,
         "user_id": user_id,
-        "timestamp": datetime.utcnow(),
-        "expires_at": datetime.utcnow() + timedelta(
-            days=settings.DATA_RETENTION_DAYS
-        ),
+        "timestamp": now,
+        "expires_at": now + timedelta(days=settings.DATA_RETENTION_DAYS),
     }
     if settings.APP_ENV == "development":
         return document
@@ -550,7 +631,10 @@ async def create_session(
         await collection.replace_one({"_id": session_id}, document, upsert=True)
         return document
     except Exception as e:
-        logfire.error("Failed to create session {session_id}: {error}", session_id=session_id, error=str(e))
+        logfire.error(
+            "Failed to create session",
+            error_kind=type(e).__name__,
+        )
         return {}
 
 async def get_sessions(
@@ -577,7 +661,9 @@ async def get_sessions(
         sessions = await cursor.to_list(length=100)
         return sessions
     except Exception as e:
-        logfire.error("Failed to fetch sessions: {error}", error=str(e))
+        logfire.error(
+            "Failed to fetch sessions", error_kind=type(e).__name__
+        )
         return []
 
 async def get_session_messages(
@@ -585,7 +671,10 @@ async def get_session_messages(
     client_id: Optional[str] = None,
     *,
     user_id: Optional[str] = None,
+    recent_limit: int | None = None,
 ) -> List[Dict[str, Any]]:
+    if recent_limit is not None and (type(recent_limit) is not int or not 1 <= recent_limit <= 8):
+        raise ValueError("invalid_recent_history_limit")
     if settings.APP_ENV == "development":
         return []
     collection = get_db().evaluation_logs
@@ -595,11 +684,26 @@ async def get_session_messages(
             query["user_id"] = user_id
         elif client_id is not None:
             query["client_id"] = client_id
-        cursor = collection.find(query).sort("timestamp", 1)
-        messages = await cursor.to_list(length=200)
+        cursor = (collection.find(query, {"user_query": 1, "timestamp": 1}).sort("timestamp", -1)
+                  if recent_limit is not None else collection.find(query).sort("timestamp", 1))
+        messages = await cursor.to_list(length=recent_limit if recent_limit is not None else 200)
+        if recent_limit is not None:
+            messages.reverse()
+        for message in messages:
+            if not isinstance(message, dict):
+                continue
+            contexts = message.get("contexts")
+            if isinstance(contexts, list):
+                message["contexts"] = restore_evidence_contexts(
+                    contexts, message.get("context_provenance")
+                )
+            message.pop("context_provenance", None)
         return messages
     except Exception as e:
-        logfire.error("Failed to fetch messages for session {session_id}: {error}", session_id=session_id, error=str(e))
+        logfire.error(
+            "Failed to fetch messages for session",
+            error_kind=type(e).__name__,
+        )
         return []
 
 async def delete_session(
@@ -626,7 +730,10 @@ async def delete_session(
         await logs_coll.delete_many(log_query)
         return True
     except Exception as e:
-        logfire.error("Failed to delete session {session_id}: {error}", session_id=session_id, error=str(e))
+        logfire.error(
+            "Failed to delete session",
+            error_kind=type(e).__name__,
+        )
         return False
 
 async def rename_session(
@@ -649,5 +756,8 @@ async def rename_session(
         result = await collection.update_one(query, {"$set": {"title": title}})
         return result.modified_count > 0
     except Exception as e:
-        logfire.error("Failed to rename session {session_id}: {error}", session_id=session_id, error=str(e))
+        logfire.error(
+            "Failed to rename session",
+            error_kind=type(e).__name__,
+        )
         return False

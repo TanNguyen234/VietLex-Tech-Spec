@@ -6,13 +6,14 @@ separately from a semantic rejection. This does not certify legal correctness.
 from __future__ import annotations
 
 import asyncio
-import re
 
 from jinja2 import Template
 
 from app.config import get_settings
 from app.services.direct_llm import LLMUseCase, generate_llm_response_with_metadata
-from app.services.guardrail_prompts import INPUT_PROMPT, OUTPUT_PROMPT
+from app.services.guardrail_prompts import (
+    INPUT_PROMPT, OUTPUT_PROMPT, output_guardrail_evidence, parse_guardrail_decision,
+)
 from app.services.runtime_errors import GuardrailUnavailableError
 
 
@@ -30,12 +31,15 @@ async def _decision(stage: str, prompt: str) -> str:
         raise GuardrailUnavailableError(stage, "timeout") from None
     except Exception as error:
         raise GuardrailUnavailableError(stage, type(error).__name__) from None
+    if (
+        not isinstance(getattr(result, "text", None), str)
+        or not isinstance(getattr(result, "status", None), str)
+        or not hasattr(result, "finish_reason")
+    ):
+        raise GuardrailUnavailableError(stage, "invalid_generation_result")
     if result.status != "success" or result.finish_reason not in {None, "STOP", "stop"}:
         raise GuardrailUnavailableError(stage, "generation_incomplete")
-    match = re.fullmatch(r"(?:Đánh giá \(yes/no\):\s*)?(yes|no)[.!]?", result.text.strip(), re.IGNORECASE)
-    if not match:
-        raise GuardrailUnavailableError(stage, "invalid_decision")
-    return match.group(1).lower()
+    return parse_guardrail_decision(result.text, stage)
 
 
 async def check_input_guardrails(message: str) -> tuple[bool, str]:
@@ -46,9 +50,7 @@ async def check_input_guardrails(message: str) -> tuple[bool, str]:
 
 
 async def check_output_guardrails(response: str, contexts: list[str], query: str = "") -> tuple[bool, str]:
-    if not contexts:
-        return True, ""
-    evidence = "\n\n".join(document[:3000] for document in contexts)
+    evidence = output_guardrail_evidence(contexts, query)
     decision = await _decision("output", Template(OUTPUT_PROMPT).render(evidence=evidence, response=response))
     if decision == "no":
         return False, "Kiểm tra tự động phát hiện câu trả lời chưa được tài liệu hỗ trợ đầy đủ. Vui lòng kiểm chứng nguồn."

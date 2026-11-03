@@ -58,8 +58,18 @@ class EvidenceChunk:
     )
 
     def formatted_context(self) -> str:
+        display_citation = self.citation
+        clause_suffix = f", Khoản {self.clause}" if self.clause else ""
+        if (
+            self.article
+            and self.clause == "1"
+            and display_citation.endswith(clause_suffix)
+        ):
+            # Chunk windows flatten line boundaries, so clause 1 may include
+            # unnumbered article text that cannot be separated at display time.
+            display_citation = display_citation[: -len(clause_suffix)]
         return (
-            f"[{self.citation}]\n"
+            f"[{display_citation}]\n"
             f"Nguồn: {self.source_url}\n"
             f"Tiêu đề: {self.title}\n"
             f"{self.text}"
@@ -288,12 +298,24 @@ def _article_units(article_text: str) -> list[tuple[str | None, str]]:
     return units
 
 
+def _has_article_preamble(article_text: str) -> bool:
+    _, separator, body = article_text.partition("\n")
+    if not separator:
+        return False
+
+    first_clause = CLAUSE_RE.search(body)
+    return bool(first_clause and body[: first_clause.start()].strip())
+
+
 def chunk_document(
     metadata: DocumentMetadata,
     content: str,
     *,
     max_tokens: int = 280,
     overlap_tokens: int = 24,
+    preserve_unit_max_tokens: int | None = None,
+    preserve_article_max_tokens: int | None = None,
+    require_preamble: bool = False,
 ) -> list[EvidenceChunk]:
     normalized = normalize_legal_text(content)
     if not normalized:
@@ -355,7 +377,19 @@ def chunk_document(
     if article_blocks:
         chunks: list[EvidenceChunk] = []
         for heading_path, article, article_text in article_blocks:
-            for clause, unit_text in _article_units(article_text):
+            if (
+                preserve_article_max_tokens is not None
+                and len(article_text.split()) <= preserve_article_max_tokens
+                and (not require_preamble or _has_article_preamble(article_text))
+            ):
+                article_units = [(None, article_text)]
+            else:
+                article_units = _article_units(article_text)
+            for clause, unit_text in article_units:
+                # Runtime-only opt-in. Default index chunking is unchanged.
+                unit_limit = max_tokens
+                if preserve_unit_max_tokens is not None and len(unit_text.split()) <= preserve_unit_max_tokens:
+                    unit_limit = max(max_tokens, len(unit_text.split()))
                 chunks.extend(
                     _make_chunks(
                         metadata,
@@ -363,7 +397,7 @@ def chunk_document(
                         heading_path,
                         article,
                         clause,
-                        max_tokens=max_tokens,
+                        max_tokens=unit_limit,
                         overlap_tokens=overlap_tokens,
                     )
                 )

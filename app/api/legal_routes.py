@@ -14,6 +14,7 @@ from app.api.dependencies import optional_user, verify_csrf
 from app.rate_limit import limiter
 from app.services.legal_browser import SearchFilters, LegalBrowserBackendError
 from app.services.document_structure import document_sections
+from app.services.source_quality import assess_source_quality
 from app.services.body_search import BodySearchUnavailable
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -144,6 +145,7 @@ async def legal_document(request: Request, document_id: int, as_of: str = Query(
         {
             "document": document,
             "sections": document_sections(document.content),
+            "source_quality": assess_source_quality(document.content),
             "source_url": _safe_source_url(document.metadata.source_url),
             **await _registry_context([document.metadata.document_number], day),
         },

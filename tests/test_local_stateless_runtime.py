@@ -9,6 +9,27 @@ from fastapi.testclient import TestClient
 
 
 @pytest.mark.asyncio
+async def test_app_lifespan_runs_startup_and_shutdown_in_order(monkeypatch):
+    import app.main as main
+
+    events = []
+
+    async def startup():
+        events.append("startup")
+
+    async def shutdown():
+        events.append("shutdown")
+
+    monkeypatch.setattr(main, "startup_event", startup)
+    monkeypatch.setattr(main, "shutdown_event", shutdown)
+
+    async with main.app.router.lifespan_context(main.app):
+        assert events == ["startup"]
+
+    assert events == ["startup", "shutdown"]
+
+
+@pytest.mark.asyncio
 async def test_development_startup_skips_persistent_provider_initialization(monkeypatch):
     import app.main as main
     import app.services.semantic_cache as semantic_cache
@@ -98,6 +119,7 @@ async def test_local_auth_cookie_is_ignored_without_mongo(monkeypatch):
 @pytest.mark.asyncio
 async def test_local_stateful_route_dependency_returns_explicit_503(monkeypatch):
     from app.api import dependencies
+    from starlette.requests import Request
 
     monkeypatch.setattr(
         dependencies,
@@ -106,7 +128,10 @@ async def test_local_stateful_route_dependency_returns_explicit_503(monkeypatch)
     )
 
     with pytest.raises(HTTPException) as error:
-        await dependencies.require_online_persistence()
+        request = Request(
+            {"type": "http", "method": "POST", "path": "/workspaces", "headers": []}
+        )
+        await dependencies.require_online_persistence(request)
 
     assert error.value.status_code == 503
     assert error.value.detail["code"] == "online_persistence_required"
@@ -115,6 +140,7 @@ async def test_local_stateful_route_dependency_returns_explicit_503(monkeypatch)
 @pytest.mark.asyncio
 async def test_production_stateful_route_dependency_allows_online_path(monkeypatch):
     from app.api import dependencies
+    from starlette.requests import Request
 
     monkeypatch.setattr(
         dependencies,
@@ -122,11 +148,15 @@ async def test_production_stateful_route_dependency_allows_online_path(monkeypat
         lambda: SimpleNamespace(APP_ENV="production"),
     )
 
-    assert await dependencies.require_online_persistence() is None
+    request = Request(
+        {"type": "http", "method": "GET", "path": "/workspaces", "headers": []}
+    )
+    assert await dependencies.require_online_persistence(request) is None
 
 
 def test_main_workspace_and_account_routes_are_gated_in_local_mode(monkeypatch):
     import app.api.dependencies as dependencies
+    import app.api.account_routes as account_routes
     import app.main as main
 
     monkeypatch.setattr(
@@ -134,12 +164,43 @@ def test_main_workspace_and_account_routes_are_gated_in_local_mode(monkeypatch):
         "get_settings",
         lambda: SimpleNamespace(APP_ENV="development"),
     )
+    monkeypatch.setattr(account_routes.settings, "APP_ENV", "development")
     client = TestClient(main.app, raise_server_exceptions=False)
 
-    for path in ("/workspaces", "/account", "/login", "/register"):
+    workspace = client.get("/workspaces")
+    assert workspace.status_code == 503
+    assert workspace.json()["detail"]["code"] == "online_persistence_required"
+    account = client.get("/account")
+    assert account.status_code == 503
+    assert account.json()["detail"]["code"] == "online_persistence_required"
+
+    for path in (
+        "/register",
+        "/login",
+        "/verify-email",
+        "/forgot-password",
+        "/reset-password",
+    ):
         response = client.get(path)
         assert response.status_code == 503
-        assert response.json()["detail"]["code"] == "online_persistence_required"
+        assert response.headers["content-type"].startswith("text/html")
+        assert "Cần môi trường trực tuyến" in response.text
+        assert "<form" not in response.text
+
+    client.cookies.set("csrf_token", "local")
+    post = client.post(
+        "/register",
+        data={"email": "local@example.invalid", "password": "never-used", "csrf_token": "local"},
+    )
+    assert post.status_code == 503
+    assert post.json()["detail"]["code"] == "online_persistence_required"
+
+    verify_post = client.post(
+        "/verify-email",
+        data={"token": "never-consumed-locally", "csrf_token": "local"},
+    )
+    assert verify_post.status_code == 503
+    assert verify_post.json()["detail"]["code"] == "online_persistence_required"
 
 
 def test_main_account_form_route_remains_available_online(monkeypatch):
@@ -245,6 +306,14 @@ def test_local_asgi_lifespan_serves_health_without_mongo(monkeypatch, tmp_path):
     monkeypatch.setattr(main.settings, "MONGO_URL", None)
     monkeypatch.setattr(main.settings, "SERVERLESS_ONLINE_ONLY", False)
     monkeypatch.setattr(main.settings, "USE_LEGACY_FREE_PIPELINE", False)
+    monkeypatch.setattr(main.settings, "SUPABASE_URL", None)
+    monkeypatch.setattr(main.settings, "SUPABASE_PUBLISHABLE_KEY", None)
+    monkeypatch.setattr(
+        routes.settings, "CONTENT_STORE_PATH", tmp_path / "missing-full-content.sqlite3"
+    )
+    monkeypatch.setattr(
+        routes.settings, "LEGAL_FTS_PATH", tmp_path / "missing-full-fts.sqlite3"
+    )
     monkeypatch.setattr(
         routes.settings, "V3_CONTENT_STORE_PATH", tmp_path / "missing-content.sqlite3"
     )

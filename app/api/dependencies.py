@@ -9,6 +9,22 @@ from app.account_database import effective_role, effective_status, resolve_auth_
 
 
 _admin_basic = HTTPBasic(auto_error=False)
+_LOCAL_ACCOUNT_INFORMATION_PATHS = frozenset(
+    {
+        "/register",
+        "/login",
+        "/verify-email",
+        "/forgot-password",
+        "/reset-password",
+    }
+)
+
+
+def get_or_create_csrf_token(request: Request) -> str:
+    token = request.cookies.get("csrf_token", "")
+    if len(token) == 64 and all(character in "0123456789abcdef" for character in token):
+        return token
+    return secrets.token_hex(32)
 
 # Dependency for CSRF token validation in form POST
 async def verify_csrf(request: Request, csrf_token: str = Form(...)):
@@ -38,8 +54,11 @@ async def verify_csrf_header(
     return csrf_token
 
 
-async def require_online_persistence():
-    if get_settings().APP_ENV == "development":
+async def require_online_persistence(request: Request):
+    if get_settings().APP_ENV == "development" and not (
+        request.method == "GET"
+        and request.url.path in _LOCAL_ACCOUNT_INFORMATION_PATHS
+    ):
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail={
@@ -54,7 +73,7 @@ async def require_admin(
     credentials: HTTPBasicCredentials | None = Depends(_admin_basic),
 ):
     settings = get_settings()
-    await require_online_persistence()
+    await require_online_persistence(request)
     user = await resolve_auth_session(
         request.cookies.get(settings.AUTH_COOKIE_NAME)
     )

@@ -185,6 +185,7 @@ def build_run_configuration(
     ranking_mode: str = "raw-rrf",
     candidate_pool_source: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
+    from app.evaluation.answer_metrics import ANSWER_METRIC_VERSION
     expected_selected_ids_sha = hashlib.sha256(
         json.dumps(
             selected_case_ids,
@@ -256,10 +257,21 @@ def build_run_configuration(
         "requested_backend": requested_backend,
         "effective_backend": retrieval_runtime["backend"],
         "ranking_mode": ranking_mode,
+        "effective_ranking_mode": "rrf-dbsf" if requested_backend == "production" and production_v3 else ranking_mode,
         "candidate_pool_source": candidate_pool_source,
         "profile_name": profile_name,
         "profile": profile,
         "eval_mode": eval_mode,
+        "answer_pipeline": (
+            "chat_service_v1" if eval_mode == "answer" and requested_backend == "production"
+            and judge_mode == "none" and pipeline_switch is not None
+            else "retrieval_generation_v1" if eval_mode == "answer" else None
+        ),
+        "runtime_environment": {
+            "app_env": getattr(settings, "APP_ENV", "unrecorded"),
+            "serverless_online_only": bool(getattr(settings, "SERVERLESS_ONLINE_ONLY", False)),
+        },
+        "answer_metric_version": ANSWER_METRIC_VERSION if eval_mode == "answer" else None,
         "judge_mode": judge_mode,
         "guardrail_mode": guardrail_mode,
         "rewrite_mode": rewrite_mode,
@@ -410,4 +422,5 @@ def create_run_manifest(
         profile_name=profile_name,
         configuration=config_dict,
         configured_provider_models=provider_models,
+        answer_metric_version=config_dict["answer_metric_version"],
     )

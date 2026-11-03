@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 import re
 from bson import BSON
+from pymongo import ReturnDocument
 
 from app.config import get_settings
 from app.database import get_db
@@ -245,6 +246,481 @@ async def save_workspace_analysis(
         },
     )
     return result.modified_count > 0
+
+
+def _free_research_owner_query(
+    workspace_id: str, client_id: str, user_id: str | None, now: datetime
+) -> dict[str, Any]:
+    return {
+        "_id": workspace_id,
+        **_owner(client_id, user_id),
+        "expires_at": {"$gt": now},
+    }
+
+
+def _free_research_run_from(workspace: dict[str, Any] | None, run_id: str):
+    return next(
+        (
+            item
+            for item in (workspace or {}).get("analyses", [])
+            if item.get("analysis_id") == run_id
+            and item.get("research_mode") == "free_web_research"
+        ),
+        None,
+    )
+
+
+def _cancel_free_research_transform(run_id: str, now: datetime) -> dict[str, Any]:
+    """Return a current-state pipeline and exact BSON-size expression for cancellation."""
+    sources = {"$ifNull": ["$$analysis.result.sources", []]}
+    events = {"$ifNull": ["$$analysis.result.events", []]}
+    terminal_status = {
+        "$cond": [{"$gt": [{"$size": "$$sources"}, 0]}, "partial", "cancelled"]
+    }
+    terminal_event = {
+        "type": "terminal",
+        "status": "$$status",
+        "analysis_id": "$$analysis.analysis_id",
+        "source_count": {"$size": "$$sources"},
+        "error_kind": "user_cancelled",
+    }
+    replacement = {
+        "$let": {
+            "vars": {"sources": sources, "events": events},
+            "in": {
+                "$let": {
+                    "vars": {"status": terminal_status},
+                    "in": {
+                        "$mergeObjects": [
+                            "$$analysis",
+                            {
+                                "status": "$$status",
+                                "lease_expires_at": None,
+                                "completed_at": {"$literal": now},
+                                "updated_at": {"$literal": now},
+                                "result": {
+                                    "$mergeObjects": [
+                                        {"$ifNull": ["$$analysis.result", {}]},
+                                        {
+                                            "status": "$$status",
+                                            "terminal": {
+                                                "status": "$$status",
+                                                "analysis_id": "$$analysis.analysis_id",
+                                                "source_count": {"$size": "$$sources"},
+                                                "error_kind": "user_cancelled",
+                                            },
+                                            "events": {
+                                                "$concatArrays": ["$$events", [terminal_event]]
+                                            },
+                                        },
+                                    ]
+                                },
+                            },
+                        ]
+                    },
+                }
+            },
+        }
+    }
+    is_target = {
+        "$and": [
+            {"$eq": ["$$analysis.analysis_id", run_id]},
+            {"$eq": ["$$analysis.research_mode", "free_web_research"]},
+            {"$eq": ["$$analysis.status", "running"]},
+        ]
+    }
+    analyses = {
+        "$map": {
+            "input": {"$ifNull": ["$analyses", []]},
+            "as": "analysis",
+            "in": {"$cond": [is_target, replacement, "$$analysis"]},
+        }
+    }
+    fields = {"analyses": analyses, "updated_at": {"$literal": now}}
+    updated_root = {"$mergeObjects": ["$$ROOT", fields]}
+    return {
+        "fields": fields,
+        "updated_root": updated_root,
+    }
+
+
+async def cancel_free_research_run(
+    workspace_id: str,
+    run_id: str,
+    client_id: str,
+    *,
+    user_id: str | None = None,
+) -> dict[str, Any]:
+    """Atomically terminalize a running owner-scoped run without losing checkpoints."""
+    now = _now()
+    transform = _cancel_free_research_transform(run_id, now)
+    owner_query = _free_research_owner_query(workspace_id, client_id, user_id, now)
+    run_match = {
+        "analysis_id": run_id,
+        "research_mode": "free_web_research",
+        "status": "running",
+    }
+    query = {
+        **owner_query,
+        "analyses": {"$elemMatch": run_match},
+        "$expr": {
+            "$lte": [
+                {"$bsonSize": transform["updated_root"]},
+                12_000_000,
+            ]
+        },
+    }
+    projection = {
+        "analyses.analysis_id": 1,
+        "analyses.research_mode": 1,
+        "analyses.status": 1,
+        "analyses.result.terminal.source_count": 1,
+        "analyses.result.terminal.error_kind": 1,
+    }
+    collection = get_db().research_workspaces
+    updated = await collection.find_one_and_update(
+        query,
+        [{"$set": transform["fields"]}],
+        projection=projection,
+        return_document=ReturnDocument.AFTER,
+    )
+    if updated is not None:
+        analysis = _free_research_run_from(updated, run_id)
+        terminal = ((analysis or {}).get("result") or {}).get("terminal") or {}
+        return {
+            "outcome": "cancelled",
+            "status": (analysis or {}).get("status"),
+            "source_count": terminal.get("source_count", 0),
+        }
+
+    current = await collection.find_one(owner_query, projection)
+    analysis = _free_research_run_from(current, run_id)
+    if analysis is None:
+        return {"outcome": "not_found", "status": None, "source_count": 0}
+    if analysis.get("status") == "running":
+        return {"outcome": "size_limit", "status": "running", "source_count": 0}
+    terminal = (analysis.get("result") or {}).get("terminal") or {}
+    if (
+        analysis.get("status") in {"partial", "cancelled"}
+        and terminal.get("error_kind") == "user_cancelled"
+    ):
+        return {
+            "outcome": "cancelled",
+            "status": analysis.get("status"),
+            "source_count": terminal.get("source_count", 0),
+        }
+    return {
+        "outcome": "not_running",
+        "status": analysis.get("status"),
+        "source_count": terminal.get("source_count", 0),
+    }
+
+
+def _replace_analysis_size_guard(run_id: str, replacement: dict[str, Any]) -> dict[str, Any]:
+    new_size = len(BSON.encode(replacement))
+    old_analysis = {
+        "$arrayElemAt": [
+            {
+                "$filter": {
+                    "input": {"$ifNull": ["$analyses", []]},
+                    "as": "analysis",
+                    "cond": {"$eq": ["$$analysis.analysis_id", run_id]},
+                }
+            },
+            0,
+        ]
+    }
+    return {
+        "$expr": {
+            "$lte": [
+                {
+                    "$add": [
+                        {"$bsonSize": "$$ROOT"},
+                        {"$max": [0, {"$subtract": [new_size, {"$bsonSize": old_analysis}]}]},
+                    ]
+                },
+                12_000_000,
+            ]
+        }
+    }
+
+
+async def checkpoint_free_research_run(
+    workspace_id: str,
+    run_id: str,
+    state: dict[str, Any],
+    client_id: str,
+    *,
+    user_id: str | None = None,
+) -> bool:
+    """Atomically replace a bounded embedded run checkpoint under its owner."""
+    now = _now()
+    replacement = {"analysis_id": run_id, "research_mode": "free_web_research", **state}
+    match = {
+        **_free_research_owner_query(workspace_id, client_id, user_id, now),
+        "analyses": {
+            "$elemMatch": {
+                "analysis_id": run_id,
+                "research_mode": "free_web_research",
+                "status": "running",
+            }
+        },
+        **_replace_analysis_size_guard(run_id, replacement),
+    }
+    result = await get_db().research_workspaces.update_one(
+        match,
+        [
+            {
+                "$set": {
+                    "analyses": {
+                        "$map": {
+                            "input": {"$ifNull": ["$analyses", []]},
+                            "as": "analysis",
+                            "in": {
+                                "$cond": [
+                                    {"$eq": ["$$analysis.analysis_id", run_id]},
+                                    {"$mergeObjects": ["$$analysis", {"$literal": replacement}]},
+                                    "$$analysis",
+                                ]
+                            },
+                        }
+                    }
+                }
+            },
+            {"$set": {"updated_at": now}},
+        ],
+    )
+    return result.modified_count > 0
+
+
+async def replay_free_research_run(
+    workspace_id: str,
+    run_id: str,
+    request_sha256: str | None,
+    client_id: str,
+    *,
+    user_id: str | None = None,
+) -> dict[str, Any]:
+    """Read an owner-scoped run and classify stale leases as interrupted."""
+    now = _now()
+    workspace = await get_db().research_workspaces.find_one(
+        _free_research_owner_query(workspace_id, client_id, user_id, now),
+        {"analyses": {"$elemMatch": {"analysis_id": run_id}}},
+    )
+    analysis = _free_research_run_from(workspace, run_id)
+    if analysis is None:
+        return {"outcome": "not_found", "analysis": None}
+    if request_sha256 is not None and analysis.get("request_sha256") != request_sha256:
+        return {"outcome": "mismatch", "analysis": analysis}
+    if analysis.get("status") == "running":
+        lease = analysis.get("lease_expires_at")
+        if isinstance(lease, datetime):
+            if lease.tzinfo is None:
+                lease = lease.replace(tzinfo=timezone.utc)
+            stale = lease <= now
+        else:
+            stale = True
+        if stale:
+            result_state = {
+                **(analysis.get("result") or {}),
+                "status": "interrupted",
+            }
+            if not any(
+                item.get("type") == "terminal"
+                for item in result_state.get("events", [])
+                if isinstance(item, dict)
+            ):
+                result_state["events"] = [
+                    *(result_state.get("events") or []),
+                    {
+                        "type": "terminal",
+                        "status": "interrupted",
+                        "analysis_id": run_id,
+                        "source_count": len(result_state.get("sources") or []),
+                        "error_kind": "stale_lease",
+                    },
+                ]
+            interrupted = {
+                **analysis,
+                "status": "interrupted",
+                "lease_expires_at": None,
+                "completed_at": now,
+                "result": result_state,
+            }
+            interrupted.pop("created_at", None)
+            interrupted.pop("analysis_id", None)
+            interrupted.pop("research_mode", None)
+            if await checkpoint_free_research_run(
+                workspace_id,
+                run_id,
+                interrupted,
+                client_id,
+                user_id=user_id,
+            ):
+                analysis = {**analysis, **interrupted}
+                return {"outcome": "replay", "analysis": analysis}
+            return {"outcome": "changed", "analysis": None}
+        return {"outcome": "active", "analysis": analysis}
+    return {"outcome": "replay", "analysis": analysis}
+
+
+async def begin_free_research_run(
+    workspace_id: str,
+    analysis: dict[str, Any],
+    client_id: str,
+    *,
+    user_id: str | None = None,
+) -> dict[str, Any]:
+    """Claim one workspace run with idempotency and an atomic active-run guard."""
+    now = _now()
+    run_id = str(analysis["analysis_id"])
+    request_sha256 = str(analysis["request_sha256"])
+    existing_result = await replay_free_research_run(
+        workspace_id, run_id, request_sha256, client_id, user_id=user_id
+    )
+    if existing_result["outcome"] != "not_found":
+        return existing_result
+
+    stored = {
+        **analysis,
+        "analysis_id": run_id,
+        "kind": "trusted_sources",
+        "research_mode": "free_web_research",
+        "status": "running",
+        "created_at": now,
+        "updated_at": now,
+    }
+    match = {
+        **_free_research_owner_query(workspace_id, client_id, user_id, now),
+        "analyses": {
+            "$not": {
+                "$elemMatch": {
+                    "research_mode": "free_web_research",
+                    "status": "running",
+                    "lease_expires_at": {"$gt": now},
+                }
+            }
+        },
+        **_size_guard(stored),
+    }
+    collection = get_db().research_workspaces
+    result = await collection.update_one(
+        match,
+        [
+            {
+                "$set": {
+                    "analyses": {
+                        "$map": {
+                            "input": {"$ifNull": ["$analyses", []]},
+                            "as": "analysis",
+                            "in": {
+                                "$cond": [
+                                    {
+                                        "$and": [
+                                            {"$eq": ["$$analysis.research_mode", "free_web_research"]},
+                                            {"$eq": ["$$analysis.status", "running"]},
+                                            {"$lte": [
+                                                {"$ifNull": ["$$analysis.lease_expires_at", datetime.min.replace(tzinfo=timezone.utc)]},
+                                                now,
+                                            ]},
+                                        ]
+                                    },
+                                    {
+                                        "$mergeObjects": [
+                                            "$$analysis",
+                                            {
+                                                "status": "interrupted",
+                                                "lease_expires_at": None,
+                                                "completed_at": now,
+                                                "result": {
+                                                    "$mergeObjects": [
+                                                        {"$ifNull": ["$$analysis.result", {}]},
+                                                        {
+                                                            "status": "interrupted",
+                                                            "events": {
+                                                                "$concatArrays": [
+                                                                    {"$ifNull": ["$$analysis.result.events", []]},
+                                                                    [
+                                                                        {
+                                                                            "$mergeObjects": [
+                                                                                {
+                                                                                    "$literal": {
+                                                                                        "type": "terminal",
+                                                                                        "status": "interrupted",
+                                                                                        "error_kind": "stale_lease",
+                                                                                    }
+                                                                                },
+                                                                                {
+                                                                                    "analysis_id": "$$analysis.analysis_id",
+                                                                                    "source_count": {
+                                                                                        "$size": {
+                                                                                            "$ifNull": ["$$analysis.result.sources", []]
+                                                                                        }
+                                                                                    },
+                                                                                },
+                                                                            ]
+                                                                        }
+                                                                    ],
+                                                                ]
+                                                            },
+                                                        },
+                                                    ]
+                                                },
+                                            },
+                                        ]
+                                    },
+                                    "$$analysis",
+                                ]
+                            },
+                        }
+                    }
+                }
+            },
+            {
+                "$set": {
+                    "analyses": {
+                        "$slice": [
+                            {"$concatArrays": ["$analyses", {"$literal": [stored]}]},
+                            -50,
+                        ]
+                    },
+                    "updated_at": now,
+                }
+            },
+        ],
+    )
+    if result.modified_count:
+        return {"outcome": "started", "analysis": stored}
+
+    # Distinguish idempotent races and active work from an absent/expired or
+    # BSON-full workspace without performing a non-atomic second mutation.
+    workspace = await collection.find_one(
+        _free_research_owner_query(workspace_id, client_id, user_id, now),
+        {"analyses": 1},
+    )
+    same = _free_research_run_from(workspace, run_id)
+    if same is not None:
+        if same.get("request_sha256") != request_sha256:
+            return {"outcome": "mismatch", "analysis": same}
+        if same.get("status") == "running":
+            return {"outcome": "active", "analysis": same}
+        return {"outcome": "replay", "analysis": same}
+    if workspace is None:
+        return {"outcome": "not_found", "analysis": None}
+    active = next(
+        (
+            item
+            for item in workspace.get("analyses", [])
+            if item.get("research_mode") == "free_web_research"
+            and item.get("status") == "running"
+            and item.get("lease_expires_at")
+            and item["lease_expires_at"] > now
+        ),
+        None,
+    )
+    if active:
+        return {"outcome": "active", "analysis": active}
+    return {"outcome": "size_limit", "analysis": None}
 
 
 async def save_full_document_review_batch(

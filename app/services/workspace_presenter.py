@@ -19,6 +19,7 @@ def source_library(workspace: dict) -> list[dict]:
                     "title": source.get("title") or source.get("url"),
                     "url": source.get("url"),
                     "document_sha256": source.get("document_sha256"),
+                    "source_sha256": digest,
                     "page_count": count
                     if isinstance(count, int) and 1 <= count <= 200
                     else None,

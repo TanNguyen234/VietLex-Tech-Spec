@@ -16,6 +16,7 @@
 .evidence-row[hidden],.finding-card[hidden]{display:none!important}
 
 .case-header>a:first-child{display:block;width:fit-content;margin-bottom:12px}.analysis-result>details[id^="stored-source-"]>a{display:block;width:fit-content;margin:8px 0;overflow-wrap:anywhere}
+button[data-cancel-free-research][hidden]{display:none!important}
 
 .saved-source-search { margin-block: 1.5rem; }
 .saved-source-search-controls { display: flex; gap: .75rem; flex-wrap: wrap; }
@@ -23,3 +24,17 @@
 .saved-source-results { display: grid; gap: 1rem; margin-block: 1.5rem; }
 .saved-source-quote { white-space: pre-wrap; overflow-wrap: anywhere; }
 .saved-source-quote mark { background: #f5df97; color: #30271d; }
+.demo-notice { flex-basis: 100%; font-size: .82rem; line-height: 1.45; }
+.demo-notice p { margin: .25rem 0; }
+.demo-notice summary { cursor: pointer; min-height: 24px; }
+@media (max-width: 600px) {
+  .case-layout .case-header { padding-block: 12px; }
+  .case-layout .case-header h1 { font-size: clamp(1.35rem, 6vw, 1.8rem); line-height: 1.25; margin-block: 8px; }
+  .case-layout .case-header > p { margin-block: 6px; }
+  .case-layout .case-header > .muted { font-size: .75rem; line-height: 1.4; }
+  .case-layout .case-header > a, .demo-notice a { display: inline-flex; min-height: 24px; align-items: center; }
+  .case-layout .case-header > a { display: flex; width: fit-content; }
+  .case-layout .case-header > .eyebrow { display: none; }
+  .demo-notice summary { display: flex; align-items: center; min-height: 32px; }
+  .workspace-views { scroll-margin-top: 12px; }
+}

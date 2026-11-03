@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import socket
+import asyncio
 import os
 import pytest
 
@@ -9,6 +10,8 @@ import pytest
 os.environ["APP_ENV"] = "test"
 
 _real_connect = socket.socket.connect
+_real_connect_ex = socket.socket.connect_ex
+_real_create_connection = asyncio.BaseEventLoop.create_connection
 
 
 def pytest_configure(config):
@@ -60,3 +63,18 @@ def block_external_network(request, monkeypatch):
         )
 
     monkeypatch.setattr(socket.socket, "connect", guarded_connect)
+
+    def guarded_connect_ex(self, address):
+        host = str(address[0]) if isinstance(address, tuple) else str(address)
+        if host not in {"127.0.0.1", "localhost", "::1", "0.0.0.0"}:
+            raise RuntimeError("Real external network connection blocked during evaluation unit tests")
+        return _real_connect_ex(self, address)
+
+    async def guarded_create_connection(self, protocol_factory, host=None, port=None, *args, **kwargs):
+        # Windows Proactor uses ConnectEx and bypasses socket.socket.connect.
+        if host is not None and str(host) not in {"127.0.0.1", "localhost", "::1", "0.0.0.0"}:
+            raise RuntimeError("Real external network connection blocked during evaluation unit tests")
+        return await _real_create_connection(self, protocol_factory, host, port, *args, **kwargs)
+
+    monkeypatch.setattr(socket.socket, "connect_ex", guarded_connect_ex)
+    monkeypatch.setattr(asyncio.BaseEventLoop, "create_connection", guarded_create_connection)

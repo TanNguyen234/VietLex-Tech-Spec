@@ -277,7 +277,7 @@ async def test_rewrite_failure_falls_back_and_is_observable() -> None:
 
     assert result.query_used == case.question
     assert result.technical_errors == {
-        "rewrite": "QueryRewriteError: rewrite timeout"
+        "rewrite": "QueryRewriteError: TimeoutError"
     }
     provider_call.assert_awaited_once()
 
@@ -796,6 +796,26 @@ def test_refusal_and_text_metrics_keep_distinct_contracts() -> None:
     assert metrics["refusal_category"] == "normal_answer"
 
 
+@pytest.mark.parametrize("date_text", ["01/01/2025", "ngày 1 tháng 1 năm 2025"])
+def test_number_metric_does_not_count_date_components(date_text: str) -> None:
+    from app.evaluation.answer_metrics import calculate_case_answer_metrics
+
+    response = f"Mức phạt 5 triệu đồng từ {date_text}."
+    metrics = calculate_case_answer_metrics(
+        pred_response=response,
+        ref_answer=response,
+        question_type="factoid",
+        retrieved_contexts=[response],
+        expected_numbers=["5"],
+        expected_dates=[date_text],
+    )
+
+    assert metrics["number_precision"] == 1.0
+    assert metrics["number_recall"] == 1.0
+    assert metrics["date_precision"] == 1.0
+    assert metrics["date_recall"] == 1.0
+
+
 def test_citation_precision_uses_retrieved_evidence_not_short_reference() -> None:
     from app.evaluation.answer_metrics import calculate_case_answer_metrics
 
@@ -828,6 +848,53 @@ def test_technical_fallback_is_not_an_honest_refusal() -> None:
 
     assert category == "technical_error"
     assert is_refusal is False
+
+
+def test_missing_evidence_does_not_turn_a_claim_into_a_refusal() -> None:
+    from app.evaluation.answer_metrics import classify_response_refusal
+
+    category, is_refusal = classify_response_refusal(
+        "Theo Điều 5, doanh nghiệp phải nộp báo cáo hằng năm.",
+        [],
+    )
+
+    assert category == "no_evidence"
+    assert is_refusal is False
+
+
+def test_legal_claim_that_something_is_unregulated_is_not_a_refusal() -> None:
+    from app.evaluation.answer_metrics import classify_response_refusal
+
+    category, is_refusal = classify_response_refusal(
+        "Thủ tục này không được quy định trong văn bản.",
+        ["Văn bản pháp luật được truy xuất."],
+    )
+
+    assert category == "normal_answer"
+    assert is_refusal is False
+
+
+def test_unanswerable_accuracy_does_not_credit_unsupported_claims() -> None:
+    from app.evaluation.answer_metrics import aggregate_answer_metrics
+
+    summary = aggregate_answer_metrics(
+        [
+            {
+                "answerable": False,
+                "status": "ok",
+                "refusal_category": "no_evidence",
+                "metrics": {
+                    "applicable": True,
+                    "is_refusal": False,
+                    "token_f1": 0.0,
+                },
+            }
+        ]
+    )
+
+    assert summary["refusal_precision"] is None
+    assert summary["refusal_recall"] == 0.0
+    assert summary["unanswerable_accuracy"] == 0.0
 
 
 def test_answer_aggregation_excludes_technical_outcomes() -> None:
@@ -880,3 +947,124 @@ def test_answer_aggregation_excludes_technical_outcomes() -> None:
     assert summary["refusal_precision"] == 1.0
     assert summary["refusal_recall"] == 1.0
     assert summary["token_f1"] == 0.5
+
+
+def test_answer_summary_reports_metric_denominators_coverage_and_skip_reasons() -> None:
+    from app.evaluation.answer_metrics import (
+        aggregate_answer_metrics,
+        calculate_case_answer_metrics,
+    )
+
+    scored_metrics = calculate_case_answer_metrics(
+        pred_response="Điều 3 quy định mức phạt là 5.",
+        ref_answer="Mức phạt là 5 theo Điều 3.",
+        question_type="factoid",
+        retrieved_contexts=["Dẫn chiếu: 72/2020/QH14, Điều 3"],
+        expected_numbers=["5"],
+        expected_dates=[],
+        expected_entities=[],
+    )
+    skipped_metrics = calculate_case_answer_metrics(
+        pred_response="Không có kết quả.",
+        ref_answer="Mức phạt là 5.",
+        question_type="factoid",
+        retrieved_contexts=[],
+        status="retrieval_error",
+    )
+    summary = aggregate_answer_metrics(
+        [
+            {
+                "answerable": True,
+                "status": "ok",
+                "refusal_category": scored_metrics["refusal_category"],
+                "metrics": scored_metrics,
+            },
+            {
+                "answerable": True,
+                "status": "retrieval_error",
+                "refusal_category": skipped_metrics["refusal_category"],
+                "metrics": skipped_metrics,
+            },
+        ]
+    )
+
+    assert summary["number_precision"] == scored_metrics["number_precision"]
+    assert summary["number_recall"] == scored_metrics["number_recall"]
+    assert summary["date_precision"] is None
+    assert summary["entity_recall"] is None
+    assert "citation_coverage" in summary
+
+    details = summary["metric_details"]
+    required_detail_fields = {
+        "value",
+        "numerator",
+        "denominator",
+        "coverage",
+        "scored_cases",
+        "skipped_cases",
+        "skip_reasons",
+        "aggregation",
+        "reason",
+    }
+    required_metrics = {
+        "exact_match",
+        "token_precision",
+        "token_recall",
+        "token_f1",
+        "char_f1",
+        "rouge_l",
+        "chrf",
+        "number_precision",
+        "number_recall",
+        "date_precision",
+        "date_recall",
+        "entity_precision",
+        "entity_recall",
+        "citation_precision",
+        "citation_recall",
+        "citation_coverage",
+        "invalid_citation_rate",
+        "answer_similarity_pass_rate",
+        "unanswerable_accuracy",
+        "refusal_precision",
+        "refusal_recall",
+        "mixed_claim_refusal_rate",
+    }
+    assert required_metrics <= details.keys()
+    assert all(required_detail_fields <= item.keys() for item in details.values())
+    assert required_detail_fields <= details["number_precision"].keys()
+    assert details["number_precision"]["numerator"] == scored_metrics[
+        "number_precision"
+    ]
+    assert details["number_precision"]["denominator"] == 1
+    assert details["number_precision"]["coverage"] == 0.5
+    assert details["number_precision"]["scored_cases"] == 1
+    assert details["number_precision"]["skipped_cases"] == 1
+    assert details["number_precision"]["skip_reasons"] == {
+        "retrieval_error": 1
+    }
+    assert details["date_precision"]["denominator"] == 0
+    assert details["date_precision"]["skip_reasons"] == {
+        "no_expected_dates": 1,
+        "retrieval_error": 1,
+    }
+    assert details["entity_recall"]["skip_reasons"] == {
+        "no_expected_entities": 1,
+        "retrieval_error": 1,
+    }
+    assert details["refusal_precision"]["denominator"] == 0
+    assert details["refusal_precision"]["value"] is None
+    assert details["refusal_precision"]["reason"] == "no_predicted_refusals"
+
+
+def test_empty_answer_summary_reports_zero_denominators() -> None:
+    from app.evaluation.answer_metrics import aggregate_answer_metrics
+
+    summary = aggregate_answer_metrics([])
+
+    assert summary["total_cases"] == 0
+    assert summary["metric_details"]["exact_match"]["denominator"] == 0
+    assert summary["metric_details"]["exact_match"]["coverage"] == 0.0
+    assert summary["metric_details"]["exact_match"]["reason"] == "no_cases"
+    assert summary["metric_details"]["number_precision"]["skip_reasons"] == {}
+    assert summary["metric_details"]["refusal_recall"]["reason"] == "no_cases"

@@ -135,19 +135,68 @@ async def build_readiness(
 ) -> dict[str, Any]:
     pipeline_switch = getattr(settings, "USE_LEGACY_FREE_PIPELINE", None)
     use_v3_data = pipeline_switch is False
-    content_path = Path(
-        settings.V3_CONTENT_STORE_PATH
-        if use_v3_data
-        else settings.CONTENT_STORE_PATH
+    serverless_online_only = bool(
+        getattr(settings, "SERVERLESS_ONLINE_ONLY", False)
     )
-    fts_path = Path(
-        settings.V3_LEGAL_FTS_PATH
-        if use_v3_data
-        else settings.LEGAL_FTS_PATH
-    )
+    if serverless_online_only:
+        content_path = Path(
+            settings.V3_CONTENT_STORE_PATH
+            if pipeline_switch is False
+            else settings.CONTENT_STORE_PATH
+        )
+        fts_path = Path(
+            settings.V3_LEGAL_FTS_PATH
+            if pipeline_switch is False
+            else settings.LEGAL_FTS_PATH
+        )
+        remote_legal_source = True
+    else:
+        from app.services.legal_browser import (
+            local_legal_index_ready,
+            local_legal_paths,
+            should_use_supabase_legal_store,
+        )
+
+        local_content_path, local_fts_path, full_corpus_selected = (
+            local_legal_paths(settings)
+        )
+        content_path = Path(local_content_path)
+        fts_path = Path(local_fts_path)
+        local_index_was_validated = (
+            getattr(settings, "APP_ENV", None) == "development"
+            and pipeline_switch is False
+            and full_corpus_selected
+        )
+        local_index_ready = local_index_was_validated or local_legal_index_ready(
+            settings, content_path, fts_path
+        )
+        remote_legal_source = should_use_supabase_legal_store(
+            settings,
+            local_content_path=content_path,
+            local_fts_path=fts_path,
+            local_index_ready=local_index_ready,
+        )
+    if remote_legal_source:
+        content_store_status = "not_required"
+        legal_fts_status = "not_required"
+    else:
+        content_store_status = (
+            "ready"
+            if local_index_ready
+            else "unavailable"
+            if content_path.is_file()
+            else "missing"
+        )
+        legal_fts_status = (
+            "ready"
+            if local_index_ready
+            else "unavailable"
+            if fts_path.is_file()
+            else "missing"
+        )
     checks = {
-        "content_store": "ready" if content_path.is_file() else "missing",
-        "legal_fts": "ready" if fts_path.is_file() else "missing",
+        "content_store": content_store_status,
+        "legal_fts": legal_fts_status,
         "mongodb": (
             "not_required"
             if getattr(settings, "APP_ENV", None) == "development"
@@ -161,11 +210,8 @@ async def build_readiness(
     ):
         pending_probes["mongodb"] = _run_probe("mongodb", mongo_ping)
 
-    online_only = bool(getattr(settings, "SERVERLESS_ONLINE_ONLY", False))
+    online_only = serverless_online_only or remote_legal_source
     if online_only:
-        if pipeline_switch is False:
-            checks["content_store"] = "not_required"
-            checks["legal_fts"] = "not_required"
         if pipeline_switch is True:
             retrieval_configured = bool(
                 getattr(settings, "pinecone_api_key", None)
@@ -255,7 +301,10 @@ async def build_readiness(
         "runtime": {
             "retrieval_backend": backend,
             "google_cloud_calls_enabled": pipeline_switch is False,
-            **({"serverless_online_only": True} if online_only else {}),
+            "serverless_online_only": serverless_online_only,
+            "legal_document_source": (
+                "supabase" if remote_legal_source else "local_sqlite"
+            ),
             **(
                 {"content_store_path": str(content_path)}
                 if use_v3_data

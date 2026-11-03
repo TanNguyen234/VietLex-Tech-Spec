@@ -266,6 +266,9 @@ class AnswerCaseResult(BaseModel):
     raw_response: str
     final_response: str
     generation_metadata: Dict[str, Any] = Field(default_factory=dict)
+    prompt_evidence: List[Dict[str, Any]] = Field(default_factory=list)
+    prompt_contexts: List[str] = Field(default_factory=list)
+    pipeline_diagnostics: Dict[str, Any] = Field(default_factory=dict)
     input_safe: bool = True
     output_safe: bool = True
     refusal_category: str  # "pure_refusal" | "disclaimer" | "mixed_claim_refusal" | "technical_error" | "no_evidence" | "normal_answer"
@@ -319,3 +322,5 @@ class EvaluationRunManifest(BaseModel):
     configured_provider_models: Dict[str, Any] = Field(default_factory=dict)
     artifact_files: List[EvaluationArtifactFile] = Field(default_factory=list)
     code_metric_version: str = "3.0.0"
+    # Missing on historical manifests; retrieval schema remains v3.0.0.
+    answer_metric_version: Optional[str] = None

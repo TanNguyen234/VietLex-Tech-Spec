@@ -93,7 +93,12 @@ async def source_read(
         try:
             return await read_source(url, page_start=page_start, use_ocr=use_ocr, page_limit=page_limit), None
         except SourceReadError as error:
-            return None, {"url": url, "kind": error.kind}
+            detail = {"url": url, "kind": error.kind}
+            if getattr(error, 'transport_kind', None):
+                detail['transport_kind'] = error.transport_kind
+            if getattr(error, 'transport_cause', None):
+                detail['transport_cause'] = error.transport_cause
+            return None, detail
 
     outcomes = await asyncio.gather(*(one(url) for url in selected))
     sources = [source for source, error in outcomes if source]
@@ -157,6 +162,19 @@ async def pin_source(
     if source_index >= len(sources):
         raise HTTPException(404, detail="source_not_found")
     source = sources[source_index]
+    if analysis.get("research_mode") == "free_web_research":
+        from app.services.free_web_research import _snapshot
+
+        owner_scope = f"user:{user_id}" if user_id else f"client:{client_id}"
+        validated = _snapshot(
+            source, str(source.get("url") or ""), workspace_id=workspace_id,
+            owner_scope=owner_scope, question="",
+        )
+        if validated is None or any(
+            source.get(key) != validated.get(key)
+            for key in ("snapshot_key", "snapshot_scope_sha256")
+        ):
+            raise HTTPException(422, detail="source_snapshot_invalid")
     if quote not in source["text"]:
         # HTML form submission normalizes newlines. Recover the exact saved
         # substring; do not normalize spaces, punctuation, or evidence identity.

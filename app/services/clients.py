@@ -96,6 +96,11 @@ async def close_clients() -> None:
     global _qdrant_inference_client, _remote_reranker, _qdrant_only_reranker
     if _http_client is not None:
         await _http_client.aclose()
+    from app.services.direct_llm import close_direct_client
+    from app.services.vertex_ai import close_vertex_provider
+
+    await close_direct_client()
+    await close_vertex_provider()
     for client in (
         _pinecone_index,
         _pinecone_client,

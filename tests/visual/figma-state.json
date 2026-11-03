@@ -1,0 +1,135 @@
+{
+  "fileKey": "Fu6AiLp6FgCeQHMo6Y178A",
+  "pages": {
+    "foundations": "0:1",
+    "desktop": "5:4",
+    "mobile": "5:5"
+  },
+  "desktop": [
+    {
+      "route": "/",
+      "node": "6:2",
+      "index": 0
+    },
+    {
+      "route": "/search",
+      "node": "11:2",
+      "index": 1
+    },
+    {
+      "route": "/documents/sample",
+      "node": "12:2",
+      "index": 2
+    },
+    {
+      "route": "/workspaces",
+      "node": "14:2",
+      "index": 3
+    },
+    {
+      "route": "/workspaces/sample",
+      "node": "15:2",
+      "index": 4
+    },
+    {
+      "route": "/evaluation-lab",
+      "node": "13:2",
+      "index": 5
+    },
+    {
+      "route": "/login",
+      "node": "16:2",
+      "index": 6
+    },
+    {
+      "route": "/register",
+      "node": "17:2",
+      "index": 7
+    },
+    {
+      "route": "/forgot-password",
+      "node": "18:2",
+      "index": 8
+    },
+    {
+      "route": "/reset-password",
+      "node": "19:2",
+      "index": 9
+    },
+    {
+      "route": "/verify-email",
+      "node": "20:2",
+      "index": 10
+    },
+    {
+      "route": "/settings",
+      "node": "22:2",
+      "index": 11
+    },
+    {
+      "route": "/privacy",
+      "node": "21:2",
+      "index": 12
+    },
+    {
+      "route": "/terms",
+      "node": "23:2",
+      "index": 13
+    },
+    {
+      "route": "/admin",
+      "node": "24:2",
+      "index": 14
+    },
+    {
+      "route": "/admin/requests",
+      "node": "25:2",
+      "index": 15
+    },
+    {
+      "route": "/admin/usage",
+      "node": "26:2",
+      "index": 16
+    },
+    {
+      "route": "/admin/users",
+      "node": "27:2",
+      "index": 17
+    },
+    {
+      "route": "/admin/providers",
+      "node": "28:2",
+      "index": 18
+    },
+    {
+      "route": "/admin/evaluations",
+      "node": "29:2",
+      "status": "The design has been added to your existing file: https://www.figma.com/design/Fu6AiLp6FgCeQHMo6Y178A?node-id=29-2\n\nUse `open` to view the changes in F",
+      "index": 19
+    },
+    {
+      "route": "/admin/system",
+      "node": "30:2",
+      "status": "The design has been added to your existing file: https://www.figma.com/design/Fu6AiLp6FgCeQHMo6Y178A?node-id=30-2\n\nUse `open` to view the changes in F",
+      "index": 20
+    },
+    {
+      "route": "/admin/audit",
+      "node": "31:2",
+      "status": "The design has been added to your existing file: https://www.figma.com/design/Fu6AiLp6FgCeQHMo6Y178A?node-id=31-2\n\nUse `open` to view the changes in F",
+      "index": 21
+    },
+    {
+      "route": "/admin/details/sample",
+      "node": "32:2",
+      "status": "The design has been added to your existing file: https://www.figma.com/design/Fu6AiLp6FgCeQHMo6Y178A?node-id=32-2\n\nUse `open` to view the changes in F",
+      "index": 22
+    },
+    {
+      "route": "/admin/error",
+      "node": "33:2",
+      "status": "The design has been added to your existing file: https://www.figma.com/design/Fu6AiLp6FgCeQHMo6Y178A?node-id=33-2\n\nUse `open` to view the changes in F",
+      "index": 23
+    }
+  ]
+}

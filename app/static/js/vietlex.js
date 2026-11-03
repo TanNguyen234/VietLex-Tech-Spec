@@ -33,22 +33,41 @@
 
   function renderMarkdown(root=document){$$('[data-markdown]:not([data-rendered])',root).forEach(renderMarkdownTarget);}
 
-  async function streamAnswer(target){
+  async function streamAnswer(target,isCurrent=()=>true){
+    if(!isCurrent())return;
     if(!target||matchMedia('(prefers-reduced-motion: reduce)').matches){renderMarkdownTarget(target);return;}
     const source=target.previousElementSibling?.textContent||'';target.replaceChildren();target.dataset.rendered='streaming';
     const text=document.createTextNode('');const cursor=document.createElement('span');cursor.className='streaming-cursor';cursor.setAttribute('aria-hidden','true');target.append(text,cursor);
-    for(let end=0;end<source.length;end+=12){text.data=source.slice(0,end+12);await new Promise(resolve=>requestAnimationFrame(resolve));}
-    delete target.dataset.rendered;renderMarkdownTarget(target);
+    for(let end=0;end<source.length;end+=12){if(!isCurrent())return;text.data=source.slice(0,end+12);await new Promise(resolve=>requestAnimationFrame(resolve));}
+    if(!isCurrent())return;delete target.dataset.rendered;renderMarkdownTarget(target);
   }
 
   async function loadSessions(search=''){const list=$('#sidebar-sessions-list');if(!list)return;try{const response=await fetch(`/sessions?search=${encodeURIComponent(search)}`,{credentials:'same-origin'});list.innerHTML=await response.text();}catch{list.textContent='Không thể tải lịch sử.';}}
 
-  async function installPartial(html,mode='append',stream=false){
+  async function installPartial(html,mode='append',stream=false,isCurrent=()=>true){
+    if(!isCurrent())return;
     const history=$('#chat-history');const wrapper=document.createElement('div');wrapper.innerHTML=html;const sessionInput=wrapper.querySelector('#session-id-input');
     if(sessionInput){$('#session-id-input').value=sessionInput.value;sessionInput.remove();}
     const nodes=[...wrapper.childNodes];if(mode==='replace')history.replaceChildren(...nodes);else history.append(...nodes);
-    if(stream){const target=[...nodes].reverse().map(node=>node.querySelector?.('[data-markdown]')).find(Boolean);await streamAnswer(target);}else renderMarkdown(history);
+    if(stream){const target=[...nodes].reverse().map(node=>node.querySelector?.('[data-markdown]')).find(Boolean);await streamAnswer(target,isCurrent);}else renderMarkdown(history);
+    if(!isCurrent())return;
     history.scrollTop=history.scrollHeight;
+  }
+
+  let chatNavigationRevision = 0;
+  let chatNavigationPending = false;
+  async function navigateChat(url,options={credentials:'same-origin'}){
+    const revision=++chatNavigationRevision;
+    chatNavigationPending=true;
+    const isCurrent=()=>revision===chatNavigationRevision;
+    try{
+      const response=await fetch(url,options);
+      const html=await response.text();
+      if(!isCurrent())return;
+      if(!response.ok)throw new Error('session_unavailable');
+      await installPartial(html,'replace',false,isCurrent);
+    }catch{if(isCurrent())toast('Không thể mở hội thoại. Vui lòng thử lại.');}
+    finally{if(isCurrent())chatNavigationPending=false;}
   }
 
   function startProgress(requestId){
@@ -66,13 +85,34 @@
   }
 
   async function submitChat(form){
-    const loading=$('#chat-loading');const status=$('#chat-status');const submit=form.querySelector('[type="submit"]');const data=new FormData(form);const requestId=crypto.randomUUID?.()||`${Date.now()}-${Math.random()}`;data.set('request_id',requestId);
+    const loading=$('#chat-loading');const status=$('#chat-status');const submit=form.querySelector('[type="submit"]');if(submit.disabled||chatNavigationPending)return;const revision=chatNavigationRevision;const isCurrent=()=>revision===chatNavigationRevision;const submittedMessage=form.querySelector('[name="message"]').value;const data=new FormData(form);const requestId=crypto.randomUUID?.()||`${Date.now()}-${Math.random()}`;data.set('request_id',requestId);
+    let completed=false;
     loading.hidden=false;submit.disabled=true;status.textContent='Đang xử lý câu hỏi';$('#pipeline-progress').textContent='Đang tiếp nhận câu hỏi';$('#pipeline-elapsed').textContent='0.0s';$('#welcome-container')?.remove();const stopProgress=startProgress(requestId);
-    try{const response=await fetch('/chat',{method:'POST',body:data,credentials:'same-origin'});const body=await response.text();if(response.ok){await installPartial(body,'append',true);form.querySelector('[name="message"]').value='';await loadSessions($('#session-search').value);}else{const card=document.createElement('article');card.className='message-card error-message';card.textContent=response.status===429?'Bạn gửi quá nhanh. Vui lòng chờ một phút rồi thử lại.':'Yêu cầu chưa hoàn tất. Vui lòng thử lại sau.';$('#chat-history').append(card);toast(card.textContent);}}catch{toast('Không thể kết nối tới VietLex.');}finally{stopProgress();loading.hidden=true;submit.disabled=false;status.textContent='Đã xử lý xong';}
+    try{
+      const response=await fetch('/chat',{method:'POST',body:data,credentials:'same-origin'});
+      const body=await response.text();if(!isCurrent())return;
+      if(response.ok){
+        await installPartial(body,'append',true,isCurrent);if(!isCurrent())return;
+        completed=true;
+        if(form.querySelector('[name="message"]').value===submittedMessage)form.querySelector('[name="message"]').value='';
+        await loadSessions($('#session-search').value);
+      }else{
+        const card=document.createElement('article');card.className='message-card error-message';
+        if(response.status===429){
+          const seconds=Number(response.headers?.get('Retry-After'));
+          const wait=Number.isFinite(seconds)&&seconds>0&&seconds<=86400
+            ? `Thử lại sau khoảng ${seconds<60?`${Math.ceil(seconds)} giây`:`${Math.ceil(seconds/60)} phút`}.`
+            : 'Vui lòng thử lại sau.';
+          card.textContent=`Đã chạm giới hạn lượt dùng. ${wait} Câu hỏi vẫn được giữ.`;
+        }else card.textContent='Yêu cầu chưa hoàn tất. Vui lòng thử lại sau.';
+        $('#chat-history').append(card);toast(card.textContent);
+      }
+    }catch{if(isCurrent())toast('Không thể kết nối tới VietLex.');}
+    finally{stopProgress();loading.hidden=true;submit.disabled=false;if(isCurrent())status.textContent=completed?'Đã xử lý xong':'Chưa hoàn tất câu hỏi';}
   }
 
-  function openSource(button){const source=document.getElementById(button.dataset.sourceTarget);const drawer=$('#evidence-drawer');const content=$('#evidence-drawer-content');content.replaceChildren(source?.content?.cloneNode(true)||document.createTextNode('Không có nội dung nguồn.'));drawer.classList.add('open');drawer.setAttribute('aria-hidden','false');$('#drawer-backdrop').hidden=false;drawer._returnFocus=button;drawer.querySelector('[data-action="close-drawer"]')?.focus();}
-  function closeSource(){const drawer=$('#evidence-drawer');drawer.classList.remove('open');drawer.setAttribute('aria-hidden','true');$('#drawer-backdrop').hidden=true;drawer._returnFocus?.focus();}
+  function openSource(button){const source=document.getElementById(button.dataset.sourceTarget);const drawer=$('#evidence-drawer');const content=$('#evidence-drawer-content');content.replaceChildren(source?.content?.cloneNode(true)||document.createTextNode('Không có nội dung nguồn.'));drawer.inert=false;drawer.classList.add('open');drawer.setAttribute('aria-hidden','false');$('#drawer-backdrop').hidden=false;drawer._returnFocus=button;drawer.querySelector('[data-action="close-drawer"]')?.focus();}
+  function closeSource(){const drawer=$('#evidence-drawer');const returnFocus=drawer._returnFocus;const target=returnFocus?.isConnected?returnFocus:$('#chat-input');target?.focus();drawer.inert=true;drawer.classList.remove('open');drawer.setAttribute('aria-hidden','true');$('#drawer-backdrop').hidden=true;drawer._returnFocus=null;}
   const make=(tag,text,className)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(className)node.className=className;return node;};
   function metricCard(label,value,note){const card=make('div',undefined,'metric-card');card.append(make('strong',`${label}: ${value??'N/A'}`),make('small',note));return card;}
   function scoreText(value){return typeof value==='number'?value.toFixed(3):'Chưa có điểm';}
@@ -103,7 +143,8 @@
     if(trace.query)panel.append(make('h4','Truy vấn gốc'),make('p',trace.query));
     if(trace.rewritten_query)panel.append(make('h4','Truy vấn viết lại đã ghi'),make('p',trace.rewritten_query));
     const overview=make('dl',undefined,'trace-overview');
-    [['Trạng thái',trace.request_status],['Runtime',trace.runtime_mode||'Không ghi nhận'],['Backend',trace.backend||'Không ghi nhận'],['Collection',trace.collection||'Không ghi nhận'],['Ranking',trace.ranking||'Không ghi nhận'],['Provider / model',`${trace.observed_provider||'unobserved'} / ${trace.observed_model||'unobserved'}`],['Cache',trace.cached?'Hit':'Miss'],['Evidence cuối',trace.final_evidence_count??'Không ghi nhận'],['Context budget',trace.context_budget_tokens?`${trace.context_budget_tokens} tokens`:'Không ghi nhận'],['Guardrails input/output',`${trace.guardrail_state?.input_safe??'N/A'} / ${trace.guardrail_state?.output_safe??'N/A'}`]].forEach(([label,value])=>{overview.append(make('dt',label),make('dd',String(value??'N/A')));});panel.append(overview);
+    const guard=trace.guardrail_state||{};const safety=value=>value===true?'Đạt':value===false?'Không đạt':'Chưa đánh giá';
+    [['Trạng thái',trace.request_status],['Runtime',trace.runtime_mode||'Không ghi nhận'],['Backend',trace.backend||'Không ghi nhận'],['Collection',trace.collection||'Không ghi nhận'],['Ranking',trace.ranking||'Không ghi nhận'],['Provider / model',`${trace.observed_provider||'unobserved'} / ${trace.observed_model||'unobserved'}`],['Cache',trace.cached?'Hit':'Miss'],['Evidence cuối',trace.final_evidence_count??'Không ghi nhận'],['Context budget',trace.context_budget_tokens?`${trace.context_budget_tokens} tokens`:'Không ghi nhận'],['Guardrails chế độ / trạng thái',`${guard.mode||'unobserved'} / ${guard.status||'unobserved'}`],['Guardrails yêu cầu / thực thi',`${guard.requested??'Không ghi nhận'} / ${guard.executed??'Không ghi nhận'}`],['Guardrails input/output',`${safety(guard.input_safe)} / ${safety(guard.output_safe)}`],...Object.entries(guard.stages||{}).map(([stage,state])=>[`Guardrails ${stage}`,`${state.status||'not_run'}: ${safety(state.safe)}${state.error?' ('+state.error.reason+')':''}`])].forEach(([label,value])=>{overview.append(make('dt',label),make('dd',String(value??'N/A')));});panel.append(overview);
     const counts=Object.entries(trace.candidate_counts||{});if(counts.length){panel.append(make('h4','Candidate counts đã ghi'));const table=make('table',undefined,'evaluation-table');const body=document.createElement('tbody');counts.forEach(([stage,count])=>{const row=document.createElement('tr');row.append(make('th',stage),make('td',String(count)));body.append(row);});table.append(body);panel.append(table);}
     const timings=Object.entries(trace.latency||{});if(timings.length){panel.append(make('h4','Latency'));const table=make('table',undefined,'evaluation-table');const body=document.createElement('tbody');timings.forEach(([stage,seconds])=>{const row=document.createElement('tr');row.append(make('th',stage),make('td',`${Number(seconds).toFixed(4)}s`));body.append(row);});table.append(body);panel.append(table);}
     if(trace.evidence?.length){panel.append(make('h4','Context được chọn'));const list=make('ol');trace.evidence.forEach(item=>{const row=make('li');const button=make('button',item.citation||('Bằng chứng '+item.rank));button.type='button';button.dataset.action='open-source';button.dataset.sourceTarget='source-'+panel.closest('[data-trace-id]').dataset.traceId+'-'+item.rank;row.append(button);list.append(row);});panel.append(list);}
@@ -122,8 +163,8 @@
   }
 
   document.addEventListener('submit',async event=>{const form=event.target;if(form.id==='pin-evidence-form'){event.preventDefault();const submit=form.querySelector('[type="submit"]');if(submit.disabled)return;submit.disabled=true;try{const workspaceId=form.querySelector('[name="workspace_id"]').value;const response=await fetch(`/workspaces/${encodeURIComponent(workspaceId)}/evidence`,{method:'POST',body:new FormData(form),credentials:'same-origin'});if(response.ok){$('#pin-evidence-dialog').close();toast('Đã ghim bằng chứng vào workspace.');}else toast(response.status===409?'Bằng chứng đã ghim hoặc workspace đã đạt giới hạn.':'Không thể ghim bằng chứng.');}catch{toast('Không thể kết nối workspace.');}finally{submit.disabled=false;}return;}if(form.id==='chat-form'){event.preventDefault();await submitChat(form);}if(form.matches('[data-feedback-form]')){event.preventDefault();const response=await fetch('/api/feedback',{method:'POST',body:new FormData(form),credentials:'same-origin'});if(response.ok){const actions=form.closest('.message-actions');const state=make('span',form.querySelector('[name="rating"]').value==='up'?'✓ Hữu ích':'✓ Đã ghi nhận');actions.querySelectorAll('[data-feedback-form]').forEach(node=>node.remove());actions.append(state);}else toast('Không thể ghi nhận phản hồi.');}});
-  document.addEventListener('click',async event=>{const target=event.target.closest('button,a');if(!target)return;if(target.dataset.prompt){$('#chat-input').value=target.dataset.prompt;$('#chat-form').requestSubmit();}const action=target.dataset.action;if(action==='new-session'){const data=new FormData();data.set('csrf_token',csrf());const r=await fetch('/sessions',{method:'POST',body:data,credentials:'same-origin'});await installPartial(await r.text(),'replace');loadSessions();}if(action==='select-session'){const r=await fetch(`/sessions/${target.dataset.sessionId}`,{credentials:'same-origin'});await installPartial(await r.text(),'replace');}if(action==='delete-session'&&confirm('Xóa hội thoại này?')){await fetch(`/sessions/${target.dataset.sessionId}`,{method:'DELETE',headers:{'X-CSRF-Token':csrf()},credentials:'same-origin'});loadSessions();}if(action==='rename-session'){const name=prompt('Tên mới cho hội thoại:',target.dataset.title||'');if(name){await fetch(`/sessions/${target.dataset.sessionId}/rename`,{method:'POST',headers:{'HX-Prompt':name},body:new URLSearchParams({csrf_token:csrf()}),credentials:'same-origin'});loadSessions();}}if(action==='open-source')openSource(target);if(action==='close-drawer')closeSource();if(action==='pin-evidence')await openPinEvidence(target);if(action==='close-pin-dialog')$('#pin-evidence-dialog').close();if(action==='copy-answer'){await navigator.clipboard.writeText(target.closest('.message-card').querySelector('.answer-source').textContent);toast('Đã sao chép câu trả lời');}if(action==='retry'){$('#chat-input').value=target.dataset.query||'';$('#chat-form').requestSubmit();}if(action==='inspect-retrieval')await inspectRetrieval(target);if(action==='evaluate')await evaluateAnswer(target,false);});
+  document.addEventListener('click',async event=>{const target=event.target.closest('button,a');if(!target)return;if(target.dataset.prompt){$('#chat-input').value=target.dataset.prompt;$('#chat-form').requestSubmit();}const action=target.dataset.action;if(action==='new-session'){const data=new FormData();data.set('csrf_token',csrf());await navigateChat('/sessions',{method:'POST',body:data,credentials:'same-origin'});loadSessions();}if(action==='select-session'){await navigateChat(`/sessions/${encodeURIComponent(target.dataset.sessionId)}`);}if(action==='delete-session'&&confirm('Xóa hội thoại này?')){await fetch(`/sessions/${target.dataset.sessionId}`,{method:'DELETE',headers:{'X-CSRF-Token':csrf()},credentials:'same-origin'});loadSessions();}if(action==='rename-session'){const name=prompt('Tên mới cho hội thoại:',target.dataset.title||'');if(name){await fetch(`/sessions/${target.dataset.sessionId}/rename`,{method:'POST',headers:{'HX-Prompt':name},body:new URLSearchParams({csrf_token:csrf()}),credentials:'same-origin'});loadSessions();}}if(action==='open-source')openSource(target);if(action==='close-drawer')closeSource();if(action==='pin-evidence')await openPinEvidence(target);if(action==='close-pin-dialog')$('#pin-evidence-dialog').close();if(action==='copy-answer'){await navigator.clipboard.writeText(target.closest('.message-card').querySelector('.answer-source').textContent);toast('Đã sao chép câu trả lời');}if(action==='retry'){$('#chat-input').value=target.dataset.query||'';$('#chat-form').requestSubmit();}if(action==='inspect-retrieval')await inspectRetrieval(target);if(action==='evaluate')await evaluateAnswer(target,false);});
   $('#drawer-backdrop')?.addEventListener('click',closeSource);document.addEventListener('keydown',event=>{if(event.key==='Escape'&&$('#evidence-drawer')?.classList.contains('open'))closeSource();});$('#chat-form')?.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();event.currentTarget.requestSubmit();}});let searchTimer;$('#session-search')?.addEventListener('input',event=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>loadSessions(event.target.value),180);});const savedTheme=localStorage.getItem('vietlex-theme');if(savedTheme)document.documentElement.dataset.theme=savedTheme;$('#theme-toggle')?.addEventListener('click',()=>{const next=document.documentElement.dataset.theme==='light'?'dark':'light';document.documentElement.dataset.theme=next;localStorage.setItem('vietlex-theme',next);});fetch('/readyz').then(async r=>({ok:r.ok,data:await r.json()})).then(({ok})=>{const node=$('#system-readiness');if(!node)return;node.textContent=ok?'Hệ thống sẵn sàng':'Hệ thống chưa sẵn sàng';node.classList.add(ok?'ready':'not-ready');}).catch(()=>{const node=$('#system-readiness');if(node)node.textContent='Không đọc được trạng thái';});loadSessions();renderMarkdown();
   const initialSession=new URLSearchParams(location.search).get('session');
-  if(initialSession&&/^[A-Za-z0-9-]{1,100}$/.test(initialSession))fetch('/sessions/'+encodeURIComponent(initialSession),{credentials:'same-origin'}).then(async response=>{if(!response.ok)throw new Error('session_unavailable');await installPartial(await response.text(),'replace');}).catch(()=>toast('Không thể mở hội thoại nguồn.'));
+  if(initialSession&&/^[A-Za-z0-9-]{1,100}$/.test(initialSession))void navigateChat('/sessions/'+encodeURIComponent(initialSession));
 })();

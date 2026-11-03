@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import hashlib
+import os
+import stat
 import subprocess
 from pathlib import Path, PurePosixPath
 from typing import Literal
@@ -105,13 +107,57 @@ def _run_git(root: Path, *args: str) -> bytes:
     return completed.stdout
 
 
-def _hash_untracked(root: Path, paths: list[str]) -> bytes:
-    lines: list[str] = []
+def _is_link_or_reparse_point(metadata: os.stat_result) -> bool:
+    if stat.S_ISLNK(metadata.st_mode):
+        return True
+    reparse_attribute = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+    return bool(getattr(metadata, "st_file_attributes", 0) & reparse_attribute)
+
+
+def _hash_git_path(root: Path, relative: str) -> tuple[str, str] | None:
+    """Hash a Git path without following any symlink or reparse-point target."""
+    normalized = normalize_git_path(relative)
+    parts = PurePosixPath(normalized).parts
+    path = root
+    metadata: os.stat_result | None = None
+
+    for index, part in enumerate(parts):
+        path /= part
+        try:
+            metadata = path.lstat()
+        except FileNotFoundError:
+            # Git can list tracked paths that are deleted in the working tree.
+            return None
+        if _is_link_or_reparse_point(metadata):
+            target = os.readlink(path)
+            target_bytes = target if isinstance(target, bytes) else os.fsencode(target)
+            digest = hashlib.sha256(b"link\0" + target_bytes).hexdigest()
+            return "/".join(parts[: index + 1]), digest
+        if index < len(parts) - 1 and not stat.S_ISDIR(metadata.st_mode):
+            return None
+
+    if metadata is None or not stat.S_ISREG(metadata.st_mode):
+        return None
+    digest = hashlib.sha256(b"file\0")
+    with path.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return normalized, digest.hexdigest()
+
+
+def _hash_paths(root: Path, paths: list[str]) -> bytes:
+    hashes: dict[str, str] = {}
     for relative in sorted(paths):
-        path = root / relative
-        digest = hashlib.sha256(path.read_bytes()).hexdigest()
-        lines.append(f"{normalize_git_path(relative)}:{digest}")
+        result = _hash_git_path(root, relative)
+        if result is not None:
+            path, digest = result
+            hashes[path] = digest
+    lines = [f"{path}:{hashes[path]}" for path in sorted(hashes)]
     return "\n".join(lines).encode("utf-8")
+
+
+def _hash_untracked(root: Path, paths: list[str]) -> bytes:
+    return _hash_paths(root, paths)
 
 
 def _hash_repository_sources(root: Path) -> bytes:
@@ -128,15 +174,13 @@ def _hash_repository_sources(root: Path) -> bytes:
         for value in raw_paths.split(b"\0")
         if value
     ]
-    lines: list[str] = []
+    source_paths: list[str] = []
     for relative in sorted(paths):
         normalized = normalize_git_path(relative)
-        path = root / relative
-        if is_source_excluded(normalized) or not path.is_file():
+        if is_source_excluded(normalized):
             continue
-        digest = hashlib.sha256(path.read_bytes()).hexdigest()
-        lines.append(f"{normalized}:{digest}")
-    return "\n".join(lines).encode("utf-8")
+        source_paths.append(relative)
+    return _hash_paths(root, source_paths)
 
 
 def collect_git_provenance(

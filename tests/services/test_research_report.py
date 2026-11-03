@@ -95,7 +95,11 @@ async def test_generate_report_verifies_source_linked_claims(monkeypatch) -> Non
     verify = AsyncMock(
         return_value={
             "status": "ok",
-            "result": {"coverage": {"total_claims": 2, "assessed_claims": 2}},
+            "result": {"coverage": {"total_claims": 2, "assessed_claims": 2},
+                       "claims": [
+                           {"claim_id": "claim-1", "verdict": "supported", "quotes": []},
+                           {"claim_id": "claim-2", "verdict": "supported", "quotes": []},
+                       ]},
         }
     )
     monkeypatch.setattr(research_report, "_generate", generate)
@@ -105,7 +109,10 @@ async def test_generate_report_verifies_source_linked_claims(monkeypatch) -> Non
 
     assert result["status"] == "ok"
     assert result["report"]["sources"] == ["ev-1"]
-    assert result["coverage"] == {"report_claims": 2, "verified_claims": 2}
+    assert result["coverage"] == {
+        "report_claims": 2, "verified_claims": 2, "assessed_claims": 2,
+        "supported_claims": 2, "contradicted_claims": 0, "insufficient_claims": 0,
+    }
     assert result["unknown"] == ["Chưa có thông tin về thời hạn thông báo."]
     verify.assert_awaited_once_with(
         "Người sử dụng lao động phải thông báo bằng văn bản.\nKiểm tra việc thông báo.",
@@ -278,3 +285,23 @@ async def test_generate_report_marks_unlinked_verifier_quote_as_citation_mismatc
         result["model_assessment"]["result"]["claims"][0]["verdict"] == "insufficient"
     )
     assert result["model_assessment"]["citation_mismatch_claim_ids"] == ["claim-1"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("verdict", ["supported", "contradicted", "insufficient"])
+async def test_report_uses_actual_claim_verdicts_through_verifier(monkeypatch, verdict):
+    import json
+    from app.services import claim_verification, research_report
+
+    raw = {"status": "ok", "issue": "I", "analysis": [
+        {"text": "Claim.", "evidence_ids": ["E1"]}],
+        "exceptions": [], "checklist": [], "sources": ["E1"], "unknown": []}
+    verdict_json = {"claims": [{"claim_id": "claim-1", "verdict": verdict,
+        "quotes": [{"evidence_id": "ev-1", "quote": _evidence()[0]["excerpt"]}]}]}
+    monkeypatch.setattr(research_report, "_generate", AsyncMock(return_value=_generation(json.dumps(raw))))
+    monkeypatch.setattr(claim_verification, "_generate", AsyncMock(return_value=_generation(json.dumps(verdict_json))))
+    result = await research_report.generate_research_report("Q", _evidence())
+    assert result["status"] == ("ok" if verdict == "supported" else "insufficient_evidence")
+    assert result["coverage"]["verified_claims"] == (1 if verdict == "supported" else 0)
+    assert result["coverage"]["assessed_claims"] == 1
+    assert result["model_assessment"]["result"]["claims"][0]["verdict"] == verdict
