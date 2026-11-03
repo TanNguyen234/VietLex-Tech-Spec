@@ -1,4 +1,53 @@
+> Update 2026-11-03: Ragas completed on all 50 saved answers (faithfulness 0.8333; accuracy 0.9000; context precision 0.8708; recall 0.9490; zero technical errors). L04 has an AI source review, not independent human legal approval. General production readiness remains unproven. See [release verification](../tasks/production-readiness-20261103/REPORT.md).
+
 # VietLex Evaluation Current Status
+
+CRG/Golden50 follow-up 2026-11-03 (latest): actual CRG stdio MCP repaired and used; citation metrics3.3 and exact prompt-context replay fixed; full deterministic rescore on unchanged50answers, zero extra provider calls. Fresh 2240 passed, 6 deselected in 417.27s (0:06:57); Node22passed. Golden50 `answer-golden50-production-timeout20-20261103-f93a41fe` completed50 cases; replay50/50, guards 50/50 input and 50/50 output, retrieval gate PASS. Live release `dpl_7Pc17TstdKKXyDKWrsx8oKBhZjRt` frozen8/roles/source/database/guard controls checked. L04 source dossier expanded; complete legal-currentness/human approval remains DEFERRED. This bounded dataset does not demonstrate full-corpus production readiness. [Evidence and limits](runs/crg-golden50-20261103-3ee9f610/REPORT.md).
+
+Historical ECC remediation 2026-11-03: mandatory NeMo flows validated before client creation; invalid source provenance rejected before version selection/deduplication; effect diagnostics restricted to retained valid identities while preserving valid-mirror conflicts; generation technical failures HTTP503 preserve browser draft. Fresh 2214 passed, 6 deselected in 404.15s (0:06:44); Node22pass; browser sandbox503 flow passed. Live frozen8 both input/output checks enforce/executed, two negative controls, source/replay/export/Mongo and ADMIN/USER isolation verified on `dpl_GYe9QKWWixtH9XWuHVt2wCzJ361c`, appSHA `5a687f59afde0a4dd1ce99ddde20a0a12c9604104fc762e007080c0453a8ca0e`. L04 legal-currentness DEFERRED; Golden50 representative benchmark NOT RUN; no production-ready claim. [Evidence and limits](runs/ecc-remediation-20261103-cca01f73/REPORT.md).
+
+Historical ECC remediation 2026-11-03: mandatory NeMo flows validated before client creation; invalid source provenance rejected before version selection/deduplication; effect diagnostics restricted to retained valid identities while preserving valid-mirror conflicts; generation technical failures HTTP503 preserve browser draft. Fresh 2214 passed, 6 deselected in 404.15s (0:06:44); Node22pass; browser sandbox503 flow passed. Live frozen8 both input/output checks enforce/executed, two negative controls, source/replay/export/Mongo and ADMIN/USER isolation verified on `dpl_GYe9QKWWixtH9XWuHVt2wCzJ361c`, appSHA `5a687f59afde0a4dd1ce99ddde20a0a12c9604104fc762e007080c0453a8ca0e`. L04 legal-currentness DEFERRED; Golden50 representative benchmark NOT RUN; no production-ready claim. [Evidence and limits](runs/ecc-remediation-20261103-b81bd095/REPORT.md).
+
+## Technical release — 2026-10-29
+
+The PDF-worker startup dependency fix passed the full provider-free suite:
+**1,976 passed, 6 live deselected, zero skips/warnings**. Node16 and pip check
+also passed. The tested source is deployed and promoted to the primary domain;
+health/readiness, source fingerprint and anonymous admin rejection were checked
+again there. See the [release receipt](../tasks/pdf-deploy-20261029/REPORT.md).
+This resolves the prior PDF/full-suite and deployment blockers. No new
+representative answer-quality or legal-acceptance benchmark was run; historical
+EM/guardrail limitations and failed quality baselines remain unchanged.
+
+## Local pipeline correction — 2026-10-29
+
+Production deterministic answer evaluation now uses `chat_service_v1`, including
+runtime expansion/filtering and final prompt packing. Experimental/precomputed
+runs remain `retrieval_generation_v1`; their scores are not a direct A/B with the
+new path. Configuration fingerprints include APP_ENV/serverless source selection.
+Corpus retrieval metrics remain scoped before chat augmentation; final prompt
+receipts describe generation/answer-metric evidence separately.
+
+Bounded guardrails-off integration probes for cases 005/008 produced observed
+Vertex answers (STOP), with 11/2 prompt contexts. Offline EM is still 0/2, token
+recall 1.0 for both; this is not legal correctness or a representative benchmark.
+The earlier enforce diagnostic exposed input timeout/output-incomplete guardrail
+failures. No new Golden-10/50 acceptance, legal promotion or deployment occurred.
+Historical failed runs remain unchanged. See the [fix report and final source
+verification](../tasks/pipeline-fixes-20261028/REPORT.md).
+
+## Operational update — 2026-10-19
+
+The [October release report](../verification/production-release-20261018-01/REPORT.md)
+records bounded role, source-reading and ordinary-language chat checks. The
+[explicit-cancellation follow-up](../verification/production-release-20261018-01/cancel-fix-20261019-01/REPORT.md)
+tracks source, suite and deployment separately; final gates are recorded there. These operational checks
+do not replace the immutable Golden-50 baseline below. The new trial-work
+answers failed current-law acceptance; the environmental answer had a wrong
+authority-clause citation. No new representative answer-quality benchmark or
+production-readiness claim is established. Capacity expansion is BLOCKED.
+
+## Historical benchmark snapshot — 2026-09-03
 
 **Status (2026-09-03):** Direct Vercel FastAPI/Jinja SSR deployment with
 Supabase-backed legal browsing and the current v3 Golden-50 retrieval/answer
@@ -7,7 +56,7 @@ Qdrant v3 and Supabase cover only 14,962 of 518,255 corpus documents, verified
 retrieval gold covers 40/50 cases, and deterministic answer exact match/token
 F1 are `0.0000 / 0.2305`.
 
-Current immutable runs:
+Immutable runs for that historical snapshot:
 
 - `docs/evaluation/runs/retrieval-v3-golden50-expanded14962-rrf-dbsf-20260903/`:
   50/50 completed, zero retrieval/reranker technical errors, and zero

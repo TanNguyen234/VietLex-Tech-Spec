@@ -1,4 +1,8 @@
+> Update 2026-11-03: Ragas completed on all 50 saved answers (faithfulness 0.8333; accuracy 0.9000; context precision 0.8708; recall 0.9490; zero technical errors). L04 has an AI source review, not independent human legal approval. General production readiness remains unproven. See [release verification](../../tasks/production-readiness-20261103/REPORT.md).
+
 # VietLex v3 Golden-50 evaluation bundle
+
+Latest measurement (2026-11-03): `answer-golden50-production-timeout20-20261103-f93a41fe`, live metric3.2.0, real production-service providers, mandatory guards, judge none; paired offline metric3.3.0 rescore `answer-golden50-offline-metrics33-20261103-2349369e` on exactly the same50answers andcontexts with zero provider/database calls. Exact prompt-context/hash and noncitation metric parity50/50. See [current report](../runs/crg-golden50-20261103-3ee9f610/REPORT.md) for numerators, skips and limits. The September commands/results below remain historical; the current full command uses `--backend production --judge none` and is recorded verbatim in the report receipts.
 
 Updated: 2026-09-03.
 
@@ -38,7 +42,7 @@ Use a unique run ID; evaluators reserve immutable
 run. These commands make paid/live provider calls. Default tests and default
 evaluation make zero Ragas calls.
 
-The latest run pair is:
+The historical September2026 run pair is:
 
 - `retrieval-v3-golden50-expanded14962-rrf-dbsf-20260903`
 - `answer-v3-golden50-expanded14962-rrf-dbsf-20260903`

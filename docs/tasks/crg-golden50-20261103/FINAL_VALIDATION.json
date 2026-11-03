@@ -1,0 +1,13 @@
+{
+  "observed_utc": "2026-11-03T15:25:10.925Z",
+  "report": "docs/evaluation/runs/crg-golden50-20261103-3ee9f610/REPORT.md",
+  "artifact_files_verified": 446,
+  "artifact_hash_mismatches": [],
+  "source_config_test_files_verified": 447,
+  "source_mismatches": [],
+  "benchmark_runs_verified": 4,
+  "benchmark_hash_mismatches": [],
+  "post_seal_change": "documentation-relative-link correction in root FEATURE_STATUS.md only; sealed evidence and runtime source unchanged",
+  "git_commit_push": "NOT DONE",
+  "legal_human_promotion": false
+}

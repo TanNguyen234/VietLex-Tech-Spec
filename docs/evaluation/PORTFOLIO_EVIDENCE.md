@@ -1,6 +1,12 @@
+> Update 2026-11-03: Ragas completed on all 50 saved answers (faithfulness 0.8333; accuracy 0.9000; context precision 0.8708; recall 0.9490; zero technical errors). L04 has an AI source review, not independent human legal approval. General production readiness remains unproven. See [release verification](../tasks/production-readiness-20261103/REPORT.md).
+
 # VietLex CV / Portfolio Evidence
 
-Current evidence date: 2026-09-03.
+Historical evidence date: 2026-09-03. The portfolio statements below describe
+that dated benchmark, not current legal correctness or deployment readiness.
+For later bounded checks and failures, read the
+[October release evidence](../verification/production-release-20261018-01/REPORT.md)
+and [cancellation follow-up](../verification/production-release-20261018-01/cancel-fix-20261019-01/REPORT.md).
 
 ## CV bullet — English
 

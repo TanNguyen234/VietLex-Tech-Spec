@@ -1,0 +1,9 @@
+# Production readiness, Ragas and main delivery
+
+Authority: user requests live Ragas, L04 review, professional README without icons, separate commits and normal push to main. User selected this assistant as L04 reviewer; label that review AI-assisted, never invent an independent human signature or publish it as human-approved evidence. No corpus/vector migration/deletion, credential/.env/quota changes or force push. Keep current checkout; preserve unrelated skill deletions.
+
+Scope: evaluate the frozen saved Golden50 answers/contexts with existing Ragas0.4.3/Vertex adapter (four supported metrics), not a new generation run. Preflight actual schema/credential presence, one real case, then50cases with bounded concurrency; no judge calls in public/default tests or online semaphore. Record raw scores/errors, denominators/coverage/skips, usage/model identity, Git dirty proof/source/data hashes and commands in a unique immutable run. Same model as generator is secondary evidence, not independent legal certification.
+
+L04: re-read official source chain for frozen29October2026, record conditional conclusion and actual limits; AI review is not an invented human legal approval. Readiness must follow evidence, including corpus/label coverage, full deterministic metrics and latency. Do not relabel an unmet gate as passed.
+
+Delivery: update Vietnamese/English README with concise architecture, current measured evidence, scope/limits and reproducible commands. No icons. Review graph/source and staged changes, scan secrets/large files, use existing447-file full verification if runtime bytes remain unchanged; documentation/helper checks are separate. Group tested runtime+tests, evaluation/evidence, and docs into explicit commits; exclude unrelated deleted skills, temporary folders, actual.env and private/oversized artifacts. Fetch/compare origin/main; normal push only, no force. Report commits, remote confirmation and any remaining readiness limits.
