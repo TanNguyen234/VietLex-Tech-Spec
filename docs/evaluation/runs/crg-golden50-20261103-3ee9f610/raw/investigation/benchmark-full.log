@@ -1,0 +1,59 @@
+============================================================
+FULL PIPELINE ANSWER EVALUATION RUN: answer-golden50-production-enforce-20261103-82280547
+cases=50 profile=separated_intent rewrite=off guardrails=enforce
+reranker=current concurrency=2 judge=none
+============================================================
+-> Completed Case [case_002]: category=disclaimer token_f1=0.31 latency=33.89s
+-> Completed Case [case_001]: category=disclaimer token_f1=0.15 latency=69.20s
+-> Completed Case [case_003]: category=disclaimer token_f1=0.27 latency=58.56s
+-> Completed Case [case_004]: category=disclaimer token_f1=0.17 latency=60.09s
+-> Completed Case [case_005]: category=disclaimer token_f1=0.19 latency=70.67s
+-> Completed Case [case_007]: category=disclaimer token_f1=0.14 latency=10.10s
+-> Completed Case [case_008]: category=disclaimer token_f1=0.13 latency=11.54s
+-> Completed Case [case_006]: category=disclaimer token_f1=0.33 latency=60.28s
+-> Completed Case [case_009]: category=disclaimer token_f1=0.17 latency=15.36s
+-> Completed Case [case_010]: category=disclaimer token_f1=0.29 latency=61.35s
+-> Completed Case [case_011]: category=disclaimer token_f1=0.58 latency=63.61s
+-> Completed Case [case_013]: category=no_evidence token_f1=0.05 latency=12.21s
+-> Completed Case [case_012]: category=disclaimer token_f1=0.32 latency=58.53s
+-> Completed Case [case_014]: category=disclaimer token_f1=0.17 latency=58.94s
+-> Completed Case [case_015]: category=disclaimer token_f1=0.20 latency=59.00s
+-> Completed Case [case_016]: category=disclaimer token_f1=0.03 latency=59.80s
+-> Completed Case [case_017]: category=disclaimer token_f1=0.10 latency=64.68s
+-> Completed Case [case_018]: category=disclaimer token_f1=0.26 latency=60.19s
+-> Completed Case [case_019]: category=disclaimer token_f1=0.38 latency=59.91s
+-> Completed Case [case_021]: category=disclaimer token_f1=0.35 latency=13.71s
+-> Completed Case [case_020]: category=disclaimer token_f1=0.25 latency=57.75s
+-> Completed Case [case_022]: category=disclaimer token_f1=0.41 latency=58.01s
+-> Completed Case [case_023]: category=disclaimer token_f1=0.14 latency=64.31s
+-> Completed Case [case_024]: category=disclaimer token_f1=0.04 latency=59.28s
+-> Completed Case [case_025]: category=disclaimer token_f1=0.25 latency=56.55s
+-> Completed Case [case_026]: category=disclaimer token_f1=0.31 latency=59.48s
+-> Completed Case [case_027]: category=disclaimer token_f1=0.30 latency=59.27s
+-> Completed Case [case_028]: category=disclaimer token_f1=0.23 latency=59.76s
+-> Completed Case [case_029]: category=disclaimer token_f1=0.27 latency=69.69s
+-> Completed Case [case_030]: category=disclaimer token_f1=0.11 latency=63.14s
+-> Completed Case [case_031]: category=disclaimer token_f1=0.19 latency=63.54s
+-> Completed Case [case_032]: category=disclaimer token_f1=0.22 latency=65.51s
+-> Completed Case [case_033]: category=disclaimer token_f1=0.14 latency=67.16s
+-> Completed Case [case_034]: category=disclaimer token_f1=0.08 latency=70.21s
+-> Completed Case [case_035]: category=no_evidence token_f1=0.05 latency=65.33s
+-> Completed Case [case_036]: category=disclaimer token_f1=0.15 latency=66.96s
+-> Completed Case [case_037]: category=disclaimer token_f1=0.41 latency=64.42s
+-> Completed Case [case_038]: category=disclaimer token_f1=0.30 latency=58.59s
+-> Completed Case [case_039]: category=disclaimer token_f1=0.21 latency=65.05s
+-> Completed Case [case_040]: category=disclaimer token_f1=0.30 latency=67.57s
+-> Completed Case [case_041]: category=disclaimer token_f1=0.11 latency=57.82s
+-> Completed Case [case_042]: category=disclaimer token_f1=0.23 latency=61.39s
+-> Completed Case [case_044]: category=disclaimer token_f1=0.14 latency=12.03s
+-> Completed Case [case_043]: category=disclaimer token_f1=0.17 latency=62.41s
+-> Completed Case [case_045]: category=disclaimer token_f1=0.25 latency=56.03s
+-> Completed Case [case_046]: category=disclaimer token_f1=0.39 latency=60.28s
+-> Completed Case [case_047]: category=disclaimer token_f1=0.30 latency=55.33s
+-> Completed Case [case_048]: category=disclaimer token_f1=0.21 latency=58.88s
+-> Completed Case [case_049]: category=disclaimer token_f1=0.12 latency=10.62s
+-> Completed Case [case_050]: category=disclaimer token_f1=0.33 latency=37.36s
+============================================================
+Full Answer Evaluation Completed. Report saved to:
+D:\Download\ProfessionalLegalRAG\docs\evaluation\runs\answer-golden50-production-enforce-20261103-82280547\report.md
+============================================================

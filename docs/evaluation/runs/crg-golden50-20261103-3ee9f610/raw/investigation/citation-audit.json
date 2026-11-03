@@ -1,0 +1,445 @@
+[
+  {
+    "case_id": "case_004",
+    "macro_invalid": 0.3333,
+    "unsupported_locators": [
+      {
+        "document_number": "09/2026/TT-BNNMT",
+        "article": "Điều 34",
+        "clause": "Khoản 1"
+      },
+      {
+        "document_number": "09/2026/TT-BNNMT",
+        "article": "Điều 13a",
+        "clause": "Khoản 7"
+      }
+    ],
+    "same_article_or_clause_evidence": [
+      {
+        "document_number": "02/2022/TT-BTNMT",
+        "article": "Điều 13a",
+        "clause": ""
+      },
+      {
+        "document_number": "09/2026/TT-BNNMT",
+        "article": "Điều 13a",
+        "clause": ""
+      },
+      {
+        "document_number": "72/2020/QH14",
+        "article": "Điều 34",
+        "clause": ""
+      },
+      {
+        "document_number": "72/2020/QH14",
+        "article": "Điều 34",
+        "clause": "Khoản 1"
+      }
+    ],
+    "indexed_response_paragraphs": [
+      "*(Căn cứ: Khoản 1 Điều 34 Luật Bảo vệ môi trường 2020 [Tài liệu tham khảo #1])*",
+      "*(Căn cứ: Khoản 7 Điều 13a được bổ sung sau Điều 13 bởi Điều 4 Thông tư số 09/2026/TT-BNNMT [Tài liệu tham khảo #4])*",
+      "*(Căn cứ: Khoản 2 Điều 9 Nghị định 80/2006/NĐ-CP [Tài liệu tham khảo #2])*"
+    ]
+  },
+  {
+    "case_id": "case_005",
+    "macro_invalid": 0.6667,
+    "unsupported_locators": [
+      {
+        "document_number": "09/2026/TT-BNNMT",
+        "article": "Điều 34",
+        "clause": "Khoản 6"
+      },
+      {
+        "document_number": "09/2026/TT-BNNMT",
+        "article": "Điều 34",
+        "clause": "Khoản 5"
+      }
+    ],
+    "same_article_or_clause_evidence": [
+      {
+        "document_number": "72/2020/QH14",
+        "article": "Điều 34",
+        "clause": ""
+      },
+      {
+        "document_number": "72/2020/QH14",
+        "article": "Điều 34",
+        "clause": "Khoản 5"
+      },
+      {
+        "document_number": "72/2020/QH14",
+        "article": "Điều 34",
+        "clause": "Khoản 6"
+      }
+    ],
+    "indexed_response_paragraphs": [
+      "### 1. Thủ tục cơ quan thẩm định phải thực hiện\nTrong thời gian thẩm định, trường hợp có yêu cầu chỉnh sửa, bổ sung báo cáo đánh giá tác động môi trường, cơ quan thẩm định có trách nhiệm:\n* **Thông báo bằng văn bản** cho chủ dự án đầu tư để thực hiện việc chỉnh sửa, bổ sung này [Tài liệu tham khảo #2, Điều 34, Khoản 5].",
+      "### 2. Thời gian chỉnh sửa có tính vào thời hạn thẩm định không?\n* **Không tính vào thời hạn thẩm định**: Thời gian chủ dự án đầu tư chỉnh sửa, bổ sung báo cáo đánh giá tác động môi trường theo yêu cầu của cơ quan thẩm định không được tính vào thời hạn thẩm định [Tài liệu tham khảo #1, Điều 34, Khoản 6, Điểm c]."
+    ]
+  },
+  {
+    "case_id": "case_009",
+    "macro_invalid": 1.0,
+    "unsupported_locators": [
+      {
+        "document_number": "09/VBHN-BTNMT",
+        "article": "Điều 54",
+        "clause": "Khoản 1"
+      },
+      {
+        "document_number": "09/VBHN-BTNMT",
+        "article": "Điều 54",
+        "clause": "Khoản 2"
+      }
+    ],
+    "same_article_or_clause_evidence": [
+      {
+        "document_number": "72/2020/QH14",
+        "article": "Điều 54",
+        "clause": ""
+      },
+      {
+        "document_number": "72/2020/QH14",
+        "article": "Điều 54",
+        "clause": "Khoản 1"
+      },
+      {
+        "document_number": "72/2020/QH14",
+        "article": "Điều 54",
+        "clause": "Khoản 2"
+      }
+    ],
+    "indexed_response_paragraphs": [
+      "### 1. Các lựa chọn để thực hiện trách nhiệm tái chế\nTheo quy định tại **Khoản 2 Điều 54 Luật Bảo vệ môi trường 2020** (Tài liệu tham khảo #1), tổ chức, cá nhân sản xuất, nhập khẩu sản phẩm, bao bì có giá trị tái chế được lựa chọn thực hiện tái chế theo một trong các hình thức sau đây:\n* **Lựa chọn 1:** Tổ chức tái chế sản phẩm, bao bì (Điểm a Khoản 2 Điều 54).\n* **Lựa chọn 2:** Đóng góp tài chính vào Quỹ Bảo vệ môi trường Việt Nam để hỗ trợ tái chế sản phẩm, bao bì (Điểm b Khoản 2 Điều 54).",
+      "*Lưu ý về điều kiện áp dụng:* Trách nhiệm tái chế này áp dụng đối với tổ chức, cá nhân sản xuất, nhập khẩu sản phẩm, bao bì có giá trị tái chế theo tỷ lệ và quy cách tái chế bắt buộc, trừ các sản phẩm, bao bì xuất khẩu hoặc tạm nhập, tái xuất hoặc sản xuất, nhập khẩu cho mục đích nghiên cứu, học tập, thử nghiệm (**Khoản 1 Điều 54 Luật Bảo vệ môi trường 2020** - Tài liệu tham khảo #2).",
+      "### 2. Nghĩa vụ báo cáo tương ứng\nDựa trên các tài liệu tham khảo được cung cấp (bao gồm Luật Bảo vệ môi trường 2020 và Văn bản hợp nhất 09/VBHN-BTNMT), **không có dữ liệu** quy định về nghĩa vụ báo cáo tương ứng (như thời hạn báo cáo, cơ quan tiếp nhận báo cáo, hay hồ sơ báo cáo) đối với các lựa chọn thực hiện trách nhiệm tái chế nêu trên. "
+    ]
+  },
+  {
+    "case_id": "case_018",
+    "macro_invalid": 0.5,
+    "unsupported_locators": [
+      {
+        "document_number": "",
+        "article": "Điều 109",
+        "clause": "Khoản 1"
+      }
+    ],
+    "same_article_or_clause_evidence": [
+      {
+        "document_number": "72/2020/QH14",
+        "article": "Điều 109",
+        "clause": ""
+      }
+    ],
+    "indexed_response_paragraphs": [
+      "Dựa trên các tài liệu tham khảo được cung cấp, theo quy định tại Điều 107 Luật Bảo vệ môi trường 2020 (Tài liệu tham khảo #2), hệ thống quan trắc môi trường bao gồm các thành phần cụ thể sau đây:"
+    ]
+  },
+  {
+    "case_id": "case_023",
+    "macro_invalid": 0.25,
+    "unsupported_locators": [
+      {
+        "document_number": "02/2017/TT-BTC",
+        "article": "Điều 7",
+        "clause": "Khoản 5"
+      },
+      {
+        "document_number": "114/2006/TTLT-BTC-BTNMT",
+        "article": "Điều 148",
+        "clause": "Khoản 4"
+      }
+    ],
+    "same_article_or_clause_evidence": [
+      {
+        "document_number": "02/2017/TT-BTC",
+        "article": "Điều 7",
+        "clause": ""
+      },
+      {
+        "document_number": "02/2017/TT-BTC",
+        "article": "Điều 7",
+        "clause": "Khoản 1"
+      },
+      {
+        "document_number": "02/2017/TT-BTC",
+        "article": "Điều 7",
+        "clause": "Khoản 2"
+      },
+      {
+        "document_number": "02/2017/TT-BTC",
+        "article": "Điều 7",
+        "clause": "Khoản 3"
+      },
+      {
+        "document_number": "02/2017/TT-BTC",
+        "article": "Điều 7",
+        "clause": "Khoản 4"
+      },
+      {
+        "document_number": "72/2020/QH14",
+        "article": "Điều 148",
+        "clause": ""
+      },
+      {
+        "document_number": "72/2020/QH14",
+        "article": "Điều 148",
+        "clause": "Khoản 4"
+      }
+    ],
+    "indexed_response_paragraphs": [
+      "### 1. Trách nhiệm bảo đảm kinh phí cho các hoạt động bảo vệ môi trường của chủ dự án đầu tư\nTheo Khoản 4 Điều 148 Luật Bảo vệ môi trường 2020 (Tài liệu tham khảo #1), chủ dự án đầu tư, cơ sở có trách nhiệm bảo đảm kinh phí cho các hoạt động bảo vệ môi trường sau đây:\n* **a)** Đầu tư đổi mới công nghệ xử lý chất thải theo quy định của pháp luật;\n* **b)** Đầu tư xây dựng, vận hành công trình bảo vệ môi trường theo quy định của pháp luật;\n* **c)** Thực hiện chương trình quan trắc, giám sát môi trường (nếu có);\n* **d)** Thực hiện kế hoạch phòng ngừa, ứng phó sự cố môi trường (nếu có);\n* **đ)** Các hoạt động bảo vệ môi trường khác theo quy định của pháp luật.",
+      "### 2. Quy định về việc quản lý kinh phí sự nghiệp môi trường\nĐối với nguồn kinh phí sự nghiệp môi trường do ngân sách nhà nước bảo đảm để thực hiện các nhiệm vụ bảo vệ môi trường, việc quản lý được thực hiện theo các nguyên tắc và quy trình sau:"
+    ]
+  },
+  {
+    "case_id": "case_029",
+    "macro_invalid": 0.25,
+    "unsupported_locators": [
+      {
+        "document_number": "67/VBHN-VPQH",
+        "article": "Điều 52",
+        "clause": "Khoản 5"
+      },
+      {
+        "document_number": "67/VBHN-VPQH",
+        "article": "Điều 54",
+        "clause": "Khoản 6"
+      }
+    ],
+    "same_article_or_clause_evidence": [
+      {
+        "document_number": "59/2020/QH14",
+        "article": "Điều 52",
+        "clause": ""
+      },
+      {
+        "document_number": "59/2020/QH14",
+        "article": "Điều 52",
+        "clause": "Khoản 1"
+      },
+      {
+        "document_number": "67/VBHN-VPQH",
+        "article": "Điều 52",
+        "clause": ""
+      },
+      {
+        "document_number": "67/VBHN-VPQH",
+        "article": "Điều 52",
+        "clause": "Khoản 1"
+      },
+      {
+        "document_number": "67/VBHN-VPQH",
+        "article": "Điều 52",
+        "clause": "Khoản 2"
+      },
+      {
+        "document_number": "67/VBHN-VPQH",
+        "article": "Điều 52",
+        "clause": "Khoản 3"
+      },
+      {
+        "document_number": "68/2014/QH13",
+        "article": "Điều 52",
+        "clause": "Khoản 3"
+      },
+      {
+        "document_number": "68/2014/QH13",
+        "article": "Điều 52",
+        "clause": "Khoản 5"
+      },
+      {
+        "document_number": "68/2014/QH13",
+        "article": "Điều 54",
+        "clause": "Khoản 6"
+      },
+      {
+        "document_number": "76/2025/QH15",
+        "article": "Điều 52",
+        "clause": ""
+      },
+      {
+        "document_number": "76/2025/QH15",
+        "article": "Điều 52",
+        "clause": "Khoản 6"
+      }
+    ],
+    "indexed_response_paragraphs": [
+      "### 1. Các bước chào bán cho các thành viên còn lại trong công ty\nThành viên muốn chuyển nhượng phần vốn góp phải thực hiện bước chào bán cho các thành viên còn lại theo quy định sau:\n*   Phải chào bán phần vốn góp đó cho các thành viên còn lại theo tỷ lệ tương ứng với phần vốn góp của họ trong công ty với cùng điều kiện chào bán.\n*(Căn cứ: Điểm a Khoản 1 Điều 52 Luật Doanh nghiệp 2020 [Tài liệu tham khảo #2]; Điểm a Khoản 1 Điều 52 Văn bản hợp nhất số 67/VBHN-VPQH [Tài liệu tham khảo #5]; Điểm a Khoản 1 Điều 53 Luật Doanh nghiệp 2014 [Tài liệu tham khảo #1]).*",
+      "### 2. Thời gian được bán cho người ngoài (người không phải là thành viên)\nThành viên chỉ được chuyển nhượng phần vốn góp cho người không phải là thành viên (với cùng điều kiện đã chào bán đối với các thành viên còn lại) khi đáp ứng thời hạn sau:\n*   Nếu các thành viên còn lại của công ty **không mua hoặc không mua hết trong thời hạn 30 ngày kể từ ngày chào bán**.\n*(Căn cứ: Điểm b Khoản 1 Điều 52 Luật Doanh nghiệp 2020 [Tài liệu tham khảo #2]; Điểm b Khoản 1 Điều 52 Văn bản hợp nhất số 67/VBHN-VPQH [Tài liệu tham khảo #5]; Điểm b Khoản 1 Điều 53 Luật Doanh nghiệp 2014 [Tài liệu tham khảo #1]).*",
+      "**Ngoại lệ:** Quy định chào bán nêu trên không áp dụng đối với các trường hợp đặc biệt được quy định tại Khoản 4 Điều 51, Khoản 6 và Khoản 7 Điều 53 của Luật Doanh nghiệp 2020 (hoặc Khoản 3 Điều 52, Khoản 5 và Khoản 6 Điều 54 của Luật Doanh nghiệp 2014) *(Căn cứ: Khoản 1 Điều 52 Luật Doanh nghiệp 2020 [Tài liệu tham khảo #2]; Khoản 1 Điều 53 Luật Doanh nghiệp 2014 [Tài liệu tham khảo #1])*."
+    ]
+  },
+  {
+    "case_id": "case_034",
+    "macro_invalid": 0.75,
+    "unsupported_locators": [
+      {
+        "document_number": "04/VBHN-NHNN",
+        "article": "Điều 109",
+        "clause": "Khoản 1"
+      },
+      {
+        "document_number": "99/2025/TT-BTC",
+        "article": "Điều 139",
+        "clause": "Khoản 2"
+      },
+      {
+        "document_number": "99/2025/TT-BTC",
+        "article": "Điều 175",
+        "clause": "Khoản 4"
+      }
+    ],
+    "same_article_or_clause_evidence": [
+      {
+        "document_number": "59/2020/QH14",
+        "article": "Điều 109",
+        "clause": ""
+      },
+      {
+        "document_number": "59/2020/QH14",
+        "article": "Điều 109",
+        "clause": "Khoản 1"
+      },
+      {
+        "document_number": "59/2020/QH14",
+        "article": "Điều 139",
+        "clause": ""
+      },
+      {
+        "document_number": "59/2020/QH14",
+        "article": "Điều 139",
+        "clause": "Khoản 2"
+      },
+      {
+        "document_number": "59/2020/QH14",
+        "article": "Điều 175",
+        "clause": "Khoản 1"
+      },
+      {
+        "document_number": "59/2020/QH14",
+        "article": "Điều 175",
+        "clause": "Khoản 4"
+      }
+    ],
+    "indexed_response_paragraphs": [
+      "1. **Đối với tổ chức tín dụng (TCTD):**\n   * Tổ chức tín dụng phải gửi Báo cáo tài chính năm đã được kiểm toán kèm theo kết quả của tổ chức kiểm toán độc lập chậm nhất là **90 ngày** kể từ ngày kết thúc năm tài chính của TCTD.\n   * *Căn cứ:* Điểm b Khoản 1 Điều 7 Văn bản hợp nhất 04/VBHN-NHNN năm 2018 [Tài liệu tham khảo #1].",
+      "2. **Đối với công ty công bố thông tin định kỳ (theo Luật Doanh nghiệp 2020):**\n   * Công ty phải công bố định kỳ trên trang thông tin điện tử của công ty và của cơ quan đại diện chủ sở hữu báo cáo và tóm tắt báo cáo tài chính hằng năm đã được kiểm toán bởi tổ chức kiểm toán độc lập trong thời hạn **150 ngày** kể từ ngày kết thúc năm tài chính (bao gồm cả báo cáo tài chính của công ty mẹ và báo cáo tài chính hợp nhất nếu có).\n   * *Căn cứ:* Điểm c Khoản 1 Điều 109 Luật Doanh nghiệp 2020 [Tài liệu tham khảo #2].",
+      "3. **Đối với việc lưu giữ báo cáo để trình Đại hội đồng cổ đông thường niên:**\n   * Báo cáo kiểm toán (cùng các báo cáo hằng năm khác) phải được lưu giữ tại trụ sở chính của công ty chậm nhất là **10 ngày** trước ngày khai mạc cuộc họp Đại hội đồng cổ đông thường niên (nếu Điều lệ công ty không quy định thời hạn khác dài hơn). \n   * Đại hội đồng cổ đông phải họp thường niên trong thời hạn **04 tháng** kể từ ngày kết thúc năm tài chính (trừ trường hợp được gia hạn nhưng không quá **06 tháng** kể từ ngày kết thúc năm tài chính).\n   * *Căn cứ:* Khoản 4 Điều 175 và Khoản 2 Điều 139 Luật Doanh nghiệp 2020 [Tài liệu tham khảo #3, #4]."
+    ]
+  },
+  {
+    "case_id": "case_037",
+    "macro_invalid": 0.8,
+    "unsupported_locators": [
+      {
+        "document_number": "200/2026/NĐ-CP",
+        "article": "Điều 148",
+        "clause": ""
+      },
+      {
+        "document_number": "200/2026/NĐ-CP",
+        "article": "Điều 130",
+        "clause": "Khoản 1"
+      },
+      {
+        "document_number": "200/2026/NĐ-CP",
+        "article": "Điều 13",
+        "clause": "Khoản 2"
+      },
+      {
+        "document_number": "200/2026/NĐ-CP",
+        "article": "Điều 128",
+        "clause": "Khoản 3"
+      }
+    ],
+    "same_article_or_clause_evidence": [
+      {
+        "document_number": "153/2020/NĐ-CP",
+        "article": "Điều 13",
+        "clause": ""
+      },
+      {
+        "document_number": "153/2020/NĐ-CP",
+        "article": "Điều 13",
+        "clause": "Khoản 1"
+      },
+      {
+        "document_number": "153/2020/NĐ-CP",
+        "article": "Điều 13",
+        "clause": "Khoản 2"
+      },
+      {
+        "document_number": "200/2026/NĐ-CP",
+        "article": "Điều 13",
+        "clause": ""
+      },
+      {
+        "document_number": "59/2020/QH14",
+        "article": "Điều 128",
+        "clause": ""
+      },
+      {
+        "document_number": "59/2020/QH14",
+        "article": "Điều 128",
+        "clause": "Khoản 2"
+      },
+      {
+        "document_number": "59/2020/QH14",
+        "article": "Điều 128",
+        "clause": "Khoản 3"
+      },
+      {
+        "document_number": "59/2020/QH14",
+        "article": "Điều 130",
+        "clause": ""
+      },
+      {
+        "document_number": "59/2020/QH14",
+        "article": "Điều 130",
+        "clause": "Khoản 1"
+      },
+      {
+        "document_number": "59/2020/QH14",
+        "article": "Điều 148",
+        "clause": ""
+      }
+    ],
+    "indexed_response_paragraphs": [
+      "### 1. Thẩm quyền quyết định việc chào bán trái phiếu chuyển đổi riêng lẻ",
+      "*   **Đối với công ty cổ phần:**\n    *   **Đại hội đồng cổ đông** là cơ quan có thẩm quyền quyết định về loại, tổng giá trị trái phiếu và thời điểm chào bán đối với trái phiếu chuyển đổi riêng lẻ. Việc biểu quyết thông qua nghị quyết về chào bán trái phiếu riêng lẻ này được thực hiện theo quy định tại Điều 148 Luật Doanh nghiệp *(Căn cứ: Điều 130, Khoản 1, Điểm a [Tài liệu tham khảo #2] và Điều 13, Khoản 2, Điểm a [Tài liệu tham khảo #6])*.\n*   **Đối với công ty trách nhiệm hữu hạn:**\n    *   Cấp có thẩm quyền phê duyệt phương án phát hành trái phiếu là **Hội đồng thành viên hoặc Chủ tịch công ty hoặc chủ sở hữu công ty** theo Điều lệ của công ty *(Căn cứ: Điều 13, Khoản 2, Điểm b [Tài liệu tham khảo #6])*.\n*   **Đối với doanh nghiệp nhà nước:**\n    *   Ngoài các thẩm quyền nêu trên, doanh nghiệp phải tuân thủ quy định về giới hạn huy động vốn và thẩm quyền quyết định huy động vốn theo quy định của pháp luật về quản lý, sử dụng vốn Nhà nước đầu tư vào sản xuất, kinh doanh tại doanh nghiệp và pháp luật doanh nghiệp *(Căn cứ: Điều 13, Khoản 2, Điểm c [Tài liệu tham khảo #6])*.\n*   **Đối với doanh nghiệp thuộc ngành nghề kinh doanh có điều kiện:**\n    *   Ngoài các thẩm quyền phê duyệt phương án phát hành trái phiếu nêu trên, doanh nghiệp phải có sự chấp thuận phương án phát hành trái phiếu của cơ quan có thẩm quyền theo quy định của pháp luật chuyên ngành (nếu có) *(Căn cứ: Điều 13, Khoản 2, Điểm d [Tài liệu tham khảo #6])*.",
+      "### 2. Điều kiện về thanh toán nợ trước khi chào bán trái phiếu riêng lẻ",
+      "*(Căn cứ: Điều 128, Khoản 3, Điểm a [Tài liệu tham khảo #1])*"
+    ]
+  },
+  {
+    "case_id": "case_043",
+    "macro_invalid": 0.3333,
+    "unsupported_locators": [
+      {
+        "document_number": "67/VBHN-VPQH",
+        "article": "Điều 164",
+        "clause": "Khoản 3"
+      }
+    ],
+    "same_article_or_clause_evidence": [
+      {
+        "document_number": "59/2020/QH14",
+        "article": "Điều 164",
+        "clause": "Khoản 2"
+      },
+      {
+        "document_number": "59/2020/QH14",
+        "article": "Điều 164",
+        "clause": "Khoản 3"
+      }
+    ],
+    "indexed_response_paragraphs": [
+      "**1. Nghĩa vụ thực hiện:**\n*   Thành viên Hội đồng quản trị phải thực hiện việc kê khai các lợi ích liên quan (bao gồm trường hợp trở thành chủ sở hữu của doanh nghiệp mới) đối với công ty.\n*   *Cơ sở pháp lý:* Khoản 3 Điều 164 Luật Doanh nghiệp 2020 (Tài liệu tham khảo #3).",
+      "**2. Thời hạn thực hiện:**\n*   Việc kê khai lợi ích liên quan nêu trên phải được thực hiện trong thời hạn **07 ngày làm việc** kể từ ngày phát sinh lợi ích liên quan (ngày trở thành chủ sở hữu của doanh nghiệp mới).\n*   Trường hợp có sửa đổi, bổ sung thì phải thông báo với công ty trong thời hạn **07 ngày làm việc** kể từ ngày có sửa đổi, bổ sung tương ứng.\n*   *Cơ sở pháp lý:* Khoản 3 Điều 164 Luật Doanh nghiệp 2020 (Tài liệu tham khảo #3)."
+    ]
+  }
+]

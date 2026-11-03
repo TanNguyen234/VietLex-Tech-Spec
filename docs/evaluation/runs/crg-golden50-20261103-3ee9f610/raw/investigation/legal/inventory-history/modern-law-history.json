@@ -1,0 +1,12 @@
+{
+  "capture_kind": "actual Chrome DevTools inline DOM response; not screenshot/export",
+  "observed_utc": "2026-11-03T13:05:12.236Z",
+  "response": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Script ran on page and returned:\n```json\n{\"url\":\"https://vbpl.vn/van-ban/chi-tiet/luat-bao-ve-moi-truong-so-72-2020-qh14--146609?tabs=lich-su\",\"title\":\"Luật 72/2020/QH14 của Quốc hội | CSDL quốc gia về pháp luật\",\"text\":\"Thiết lập Cookies\\nTrang chủ\\n>\\nVăn bản quy phạm pháp luật Trung ương\\n>\\nLuật Bảo vệ môi trường số 72/2020/QH14\\nTRANG CHỦ\\nGIỚI THIỆU\\nVĂN BẢN PHÁP LUẬT TRUNG ƯƠNG\\nVĂN BẢN PHÁP LUẬT ĐỊA PHƯƠNG\\nTrang chủ\\n>\\nVăn bản quy phạm pháp luật Trung ương\\n>\\nLuật Bảo vệ môi trường số 72/2020/QH14\\nNội dung\\nThuộc tính\\nLược đồ\\nCác văn bản hợp nhất\\nLịch sử\\nVăn bản gốc\\nLệnh công bố\\nTải về\\nLuật Bảo vệ môi trường số 72/2020/QH14\\nHết hiệu lực một phần\\nNgày có hiệu lực:\\n01/01/2022\\nNgày cập nhật:\\n08/05/2026\\n504\\nlượt xem\\nNội dung\\nThuộc tính\\nLược đồ\\nCác văn bản hợp nhất\\nLịch sử\\nVăn bản gốc\\nLệnh công bố\\nTải về\\nLịch sử văn bản\\nThời gian\\n\\t\\nTrạng thái\\n\\t\\nVăn bản nguồn\\n\\n01/07/2025\\tVăn bản bị sửa đổi, bổ sung\\tLuật Địa chất và Khoáng sản số 54/2024/QH15\\n01/07/2024\\tVăn bản bị sửa đổi, bổ sung\\tLuật Giá số 16/2023/QH15\\n01/07/2023\\tVăn bản bị sửa đổi, bổ sung\\tLuật sửa đổi, bổ sung một số điều của Luật Tần số vô tuyến điện số 09/2022/QH15\\n01/01/2022\\tVăn bản có hiệu lực\\tLuật Bảo vệ môi trường số 72/2020/QH14\\n17/11/2020\\tVăn bản được ban hành\\tLuật Bảo vệ môi trường số 72/2020/QH14\\n\\nCƠ SỞ DỮ LIỆU QUỐC GIA VỀ PHÁP LUẬT\\n\\nĐơn vị chủ quản:\\n\\nBộ Tư pháp\\n\\nĐiện thoại:\\n024.6273.9468 |\\nFax:\\n024.6273.9359\\nĐịa chỉ:\\nSố 60 Trần Phú - Ba Đình - Thành phố Hà Nội\"}\n```"
+      }
+    ]
+  }
+}

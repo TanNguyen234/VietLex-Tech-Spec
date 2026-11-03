@@ -1,0 +1,61 @@
+{
+  "meta": null,
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"status\":\"ok\",\"build_type\":\"full\",\"summary\":\"Full build complete: parsed 344 files, created 4435 nodes and 47524 edges.\",\"files_parsed\":344,\"total_nodes\":4435,\"total_edges\":47524,\"errors\":[],\"rescript_resolution\":{\"files_indexed\":0,\"calls_resolved\":0,\"imports_resolved\":0},\"spring_resolution\":{\"files_indexed\":0,\"calls_resolved\":0},\"event_resolution\":{\"events_indexed\":0,\"calls_emitted\":0,\"stale_calls_removed\":0},\"temporal_resolution\":{\"files_indexed\":0,\"calls_resolved\":0},\"hcl_resolution\":{\"files_indexed\":0,\"references_resolved\":0,\"imports_resolved\":0},\"postprocess_level\":\"minimal\",\"bare_edges_resolved\":2088,\"signatures_updated\":true,\"fts_indexed\":4254,\"fts_rebuilt\":true,\"postprocess_timing\":{\"signatures_s\":9.547643,\"fts_s\":0.24079},\"_graph\":{\"updated_at\":\"2026-11-03T16:24:44\",\"age_seconds\":17,\"built_on_branch\":\"main\",\"built_at_sha\":\"7519cd1aea4a3639140b9188de1843ebf0ddb1c0\",\"head_sha\":\"7519cd1aea4a3639140b9188de1843ebf0ddb1c0\",\"head_matches_build\":true}}",
+      "annotations": null,
+      "meta": null
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "build_type": "full",
+    "summary": "Full build complete: parsed 344 files, created 4435 nodes and 47524 edges.",
+    "files_parsed": 344,
+    "total_nodes": 4435,
+    "total_edges": 47524,
+    "errors": [],
+    "rescript_resolution": {
+      "files_indexed": 0,
+      "calls_resolved": 0,
+      "imports_resolved": 0
+    },
+    "spring_resolution": {
+      "files_indexed": 0,
+      "calls_resolved": 0
+    },
+    "event_resolution": {
+      "events_indexed": 0,
+      "calls_emitted": 0,
+      "stale_calls_removed": 0
+    },
+    "temporal_resolution": {
+      "files_indexed": 0,
+      "calls_resolved": 0
+    },
+    "hcl_resolution": {
+      "files_indexed": 0,
+      "references_resolved": 0,
+      "imports_resolved": 0
+    },
+    "postprocess_level": "minimal",
+    "bare_edges_resolved": 2088,
+    "signatures_updated": true,
+    "fts_indexed": 4254,
+    "fts_rebuilt": true,
+    "postprocess_timing": {
+      "signatures_s": 9.547643,
+      "fts_s": 0.24079
+    },
+    "_graph": {
+      "updated_at": "2026-11-03T16:24:44",
+      "age_seconds": 17,
+      "built_on_branch": "main",
+      "built_at_sha": "7519cd1aea4a3639140b9188de1843ebf0ddb1c0",
+      "head_sha": "7519cd1aea4a3639140b9188de1843ebf0ddb1c0",
+      "head_matches_build": true
+    }
+  },
+  "isError": false
+}

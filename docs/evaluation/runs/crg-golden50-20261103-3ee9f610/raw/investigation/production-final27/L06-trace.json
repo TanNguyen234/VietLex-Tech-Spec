@@ -1,0 +1,137 @@
+{
+  "status": "available",
+  "query": "Theo các điều 24–25 Bộ luật Lao động 2019, một hợp đồng lao động xác định thời hạn 20 ngày có được áp dụng thử việc 6 ngày làm việc không? Giải thích quy tắc và ngoại lệ áp dụng cho chính hợp đồng ngắn này.",
+  "rewritten_query": "Theo các điều 24–25 Bộ luật Lao động 2019, một hợp đồng lao động xác định thời hạn 20 ngày có được áp dụng thử việc 6 ngày làm việc không? Giải thích quy tắc và ngoại lệ áp dụng cho chính hợp đồng ngắn này.",
+  "runtime_mode": "vertex-qdrant-v3",
+  "backend": "vertex-qdrant-v3",
+  "collection": "vietlex-legal-rag-v3-vertex-1024",
+  "ranking": "rrf-dbsf",
+  "candidate_counts": {
+    "pinecone_hits": 0,
+    "fts_hits": 0,
+    "merged_document_candidates": 0,
+    "resolved_document_candidates": 0,
+    "structural_chunks_generated": 24,
+    "locally_selected_chunks": 0,
+    "reranker_input_chunks": 24,
+    "reranker_output_chunks": 3,
+    "retrieval_selected_chunks": 3,
+    "final_evidence_chunks": 2
+  },
+  "final_evidence_count": 2,
+  "prompt_context_count": 2,
+  "count_semantics": "prompt-contexts-v1",
+  "context_stages": [
+    {
+      "stage": "retrieval_selected",
+      "count": 3,
+      "sha256": [
+        "8ef67ea058ea7cdda1e469ba3f545f94dc00b57837d1c4710d7bf56ce015a1b1",
+        "e2c782cc32328e512d1be02850fff5f4952b73817615e5e7a2b29ac40bab9fa2",
+        "ddb3d7d56ac898ae0670732170a7b36416c0eba2fb2dfda83e7906cbcb2c8434"
+      ]
+    },
+    {
+      "stage": "expanded",
+      "count": 3,
+      "sha256": [
+        "8ef67ea058ea7cdda1e469ba3f545f94dc00b57837d1c4710d7bf56ce015a1b1",
+        "e2c782cc32328e512d1be02850fff5f4952b73817615e5e7a2b29ac40bab9fa2",
+        "ddb3d7d56ac898ae0670732170a7b36416c0eba2fb2dfda83e7906cbcb2c8434"
+      ]
+    },
+    {
+      "stage": "quality_filtered",
+      "count": 3,
+      "sha256": [
+        "8ef67ea058ea7cdda1e469ba3f545f94dc00b57837d1c4710d7bf56ce015a1b1",
+        "e2c782cc32328e512d1be02850fff5f4952b73817615e5e7a2b29ac40bab9fa2",
+        "ddb3d7d56ac898ae0670732170a7b36416c0eba2fb2dfda83e7906cbcb2c8434"
+      ]
+    },
+    {
+      "stage": "situation_filtered",
+      "count": 3,
+      "sha256": [
+        "8ef67ea058ea7cdda1e469ba3f545f94dc00b57837d1c4710d7bf56ce015a1b1",
+        "e2c782cc32328e512d1be02850fff5f4952b73817615e5e7a2b29ac40bab9fa2",
+        "ddb3d7d56ac898ae0670732170a7b36416c0eba2fb2dfda83e7906cbcb2c8434"
+      ]
+    },
+    {
+      "stage": "primary_rescue",
+      "count": 2,
+      "sha256": [
+        "61bad37897f7285b5b2bb5c62c0889e6c86d784ec9b651f7b1554e1bb2af1eaa",
+        "ab7d37f9a6acdfbc358aee22219920a144053ba3138b2b86bd808afd620ab89e"
+      ]
+    },
+    {
+      "stage": "official_supplement",
+      "count": 2,
+      "sha256": [
+        "61bad37897f7285b5b2bb5c62c0889e6c86d784ec9b651f7b1554e1bb2af1eaa",
+        "ab7d37f9a6acdfbc358aee22219920a144053ba3138b2b86bd808afd620ab89e"
+      ]
+    },
+    {
+      "stage": "prompt",
+      "count": 2,
+      "sha256": [
+        "61bad37897f7285b5b2bb5c62c0889e6c86d784ec9b651f7b1554e1bb2af1eaa",
+        "ab7d37f9a6acdfbc358aee22219920a144053ba3138b2b86bd808afd620ab89e"
+      ]
+    }
+  ],
+  "context_budget_tokens": 8000,
+  "request_status": "ok",
+  "cached": false,
+  "observed_provider": "google_vertex_ai",
+  "observed_model": "gemini-3.5-flash",
+  "guardrail_state": {
+    "mode": "enforce",
+    "requested": true,
+    "executed": true,
+    "status": "passed",
+    "stages": {
+      "input": {
+        "status": "passed",
+        "safe": true,
+        "error": null
+      },
+      "output": {
+        "status": "passed",
+        "safe": true,
+        "error": null
+      }
+    },
+    "input_safe": true,
+    "output_safe": true
+  },
+  "latency": {
+    "t_total": 11.1925,
+    "t_cache": 0.0028,
+    "t_guardrails_input": 0.7177,
+    "t_guardrails_output": 0.8503,
+    "t_rewrite": 0.0,
+    "t_retrieval": 1.891,
+    "t_evidence_fallback": 3.964,
+    "vertex_qdrant": 0.8035439409999867,
+    "t_llm": 3.556
+  },
+  "evidence": [
+    {
+      "rank": 1,
+      "document_id": null,
+      "citation": "45/2019/QH14, Điều 24",
+      "excerpt": "Điều 24. Thử việc 1. Người sử dụng lao động và người lao động có thể thỏa thuận nội dung thử việc ghi trong hợp đồng lao động hoặc thỏa thuận về thử việc bằng việc giao kết hợp đồng thử việc. 2. Nội dung chủ yếu của hợp đồng thử việc gồm thời gian thử việc và nội dung quy định tại các điểm a, b, c, đ, g và h khoản 1 Điều 21 của Bộ luật này. 3. Không áp dụng thử việc đối với người lao động giao kết hợp đồng lao động có thời hạn dưới 01 tháng."
+    },
+    {
+      "rank": 2,
+      "document_id": null,
+      "citation": "45/2019/QH14, Điều 25",
+      "excerpt": "Điều 25. Thời gian thử việc Thời gian thử việc do hai bên thỏa thuận căn cứ vào tính chất và mức độ phức tạp của công việc nhưng chỉ được thử việc một lần đối với một công việc và bảo đảm điều kiện sau đây: 1. Không quá 180 ngày đối với công việc của người quản lý doanh nghiệp theo quy định của Luật Doanh nghiệp, Luật Quản lý, sử dụng vốn nhà nước đầu tư vào sản xuất, kinh doanh tại doanh nghiệp; 2. Không quá 60 ngày đối với công việc có chức danh nghề nghiệp cần trình độ chuyên môn, kỹ thuật từ cao đẳng trở lên; 3. Không quá 30 ngày đối với công việc có chức danh nghề nghiệp cần trình độ chuyên môn, kỹ thuật trung cấp, công nhân kỹ thuật, nhân viên nghiệp vụ; 4. Không quá 06 ngày làm việc đối với công việc khác."
+    }
+  ],
+  "displayed_evidence_count": 2
+}

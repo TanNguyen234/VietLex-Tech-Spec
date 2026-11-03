@@ -1,0 +1,16 @@
+{
+  "id": "nd136",
+  "landing_url": "https://congbao.chinhphu.vn/tai-ve-van-ban-so-136-2025-nd-cp-45098-56797",
+  "retrieved_utc": "2026-11-03T09:28:22.092751+00:00",
+  "evidence": "live official primary, no OCR/model",
+  "pdf_links": [
+    "https://g7.cdnchinhphu.vn/api/download/stream?Url=tm-8mq6BhNw0NbrKRhTDAQWsKg3tuqaY0aWypnY78U6M2BY68Ekp0Gvvr483flbRmw95VUIcSVO1DrzNsA9DXXm2OaIkA6g4Kt8I-D9CMS3arulJms_05gMHJhLwCirnPEdziC2e9c6Tiw8wjqP4ew~~&file_name=2025_795+%2b+796_136-2025-N%c4%90-CP.pdf"
+  ],
+  "http": 200,
+  "pdf_url": "https://g7.cdnchinhphu.vn/api/download/stream?Url=tm-8mq6BhNw0NbrKRhTDAQWsKg3tuqaY0aWypnY78U6M2BY68Ekp0Gvvr483flbRmw95VUIcSVO1DrzNsA9DXXm2OaIkA6g4Kt8I-D9CMS3arulJms_05gMHJhLwCirnPEdziC2e9c6Tiw8wjqP4ew~~&file_name=2025_795+%2b+796_136-2025-N%c4%90-CP.pdf",
+  "sha256": "0edb5357aa7d7146411d13d66162c352f559d13053f01d1fe15494ca92233fae",
+  "bytes": 791103,
+  "pages": 87,
+  "chars": 202494,
+  "status": "downloaded"
+}

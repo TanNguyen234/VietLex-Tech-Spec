@@ -1,0 +1,20 @@
+{
+  "id": "nd08",
+  "landing_url": "https://congbao.chinhphu.vn/van-ban/nghi-dinh-so-08-2022-nd-cp-36666.htm",
+  "retrieved_utc": "2026-11-03T09:29:10.211829+00:00",
+  "evidence": "live official primary, no OCR/model",
+  "pdf_links": [
+    "https://g7.cdnchinhphu.vn/api/download/stream?Url=tm-8mq6BhNw0NbrKRhTDAQWsKg3tuqaY0aWypnY78U6M2BY68Ekp0Gvvr483flbR0ZWwvhTLiVdPtgwZQBT_UNYdg4iIdAq1-Lm9aPxZBvreEa7Cwfq44SR5zklN38yELo-VUOU9iUeUzghpBYCHow~~&file_name=2022_169+%2b+170_08-2022-N%c4%90-CP.pdf",
+    "https://g7.cdnchinhphu.vn/api/download/stream?Url=tm-8mq6BhNw0NbrKRhTDAQWsKg3tuqaY0aWypnY78U6M2BY68Ekp0Gvvr483flbR0ZWwvhTLiVdPtgwZQBT_UARy4qAWZhW_5TgFtqD5W63HSyemy-4ozJhTowZzJjAE0EO3iMpXZ0mTrt6zuXOotA~~&file_name=2022_171+%2b+172_08-2022-N%c4%90-CP.pdf",
+    "https://g7.cdnchinhphu.vn/api/download/stream?Url=tm-8mq6BhNw0NbrKRhTDAQWsKg3tuqaY0aWypnY78U6M2BY68Ekp0Gvvr483flbR0ZWwvhTLiVdPtgwZQBT_UOJnaCM4zpVtYpYFcb-jPYsi4u89Po0QGXrM-G1kqvzwtEV10NJEWbExF5JwB4Hfog~~&file_name=2022_173+%2b+174_08-2022-N%c4%90-CP.pdf",
+    "https://g7.cdnchinhphu.vn/api/download/stream?Url=tm-8mq6BhNw0NbrKRhTDAQWsKg3tuqaY0aWypnY78U6M2BY68Ekp0Gvvr483flbR0ZWwvhTLiVdPtgwZQBT_UFH1tLVgBq2laRX-a2T1CIZjDI8yLtlxZQkqmU4ESSxuDDIoLYSclhkqmiHkr9WbMg~~&file_name=2022_175+%2b+176_08-2022-N%c4%90-CP.pdf",
+    "https://g7.cdnchinhphu.vn/api/download/stream?Url=tm-8mq6BhNw0NbrKRhTDAQWsKg3tuqaY0aWypnY78U6M2BY68Ekp0Gvvr483flbR2l-GFoozsnoIbCZV1kg8kSXSHULoh9Elj2PgJ_4okMrr12kQAKUZ0S64I_FODQ4Us96l_oh4PCvexsufm2kpOQ~~&file_name=2022_177+%2b+178_08-2022-N%c4%90-CP.pdf"
+  ],
+  "http": 200,
+  "pdf_url": "https://g7.cdnchinhphu.vn/api/download/stream?Url=tm-8mq6BhNw0NbrKRhTDAQWsKg3tuqaY0aWypnY78U6M2BY68Ekp0Gvvr483flbR0ZWwvhTLiVdPtgwZQBT_UNYdg4iIdAq1-Lm9aPxZBvreEa7Cwfq44SR5zklN38yELo-VUOU9iUeUzghpBYCHow~~&file_name=2022_169+%2b+170_08-2022-N%c4%90-CP.pdf",
+  "sha256": "1826c3468ea081e513ddfdf5cc60e1a4a65e6fe35d16466130a98ea6bc5cc6a4",
+  "bytes": 1163942,
+  "pages": 95,
+  "chars": 220401,
+  "status": "downloaded"
+}

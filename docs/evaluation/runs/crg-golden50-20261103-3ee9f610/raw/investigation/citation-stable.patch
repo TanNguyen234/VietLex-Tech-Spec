@@ -1,0 +1,117 @@
+--- before/.codex/config.toml
++++ current/.codex/config.toml
+@@ -14,6 +14,7 @@
+ [mcp_servers.crg]
+ command = 'D:\Projects\AI_Paper\pythonProject\.venv\Scripts\python.exe'
+ args = ["-m", "code_review_graph", "serve"]
++startup_timeout_sec = 300
+ enabled = true
+ required = false
+ enabled_tools = ["get_minimal_context_tool", "build_or_update_graph_tool", "detect_changes_tool", "query_graph_tool", "semantic_search_nodes_tool", "list_graph_stats_tool", "get_affected_flows_tool", "get_review_context_tool", "get_impact_radius_tool"]
+--- before/app/evaluation/answer_metrics.py
++++ current/app/evaluation/answer_metrics.py
+@@ -16,7 +16,7 @@
+     "generation_error",
+ }
+ 
+-ANSWER_METRIC_VERSION = "3.1.0"
++ANSWER_METRIC_VERSION = "3.2.0"
+ 
+ 
+ def _entity_mentions(text: str, expected: list[str]) -> list[str]:
+@@ -319,6 +319,43 @@
+     return set(parse_legal_citations(text))
+ 
+ 
++def _evidence_citations(context: str) -> set[LegalCitation]:
++    """Observe locators in supplied text, not legal validity or faithfulness."""
++    from app.services.evidence_presenter import present_context
++
++    # Use serialized text semantics too, so replay does not depend on a str
++    # subclass that carries online provenance outside the saved JSON.
++    context = str(context)
++    citations = _parsed_citation_set(context)
++    view = present_context(context)
++    headers = parse_legal_citations(view.citation or "")
++    if len(headers) != 1 or not headers[0].article or headers[0].clause:
++        return citations
++    own = headers[0]
++    heading = re.search(
++        rf"(?m)^\s*{re.escape(own.article)}\s*[.:]\s*", view.excerpt,
++        re.IGNORECASE,
++    )
++    if heading is None:
++        return citations
++    body = re.split(
++        r"(?mi)^\s*Điều\s+\d+[a-z]?\s*[.:]", view.excerpt[heading.end():],
++        maxsplit=1,
++    )[0]
++    next_clause = 1
++    for marker in re.finditer(r"(?<!\S)(\d{1,2})\.\s+", body):
++        if re.search(r"\b(?:khoản|điều|mục|chương|số)\s*$",
++                     body[max(0, marker.start() - 20):marker.start()], re.IGNORECASE):
++            continue
++        if int(marker.group(1)) != next_clause:
++            continue
++        citations.add(LegalCitation(
++            own.document_number, own.article, f"Khoản {next_clause}"
++        ))
++        next_clause += 1
++    return citations
++
++
+ def calculate_case_answer_metrics(
+     pred_response: str,
+     ref_answer: str,
+@@ -359,7 +396,7 @@
+     ref_cites = _parsed_citation_set(ref_answer)
+     evidence_cites: set[LegalCitation] = set()
+     for context in retrieved_contexts:
+-        evidence_cites.update(parse_legal_citations(context))
++        evidence_cites.update(_evidence_citations(context))
+ 
+     supported_pred_cites = {
+         citation
+--- before/app/evaluation/legal_citations.py
++++ current/app/evaluation/legal_citations.py
+@@ -6,7 +6,7 @@
+ 
+ 
+ DOC_PATTERN = re.compile(
+-    r"\b\d{1,4}/\d{4}/[A-ZĐ0-9-]+\b",
++    r"\b(?:\d{1,4}/\d{4}/[A-ZĐ0-9-]+|\d{1,5}/(?:VBHN|QĐ)[A-ZĐ0-9-]*)\b",
+     re.IGNORECASE,
+ )
+ ARTICLE_PATTERN = re.compile(
+--- before/app/evaluation/schemas.py
++++ current/app/evaluation/schemas.py
+@@ -267,6 +267,7 @@
+     final_response: str
+     generation_metadata: Dict[str, Any] = Field(default_factory=dict)
+     prompt_evidence: List[Dict[str, Any]] = Field(default_factory=list)
++    prompt_contexts: List[str] = Field(default_factory=list)
+     pipeline_diagnostics: Dict[str, Any] = Field(default_factory=dict)
+     input_safe: bool = True
+     output_safe: bool = True
+--- before/run_answer_eval.py
++++ current/run_answer_eval.py
+@@ -523,6 +523,7 @@
+         final_response=final_response,
+         generation_metadata=stage_a_result.get("generation_metadata", {}),
+         prompt_evidence=stage_a_result.get("prompt_evidence", []),
++        prompt_contexts=list(contexts),
+         pipeline_diagnostics=diagnostics,
+         input_safe=stage_a_result["input_safe"],
+         output_safe=stage_a_result["output_safe"],
+--- before/tests/evaluation/test_chat_pipeline_parity.py
++++ current/tests/evaluation/test_chat_pipeline_parity.py
+@@ -89,6 +89,9 @@
+     monkeypatch.setattr(evaluation, "calculate_case_retrieval_metrics", calculate_case_retrieval_metrics)
+     final = await evaluation.run_stage_b_offline(case(), result, settings, "none")
+     assert final.prompt_evidence == result["prompt_evidence"]
++    assert final.prompt_contexts == list(contexts)
++    restored = type(final).model_validate_json(final.model_dump_json())
++    assert restored.prompt_contexts == list(contexts)
+     assert final.pipeline_diagnostics["pipeline"] == "chat_service_v1"
+     assert "Nguồn bổ sung" not in str(final.prompt_evidence)
+ 

@@ -1,0 +1,110 @@
+{
+  "status": "available",
+  "query": "Chỉ giải thích khoản 2 Điều 25 trong văn bản Bộ luật Lao động 45/2019/QH14 đang mở: thời gian thử việc tối đa cho công việc cần trình độ cao đẳng là bao nhiêu? Không suy diễn tình trạng hiệu lực hiện tại nếu chưa có chứng cứ.",
+  "rewritten_query": "Chỉ giải thích khoản 2 Điều 25 trong văn bản Bộ luật Lao động 45/2019/QH14 đang mở: thời gian thử việc tối đa cho công việc cần trình độ cao đẳng là bao nhiêu? Không suy diễn tình trạng hiệu lực hiện tại nếu chưa có chứng cứ.",
+  "runtime_mode": "vertex-qdrant-v3",
+  "backend": "document_lexical_v1",
+  "collection": null,
+  "ranking": null,
+  "candidate_counts": {
+    "final_evidence_chunks": 1
+  },
+  "final_evidence_count": 1,
+  "prompt_context_count": 1,
+  "count_semantics": "prompt-contexts-v1",
+  "context_stages": [
+    {
+      "stage": "retrieval_selected",
+      "count": 1,
+      "sha256": [
+        "03be2b81956476661c98e6da9842502d97123dd1c64de2610ed0500af54de464"
+      ]
+    },
+    {
+      "stage": "expanded",
+      "count": 1,
+      "sha256": [
+        "6ac48065bc4dc439b3efbbdf31ec12e3e61ac2b205b478fe1470adc87f14924b"
+      ]
+    },
+    {
+      "stage": "quality_filtered",
+      "count": 1,
+      "sha256": [
+        "6ac48065bc4dc439b3efbbdf31ec12e3e61ac2b205b478fe1470adc87f14924b"
+      ]
+    },
+    {
+      "stage": "situation_filtered",
+      "count": 1,
+      "sha256": [
+        "6ac48065bc4dc439b3efbbdf31ec12e3e61ac2b205b478fe1470adc87f14924b"
+      ]
+    },
+    {
+      "stage": "primary_rescue",
+      "count": 1,
+      "sha256": [
+        "6ac48065bc4dc439b3efbbdf31ec12e3e61ac2b205b478fe1470adc87f14924b"
+      ]
+    },
+    {
+      "stage": "official_supplement",
+      "count": 1,
+      "sha256": [
+        "6ac48065bc4dc439b3efbbdf31ec12e3e61ac2b205b478fe1470adc87f14924b"
+      ]
+    },
+    {
+      "stage": "prompt",
+      "count": 1,
+      "sha256": [
+        "6ac48065bc4dc439b3efbbdf31ec12e3e61ac2b205b478fe1470adc87f14924b"
+      ]
+    }
+  ],
+  "context_budget_tokens": 720,
+  "request_status": "ok",
+  "cached": false,
+  "observed_provider": "google_vertex_ai",
+  "observed_model": "gemini-3.5-flash",
+  "guardrail_state": {
+    "mode": "enforce",
+    "requested": true,
+    "executed": true,
+    "status": "passed",
+    "stages": {
+      "input": {
+        "status": "passed",
+        "safe": true,
+        "error": null
+      },
+      "output": {
+        "status": "passed",
+        "safe": true,
+        "error": null
+      }
+    },
+    "input_safe": true,
+    "output_safe": true
+  },
+  "latency": {
+    "t_total": 4.8881,
+    "t_cache": 0.0,
+    "t_guardrails_input": 0.9725,
+    "t_guardrails_output": 0.9553,
+    "t_rewrite": 0.0,
+    "t_retrieval": 0.0,
+    "t_evidence_fallback": 0.004,
+    "t_llm": 1.616
+  },
+  "evidence": [
+    {
+      "rank": 1,
+      "document_id": 333670,
+      "citation": "45/2019/QH14, Điều 25, Khoản 2",
+      "excerpt": "Điều 25. Thời gian thử việc 2. Không quá 60 ngày đối với công việc có chức danh nghề nghiệp cần trình độ chuyên môn, kỹ thuật từ cao đẳng trở lên;"
+    }
+  ],
+  "displayed_evidence_count": 1
+}

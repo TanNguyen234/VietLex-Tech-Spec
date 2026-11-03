@@ -1,0 +1,822 @@
+{
+  "status": "available",
+  "query": "Tình huống giả định: tại ngày 29/10/2026, một cơ sở nhập khẩu phế liệu từ nước ngoài làm nguyên liệu sản xuất nhưng không có nước thải, khí thải cần xử lý. Chỉ vì không có dòng thải thì có được miễn giấy phép môi trường không? Cơ quan hoặc người nào có thẩm quyền cấp trong trường hợp này? Phân biệt quy định gốc và thay đổi có hiệu lực năm 2025–2026.",
+  "rewritten_query": "Tình huống giả định: tại ngày 29/10/2026, một cơ sở nhập khẩu phế liệu từ nước ngoài làm nguyên liệu sản xuất nhưng không có nước thải, khí thải cần xử lý. Chỉ vì không có dòng thải thì có được miễn giấy phép môi trường không? Cơ quan hoặc người nào có thẩm quyền cấp trong trường hợp này? Phân biệt quy định gốc và thay đổi có hiệu lực năm 2025–2026.",
+  "runtime_mode": "vertex-qdrant-v3",
+  "backend": "vertex-qdrant-v3",
+  "collection": "vietlex-legal-rag-v3-vertex-1024",
+  "ranking": "rrf-dbsf",
+  "candidate_counts": {
+    "pinecone_hits": 0,
+    "fts_hits": 0,
+    "merged_document_candidates": 0,
+    "resolved_document_candidates": 0,
+    "structural_chunks_generated": 24,
+    "locally_selected_chunks": 0,
+    "reranker_input_chunks": 24,
+    "reranker_output_chunks": 3,
+    "retrieval_selected_chunks": 3,
+    "final_evidence_chunks": 10
+  },
+  "final_evidence_count": 10,
+  "prompt_context_count": 10,
+  "count_semantics": "prompt-contexts-v1",
+  "context_stages": [
+    {
+      "stage": "retrieval_selected",
+      "count": 3,
+      "sha256": [
+        "56a0ac5de6c1a92e9ab4510e0d30b8fe791dec85876393cfbce2487e19ab0433",
+        "5d5343ac510458a28b05b3c672cb18232868ff1a57e40ad7d0ca53458437f148",
+        "d1e20c32f3e6b8cc2cc73afd8fd2d7ac28d2ab18d915eb88b50d2408738beac0"
+      ]
+    },
+    {
+      "stage": "expanded",
+      "count": 3,
+      "sha256": [
+        "56a0ac5de6c1a92e9ab4510e0d30b8fe791dec85876393cfbce2487e19ab0433",
+        "5d5343ac510458a28b05b3c672cb18232868ff1a57e40ad7d0ca53458437f148",
+        "d1e20c32f3e6b8cc2cc73afd8fd2d7ac28d2ab18d915eb88b50d2408738beac0"
+      ]
+    },
+    {
+      "stage": "quality_filtered",
+      "count": 3,
+      "sha256": [
+        "56a0ac5de6c1a92e9ab4510e0d30b8fe791dec85876393cfbce2487e19ab0433",
+        "5d5343ac510458a28b05b3c672cb18232868ff1a57e40ad7d0ca53458437f148",
+        "d1e20c32f3e6b8cc2cc73afd8fd2d7ac28d2ab18d915eb88b50d2408738beac0"
+      ]
+    },
+    {
+      "stage": "situation_filtered",
+      "count": 3,
+      "sha256": [
+        "56a0ac5de6c1a92e9ab4510e0d30b8fe791dec85876393cfbce2487e19ab0433",
+        "5d5343ac510458a28b05b3c672cb18232868ff1a57e40ad7d0ca53458437f148",
+        "d1e20c32f3e6b8cc2cc73afd8fd2d7ac28d2ab18d915eb88b50d2408738beac0"
+      ]
+    },
+    {
+      "stage": "primary_rescue",
+      "count": 3,
+      "sha256": [
+        "56a0ac5de6c1a92e9ab4510e0d30b8fe791dec85876393cfbce2487e19ab0433",
+        "5d5343ac510458a28b05b3c672cb18232868ff1a57e40ad7d0ca53458437f148",
+        "d1e20c32f3e6b8cc2cc73afd8fd2d7ac28d2ab18d915eb88b50d2408738beac0"
+      ]
+    },
+    {
+      "stage": "official_supplement",
+      "count": 10,
+      "sha256": [
+        "56a0ac5de6c1a92e9ab4510e0d30b8fe791dec85876393cfbce2487e19ab0433",
+        "5d5343ac510458a28b05b3c672cb18232868ff1a57e40ad7d0ca53458437f148",
+        "d1e20c32f3e6b8cc2cc73afd8fd2d7ac28d2ab18d915eb88b50d2408738beac0",
+        "46ac1d7d87ca161e0f25b3c60584c13d37d4b65f1bbb5b90fce675f619b66e5d",
+        "b24117c68aa8d15c3a2a0662bfd8cc4fd47fbca1dcad24eac91d4766d4f6d1fc",
+        "a742a256da70c16cc6dde98fb98929e5e19f93567bf006c77a9c718bc4c57cd1",
+        "ca950d691562aa93a586bf6e665dabe5c4b6752a84b52bccd9487a7c1db474c0",
+        "0c7c63dc7c0dc110b59d712bf5f2d9f0ff14c53291d3716bce8a47c01beac987",
+        "e414776e60a6b255193891d2fbfba80b9dba8f406c127946a3e7134ecfbc959c",
+        "6fe894651d21b67b7b5e96780e2b4aa06241dd3dd84b69b2ef1c4be0e4edfd09"
+      ]
+    },
+    {
+      "stage": "prompt",
+      "count": 10,
+      "sha256": [
+        "56a0ac5de6c1a92e9ab4510e0d30b8fe791dec85876393cfbce2487e19ab0433",
+        "5d5343ac510458a28b05b3c672cb18232868ff1a57e40ad7d0ca53458437f148",
+        "d1e20c32f3e6b8cc2cc73afd8fd2d7ac28d2ab18d915eb88b50d2408738beac0",
+        "46ac1d7d87ca161e0f25b3c60584c13d37d4b65f1bbb5b90fce675f619b66e5d",
+        "b24117c68aa8d15c3a2a0662bfd8cc4fd47fbca1dcad24eac91d4766d4f6d1fc",
+        "a742a256da70c16cc6dde98fb98929e5e19f93567bf006c77a9c718bc4c57cd1",
+        "ca950d691562aa93a586bf6e665dabe5c4b6752a84b52bccd9487a7c1db474c0",
+        "0c7c63dc7c0dc110b59d712bf5f2d9f0ff14c53291d3716bce8a47c01beac987",
+        "e414776e60a6b255193891d2fbfba80b9dba8f406c127946a3e7134ecfbc959c",
+        "6fe894651d21b67b7b5e96780e2b4aa06241dd3dd84b69b2ef1c4be0e4edfd09"
+      ]
+    }
+  ],
+  "context_budget_tokens": 8000,
+  "official_search": {
+    "status": "partial",
+    "search_queries": 5,
+    "queries_completed": 4,
+    "provider_attempts": 14,
+    "urls_discovered": 39,
+    "urls_attempted": 8,
+    "sources_read": 7,
+    "sources_downloaded": 8,
+    "read_failures": 1,
+    "phase_seconds": {
+      "discovery": 15.001,
+      "read": 25.033,
+      "pack": 0.175
+    },
+    "budget_unit": "approx_whitespace_tokens",
+    "context_tokens": 7987,
+    "evidence_blocks": 9,
+    "legal_effect_status": "unverified",
+    "effect_as_of": "29/10/2026",
+    "effect_reason": "amendment_chain_not_verified",
+    "errors": [
+      {
+        "phase": "discovery",
+        "provider": "VbplClient",
+        "kind": "vbpl_http_403"
+      },
+      {
+        "phase": "discovery",
+        "provider": "VbplClient",
+        "kind": "vbpl_http_403"
+      },
+      {
+        "phase": "discovery",
+        "provider": "VbplClient",
+        "kind": "vbpl_http_403"
+      },
+      {
+        "phase": "discovery",
+        "provider": "VbplClient",
+        "kind": "vbpl_http_403"
+      },
+      {
+        "phase": "discovery",
+        "kind": "deadline"
+      },
+      {
+        "phase": "extraction",
+        "kind": "source_metadata_only"
+      }
+    ],
+    "source_reads": [
+      {
+        "url": "https://congbao.chinhphu.vn/van-ban/quyet-dinh-so-13-2023-q-ttg-39342.htm",
+        "sha256": "2f0c584775f2248475cfd91f7a7f45922971361cdf846045238f431a9684a722",
+        "document_sha256": "b65748ef1603ada729a4d137336739d6b7437d37908ffd8bfc5c8f36241dd607",
+        "inspected_pages": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "retained_pages": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "partial_read": false
+      },
+      {
+        "url": "https://congbao.chinhphu.vn/van-ban/van-ban-hop-nhat-so-15-vbhn-vpqh-44444.htm",
+        "sha256": "e14fc4f37360cf1bbf5cf979b1e13500bc63cff7e8c6e37af5b7eadd54f84d75",
+        "document_sha256": "e3a9d7f347f7acfbd615c2d7c68e553f008f415905c8d321ba6131290e6caf1d",
+        "inspected_pages": [
+          1,
+          4,
+          7,
+          10,
+          13,
+          15,
+          18,
+          21,
+          24,
+          27,
+          30,
+          33,
+          36,
+          39,
+          42,
+          44,
+          47,
+          50,
+          53,
+          56,
+          26,
+          28,
+          29,
+          31,
+          32,
+          34,
+          35,
+          37,
+          38,
+          40,
+          41,
+          43,
+          45
+        ],
+        "retained_pages": [
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45
+        ],
+        "partial_read": true
+      },
+      {
+        "url": "https://congbao.chinhphu.vn/van-ban/van-ban-hop-nhat-so-21-vbhn-vpqh-38903.htm",
+        "sha256": "3ebc83b4ea41107ce670aba886504b91e707cb0d26e9c3b281b3c2d838bf9cea",
+        "document_sha256": "abf05e60336dfd3b881f94f74f3e074404e7e579fcee4134ed1a5331b4ca4c1c",
+        "inspected_pages": [
+          1,
+          6,
+          11,
+          16,
+          21,
+          26,
+          31,
+          36,
+          41,
+          46,
+          50,
+          55,
+          60,
+          65,
+          70,
+          75,
+          80,
+          85,
+          90,
+          95,
+          32,
+          33,
+          34,
+          35,
+          37,
+          38,
+          39,
+          40,
+          42,
+          43,
+          44,
+          45,
+          47,
+          48,
+          49
+        ],
+        "retained_pages": [
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50
+        ],
+        "partial_read": true
+      },
+      {
+        "url": "https://congbao.chinhphu.vn/van-ban/nghi-dinh-so-05-2025-nd-cp-43838.htm",
+        "sha256": "b20b596ab0d4aec1e68f7446f6dbac84c133a336393a50565923a228e7cba38b",
+        "document_sha256": "d40c6e8336a81b0022d6166c32164565bcb4b46e774648926989848e2c8d07a7",
+        "inspected_pages": [
+          1,
+          6,
+          11,
+          16,
+          21,
+          26,
+          31,
+          36,
+          41,
+          46,
+          50,
+          55,
+          60,
+          65,
+          70,
+          75,
+          80,
+          85,
+          90,
+          95,
+          32,
+          33,
+          34,
+          35,
+          37,
+          38,
+          39,
+          40,
+          42,
+          43,
+          44,
+          45,
+          47,
+          48,
+          49
+        ],
+        "retained_pages": [
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50
+        ],
+        "partial_read": true
+      },
+      {
+        "url": "https://congbao.chinhphu.vn/van-ban/thong-tu-so-07-2025-tt-btnmt-44389.htm",
+        "sha256": "ac0a53f46ef9f990ed2475cb6976855c9b779c0cc5698fe66ac10cc559bcc456",
+        "document_sha256": "a9f479d681af67f01041d81710d3967a48b628731c5940213c1153e8060af189",
+        "inspected_pages": [
+          1,
+          6,
+          10,
+          15,
+          19,
+          24,
+          28,
+          33,
+          38,
+          42,
+          47,
+          51,
+          56,
+          61,
+          65,
+          70,
+          74,
+          79,
+          83,
+          88,
+          29,
+          30,
+          31,
+          32,
+          34,
+          35,
+          36,
+          37,
+          39,
+          40,
+          41,
+          43,
+          44,
+          45,
+          46
+        ],
+        "retained_pages": [
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47
+        ],
+        "partial_read": true
+      },
+      {
+        "url": "https://congbao.chinhphu.vn/van-ban/van-ban-hop-nhat-so-09-vbhn-vpqh-40444.htm",
+        "sha256": "5ff69699ac1fdc1778fa5947201d76424d923b1a7e9df0cf7f02090b044f2ca3",
+        "document_sha256": "6ca6302d146257aa9e1fc61a89267db6d0acad20e7c719c7213377f8d4d018c4",
+        "inspected_pages": [
+          1,
+          6,
+          11,
+          16,
+          21,
+          26,
+          31,
+          36,
+          41,
+          46,
+          50,
+          55,
+          60,
+          65,
+          70,
+          75,
+          80,
+          85,
+          90,
+          95,
+          32,
+          33,
+          34,
+          35,
+          37,
+          38,
+          39,
+          40,
+          42,
+          43,
+          44,
+          45,
+          47,
+          48,
+          49
+        ],
+        "retained_pages": [
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50
+        ],
+        "partial_read": true
+      },
+      {
+        "url": "https://congbao.chinhphu.vn/van-ban/nghi-dinh-so-08-2022-nd-cp-36666.htm",
+        "sha256": "79dc48a53f00c3746daa6bdbeccc33d5b4a6f2e451092beda375de8acc224e5a",
+        "document_sha256": "1826c3468ea081e513ddfdf5cc60e1a4a65e6fe35d16466130a98ea6bc5cc6a4",
+        "inspected_pages": [
+          1,
+          6,
+          11,
+          16,
+          21,
+          26,
+          31,
+          36,
+          41,
+          46,
+          50,
+          55,
+          60,
+          65,
+          70,
+          75,
+          80,
+          85,
+          90,
+          95,
+          42,
+          43,
+          44,
+          45,
+          47,
+          48,
+          49,
+          51,
+          52,
+          53,
+          54,
+          56,
+          57,
+          58,
+          59
+        ],
+        "retained_pages": [
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60
+        ],
+        "partial_read": true
+      },
+      {
+        "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=205282",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "document_sha256": "4ab65d8d64179e76c949383337cb43fc270e86afd0908e7bb37c46195feae66a",
+        "inspected_pages": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "retained_pages": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "partial_read": true
+      }
+    ],
+    "discovered_urls": [
+      "https://congbao.chinhphu.vn/van-ban/luat-so-55-2014-qh13-4894.htm",
+      "https://congbao.chinhphu.vn/van-ban/luat-so-72-2020-qh14-32703.htm",
+      "https://congbao.chinhphu.vn/van-ban/nghi-dinh-so-05-2025-nd-cp-43838.htm",
+      "https://congbao.chinhphu.vn/van-ban/nghi-dinh-so-08-2022-nd-cp-36666.htm",
+      "https://congbao.chinhphu.vn/van-ban/nghi-dinh-so-179-2013-nd-cp-9922.htm",
+      "https://congbao.chinhphu.vn/van-ban/nghi-dinh-so-40-2019-nd-cp-28977.htm",
+      "https://congbao.chinhphu.vn/van-ban/nghi-quyet-so-66-4-2025-nq-cp-46292.htm",
+      "https://congbao.chinhphu.vn/van-ban/quyet-dinh-so-13-2023-q-ttg-39342.htm",
+      "https://congbao.chinhphu.vn/van-ban/quyet-dinh-so-28-2020-qd-ttg-32152.htm",
+      "https://congbao.chinhphu.vn/van-ban/quyet-dinh-so-46-2025-qd-ttg-46805.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-lien-tich-so-34-2012-ttlt-bct-btnmt-17327.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-01-2013-tt-btnmt-2086.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-07-2025-tt-btnmt-44389.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-08-2018-tt-btnmt-27393.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-19-2025-tt-bct-44762.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-62-2017-tt-btc-24203.htm",
+      "https://congbao.chinhphu.vn/van-ban/van-ban-hop-nhat-so-09-vbhn-bgtvt-7540.htm",
+      "https://congbao.chinhphu.vn/van-ban/van-ban-hop-nhat-so-09-vbhn-vpqh-40444.htm",
+      "https://congbao.chinhphu.vn/van-ban/van-ban-hop-nhat-so-13-vbhn-vpqh-29568.htm",
+      "https://congbao.chinhphu.vn/van-ban/van-ban-hop-nhat-so-14-vbhn-btc-28278.htm",
+      "https://congbao.chinhphu.vn/van-ban/van-ban-hop-nhat-so-15-vbhn-vpqh-44444.htm",
+      "https://congbao.chinhphu.vn/van-ban/van-ban-hop-nhat-so-21-vbhn-vpqh-38903.htm",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=165506",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=182033",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=190907",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=194217",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=196110",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=198647",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=204144",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=205282",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=214084",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=214372",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=216867",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=216920",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=217544",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=217892",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=218358",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=218478",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=38575"
+    ],
+    "topic_coverage": {
+      "covered": [
+        "giấy phép môi trường",
+        "nhập khẩu phế liệu"
+      ],
+      "missing": [],
+      "status": "known"
+    },
+    "excluded_blocks": [
+      {
+        "source": 7,
+        "reason": "metadata_only"
+      },
+      {
+        "source": 1,
+        "article": "Điều 32. Đối tượng được miễn đăng ký môi trường",
+        "reason": "unrelated_topic"
+      },
+      {
+        "source": 1,
+        "article": "Điều 33. Điều kiện về bảo vệ môi trường làng nghề",
+        "reason": "incomplete_article"
+      },
+      {
+        "source": 2,
+        "article": "Điều 1. Ban hành  kèm theo  Quyết định này Danh m ục ph ế li ệu được phép",
+        "reason": "unrelated_topic"
+      },
+      {
+        "source": 2,
+        "article": "Điều 2. Tổ ch ức, cá nhân tr ực ti ếp nh ập kh ẩu ph ế li ệu làm nguyên li ệu s ản",
+        "reason": "unrelated_topic"
+      },
+      {
+        "source": 2,
+        "article": "Điều 4. Điều khoản thi hành",
+        "reason": "unrelated_topic"
+      },
+      {
+        "source": 4,
+        "article": "Điều 35. Thẩm quyền thẩm định báo cáo đánh giá tác động môi trường",
+        "reason": "unrelated_topic"
+      },
+      {
+        "source": 4,
+        "article": "Điều 50. Bảo vệ môi trường đối với khu kinh tế",
+        "reason": "unrelated_topic"
+      },
+      {
+        "source": 4,
+        "article": "Điều 51. Bảo vệ môi trường đối với khu sản xuất, kinh doanh, dị ch vụ",
+        "reason": "incomplete_article"
+      },
+      {
+        "source": 1,
+        "article": "Điều 29. Hồ sơ, trình tự, thủ tục cấp giấy phép môi trường",
+        "reason": "context_budget"
+      },
+      {
+        "source": 4,
+        "article": "Điều 46. Công trình bảo vệ môi trường và vận hành thử nghiệm công trình",
+        "reason": "context_budget"
+      },
+      {
+        "source": 2,
+        "article": "Điều 3. Điều khoản chuyển tiếp",
+        "reason": "context_budget"
+      },
+      {
+        "source": 1,
+        "article": "Điều 31. Vận hành thử nghiệm công trình xử lý chất thải sau khi được cấp",
+        "reason": "context_budget"
+      },
+      {
+        "source": 4,
+        "article": "Điều 38. Trách nhiệm của cơ quan thẩm định báo cáo đánh giá tác  động",
+        "reason": "context_budget"
+      },
+      {
+        "source": 4,
+        "article": "Điều 37. Trách nhiệm của chủ dự án đầu tư sau khi có quyết định phê duyệt",
+        "reason": "context_budget"
+      },
+      {
+        "source": 4,
+        "article": "Điều 36. Quyết định phê duyệt kết quả thẩm định báo cáo đánh giá tác động",
+        "reason": "context_budget"
+      },
+      {
+        "source": 4,
+        "article": "Điều 47. Quyền, nghĩa vụ của chủ dự án đầu tư, cơ sở được cấp g iấy phép",
+        "reason": "context_budget"
+      },
+      {
+        "source": 4,
+        "article": "Điều 49. Đăng ký môi trường",
+        "reason": "context_budget"
+      }
+    ]
+  },
+  "request_status": "ok",
+  "cached": false,
+  "observed_provider": "unobserved",
+  "observed_model": "unobserved",
+  "guardrail_state": {
+    "mode": "enforce",
+    "requested": true,
+    "executed": true,
+    "status": "passed",
+    "stages": {
+      "input": {
+        "status": "passed",
+        "safe": true,
+        "error": null
+      },
+      "output": {
+        "status": "passed",
+        "safe": true,
+        "error": null
+      }
+    },
+    "input_safe": true,
+    "output_safe": true
+  },
+  "latency": {
+    "t_total": 47.1302,
+    "t_cache": 0.0022,
+    "t_guardrails_input": 0.7281,
+    "t_guardrails_output": 1.4517,
+    "t_rewrite": 0.0,
+    "t_retrieval": 2.581,
+    "t_evidence_fallback": 42.15,
+    "vertex_qdrant": 0.7477330859999824,
+    "t_llm": 0.003
+  },
+  "evidence": [
+    {
+      "rank": 1,
+      "document_id": null,
+      "citation": "72/2020/QH14, Điều 46, Khoản 4",
+      "excerpt": "Điều 46. Công trình bảo vệ môi trường và vận hành thử nghiệm công trình xử lý chất thải của dự án đầu tư sau khi được cấp giấy phép môi trường 4. Đối với dự án đầu tư có thực hiện dịch vụ xử lý chất thải nguy hại hoặc có nhập khẩu phế liệu từ nước ngoài làm nguyên liệu sản xuất, trước khi kết thúc vận hành thử nghiệm 45 ngày, chủ dự án đầu tư phải gửi báo cáo kết quả vận hành thử nghiệm đến cơ quan có thẩm quyền cấp giấy phép môi trường của dự án. Cơ quan cấp giấy phép môi trường có trách nhiệm kiểm tra và quyết định việc điều chỉnh loại, khối lượng chất thải nguy hại được phép xử lý hoặc khối lượng phế liệu được phép nhập khẩu và xử lý vi phạm (nếu có) theo quy định của pháp luật."
+    },
+    {
+      "rank": 2,
+      "document_id": null,
+      "citation": "72/2020/QH14, Điều 41",
+      "excerpt": "Điều 41. Thẩm quyền cấp giấy phép môi trường 1. Bộ Tài nguyên và Môi trường cấp giấy phép môi trường đối với các đối tượng sau đây, trừ trường hợp quy định tại khoản 2 Điều này: a) Đối tượng quy định tại Điều 39 của Luật này đã được Bộ Tài nguyên và Môi trường phê duyệt kết quả thẩm định báo cáo đánh giá tác động môi trường; b) Đối tượng quy định tại Điều 39 của Luật này nằm trên địa bàn từ 02 đơn vị hành chính cấp tỉnh trở lên hoặc nằm trên vùng biển chưa xác định trách nhiệm quản lý hành chính của Ủy ban nhân dân cấp tỉnh; cơ sở có nhập khẩu phế liệu từ nước ngoài làm nguyên liệu sản xuất, cơ sở thực hiện dịch vụ xử lý chất thải nguy hại."
+    },
+    {
+      "rank": 3,
+      "document_id": null,
+      "citation": "72/2020/QH14, Điều 40, Khoản 2",
+      "excerpt": "Điều 40. Nội dung giấy phép môi trường 2. Nội dung cấp phép môi trường bao gồm: a) Nguồn phát sinh nước thải; lưu lượng xả nước thải tối đa; dòng nước thải; các chất ô nhiễm và giá trị giới hạn của các chất ô nhiễm theo dòng nước thải; vị trí, phương thức xả nước thải và nguồn tiếp nhận nước thải; b) Nguồn phát sinh khí thải; lưu lượng xả khí thải tối đa; dòng khí thải; các chất ô nhiễm và giá trị giới hạn của các chất ô nhiễm theo dòng khí thải; vị trí, phương thức xả khí thải; c) Nguồn phát sinh và giá trị giới hạn đối với tiếng ồn, độ rung; d) Công trình, hệ thống thiết bị xử lý chất thải nguy hại; mã chất thải nguy hại và khối lượng được phép xử lý, số lượng trạm trung chuyển chất thải nguy hại, địa bàn hoạt động đối với dự án đầu tư, cơ sở thực hiện dịch vụ xử lý chất thải nguy hại; đ) Loại, khối lượng phế liệu được phép nhập khẩu đối với dự án đầu tư, cơ sở có nhập khẩu phế liệu từ nước ngoài làm nguyên liệu sản xuất."
+    },
+    {
+      "rank": 4,
+      "document_id": null,
+      "citation": "15/VBHN-VPQH, Điều 41. Thẩm quyền cấp giấy phép môi trường",
+      "excerpt": "Điều 41. Thẩm quyền cấp giấy phép môi trường\n1. Bộ Tài nguyên và Môi trường cấp  giấy phép môi trường đối với  c á c  đ ố i\ntượng sau đây, trừ trường hợp quy định tại khoản 2 Điều này:\na) Đối tượng quy định tại Điều 39 của Luật này đã được Bộ Tài n guyên và\nMôi trường phê duyệt kết quả thẩm định báo cáo đánh giá tác động môi trường;\nCÔNG BÁO/Số 527 + 528/Ngày 18-3-2025 73\nb) Đối tượng quy định tại Điều 39 của Luật này nằm trên địa bàn  từ 02 đơn vị\nhành chính cấp tỉnh trở lên hoặc nằm trên vùng biển chưa xác định trách nhiệm quản\nlý hành chính của Ủy ban nhân dân cấp tỉnh; cơ sở có nhập khẩu phế liệu từ nước\nngoài làm nguyên liệu sản xuất, cơ sở thực hiện dịch vụ xử lý chất thải nguy hại.\n2. Bộ Quốc phòng, Bộ Công an cấp giấy phép môi trường đối với c ác dự án\nđầu tư, cơ sở thuộc bí mật nhà nước về quốc phòng, an ninh.\n3. Ủy ban nhân dân cấp tỉnh cấp giấy phép môi trường đối với cá c đối tượng\nsau đây, trừ trường hợp quy định tại khoản 1 và khoản 2 Điều này:\na) Dự án đầu tư nhóm II quy định tại Điều 39 của Luật này;\nb) Dự án đầu tư nhóm III quy định tại Điều 39 của Luật này nằm trên địa bàn\ntừ 02 đơn vị hành chính cấp huyện trở lên;\nc) Đối tượng quy định tại khoản 2 Điều 39 của Luật này đã được Ủy ban nhân\ndân cấp tỉnh hoặc Bộ, cơ quan ngang Bộ phê duyệt kết quả thẩm định báo cáo đánh\ngiá tác động môi trường.\n4. Ủy ban nhân dân cấp huyện cấp giấy phép môi trường đối với đối tượng quy\nđịnh tại Điều 39 của Luật này, trừ trường hợp quy định tại các khoản 1, 2 và 3\nĐiều này."
+    },
+    {
+      "rank": 5,
+      "document_id": null,
+      "citation": "15/VBHN-VPQH, Điều 40. Nội dung giấy phép môi trường",
+      "excerpt": "Điều 40. Nội dung giấy phép môi trường\n1. Nội dung giấy phép môi trường gồm thông tin chung về dự án đ ầu tư, cơ sở,\nkhu sản xuất kinh doanh, dịch vụ tập trung, cụm công nghiệp; nộ i dung cấp phép\nmôi trường; yêu cầu về bảo vệ môi trường; thời hạn của giấy phé p môi trường; nội\ndung khác (nếu có).\n2. Nội dung cấp phép môi trường bao gồm:\na) Nguồn phát sinh nước thải; lưu lượng xả nước thải tối đa; dò ng nước thải;\ncác chất ô nhiễm và giá trị giới  hạn của các chất ô nhiễm theo dòng nước thải; vị\ntrí, phương thức xả nước thải và nguồn tiếp nhận nước thải;\nb) Nguồn phát sinh khí thải; lưu lư ợng xả khí thải tối đa; dòng  khí thải; các\nchất ô nhiễm và giá trị giới hạn của các chất ô nhiễm theo dòng  khí thải; vị trí,\nphương thức xả khí thải;\nc) Nguồn phát sinh và giá trị giới hạn đối với tiếng ồn, độ rung;\nd) Công trình, hệ thống thiết bị xử lý chất thải nguy hại; mã chất thải nguy hại và\nkhối lượng được phép xử lý, số lượng trạm trung chuyển chất thải nguy hại, địa bàn\nhoạt động đối với dự án đầu tư, cơ sở thực hiện dịch vụ xử lý chất thải nguy hại;\nđ) Loại, khối lượng phế liệu được  phép nhập khẩu đối với dự án đầu tư, cơ sở\ncó nhập khẩu phế liệu từ nước ngoài làm nguyên liệu sản xuất.\n3 Khoản này được sửa đổi, bổ sung theo quy định tại điểm b khoản  1 Điều 109 của Luật Địa\nchất và khoáng sản số 54/2024/QH15, có hiệu lực kể từ ngày 15 t háng 01 năm 2025 theo quy\nđịnh tại khoản 2 Điều 110 của Luật Địa chất và khoáng sản số 54/2024/QH15.\n72 CÔNG BÁO/Số 527 + 528/Ngày 18-3-2025\n3. Yêu cầu về bảo vệ môi trường bao gồm:\na) Có công trình, biện pháp thu gom, xử lý nước thải, khí thải,  giảm thiểu tiếng\nồn, độ rung đáp ứng yêu cầu; trường hợp xả nước thải vào công t rình thủy lợi phải\ncó các yêu cầu về bảo vệ môi trường đối với nguồn nước công trình thủy lợi;\nb) Có biện pháp, hệ thống, công trình, thiết bị lưu giữ, vận ch uyển, trung\nchuyển, sơ chế, xử lý đáp ứng yêu cầu quy trình kỹ thuật và quả n lý đối với dự án\nđầu tư, cơ sở thực hiện dịch vụ xử lý chất thải nguy hại;\nc) Có kho, bãi lưu giữ phế liệu đáp ứng quy định; hệ thống thiế t bị tái chế;\nphương án xử lý tạp chất; phương án tái xuất đối với dự án đầu tư, cơ sở có nhập\nkhẩu phế liệu từ nước ngoài làm nguyên liệu sản xuất;\nd) Có kế hoạch quản lý và giám sát môi trường, kế hoạch phòng ngừa, ứng phó\nsự cố môi trường; trang thiết bị, công trình phòng ngừa, ứng ph ó sự cố môi trường,\nquan trắc môi trường;\nđ) Quản lý chất thải rắn sinh hoạt, chất thải rắn công nghiệp t hông thường,\nchất thải nguy hại; cải tạo, phục hồi môi trường; bồi hoàn đa d ạng sinh học theo\nquy định của pháp luật;\ne) Yêu cầu khác về bảo vệ môi trường (nếu có).\n4. Thời hạn của giấy phép môi trường được quy định như sau:\na) 07 năm đối với dự án đầu tư nhóm I;\nb) 07 năm đối với cơ sở sản xuất, kinh doanh, dịch vụ, khu sản xuất, kinh\ndoanh, dịch vụ tập trung, cụm c ông nghiệp hoạt động trước ngày Luật này có hiệu\nlực thi hành có tiêu chí về môi trường như dự án đầu tư nhóm I;\nc) 10 năm đối với đối tượng không thuộc quy định tại điểm a và điểm b khoản này;\nd) Thời hạn của giấy phép môi trường có thể ngắn hơn thời hạn q uy định tại\ncác điểm a, b và c khoản này theo đề nghị của chủ dự án đầu tư,  cơ sở, chủ đầu tư\nxây dựng và kinh doanh hạ tầng khu sản xuất, kinh doanh, dịch v ụ tập trung, cụm\ncông nghiệp (sau đây gọi chung là chủ dự án đầu tư, cơ sở).\n5. Bộ trưởng Bộ Tài nguyên và Môi trường ban hành mẫu giấy phép môi trường."
+    },
+    {
+      "rank": 6,
+      "document_id": null,
+      "citation": "15/VBHN-VPQH, Điều 42. Căn cứ và thời điểm cấp giấy phép môi trường",
+      "excerpt": "Điều 42. Căn cứ và thời điểm cấp giấy phép môi trường\n1. Căn cứ cấp giấy phép môi trường bao gồm:\na) Hồ sơ đề nghị cấp giấy phép môi trường quy định tại khoản 1 Điều 43 của\nLuật này;\nb) Báo cáo đánh giá tác động môi trường đã được cơ quan nhà nướ c có thẩm\nquyền phê duyệt kết quả thẩm định (nếu có);\nc) Quy hoạch bảo vệ môi trường quốc gia, quy hoạch tỉnh, phân v ùng môi\ntrường, khả năng chịu tải của môi trường theo quyết định của cơ  quan nhà nước có\nthẩm quyền, trừ trường hợp quy định tại điểm e khoản này;\nd) Quy chuẩn kỹ thuật môi trường;\nđ) Các quy định của pháp luật về bảo vệ môi trường, tài nguyên nước và quy\nđịnh khác của pháp luật có liên quan;\ne) Tại thời điểm cấp giấy phép môi trường, trường hợp Quy hoạch  bảo vệ môi\ntrường quốc gia, quy hoạch tỉnh, phân vùng môi trường, khả năng  chịu tải của môi\ntrường chưa được cơ quan nhà nư ớc có thẩm quyền ban hành thì vi ệc cấp giấy\nphép môi trường được thực hiện căn cứ vào các điểm a, b, d và đ khoản này.\n74 CÔNG BÁO/Số 527 + 528/Ngày 18-3-2025\n2. Thời điểm cấp giấy phép môi trường được quy định như sau:\na) Dự án đầu tư thuộc đối tượng phải thực hiện đánh giá tác độn g môi trường\nphải có giấy phép môi trường trước khi vận hành thử nghiệm công  trình xử lý chất\nthải, trừ trường hợp quy định tại điểm c khoản này;\nb) Dự án đầu tư không thuộc đối tượng phải thực hiện đánh giá t ác động môi\ntrường phải có giấy phép môi trường trước khi được cơ quan nhà nước có thẩm\nquyền ban hành văn bản quy định tại các điểm a, b, c, d và g kh oản 1 Điều 36 của\nLuật này. Trường hợp dự án đầu tư  xây dựng không thuộc đối tượng được cơ quan\nchuyên môn về xây dựng thẩm định báo cáo nghiên cứu khả thi the o quy định của\npháp luật về xây dựng thì phải có giấy phép môi trường trước kh i được cơ quan\nnhà nước có thẩm quyền cấp, điều chỉnh giấy phép xây dựng;\nc) Đối với dự án đầu tư quy định tại khoản 2 Điều 39 của Luật n ày đang vận\nhành thử nghiệm công trình xử lý chất thải theo  quy định của ph áp luật trước\nngày Luật này có hiệu lực thi hàn h, chủ dự án đầu tư được lựa c họn tiếp tục vận\nhành thử nghiệm để được cấp giấy phép môi trường sau khi kết th úc vận hành\nthử nghiệm công trình xử lý chất thải hoặc lập hồ sơ để được cấ p giấy phép môi\ntrường trước khi hết thời hạn vậ n hành thử nghiệm. Chủ dự án đầ u tư không\nphải vận hành thử nghiệm lại công  trình xử lý chất thải nhưng k ết quả hoàn\nthành việc vận hành thử nghiệm p hải được báo cáo, đánh giá theo  quy định tại\nĐiều 46 của Luật này;\nd) Cơ sở sản xuất, kinh doanh, dịch vụ, khu sản xuất, kinh doan h, dịch vụ tập\ntrung, cụm công nghiệp quy định tại khoản 2 Điều 39 của Luật nà y đã đi vào vận\nhành chính thức trước ngày Luật n ày có hiệu lực thi hành phải c ó giấy phép môi\ntrường trong thời hạn 36 tháng kể từ ngày Luật này có hiệu lực thi hành, trừ trường\nhợp đã được cơ quan có thẩm quyền cấp giấy xác nhận hoàn thành công trình bảo\nvệ môi trường, giấy chứng nhận đạt tiêu chuẩn môi trường, giấy xác nhận đủ điều\nkiện về bảo vệ môi trường trong nhập khẩu phế liệu từ nước ngoài làm nguyên liệu\nsản xuất, giấy phép xử lý chất thải nguy hại, giấy phép xả nước  thải vào nguồn\nnước, giấy phép xả nước thải vào công trình thủy lợi (sau đây g ọi chung là giấy\nphép môi trường thành phần). Giấ y phép môi trường thành phần đư ợc tiếp tục sử\ndụng như giấy phép môi trường đến hết thời hạn của giấy phép mô i trường thành\nphần hoặc được tiếp tục sử dụng trong thời hạn 05 năm kể từ ngà y Luật này có\nhiệu lực thi hành trong trường h ợp giấy phép môi trường thành p hần không xác\nđịnh thời hạn.\nCÔNG BÁO/Số 527 + 528/Ngày 18-3-2025 75\n3. Trường hợp dự án đầu tư hoặc cơ sở sản xuất, kinh doanh, dịc h vụ, khu sản\nxuất, kinh doanh, dịch vụ tập trung, cụm công nghiệp được thực hiện theo nhiều\ngiai đoạn, có nhiều công trình, hạng mục công trình thì giấy ph ép môi trường có\nthể cấp cho từng giai đoạn, công trình, hạng mục công trình có phát sinh chất thải.\nGiấy phép môi trường được cấp sau sẽ tích hợp nội dung giấy phé p môi trường\nđược cấp trước vẫn còn hiệu lực.\n4. Giấy phép m"
+    },
+    {
+      "rank": 7,
+      "document_id": null,
+      "citation": "08/2022/NĐ-CP, Điều 30. Cấp đổi, điều chỉnh, cấp lại, thu hồi giấy phép môi trường",
+      "excerpt": "Điều 30. Cấp đổi, điều chỉnh, cấp lại, thu hồi giấy phép môi trường\n1. Cấp đổi giấy phép môi tr ường theo quy định tại khoản 1 Điều 44 Lu ật Bảo\nvệ môi tr ường được thực hiện trong th ời hạn 10 ngày, k ể từ ngày nh ận được văn\nbản đề nghị cấp đổi của chủ dự án đầu tư, cơ sở, kèm theo h ồ sơ pháp lý có liên\nquan đến việc thay đổi. Cơ quan c ấp giấy phép môi tr ường cấp đổi giấy phép môi\ntrường cho chủ dự án đầu tư, cơ sở với thời hạn còn lại của giấy phép.\nViệc c ấp đổi gi ấy phép môi tr ường được th ực hi ện trên môi tr ường điện t ử\nthông qua h ệ thống dịch vụ công tr ực tuyến mức độ 4 c ủa cơ quan c ấp phép ho ặc\ncơ quan được ủy quyền và không phải nộp phí thẩm định theo quy định.\n52 CÔNG BÁO/Số 169 + 170/Ngày 30-01-2022\n2. Ch ủ d ự án đầu t ư, c ơ s ở ph ải th ực hi ện điều ch ỉnh gi ấy phép môi tr ường\ntrong thời hạn còn l ại của giấy phép khi có thay đổi quy định tại điểm a kho ản 2\nĐiều 44 Luật Bảo vệ môi trường và các thay đổi khác không thuộc trường hợp quy\nđịnh t ại điểm b kho ản 3 và kho ản 4 Điều này, tr ừ tr ường h ợp thay đổi gi ảm n ội\ndung cấp phép môi tr ường hoặc thay đổi khối lượng, loại chất thải nguy h ại phát\nsinh. Trường hợp thay đổi giảm nội dung cấp phép môi tr ường, việc thay đổi giấy\nphép môi tr ường được th ực hi ện khi có đề ngh ị c ủa ch ủ d ự án đầu t ư, c ơ s ở.\nTrường hợp thay đổi khối lượng, loại chất thải nguy hại phát sinh, chủ dự án, cơ sở\ncó trách nhi ệm báo cáo vi ệc thay đổi trong báo cáo công tác b ảo v ệ môi tr ường\nđịnh kỳ của dự án, cơ sở.\nViệc điều chỉnh giấy phép môi tr ường được thực hiện trong th ời hạn 15 ngày,\nkể từ ngày nhận được văn bản đề nghị điều chỉnh giấy phép môi trường của chủ dự\nán đầu tư, cơ sở và được thực hiện trên môi trường điện tử thông qua hệ thống dịch\nvụ công tr ực tuyến mức độ 4 c ủa cơ quan c ấp phép ho ặc cơ quan được ủy quyền\ncấp giấy phép môi trường theo quy định.\n3. Việc xem xét, điều chỉnh giấy phép môi trường quy định tại điểm b khoản 2\nĐiều 44 và khoản 4 Điều 46 Luật Bảo vệ môi trường được thực hiện trong thời hạn\n25 ngày, k ể từ ngày nh ận được báo cáo k ết quả vận hành th ử nghiệm của chủ dự\nán đầu tư, cơ sở. Cơ quan cấp giấy phép môi tr ường, căn cứ báo cáo k ết quả kiểm\ntra của đoàn kiểm tra vi ệc vận hành th ử nghiệm công trình x ử lý ch ất thải của dự\nán đầu tư, cơ sở sản xuất, kinh doanh, d ịch vụ; kết quả đo đạc, phân tích m ẫu chất\nthải đối chứng, mẫu quan tr ắc chất thải bổ sung (n ếu có) và báo cáo k ết quả vận\nhành th ử nghi ệm c ủa ch ủ d ự án đầu t ư, c ơ s ở để th ực hi ện vi ệc điều ch ỉnh gi ấy\nphép môi trường như sau:\na) Lấy ý kiến cơ quan chuyên môn về bảo vệ môi trường cấp tỉnh, Ban quản lý\ncác khu công nghi ệp c ủa t ỉnh (n ếu d ự án đầu t ư n ằm trong khu s ản xu ất, kinh\ndoanh, d ịch v ụ t ập trung); ý ki ến m ột s ố chuyên gia môi tr ường, trong đó có\nchuyên gia đã tham gia h ội đồng th ẩm định, đoàn ki ểm tra c ấp gi ấy phép môi\ntrường về các n ội dung điều chỉnh của dự án đầu tư, cơ sở sản xuất, kinh doanh,\ndịch vụ;\nb) Thông báo với chủ dự án đầu tư, cơ sở về các nội dung điều chỉnh loại, khối\nlượng chất thải nguy hại được phép x ử lý chất thải hoặc khối lượng phế liệu được\nphép nhập khẩu làm nguyên li ệu sản xuất để phù hợp với năng lực hoạt động thực\ntế của dự án đầu tư, cơ sở sản xuất, kinh doanh, dịch vụ;\nCÔNG BÁO/Số 169 + 170/Ngày 30-01-2022 53\nChủ dự án đầu tư, cơ sở có v ăn bản giải trình, b ổ sung v ề các n ội dung điều\nchỉnh quy định tại điểm này gửi cơ quan cấp giấy phép môi trường (nếu có);\nc) Cơ quan c ấp giấy phép môi tr ường cấp giấy phép môi tr ường (điều chỉnh)\ncho chủ dự án đầu tư, cơ sở với thời hạn còn lại của giấy phép để phù hợp với năng\nlực hoạt động thực tế của dự án đầu tư, cơ sở sản xuất, kinh doanh, dịch vụ.\n4. Đối tượng cấp lại giấy phép môi trường và thời điểm chủ dự án đầu tư, cơ sở\ngửi hồ sơ đề nghị cấp lại giấy phép môi trường được quy định như sau:\na) Đối tượng quy định tại điểm a khoản 3 Điều 44 Luật Bảo vệ môi trường gửi\nhồ sơ đề nghị cấp lại giấy phép môi trường trước khi hết hạn 06 tháng;\nb"
+    },
+    {
+      "rank": 8,
+      "document_id": null,
+      "citation": "15/VBHN-VPQH, Điều 45. Phí thẩm định cấp giấy phép môi trường",
+      "excerpt": "Điều 45. Phí thẩm định cấp giấy phép môi trường\n1. Chủ dự án đầu tư, cơ sở có trách nhiệm nộp phí thẩm định cấp , cấp lại, điều\nchỉnh giấy phép môi trường.\n2. Bộ trưởng Bộ Tài chính quy định chế độ thu, nộp, quản lý và sử dụng phí\nthẩm định cấp, cấp lại, điều chỉnh giấy phép môi trường thuộc t hẩm quyền cấp\ngiấy phép môi trường của cơ quan nhà nước ở trung ương.\n3. Hội đồng nhân dân cấp tỉnh quy định chế độ thu, nộp, quản lý  và sử dụng\nphí thẩm định cấp, cấp lại, điều chỉnh giấy phép môi trường thu ộc thẩm quyền cấp\ngiấy phép môi trường của Ủy ban nhân dân cấp tỉnh và Ủy ban nhân dân cấp huyện\ntheo quy định của pháp luật."
+    },
+    {
+      "rank": 9,
+      "document_id": null,
+      "citation": "15/VBHN-VPQH, Điều 39. Đối tượng phải có giấy phép môi trường",
+      "excerpt": "Điều 39. Đối tượng phải có giấy phép môi trường\n1. Dự án đầu tư nhóm I, nhóm II và nhóm III có phát sinh nước t hải, bụi, khí\nthải xả ra môi trường phải được xử lý hoặc phát sinh chất thải nguy hại phải được\nquản lý theo quy định về quản lý chất thải khi đi vào vận hành chính thức.\n2. Dự án đầu tư, cơ sở, khu sản xuất, kinh doanh, dịch vụ tập t rung, cụm công\nnghiệp hoạt động trước ngày Luật này có hiệu lực thi hành có ti ê u  c h í  v ề  m ô i\ntrường như đối tượng quy định tại khoản 1 Điều này.\nCÔNG BÁO/Số 527 + 528/Ngày 18-3-2025 71\n3.3 Đối tượng quy định tại khoản 1 Điều này được miễn giấy phép mô i trường\nkhi thuộc trường hợp sau đây:\na) Dự án đầu tư công khẩn cấp theo quy định của pháp luật về đầu tư công;\nb) Dự án đầu tư hoặc phương án khai thác khoáng sản nhóm IV the o quy định\ncủa pháp luật về địa chất, khoáng sản của tổ chức được cơ quan quản lý nhà nước\ncó thẩm quyền chấp thuận, lựa c họn là nhà thầu thi công để phục  vụ các dự án\nquan trọng quốc gia, dự án đầu tư công khẩn cấp, công trình, hạ ng mục công trình\nthuộc chương trình mục tiêu quốc  gia theo quy định của pháp luậ t về đầu tư công,\nthực hiện các biện pháp huy động khẩn cấp để kịp thời ứng phó v ới tình huống\nkhẩn cấp về thiên tai, thi công các công trình phòng, chống thi ên tai theo quy định\ncủa pháp luật về phòng, chống thiên tai."
+    },
+    {
+      "rank": 10,
+      "document_id": null,
+      "citation": "15/VBHN-VPQH, Điều 44. Cấp đổi, điều chỉnh, cấp lại, tước quyền sử dụng, thu hồi giấy phép",
+      "excerpt": "Điều 44. Cấp đổi, điều chỉnh, cấp lại, tước quyền sử dụng, thu hồi giấy phép\nmôi trường\n1. Giấy phép môi trường được cấp đổi trong trường hợp quy định tại khoản 5\nĐiều 42 của Luật này nhưng không thay đổi các nội dung khác quy  định trong\ngiấy phép.\n2. Giấy phép môi trường được xem xét điều chỉnh trong thời hạn của giấy phép\nkhi thuộc một trong các trường hợp sau đây:\na) Thay đổi nội dung cấp phép quy định tại khoản 2 Điều 40 của Luật này theo\nđề nghị của chủ dự án đầu tư, cơ sở hoặc theo quy định của pháp  luật, trừ trường\nhợp quy định tại điểm b khoản 3 Điều này;\nb) Dự án đầu tư, cơ sở có thực hiện dịch vụ xử lý chất thải ngu y hại hoặc nhập\nkhẩu phế liệu từ nước ngoài làm nguyên liệu sản xuất sau khi kế t thúc quá trình\nvận hành thử nghiệm để phù hợp với năng lực hoạt động thực tế.\n3. Giấy phép môi trường được cấp lại trong các trường hợp sau đây:\na) Giấy phép hết hạn;\nb) Dự án đầu tư, cơ sở, khu sản xuất, kinh doanh, dịch vụ tập t rung, cụm công\nnghiệp có một trong các thay đổi về tăng quy mô, công suất, côn g nghệ sản xuất\nhoặc thay đổi khác làm tăng tác động xấu đến môi trường so với giấy phép môi\ntrường đã được cấp, trừ trường hợp dự án đầu tư thay đổi thuộc đối tượng phải\nthực hiện đánh giá tác động môi trường.\n4. Tước quyền sử dụng giấy phép môi trường khi chủ dự án đầu tư , cơ sở thực\nhiện hành vi vi phạm hành chính trong lĩnh vực bảo vệ môi trườn g đến mức phải\ntước quyền sử dụng giấy phép mô i trường theo quy định của pháp luật về xử lý vi\nphạm hành chính.\n78 CÔNG BÁO/Số 527 + 528/Ngày 18-3-2025\n5. Giấy phép môi trường bị thu hồi trong các trường hợp sau đây:\na) Giấy phép cấp không đúng thẩm quyền;\nb) Giấy phép có nội dung trái quy định của pháp luật.\n6. Chính phủ quy định chi tiết Điều này."
+    }
+  ],
+  "displayed_evidence_count": 10
+}

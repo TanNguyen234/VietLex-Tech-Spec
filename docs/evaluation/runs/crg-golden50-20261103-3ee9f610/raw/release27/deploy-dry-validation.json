@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "uploaded_entries": 237,
+  "uploaded_regular_files": 237,
+  "uploaded_bytes": 12325673,
+  "directory_entries": [],
+  "file_hash_mismatches": [],
+  "sensitive_paths": [],
+  "unexpected_regular_files": [],
+  "omitted_offline_qa_files": [
+    "app/data/namsyntax_legal_qa_420.json",
+    "app/data/namsyntax_legal_qa_420_curated_v1.json"
+  ],
+  "source_manifest_sha256": "0d15ac1dcfc7436fb1cdbb06e74f5c9a074e3e9bc885e753f23f9a7a5ea9dc33"
+}

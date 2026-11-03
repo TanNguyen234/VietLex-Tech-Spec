@@ -1,0 +1,26 @@
+{
+  "evidence": "live",
+  "ADMIN_login_count": 1,
+  "USER_login_count": 1,
+  "model_calls_for_roles": 0,
+  "checks": [
+    {
+      "role": "ADMIN",
+      "admin_http": 200,
+      "session_http": 200,
+      "export_http": 200,
+      "assistant_count": 2,
+      "login_reused": true
+    },
+    {
+      "role": "USER",
+      "admin_http": 403,
+      "session_http": 200,
+      "export_http": 404,
+      "assistant_count": 0,
+      "owner_answer_leaked": false,
+      "trace_marker_present": false,
+      "passed": true
+    }
+  ]
+}

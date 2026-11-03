@@ -1,0 +1,27 @@
+{
+  "case_id": "case_013",
+  "metrics": {
+    "faithfulness": {
+      "status": "skipped",
+      "reason": "no_prompt_contexts",
+      "value": null
+    },
+    "answer_accuracy": {
+      "status": "ok",
+      "value": 0.0,
+      "seconds": 2.047
+    },
+    "context_precision": {
+      "status": "skipped",
+      "reason": "no_prompt_contexts",
+      "value": null
+    },
+    "context_recall": {
+      "status": "skipped",
+      "reason": "no_prompt_contexts",
+      "value": null
+    }
+  },
+  "evidence": "live_judge",
+  "answer_sha256": "b26f57ea6bbf0c816a02672ff3cddfe7ed4554e805d291585960f4bf06ed1f38"
+}

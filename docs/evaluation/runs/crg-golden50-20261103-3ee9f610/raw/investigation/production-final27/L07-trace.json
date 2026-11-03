@@ -1,0 +1,343 @@
+{
+  "status": "available",
+  "query": "Kiểm thử khả năng không bịa nguồn: hãy kiểm tra có Điều 9999 Bộ luật Lao động quy định doanh nghiệp luôn được trả 0% lương thử việc hay không. Không có chứng cứ thì nói không xác minh được điều khoản đó và không suy đoán số hiệu văn bản.",
+  "rewritten_query": "Kiểm thử khả năng không bịa nguồn: hãy kiểm tra có Điều 9999 Bộ luật Lao động quy định doanh nghiệp luôn được trả 0% lương thử việc hay không. Không có chứng cứ thì nói không xác minh được điều khoản đó và không suy đoán số hiệu văn bản.",
+  "runtime_mode": "vertex-qdrant-v3",
+  "backend": "vertex-qdrant-v3",
+  "collection": "vietlex-legal-rag-v3-vertex-1024",
+  "ranking": "rrf-dbsf",
+  "candidate_counts": {
+    "pinecone_hits": 0,
+    "fts_hits": 0,
+    "merged_document_candidates": 0,
+    "resolved_document_candidates": 0,
+    "structural_chunks_generated": 24,
+    "locally_selected_chunks": 0,
+    "reranker_input_chunks": 24,
+    "reranker_output_chunks": 3,
+    "retrieval_selected_chunks": 3,
+    "final_evidence_chunks": 3
+  },
+  "final_evidence_count": 3,
+  "prompt_context_count": 3,
+  "count_semantics": "prompt-contexts-v1",
+  "context_stages": [
+    {
+      "stage": "retrieval_selected",
+      "count": 3,
+      "sha256": [
+        "0e6536a24bbf61da5fd9c24bec7d8ece8ae397f8d6e2544808a5e54fbe12bf4b",
+        "66f606730903d4428d03352b5ecff517111facdc3178f9c5aebcf4590cdba170",
+        "cf110b75ed3ce2fef76320bd5609a2cb16d448538c4f6807c7ea8d0c1c5152fb"
+      ]
+    },
+    {
+      "stage": "expanded",
+      "count": 3,
+      "sha256": [
+        "0e6536a24bbf61da5fd9c24bec7d8ece8ae397f8d6e2544808a5e54fbe12bf4b",
+        "66f606730903d4428d03352b5ecff517111facdc3178f9c5aebcf4590cdba170",
+        "cf110b75ed3ce2fef76320bd5609a2cb16d448538c4f6807c7ea8d0c1c5152fb"
+      ]
+    },
+    {
+      "stage": "quality_filtered",
+      "count": 3,
+      "sha256": [
+        "0e6536a24bbf61da5fd9c24bec7d8ece8ae397f8d6e2544808a5e54fbe12bf4b",
+        "66f606730903d4428d03352b5ecff517111facdc3178f9c5aebcf4590cdba170",
+        "cf110b75ed3ce2fef76320bd5609a2cb16d448538c4f6807c7ea8d0c1c5152fb"
+      ]
+    },
+    {
+      "stage": "situation_filtered",
+      "count": 3,
+      "sha256": [
+        "0e6536a24bbf61da5fd9c24bec7d8ece8ae397f8d6e2544808a5e54fbe12bf4b",
+        "66f606730903d4428d03352b5ecff517111facdc3178f9c5aebcf4590cdba170",
+        "cf110b75ed3ce2fef76320bd5609a2cb16d448538c4f6807c7ea8d0c1c5152fb"
+      ]
+    },
+    {
+      "stage": "primary_rescue",
+      "count": 3,
+      "sha256": [
+        "0e6536a24bbf61da5fd9c24bec7d8ece8ae397f8d6e2544808a5e54fbe12bf4b",
+        "66f606730903d4428d03352b5ecff517111facdc3178f9c5aebcf4590cdba170",
+        "cf110b75ed3ce2fef76320bd5609a2cb16d448538c4f6807c7ea8d0c1c5152fb"
+      ]
+    },
+    {
+      "stage": "official_supplement",
+      "count": 3,
+      "sha256": [
+        "0e6536a24bbf61da5fd9c24bec7d8ece8ae397f8d6e2544808a5e54fbe12bf4b",
+        "66f606730903d4428d03352b5ecff517111facdc3178f9c5aebcf4590cdba170",
+        "cf110b75ed3ce2fef76320bd5609a2cb16d448538c4f6807c7ea8d0c1c5152fb"
+      ]
+    },
+    {
+      "stage": "prompt",
+      "count": 3,
+      "sha256": [
+        "0e6536a24bbf61da5fd9c24bec7d8ece8ae397f8d6e2544808a5e54fbe12bf4b",
+        "66f606730903d4428d03352b5ecff517111facdc3178f9c5aebcf4590cdba170",
+        "cf110b75ed3ce2fef76320bd5609a2cb16d448538c4f6807c7ea8d0c1c5152fb"
+      ]
+    }
+  ],
+  "context_budget_tokens": 8000,
+  "official_search": {
+    "status": "no_readable_source",
+    "search_queries": 5,
+    "queries_completed": 5,
+    "provider_attempts": 15,
+    "urls_discovered": 56,
+    "urls_attempted": 8,
+    "sources_read": 0,
+    "sources_downloaded": 2,
+    "read_failures": 8,
+    "phase_seconds": {
+      "discovery": 15.002,
+      "read": 22.114,
+      "pack": 0.0
+    },
+    "budget_unit": "approx_whitespace_tokens",
+    "context_tokens": 0,
+    "evidence_blocks": 0,
+    "legal_effect_status": "unverified",
+    "effect_as_of": "2026-11-03",
+    "effect_reason": "amendment_chain_not_verified",
+    "errors": [
+      {
+        "phase": "discovery",
+        "provider": "VbplClient",
+        "kind": "vbpl_http_403"
+      },
+      {
+        "phase": "discovery",
+        "provider": "VbplClient",
+        "kind": "vbpl_http_403"
+      },
+      {
+        "phase": "discovery",
+        "provider": "VbplClient",
+        "kind": "vbpl_http_403"
+      },
+      {
+        "phase": "discovery",
+        "provider": "VbplClient",
+        "kind": "vbpl_http_403"
+      },
+      {
+        "phase": "discovery",
+        "provider": "VbplClient",
+        "kind": "vbpl_http_403"
+      },
+      {
+        "phase": "discovery",
+        "kind": "deadline"
+      },
+      {
+        "phase": "extraction",
+        "kind": "source_requested_article_not_found"
+      },
+      {
+        "phase": "extraction",
+        "kind": "source_requested_article_not_found"
+      },
+      {
+        "phase": "extraction",
+        "kind": "source_metadata_only"
+      },
+      {
+        "phase": "extraction",
+        "kind": "source_requested_article_not_found"
+      },
+      {
+        "phase": "extraction",
+        "kind": "source_requested_article_not_found"
+      },
+      {
+        "phase": "extraction",
+        "kind": "source_metadata_only"
+      },
+      {
+        "phase": "extraction",
+        "kind": "source_requested_article_not_found"
+      },
+      {
+        "phase": "extraction",
+        "kind": "source_requested_article_not_found"
+      }
+    ],
+    "source_reads": [
+      {
+        "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=9203",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "document_sha256": "b1c6e3d0fe00fffd872b22ab0f5a69ceeffce16f62a239dcf9be7eec10af48c3",
+        "inspected_pages": [],
+        "retained_pages": [],
+        "partial_read": false
+      },
+      {
+        "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=219939",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "document_sha256": "e46a44a8911981a5113c26ed6141d637646e0c8bee560ae30566d98fa1b89b62",
+        "inspected_pages": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "retained_pages": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "partial_read": true
+      }
+    ],
+    "discovered_urls": [
+      "https://congbao.chinhphu.vn/van-ban/luat-so-10-2012-qh13-2771.htm",
+      "https://congbao.chinhphu.vn/van-ban/luat-so-131-2025-qh15-468691.htm",
+      "https://congbao.chinhphu.vn/van-ban/luat-so-136-2025-qh15-468696.htm",
+      "https://congbao.chinhphu.vn/van-ban/luat-so-140-2025-qh15-468700.htm",
+      "https://congbao.chinhphu.vn/van-ban/luat-so-146-2025-qh15-468706.htm",
+      "https://congbao.chinhphu.vn/van-ban/luat-so-85-2025-qh15-45520.htm",
+      "https://congbao.chinhphu.vn/van-ban/luat-so-97-2025-qh15-45535.htm",
+      "https://congbao.chinhphu.vn/van-ban/luat-so-99-2025-qh15-45530.htm",
+      "https://congbao.chinhphu.vn/van-ban/nghi-dinh-so-50-2013-nd-cp-4122.htm",
+      "https://congbao.chinhphu.vn/van-ban/nghi-dinh-so-95-2013-nd-cp-610.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-02-2025-tt-bgtvt-43936.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-04-2018-tt-byt-26096.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-09-2025-tt-bgtvt-44290.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-124-2015-tt-bqp-18043.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-15-2016-tt-bldtbxh-22238.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-17-2015-tt-bldtbxh-11847.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-19-2013-tt-bldtbxh-4126.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-19-2014-tt-bldtbxh-12575.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-23-2011-tt-bldtbxh-816.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-25-2022-tt-bldtbxh-38771.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-27-2015-tt-bldtbxh-15946.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-29-2012-tt-bldtbxh-825.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-30-2017-tt-bct-25533.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-33-2013-tt-bldtbxh-1004.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-34-2019-tt-bldtbxh-30487.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-36-2012-tt-bldtbxh-1911.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-38-2016-tt-bldtbxh-22272.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-45-2016-tt-bldtbxh-22273.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-54-2016-tt-bldtbxh-23923.htm",
+      "https://congbao.chinhphu.vn/van-ban/van-ban-hop-nhat-so-01-vbhn-bgtvt-26945.htm",
+      "https://congbao.chinhphu.vn/van-ban/van-ban-hop-nhat-so-125-vbhn-vpqh-46084.htm",
+      "https://congbao.chinhphu.vn/van-ban/van-ban-hop-nhat-so-1308-vbhn-bldtbxh-28839.htm",
+      "https://congbao.chinhphu.vn/van-ban/van-ban-hop-nhat-so-2651-vbhn-bldtbxh-42111.htm",
+      "https://congbao.chinhphu.vn/van-ban/van-ban-hop-nhat-so-50-vbhn-vpqh-44640.htm",
+      "https://congbao.chinhphu.vn/van-ban/van-ban-hop-nhat-so-52-vbhn-vpqh-28604.htm",
+      "https://congbao.chinhphu.vn/van-ban/van-ban-hop-nhat-so-5213-vbhn-bldtbxh-27972.htm",
+      "https://congbao.chinhphu.vn/van-ban/van-ban-so-3922-vbhn-bldtbxh-33804.htm",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=1172",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=14187",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=194764",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=195111",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=195224",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=196496",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=198540",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=201967",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=215248",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=217002",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=219842",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=219939",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=220029",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=220040",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=220092",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=220148",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=220150",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=220166",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=9203"
+    ],
+    "topic_coverage": {
+      "covered": [],
+      "missing": [
+        "lương",
+        "thử việc"
+      ],
+      "status": "known"
+    },
+    "excluded_blocks": [
+      {
+        "source": 0,
+        "reason": "metadata_only"
+      },
+      {
+        "source": 1,
+        "reason": "metadata_only"
+      }
+    ]
+  },
+  "request_status": "ok",
+  "cached": false,
+  "observed_provider": "google_vertex_ai",
+  "observed_model": "gemini-3.5-flash",
+  "guardrail_state": {
+    "mode": "enforce",
+    "requested": true,
+    "executed": true,
+    "status": "passed",
+    "stages": {
+      "input": {
+        "status": "passed",
+        "safe": true,
+        "error": null
+      },
+      "output": {
+        "status": "passed",
+        "safe": true,
+        "error": null
+      }
+    },
+    "input_safe": true,
+    "output_safe": true
+  },
+  "latency": {
+    "t_total": 45.8314,
+    "t_cache": 0.0025,
+    "t_guardrails_input": 0.5959,
+    "t_guardrails_output": 0.7406,
+    "t_rewrite": 0.0,
+    "t_retrieval": 1.712,
+    "t_evidence_fallback": 40.832,
+    "vertex_qdrant": 0.7788852269999893,
+    "t_llm": 1.738
+  },
+  "evidence": [
+    {
+      "rank": 1,
+      "document_id": null,
+      "citation": "45/2019/QH14, Điều 90, Khoản 2",
+      "excerpt": "Điều 90. Tiền lương 2. Mức lương theo công việc hoặc chức danh không được thấp hơn mức lương tối thiểu."
+    },
+    {
+      "rank": 2,
+      "document_id": null,
+      "citation": "01-LĐ-TT",
+      "excerpt": "năng suất lao động giảm giá thành, quản lý tốt các xí nghiệp. Muốn được như vậy trong việc sắp xếp phải lãnh đạo chặt chẽ, để cho mọi người được dùng đúng tài năng và thù lao đúng khả năng sản xuất. Nếu có người không dùng đúng chỗ thì phải điều chỉnh cho thích hợp. Không nên cố giữ lại mà trả lương thấp. Nói căn cứ thực tế mà trả lương là trước tiên nói đến việc dùng người, dùng nghề và đúng khả năng. Phải chú trọng lãnh đạo sắp xếp cho đúng, tránh suy bì rất có hại cho sản xuất, hoặc làm cho chán nản công tác. Kết quả việc sắp xếp và trả lương mới này là làm cho mọi người vui lòng phấn khởi sản xuất. Nhưng đồng thời cũng chú ý tránh bừa bãi mà nhất loạt xếp lên cao quá khả năng thực tế. Sau đây là những điểm chính về nhiệm vụ và kế hoạch thực hiện. Các ngành, các cấp sẽ dựa vào đó và căn cứ vào tình hình cụ thể của ngành mình, của địa phương mình mà vạch kế hoạch cụ thể thi hành. 1. – Lãnh đạo tư tưởng: Phải tuyên truyền giải thích, phổ biến rộng rãi, tổ chức học tập mục đích, ý nghĩa, nguyên tắc và nội dung của chế độ lương mới cho cán bộ và công nhân, nhân viên để quyết tâm và tin tưởng chấp hành. Cần quan niệm rõ, nếu làm được tốt, thì mỗi lần điều chỉnh lương bổng là một dịp giáo dục, nâng cao lập trường tư tưởng, khuyến khích nâng cao trình độ nghề nghiệp cho cán bộ và công nhân, nhân viên, do đó mà càng kích thích công cuộc thi đua phát triển sản xuất. Việc lãnh đạo tư tưởng phải chặt chẽ, kịp thời. Cần đề phòng những tư tưởng"
+    },
+    {
+      "rank": 3,
+      "document_id": null,
+      "citation": "10-LĐ-TT",
+      "excerpt": "định các mức tiền công bằng các mức lương của các thang lương hiện hành cùng ngành nghề và hướng dẫn áp dụng theo đúng tiêu chuẩn cấp bậc kỹ thuật đã ban hành. Ví dụ: Làm nề mộc ở công trường xây dựng cơ bản theo thang lương công nhân xây dựng cơ bản; làm việc ở xí nghiệp loại nào theo thang lương công nhân xí nghiệp loại đó. Các loại công nhân nói trên phải qua một thời gian thử nghề tùy theo yêu cầu của mỗi nghề và do Ủy ban hành chính địa phương quyết định, nhưng nhiều nhất không quá 30 ngày. Trong thời gian thử nghề, đương sự được hưởng mức lương tạm thời bằng 85% lương cấp bậc của công việc làm thử. Hết thời gian làm thử được trả đủ 100% tiền lương cấp bậc được sắp xếp và được tính lại tiền lương kể từ ngày đầu mới vào làm việc (được truy lĩnh hoặc truy hoàn số tiền lương tạm hưởng của thời kỳ làm thử). Riêng công nhân thuộc các đội, tổ thợ là lực lượng thường trực do Ủy ban hành chính hoặc cơ quan lao động quản lý thì không cần phải qua thời gian thử nghề, việc trả lương sẽ theo giấy giới thiệu của Ủy ban hành chính hoặc của cơ quan lao động địa phương. 3. Ngoài các mức tiền công của lao động phổ thông và của thợ thủ công có nghề nghiệp chuyên môn nói trên, nếu địa phương nào do đặc điểm riêng đối với một số thợ hoặc một số vùng quá khan hiếm nhân công, muốn có mức tiền công cao hơn nữa thì phải báo cáo bộ Lao động và phải có sự đồng ý của Bộ mới được thi hành. 4. Đối với thợ thủ công là xã viên hợp tác xã thủ công nghiệp: Nhà"
+    }
+  ],
+  "displayed_evidence_count": 3
+}

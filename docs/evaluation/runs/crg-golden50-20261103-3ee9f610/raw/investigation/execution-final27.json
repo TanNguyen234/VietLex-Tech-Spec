@@ -1,0 +1,111 @@
+[
+  {
+    "step": "local-NeMo",
+    "command": [
+      "D:\\Download\\ProfessionalLegalRAG\\.venv\\Scripts\\python.exe",
+      "-X",
+      "utf8",
+      "D:\\Download\\ProfessionalLegalRAG\\.tmp-finish-real-20261030\\crg-golden50-af33f34f\\local_guard_timeout20.py"
+    ],
+    "exit_code": 0
+  },
+  {
+    "step": "promote",
+    "command": [
+      "D:\\Download\\ProfessionalLegalRAG\\.venv\\Scripts\\python.exe",
+      "-X",
+      "utf8",
+      "D:\\Download\\ProfessionalLegalRAG\\.tmp-finish-real-20261030\\cycle27\\promote_release.py"
+    ],
+    "exit_code": 0
+  },
+  {
+    "step": "primary",
+    "command": [
+      "D:\\Download\\ProfessionalLegalRAG\\.venv\\Scripts\\python.exe",
+      "-X",
+      "utf8",
+      "D:\\Download\\ProfessionalLegalRAG\\.tmp-finish-real-20261030\\acceptance-followup-20261102\\verify_primary.py",
+      "D:\\Download\\ProfessionalLegalRAG\\.tmp-finish-real-20261030\\cycle27",
+      "D:\\Download\\ProfessionalLegalRAG\\.tmp-finish-real-20261030\\crg-golden50-af33f34f\\primary-final27"
+    ],
+    "exit_code": 0
+  },
+  {
+    "step": "production",
+    "command": [
+      "D:\\Download\\ProfessionalLegalRAG\\.venv\\Scripts\\python.exe",
+      "-X",
+      "utf8",
+      "D:\\Download\\ProfessionalLegalRAG\\.tmp-finish-real-20261030\\crg-golden50-af33f34f\\accept_enforced.py",
+      "D:\\Download\\ProfessionalLegalRAG\\.tmp-finish-real-20261030\\crg-golden50-af33f34f\\production-final27",
+      "D:\\Download\\ProfessionalLegalRAG\\.tmp-finish-real-20261030\\cycle27"
+    ],
+    "exit_code": 0
+  },
+  {
+    "step": "roundtrip",
+    "command": [
+      "D:\\Download\\ProfessionalLegalRAG\\.venv\\Scripts\\python.exe",
+      "-X",
+      "utf8",
+      "D:\\Download\\ProfessionalLegalRAG\\.tmp-finish-real-20261030\\crg-golden50-af33f34f\\compare_roundtrip.py",
+      "D:\\Download\\ProfessionalLegalRAG\\.tmp-finish-real-20261030\\crg-golden50-af33f34f\\production-final27"
+    ],
+    "exit_code": 0
+  },
+  {
+    "step": "guard-enforcement",
+    "command": [
+      "D:\\Download\\ProfessionalLegalRAG\\.venv\\Scripts\\python.exe",
+      "-X",
+      "utf8",
+      "D:\\Download\\ProfessionalLegalRAG\\.tmp-finish-real-20261030\\crg-golden50-af33f34f\\verify_enforcement.py",
+      "D:\\Download\\ProfessionalLegalRAG\\.tmp-finish-real-20261030\\crg-golden50-af33f34f\\production-final27"
+    ],
+    "exit_code": 0
+  },
+  {
+    "step": "database",
+    "command": [
+      "D:\\Download\\ProfessionalLegalRAG\\.venv\\Scripts\\python.exe",
+      "-X",
+      "utf8",
+      "D:\\Download\\ProfessionalLegalRAG\\.tmp-finish-real-20261030\\crg-golden50-af33f34f\\production_db_receipts.py",
+      "D:\\Download\\ProfessionalLegalRAG\\.tmp-finish-real-20261030\\crg-golden50-af33f34f\\production-final27"
+    ],
+    "exit_code": 0
+  },
+  {
+    "step": "control-database",
+    "command": [
+      "D:\\Download\\ProfessionalLegalRAG\\.venv\\Scripts\\python.exe",
+      "-X",
+      "utf8",
+      "D:\\Download\\ProfessionalLegalRAG\\.tmp-finish-real-20261030\\crg-golden50-af33f34f\\control_db_receipts.py",
+      "D:\\Download\\ProfessionalLegalRAG\\.tmp-finish-real-20261030\\crg-golden50-af33f34f\\production-final27"
+    ],
+    "exit_code": 0
+  },
+  {
+    "step": "frontend",
+    "command": [
+      "D:\\Download\\ProfessionalLegalRAG\\.venv\\Scripts\\python.exe",
+      "-X",
+      "utf8",
+      "D:\\Download\\ProfessionalLegalRAG\\.tmp-finish-real-20261030\\crg-golden50-af33f34f\\verify_frontend.py",
+      "D:\\Download\\ProfessionalLegalRAG\\.tmp-finish-real-20261030\\crg-golden50-af33f34f\\frontend-final27"
+    ],
+    "exit_code": 0
+  },
+  {
+    "step": "log-scan",
+    "command": [
+      "D:\\Download\\ProfessionalLegalRAG\\.venv\\Scripts\\python.exe",
+      "-X",
+      "utf8",
+      "D:\\Download\\ProfessionalLegalRAG\\.tmp-finish-real-20261030\\crg-golden50-af33f34f\\log_scan_final27.py"
+    ],
+    "exit_code": 0
+  }
+]

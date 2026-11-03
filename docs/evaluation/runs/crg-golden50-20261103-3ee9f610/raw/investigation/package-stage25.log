@@ -1,0 +1,102 @@
+warning: in the working copy of '.codex/config.toml', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.gitignore', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.vercelignore', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/api/account_routes.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/api/dependencies.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/api/legal_routes.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/config.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/database.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/evaluation/answer_metrics.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/evaluation/legal_citations.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/evaluation/online_metrics.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/evaluation/provenance.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/evaluation/reporting.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/evaluation/retrieval_backends.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/evaluation/run_manifest.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/evaluation/schemas.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/ingestion/legal_text.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/research_database.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/services/clients.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/services/direct_llm.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/services/document_scope.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/services/document_worker.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/services/evaluator.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/services/federated_official_search.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/services/http_security.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/services/legal_browser.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/services/legal_effect.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/services/official_document_reader.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/services/provider_runtime.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/services/rag_pipeline.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/services/readiness.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/services/report_deliverables.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/services/research_presenter.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/services/research_report.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/services/retrieval.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/services/reviewer_demo.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/services/semantic_cache.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/services/serverless_guardrails.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/services/trusted_source_reader.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/services/v3_article_expansion.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/services/vertex_ai.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/services/workspace_presenter.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/templates/account_form.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/templates/chat_history_messages.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/templates/chat_message.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/templates/demo_notice.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/templates/product_nav.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/evaluation/PORTFOLIO_EVIDENCE.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'requirements-demo.lock', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'requirements.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'run_answer_eval.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'run_retrieval_eval.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/audit_gold_distribution.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/conftest.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/evaluation/test_decision_package.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/evaluation/test_gold_distribution.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/evaluation/test_provenance.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/evaluation/test_reporting_v3.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/evaluation/test_retrieval_backend_binding.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/evaluation/test_runtime_contracts.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/ingestion/test_legal_text.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/ingestion/test_structural_pilot.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/services/test_admin_observability.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/services/test_federated_official_search.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/services/test_legal_browser.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/services/test_legal_effect.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/services/test_observability.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/services/test_official_document_reader.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/services/test_research_report.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/services/test_reviewer_demo.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/services/test_semantic_cache.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/services/test_trusted_source_reader.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/services/test_v3_article_expansion.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/services/test_vertex_ai.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/test_account_routes.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/test_database.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/test_local_stateless_runtime.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/test_product_quality.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/test_public_templates.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/test_rag_pipeline.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/test_rbac.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/test_readiness.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/test_report_deliverables.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/test_trusted_source_routes.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/test_workspace_routes.py', LF will be replaced by CRLF the next time Git touches it
+{
+  "bundle_directory": "D:\\Download\\ProfessionalLegalRAG\\tmp\\vercel-release-20261030-real-4760ee53",
+  "release_manifest": "D:\\Download\\ProfessionalLegalRAG\\.tmp-finish-real-20261030\\cycle25\\release-bundle-manifest.json",
+  "included_file_count": 239,
+  "included_total_bytes": 13138703,
+  "included_file_list_sha256": "01b6e99d22ac8f3ad383229a78e7b1a30ffb8b53900c6f09201bde1a4f94de31",
+  "verified_source_file_count": 237,
+  "excluded_app_entry_count": 5,
+  "git_head": "7519cd1aea4a3639140b9188de1843ebf0ddb1c0",
+  "git_dirty": true,
+  "git_diff_sha256": "c745230de30e9fd5b3332d54550dd5b00ffd101116b2686d6101d76f826a482c"
+}
+{"bundle": "D:\\Download\\ProfessionalLegalRAG\\tmp\\vercel-release-20261030-real-4760ee53", "manifest": "D:\\Download\\ProfessionalLegalRAG\\.tmp-finish-real-20261030\\cycle25\\release-bundle-manifest.json", "action": "local packaging only; NOT DEPLOYED"}
+{"passed": true, "uploaded_entries": 237, "uploaded_regular_files": 237, "uploaded_bytes": 12323607, "directory_entries": [], "file_hash_mismatches": [], "sensitive_paths": [], "unexpected_regular_files": [], "omitted_offline_qa_files": ["app/data/namsyntax_legal_qa_420.json", "app/data/namsyntax_legal_qa_420_curated_v1.json"], "source_manifest_sha256": "d1a6ed2618bc6fbca8df8dd48a698fb9456acd03a587ef7c8198920bb77de3cc"}
+{"exit_code": 0, "stdout_path": "D:\\Download\\ProfessionalLegalRAG\\.tmp-finish-real-20261030\\cycle25\\deploy.stdout.json"}
+{"passed": true, "deployment_id": "dpl_B76tRoFgWybzu1kAbSi5CsrZ32w4", "checks": {"health": {"http_status": 200, "body_sha256": "e291b70d1b84eee161df2f16e3d2b79b06a95ffc1e19b78913bfb866ecfa2eb5", "body_length": 508}, "ready": {"http_status": 200, "body_sha256": "f3699949c8fd4c961b81c1235b3cb9df349ff3046150d3fbc1ca3a1b8b50d1b0", "body_length": 514}, "home": {"http_status": 200, "body_sha256": "0e0d22f13d23bd496b3499a7119dc4149b446c345ca76a4d33668dbb2d095cbe", "body_length": 6588, "title": "VietLex \u00b7 Kh\u00f4ng gian nghi\u00ean c\u1ee9u ph\u00e1p lu\u1eadt"}, "admin_auth_gate": {"http_status": 401, "body_sha256": "d548d35b2612e7b71e86cf4d3850a7871be8e1d440ee1780ab4f17b6ba22a66b", "body_length": 51}}}
+STAGE_READY_CHECKED

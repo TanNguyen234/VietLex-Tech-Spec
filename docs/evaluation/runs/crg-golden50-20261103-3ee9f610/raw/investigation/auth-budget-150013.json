@@ -1,0 +1,13 @@
+{
+  "evidence": "live readonly daily auth counter aggregate; no index/init/update/reservation/login",
+  "observed_utc": "2026-11-03T15:00:13.791443+00:00",
+  "window": "auth:2026-11-03",
+  "global_used": 12,
+  "global_cap_source": 200,
+  "personal_cap_source": 15,
+  "subject_count_distribution": {
+    "12": 1
+  },
+  "subject_identities_retained": false,
+  "limit": "Distribution does not identify current outbound subject; ordinary HTTP login still governs actual authorization"
+}

@@ -1,0 +1,18 @@
+✔ late chat response cannot replace another session or erase its draft (9.1461ms)
+✔ a draft edited during the current request survives its successful reply (3.9845ms)
+✔ history responses arriving out of order keep the latest requested session (1.704ms)
+✔ duplicate submit while active sends only one request and normal success clears submitted text (1.1672ms)
+✔ submit is held until requested navigation has installed the correct session (1.5612ms)
+✔ rate limit response uses the server wait interval and preserves the draft (2.3732ms)
+✔ backend failure does not announce that the question was processed (0.9457ms)
+✔ admin form carries explicit inclusive bound into reviewed event (3.0718ms)
+✔ empty bound preserves old event shape (0.7036ms)
+✔ workspace replay renders finite expiry in Vietnamese (1.0075ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1158.8899

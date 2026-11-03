@@ -1,0 +1,70 @@
+[
+  {
+    "name": "nd08",
+    "landing_url": "https://vanban.chinhphu.vn/?pageid=27160&docid=205092",
+    "retrieved_utc": "2026-10-30T13:53:26.260458+00:00",
+    "landing_sha256": "72e9dfd5c00f45777a05389d5ef5cad333a0cca53a190c05d0eb25ea849f5649",
+    "attachment_links": [
+      "https://datafiles.chinhphu.vn/cpp/files/vbpq/2022/01/08-nd.signed.pdf",
+      "https://datafiles.chinhphu.vn/cpp/files/vbpq/2022/01/pl-08-nd.pdf"
+    ],
+    "pdf_url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2022/01/08-nd.signed.pdf",
+    "sha256": "28f893ccbba3a8e3b13f15816840140a2bcb6838d2fd6a1c053afc05ac82d35f",
+    "bytes": 12723260,
+    "pages": 215,
+    "chars": 0
+  },
+  {
+    "name": "nd05",
+    "landing_url": "https://vanban.chinhphu.vn/?pageid=27160&docid=212284",
+    "retrieved_utc": "2026-10-30T13:53:41.366669+00:00",
+    "landing_sha256": "a0454e7f329a6320e339f82d2eb075c20ee921f06510d24ce24dccd5c7f263ea",
+    "attachment_links": [
+      "https://datafiles.chinhphu.vn/cpp/files/vbpq/2025/01/05-2nd.signed.pdf"
+    ],
+    "pdf_url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2025/01/05-2nd.signed.pdf",
+    "sha256": "5ea433f7c4d94981c86478d050a28eeab99f36f8e620f367be90df1a8deac916",
+    "bytes": 6412755,
+    "pages": 165,
+    "chars": 0
+  },
+  {
+    "name": "nd136",
+    "landing_url": "https://chinhphu.vn/?pageid=27160&docid=213924",
+    "retrieved_utc": "2026-10-30T13:53:43.305498+00:00",
+    "landing_sha256": "016d5996c83adf501974da044d848d5638d682d11157b073e99cb1e96b141865",
+    "attachment_links": [
+      "https://datafiles.chinhphu.vn/cpp/files/vbpq/2025/6/136-ndcp.signed.pdf"
+    ],
+    "pdf_url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2025/6/136-ndcp.signed.pdf",
+    "sha256": "7ca8df2c4cc404340d9a2ae9745faf81f9f2afd075dc7d818e306d83e26a4b24",
+    "bytes": 3451676,
+    "pages": 78,
+    "chars": 0
+  },
+  {
+    "name": "tt09",
+    "landing_url": "https://vanban.chinhphu.vn/?pageid=27160&docid=216920",
+    "retrieved_utc": "2026-10-30T13:53:46.190837+00:00",
+    "landing_sha256": "abf2ef9770c9d4f7698cd94ffe82ddb31ddcf681da56611a7cc3f6d113188050",
+    "attachment_links": [
+      "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/02/09-bnnmt.pdf",
+      "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/02/09-bnnmt-kem.pdf"
+    ],
+    "pdf_url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/02/09-bnnmt.pdf",
+    "sha256": "f3077e31f1907ecab02e8736bc5ae97b47f3295b5eb2b1934196e6105aad6b51",
+    "bytes": 1847105,
+    "pages": 30,
+    "chars": 81658
+  },
+  {
+    "name": "tt22",
+    "url": "https://dcc.mae.gov.vn/noidung/Lists/VBQPPL/Attachments/343/22-2026-TT-BNNTMT.pdf",
+    "retrieved_utc": "2026-10-30T13:54:02.222558+00:00",
+    "discovery": "current officialDCC landing registry link, webtool verified",
+    "sha256": "0bea25a79fac66b8e4d2d7f5dbfa11d61470881f3a375cf2ef1ba34d2590c6e3",
+    "bytes": 2751842,
+    "pages": 82,
+    "chars": 154298
+  }
+]

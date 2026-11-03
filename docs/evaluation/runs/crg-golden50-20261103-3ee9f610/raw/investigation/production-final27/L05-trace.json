@@ -1,0 +1,138 @@
+{
+  "status": "available",
+  "query": "Giả định chỉ áp dụng nội dung khoản 2 Điều 328 Bộ luật Dân sự 2015: tôi đặt cọc 10 triệu đồng để bảo đảm giao kết hợp đồng, bên nhận cọc từ chối giao kết và không có thỏa thuận phạt cọc khác. Theo chính điều khoản này phải trả tôi tổng cộng bao nhiêu? Nêu điều kiện và ngoại lệ, không kết luận một vụ tranh chấp thực tế.",
+  "rewritten_query": "Giả định chỉ áp dụng nội dung khoản 2 Điều 328 Bộ luật Dân sự 2015: tôi đặt cọc 10 triệu đồng để bảo đảm giao kết hợp đồng, bên nhận cọc từ chối giao kết và không có thỏa thuận phạt cọc khác. Theo chính điều khoản này phải trả tôi tổng cộng bao nhiêu? Nêu điều kiện và ngoại lệ, không kết luận một vụ tranh chấp thực tế.",
+  "runtime_mode": "vertex-qdrant-v3",
+  "backend": "vertex-qdrant-v3",
+  "collection": "vietlex-legal-rag-v3-vertex-1024",
+  "ranking": "rrf-dbsf",
+  "candidate_counts": {
+    "pinecone_hits": 0,
+    "fts_hits": 0,
+    "merged_document_candidates": 0,
+    "resolved_document_candidates": 0,
+    "structural_chunks_generated": 24,
+    "locally_selected_chunks": 0,
+    "reranker_input_chunks": 24,
+    "reranker_output_chunks": 3,
+    "retrieval_selected_chunks": 3,
+    "final_evidence_chunks": 2
+  },
+  "final_evidence_count": 2,
+  "prompt_context_count": 2,
+  "count_semantics": "prompt-contexts-v1",
+  "context_stages": [
+    {
+      "stage": "retrieval_selected",
+      "count": 3,
+      "sha256": [
+        "2db48f1af2630754fa9a17b8a24089c0d94ae7ebf8104e65db9ac9a6be01a462",
+        "2f7567847c6e9b21d0006e840cb08eba8e6239fdc9ee5df214d21155009d9778",
+        "ed4aea1d4cd992bd0890192fc551e221b30ad2739862bb3ed4f9ccc885593f66"
+      ]
+    },
+    {
+      "stage": "expanded",
+      "count": 3,
+      "sha256": [
+        "2db48f1af2630754fa9a17b8a24089c0d94ae7ebf8104e65db9ac9a6be01a462",
+        "2f7567847c6e9b21d0006e840cb08eba8e6239fdc9ee5df214d21155009d9778",
+        "ed4aea1d4cd992bd0890192fc551e221b30ad2739862bb3ed4f9ccc885593f66"
+      ]
+    },
+    {
+      "stage": "quality_filtered",
+      "count": 3,
+      "sha256": [
+        "2db48f1af2630754fa9a17b8a24089c0d94ae7ebf8104e65db9ac9a6be01a462",
+        "2f7567847c6e9b21d0006e840cb08eba8e6239fdc9ee5df214d21155009d9778",
+        "ed4aea1d4cd992bd0890192fc551e221b30ad2739862bb3ed4f9ccc885593f66"
+      ]
+    },
+    {
+      "stage": "situation_filtered",
+      "count": 3,
+      "sha256": [
+        "2db48f1af2630754fa9a17b8a24089c0d94ae7ebf8104e65db9ac9a6be01a462",
+        "2f7567847c6e9b21d0006e840cb08eba8e6239fdc9ee5df214d21155009d9778",
+        "ed4aea1d4cd992bd0890192fc551e221b30ad2739862bb3ed4f9ccc885593f66"
+      ]
+    },
+    {
+      "stage": "primary_rescue",
+      "count": 2,
+      "sha256": [
+        "f10b79feaa7f19f5bfe93f932cb961da4f5ca8b966412d378d9d93732d5ef1e5",
+        "2f7567847c6e9b21d0006e840cb08eba8e6239fdc9ee5df214d21155009d9778"
+      ]
+    },
+    {
+      "stage": "official_supplement",
+      "count": 2,
+      "sha256": [
+        "f10b79feaa7f19f5bfe93f932cb961da4f5ca8b966412d378d9d93732d5ef1e5",
+        "2f7567847c6e9b21d0006e840cb08eba8e6239fdc9ee5df214d21155009d9778"
+      ]
+    },
+    {
+      "stage": "prompt",
+      "count": 2,
+      "sha256": [
+        "f10b79feaa7f19f5bfe93f932cb961da4f5ca8b966412d378d9d93732d5ef1e5",
+        "2f7567847c6e9b21d0006e840cb08eba8e6239fdc9ee5df214d21155009d9778"
+      ]
+    }
+  ],
+  "context_budget_tokens": 8000,
+  "request_status": "ok",
+  "cached": false,
+  "observed_provider": "google_vertex_ai",
+  "observed_model": "gemini-3.5-flash",
+  "guardrail_state": {
+    "mode": "enforce",
+    "requested": true,
+    "executed": true,
+    "status": "passed",
+    "stages": {
+      "input": {
+        "status": "passed",
+        "safe": true,
+        "error": null
+      },
+      "output": {
+        "status": "passed",
+        "safe": true,
+        "error": null
+      }
+    },
+    "input_safe": true,
+    "output_safe": true
+  },
+  "latency": {
+    "t_total": 9.0089,
+    "t_cache": 0.0032,
+    "t_guardrails_input": 0.8659,
+    "t_guardrails_output": 0.7916,
+    "t_rewrite": 0.0,
+    "t_retrieval": 0.882,
+    "t_evidence_fallback": 2.72,
+    "vertex_qdrant": 0.8797016190000022,
+    "v3_article_expansion": 0.0018421449999550532,
+    "t_llm": 3.536
+  },
+  "evidence": [
+    {
+      "rank": 1,
+      "document_id": null,
+      "citation": "91/2015/QH13, Điều 328, Khoản 2",
+      "excerpt": "Điều 328. Đặt cọc 2. Trường hợp hợp đồng được giao kết, thực hiện thì tài sản đặt cọc được trả lại cho bên đặt cọc hoặc được trừ để thực hiện nghĩa vụ trả tiền; nếu bên đặt cọc từ chối việc giao kết, thực hiện hợp đồng thì tài sản đặt cọc thuộc về bên nhận đặt cọc; nếu bên nhận đặt cọc từ chối việc giao kết, thực hiện hợp đồng thì phải trả cho bên đặt cọc tài sản đặt cọc và một khoản tiền tương đương giá trị tài sản đặt cọc, trừ trường hợp có thỏa thuận khác."
+    },
+    {
+      "rank": 2,
+      "document_id": null,
+      "citation": "01/2003/NQ-HĐTP",
+      "excerpt": "HỘI ĐỒNG THẨM PHÁN TOÀ ÁN NHÂN DÂN TỐI CAO | CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM Độc lập - Tự do - Hạnh phúc Số: 01/2003/NQ-HĐTP | Hà Nội, ngày 16 tháng 4 năm 2003 NGHỊ QUYẾT CỦA HỘI ĐỒNG THẨM PHÁN TOÀ ÁN NHÂN DÂN TỐI CAO SỐ 01/2003/NQ-HĐTP NGÀY 16 THÁNG 4 NĂM 2003 HƯỚNG DẪN ÁP DỤNG PHÁP LUẬT TRONG VIỆC GIẢI QUYẾT MỘT SỐ LOẠI TRANH CHẤP DÂN SỰ, HÔN NHÂN VÀ GIA ĐÌNH HỘI ĐỒNG THẨM PHÁN TOÀ ÁN NHÂN DÂN TỐI CAO Căn cứ vào Luật tổ chức Toà án nhân dân; Để áp dụng đúng và thống nhất các quy định của pháp luật trong việc giải quyết các tranh chấp dân sự, hôn nhân và gia đình; QUYẾT NGHỊ: I. ĐỐI VỚI CÁC TRANH CHẤP HỢP ĐỒNG DÂN SỰ 1. Tranh chấp hợp đồng dân sự có đặt cọc Theo quy định tại Điều 130 Bộ luật Dân sự (sau đây viết tắt là BLDS) thì thoả thuận về đặt cọc là một giao dịch dân sự; do đó, việc đặt cọc chỉ có hiệu lực khi có đủ các điều kiện quy định tại Điều 131 BLDS và phải được lập thành văn bản (có thể lập thành văn bản riêng hoặc ghi trong hợp đồng chính). Trong trường hợp có tranh chấp về đặt cọc mà các bên không có thoả thuận khác về việc xử lý đặt cọc, thì việc xử lý được thực hiện như sau: a. Trong trường hợp đặt cọc chỉ để bảo đảm cho việc giao kết hợp đồng hoặc chỉ để bảo đảm cho việc thực hiện hợp đồng hoặc vừa để bảo đảm cho việc giao kết hợp đồng vừa để bảo đảm cho việc thực hiện hợp đồng thì bên nào có lỗi làm cho hợp đồng không được giao kết hoặc không được thực hiện hoặc bị vô"
+    }
+  ],
+  "displayed_evidence_count": 2
+}

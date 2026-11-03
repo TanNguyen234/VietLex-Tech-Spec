@@ -1,0 +1,146 @@
+{
+  "status": "available",
+  "query": "Với mức lương công việc đó thì 85% bằng bao nhiêu tiền?",
+  "rewritten_query": "Với mức lương công việc đó thì 85% bằng bao nhiêu tiền?",
+  "runtime_mode": "vertex-qdrant-v3",
+  "backend": "vertex-qdrant-v3",
+  "collection": "vietlex-legal-rag-v3-vertex-1024",
+  "ranking": "rrf-dbsf",
+  "candidate_counts": {
+    "pinecone_hits": 0,
+    "fts_hits": 0,
+    "merged_document_candidates": 0,
+    "resolved_document_candidates": 0,
+    "structural_chunks_generated": 24,
+    "locally_selected_chunks": 0,
+    "reranker_input_chunks": 24,
+    "reranker_output_chunks": 3,
+    "retrieval_selected_chunks": 3,
+    "final_evidence_chunks": 3
+  },
+  "final_evidence_count": 3,
+  "prompt_context_count": 3,
+  "count_semantics": "prompt-contexts-v1",
+  "context_stages": [
+    {
+      "stage": "retrieval_selected",
+      "count": 3,
+      "sha256": [
+        "68e0499a2562e6c0d3e60c0c2c03435809b75cf6c755437e63d6f7898d390d3e",
+        "5b2fd02af6b3d4a1c44ce5840b8d05b2197b2b15419825b17d201573af95f0db",
+        "d1f068a565ed8b193f0274f29d8d85245aaca83c0fe34fc311781fc3e02f14ea"
+      ]
+    },
+    {
+      "stage": "expanded",
+      "count": 3,
+      "sha256": [
+        "68e0499a2562e6c0d3e60c0c2c03435809b75cf6c755437e63d6f7898d390d3e",
+        "5b2fd02af6b3d4a1c44ce5840b8d05b2197b2b15419825b17d201573af95f0db",
+        "d1f068a565ed8b193f0274f29d8d85245aaca83c0fe34fc311781fc3e02f14ea"
+      ]
+    },
+    {
+      "stage": "quality_filtered",
+      "count": 3,
+      "sha256": [
+        "68e0499a2562e6c0d3e60c0c2c03435809b75cf6c755437e63d6f7898d390d3e",
+        "5b2fd02af6b3d4a1c44ce5840b8d05b2197b2b15419825b17d201573af95f0db",
+        "d1f068a565ed8b193f0274f29d8d85245aaca83c0fe34fc311781fc3e02f14ea"
+      ]
+    },
+    {
+      "stage": "situation_filtered",
+      "count": 3,
+      "sha256": [
+        "68e0499a2562e6c0d3e60c0c2c03435809b75cf6c755437e63d6f7898d390d3e",
+        "5b2fd02af6b3d4a1c44ce5840b8d05b2197b2b15419825b17d201573af95f0db",
+        "d1f068a565ed8b193f0274f29d8d85245aaca83c0fe34fc311781fc3e02f14ea"
+      ]
+    },
+    {
+      "stage": "primary_rescue",
+      "count": 3,
+      "sha256": [
+        "122866f9bc93ac4865466124652d860ef49af433ade2e2a22097a197268011f1",
+        "3e6bd762b87400dbf8c34192197ff7a2736aa98ac72b1676c194fc8f58e0a28c",
+        "0e6536a24bbf61da5fd9c24bec7d8ece8ae397f8d6e2544808a5e54fbe12bf4b"
+      ]
+    },
+    {
+      "stage": "official_supplement",
+      "count": 3,
+      "sha256": [
+        "122866f9bc93ac4865466124652d860ef49af433ade2e2a22097a197268011f1",
+        "3e6bd762b87400dbf8c34192197ff7a2736aa98ac72b1676c194fc8f58e0a28c",
+        "0e6536a24bbf61da5fd9c24bec7d8ece8ae397f8d6e2544808a5e54fbe12bf4b"
+      ]
+    },
+    {
+      "stage": "prompt",
+      "count": 3,
+      "sha256": [
+        "122866f9bc93ac4865466124652d860ef49af433ade2e2a22097a197268011f1",
+        "3e6bd762b87400dbf8c34192197ff7a2736aa98ac72b1676c194fc8f58e0a28c",
+        "0e6536a24bbf61da5fd9c24bec7d8ece8ae397f8d6e2544808a5e54fbe12bf4b"
+      ]
+    }
+  ],
+  "context_budget_tokens": 8000,
+  "request_status": "ok",
+  "cached": false,
+  "observed_provider": "google_vertex_ai",
+  "observed_model": "gemini-3.5-flash",
+  "guardrail_state": {
+    "mode": "enforce",
+    "requested": true,
+    "executed": true,
+    "status": "passed",
+    "stages": {
+      "input": {
+        "status": "passed",
+        "safe": true,
+        "error": null
+      },
+      "output": {
+        "status": "passed",
+        "safe": true,
+        "error": null
+      }
+    },
+    "input_safe": true,
+    "output_safe": true
+  },
+  "latency": {
+    "t_total": 11.3306,
+    "t_cache": 0.0008,
+    "t_guardrails_input": 0.8238,
+    "t_guardrails_output": 0.9282,
+    "t_rewrite": 0.0,
+    "t_retrieval": 1.821,
+    "t_evidence_fallback": 3.864,
+    "vertex_qdrant": 0.8042090629999166,
+    "t_llm": 3.683
+  },
+  "evidence": [
+    {
+      "rank": 1,
+      "document_id": null,
+      "citation": "45/2019/QH14, Điều 26",
+      "excerpt": "Điều 26. Tiền lương thử việc Tiền lương của người lao động trong thời gian thử việc do hai bên thỏa thuận nhưng ít nhất phải bằng 85% mức lương của công việc đó."
+    },
+    {
+      "rank": 2,
+      "document_id": null,
+      "citation": "45/2019/QH14, Điều 29, Khoản 3",
+      "excerpt": "Điều 29. Chuyển người lao động làm công việc khác so với hợp đồng lao động 3. Người lao động chuyển sang làm công việc khác so với hợp đồng lao động được trả lương theo công việc mới. Nếu tiền lương của công việc mới thấp hơn tiền lương của công việc cũ thì được giữ nguyên tiền lương của công việc cũ trong thời hạn 30 ngày làm việc. Tiền lương theo công việc mới ít nhất phải bằng 85% tiền lương của công việc cũ nhưng không thấp hơn mức lương tối thiểu."
+    },
+    {
+      "rank": 3,
+      "document_id": null,
+      "citation": "45/2019/QH14, Điều 90, Khoản 2",
+      "excerpt": "Điều 90. Tiền lương 2. Mức lương theo công việc hoặc chức danh không được thấp hơn mức lương tối thiểu."
+    }
+  ],
+  "displayed_evidence_count": 3
+}

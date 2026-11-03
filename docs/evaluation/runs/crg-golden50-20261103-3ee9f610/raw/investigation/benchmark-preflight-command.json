@@ -1,0 +1,40 @@
+{
+  "argv": [
+    "D:\\Download\\ProfessionalLegalRAG\\.venv\\Scripts\\python.exe",
+    "run_answer_eval.py",
+    "--dataset",
+    "docs/evaluation/golden50-v3/cases.json",
+    "--sidecar",
+    "docs/evaluation/golden50-v3/labels.json",
+    "--backend",
+    "production",
+    "--ranking",
+    "rrf-dbsf",
+    "--profile",
+    "separated_intent",
+    "--rewrite",
+    "off",
+    "--guardrails",
+    "enforce",
+    "--reranker",
+    "current",
+    "--concurrency",
+    "1",
+    "--gold-policy",
+    "none",
+    "--judge",
+    "none",
+    "--case-ids",
+    "case_001",
+    "--run-id",
+    "answer-golden50-preflight-20261103-01470b4e"
+  ],
+  "env_overrides": {
+    "SERVERLESS_ONLINE_ONLY": "true",
+    "USE_LEGACY_FREE_PIPELINE": "false",
+    "APP_ENV": "development",
+    "LOGFIRE_TOKEN": ""
+  },
+  "run_id": "answer-golden50-preflight-20261103-01470b4e",
+  "evidence": "live local execution of production chat service; real remote providers; not deployed HTTP"
+}

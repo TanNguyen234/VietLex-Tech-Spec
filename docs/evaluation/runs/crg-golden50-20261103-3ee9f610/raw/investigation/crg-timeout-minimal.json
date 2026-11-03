@@ -1,0 +1,47 @@
+{
+  "meta": null,
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"status\":\"ok\",\"summary\":\"5471 nodes, 61142 edges across 404 files. Risk: high (0.85). 261 test gaps.\",\"key_entities\":[\"_form_response\",\"_development_account_page\",\"register_page\",\"register\",\"login_page\"],\"risk\":\"high\",\"communities\":[\"services-fake\",\"services-structural\",\"professional-legal-rag-evaluation\"],\"flows_affected\":[\"reset_password\",\"admin_page\",\"admin_logs_partial\"],\"next_tool_suggestions\":[\"detect_changes\",\"get_affected_flows\",\"get_review_context\"],\"_graph\":{\"updated_at\":\"2026-11-03T19:40:24\",\"age_seconds\":2728,\"built_on_branch\":\"main\",\"built_at_sha\":\"7519cd1aea4a3639140b9188de1843ebf0ddb1c0\",\"head_sha\":\"7519cd1aea4a3639140b9188de1843ebf0ddb1c0\",\"head_matches_build\":true}}",
+      "annotations": null,
+      "meta": null
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "summary": "5471 nodes, 61142 edges across 404 files. Risk: high (0.85). 261 test gaps.",
+    "key_entities": [
+      "_form_response",
+      "_development_account_page",
+      "register_page",
+      "register",
+      "login_page"
+    ],
+    "risk": "high",
+    "communities": [
+      "services-fake",
+      "services-structural",
+      "professional-legal-rag-evaluation"
+    ],
+    "flows_affected": [
+      "reset_password",
+      "admin_page",
+      "admin_logs_partial"
+    ],
+    "next_tool_suggestions": [
+      "detect_changes",
+      "get_affected_flows",
+      "get_review_context"
+    ],
+    "_graph": {
+      "updated_at": "2026-11-03T19:40:24",
+      "age_seconds": 2728,
+      "built_on_branch": "main",
+      "built_at_sha": "7519cd1aea4a3639140b9188de1843ebf0ddb1c0",
+      "head_sha": "7519cd1aea4a3639140b9188de1843ebf0ddb1c0",
+      "head_matches_build": true
+    }
+  },
+  "isError": false
+}

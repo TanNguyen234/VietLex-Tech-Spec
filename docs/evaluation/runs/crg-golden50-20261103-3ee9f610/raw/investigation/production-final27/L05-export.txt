@@ -1,0 +1,55 @@
+# Giả định chỉ áp dụng...
+
+*2026-11-03T15:16*
+**Trace:** `2bfbbcca-f0a3-49b2-a36c-8ac0f743d8d2`
+
+## Người dùng
+
+Giả định chỉ áp dụng nội dung khoản 2 Điều 328 Bộ luật Dân sự 2015: tôi đặt cọc 10 triệu đồng để bảo đảm giao kết hợp đồng, bên nhận cọc từ chối giao kết và không có thỏa thuận phạt cọc khác. Theo chính điều khoản này phải trả tôi tổng cộng bao nhiêu? Nêu điều kiện và ngoại lệ, không kết luận một vụ tranh chấp thực tế.
+
+## VietLex
+
+Dựa trên các tài liệu tham khảo được cung cấp, dưới đây là câu trả lời chi tiết cho trường hợp giả định của bạn:
+
+### 1. Số tiền bên nhận đặt cọc phải trả cho bạn
+Theo dữ kiện giả định bạn cung cấp:
+*   Số tiền đặt cọc: $10.000.000$ đồng.
+*   Bên nhận đặt cọc từ chối việc giao kết hợp đồng.
+*   Các bên không có thỏa thuận khác về việc xử lý đặt cọc (phạt cọc).
+
+Áp dụng quy định tại Khoản 2 Điều 328 Bộ luật Dân sự 2015 [91/2015/QH13, Điều 328, Khoản 2]: 
+> *"nếu bên nhận đặt cọc từ chối việc giao kết, thực hiện hợp đồng thì phải trả cho bên đặt cọc tài sản đặt cọc và một khoản tiền tương đương giá trị tài sản đặt cọc, trừ trường hợp có thỏa thuận khác."*
+
+Phép tính số tiền phải trả cho bạn được xác định như sau:
+*   **Tài sản đặt cọc phải trả lại:** $10.000.000$ đồng.
+*   **Khoản tiền phạt cọc (tương đương giá trị tài sản đặt cọc):** $10.000.000$ đồng.
+*   **Tổng số tiền bên nhận đặt cọc phải trả:** 
+    $$\text{Tổng số tiền} = 10.000.000 \text{ đồng} + 10.000.000 \text{ đồng} = 20.000.000 \text{ đồng}$$
+
+Như vậy, theo đúng điều khoản này, bên nhận đặt cọc phải trả cho bạn tổng cộng **$20.000.000$ đồng** (Hai mươi triệu đồng).
+
+---
+
+### 2. Điều kiện và ngoại lệ theo quy định
+Theo Khoản 2 Điều 328 Bộ luật Dân sự 2015 [91/2015/QH13, Điều 328, Khoản 2], các điều kiện và ngoại lệ áp dụng đối với nghĩa vụ trả tiền này bao gồm:
+
+*   **Điều kiện áp dụng:** Bên nhận đặt cọc từ chối việc giao kết, thực hiện hợp đồng.
+*   **Ngoại lệ:** Quy định trả lại tài sản đặt cọc và phạt một khoản tiền tương đương giá trị tài sản đặt cọc nêu trên sẽ không áp dụng nếu các bên **"có thỏa thuận khác"** (ví dụ: thỏa thuận không phạt cọc, hoặc thỏa thuận mức phạt cọc khác mức tương đương giá trị tài sản đặt cọc).
+
+---
+
+*Khuyến cáo: Nguồn dữ liệu này không phải cơ sở dữ liệu pháp luật chính thức và không xác nhận tình trạng hiệu lực hiện hành của văn bản. Thông tin trên chỉ mang tính chất tham khảo, không phải tư vấn pháp lý. Bạn vui lòng kiểm tra lại trên nguồn chính thức hiện hành hoặc tham vấn người có chuyên môn trước khi áp dụng thực tế.*
+
+### Nguồn tham chiếu
+
+> [91/2015/QH13, Điều 328, Khoản 2]
+> Nguồn: https://thuvienphapluat.vn/van-ban/Quyen-dan-su/Bo-luat-dan-su-2015-296215.aspx
+> Tiêu đề: Bộ luật dân sự 2015
+> Điều 328. Đặt cọc 2. Trường hợp hợp đồng được giao kết, thực hiện thì tài sản đặt cọc được trả lại cho bên đặt cọc hoặc được trừ để thực hiện nghĩa vụ trả tiền; nếu bên đặt cọc từ chối việc giao kết, thực hiện hợp đồng thì tài sản đặt cọc thuộc về bên nhận đặt cọc; nếu bên nhận đặt cọc từ chối việc giao kết, thực hiện hợp đồng thì phải trả cho bên đặt cọc tài sản đặt cọc và một khoản tiền tương đương giá trị tài sản đặt cọc, trừ trường hợp có thỏa thuận khác.
+
+> [01/2003/NQ-HĐTP]
+> Nguồn: https://thuvienphapluat.vn/van-ban/Thu-tuc-To-tung/Nghi-quyet-01-2003-NQ-HDTP-huong-dan-ap-dung-phap-luat-trong-viec-giai-quyet-mot-so-loai-tranh-chap-dan-su-hon-nhan-va-gia-dinh-51254.aspx
+> Tiêu đề: Nghị quyết 01/2003/NQ-HĐTP về việc hướng dẫn áp dụng pháp luật trong việc giải quyết một số loại tranh chấp dân sự, hôn nhân và gia đình do Hội đồng thẩm phán Toà án nhân dân tối cao ban hành
+> HỘI ĐỒNG THẨM PHÁN TOÀ ÁN NHÂN DÂN TỐI CAO | CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM Độc lập - Tự do - Hạnh phúc Số: 01/2003/NQ-HĐTP | Hà Nội, ngày 16 tháng 4 năm 2003 NGHỊ QUYẾT CỦA HỘI ĐỒNG THẨM PHÁN TOÀ ÁN NHÂN DÂN TỐI CAO SỐ 01/2003/NQ-HĐTP NGÀY 16 THÁNG 4 NĂM 2003 HƯỚNG DẪN ÁP DỤNG PHÁP LUẬT TRONG VIỆC GIẢI QUYẾT MỘT SỐ LOẠI TRANH CHẤP DÂN SỰ, HÔN NHÂN VÀ GIA ĐÌNH HỘI ĐỒNG THẨM PHÁN TOÀ ÁN NHÂN DÂN TỐI CAO Căn cứ vào Luật tổ chức Toà án nhân dân; Để áp dụng đúng và thống nhất các quy định của pháp luật trong việc giải quyết các tranh chấp dân sự, hôn nhân và gia đình; QUYẾT NGHỊ: I. ĐỐI VỚI CÁC TRANH CHẤP HỢP ĐỒNG DÂN SỰ 1. Tranh chấp hợp đồng dân sự có đặt cọc Theo quy định tại Điều 130 Bộ luật Dân sự (sau đây viết tắt là BLDS) thì thoả thuận về đặt cọc là một giao dịch dân sự; do đó, việc đặt cọc chỉ có hiệu lực khi có đủ các điều kiện quy định tại Điều 131 BLDS và phải được lập thành văn bản (có thể lập thành văn bản riêng hoặc ghi trong hợp đồng chính). Trong trường hợp có tranh chấp về đặt cọc mà các bên không có thoả thuận khác về việc xử lý đặt cọc, thì việc xử lý được thực hiện như sau: a. Trong trường hợp đặt cọc chỉ để bảo đảm cho việc giao kết hợp đồng hoặc chỉ để bảo đảm cho việc thực hiện hợp đồng hoặc vừa để bảo đảm cho việc giao kết hợp đồng vừa để bảo đảm cho việc thực hiện hợp đồng thì bên nào có lỗi làm cho hợp đồng không được giao kết hoặc không được thực hiện hoặc bị vô
+
+---

@@ -1,0 +1,837 @@
+{
+  "evidence": "live readonly Mongo verification of the just-completed public HTTP cases",
+  "database_name_sha256": "aae8559e9d159844191e1f47e514aaedfcc97bdc932ed91435dd7bb663958745",
+  "mutations": 0,
+  "cases": [
+    {
+      "case": "L01",
+      "owner_record_found": true,
+      "foreign_owner_count": 0,
+      "request_status": "ok",
+      "contexts_match_prompt": true,
+      "context_count": 14,
+      "saved_answer_matches_HTTP": true,
+      "provider": "google_vertex_ai",
+      "model": "gemini-3.5-flash",
+      "guardrail_engine": "direct_self_check",
+      "provider_calls": [
+        {
+          "provider": "google_vertex_ai",
+          "model": "gemini-3.5-flash",
+          "use_case": "guardrail",
+          "success": true,
+          "error_kind": null,
+          "latency_ms": 842.336,
+          "fallback_used": false,
+          "timestamp": "2026-11-03T15:13:02.594494+00:00",
+          "prompt_token_count": 1035,
+          "output_token_count": 1,
+          "thinking_token_count": null,
+          "total_token_count": 1036,
+          "call_kind": "llm",
+          "request_count": null
+        },
+        {
+          "provider": "google_vertex_ai",
+          "model": "gemini-3.5-flash",
+          "use_case": "answer",
+          "success": true,
+          "error_kind": null,
+          "latency_ms": 4641.145,
+          "fallback_used": false,
+          "timestamp": "2026-11-03T15:13:49.618415+00:00",
+          "prompt_token_count": 15832,
+          "output_token_count": 1000,
+          "thinking_token_count": null,
+          "total_token_count": 16832,
+          "call_kind": "llm",
+          "request_count": null
+        },
+        {
+          "provider": "google_vertex_ai",
+          "model": "gemini-3.5-flash",
+          "use_case": "guardrail",
+          "success": true,
+          "error_kind": null,
+          "latency_ms": 787.742,
+          "fallback_used": false,
+          "timestamp": "2026-11-03T15:13:50.411963+00:00",
+          "prompt_token_count": 16340,
+          "output_token_count": 1,
+          "thinking_token_count": null,
+          "total_token_count": 16341,
+          "call_kind": "llm",
+          "request_count": null
+        }
+      ],
+      "provider_usage": {
+        "query_rewrite": {
+          "provider": "none",
+          "model": "none",
+          "observed": false
+        },
+        "answer_generation": {
+          "provider": "google_vertex_ai",
+          "model": "gemini-3.5-flash",
+          "observed": true,
+          "prompt_token_count": 15832,
+          "output_token_count": 1000,
+          "total_token_count": 16832,
+          "status": "success",
+          "finish_reason": "STOP",
+          "fallback_used": false
+        },
+        "guardrails": {
+          "provider": "unobserved",
+          "model": "unobserved",
+          "observed": false
+        }
+      },
+      "guardrail_state": {
+        "mode": "enforce",
+        "requested": true,
+        "executed": true,
+        "status": "passed",
+        "input_safe": true,
+        "output_safe": true,
+        "stages": {
+          "input": {
+            "status": "passed",
+            "safe": true,
+            "error": null
+          },
+          "output": {
+            "status": "passed",
+            "safe": true,
+            "error": null
+          }
+        }
+      }
+    },
+    {
+      "case": "L02",
+      "owner_record_found": true,
+      "foreign_owner_count": 0,
+      "request_status": "ok",
+      "contexts_match_prompt": true,
+      "context_count": 14,
+      "saved_answer_matches_HTTP": true,
+      "provider": "google_vertex_ai",
+      "model": "gemini-3.5-flash",
+      "guardrail_engine": "direct_self_check",
+      "provider_calls": [
+        {
+          "provider": "google_vertex_ai",
+          "model": "gemini-3.5-flash",
+          "use_case": "guardrail",
+          "success": true,
+          "error_kind": null,
+          "latency_ms": 1050.742,
+          "fallback_used": false,
+          "timestamp": "2026-11-03T15:13:59.508149+00:00",
+          "prompt_token_count": 711,
+          "output_token_count": 1,
+          "thinking_token_count": null,
+          "total_token_count": 712,
+          "call_kind": "llm",
+          "request_count": null
+        },
+        {
+          "provider": "google_vertex_ai",
+          "model": "gemini-3.5-flash",
+          "use_case": "answer",
+          "success": true,
+          "error_kind": null,
+          "latency_ms": 2398.341,
+          "fallback_used": false,
+          "timestamp": "2026-11-03T15:14:42.294642+00:00",
+          "prompt_token_count": 15960,
+          "output_token_count": 427,
+          "thinking_token_count": null,
+          "total_token_count": 16387,
+          "call_kind": "llm",
+          "request_count": null
+        },
+        {
+          "provider": "google_vertex_ai",
+          "model": "gemini-3.5-flash",
+          "use_case": "guardrail",
+          "success": true,
+          "error_kind": null,
+          "latency_ms": 995.64,
+          "fallback_used": false,
+          "timestamp": "2026-11-03T15:14:43.293535+00:00",
+          "prompt_token_count": 15818,
+          "output_token_count": 1,
+          "thinking_token_count": null,
+          "total_token_count": 15819,
+          "call_kind": "llm",
+          "request_count": null
+        }
+      ],
+      "provider_usage": {
+        "query_rewrite": {
+          "provider": "none",
+          "model": "none",
+          "observed": false
+        },
+        "answer_generation": {
+          "provider": "google_vertex_ai",
+          "model": "gemini-3.5-flash",
+          "observed": true,
+          "prompt_token_count": 15960,
+          "output_token_count": 427,
+          "total_token_count": 16387,
+          "status": "success",
+          "finish_reason": "STOP",
+          "fallback_used": false
+        },
+        "guardrails": {
+          "provider": "unobserved",
+          "model": "unobserved",
+          "observed": false
+        }
+      },
+      "guardrail_state": {
+        "mode": "enforce",
+        "requested": true,
+        "executed": true,
+        "status": "passed",
+        "input_safe": true,
+        "output_safe": true,
+        "stages": {
+          "input": {
+            "status": "passed",
+            "safe": true,
+            "error": null
+          },
+          "output": {
+            "status": "passed",
+            "safe": true,
+            "error": null
+          }
+        }
+      }
+    },
+    {
+      "case": "L03",
+      "owner_record_found": true,
+      "foreign_owner_count": 0,
+      "request_status": "ok",
+      "contexts_match_prompt": true,
+      "context_count": 1,
+      "saved_answer_matches_HTTP": true,
+      "provider": "google_vertex_ai",
+      "model": "gemini-3.5-flash",
+      "guardrail_engine": "direct_self_check",
+      "provider_calls": [
+        {
+          "provider": "google_vertex_ai",
+          "model": "gemini-3.5-flash",
+          "use_case": "guardrail",
+          "success": true,
+          "error_kind": null,
+          "latency_ms": 970.75,
+          "fallback_used": false,
+          "timestamp": "2026-11-03T15:14:55.197504+00:00",
+          "prompt_token_count": 825,
+          "output_token_count": 1,
+          "thinking_token_count": null,
+          "total_token_count": 826,
+          "call_kind": "llm",
+          "request_count": null
+        },
+        {
+          "provider": "google_vertex_ai",
+          "model": "gemini-3.5-flash",
+          "use_case": "answer",
+          "success": true,
+          "error_kind": null,
+          "latency_ms": 1614.816,
+          "fallback_used": false,
+          "timestamp": "2026-11-03T15:14:57.949333+00:00",
+          "prompt_token_count": 750,
+          "output_token_count": 273,
+          "thinking_token_count": null,
+          "total_token_count": 1023,
+          "call_kind": "llm",
+          "request_count": null
+        },
+        {
+          "provider": "google_vertex_ai",
+          "model": "gemini-3.5-flash",
+          "use_case": "guardrail",
+          "success": true,
+          "error_kind": null,
+          "latency_ms": 953.88,
+          "fallback_used": false,
+          "timestamp": "2026-11-03T15:14:58.905604+00:00",
+          "prompt_token_count": 806,
+          "output_token_count": 1,
+          "thinking_token_count": null,
+          "total_token_count": 807,
+          "call_kind": "llm",
+          "request_count": null
+        }
+      ],
+      "provider_usage": {
+        "query_rewrite": {
+          "provider": "none",
+          "model": "none",
+          "observed": false
+        },
+        "answer_generation": {
+          "provider": "google_vertex_ai",
+          "model": "gemini-3.5-flash",
+          "observed": true,
+          "prompt_token_count": 750,
+          "output_token_count": 273,
+          "total_token_count": 1023,
+          "status": "success",
+          "finish_reason": "STOP",
+          "fallback_used": false
+        },
+        "guardrails": {
+          "provider": "unobserved",
+          "model": "unobserved",
+          "observed": false
+        }
+      },
+      "guardrail_state": {
+        "mode": "enforce",
+        "requested": true,
+        "executed": true,
+        "status": "passed",
+        "input_safe": true,
+        "output_safe": true,
+        "stages": {
+          "input": {
+            "status": "passed",
+            "safe": true,
+            "error": null
+          },
+          "output": {
+            "status": "passed",
+            "safe": true,
+            "error": null
+          }
+        }
+      }
+    },
+    {
+      "case": "L04",
+      "owner_record_found": true,
+      "foreign_owner_count": 0,
+      "request_status": "ok",
+      "contexts_match_prompt": true,
+      "context_count": 10,
+      "saved_answer_matches_HTTP": true,
+      "provider": "unobserved",
+      "model": "unobserved",
+      "guardrail_engine": "direct_self_check",
+      "provider_calls": [
+        {
+          "provider": "google_vertex_ai",
+          "model": "gemini-3.5-flash",
+          "use_case": "guardrail",
+          "success": true,
+          "error_kind": null,
+          "latency_ms": 725.996,
+          "fallback_used": false,
+          "timestamp": "2026-11-03T15:15:17.066313+00:00",
+          "prompt_token_count": 1076,
+          "output_token_count": 1,
+          "thinking_token_count": null,
+          "total_token_count": 1077,
+          "call_kind": "llm",
+          "request_count": null
+        },
+        {
+          "provider": "google_vertex_ai",
+          "model": "gemini-3.5-flash",
+          "use_case": "guardrail",
+          "success": true,
+          "error_kind": null,
+          "latency_ms": 1450.346,
+          "fallback_used": false,
+          "timestamp": "2026-11-03T15:16:03.256797+00:00",
+          "prompt_token_count": 25867,
+          "output_token_count": 1,
+          "thinking_token_count": null,
+          "total_token_count": 25868,
+          "call_kind": "llm",
+          "request_count": null
+        }
+      ],
+      "provider_usage": {
+        "query_rewrite": {
+          "provider": "none",
+          "model": "none",
+          "observed": false
+        },
+        "answer_generation": {
+          "provider": "none",
+          "model": "none",
+          "observed": false,
+          "status": "success",
+          "fallback_used": false
+        },
+        "guardrails": {
+          "provider": "unobserved",
+          "model": "unobserved",
+          "observed": false
+        }
+      },
+      "guardrail_state": {
+        "mode": "enforce",
+        "requested": true,
+        "executed": true,
+        "status": "passed",
+        "input_safe": true,
+        "output_safe": true,
+        "stages": {
+          "input": {
+            "status": "passed",
+            "safe": true,
+            "error": null
+          },
+          "output": {
+            "status": "passed",
+            "safe": true,
+            "error": null
+          }
+        }
+      }
+    },
+    {
+      "case": "L05",
+      "owner_record_found": true,
+      "foreign_owner_count": 0,
+      "request_status": "ok",
+      "contexts_match_prompt": true,
+      "context_count": 2,
+      "saved_answer_matches_HTTP": true,
+      "provider": "google_vertex_ai",
+      "model": "gemini-3.5-flash",
+      "guardrail_engine": "direct_self_check",
+      "provider_calls": [
+        {
+          "provider": "google_vertex_ai",
+          "model": "gemini-3.5-flash",
+          "use_case": "guardrail",
+          "success": true,
+          "error_kind": null,
+          "latency_ms": 863.534,
+          "fallback_used": false,
+          "timestamp": "2026-11-03T15:16:12.428741+00:00",
+          "prompt_token_count": 1003,
+          "output_token_count": 1,
+          "thinking_token_count": null,
+          "total_token_count": 1004,
+          "call_kind": "llm",
+          "request_count": null
+        },
+        {
+          "provider": "google_vertex_ai",
+          "model": "gemini-3.5-flash",
+          "use_case": "answer",
+          "success": true,
+          "error_kind": null,
+          "latency_ms": 3533.851,
+          "fallback_used": false,
+          "timestamp": "2026-11-03T15:16:19.571373+00:00",
+          "prompt_token_count": 1708,
+          "output_token_count": 689,
+          "thinking_token_count": null,
+          "total_token_count": 2397,
+          "call_kind": "llm",
+          "request_count": null
+        },
+        {
+          "provider": "google_vertex_ai",
+          "model": "gemini-3.5-flash",
+          "use_case": "guardrail",
+          "success": true,
+          "error_kind": null,
+          "latency_ms": 790.05,
+          "fallback_used": false,
+          "timestamp": "2026-11-03T15:16:20.364753+00:00",
+          "prompt_token_count": 2038,
+          "output_token_count": 1,
+          "thinking_token_count": null,
+          "total_token_count": 2039,
+          "call_kind": "llm",
+          "request_count": null
+        }
+      ],
+      "provider_usage": {
+        "query_rewrite": {
+          "provider": "none",
+          "model": "none",
+          "observed": false
+        },
+        "answer_generation": {
+          "provider": "google_vertex_ai",
+          "model": "gemini-3.5-flash",
+          "observed": true,
+          "prompt_token_count": 1708,
+          "output_token_count": 689,
+          "total_token_count": 2397,
+          "status": "success",
+          "finish_reason": "STOP",
+          "fallback_used": false
+        },
+        "guardrails": {
+          "provider": "unobserved",
+          "model": "unobserved",
+          "observed": false
+        }
+      },
+      "guardrail_state": {
+        "mode": "enforce",
+        "requested": true,
+        "executed": true,
+        "status": "passed",
+        "input_safe": true,
+        "output_safe": true,
+        "stages": {
+          "input": {
+            "status": "passed",
+            "safe": true,
+            "error": null
+          },
+          "output": {
+            "status": "passed",
+            "safe": true,
+            "error": null
+          }
+        }
+      }
+    },
+    {
+      "case": "L06",
+      "owner_record_found": true,
+      "foreign_owner_count": 0,
+      "request_status": "ok",
+      "contexts_match_prompt": true,
+      "context_count": 2,
+      "saved_answer_matches_HTTP": true,
+      "provider": "google_vertex_ai",
+      "model": "gemini-3.5-flash",
+      "guardrail_engine": "direct_self_check",
+      "provider_calls": [
+        {
+          "provider": "google_vertex_ai",
+          "model": "gemini-3.5-flash",
+          "use_case": "guardrail",
+          "success": true,
+          "error_kind": null,
+          "latency_ms": 715.8,
+          "fallback_used": false,
+          "timestamp": "2026-11-03T15:16:34.305046+00:00",
+          "prompt_token_count": 850,
+          "output_token_count": 1,
+          "thinking_token_count": null,
+          "total_token_count": 851,
+          "call_kind": "llm",
+          "request_count": null
+        },
+        {
+          "provider": "google_vertex_ai",
+          "model": "gemini-3.5-flash",
+          "use_case": "answer",
+          "success": true,
+          "error_kind": null,
+          "latency_ms": 3553.324,
+          "fallback_used": false,
+          "timestamp": "2026-11-03T15:16:43.720083+00:00",
+          "prompt_token_count": 1199,
+          "output_token_count": 806,
+          "thinking_token_count": null,
+          "total_token_count": 2005,
+          "call_kind": "llm",
+          "request_count": null
+        },
+        {
+          "provider": "google_vertex_ai",
+          "model": "gemini-3.5-flash",
+          "use_case": "guardrail",
+          "success": true,
+          "error_kind": null,
+          "latency_ms": 848.882,
+          "fallback_used": false,
+          "timestamp": "2026-11-03T15:16:44.572142+00:00",
+          "prompt_token_count": 1762,
+          "output_token_count": 1,
+          "thinking_token_count": null,
+          "total_token_count": 1763,
+          "call_kind": "llm",
+          "request_count": null
+        }
+      ],
+      "provider_usage": {
+        "query_rewrite": {
+          "provider": "none",
+          "model": "none",
+          "observed": false
+        },
+        "answer_generation": {
+          "provider": "google_vertex_ai",
+          "model": "gemini-3.5-flash",
+          "observed": true,
+          "prompt_token_count": 1199,
+          "output_token_count": 806,
+          "total_token_count": 2005,
+          "status": "success",
+          "finish_reason": "STOP",
+          "fallback_used": false
+        },
+        "guardrails": {
+          "provider": "unobserved",
+          "model": "unobserved",
+          "observed": false
+        }
+      },
+      "guardrail_state": {
+        "mode": "enforce",
+        "requested": true,
+        "executed": true,
+        "status": "passed",
+        "input_safe": true,
+        "output_safe": true,
+        "stages": {
+          "input": {
+            "status": "passed",
+            "safe": true,
+            "error": null
+          },
+          "output": {
+            "status": "passed",
+            "safe": true,
+            "error": null
+          }
+        }
+      }
+    },
+    {
+      "case": "L07",
+      "owner_record_found": true,
+      "foreign_owner_count": 0,
+      "request_status": "ok",
+      "contexts_match_prompt": true,
+      "context_count": 3,
+      "saved_answer_matches_HTTP": true,
+      "provider": "google_vertex_ai",
+      "model": "gemini-3.5-flash",
+      "guardrail_engine": "direct_self_check",
+      "provider_calls": [
+        {
+          "provider": "google_vertex_ai",
+          "model": "gemini-3.5-flash",
+          "use_case": "guardrail",
+          "success": true,
+          "error_kind": null,
+          "latency_ms": 594.073,
+          "fallback_used": false,
+          "timestamp": "2026-11-03T15:16:56.142753+00:00",
+          "prompt_token_count": 893,
+          "output_token_count": 1,
+          "thinking_token_count": null,
+          "total_token_count": 894,
+          "call_kind": "llm",
+          "request_count": null
+        },
+        {
+          "provider": "google_vertex_ai",
+          "model": "gemini-3.5-flash",
+          "use_case": "answer",
+          "success": true,
+          "error_kind": null,
+          "latency_ms": 1736.492,
+          "fallback_used": false,
+          "timestamp": "2026-11-03T15:17:40.429405+00:00",
+          "prompt_token_count": 1895,
+          "output_token_count": 145,
+          "thinking_token_count": null,
+          "total_token_count": 2040,
+          "call_kind": "llm",
+          "request_count": null
+        },
+        {
+          "provider": "google_vertex_ai",
+          "model": "gemini-3.5-flash",
+          "use_case": "guardrail",
+          "success": true,
+          "error_kind": null,
+          "latency_ms": 739.075,
+          "fallback_used": false,
+          "timestamp": "2026-11-03T15:17:41.171056+00:00",
+          "prompt_token_count": 1705,
+          "output_token_count": 1,
+          "thinking_token_count": null,
+          "total_token_count": 1706,
+          "call_kind": "llm",
+          "request_count": null
+        }
+      ],
+      "provider_usage": {
+        "query_rewrite": {
+          "provider": "none",
+          "model": "none",
+          "observed": false
+        },
+        "answer_generation": {
+          "provider": "google_vertex_ai",
+          "model": "gemini-3.5-flash",
+          "observed": true,
+          "prompt_token_count": 1895,
+          "output_token_count": 145,
+          "total_token_count": 2040,
+          "status": "success",
+          "finish_reason": "STOP",
+          "fallback_used": false
+        },
+        "guardrails": {
+          "provider": "unobserved",
+          "model": "unobserved",
+          "observed": false
+        }
+      },
+      "guardrail_state": {
+        "mode": "enforce",
+        "requested": true,
+        "executed": true,
+        "status": "passed",
+        "input_safe": true,
+        "output_safe": true,
+        "stages": {
+          "input": {
+            "status": "passed",
+            "safe": true,
+            "error": null
+          },
+          "output": {
+            "status": "passed",
+            "safe": true,
+            "error": null
+          }
+        }
+      }
+    },
+    {
+      "case": "N01",
+      "owner_record_found": true,
+      "foreign_owner_count": 0,
+      "request_status": "ok",
+      "contexts_match_prompt": true,
+      "context_count": 3,
+      "saved_answer_matches_HTTP": true,
+      "provider": "google_vertex_ai",
+      "model": "gemini-3.5-flash",
+      "guardrail_engine": "direct_self_check",
+      "provider_calls": [
+        {
+          "provider": "google_vertex_ai",
+          "model": "gemini-3.5-flash",
+          "use_case": "guardrail",
+          "success": true,
+          "error_kind": null,
+          "latency_ms": 821.452,
+          "fallback_used": false,
+          "timestamp": "2026-11-03T15:17:48.671727+00:00",
+          "prompt_token_count": 605,
+          "output_token_count": 1,
+          "thinking_token_count": null,
+          "total_token_count": 606,
+          "call_kind": "llm",
+          "request_count": null
+        },
+        {
+          "provider": "google_vertex_ai",
+          "model": "gemini-3.5-flash",
+          "use_case": "answer",
+          "success": true,
+          "error_kind": null,
+          "latency_ms": 3681.432,
+          "fallback_used": false,
+          "timestamp": "2026-11-03T15:17:58.041676+00:00",
+          "prompt_token_count": 1086,
+          "output_token_count": 774,
+          "thinking_token_count": null,
+          "total_token_count": 1860,
+          "call_kind": "llm",
+          "request_count": null
+        },
+        {
+          "provider": "google_vertex_ai",
+          "model": "gemini-3.5-flash",
+          "use_case": "guardrail",
+          "success": true,
+          "error_kind": null,
+          "latency_ms": 926.827,
+          "fallback_used": false,
+          "timestamp": "2026-11-03T15:17:58.971096+00:00",
+          "prompt_token_count": 1569,
+          "output_token_count": 1,
+          "thinking_token_count": null,
+          "total_token_count": 1570,
+          "call_kind": "llm",
+          "request_count": null
+        }
+      ],
+      "provider_usage": {
+        "query_rewrite": {
+          "provider": "none",
+          "model": "none",
+          "observed": false
+        },
+        "answer_generation": {
+          "provider": "google_vertex_ai",
+          "model": "gemini-3.5-flash",
+          "observed": true,
+          "prompt_token_count": 1086,
+          "output_token_count": 774,
+          "total_token_count": 1860,
+          "status": "success",
+          "finish_reason": "STOP",
+          "fallback_used": false
+        },
+        "guardrails": {
+          "provider": "unobserved",
+          "model": "unobserved",
+          "observed": false
+        }
+      },
+      "guardrail_state": {
+        "mode": "enforce",
+        "requested": true,
+        "executed": true,
+        "status": "passed",
+        "input_safe": true,
+        "output_safe": true,
+        "stages": {
+          "input": {
+            "status": "passed",
+            "safe": true,
+            "error": null
+          },
+          "output": {
+            "status": "passed",
+            "safe": true,
+            "error": null
+          }
+        }
+      }
+    }
+  ],
+  "auth_window": {
+    "UTC_date": "2026-11-03",
+    "count": 14,
+    "subjects": 1,
+    "max_personal": 14,
+    "cap_unchanged": {
+      "personal": 15,
+      "global": 200
+    }
+  }
+}

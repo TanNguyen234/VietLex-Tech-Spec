@@ -1,0 +1,13 @@
+{
+  "command": [
+    "C:/Program Files/nodejs/node.exe",
+    "--test",
+    "tests\\chat_session_race.test.cjs",
+    "tests\\free_research_cancel_race.test.cjs",
+    "tests\\guardrail_inspector.test.cjs",
+    "tests\\legal_effect_bounds.test.cjs",
+    "tests\\product_forms.test.cjs",
+    "tests\\workspace_state_readback.test.cjs"
+  ],
+  "exit_code": 0
+}

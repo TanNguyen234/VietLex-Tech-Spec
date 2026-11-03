@@ -1,0 +1,14 @@
+START minimal
+minimal error=False
+START build
+build error=False
+START detect
+detect error=False
+START flows
+flows error=False
+START callers
+callers error=False
+START tests
+tests error=False
+START context
+context error=False

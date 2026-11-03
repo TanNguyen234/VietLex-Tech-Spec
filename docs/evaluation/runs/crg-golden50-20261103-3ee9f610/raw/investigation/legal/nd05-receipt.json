@@ -1,0 +1,17 @@
+{
+  "id": "nd05",
+  "landing_url": "https://congbao.chinhphu.vn/tai-ve-van-ban-so-05-2025-nd-cp-43838-54238",
+  "retrieved_utc": "2026-11-03T09:28:22.109706+00:00",
+  "evidence": "live official primary, no OCR/model",
+  "pdf_links": [
+    "https://g7.cdnchinhphu.vn/api/download/stream?Url=tm-8mq6BhNw0NbrKRhTDAQWsKg3tuqaY0aWypnY78U6M2BY68Ekp0Gvvr483flbRl1QrQyZp7_-arz22Unv-iNgw3lZaCzkMPfc9E7hVZhGp1MCADZlSaHGdgr-61cfF9OUwRnVIoie1IfCCaG2L8g~~&file_name=2025_155+%2b+156_05-2025-N%c4%90-CP.pdf",
+    "https://g7.cdnchinhphu.vn/api/download/stream?Url=tm-8mq6BhNw0NbrKRhTDAQWsKg3tuqaY0aWypnY78U6M2BY68Ekp0Gvvr483flbRl1QrQyZp7_-arz22Unv-iA0Y2opWxTHBEGuCI-7JLzrYzFmgbUrYMfMl1zAWTLCC3CQW8y_c_XMt5kqO07VTkg~~&file_name=2025_157+%2b+158_05-2025-N%c4%90-CP.pdf"
+  ],
+  "http": 200,
+  "pdf_url": "https://g7.cdnchinhphu.vn/api/download/stream?Url=tm-8mq6BhNw0NbrKRhTDAQWsKg3tuqaY0aWypnY78U6M2BY68Ekp0Gvvr483flbRl1QrQyZp7_-arz22Unv-iNgw3lZaCzkMPfc9E7hVZhGp1MCADZlSaHGdgr-61cfF9OUwRnVIoie1IfCCaG2L8g~~&file_name=2025_155+%2b+156_05-2025-N%c4%90-CP.pdf",
+  "sha256": "d40c6e8336a81b0022d6166c32164565bcb4b46e774648926989848e2c8d07a7",
+  "bytes": 1308298,
+  "pages": 95,
+  "chars": 214021,
+  "status": "downloaded"
+}

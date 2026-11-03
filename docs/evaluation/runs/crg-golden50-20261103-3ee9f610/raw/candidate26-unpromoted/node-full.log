@@ -1,0 +1,30 @@
+✔ late chat response cannot replace another session or erase its draft (6.72ms)
+✔ a draft edited during the current request survives its successful reply (3.2273ms)
+✔ history responses arriving out of order keep the latest requested session (1.4081ms)
+✔ duplicate submit while active sends only one request and normal success clears submitted text (1.0178ms)
+✔ submit is held until requested navigation has installed the correct session (1.8395ms)
+✔ rate limit response uses the server wait interval and preserves the draft (2.2585ms)
+✔ backend failure does not announce that the question was processed (0.8812ms)
+✔ late fetch response cannot abort or alter a newer run (4.8248ms)
+✔ late JSON acknowledgement cannot abort or alter a newer run (13.0577ms)
+✔ late fetch failure cannot add an error to a newer run (0.866ms)
+✔ inspector renders explicit mode, execution and stage errors without calling unknown safe (4.4702ms)
+✔ admin form carries explicit inclusive bound into reviewed event (2.6156ms)
+✔ empty bound preserves old event shape (0.624ms)
+✔ workspace replay renders finite expiry in Vietnamese (1.9077ms)
+✔ forms still work with browser storage disabled (8.6937ms)
+✔ destructive confirmation cancellation never submits (2.2959ms)
+✔ admin filters omit empty options and replace only their target (2.6183ms)
+✔ pending submissions are deduplicated and errors restore controls (2.5981ms)
+✔ successful redirects navigate to the server-selected page (3.77ms)
+✔ canonical owner-scoped readback updates library and reports while preserving active edits and focus (7.6538ms)
+✔ a late readback from an older run cannot replace the newer canonical state (2.2919ms)
+✔ a failed readback leaves saved UI intact and reports a retryable failure (2.6461ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 527.8348

@@ -1,0 +1,530 @@
+Chưa xác minh đầy đủ chuỗi sửa đổi, bãi bỏ, chuyển tiếp và phạm vi áp dụng tại ngày hỏi. Phần dưới chỉ giải thích nội dung nguồn được cung cấp và dữ kiện giả định; chưa kết luận hiệu lực hoặc thẩm quyền hiện hành.
+
+**Trích đoạn nguồn; không xác nhận áp dụng tại ngày hỏi:**
+
+> [Tài liệu tham khảo #1]
+> [72/2020/QH14, Điều 46, Khoản 4]
+> Nguồn: https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx
+> Tiêu đề: Luật Bảo vệ môi trường 2020
+> Điều 46. Công trình bảo vệ môi trường và vận hành thử nghiệm công trình xử lý chất thải của dự án đầu tư sau khi được cấp giấy phép môi trường 4. Đối với dự án đầu tư có thực hiện dịch vụ xử lý chất thải nguy hại hoặc có nhập khẩu phế liệu từ nước ngoài làm nguyên liệu sản xuất, trước khi kết thúc vận hành thử nghiệm 45 ngày, chủ dự án đầu tư phải gửi báo cáo kết quả vận hành thử nghiệm đến cơ quan có thẩm quyền cấp giấy phép môi trường của dự án. Cơ quan cấp giấy phép môi trường có trách nhiệm kiểm tra và quyết định việc điều chỉnh loại, khối lượng chất thải nguy hại được phép xử lý hoặc khối lượng phế liệu được phép nhập khẩu và xử lý vi phạm (nếu có) theo quy định của pháp luật.
+> 
+> [Tài liệu tham khảo #2]
+> [72/2020/QH14, Điều 41]
+> Nguồn: https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx
+> Tiêu đề: Luật Bảo vệ môi trường 2020
+> Điều 41. Thẩm quyền cấp giấy phép môi trường 1. Bộ Tài nguyên và Môi trường cấp giấy phép môi trường đối với các đối tượng sau đây, trừ trường hợp quy định tại khoản 2 Điều này: a) Đối tượng quy định tại Điều 39 của Luật này đã được Bộ Tài nguyên và Môi trường phê duyệt kết quả thẩm định báo cáo đánh giá tác động môi trường; b) Đối tượng quy định tại Điều 39 của Luật này nằm trên địa bàn từ 02 đơn vị hành chính cấp tỉnh trở lên hoặc nằm trên vùng biển chưa xác định trách nhiệm quản lý hành chính của Ủy ban nhân dân cấp tỉnh; cơ sở có nhập khẩu phế liệu từ nước ngoài làm nguyên liệu sản xuất, cơ sở thực hiện dịch vụ xử lý chất thải nguy hại.
+> 
+> [Tài liệu tham khảo #3]
+> [72/2020/QH14, Điều 40, Khoản 2]
+> Nguồn: https://thuvienphapluat.vn/van-ban/Tai-nguyen-Moi-truong/Luat-so-72-2020-QH14-Bao-ve-moi-truong-2020-431147.aspx
+> Tiêu đề: Luật Bảo vệ môi trường 2020
+> Điều 40. Nội dung giấy phép môi trường 2. Nội dung cấp phép môi trường bao gồm: a) Nguồn phát sinh nước thải; lưu lượng xả nước thải tối đa; dòng nước thải; các chất ô nhiễm và giá trị giới hạn của các chất ô nhiễm theo dòng nước thải; vị trí, phương thức xả nước thải và nguồn tiếp nhận nước thải; b) Nguồn phát sinh khí thải; lưu lượng xả khí thải tối đa; dòng khí thải; các chất ô nhiễm và giá trị giới hạn của các chất ô nhiễm theo dòng khí thải; vị trí, phương thức xả khí thải; c) Nguồn phát sinh và giá trị giới hạn đối với tiếng ồn, độ rung; d) Công trình, hệ thống thiết bị xử lý chất thải nguy hại; mã chất thải nguy hại và khối lượng được phép xử lý, số lượng trạm trung chuyển chất thải nguy hại, địa bàn hoạt động đối với dự án đầu tư, cơ sở thực hiện dịch vụ xử lý chất thải nguy hại; đ) Loại, khối lượng phế liệu được phép nhập khẩu đối với dự án đầu tư, cơ sở có nhập khẩu phế liệu từ nước ngoài làm nguyên liệu sản xuất.
+> 
+> [Tài liệu tham khảo #4]
+> [Nguồn chính thức ngoài VietLex · 15/VBHN-VPQH]
+> Nguồn: https://congbao.chinhphu.vn/van-ban/van-ban-hop-nhat-so-15-vbhn-vpqh-44444.htm
+> Nguồn loại: official_external
+> Hiệu lực pháp lý: unverified
+> SHA-256 nội dung trích xuất: e14fc4f37360cf1bbf5cf979b1e13500bc63cff7e8c6e37af5b7eadd54f84d75
+> SHA-256 tệp PDF: e3a9d7f347f7acfbd615c2d7c68e553f008f415905c8d321ba6131290e6caf1d
+> Phạm vi trang PDF: 26-45/56
+> Đọc một phần PDF: có
+> Tệp PDF: https://congbaocdn.chinhphu.vn/CongBaoCP/VanBan/2025/2/44444/55441-1-2025527-52815-vbhn-vpqh.pdf
+> Thời điểm đọc: 2026-11-03T15:15:42.215976+00:00
+> Phương thức đọc: pdf_text
+> Dẫn chiếu: 15/VBHN-VPQH, Điều 41. Thẩm quyền cấp giấy phép môi trường
+> Cơ quan ban hành: VĂN BẢN HỢP NHẤT - VĂN PHÒNG QUỐC HỘI
+> Tiêu đề: Văn bản hợp nhất số 15/VBHN-VPQH hợp nhất Luật Bảo vệ môi trường.
+> Điều 41. Thẩm quyền cấp giấy phép môi trường 
+> 1. Bộ Tài nguyên và Môi trường cấp  giấy phép môi trường đối với  c á c  đ ố i  
+> tượng sau đây, trừ trường hợp quy định tại khoản 2 Điều này: 
+> a) Đối tượng quy định tại Điều 39 của Luật này đã được Bộ Tài n guyên và 
+> Môi trường phê duyệt kết quả thẩm định báo cáo đánh giá tác động môi trường; 
+> 
+>  
+>  CÔNG BÁO/Số 527 + 528/Ngày 18-3-2025 73 
+>  
+> b) Đối tượng quy định tại Điều 39 của Luật này nằm trên địa bàn  từ 02 đơn vị 
+> hành chính cấp tỉnh trở lên hoặc nằm trên vùng biển chưa xác định trách nhiệm quản 
+> lý hành chính của Ủy ban nhân dân cấp tỉnh; cơ sở có nhập khẩu phế liệu từ nước 
+> ngoài làm nguyên liệu sản xuất, cơ sở thực hiện dịch vụ xử lý chất thải nguy hại. 
+> 2. Bộ Quốc phòng, Bộ Công an cấp giấy phép môi trường đối với c ác dự án 
+> đầu tư, cơ sở thuộc bí mật nhà nước về quốc phòng, an ninh. 
+> 3. Ủy ban nhân dân cấp tỉnh cấp giấy phép môi trường đối với cá c đối tượng 
+> sau đây, trừ trường hợp quy định tại khoản 1 và khoản 2 Điều này: 
+> a) Dự án đầu tư nhóm II quy định tại Điều 39 của Luật này; 
+> b) Dự án đầu tư nhóm III quy định tại Điều 39 của Luật này nằm trên địa bàn 
+> từ 02 đơn vị hành chính cấp huyện trở lên;  
+> c) Đối tượng quy định tại khoản 2 Điều 39 của Luật này đã được Ủy ban nhân 
+> dân cấp tỉnh hoặc Bộ, cơ quan ngang Bộ phê duyệt kết quả thẩm định báo cáo đánh 
+> giá tác động môi trường. 
+> 4. Ủy ban nhân dân cấp huyện cấp giấy phép môi trường đối với đối tượng quy 
+> định tại Điều 39 của Luật này, trừ trường hợp quy định tại các khoản 1, 2 và 3 
+> Điều này.
+> 
+> [Tài liệu tham khảo #5]
+> [Nguồn chính thức ngoài VietLex · 15/VBHN-VPQH]
+> Nguồn: https://congbao.chinhphu.vn/van-ban/van-ban-hop-nhat-so-15-vbhn-vpqh-44444.htm
+> Nguồn loại: official_external
+> Hiệu lực pháp lý: unverified
+> SHA-256 nội dung trích xuất: e14fc4f37360cf1bbf5cf979b1e13500bc63cff7e8c6e37af5b7eadd54f84d75
+> SHA-256 tệp PDF: e3a9d7f347f7acfbd615c2d7c68e553f008f415905c8d321ba6131290e6caf1d
+> Phạm vi trang PDF: 26-45/56
+> Đọc một phần PDF: có
+> Tệp PDF: https://congbaocdn.chinhphu.vn/CongBaoCP/VanBan/2025/2/44444/55441-1-2025527-52815-vbhn-vpqh.pdf
+> Thời điểm đọc: 2026-11-03T15:15:42.215976+00:00
+> Phương thức đọc: pdf_text
+> Dẫn chiếu: 15/VBHN-VPQH, Điều 40. Nội dung giấy phép môi trường
+> Cơ quan ban hành: VĂN BẢN HỢP NHẤT - VĂN PHÒNG QUỐC HỘI
+> Tiêu đề: Văn bản hợp nhất số 15/VBHN-VPQH hợp nhất Luật Bảo vệ môi trường.
+> Điều 40. Nội dung giấy phép môi trường 
+> 1. Nội dung giấy phép môi trường gồm thông tin chung về dự án đ ầu tư, cơ sở, 
+> khu sản xuất kinh doanh, dịch vụ tập trung, cụm công nghiệp; nộ i dung cấp phép 
+> môi trường; yêu cầu về bảo vệ môi trường; thời hạn của giấy phé p môi trường; nội 
+> dung khác (nếu có). 
+> 2. Nội dung cấp phép môi trường bao gồm: 
+> a) Nguồn phát sinh nước thải; lưu lượng xả nước thải tối đa; dò ng nước thải; 
+> các chất ô nhiễm và giá trị giới  hạn của các chất ô nhiễm theo dòng nước thải; vị 
+> trí, phương thức xả nước thải và nguồn tiếp nhận nước thải;  
+> b) Nguồn phát sinh khí thải; lưu lư ợng xả khí thải tối đa; dòng  khí thải; các 
+> chất ô nhiễm và giá trị giới hạn của các chất ô nhiễm theo dòng  khí thải; vị trí, 
+> phương thức xả khí thải; 
+> c) Nguồn phát sinh và giá trị giới hạn đối với tiếng ồn, độ rung;  
+> d) Công trình, hệ thống thiết bị xử lý chất thải nguy hại; mã chất thải nguy hại và 
+> khối lượng được phép xử lý, số lượng trạm trung chuyển chất thải nguy hại, địa bàn 
+> hoạt động đối với dự án đầu tư, cơ sở thực hiện dịch vụ xử lý chất thải nguy hại; 
+> đ) Loại, khối lượng phế liệu được  phép nhập khẩu đối với dự án đầu tư, cơ sở 
+> có nhập khẩu phế liệu từ nước ngoài làm nguyên liệu sản xuất. 
+>                                            
+> 3 Khoản này được sửa đổi, bổ sung theo quy định tại điểm b khoản  1 Điều 109 của Luật Địa 
+> chất và khoáng sản số 54/2024/QH15, có hiệu lực kể từ ngày 15 t háng 01 năm 2025 theo quy 
+> định tại khoản 2 Điều 110 của Luật Địa chất và khoáng sản số 54/2024/QH15. 
+> 
+>  
+> 72 CÔNG BÁO/Số 527 + 528/Ngày 18-3-2025 
+>   
+> 3. Yêu cầu về bảo vệ môi trường bao gồm: 
+> a) Có công trình, biện pháp thu gom, xử lý nước thải, khí thải,  giảm thiểu tiếng 
+> ồn, độ rung đáp ứng yêu cầu; trường hợp xả nước thải vào công t rình thủy lợi phải 
+> có các yêu cầu về bảo vệ môi trường đối với nguồn nước công trình thủy lợi; 
+> b) Có biện pháp, hệ thống, công trình, thiết bị lưu giữ, vận ch uyển, trung 
+> chuyển, sơ chế, xử lý đáp ứng yêu cầu quy trình kỹ thuật và quả n lý đối với dự án 
+> đầu tư, cơ sở thực hiện dịch vụ xử lý chất thải nguy hại; 
+> c) Có kho, bãi lưu giữ phế liệu đáp ứng quy định; hệ thống thiế t bị tái chế; 
+> phương án xử lý tạp chất; phương án tái xuất đối với dự án đầu tư, cơ sở có nhập 
+> khẩu phế liệu từ nước ngoài làm nguyên liệu sản xuất; 
+> d) Có kế hoạch quản lý và giám sát môi trường, kế hoạch phòng ngừa, ứng phó 
+> sự cố môi trường; trang thiết bị, công trình phòng ngừa, ứng ph ó sự cố môi trường, 
+> quan trắc môi trường; 
+> đ) Quản lý chất thải rắn sinh hoạt, chất thải rắn công nghiệp t hông thường, 
+> chất thải nguy hại; cải tạo, phục hồi môi trường; bồi hoàn đa d ạng sinh học theo 
+> quy định của pháp luật; 
+> e) Yêu cầu khác về bảo vệ môi trường (nếu có). 
+> 4. Thời hạn của giấy phép môi trường được quy định như sau: 
+> a) 07 năm đối với dự án đầu tư nhóm I; 
+> b) 07 năm đối với cơ sở sản xuất, kinh doanh, dịch vụ, khu sản xuất, kinh 
+> doanh, dịch vụ tập trung, cụm c ông nghiệp hoạt động trước ngày Luật này có hiệu 
+> lực thi hành có tiêu chí về môi trường như dự án đầu tư nhóm I; 
+> c) 10 năm đối với đối tượng không thuộc quy định tại điểm a và điểm b khoản này; 
+> d) Thời hạn của giấy phép môi trường có thể ngắn hơn thời hạn q uy định tại 
+> các điểm a, b và c khoản này theo đề nghị của chủ dự án đầu tư,  cơ sở, chủ đầu tư 
+> xây dựng và kinh doanh hạ tầng khu sản xuất, kinh doanh, dịch v ụ tập trung, cụm 
+> công nghiệp (sau đây gọi chung là chủ dự án đầu tư, cơ sở). 
+> 5. Bộ trưởng Bộ Tài nguyên và Môi trường ban hành mẫu giấy phép môi trường.
+> 
+> [Tài liệu tham khảo #6]
+> [Nguồn chính thức ngoài VietLex · 15/VBHN-VPQH]
+> Nguồn: https://congbao.chinhphu.vn/van-ban/van-ban-hop-nhat-so-15-vbhn-vpqh-44444.htm
+> Nguồn loại: official_external
+> Hiệu lực pháp lý: unverified
+> SHA-256 nội dung trích xuất: e14fc4f37360cf1bbf5cf979b1e13500bc63cff7e8c6e37af5b7eadd54f84d75
+> SHA-256 tệp PDF: e3a9d7f347f7acfbd615c2d7c68e553f008f415905c8d321ba6131290e6caf1d
+> Phạm vi trang PDF: 26-45/56
+> Đọc một phần PDF: có
+> Tệp PDF: https://congbaocdn.chinhphu.vn/CongBaoCP/VanBan/2025/2/44444/55441-1-2025527-52815-vbhn-vpqh.pdf
+> Thời điểm đọc: 2026-11-03T15:15:42.215976+00:00
+> Phương thức đọc: pdf_text
+> Dẫn chiếu: 15/VBHN-VPQH, Điều 42. Căn cứ và thời điểm cấp giấy phép môi trường
+> Cơ quan ban hành: VĂN BẢN HỢP NHẤT - VĂN PHÒNG QUỐC HỘI
+> Tiêu đề: Văn bản hợp nhất số 15/VBHN-VPQH hợp nhất Luật Bảo vệ môi trường.
+> Điều 42. Căn cứ và thời điểm cấp giấy phép môi trường 
+> 1. Căn cứ cấp giấy phép môi trường bao gồm: 
+> a) Hồ sơ đề nghị cấp giấy phép môi trường quy định tại khoản 1 Điều 43 của 
+> Luật này; 
+> b) Báo cáo đánh giá tác động môi trường đã được cơ quan nhà nướ c có thẩm 
+> quyền phê duyệt kết quả thẩm định (nếu có); 
+> c) Quy hoạch bảo vệ môi trường quốc gia, quy hoạch tỉnh, phân v ùng môi 
+> trường, khả năng chịu tải của môi trường theo quyết định của cơ  quan nhà nước có 
+> thẩm quyền, trừ trường hợp quy định tại điểm e khoản này;  
+> d) Quy chuẩn kỹ thuật môi trường;  
+> đ) Các quy định của pháp luật về bảo vệ môi trường, tài nguyên nước và quy 
+> định khác của pháp luật có liên quan; 
+> e) Tại thời điểm cấp giấy phép môi trường, trường hợp Quy hoạch  bảo vệ môi 
+> trường quốc gia, quy hoạch tỉnh, phân vùng môi trường, khả năng  chịu tải của môi 
+> trường chưa được cơ quan nhà nư ớc có thẩm quyền ban hành thì vi ệc cấp giấy 
+> phép môi trường được thực hiện căn cứ vào các điểm a, b, d và đ khoản này. 
+> 
+>  
+> 74 CÔNG BÁO/Số 527 + 528/Ngày 18-3-2025 
+>   
+> 2. Thời điểm cấp giấy phép môi trường được quy định như sau: 
+> a) Dự án đầu tư thuộc đối tượng phải thực hiện đánh giá tác độn g môi trường 
+> phải có giấy phép môi trường trước khi vận hành thử nghiệm công  trình xử lý chất 
+> thải, trừ trường hợp quy định tại điểm c khoản này;  
+> b) Dự án đầu tư không thuộc đối tượng phải thực hiện đánh giá t ác động môi 
+> trường phải có giấy phép môi trường trước khi được cơ quan nhà nước có thẩm 
+> quyền ban hành văn bản quy định tại các điểm a, b, c, d và g kh oản 1 Điều 36 của 
+> Luật này. Trường hợp dự án đầu tư  xây dựng không thuộc đối tượng được cơ quan 
+> chuyên môn về xây dựng thẩm định báo cáo nghiên cứu khả thi the o quy định của 
+> pháp luật về xây dựng thì phải có giấy phép môi trường trước kh i được cơ quan 
+> nhà nước có thẩm quyền cấp, điều chỉnh giấy phép xây dựng; 
+> c) Đối với dự án đầu tư quy định tại khoản 2 Điều 39 của Luật n ày đang vận 
+> hành thử nghiệm công trình xử lý chất thải theo  quy định của ph áp luật trước 
+> ngày Luật này có hiệu lực thi hàn h, chủ dự án đầu tư được lựa c họn tiếp tục vận 
+> hành thử nghiệm để được cấp giấy phép môi trường sau khi kết th úc vận hành 
+> thử nghiệm công trình xử lý chất thải hoặc lập hồ sơ để được cấ p giấy phép môi 
+> trường trước khi hết thời hạn vậ n hành thử nghiệm. Chủ dự án đầ u tư không 
+> phải vận hành thử nghiệm lại công  trình xử lý chất thải nhưng k ết quả hoàn 
+> thành việc vận hành thử nghiệm p hải được báo cáo, đánh giá theo  quy định tại 
+> Điều 46 của Luật này; 
+> d) Cơ sở sản xuất, kinh doanh, dịch vụ, khu sản xuất, kinh doan h, dịch vụ tập 
+> trung, cụm công nghiệp quy định tại khoản 2 Điều 39 của Luật nà y đã đi vào vận 
+> hành chính thức trước ngày Luật n ày có hiệu lực thi hành phải c ó giấy phép môi 
+> trường trong thời hạn 36 tháng kể từ ngày Luật này có hiệu lực thi hành, trừ trường 
+> hợp đã được cơ quan có thẩm quyền cấp giấy xác nhận hoàn thành công trình bảo 
+> vệ môi trường, giấy chứng nhận đạt tiêu chuẩn môi trường, giấy xác nhận đủ điều 
+> kiện về bảo vệ môi trường trong nhập khẩu phế liệu từ nước ngoài làm nguyên liệu 
+> sản xuất, giấy phép xử lý chất thải nguy hại, giấy phép xả nước  thải vào nguồn 
+> nước, giấy phép xả nước thải vào công trình thủy lợi (sau đây g ọi chung là giấy 
+> phép môi trường thành phần). Giấ y phép môi trường thành phần đư ợc tiếp tục sử 
+> dụng như giấy phép môi trường đến hết thời hạn của giấy phép mô i trường thành 
+> phần hoặc được tiếp tục sử dụng trong thời hạn 05 năm kể từ ngà y Luật này có 
+> hiệu lực thi hành trong trường h ợp giấy phép môi trường thành p hần không xác 
+> định thời hạn. 
+> 
+>  
+>  CÔNG BÁO/Số 527 + 528/Ngày 18-3-2025 75 
+>  
+> 3. Trường hợp dự án đầu tư hoặc cơ sở sản xuất, kinh doanh, dịc h vụ, khu sản 
+> xuất, kinh doanh, dịch vụ tập trung, cụm công nghiệp được thực hiện theo nhiều 
+> giai đoạn, có nhiều công trình, hạng mục công trình thì giấy ph ép môi trường có 
+> thể cấp cho từng giai đoạn, công trình, hạng mục công trình có phát sinh chất thải. 
+> Giấy phép môi trường được cấp sau sẽ tích hợp nội dung giấy phé p môi trường 
+> được cấp trước vẫn còn hiệu lực. 
+> 4. Giấy phép môi trường là căn cứ để thực hiện hoạt động sau đây: 
+> a) Thực hiện việc thanh tra, kiể m tra, giám sát của cơ quan nhà  nước có thẩm 
+> quyền đối với các hoạt động bảo vệ m ôi trường của dự án đầu tư,  cơ sở, khu sản 
+> xuất, kinh doanh, dịch vụ tập trung, cụm công nghiệp;  
+> b) Thực hiện trách nhiệm bảo vệ môi trường của chủ dự án đầu tư, cơ sở. 
+> 5. Trường hợp có thay đổi tên dự án đầu tư, cơ sở, khu sản xuất , kinh doanh, 
+> dịch vụ tập trung, cụm công nghiệp hoặc chủ dự án đầu tư, cơ sở  thì chủ dự án đầu 
+> tư, cơ sở có trách nhiệm tiếp tục thực hiện giấy phép môi trườn g và thông báo cho 
+> cơ quan cấp giấy phép môi trường biết để được cấp đổi giấy phép. 
+> 6. Kể từ ngày giấy phép môi trường có hiệu lực, quyết định phê duyệt kết quả 
+> thẩm định báo cáo đánh giá tác động môi trường, giấy phép môi t rường thành phần 
+> hết hiệu lực.
+> 
+> [Tài liệu tham khảo #7]
+> [Nguồn chính thức ngoài VietLex · 08/2022/NĐ-CP]
+> Nguồn: https://congbao.chinhphu.vn/van-ban/nghi-dinh-so-08-2022-nd-cp-36666.htm
+> Nguồn loại: official_external
+> Hiệu lực pháp lý: unverified
+> SHA-256 nội dung trích xuất: 79dc48a53f00c3746daa6bdbeccc33d5b4a6f2e451092beda375de8acc224e5a
+> SHA-256 tệp PDF: 1826c3468ea081e513ddfdf5cc60e1a4a65e6fe35d16466130a98ea6bc5cc6a4
+> Phạm vi trang PDF: 41-60/95
+> Đọc một phần PDF: có
+> Tệp PDF: https://congbaocdn.chinhphu.vn/CongBaoCP/VanBan/2022/1/36666/39590-1-2022169-17008-2022-nd-cp.pdf
+> Thời điểm đọc: 2026-11-03T15:16:01.506793+00:00
+> Phương thức đọc: pdf_text
+> Dẫn chiếu: 08/2022/NĐ-CP, Điều 30. Cấp đổi, điều chỉnh, cấp lại, thu hồi giấy phép môi trường
+> Cơ quan ban hành: CHÍNH PHỦ
+> Tiêu đề: Nghị định số 08/2022/NĐ-CP quy định chi tiết một số điều của Luật Bảo vệ môi trường.
+> Điều 30. Cấp đổi, điều chỉnh, cấp lại, thu hồi giấy phép môi trường 
+> 1. Cấp đổi giấy phép môi tr ường theo quy định tại khoản 1 Điều 44 Lu ật Bảo 
+> vệ môi tr ường được thực hiện trong th ời hạn 10 ngày, k ể từ ngày nh ận được văn 
+> bản đề nghị cấp đổi của chủ dự án đầu tư, cơ sở, kèm theo h ồ sơ pháp lý có liên 
+> quan đến việc thay đổi. Cơ quan c ấp giấy phép môi tr ường cấp đổi giấy phép môi 
+> trường cho chủ dự án đầu tư, cơ sở với thời hạn còn lại của giấy phép. 
+> Việc c ấp đổi gi ấy phép môi tr ường được th ực hi ện trên môi tr ường điện t ử 
+> thông qua h ệ thống dịch vụ công tr ực tuyến mức độ 4 c ủa cơ quan c ấp phép ho ặc 
+> cơ quan được ủy quyền và không phải nộp phí thẩm định theo quy định. 
+> 
+>  
+> 52 CÔNG BÁO/Số 169 + 170/Ngày 30-01-2022 
+>   
+> 2. Ch ủ d ự án đầu t ư, c ơ s ở ph ải th ực hi ện điều ch ỉnh gi ấy phép môi tr ường 
+> trong thời hạn còn l ại của giấy phép khi có thay đổi quy định tại điểm a kho ản 2 
+> Điều 44 Luật Bảo vệ môi trường và các thay đổi khác không thuộc trường hợp quy 
+> định t ại điểm b kho ản 3 và kho ản 4 Điều này, tr ừ tr ường h ợp thay đổi gi ảm n ội 
+> dung cấp phép môi tr ường hoặc thay đổi khối lượng, loại chất thải nguy h ại phát 
+> sinh. Trường hợp thay đổi giảm nội dung cấp phép môi tr ường, việc thay đổi giấy 
+> phép môi tr ường được th ực hi ện khi có đề ngh ị c ủa ch ủ d ự án đầu t ư, c ơ s ở. 
+> Trường hợp thay đổi khối lượng, loại chất thải nguy hại phát sinh, chủ dự án, cơ sở 
+> có trách nhi ệm báo cáo vi ệc thay đổi trong báo cáo công tác b ảo v ệ môi tr ường 
+> định kỳ của dự án, cơ sở. 
+> Việc điều chỉnh giấy phép môi tr ường được thực hiện trong th ời hạn 15 ngày, 
+> kể từ ngày nhận được văn bản đề nghị điều chỉnh giấy phép môi trường của chủ dự 
+> án đầu tư, cơ sở và được thực hiện trên môi trường điện tử thông qua hệ thống dịch 
+> vụ công tr ực tuyến mức độ 4 c ủa cơ quan c ấp phép ho ặc cơ quan được ủy quyền 
+> cấp giấy phép môi trường theo quy định. 
+> 3. Việc xem xét, điều chỉnh giấy phép môi trường quy định tại điểm b khoản 2 
+> Điều 44 và khoản 4 Điều 46 Luật Bảo vệ môi trường được thực hiện trong thời hạn 
+> 25 ngày, k ể từ ngày nh ận được báo cáo k ết quả vận hành th ử nghiệm của chủ dự 
+> án đầu tư, cơ sở. Cơ quan cấp giấy phép môi tr ường, căn cứ báo cáo k ết quả kiểm 
+> tra của đoàn kiểm tra vi ệc vận hành th ử nghiệm công trình x ử lý ch ất thải của dự 
+> án đầu tư, cơ sở sản xuất, kinh doanh, d ịch vụ; kết quả đo đạc, phân tích m ẫu chất 
+> thải đối chứng, mẫu quan tr ắc chất thải bổ sung (n ếu có) và báo cáo k ết quả vận 
+> hành th ử nghi ệm c ủa ch ủ d ự án đầu t ư, c ơ s ở để th ực hi ện vi ệc điều ch ỉnh gi ấy 
+> phép môi trường như sau: 
+> a) Lấy ý kiến cơ quan chuyên môn về bảo vệ môi trường cấp tỉnh, Ban quản lý 
+> các khu công nghi ệp c ủa t ỉnh (n ếu d ự án đầu t ư n ằm trong khu s ản xu ất, kinh 
+> doanh, d ịch v ụ t ập trung); ý ki ến m ột s ố chuyên gia môi tr ường, trong đó có 
+> chuyên gia đã tham gia h ội đồng th ẩm định, đoàn ki ểm tra c ấp gi ấy phép môi 
+> trường về các n ội dung điều chỉnh của dự án đầu tư, cơ sở sản xuất, kinh doanh, 
+> dịch vụ; 
+> b) Thông báo với chủ dự án đầu tư, cơ sở về các nội dung điều chỉnh loại, khối 
+> lượng chất thải nguy hại được phép x ử lý chất thải hoặc khối lượng phế liệu được 
+> phép nhập khẩu làm nguyên li ệu sản xuất để phù hợp với năng lực hoạt động thực 
+> tế của dự án đầu tư, cơ sở sản xuất, kinh doanh, dịch vụ;  
+> 
+>  
+>  CÔNG BÁO/Số 169 + 170/Ngày 30-01-2022 53 
+>  
+> Chủ dự án đầu tư, cơ sở có v ăn bản giải trình, b ổ sung v ề các n ội dung điều 
+> chỉnh quy định tại điểm này gửi cơ quan cấp giấy phép môi trường (nếu có); 
+> c) Cơ quan c ấp giấy phép môi tr ường cấp giấy phép môi tr ường (điều chỉnh) 
+> cho chủ dự án đầu tư, cơ sở với thời hạn còn lại của giấy phép để phù hợp với năng 
+> lực hoạt động thực tế của dự án đầu tư, cơ sở sản xuất, kinh doanh, dịch vụ. 
+> 4. Đối tượng cấp lại giấy phép môi trường và thời điểm chủ dự án đầu tư, cơ sở 
+> gửi hồ sơ đề nghị cấp lại giấy phép môi trường được quy định như sau: 
+> a) Đối tượng quy định tại điểm a khoản 3 Điều 44 Luật Bảo vệ môi trường gửi 
+> hồ sơ đề nghị cấp lại giấy phép môi trường trước khi hết hạn 06 tháng; 
+> b) Dự án đầu tư, cơ sở, khu sản xuất, kinh doanh, d ịch vụ tập trung, cụm công 
+> nghiệp tăng quy mô, công su ất, thay đổi công nghệ sản xuất, trừ trường hợp dự án 
+> đầu tư thay đổi thuộc đối tượng phải thực hiện đánh giá tác động môi tr ường, gửi 
+> hồ sơ đề nghị cấp lại giấy phép môi tr ường trước khi thực hiện việc tăng, thay đổi 
+> và chỉ được triển khai thực hiện sau khi được cấp giấy phép môi trường; 
+> c) Khu s ản xuất, kinh doanh, d ịch vụ tập trung, c ụm công nghi ệp có b ổ sung 
+> ngành, nghề thu hút đầu tư, gửi hồ sơ đề nghị cấp lại giấy phép môi tr ường trước 
+> khi thực hiện thu hút đầu tư các ngành, ngh ề đó (trừ trường hợp ngành, nghề hoặc 
+> dự án đầu tư thuộc ngành, nghề đó khi đi vào vận hành không phát sinh n ước thải 
+> công nghiệp phải xử lý để bảo đảm đạt điều kiện tiếp nhận nước thải của hệ thống 
+> xử lý nước thải tập trung); 
+> d) Dự án đầu tư, cơ sở, khu sản xuất, kinh doanh, d ịch vụ tập trung, cụm công 
+> nghiệp có thay đổi tăng số lượng nguồn phát sinh n ước thải, bụi, khí thải làm phát 
+> sinh các thông s ố ô nhi ễm vượt quy chu ẩn kỹ thuật môi tr ường về chất thải; phát 
+> sinh thêm thông s ố ô nhiễm mới vượt quy chuẩn kỹ thuật môi trường về chất thải; 
+> tăng l ưu l ượng n ước th ải, b ụi, khí th ải làm gia t ăng hàm l ượng các thông s ố ô 
+> nhiễm vượt quy chuẩn kỹ thuật môi trường về chất thải; tăng mức độ ô nhiễm tiếng 
+> ồn, độ rung; thay đổi nguồn tiếp nhận nước thải và phương thức xả thải vào nguồn 
+> nước có yêu c ầu bảo vệ nghiêm ngặt hơn, gửi hồ sơ đề nghị cấp lại giấy phép môi 
+> trường trước khi th ực hiện việc thay đổi và ch ỉ được triển khai th ực hiện sau khi 
+> được cấp giấy phép môi trường. 
+> 5. Việc cấp lại giấy phép môi trường quy định tại khoản 4 Điều này được thực 
+> hiện như sau: 
+> a) Chủ cơ sở, chủ đầu tư xây d ựng và kinh doanh h ạ tầng khu s ản xuất, kinh 
+> doanh, dịch vụ tập trung, cụm công nghiệp quy định tại điểm a và điểm c khoản 4 
+> 
+>  
+> 54 CÔNG BÁO/Số 169 + 170/Ngày 30-01-2022 
+>   
+> Điều này gửi văn bản đề nghị cấp lại giấy phép môi trường và báo cáo đề xuất cấp 
+> giấy phép môi tr ường quy định tại khoản 3 Điều 28 Ngh ị định này (tr ừ nội dung 
+> quy định t ại điểm a và điểm c kho ản 3 Điều 28 Ngh ị định này) ho ặc kho ản 5 
+> Điều 28 Ngh ị định này (tr ừ n ội dung quy định t ại điểm a và điểm c kho ản 5 
+> Điều 28 Ngh ị định này) đến cơ quan nhà n ước có th ẩm quyền cấp giấy phép môi 
+> trường. Trình t ự, th ủ t ục c ấp l ại gi ấy phép môi tr ường được th ực hi ện theo quy 
+> định tại Điều 29 Nghị định này. 
+> Thời hạn cấp lại giấy phép môi tr ường không quá 30 ngày đối với trường hợp 
+> thuộc thẩm quyền cấp phép của Bộ Tài nguyên và Môi trường, Bộ Quốc phòng, Bộ 
+> Công an, không quá 20 ngày đối với trường hợp thuộc thẩm quyền cấp phép c ủa 
+> Ủy ban nhân dân c ấp tỉnh và Ủy ban nhân dân c ấp huyện, kể từ ngày nh ận được 
+> đầy đủ hồ sơ hợp lệ; 
+> b) Chủ dự án đầu tư, cơ sở quy định tại điểm b và điểm d kho ản 4 Điều này 
+> gửi văn bản đề nghị cấp lại giấy phép môi trường và báo cáo đề xuất cấp giấy phép 
+> môi trường quy định tại một trong các khoản 2, 3, 4 hoặc 5 Điều 28 Nghị định này 
+> (chỉ bao g ồm những nội dung thay đổi so v ới báo cáo đề xuất cấp giấy phép môi 
+> trường lần đầu) đến cơ quan nhà n ước có th ẩm quyền cấp giấy phép môi tr ường. 
+> Thời gian, trình t ự, thủ tục cấp lại giấy phép môi tr ường được thực hiện theo quy 
+> định tại Điều 29 Nghị định này. 
+> 6. D ự án đầu t ư, c ơ s ở được c ấp đổi, c ấp điều ch ỉnh, c ấp l ại gi ấy phép môi 
+> trường không ph ải vận hành th ử nghiệm công trình x ử lý ch ất thải, trừ các tr ường 
+> hợp quy định tại điểm b và điểm d khoản 4 Điều này. 
+> 7. Trường hợp phát hi ện giấy phép môi tr ường phải bị thu h ồi theo quy định 
+> tại khoản 5 Điều 44 Lu ật Bảo vệ môi tr ường trong quá trình x ử lý vi ph ạm hành 
+> chính, việc thu hồi giấy phép được thực hiện theo quy định của pháp luật về xử lý 
+> vi ph ạm hành chính. Vi ệc c ấp gi ấy phép môi tr ường được th ực hi ện theo quy 
+> định sau: 
+> a) Trường hợp giấy phép môi tr ường được cấp không đúng thẩm quyền, trong 
+> thời hạn khắc phục hậu quả vi phạm, chủ dự án đầu tư, cơ sở thực hiện thủ tục đề 
+> nghị cấp giấy phép môi trường quy định tại Điều 29 Nghị định này; 
+> b) Trường hợp giấy phép môi tr ường có n ội dung trái quy định của pháp lu ật, 
+> trong th ời hạn 07 ngày k ể từ ngày nh ận được giấy phép môi tr ường có n ội dung 
+> trái quy định của pháp lu ật do ng ười có th ẩm quyền xử phạt chuyển đến, cơ quan 
+> có thẩm quyền cấp giấy phép môi trường có trách nhiệm xem xét cấp thay thế giấy 
+> 
+>  
+>  CÔNG BÁO/Số 169 + 170/Ngày 30-01-2022 55 
+>  
+> phép môi trường cho chủ dự án đầu tư, cơ sở, trong đó có điều chỉnh nội dung trái 
+> pháp luật. 
+> 8. Tr ường h ợp phát hi ện gi ấy phép môi tr ường ph ải b ị thu h ồi quy định t ại 
+> khoản 5 Điều 44 Lu ật B ảo v ệ môi tr ường nh ưng không thu ộc tr ường h ợp quy 
+> định t ại kho ản 7 Điều này, vi ệc thu h ồi và c ấp gi ấy phép môi tr ường được th ực 
+> hiện như sau: 
+> a) C ơ quan nhà n ước phát hi ện gi ấy phép môi tr ường ph ải bị thu h ồi có v ăn 
+> bản gửi cơ quan đã cấp giấy phép môi tr ường để thông báo vi ệc cấp phép không 
+> đúng thẩm quyền hoặc có nội dung cấp phép trái quy định của pháp luật về bảo vệ 
+> môi trường; 
+> b) Cơ quan đã cấp giấy phép môi tr ường phải bị thu h ồi có trách nhi ệm xem 
+> xét, rà soát l ại trình t ự, thủ tục, nội dung th ẩm định cấp giấy phép môi tr ường sau 
+> khi nhận được văn bản thông báo quy định tại điểm a khoản này. 
+> Trường hợp giấy phép môi tr ường được cấp không đúng thẩm quyền theo quy 
+> định, cơ quan đã cấp giấy phép môi tr ường hướng dẫn chủ dự án đầu tư, cơ sở lập 
+> hồ đề nghị cấp giấy phép môi trường gửi cơ quan có thẩm quyền cấp phép để được 
+> cấp mới giấy phép môi tr ường theo quy định tại Điều 29 Ngh ị định này. C ơ quan 
+> đã cấp giấy phép môi tr ường thực hiện việc thu h ồi giấy phép môi tr ường sau khi 
+> dự án đầu tư, cơ sở đã được cơ quan có thẩm quyền cấp mới giấy phép môi trường 
+> theo đúng quy định của pháp luật. 
+> Trường h ợp gi ấy phép môi tr ường được c ấp có n ội dung trái quy định c ủa 
+> pháp luật, cơ quan đã cấp giấy phép môi tr ường thực hiện cấp thay th ế giấy phép 
+> môi trường cho dự án đầu tư, cơ sở, trong đó có điều chỉnh nội dung trái quy định 
+> của pháp lu ật. Vi ệc thu h ồi gi ấy phép môi tr ường có n ội dung trái quy định c ủa 
+> pháp lu ật được th ực hi ện đồng th ời v ới th ời điểm c ấp thay th ế gi ấy phép môi 
+> trường cho dự án đầu tư, cơ sở. 
+> 9. Báo cáo đề xuất cấp lại giấy phép môi tr ường của cơ sở, khu sản xuất, kinh 
+> doanh, d ịch v ụ t ập trung, c ụm công nghi ệp đang ho ạt động có tiêu chí v ề môi 
+> trường tương đương với dự án nhóm I, nhóm II th ực hiện theo m ẫu quy định tại 
+> Phụ l ục X ban hành kèm theo Ngh ị định này; báo cáo đề xu ất c ấp l ại gi ấy phép 
+> môi trường của cơ sở sản xuất, kinh doanh, d ịch vụ đang hoạt động có tiêu chí v ề 
+> môi trường tương đương với dự án nhóm III th ực hiện theo m ẫu quy định tại Phụ 
+> lục XII ban hành kèm theo Ngh ị định này; báo cáo đề xuất cấp lại giấy phép môi 
+> trường của dự án đầu tư quy định tại điểm b và điểm d kho ản 4 Điều này có tiêu 
+> 
+>  
+> 56 CÔNG BÁO/Số 169 + 170/Ngày 30-01-2022 
+>   
+> chí về môi trường tương đương với dự án nhóm II thực hiện theo mẫu quy định tại 
+> Phụ lục IX ban hành kèm theo Ngh ị định này; báo cáo đề xuất cấp lại giấy phép 
+> môi trường của dự án đầu tư quy định tại điểm b và điểm d kho ản 4 Điều này có 
+> tiêu chí v ề môi tr ường t ương đương v ới d ự án nhóm III th ực hiện theo m ẫu quy 
+> định tại Phụ lục XI ban hành kèm theo Ngh ị định này; v ăn bản đề nghị cấp điều 
+> chỉnh, cấp lại giấy phép môi tr ường của chủ dự án đầu tư, cơ sở, mẫu văn bản đề 
+> nghị cấp đổi giấy phép môi tr ường của chủ dự án đầu tư, cơ sở thực hiện theo các 
+> mẫu quy định tương ứng tại Phụ lục XIII và Phụ lục XIV ban hành kèm theo Ngh ị 
+> định này. 
+> 10. Bộ trưởng Bộ Tài nguyên và Môi tr ường ban hành các bi ểu mẫu liên quan 
+> đến quá trình th ực hi ện c ấp đổi, c ấp điều ch ỉnh, c ấp l ại, thu h ồi gi ấy phép môi 
+> trường, trừ trường hợp quy định tại khoản 9 Điều này.
+> 
+> [Tài liệu tham khảo #8]
+> [Nguồn chính thức ngoài VietLex · 15/VBHN-VPQH]
+> Nguồn: https://congbao.chinhphu.vn/van-ban/van-ban-hop-nhat-so-15-vbhn-vpqh-44444.htm
+> Nguồn loại: official_external
+> Hiệu lực pháp lý: unverified
+> SHA-256 nội dung trích xuất: e14fc4f37360cf1bbf5cf979b1e13500bc63cff7e8c6e37af5b7eadd54f84d75
+> SHA-256 tệp PDF: e3a9d7f347f7acfbd615c2d7c68e553f008f415905c8d321ba6131290e6caf1d
+> Phạm vi trang PDF: 26-45/56
+> Đọc một phần PDF: có
+> Tệp PDF: https://congbaocdn.chinhphu.vn/CongBaoCP/VanBan/2025/2/44444/55441-1-2025527-52815-vbhn-vpqh.pdf
+> Thời điểm đọc: 2026-11-03T15:15:42.215976+00:00
+> Phương thức đọc: pdf_text
+> Dẫn chiếu: 15/VBHN-VPQH, Điều 45. Phí thẩm định cấp giấy phép môi trường
+> Cơ quan ban hành: VĂN BẢN HỢP NHẤT - VĂN PHÒNG QUỐC HỘI
+> Tiêu đề: Văn bản hợp nhất số 15/VBHN-VPQH hợp nhất Luật Bảo vệ môi trường.
+> Điều 45. Phí thẩm định cấp giấy phép môi trường 
+> 1. Chủ dự án đầu tư, cơ sở có trách nhiệm nộp phí thẩm định cấp , cấp lại, điều 
+> chỉnh giấy phép môi trường. 
+> 2. Bộ trưởng Bộ Tài chính quy định chế độ thu, nộp, quản lý và sử dụng phí 
+> thẩm định cấp, cấp lại, điều chỉnh giấy phép môi trường thuộc t hẩm quyền cấp 
+> giấy phép môi trường của cơ quan nhà nước ở trung ương. 
+> 3. Hội đồng nhân dân cấp tỉnh quy định chế độ thu, nộp, quản lý  và sử dụng 
+> phí thẩm định cấp, cấp lại, điều chỉnh giấy phép môi trường thu ộc thẩm quyền cấp 
+> giấy phép môi trường của Ủy ban nhân dân cấp tỉnh và Ủy ban nhân dân cấp huyện 
+> theo quy định của pháp luật.
+> 
+> [Tài liệu tham khảo #9]
+> [Nguồn chính thức ngoài VietLex · 15/VBHN-VPQH]
+> Nguồn: https://congbao.chinhphu.vn/van-ban/van-ban-hop-nhat-so-15-vbhn-vpqh-44444.htm
+> Nguồn loại: official_external
+> Hiệu lực pháp lý: unverified
+> SHA-256 nội dung trích xuất: e14fc4f37360cf1bbf5cf979b1e13500bc63cff7e8c6e37af5b7eadd54f84d75
+> SHA-256 tệp PDF: e3a9d7f347f7acfbd615c2d7c68e553f008f415905c8d321ba6131290e6caf1d
+> Phạm vi trang PDF: 26-45/56
+> Đọc một phần PDF: có
+> Tệp PDF: https://congbaocdn.chinhphu.vn/CongBaoCP/VanBan/2025/2/44444/55441-1-2025527-52815-vbhn-vpqh.pdf
+> Thời điểm đọc: 2026-11-03T15:15:42.215976+00:00
+> Phương thức đọc: pdf_text
+> Dẫn chiếu: 15/VBHN-VPQH, Điều 39. Đối tượng phải có giấy phép môi trường
+> Cơ quan ban hành: VĂN BẢN HỢP NHẤT - VĂN PHÒNG QUỐC HỘI
+> Tiêu đề: Văn bản hợp nhất số 15/VBHN-VPQH hợp nhất Luật Bảo vệ môi trường.
+> Điều 39. Đối tượng phải có giấy phép môi trường 
+> 1. Dự án đầu tư nhóm I, nhóm II và nhóm III có phát sinh nước t hải, bụi, khí 
+> thải xả ra môi trường phải được xử lý hoặc phát sinh chất thải nguy hại phải được 
+> quản lý theo quy định về quản lý chất thải khi đi vào vận hành chính thức.  
+> 2. Dự án đầu tư, cơ sở, khu sản xuất, kinh doanh, dịch vụ tập t rung, cụm công 
+> nghiệp hoạt động trước ngày Luật này có hiệu lực thi hành có ti ê u  c h í  v ề  m ô i  
+> trường như đối tượng quy định tại khoản 1 Điều này. 
+> 
+>  
+>  CÔNG BÁO/Số 527 + 528/Ngày 18-3-2025 71 
+>  
+> 3.3 Đối tượng quy định tại khoản 1 Điều này được miễn giấy phép mô i trường 
+> khi thuộc trường hợp sau đây: 
+> a) Dự án đầu tư công khẩn cấp theo quy định của pháp luật về đầu tư công; 
+> b) Dự án đầu tư hoặc phương án khai thác khoáng sản nhóm IV the o quy định 
+> của pháp luật về địa chất, khoáng sản của tổ chức được cơ quan quản lý nhà nước 
+> có thẩm quyền chấp thuận, lựa c họn là nhà thầu thi công để phục  vụ các dự án 
+> quan trọng quốc gia, dự án đầu tư công khẩn cấp, công trình, hạ ng mục công trình 
+> thuộc chương trình mục tiêu quốc  gia theo quy định của pháp luậ t về đầu tư công, 
+> thực hiện các biện pháp huy động khẩn cấp để kịp thời ứng phó v ới tình huống 
+> khẩn cấp về thiên tai, thi công các công trình phòng, chống thi ên tai theo quy định 
+> của pháp luật về phòng, chống thiên tai.
+> 
+> [Tài liệu tham khảo #10]
+> [Nguồn chính thức ngoài VietLex · 15/VBHN-VPQH]
+> Nguồn: https://congbao.chinhphu.vn/van-ban/van-ban-hop-nhat-so-15-vbhn-vpqh-44444.htm
+> Nguồn loại: official_external
+> Hiệu lực pháp lý: unverified
+> SHA-256 nội dung trích xuất: e14fc4f37360cf1bbf5cf979b1e13500bc63cff7e8c6e37af5b7eadd54f84d75
+> SHA-256 tệp PDF: e3a9d7f347f7acfbd615c2d7c68e553f008f415905c8d321ba6131290e6caf1d
+> Phạm vi trang PDF: 26-45/56
+> Đọc một phần PDF: có
+> Tệp PDF: https://congbaocdn.chinhphu.vn/CongBaoCP/VanBan/2025/2/44444/55441-1-2025527-52815-vbhn-vpqh.pdf
+> Thời điểm đọc: 2026-11-03T15:15:42.215976+00:00
+> Phương thức đọc: pdf_text
+> Dẫn chiếu: 15/VBHN-VPQH, Điều 44. Cấp đổi, điều chỉnh, cấp lại, tước quyền sử dụng, thu hồi giấy phép
+> Cơ quan ban hành: VĂN BẢN HỢP NHẤT - VĂN PHÒNG QUỐC HỘI
+> Tiêu đề: Văn bản hợp nhất số 15/VBHN-VPQH hợp nhất Luật Bảo vệ môi trường.
+> Điều 44. Cấp đổi, điều chỉnh, cấp lại, tước quyền sử dụng, thu hồi giấy phép 
+> môi trường  
+> 1. Giấy phép môi trường được cấp đổi trong trường hợp quy định tại khoản 5 
+> Điều 42 của Luật này nhưng không thay đổi các nội dung khác quy  định trong 
+> giấy phép. 
+> 2. Giấy phép môi trường được xem xét điều chỉnh trong thời hạn của giấy phép 
+> khi thuộc một trong các trường hợp sau đây:  
+> a) Thay đổi nội dung cấp phép quy định tại khoản 2 Điều 40 của Luật này theo 
+> đề nghị của chủ dự án đầu tư, cơ sở hoặc theo quy định của pháp  luật, trừ trường 
+> hợp quy định tại điểm b khoản 3 Điều này; 
+> b) Dự án đầu tư, cơ sở có thực hiện dịch vụ xử lý chất thải ngu y hại hoặc nhập 
+> khẩu phế liệu từ nước ngoài làm nguyên liệu sản xuất sau khi kế t thúc quá trình 
+> vận hành thử nghiệm để phù hợp với năng lực hoạt động thực tế. 
+> 3. Giấy phép môi trường được cấp lại trong các trường hợp sau đây:  
+> a) Giấy phép hết hạn;  
+> b) Dự án đầu tư, cơ sở, khu sản xuất, kinh doanh, dịch vụ tập t rung, cụm công 
+> nghiệp có một trong các thay đổi về tăng quy mô, công suất, côn g nghệ sản xuất 
+> hoặc thay đổi khác làm tăng tác động xấu đến môi trường so với giấy phép môi 
+> trường đã được cấp, trừ trường hợp dự án đầu tư thay đổi thuộc đối tượng phải 
+> thực hiện đánh giá tác động môi trường.  
+> 4. Tước quyền sử dụng giấy phép môi trường khi chủ dự án đầu tư , cơ sở thực 
+> hiện hành vi vi phạm hành chính trong lĩnh vực bảo vệ môi trườn g đến mức phải 
+> tước quyền sử dụng giấy phép mô i trường theo quy định của pháp luật về xử lý vi 
+> phạm hành chính. 
+> 
+>  
+> 78 CÔNG BÁO/Số 527 + 528/Ngày 18-3-2025 
+>   
+> 5. Giấy phép môi trường bị thu hồi trong các trường hợp sau đây:  
+> a) Giấy phép cấp không đúng thẩm quyền; 
+> b) Giấy phép có nội dung trái quy định của pháp luật. 
+> 6. Chính phủ quy định chi tiết Điều này.

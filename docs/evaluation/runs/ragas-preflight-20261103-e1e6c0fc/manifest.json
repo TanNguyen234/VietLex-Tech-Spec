@@ -1,0 +1,17 @@
+{
+  "run_id": "ragas-preflight-20261103-e1e6c0fc",
+  "created_at": "2026-11-03T15:45:07.223408+00:00",
+  "git_sha": "7519cd1aea4a3639140b9188de1843ebf0ddb1c0",
+  "git_dirty": true,
+  "git_diff_sha256": "3d1ace9812dc66774be1f32e5f27f569ed5742ac222d701f722f57bf09345f8c",
+  "git_diff_hash_contract": "literal tracked git diff --binary HEAD",
+  "dataset_sha256": "7ea128eb4d776421ccf49a5e4dc2e7c73087aa251066d6e6bea56290598b3ac6",
+  "labels_sha256": "a25c50cf516adbcd7a9e288273d16a91c5987ee409f26bf3b21e3775cda350a1",
+  "configuration_fingerprint": "04daccd37ee2d0e5f360961d6ca89b4c77796ddbb740b557d9833a8eb00a0067",
+  "command": "D:\\Download\\ProfessionalLegalRAG\\.venv\\Scripts\\python.exe .tmp-finish-real-20261030/ragas_release_20261103/audit_saved.py --live --limit 1",
+  "provider_model_ids": [
+    "google_vertex_ai/gemini-3.5-flash"
+  ],
+  "metric_version": "ragas-0.4.3",
+  "evidence": "live judge; saved unchanged responses and contexts; no online retrieval/generation/guard rerun; no DB access"
+}

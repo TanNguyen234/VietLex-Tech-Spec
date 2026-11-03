@@ -1,0 +1,1070 @@
+from dataclasses import FrozenInstanceError, fields
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock, create_autospec, patch
+
+import pytest
+
+from app.evaluation.profiles import EvaluationProfile, get_evaluation_profile
+from app.evaluation.schemas import (
+    CandidateChunk,
+    GoldenCase,
+    RetrievalCaseResult,
+    RetrievalStageTrace,
+)
+from app.ingestion.legal_text import EvidenceChunk
+from app.services.direct_llm import LLMGenerationResult
+from app.services.retrieval import LegalRetriever, RetrievalOutcome
+from run_answer_eval import run_stage_a_online, run_stage_b_offline
+from run_retrieval_eval import (
+    document_recall_at,
+    evaluate_single_retrieval_case,
+    parse_golden_case,
+)
+
+
+def make_case() -> GoldenCase:
+    return GoldenCase(
+        case_id="case_001",
+        question="What are the tax deduction conditions?",
+        question_type="factoid",
+        answerable=True,
+        reference_answer="",
+    )
+
+
+def make_settings() -> SimpleNamespace:
+    return SimpleNamespace(LEGAL_FTS_RESULT_LIMIT=12)
+
+
+def test_legacy_case_parser_uses_the_shared_legal_citation_contract() -> None:
+    case = parse_golden_case(
+        {
+            "question": "Điều kiện áp dụng là gì?",
+            "question_type": "factoid",
+            "ground_truth_answer": "Có căn cứ pháp luật.",
+            "ground_truth_context": [
+                "Khoản 1 Điều 2 Nghị định 12/2026/NĐ-CP quy định nội dung này."
+            ],
+        },
+        0,
+    )
+
+    assert len(case.gold_evidence) == 1
+    assert case.gold_evidence[0].document_number == "12/2026/NĐ-CP"
+    assert case.gold_evidence[0].article == "Điều 2"
+    assert case.gold_evidence[0].clause == "Khoản 1"
+
+
+def test_legacy_case_parser_preserves_every_citation_unit() -> None:
+    case = parse_golden_case(
+        {
+            "question": "Các căn cứ là gì?",
+            "question_type": "multi-hop",
+            "ground_truth_answer": "Có hai căn cứ.",
+            "ground_truth_context": [
+                "Điều 2 văn bản 12/2026/NĐ-CP và "
+                "Điều 5 văn bản 13/2026/NĐ-CP."
+            ],
+        },
+        0,
+    )
+
+    assert [item.evidence_item_id for item in case.gold_evidence] == [
+        "case_001_ctx01_cit01",
+        "case_001_ctx01_cit02",
+    ]
+    assert [item.document_number for item in case.gold_evidence] == [
+        "12/2026/NĐ-CP",
+        "13/2026/NĐ-CP",
+    ]
+
+
+def test_progress_metric_reads_v3_integer_or_json_object_keys() -> None:
+    metric = {"value": 0.75}
+
+    assert document_recall_at({"document_recall": {1: metric}}, 1) == 0.75
+    assert document_recall_at({"document_recall": {"1": metric}}, 1) == 0.75
+    assert document_recall_at({"document_recall": {}}, 1) is None
+
+
+def rewrite_profile(name: str) -> EvaluationProfile:
+    return EvaluationProfile(
+        name=name,
+        retrieval_document_limit=24,
+        resolved_document_limit=16,
+        local_chunks_per_document=4,
+        rerank_input_limit=24,
+        rerank_return_limit=3,
+        final_evidence_limit=3,
+        final_context_token_limit=720,
+        intent_scoring_enabled=True,
+        rewrite_mode="on",
+        reranker_mode="current",
+    )
+
+
+def test_evaluation_profile_is_frozen_and_has_all_runtime_fields() -> None:
+    profile = get_evaluation_profile("separated_intent")
+    assert {field.name for field in fields(profile)} == {
+        "name",
+        "retrieval_document_limit",
+        "resolved_document_limit",
+        "local_chunks_per_document",
+        "rerank_input_limit",
+        "rerank_return_limit",
+        "final_evidence_limit",
+        "final_context_token_limit",
+        "intent_scoring_enabled",
+        "rewrite_mode",
+        "reranker_mode",
+    }
+    with pytest.raises(FrozenInstanceError):
+        profile.rerank_input_limit = 99
+
+
+@pytest.mark.asyncio
+async def test_retrieval_adapter_calls_real_contract_once() -> None:
+    profile = get_evaluation_profile("separated_intent")
+    trace = RetrievalStageTrace()
+    retriever = create_autospec(LegalRetriever, instance=True, spec_set=True)
+    retriever.retrieve_detailed.return_value = RetrievalOutcome(
+        evidence=[],
+        latency={},
+        status="no_candidate",
+        diagnostics={"stage_trace": trace},
+    )
+    with (
+        patch(
+            "app.services.retrieval.get_legal_retriever",
+            autospec=True,
+            return_value=retriever,
+        ),
+        patch(
+            "run_retrieval_eval.calculate_case_retrieval_metrics",
+            autospec=True,
+            return_value={},
+        ) as metric_call,
+    ):
+        result = await evaluate_single_retrieval_case(
+            make_case(), make_settings(), profile
+        )
+
+    retriever.retrieve_detailed.assert_awaited_once_with(
+        make_case().question,
+        sparse_query=make_case().question,
+        profile=profile,
+    )
+    assert result.status == "no_candidate"
+    assert result.stage_trace == trace
+    metric_call.assert_called_once()
+    assert metric_call.call_args.kwargs["stage_trace"] == trace
+    assert metric_call.call_args.kwargs["capacities"].model_dump() == {
+        "pinecone_document_limit": 24,
+        "fts_document_limit": 12,
+        "merged_document_limit": 36,
+        "resolved_document_limit": 16,
+        "structural_chunk_limit": None,
+        "local_chunks_limit": 64,
+        "rerank_input_limit": 24,
+        "rerank_return_limit": 3,
+        "final_evidence_limit": 3,
+    }
+
+
+@pytest.mark.asyncio
+async def test_retrieval_adapter_accepts_real_unscored_evidence_chunks() -> None:
+    # Break caught: the evaluation adapter reads an undeclared `.score`
+    # attribute from the production EvidenceChunk runtime contract.
+    profile = get_evaluation_profile("legacy")
+    evidence = EvidenceChunk(
+        document_id=431147,
+        document_number="72/2020/QH14",
+        title="Luật Bảo vệ môi trường",
+        source_url="https://example.invalid/431147",
+        heading_path="Điều 1",
+        article="Điều 1",
+        clause=None,
+        citation="Điều 1 Luật 72/2020/QH14",
+        text="Nội dung chứng cứ.",
+        token_count=4,
+    )
+    retriever = create_autospec(LegalRetriever, instance=True, spec_set=True)
+    retriever.retrieve_detailed.return_value = RetrievalOutcome(
+        evidence=[evidence],
+        latency={"t_total": 0.1},
+        status="ok",
+        diagnostics={"stage_trace": RetrievalStageTrace()},
+    )
+
+    with patch(
+        "app.services.retrieval.get_legal_retriever",
+        autospec=True,
+        return_value=retriever,
+    ):
+        result = await evaluate_single_retrieval_case(
+            make_case(), make_settings(), profile
+        )
+
+    assert result.status == "ok"
+    assert len(result.retrieved_evidence) == 1
+    assert result.retrieved_evidence[0].document_id == 431147
+    assert result.retrieved_evidence[0].score is None
+
+
+@pytest.mark.asyncio
+async def test_retrieval_adapter_returns_typed_error_on_unexpected_exception() -> None:
+    profile = get_evaluation_profile("separated_intent")
+    retriever = create_autospec(LegalRetriever, instance=True, spec_set=True)
+    retriever.retrieve_detailed.side_effect = RuntimeError("provider exploded")
+    with patch(
+        "app.services.retrieval.get_legal_retriever",
+        autospec=True,
+        return_value=retriever,
+    ):
+        result = await evaluate_single_retrieval_case(
+            make_case(), make_settings(), profile
+        )
+
+    assert result.status == "retrieval_error"
+    assert result.error == "RuntimeError: provider exploded"
+    assert result.technical_errors == {
+        "retrieval": "RuntimeError: provider exploded"
+    }
+
+
+@pytest.mark.asyncio
+async def test_rewrite_failure_falls_back_and_is_observable() -> None:
+    profile = rewrite_profile("rewrite-failure")
+    case = make_case().model_copy(
+        update={
+            "question": (
+                "What legal conditions govern corporate income tax "
+                "deductions for this documented transaction today?"
+            )
+        }
+    )
+    retriever = create_autospec(LegalRetriever, instance=True, spec_set=True)
+    retriever.retrieve_detailed.return_value = RetrievalOutcome(
+        evidence=[],
+        latency={},
+        status="no_candidate",
+        diagnostics={"stage_trace": RetrievalStageTrace()},
+    )
+    provider_call = AsyncMock(side_effect=TimeoutError("rewrite timeout"))
+    rewrite_settings = SimpleNamespace(
+        QUERY_REWRITE_MAX_CHARACTERS=500,
+        QUERY_REWRITE_MAX_OUTPUT_TOKENS=64,
+        QUERY_REWRITE_TIMEOUT_SECONDS=2.0,
+    )
+    with (
+        patch(
+            "app.services.retrieval.get_legal_retriever",
+            autospec=True,
+            return_value=retriever,
+        ),
+        patch(
+            "app.services.rag_pipeline.generate_llm_response_with_metadata",
+            new=provider_call,
+        ),
+        patch(
+            "app.services.rag_pipeline.get_settings",
+            return_value=rewrite_settings,
+        ),
+    ):
+        result = await evaluate_single_retrieval_case(
+            case, make_settings(), profile
+        )
+
+    assert result.query_used == case.question
+    assert result.technical_errors == {
+        "rewrite": "QueryRewriteError: TimeoutError"
+    }
+    provider_call.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_successful_rewrite_is_dense_query_only_and_called_once() -> None:
+    profile = rewrite_profile("rewrite-success")
+    retriever = create_autospec(LegalRetriever, instance=True, spec_set=True)
+    retriever.retrieve_detailed.return_value = RetrievalOutcome(
+        evidence=[],
+        latency={},
+        status="no_candidate",
+        diagnostics={"stage_trace": RetrievalStageTrace()},
+    )
+    rewrite_call = AsyncMock(return_value="rewritten legal query")
+    with (
+        patch(
+            "app.services.retrieval.get_legal_retriever",
+            autospec=True,
+            return_value=retriever,
+        ),
+        patch("app.services.rag_pipeline.rewrite_query", new=rewrite_call),
+    ):
+        result = await evaluate_single_retrieval_case(
+            make_case(), make_settings(), profile
+        )
+
+    rewrite_call.assert_awaited_once_with(
+        make_case().question,
+        raise_on_error=True,
+    )
+    retriever.retrieve_detailed.assert_awaited_once_with(
+        "rewritten legal query",
+        sparse_query=make_case().question,
+        profile=profile,
+    )
+    assert result.query_used == "rewritten legal query"
+    assert result.rewritten_query == "rewritten legal query"
+
+
+@pytest.mark.asyncio
+async def test_answer_stage_uses_one_retrieval_and_three_generation_arguments() -> None:
+    profile = get_evaluation_profile("separated_intent")
+    chunk = CandidateChunk(
+        document_id=1,
+        document_number="12/2026/ND-CP",
+        title="Sample instrument",
+        source_url="https://example.invalid/12",
+        citation="Article 2, 12/2026/ND-CP",
+        article="Article 2",
+        text="Evidence text",
+        token_count=2,
+    )
+    retrieval_result = RetrievalCaseResult(
+        case_id="case_001",
+        question=make_case().question,
+        original_query=make_case().question,
+        question_type="factoid",
+        answerable=True,
+        query_used="tax deduction",
+        rewritten_query="tax deduction",
+        status="ok",
+        retrieved_evidence=[chunk],
+    )
+    retrieval_call = AsyncMock(return_value=retrieval_result)
+    generation_call = AsyncMock(
+        return_value=SimpleNamespace(
+            text="Generated answer",
+            observed_provider="google_vertex_ai",
+            observed_model="gemini-3.5-flash",
+            observed=True,
+            status="success",
+            project="vietlex-test-project",
+            location="global",
+            provider_latency_ms=12.5,
+            fallback_used=False,
+            primary_error_kind=None,
+            finish_reason="MAX_TOKENS",
+            prompt_token_count=120,
+            output_token_count=18,
+            thought_token_count=46,
+            total_token_count=184,
+            max_output_tokens=640,
+            thinking_level="DEFAULT",
+        )
+    )
+    legacy_generation_call = AsyncMock(
+        side_effect=AssertionError("evaluation must retain generation metadata")
+    )
+    with (
+        patch("run_answer_eval.evaluate_single_retrieval_case", retrieval_call),
+        patch(
+            "app.services.rag_pipeline.generate_response_with_metadata",
+            generation_call,
+        ),
+        patch(
+            "app.services.rag_pipeline.generate_response",
+            legacy_generation_call,
+        ),
+    ):
+        result = await run_stage_a_online(
+            make_case(), make_settings(), "off", profile
+        )
+
+    retrieval_call.assert_awaited_once_with(make_case(), make_settings(), profile)
+    generation_call.assert_awaited_once_with(
+        make_case().question,
+        "tax deduction",
+        result["contexts"],
+    )
+    assert result["raw_response"] == "Generated answer"
+    assert result["generation_metadata"] == {
+        "provider": "google_vertex_ai",
+        "model": "gemini-3.5-flash",
+        "observed": True,
+        "status": "success",
+        "finish_reason": "MAX_TOKENS",
+        "prompt_token_count": 120,
+        "output_token_count": 18,
+        "thought_token_count": 46,
+        "total_token_count": 184,
+        "max_output_tokens": 640,
+        "thinking_level": "DEFAULT",
+    }
+
+
+@pytest.mark.asyncio
+async def test_answer_stage_propagates_reranker_error_status() -> None:
+    profile = get_evaluation_profile("separated_intent")
+    retrieval_result = RetrievalCaseResult(
+        case_id="case_001",
+        question=make_case().question,
+        original_query=make_case().question,
+        question_type="factoid",
+        answerable=True,
+        query_used=make_case().question,
+        status="reranker_error",
+        retrieved_evidence=[],
+        error="TimeoutError: reranker timeout",
+        technical_errors={"reranker": "TimeoutError: reranker timeout"},
+    )
+    with (
+        patch(
+            "run_answer_eval.evaluate_single_retrieval_case",
+            new=AsyncMock(return_value=retrieval_result),
+        ),
+        patch(
+            "app.services.rag_pipeline.generate_response_with_metadata",
+            new=AsyncMock(
+                return_value=LLMGenerationResult(
+                    text="System cannot process the request.",
+                    observed_provider="test",
+                    observed_model="test",
+                )
+            ),
+        ),
+    ):
+        result = await run_stage_a_online(
+            make_case(), make_settings(), "off", profile
+        )
+
+    assert result["status"] == "reranker_error"
+    assert result["technical_errors"] == {
+        "reranker": "TimeoutError: reranker timeout"
+    }
+
+
+@pytest.mark.asyncio
+async def test_answer_stage_b_skips_quality_and_judge_on_technical_status() -> None:
+    case = make_case()
+    retrieval_result = RetrievalCaseResult(
+        case_id=case.case_id,
+        question=case.question,
+        original_query=case.question,
+        question_type=case.question_type,
+        answerable=case.answerable,
+        query_used=case.question,
+        status="retrieval_error",
+        error="TimeoutError: retrieval timeout",
+        technical_errors={"retrieval": "TimeoutError: retrieval timeout"},
+    )
+    stage_a_result = {
+        "raw_response": "Technical fallback",
+        "final_response": "Technical fallback",
+        "contexts": ["Context must not trigger the judge."],
+        "input_safe": True,
+        "output_safe": False,
+        "status": "retrieval_error",
+        "technical_errors": retrieval_result.technical_errors,
+        "latency": {"t_total": 0.01},
+        "retrieval_result": retrieval_result,
+    }
+
+    with patch(
+        "run_eval_suite.build_ragas_evaluator",
+        side_effect=AssertionError("technical result must not call judge"),
+    ):
+        result = await run_stage_b_offline(
+            case,
+            stage_a_result,
+            SimpleNamespace(),
+            "ragas",
+        )
+
+    assert result.metrics["applicable"] is False
+    assert result.metrics["skip_reason"] == "retrieval_error"
+    assert result.ragas_metrics is None
+
+
+@pytest.mark.asyncio
+async def test_answer_stage_b_records_judge_failure_as_typed_technical_error() -> None:
+    case = make_case()
+    retrieval_result = RetrievalCaseResult(
+        case_id=case.case_id,
+        question=case.question,
+        original_query=case.question,
+        question_type=case.question_type,
+        answerable=case.answerable,
+        query_used=case.question,
+        status="ok",
+    )
+    stage_a_result = {
+        "raw_response": "Grounded response",
+        "final_response": "Grounded response",
+        "contexts": ["Grounded context"],
+        "input_safe": True,
+        "output_safe": True,
+        "status": "ok",
+        "technical_errors": {},
+        "latency": {"t_total": 0.01},
+        "retrieval_result": retrieval_result,
+    }
+
+    async def failing_evaluator(**_kwargs):
+        raise RuntimeError("judge model unavailable")
+
+    with patch(
+        "run_eval_suite.build_ragas_evaluator",
+        return_value=failing_evaluator,
+    ):
+        result = await run_stage_b_offline(
+            case,
+            stage_a_result,
+            SimpleNamespace(),
+            "ragas",
+        )
+
+    assert result.status == "ok"
+    assert result.ragas_metrics is None
+    assert result.technical_errors["judge"] == (
+        "RuntimeError: judge model unavailable"
+    )
+
+
+@pytest.mark.asyncio
+async def test_partial_retrieval_error_remains_scoreable_and_observable() -> None:
+    case = make_case()
+    retriever = MagicMock()
+    retriever.retrieve_detailed = AsyncMock(
+        return_value=RetrievalOutcome(
+            evidence=[],
+            latency={},
+            status="partial_retrieval_error",
+            diagnostics={"hybrid_error_stage": "qdrant_embedding"},
+            error="qdrant_embedding failed: HTTP 404",
+        )
+    )
+
+    with patch("app.services.retrieval.get_legal_retriever", return_value=retriever):
+        result = await evaluate_single_retrieval_case(
+            case,
+            make_settings(),
+            get_evaluation_profile("separated_intent"),
+        )
+
+    assert result.status == "partial_retrieval_error"
+    assert result.technical_errors == {
+        "retrieval_fallback": "qdrant_embedding failed: HTTP 404"
+    }
+    assert result.metrics["retrieval_technical_error"] is True
+
+
+@pytest.mark.asyncio
+async def test_input_guardrail_error_is_typed_and_runs_zero_retrieval() -> None:
+    profile = get_evaluation_profile("separated_intent")
+    retrieval_call = AsyncMock()
+    with (
+        patch(
+            "app.services.guardrails.check_input_guardrails",
+            new=AsyncMock(side_effect=TimeoutError("guardrail timeout")),
+        ),
+        patch("run_answer_eval.evaluate_single_retrieval_case", retrieval_call),
+    ):
+        result = await run_stage_a_online(
+            make_case(), make_settings(), "enforce", profile
+        )
+
+    retrieval_call.assert_not_awaited()
+    assert result["status"] == "input_guardrail_error"
+    assert result["technical_errors"] == {
+        "input_guardrail": "TimeoutError: guardrail timeout"
+    }
+    assert result["retrieval_result"].status == "input_guardrail_error"
+
+
+@pytest.mark.asyncio
+async def test_input_guardrail_error_in_shadow_keeps_pipeline_scoreable() -> None:
+    profile = get_evaluation_profile("separated_intent")
+    case = make_case()
+    retrieval_result = RetrievalCaseResult(
+        case_id=case.case_id,
+        question=case.question,
+        original_query=case.question,
+        question_type=case.question_type,
+        answerable=case.answerable,
+        query_used=case.question,
+        status="ok",
+    )
+    with (
+        patch(
+            "app.services.guardrails.check_input_guardrails",
+            new=AsyncMock(side_effect=TimeoutError("guardrail timeout")),
+        ),
+        patch(
+            "run_answer_eval.evaluate_single_retrieval_case",
+            new=AsyncMock(return_value=retrieval_result),
+        ),
+        patch(
+            "app.services.rag_pipeline.generate_response_with_metadata",
+            new=AsyncMock(
+                return_value=LLMGenerationResult(
+                    text="Generated answer",
+                    observed_provider="test",
+                    observed_model="test",
+                )
+            ),
+        ),
+        patch(
+            "app.services.guardrails.check_output_guardrails",
+            new=AsyncMock(return_value=(True, "")),
+        ),
+    ):
+        result = await run_stage_a_online(
+            case, make_settings(), "shadow", profile
+        )
+
+    assert result["status"] == "ok"
+    assert result["input_safe"] is False
+    assert result["technical_errors"] == {
+        "input_guardrail": "TimeoutError: guardrail timeout"
+    }
+
+
+@pytest.mark.asyncio
+async def test_output_guardrail_error_is_typed_not_a_hallucination_block() -> None:
+    profile = get_evaluation_profile("separated_intent")
+    retrieval_result = RetrievalCaseResult(
+        case_id="case_001",
+        question=make_case().question,
+        original_query=make_case().question,
+        question_type="factoid",
+        answerable=True,
+        query_used=make_case().question,
+        status="ok",
+        retrieved_evidence=[],
+    )
+    with (
+        patch(
+            "app.services.guardrails.check_input_guardrails",
+            new=AsyncMock(return_value=(True, "")),
+        ),
+        patch(
+            "run_answer_eval.evaluate_single_retrieval_case",
+            new=AsyncMock(return_value=retrieval_result),
+        ),
+        patch(
+            "app.services.rag_pipeline.generate_response_with_metadata",
+            new=AsyncMock(
+                return_value=LLMGenerationResult(
+                    text="Generated answer",
+                    observed_provider="test",
+                    observed_model="test",
+                )
+            ),
+        ),
+        patch(
+            "app.services.guardrails.check_output_guardrails",
+            new=AsyncMock(side_effect=TimeoutError("guardrail timeout")),
+        ),
+    ):
+        result = await run_stage_a_online(
+            make_case(), make_settings(), "enforce", profile
+        )
+
+    assert result["status"] == "output_guardrail_error"
+    assert result["technical_errors"] == {
+        "output_guardrail": "TimeoutError: guardrail timeout"
+    }
+    assert result["raw_response"] == "Generated answer"
+    assert result["final_response"] == "Generated answer"
+    assert result["output_safe"] is False
+
+
+@pytest.mark.asyncio
+async def test_output_guardrail_error_in_shadow_keeps_pipeline_scoreable() -> None:
+    profile = get_evaluation_profile("separated_intent")
+    case = make_case()
+    retrieval_result = RetrievalCaseResult(
+        case_id=case.case_id,
+        question=case.question,
+        original_query=case.question,
+        question_type=case.question_type,
+        answerable=case.answerable,
+        query_used=case.question,
+        status="ok",
+    )
+    with (
+        patch(
+            "app.services.guardrails.check_input_guardrails",
+            new=AsyncMock(return_value=(True, "")),
+        ),
+        patch(
+            "run_answer_eval.evaluate_single_retrieval_case",
+            new=AsyncMock(return_value=retrieval_result),
+        ),
+        patch(
+            "app.services.rag_pipeline.generate_response_with_metadata",
+            new=AsyncMock(
+                return_value=LLMGenerationResult(
+                    text="Generated answer",
+                    observed_provider="test",
+                    observed_model="test",
+                )
+            ),
+        ),
+        patch(
+            "app.services.guardrails.check_output_guardrails",
+            new=AsyncMock(side_effect=TimeoutError("guardrail timeout")),
+        ),
+    ):
+        result = await run_stage_a_online(
+            case, make_settings(), "shadow", profile
+        )
+
+    assert result["status"] == "ok"
+    assert result["output_safe"] is False
+    assert result["technical_errors"] == {
+        "output_guardrail": "TimeoutError: guardrail timeout"
+    }
+
+
+def test_run_directory_cannot_overwrite_existing_run(tmp_path) -> None:
+    from app.evaluation.run_manifest import prepare_run_directory
+
+    base = tmp_path / "runs"
+    created = prepare_run_directory(base, "run_001")
+    assert created.is_dir()
+    with pytest.raises(FileExistsError, match="cannot be overwritten"):
+        prepare_run_directory(base, "run_001")
+
+
+@pytest.mark.parametrize(
+    "run_id",
+    ["../escape", "..\\escape", "/absolute", "C:\\absolute"],
+)
+def test_run_directory_rejects_path_like_run_ids(tmp_path, run_id: str) -> None:
+    from app.evaluation.run_manifest import prepare_run_directory
+
+    with pytest.raises(ValueError, match="invalid run_id"):
+        prepare_run_directory(tmp_path / "runs", run_id)
+
+
+def test_verified_only_selection_reports_honest_denominator() -> None:
+    from app.evaluation.case_selection import select_evaluation_cases
+    from app.evaluation.schemas import EvidenceStatus, GoldEvidence
+
+    verified = make_case().model_copy(
+        update={
+            "case_id": "verified",
+            "gold_evidence": [
+                GoldEvidence(
+                    evidence_item_id="verified_ev_01",
+                    case_id="verified",
+                    document_number="12/2026/ND-CP",
+                    required=True,
+                    status=EvidenceStatus.VERIFIED,
+                )
+            ],
+        }
+    )
+    pending = make_case().model_copy(update={"case_id": "pending"})
+    selection = select_evaluation_cases(
+        [verified, pending], "all-required-verified"
+    )
+
+    assert selection.total_candidate_cases == 2
+    assert selection.selected_case_count == 1
+    assert selection.excluded_no_verified_label_count == 1
+
+
+def test_refusal_and_text_metrics_keep_distinct_contracts() -> None:
+    from app.evaluation.answer_metrics import calculate_case_answer_metrics
+
+    metrics = calculate_case_answer_metrics(
+        pred_response="Taxable income",
+        ref_answer="taxable income",
+        question_type="factoid",
+        retrieved_contexts=["Article 1"],
+    )
+
+    assert metrics["exact_match"] == 1.0
+    assert metrics["token_precision"] == 1.0
+    assert metrics["token_recall"] == 1.0
+    assert metrics["token_f1"] == 1.0
+    assert metrics["char_f1"] == 1.0
+    assert metrics["refusal_category"] == "normal_answer"
+
+
+@pytest.mark.parametrize("date_text", ["01/01/2025", "ngày 1 tháng 1 năm 2025"])
+def test_number_metric_does_not_count_date_components(date_text: str) -> None:
+    from app.evaluation.answer_metrics import calculate_case_answer_metrics
+
+    response = f"Mức phạt 5 triệu đồng từ {date_text}."
+    metrics = calculate_case_answer_metrics(
+        pred_response=response,
+        ref_answer=response,
+        question_type="factoid",
+        retrieved_contexts=[response],
+        expected_numbers=["5"],
+        expected_dates=[date_text],
+    )
+
+    assert metrics["number_precision"] == 1.0
+    assert metrics["number_recall"] == 1.0
+    assert metrics["date_precision"] == 1.0
+    assert metrics["date_recall"] == 1.0
+
+
+def test_citation_precision_uses_retrieved_evidence_not_short_reference() -> None:
+    from app.evaluation.answer_metrics import calculate_case_answer_metrics
+
+    metrics = calculate_case_answer_metrics(
+        pred_response=(
+            "Theo Khoản 2 Điều 87 Luật Doanh nghiệp 2020, công ty có thể "
+            "chuyển đổi và thực hiện theo Khoản 2 Điều 202."
+        ),
+        ref_answer="Công ty thực hiện theo Điều 202 của Luật này.",
+        question_type="factoid",
+        retrieved_contexts=[
+            "Dẫn chiếu: 59/2020/QH14, Điều 87, Khoản 2\nNội dung: ...",
+            "Dẫn chiếu: 59/2020/QH14, Điều 202, Khoản 2\nNội dung: ...",
+        ],
+    )
+
+    assert metrics["citation_precision"] == 1.0
+    assert metrics["citation_recall"] == 1.0
+    assert metrics["citation_coverage"] == 1.0
+    assert metrics["invalid_citation_rate"] == 0.0
+
+
+def test_technical_fallback_is_not_an_honest_refusal() -> None:
+    from app.evaluation.answer_metrics import classify_response_refusal
+
+    category, is_refusal = classify_response_refusal(
+        "guardrail error: request could not be processed",
+        ["Article 1"],
+    )
+
+    assert category == "technical_error"
+    assert is_refusal is False
+
+
+def test_missing_evidence_does_not_turn_a_claim_into_a_refusal() -> None:
+    from app.evaluation.answer_metrics import classify_response_refusal
+
+    category, is_refusal = classify_response_refusal(
+        "Theo Điều 5, doanh nghiệp phải nộp báo cáo hằng năm.",
+        [],
+    )
+
+    assert category == "no_evidence"
+    assert is_refusal is False
+
+
+def test_legal_claim_that_something_is_unregulated_is_not_a_refusal() -> None:
+    from app.evaluation.answer_metrics import classify_response_refusal
+
+    category, is_refusal = classify_response_refusal(
+        "Thủ tục này không được quy định trong văn bản.",
+        ["Văn bản pháp luật được truy xuất."],
+    )
+
+    assert category == "normal_answer"
+    assert is_refusal is False
+
+
+def test_unanswerable_accuracy_does_not_credit_unsupported_claims() -> None:
+    from app.evaluation.answer_metrics import aggregate_answer_metrics
+
+    summary = aggregate_answer_metrics(
+        [
+            {
+                "answerable": False,
+                "status": "ok",
+                "refusal_category": "no_evidence",
+                "metrics": {
+                    "applicable": True,
+                    "is_refusal": False,
+                    "token_f1": 0.0,
+                },
+            }
+        ]
+    )
+
+    assert summary["refusal_precision"] is None
+    assert summary["refusal_recall"] == 0.0
+    assert summary["unanswerable_accuracy"] == 0.0
+
+
+def test_answer_aggregation_excludes_technical_outcomes() -> None:
+    from app.evaluation.answer_metrics import aggregate_answer_metrics
+
+    results = [
+        {
+            "answerable": True,
+            "status": "ok",
+            "refusal_category": "normal_answer",
+            "metrics": {
+                "applicable": True,
+                "skip_reason": None,
+                "is_refusal": False,
+                "token_f1": 1.0,
+            },
+        },
+        {
+            "answerable": False,
+            "status": "retrieval_error",
+            "refusal_category": "technical_error",
+            "metrics": {
+                "applicable": False,
+                "skip_reason": "retrieval_error",
+                "is_refusal": False,
+                "token_f1": 0.0,
+            },
+        },
+        {
+            "answerable": False,
+            "status": "ok",
+            "refusal_category": "pure_refusal",
+            "metrics": {
+                "applicable": True,
+                "skip_reason": None,
+                "is_refusal": True,
+                "token_f1": 0.0,
+            },
+        },
+    ]
+
+    summary = aggregate_answer_metrics(results)
+
+    assert summary["total_cases"] == 3
+    assert summary["scored_cases"] == 2
+    assert summary["skipped_cases"] == 1
+    assert summary["skip_reason_counts"] == {"retrieval_error": 1}
+    assert summary["answerable_count"] == 1
+    assert summary["unanswerable_count"] == 1
+    assert summary["refusal_precision"] == 1.0
+    assert summary["refusal_recall"] == 1.0
+    assert summary["token_f1"] == 0.5
+
+
+def test_answer_summary_reports_metric_denominators_coverage_and_skip_reasons() -> None:
+    from app.evaluation.answer_metrics import (
+        aggregate_answer_metrics,
+        calculate_case_answer_metrics,
+    )
+
+    scored_metrics = calculate_case_answer_metrics(
+        pred_response="Điều 3 quy định mức phạt là 5.",
+        ref_answer="Mức phạt là 5 theo Điều 3.",
+        question_type="factoid",
+        retrieved_contexts=["Dẫn chiếu: 72/2020/QH14, Điều 3"],
+        expected_numbers=["5"],
+        expected_dates=[],
+        expected_entities=[],
+    )
+    skipped_metrics = calculate_case_answer_metrics(
+        pred_response="Không có kết quả.",
+        ref_answer="Mức phạt là 5.",
+        question_type="factoid",
+        retrieved_contexts=[],
+        status="retrieval_error",
+    )
+    summary = aggregate_answer_metrics(
+        [
+            {
+                "answerable": True,
+                "status": "ok",
+                "refusal_category": scored_metrics["refusal_category"],
+                "metrics": scored_metrics,
+            },
+            {
+                "answerable": True,
+                "status": "retrieval_error",
+                "refusal_category": skipped_metrics["refusal_category"],
+                "metrics": skipped_metrics,
+            },
+        ]
+    )
+
+    assert summary["number_precision"] == scored_metrics["number_precision"]
+    assert summary["number_recall"] == scored_metrics["number_recall"]
+    assert summary["date_precision"] is None
+    assert summary["entity_recall"] is None
+    assert "citation_coverage" in summary
+
+    details = summary["metric_details"]
+    required_detail_fields = {
+        "value",
+        "numerator",
+        "denominator",
+        "coverage",
+        "scored_cases",
+        "skipped_cases",
+        "skip_reasons",
+        "aggregation",
+        "reason",
+    }
+    required_metrics = {
+        "exact_match",
+        "token_precision",
+        "token_recall",
+        "token_f1",
+        "char_f1",
+        "rouge_l",
+        "chrf",
+        "number_precision",
+        "number_recall",
+        "date_precision",
+        "date_recall",
+        "entity_precision",
+        "entity_recall",
+        "citation_precision",
+        "citation_recall",
+        "citation_coverage",
+        "invalid_citation_rate",
+        "answer_similarity_pass_rate",
+        "unanswerable_accuracy",
+        "refusal_precision",
+        "refusal_recall",
+        "mixed_claim_refusal_rate",
+    }
+    assert required_metrics <= details.keys()
+    assert all(required_detail_fields <= item.keys() for item in details.values())
+    assert required_detail_fields <= details["number_precision"].keys()
+    assert details["number_precision"]["numerator"] == scored_metrics[
+        "number_precision"
+    ]
+    assert details["number_precision"]["denominator"] == 1
+    assert details["number_precision"]["coverage"] == 0.5
+    assert details["number_precision"]["scored_cases"] == 1
+    assert details["number_precision"]["skipped_cases"] == 1
+    assert details["number_precision"]["skip_reasons"] == {
+        "retrieval_error": 1
+    }
+    assert details["date_precision"]["denominator"] == 0
+    assert details["date_precision"]["skip_reasons"] == {
+        "no_expected_dates": 1,
+        "retrieval_error": 1,
+    }
+    assert details["entity_recall"]["skip_reasons"] == {
+        "no_expected_entities": 1,
+        "retrieval_error": 1,
+    }
+    assert details["refusal_precision"]["denominator"] == 0
+    assert details["refusal_precision"]["value"] is None
+    assert details["refusal_precision"]["reason"] == "no_predicted_refusals"
+
+
+def test_empty_answer_summary_reports_zero_denominators() -> None:
+    from app.evaluation.answer_metrics import aggregate_answer_metrics
+
+    summary = aggregate_answer_metrics([])
+
+    assert summary["total_cases"] == 0
+    assert summary["metric_details"]["exact_match"]["denominator"] == 0
+    assert summary["metric_details"]["exact_match"]["coverage"] == 0.0
+    assert summary["metric_details"]["exact_match"]["reason"] == "no_cases"
+    assert summary["metric_details"]["number_precision"]["skip_reasons"] == {}
+    assert summary["metric_details"]["refusal_recall"]["reason"] == "no_cases"

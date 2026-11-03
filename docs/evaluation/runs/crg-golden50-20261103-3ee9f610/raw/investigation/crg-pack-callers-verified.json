@@ -1,0 +1,56 @@
+{
+  "meta": null,
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"status\":\"ok\",\"pattern\":\"callers_of\",\"target\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\services\\\\deep_official_search.py::pack_sources\",\"description\":\"Find all functions that call a given function\",\"summary\":\"Found 16 result(s) for callers_of('D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\services\\\\deep_official_search.py::pack_sources') — showing 5, 11 omitted\",\"result_count\":16,\"results_omitted\":11,\"results\":[{\"name\":\"search_and_read\",\"kind\":\"Function\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\services\\\\deep_official_search.py\"},{\"name\":\"test_excluded_future_source_does_not_change_retained_effect_diagnostics\",\"kind\":\"Test\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\services\\\\test_deep_official_search.py\"},{\"name\":\"test_discarded_source_cannot_poison_selected_evidence_status\",\"kind\":\"Test\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\services\\\\test_deep_official_search.py\"},{\"name\":\"test_untrusted_mirror_neither_poison_nor_suppress_valid_source\",\"kind\":\"Test\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\services\\\\test_deep_official_search.py\"},{\"name\":\"test_recognized_topic_does_not_admit_generic_word_overlap_from_other_domain\",\"kind\":\"Test\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\services\\\\test_deep_official_search.py\"}],\"_graph\":{\"updated_at\":\"2026-11-03T16:40:35\",\"age_seconds\":911,\"built_on_branch\":\"main\",\"built_at_sha\":\"7519cd1aea4a3639140b9188de1843ebf0ddb1c0\",\"head_sha\":\"7519cd1aea4a3639140b9188de1843ebf0ddb1c0\",\"head_matches_build\":true}}",
+      "annotations": null,
+      "meta": null
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "pattern": "callers_of",
+    "target": "D:\\Download\\ProfessionalLegalRAG\\app\\services\\deep_official_search.py::pack_sources",
+    "description": "Find all functions that call a given function",
+    "summary": "Found 16 result(s) for callers_of('D:\\Download\\ProfessionalLegalRAG\\app\\services\\deep_official_search.py::pack_sources') — showing 5, 11 omitted",
+    "result_count": 16,
+    "results_omitted": 11,
+    "results": [
+      {
+        "name": "search_and_read",
+        "kind": "Function",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\app\\services\\deep_official_search.py"
+      },
+      {
+        "name": "test_excluded_future_source_does_not_change_retained_effect_diagnostics",
+        "kind": "Test",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\services\\test_deep_official_search.py"
+      },
+      {
+        "name": "test_discarded_source_cannot_poison_selected_evidence_status",
+        "kind": "Test",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\services\\test_deep_official_search.py"
+      },
+      {
+        "name": "test_untrusted_mirror_neither_poison_nor_suppress_valid_source",
+        "kind": "Test",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\services\\test_deep_official_search.py"
+      },
+      {
+        "name": "test_recognized_topic_does_not_admit_generic_word_overlap_from_other_domain",
+        "kind": "Test",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\services\\test_deep_official_search.py"
+      }
+    ],
+    "_graph": {
+      "updated_at": "2026-11-03T16:40:35",
+      "age_seconds": 911,
+      "built_on_branch": "main",
+      "built_at_sha": "7519cd1aea4a3639140b9188de1843ebf0ddb1c0",
+      "head_sha": "7519cd1aea4a3639140b9188de1843ebf0ddb1c0",
+      "head_matches_build": true
+    }
+  },
+  "isError": false
+}

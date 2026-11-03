@@ -1,0 +1,14 @@
+{
+  "command": [
+    "C:/Program Files/nodejs/node.exe",
+    "--test",
+    "D:\\Download\\ProfessionalLegalRAG\\tests\\chat_session_race.test.cjs",
+    "D:\\Download\\ProfessionalLegalRAG\\tests\\free_research_cancel_race.test.cjs",
+    "D:\\Download\\ProfessionalLegalRAG\\tests\\guardrail_inspector.test.cjs",
+    "D:\\Download\\ProfessionalLegalRAG\\tests\\legal_effect_bounds.test.cjs",
+    "D:\\Download\\ProfessionalLegalRAG\\tests\\product_forms.test.cjs",
+    "D:\\Download\\ProfessionalLegalRAG\\tests\\workspace_state_readback.test.cjs"
+  ],
+  "exit_code": 0,
+  "seconds": 0.6409999999996217
+}

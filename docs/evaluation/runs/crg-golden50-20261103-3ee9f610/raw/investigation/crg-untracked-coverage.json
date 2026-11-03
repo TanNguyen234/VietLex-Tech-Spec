@@ -1,0 +1,431 @@
+{
+  "evidence": "installed CRG parser/store explicit untracked source supplement; no app mutation",
+  "files": [
+    {
+      "path": "app/api/free_web_research_routes.py",
+      "nodes": 21,
+      "edges": 287,
+      "source_sha256": "f28d61a66e681db05f5c4796d94d52f12e349ccda76022a8a14fcf94e28ea5f6"
+    },
+    {
+      "path": "app/evaluation/qwen_lora_embedder.py",
+      "nodes": 8,
+      "edges": 54,
+      "source_sha256": "68740c9a2b33111e19aee730c03f7289245ea018a936d65573754e1371344582"
+    },
+    {
+      "path": "app/ingestion/corpus_cleaning.py",
+      "nodes": 8,
+      "edges": 63,
+      "source_sha256": "1b28ffb754b4a72bc6b6f49e288c303ec852845a7cabaad7f48cf320a188d2e4"
+    },
+    {
+      "path": "app/services/chat_intent.py",
+      "nodes": 2,
+      "edges": 16,
+      "source_sha256": "05b651e3d32282fc22d60bfe9a26a177165648eeebb6a9b013992a145c162197"
+    },
+    {
+      "path": "app/services/chat_official_supplement.py",
+      "nodes": 28,
+      "edges": 455,
+      "source_sha256": "0c02570358d6407459fd4ffa9b4f58c615ebb3dbcea30a63ddd22049f5e43230"
+    },
+    {
+      "path": "app/services/conversation_context.py",
+      "nodes": 3,
+      "edges": 20,
+      "source_sha256": "48efa2defb19a4af99ab9a21773c93a558802e5f81614ca294b0dd6502d7019a"
+    },
+    {
+      "path": "app/services/deep_official_search.py",
+      "nodes": 12,
+      "edges": 357,
+      "source_sha256": "1d90157abf4ebdd973d0564323a142e7ceb15a41737ec9c1cc4d2aaddb460e45"
+    },
+    {
+      "path": "app/services/free_web_research.py",
+      "nodes": 23,
+      "edges": 474,
+      "source_sha256": "01ccafd3612c0b83991a02933569c6600739a9bd9fe7bfbdc51e1d2dd239e99c"
+    },
+    {
+      "path": "app/services/legal_topic_terms.py",
+      "nodes": 6,
+      "edges": 64,
+      "source_sha256": "059206c97d7f142a041330b4a5a61cfde9daa58d96a5a6d32b75c85821a79ca2"
+    },
+    {
+      "path": "app/services/official_discovered_corpus_rescue.py",
+      "nodes": 13,
+      "edges": 168,
+      "source_sha256": "1c77c51045d4d54451de696912139cbf5a4e40240676e8491946f56f51e1703d"
+    },
+    {
+      "path": "app/services/official_pdf_worker.py",
+      "nodes": 3,
+      "edges": 53,
+      "source_sha256": "b01cb0511c233c71142b1c333839a3862c7d1d0747293bbcc0b4cbec9a7c8670"
+    },
+    {
+      "path": "app/services/official_search_plan.py",
+      "nodes": 8,
+      "edges": 95,
+      "source_sha256": "f7479241dcc9c208c082e031891345c9eec2e8eb642c3fd3d27d84df5a67bb17"
+    },
+    {
+      "path": "app/services/primary_law_rescue.py",
+      "nodes": 17,
+      "edges": 292,
+      "source_sha256": "29e0e4a0992eafc4f3f87b01980f8fac22d26388d90793cb2b2562d101370e63"
+    },
+    {
+      "path": "app/services/provider_http_budget.py",
+      "nodes": 41,
+      "edges": 167,
+      "source_sha256": "d439a735e00f5dde81aae5f834d2f828a2b9416522094bcdacb9027a1d533d4e"
+    },
+    {
+      "path": "app/services/runtime_identity.py",
+      "nodes": 4,
+      "edges": 37,
+      "source_sha256": "e6cb84a12028e10939680c7cd4304358c218a3e63a7f46385be1b39e7d0fd486"
+    },
+    {
+      "path": "app/services/source_quality.py",
+      "nodes": 2,
+      "edges": 12,
+      "source_sha256": "1cc4e7c9394dd7deb19de7c0022c280e40bf9702037d51acbebee69c6becfa14"
+    },
+    {
+      "path": "app/services/source_tls.py",
+      "nodes": 4,
+      "edges": 41,
+      "source_sha256": "959c43e2b07e174be8c7ef30c002b5fbd1c4484126913ac438563542833e0d5b"
+    },
+    {
+      "path": "app/services/vbpl_search.py",
+      "nodes": 11,
+      "edges": 82,
+      "source_sha256": "99dac8acebbab8ce1c202cf33d95a8cc979c85d95972f4069ef0746e0c1c6f7a"
+    },
+    {
+      "path": "scripts/apply_corpus_migration.py",
+      "nodes": 78,
+      "edges": 1239,
+      "source_sha256": "b88a0894b0e9e0e49edfbb4b0d82732f6589d7275a89f80ca3e29dec4877e13b"
+    },
+    {
+      "path": "scripts/audit_online_capacity.py",
+      "nodes": 26,
+      "edges": 394,
+      "source_sha256": "32dc6f19e1a0e169291a5d423af9bee6e96c15483fcb159dffcd978a91a3f26e"
+    },
+    {
+      "path": "scripts/benchmark_document_readers.py",
+      "nodes": 27,
+      "edges": 341,
+      "source_sha256": "7e104335811b0b541d3dca7fe83629e408008d5158c9304552cbf68eb66e4741"
+    },
+    {
+      "path": "scripts/materialize_clean_store.py",
+      "nodes": 14,
+      "edges": 381,
+      "source_sha256": "14b1bdfac639c4b9176c206e2663736bdd22152a2f778a586889733a951d2f74"
+    },
+    {
+      "path": "scripts/prepare_clean_corpus.py",
+      "nodes": 4,
+      "edges": 133,
+      "source_sha256": "3332a9b37488459cae1e2d68cba71a56afc424f25ce6278a74c99c46812ab96c"
+    },
+    {
+      "path": "scripts/prepare_corpus_migration.py",
+      "nodes": 22,
+      "edges": 383,
+      "source_sha256": "ef6b1d2f0ca1e74cf802a79180a598df1d82e0f8aed2e447ee3b48828a554e3f"
+    },
+    {
+      "path": "scripts/probe_natural_rag.py",
+      "nodes": 50,
+      "edges": 409,
+      "source_sha256": "38c3b5a3fbb1c9963b0f61630223c021b29d95d44eaae9d73c6ff41b5b225388"
+    },
+    {
+      "path": "tests/evaluation/test_chat_pipeline_parity.py",
+      "nodes": 13,
+      "edges": 294,
+      "source_sha256": "207c48a96df99932f53a6696308b5c2751c0a97374e47d05c9816cb1669cf1c7"
+    },
+    {
+      "path": "tests/evaluation/test_evidence_citation_scope.py",
+      "nodes": 7,
+      "edges": 26,
+      "source_sha256": "fa392d1ac7aa03d2a4b0b0dca811ff2b3c16d8e0c362ddec69c14ce77e3cda3e"
+    },
+    {
+      "path": "tests/evaluation/test_vietnamese_entity_metrics.py",
+      "nodes": 6,
+      "edges": 28,
+      "source_sha256": "ca07672ab741d582532336a7a086e3e23f2a9ab05119dbdebd66bb3f34c1bb1d"
+    },
+    {
+      "path": "tests/ingestion/test_corpus_cleaning.py",
+      "nodes": 7,
+      "edges": 72,
+      "source_sha256": "22386919c1c5085f91749eb0625c2722b1d2ee8d679fcff58578e3be829db1f2"
+    },
+    {
+      "path": "tests/integration/conftest.py",
+      "nodes": 2,
+      "edges": 5,
+      "source_sha256": "e745097e12f962e5e8c4689991e859666dc332d49b38d863104906945b0e556d"
+    },
+    {
+      "path": "tests/scripts/test_apply_corpus_migration.py",
+      "nodes": 65,
+      "edges": 776,
+      "source_sha256": "6659cb4b1e1c27f789d4ddaa861916d7c638bf860e218644d7c5a4eab9f046ed"
+    },
+    {
+      "path": "tests/scripts/test_audit_online_capacity.py",
+      "nodes": 17,
+      "edges": 83,
+      "source_sha256": "cf5d7ba6ddc3def89c51634df87cbeb7698c56e35113f10f3a2b9e95d679026b"
+    },
+    {
+      "path": "tests/scripts/test_benchmark_document_readers.py",
+      "nodes": 4,
+      "edges": 86,
+      "source_sha256": "b29fdb23342ebfb2355806f5da6af1926ce67960992e4cbd55189967544c2d4e"
+    },
+    {
+      "path": "tests/scripts/test_materialize_clean_store.py",
+      "nodes": 10,
+      "edges": 170,
+      "source_sha256": "e20556af4d395819fc811678f11cdb69e02ec5cb307beb217e0a26378a666178"
+    },
+    {
+      "path": "tests/scripts/test_prepare_clean_corpus.py",
+      "nodes": 2,
+      "edges": 86,
+      "source_sha256": "7895eb6c215b863d08a874090135899d4c8e0b0c342e6c22744eb784f9a4508c"
+    },
+    {
+      "path": "tests/scripts/test_prepare_corpus_migration.py",
+      "nodes": 15,
+      "edges": 254,
+      "source_sha256": "7ac48a33cb96477f22f9e66203af5c0ed0d16f23118c8dc8264fe9ea012af107"
+    },
+    {
+      "path": "tests/scripts/test_probe_natural_rag.py",
+      "nodes": 32,
+      "edges": 187,
+      "source_sha256": "adf312007b47d69b6c85dbab34b69aaa0d796d3a7904f92bdba5045abdc6071d"
+    },
+    {
+      "path": "tests/services/test_audit_labor_coverage.py",
+      "nodes": 4,
+      "edges": 113,
+      "source_sha256": "39eefb2a75426e6f88decd1fd4cf7ff00e16fa5b44590b7ad23bce2d55feea7c"
+    },
+    {
+      "path": "tests/services/test_chat_intent_preflight.py",
+      "nodes": 6,
+      "edges": 32,
+      "source_sha256": "fd368eaf03423bc5d33500d6df6a6934f96012adcc6051bff04856d3a9bc83c8"
+    },
+    {
+      "path": "tests/services/test_chat_official_supplement.py",
+      "nodes": 103,
+      "edges": 522,
+      "source_sha256": "137869daacd80ead55405dee0e89b9105fdb3a4d62d482132255732bdb0e97bd"
+    },
+    {
+      "path": "tests/services/test_deep_official_search.py",
+      "nodes": 53,
+      "edges": 526,
+      "source_sha256": "c098daf9b69ed59cdd7f7fcc8836d809e7eee6e1cf69d5f7b7e22c52a6152a8f"
+    },
+    {
+      "path": "tests/services/test_final_context_trace.py",
+      "nodes": 7,
+      "edges": 34,
+      "source_sha256": "3e53a071283b053d649c3b88e1b9cd46b18c9c43dbe52115c4ac9e37c593c1d4"
+    },
+    {
+      "path": "tests/services/test_followup_context.py",
+      "nodes": 9,
+      "edges": 73,
+      "source_sha256": "fd0a6f81e47b33bd72ffb17c796dd4c4eb7597f246e2c0dab4aa0ae5422e241b"
+    },
+    {
+      "path": "tests/services/test_free_research_demo_admission.py",
+      "nodes": 2,
+      "edges": 22,
+      "source_sha256": "36479ed0046d1f0b78a0f8216e8523bf7db92851754e1605076d7cce10ef6962"
+    },
+    {
+      "path": "tests/services/test_free_web_research.py",
+      "nodes": 42,
+      "edges": 361,
+      "source_sha256": "7d1dda049c601f7609fdd4a0246d270409b0b50c92d572c64fffc6c53e1b36d6"
+    },
+    {
+      "path": "tests/services/test_free_web_research_database.py",
+      "nodes": 11,
+      "edges": 130,
+      "source_sha256": "7403ddb5443470fded18cd6c5b5fa85a5bb59e8490104b2cc29dbdb447e82144"
+    },
+    {
+      "path": "tests/services/test_official_discovered_corpus_rescue.py",
+      "nodes": 23,
+      "edges": 202,
+      "source_sha256": "4a5e3e35212da5189e0ad2e6184159ba81eaf4a7418aaae43f0b8cc46245ba22"
+    },
+    {
+      "path": "tests/services/test_pdf_worker_startup.py",
+      "nodes": 2,
+      "edges": 18,
+      "source_sha256": "b8f868b25d3efcdde391c54887987b898ed9462c2dbf26972859d4db87f8cda1"
+    },
+    {
+      "path": "tests/services/test_primary_law_rescue.py",
+      "nodes": 46,
+      "edges": 466,
+      "source_sha256": "2b5127227579524cd7660adaac186f87875a6e19d9f02214062e0faee06ab4a2"
+    },
+    {
+      "path": "tests/services/test_provider_http_budget.py",
+      "nodes": 63,
+      "edges": 774,
+      "source_sha256": "35b53bfba69e43ffaa20636e700b3e897989dfcec5fcc1cd40c82883fa3456d2"
+    },
+    {
+      "path": "tests/services/test_rental_evidence_contract.py",
+      "nodes": 19,
+      "edges": 103,
+      "source_sha256": "91b8483ee23489192ef453a13ae0e3a3f0a67d0f468a3625c5f4a80d326cd123"
+    },
+    {
+      "path": "tests/services/test_runtime_complete_clauses.py",
+      "nodes": 3,
+      "edges": 25,
+      "source_sha256": "704d2f27bdd9f0bdaf4815d32691bb582d515c125531ad4f72367cd366dd74d0"
+    },
+    {
+      "path": "tests/services/test_runtime_identity.py",
+      "nodes": 5,
+      "edges": 41,
+      "source_sha256": "5bece294a5d17be6cd34fa4ffdd1e2300da951351ba088755fbcccd836ed77d7"
+    },
+    {
+      "path": "tests/services/test_selected_source_provenance.py",
+      "nodes": 2,
+      "edges": 4,
+      "source_sha256": "23e2bf3e9f8917b167edffd1c6fda2fb99616d404f1775d40f442ee851804240"
+    },
+    {
+      "path": "tests/services/test_source_quality_gate.py",
+      "nodes": 8,
+      "edges": 57,
+      "source_sha256": "276927bd1d58b00d4160707933ef0220ba3676b753c7e710227d00109d7c8053"
+    },
+    {
+      "path": "tests/services/test_source_tls.py",
+      "nodes": 20,
+      "edges": 242,
+      "source_sha256": "bfd43f21af117fc739dd89573f5d3a569889865e48f4ad6b685eaa04feb2f465"
+    },
+    {
+      "path": "tests/services/test_source_transport_cause.py",
+      "nodes": 5,
+      "edges": 49,
+      "source_sha256": "f788ed381b9b8881cd67f210c21789423537b164fc0f3cee2e22a5eace70146a"
+    },
+    {
+      "path": "tests/test_chat_recovery_accessibility.py",
+      "nodes": 12,
+      "edges": 102,
+      "source_sha256": "c850f7091b341c26cd80f3d7283e3b8c383563d2fe160f9fb1c36d5ccd0ff443"
+    },
+    {
+      "path": "tests/test_demo_notice_compact.py",
+      "nodes": 4,
+      "edges": 18,
+      "source_sha256": "b542958792d26f7b482670038ec7ccfea1b84c88f0648f039377436728f4192a"
+    },
+    {
+      "path": "tests/test_free_web_research_routes.py",
+      "nodes": 62,
+      "edges": 491,
+      "source_sha256": "15254a5aae3cd12049248ed3c9a33243b2c8267879b2cad98b2051fe19eea626"
+    },
+    {
+      "path": "tests/test_free_web_research_ui.py",
+      "nodes": 5,
+      "edges": 32,
+      "source_sha256": "d618694396940672c6fb0ba11df5362b1ad9dfa6bde5a9a60f3d73f49d99ad75"
+    },
+    {
+      "path": "tests/test_guardrail_route_state.py",
+      "nodes": 16,
+      "edges": 190,
+      "source_sha256": "b20f26c773981cacb9c1a6585a5034e9af4af1282304a0cecf47ae8c9dfdecd2"
+    },
+    {
+      "path": "tests/test_legal_acceptance_remediation.py",
+      "nodes": 23,
+      "edges": 146,
+      "source_sha256": "d805f9d332d813cbfcc512fe3168d9c9dc2086a4a804c692d1673e152bf398b1"
+    },
+    {
+      "path": "tests/test_mandatory_guardrails.py",
+      "nodes": 18,
+      "edges": 186,
+      "source_sha256": "8266d3b96e3b8eb12e198bf848e665ad15dd7c5d7998c4ca85f20188fadf1dd8"
+    },
+    {
+      "path": "tests/test_public_evidence_replay.py",
+      "nodes": 10,
+      "edges": 173,
+      "source_sha256": "04e45b175e67e78b5d5f8e6a2b8f56dd61491dc9c8867ff10320005447eaea00"
+    },
+    {
+      "path": "tests/test_public_web_followup_context.py",
+      "nodes": 3,
+      "edges": 65,
+      "source_sha256": "d8e6f7f2701a5d176eb2bc420b298fcc880d14527aabdfc20ec6cddff60c9031"
+    },
+    {
+      "path": "tests/test_qwen_lora_preflight.py",
+      "nodes": 6,
+      "edges": 66,
+      "source_sha256": "076b5825b4308c03976bc934fe6d124e14ef2b920f9d60cd768df23f15f17c02"
+    },
+    {
+      "path": "tests/test_system_ssl_trust.py",
+      "nodes": 2,
+      "edges": 5,
+      "source_sha256": "52792f63ccd7aabd3b39f6200b5b12502f7cfcbc52c16cb83a201091ab440d51"
+    },
+    {
+      "path": "tests/test_workspace_state_readback.py",
+      "nodes": 2,
+      "edges": 16,
+      "source_sha256": "b03dd15034b287b63d137b2abf7e0c598c46c23c80317c05f8b0f220c3e1f1e8"
+    },
+    {
+      "path": "tests/visual/browser_remediation_harness.py",
+      "nodes": 3,
+      "edges": 31,
+      "source_sha256": "a1a4071ceae82d4d9ac21a758e9024a1aef2442b0d63483fb565806942db6cf9"
+    },
+    {
+      "path": "tests/visual/redesign_preview.py",
+      "nodes": 4,
+      "edges": 69,
+      "source_sha256": "1244c479b3d80a78fa58ced5780b2a656b6aa8606869ad1928a59cc8825701ca"
+    }
+  ]
+}

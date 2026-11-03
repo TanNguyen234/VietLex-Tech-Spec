@@ -1,0 +1,30 @@
+Dựa trên các tài liệu tham khảo được cung cấp, dưới đây là câu trả lời chi tiết cho trường hợp giả định của bạn:
+
+### 1. Số tiền bên nhận đặt cọc phải trả cho bạn
+Theo dữ kiện giả định bạn cung cấp:
+*   Số tiền đặt cọc: $10.000.000$ đồng.
+*   Bên nhận đặt cọc từ chối việc giao kết hợp đồng.
+*   Các bên không có thỏa thuận khác về việc xử lý đặt cọc (phạt cọc).
+
+Áp dụng quy định tại Khoản 2 Điều 328 Bộ luật Dân sự 2015 [91/2015/QH13, Điều 328, Khoản 2]: 
+> *"nếu bên nhận đặt cọc từ chối việc giao kết, thực hiện hợp đồng thì phải trả cho bên đặt cọc tài sản đặt cọc và một khoản tiền tương đương giá trị tài sản đặt cọc, trừ trường hợp có thỏa thuận khác."*
+
+Phép tính số tiền phải trả cho bạn được xác định như sau:
+*   **Tài sản đặt cọc phải trả lại:** $10.000.000$ đồng.
+*   **Khoản tiền phạt cọc (tương đương giá trị tài sản đặt cọc):** $10.000.000$ đồng.
+*   **Tổng số tiền bên nhận đặt cọc phải trả:** 
+    $$\text{Tổng số tiền} = 10.000.000 \text{ đồng} + 10.000.000 \text{ đồng} = 20.000.000 \text{ đồng}$$
+
+Như vậy, theo đúng điều khoản này, bên nhận đặt cọc phải trả cho bạn tổng cộng **$20.000.000$ đồng** (Hai mươi triệu đồng).
+
+---
+
+### 2. Điều kiện và ngoại lệ theo quy định
+Theo Khoản 2 Điều 328 Bộ luật Dân sự 2015 [91/2015/QH13, Điều 328, Khoản 2], các điều kiện và ngoại lệ áp dụng đối với nghĩa vụ trả tiền này bao gồm:
+
+*   **Điều kiện áp dụng:** Bên nhận đặt cọc từ chối việc giao kết, thực hiện hợp đồng.
+*   **Ngoại lệ:** Quy định trả lại tài sản đặt cọc và phạt một khoản tiền tương đương giá trị tài sản đặt cọc nêu trên sẽ không áp dụng nếu các bên **"có thỏa thuận khác"** (ví dụ: thỏa thuận không phạt cọc, hoặc thỏa thuận mức phạt cọc khác mức tương đương giá trị tài sản đặt cọc).
+
+---
+
+*Khuyến cáo: Nguồn dữ liệu này không phải cơ sở dữ liệu pháp luật chính thức và không xác nhận tình trạng hiệu lực hiện hành của văn bản. Thông tin trên chỉ mang tính chất tham khảo, không phải tư vấn pháp lý. Bạn vui lòng kiểm tra lại trên nguồn chính thức hiện hành hoặc tham vấn người có chuyên môn trước khi áp dụng thực tế.*

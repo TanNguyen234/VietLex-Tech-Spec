@@ -1,0 +1,25 @@
+{
+  "evidence": "live readonly project environment metadata; secret values not emitted/persisted",
+  "command": [
+    "C:/Program Files/nodejs/node.exe",
+    "D:/Download/AntigravityData/npm-cache/_npx/69f9afb961c37556/node_modules/vercel/dist/index.js",
+    "api",
+    "/v10/projects/prj_PZ1anb4DLevoKHI0ZRT39DtWCLrw/env",
+    "--method",
+    "GET",
+    "--raw",
+    "--scope",
+    "foxys-projects-5fe642e0",
+    "--non-interactive"
+  ],
+  "exit_code": 0,
+  "schema_root_keys": [
+    "envs",
+    "hiddenProductionEnvCount"
+  ],
+  "env_entries": 30,
+  "production_guard_timeout_override_present": false,
+  "matching_entry_metadata": [],
+  "raw_response_sha256": "2ab5f10256866b8acc29850d3772af1f1216cf3d23f9d9596338e9baec6f1a8b",
+  "raw_values_retained": false
+}

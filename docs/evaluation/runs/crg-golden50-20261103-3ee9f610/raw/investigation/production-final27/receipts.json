@@ -1,0 +1,103 @@
+{
+  "evidence": "live",
+  "QA_login": 1,
+  "chat_POST": 8,
+  "cases": [
+    {
+      "id": "L01",
+      "status": 200,
+      "seconds": 51.797,
+      "original_body_sha256": "913b36ab449128e48ff6a3bf42c18dbe02924e3a7101ff848a707e4c4ce5617f",
+      "trace_id": "34c2a77b-af69-47f3-b1c2-9a38651efea6",
+      "session_id": "d5d451f7-f5e2-4720-98cb-38b9a33edb58",
+      "mocked": false,
+      "trace_http": 200,
+      "replay_http": 200,
+      "export_http": 200
+    },
+    {
+      "id": "L02",
+      "status": 200,
+      "seconds": 47.688,
+      "original_body_sha256": "26fd3121f949be2340496f0d9c38aa6e405e55fb3352252b6c65dbba431f016c",
+      "trace_id": "5bdb3836-604a-48aa-8244-5f32082a0da5",
+      "session_id": "d5d451f7-f5e2-4720-98cb-38b9a33edb58",
+      "mocked": false,
+      "trace_http": 200,
+      "replay_http": 200,
+      "export_http": 200
+    },
+    {
+      "id": "L03",
+      "status": 200,
+      "seconds": 7.047,
+      "original_body_sha256": "65d84a4afede51b2ae581c3e29b2b94c5ca680c1d4ddfc92ef882fdae068d455",
+      "trace_id": "ea3f5734-c05a-407d-b905-2734cf0a5090",
+      "session_id": "42980582-9490-477d-8c62-b90c1297f894",
+      "mocked": false,
+      "trace_http": 200,
+      "replay_http": 200,
+      "export_http": 200
+    },
+    {
+      "id": "L04",
+      "status": 200,
+      "seconds": 50.265,
+      "original_body_sha256": "b37f1f15e3e983e34f25641bdffb97e1b9660d7bfe90f5f3d50a24f9260b26e0",
+      "trace_id": "227498dc-9c0b-456b-9200-6418f41d69d9",
+      "session_id": "7170f85b-f6ab-4541-bc66-f1e12577385a",
+      "mocked": false,
+      "trace_http": 200,
+      "replay_http": 200,
+      "export_http": 200
+    },
+    {
+      "id": "L05",
+      "status": 200,
+      "seconds": 11.391,
+      "original_body_sha256": "f953ae376ad6f7a701c20dc128fbfef5b43d40abc44c9dcb51e513f82241e92b",
+      "trace_id": "2bfbbcca-f0a3-49b2-a36c-8ac0f743d8d2",
+      "session_id": "5cee06dd-b3d0-4f59-bc19-515f571d0e4f",
+      "mocked": false,
+      "trace_http": 200,
+      "replay_http": 200,
+      "export_http": 200
+    },
+    {
+      "id": "L06",
+      "status": 200,
+      "seconds": 13.407,
+      "original_body_sha256": "23b448f023f888ce4f53ff51ad7105a5c92a19030d9d8bdbfb51050c4244d032",
+      "trace_id": "914d508d-2826-4991-9b31-3933387da18f",
+      "session_id": "5b3c3bdd-d4e3-4a3e-80e1-279381252c56",
+      "mocked": false,
+      "trace_http": 200,
+      "replay_http": 200,
+      "export_http": 200
+    },
+    {
+      "id": "L07",
+      "status": 200,
+      "seconds": 48.203,
+      "original_body_sha256": "03950b28021e7cfd9df56adb569375ad5844070070e951d9adcc3411987bfe9e",
+      "trace_id": "de8929f2-0f82-4b57-962b-22f5db14f47e",
+      "session_id": "bb574255-7ee6-4d7a-9b0c-34417ba89812",
+      "mocked": false,
+      "trace_http": 200,
+      "replay_http": 200,
+      "export_http": 200
+    },
+    {
+      "id": "N01",
+      "status": 200,
+      "seconds": 13.484,
+      "original_body_sha256": "5bb3b136fbb1dc44698936be7047738a4985077a61dbb8d09b6fb66d57d6b542",
+      "trace_id": "ea9cd691-d35a-44e9-876b-6db86bf2be14",
+      "session_id": "a48c1937-67a0-4d68-9251-b9c62cc8419b",
+      "mocked": false,
+      "trace_http": 200,
+      "replay_http": 200,
+      "export_http": 200
+    }
+  ]
+}

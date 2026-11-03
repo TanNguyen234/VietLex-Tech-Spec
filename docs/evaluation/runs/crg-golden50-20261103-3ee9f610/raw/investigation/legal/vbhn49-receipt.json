@@ -1,0 +1,13 @@
+{
+  "id": "vbhn49",
+  "landing_url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/4/49-vbhn-bnnmt.pdf",
+  "retrieved_utc": "2026-11-03T09:29:12.378591+00:00",
+  "evidence": "live official primary, no OCR/model",
+  "http": 200,
+  "pdf_url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/4/49-vbhn-bnnmt.pdf",
+  "sha256": "12d27325fa1ef15211bca4419e176b4cf6fd098532fe9786932eed8d373ad6e4",
+  "bytes": 4738732,
+  "pages": 333,
+  "chars": 845578,
+  "status": "downloaded"
+}

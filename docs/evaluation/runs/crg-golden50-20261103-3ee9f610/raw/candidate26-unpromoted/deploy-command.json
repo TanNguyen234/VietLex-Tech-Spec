@@ -1,0 +1,23 @@
+{
+  "argv": [
+    "C:/Program Files/nodejs/node.exe",
+    "D:/Download/AntigravityData/npm-cache/_npx/69f9afb961c37556/node_modules/vercel/dist/index.js",
+    "deploy",
+    "--prod",
+    "--skip-domain",
+    "--yes",
+    "--non-interactive",
+    "--json",
+    "--scope",
+    "foxys-projects-5fe642e0",
+    "--meta",
+    "sourceSnapshotSha256=b0259cb29bdba58c85048e616fc88a29848745b8a76a0b7c7291c0e6dc805b86",
+    "--meta",
+    "sourceManifestSha256=687c0585ad5cc5d905b75475999d37e536f62aa789f5a3238ca9f7026e5696bf",
+    "--meta",
+    "sourceUploadSha256=0c945dbb4931fdbeae68cfd9de9a32b5ffaee5b720025575ceeba7ddf78cb130",
+    "--meta",
+    "sourceDirty=true"
+  ],
+  "cwd": "D:\\Download\\ProfessionalLegalRAG\\tmp\\vercel-release-20261030-real-793e8201"
+}

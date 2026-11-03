@@ -1,0 +1,3535 @@
+{
+  "mode": "offline same-answer full50 rescore; zero provider/database calls",
+  "parent_live_run": "answer-golden50-production-timeout20-20261103-f93a41fe",
+  "parent_answer_results_sha256": "8ecd03dcf46223e0d08c31ab2bd5c0489c393434caca38abdafae12b125f1be1",
+  "old_metric_version": "3.2.0",
+  "new_metric_version": "3.3.0",
+  "cases": 50,
+  "input_safe_count": 50,
+  "output_safe_count": 50,
+  "technical_error_cases": 0,
+  "generation_observed_in_parent": 49,
+  "old_answer_summary": {
+    "total_cases": 50,
+    "scored_cases": 50,
+    "skipped_cases": 0,
+    "skip_reason_counts": {},
+    "answerable_count": 50,
+    "unanswerable_count": 0,
+    "refusal_categories_breakdown": {
+      "disclaimer": 49,
+      "no_evidence": 1
+    },
+    "mixed_claim_refusal_rate": 0.0,
+    "metric_details": {
+      "exact_match": {
+        "value": 0.0,
+        "numerator": 0.0,
+        "denominator": 50,
+        "coverage": 1.0,
+        "scored_cases": 50,
+        "skipped_cases": 0,
+        "skip_reasons": {},
+        "aggregation": "macro_case_mean",
+        "reason": null
+      },
+      "token_precision": {
+        "value": 0.1367,
+        "numerator": 6.8331,
+        "denominator": 50,
+        "coverage": 1.0,
+        "scored_cases": 50,
+        "skipped_cases": 0,
+        "skip_reasons": {},
+        "aggregation": "macro_case_mean",
+        "reason": null
+      },
+      "token_recall": {
+        "value": 0.9577,
+        "numerator": 47.8874,
+        "denominator": 50,
+        "coverage": 1.0,
+        "scored_cases": 50,
+        "skipped_cases": 0,
+        "skip_reasons": {},
+        "aggregation": "macro_case_mean",
+        "reason": null
+      },
+      "token_f1": {
+        "value": 0.2323,
+        "numerator": 11.6138,
+        "denominator": 50,
+        "coverage": 1.0,
+        "scored_cases": 50,
+        "skipped_cases": 0,
+        "skip_reasons": {},
+        "aggregation": "macro_case_mean",
+        "reason": null
+      },
+      "char_f1": {
+        "value": 0.2291,
+        "numerator": 11.4539,
+        "denominator": 50,
+        "coverage": 1.0,
+        "scored_cases": 50,
+        "skipped_cases": 0,
+        "skip_reasons": {},
+        "aggregation": "macro_case_mean",
+        "reason": null
+      },
+      "rouge_l": {
+        "value": 0.2241,
+        "numerator": 11.2056,
+        "denominator": 50,
+        "coverage": 1.0,
+        "scored_cases": 50,
+        "skipped_cases": 0,
+        "skip_reasons": {},
+        "aggregation": "macro_case_mean",
+        "reason": null
+      },
+      "chrf": {
+        "value": 0.3836,
+        "numerator": 19.1786,
+        "denominator": 50,
+        "coverage": 1.0,
+        "scored_cases": 50,
+        "skipped_cases": 0,
+        "skip_reasons": {},
+        "aggregation": "macro_case_mean",
+        "reason": null
+      },
+      "number_precision": {
+        "value": null,
+        "numerator": 0,
+        "denominator": 0,
+        "coverage": 0.0,
+        "scored_cases": 0,
+        "skipped_cases": 50,
+        "skip_reasons": {
+          "no_expected_numbers": 50
+        },
+        "aggregation": "macro_case_mean",
+        "reason": "no_applicable_values"
+      },
+      "number_recall": {
+        "value": null,
+        "numerator": 0,
+        "denominator": 0,
+        "coverage": 0.0,
+        "scored_cases": 0,
+        "skipped_cases": 50,
+        "skip_reasons": {
+          "no_expected_numbers": 50
+        },
+        "aggregation": "macro_case_mean",
+        "reason": "no_applicable_values"
+      },
+      "date_precision": {
+        "value": null,
+        "numerator": 0,
+        "denominator": 0,
+        "coverage": 0.0,
+        "scored_cases": 0,
+        "skipped_cases": 50,
+        "skip_reasons": {
+          "no_expected_dates": 50
+        },
+        "aggregation": "macro_case_mean",
+        "reason": "no_applicable_values"
+      },
+      "date_recall": {
+        "value": null,
+        "numerator": 0,
+        "denominator": 0,
+        "coverage": 0.0,
+        "scored_cases": 0,
+        "skipped_cases": 50,
+        "skip_reasons": {
+          "no_expected_dates": 50
+        },
+        "aggregation": "macro_case_mean",
+        "reason": "no_applicable_values"
+      },
+      "entity_precision": {
+        "value": null,
+        "numerator": 0,
+        "denominator": 0,
+        "coverage": 0.0,
+        "scored_cases": 0,
+        "skipped_cases": 50,
+        "skip_reasons": {
+          "no_expected_entities": 50
+        },
+        "aggregation": "macro_case_mean",
+        "reason": "no_applicable_values"
+      },
+      "entity_recall": {
+        "value": null,
+        "numerator": 0,
+        "denominator": 0,
+        "coverage": 0.0,
+        "scored_cases": 0,
+        "skipped_cases": 50,
+        "skip_reasons": {
+          "no_expected_entities": 50
+        },
+        "aggregation": "macro_case_mean",
+        "reason": "no_applicable_values"
+      },
+      "citation_precision": {
+        "value": 0.9003,
+        "numerator": 44.1167,
+        "denominator": 49,
+        "coverage": 0.98,
+        "scored_cases": 49,
+        "skipped_cases": 1,
+        "skip_reasons": {
+          "no_retrieved_evidence_citations": 1
+        },
+        "aggregation": "macro_case_mean",
+        "reason": null
+      },
+      "citation_recall": {
+        "value": 1.0,
+        "numerator": 1.0,
+        "denominator": 1,
+        "coverage": 0.02,
+        "scored_cases": 1,
+        "skipped_cases": 49,
+        "skip_reasons": {
+          "no_reference_citations": 49
+        },
+        "aggregation": "macro_case_mean",
+        "reason": null
+      },
+      "citation_coverage": {
+        "value": 1.0,
+        "numerator": 1.0,
+        "denominator": 1,
+        "coverage": 0.02,
+        "scored_cases": 1,
+        "skipped_cases": 49,
+        "skip_reasons": {
+          "no_reference_citations": 49
+        },
+        "aggregation": "macro_case_mean",
+        "reason": null
+      },
+      "invalid_citation_rate": {
+        "value": 0.0997,
+        "numerator": 4.8833,
+        "denominator": 49,
+        "coverage": 0.98,
+        "scored_cases": 49,
+        "skipped_cases": 1,
+        "skip_reasons": {
+          "no_retrieved_evidence_citations": 1
+        },
+        "aggregation": "macro_case_mean",
+        "reason": null
+      },
+      "answer_similarity_pass_rate": {
+        "value": 0.0,
+        "numerator": 0,
+        "denominator": 50,
+        "coverage": 1.0,
+        "scored_cases": 50,
+        "skipped_cases": 0,
+        "skip_reasons": {},
+        "aggregation": "case_count_ratio",
+        "reason": null
+      },
+      "unanswerable_accuracy": {
+        "value": null,
+        "numerator": 0,
+        "denominator": 0,
+        "coverage": 0.0,
+        "scored_cases": 0,
+        "skipped_cases": 50,
+        "skip_reasons": {
+          "answerable_case": 50
+        },
+        "aggregation": "case_count_ratio",
+        "reason": "no_unanswerable_cases"
+      },
+      "refusal_precision": {
+        "value": 0.0,
+        "numerator": 0,
+        "denominator": 1,
+        "coverage": 0.02,
+        "scored_cases": 1,
+        "skipped_cases": 49,
+        "skip_reasons": {
+          "not_predicted_refusal": 49
+        },
+        "aggregation": "case_count_ratio",
+        "reason": null
+      },
+      "refusal_recall": {
+        "value": null,
+        "numerator": 0,
+        "denominator": 0,
+        "coverage": 0.0,
+        "scored_cases": 0,
+        "skipped_cases": 50,
+        "skip_reasons": {
+          "answerable_case": 50
+        },
+        "aggregation": "case_count_ratio",
+        "reason": "no_unanswerable_cases"
+      },
+      "mixed_claim_refusal_rate": {
+        "value": 0.0,
+        "numerator": 0,
+        "denominator": 50,
+        "coverage": 1.0,
+        "scored_cases": 50,
+        "skipped_cases": 0,
+        "skip_reasons": {},
+        "aggregation": "case_count_ratio",
+        "reason": null
+      }
+    },
+    "refusal_precision": 0.0,
+    "refusal_recall": null,
+    "unanswerable_accuracy": null,
+    "answer_similarity_pass_rate": 0.0,
+    "exact_match": 0.0,
+    "token_precision": 0.1367,
+    "token_recall": 0.9577,
+    "token_f1": 0.2323,
+    "char_f1": 0.2291,
+    "rouge_l": 0.2241,
+    "chrf": 0.3836,
+    "number_precision": null,
+    "number_recall": null,
+    "date_precision": null,
+    "date_recall": null,
+    "entity_precision": null,
+    "entity_recall": null,
+    "citation_precision": 0.9003,
+    "citation_recall": 1.0,
+    "citation_coverage": 1.0,
+    "invalid_citation_rate": 0.0997
+  },
+  "answer_summary": {
+    "total_cases": 50,
+    "scored_cases": 50,
+    "skipped_cases": 0,
+    "skip_reason_counts": {},
+    "answerable_count": 50,
+    "unanswerable_count": 0,
+    "refusal_categories_breakdown": {
+      "disclaimer": 49,
+      "no_evidence": 1
+    },
+    "mixed_claim_refusal_rate": 0.0,
+    "metric_details": {
+      "exact_match": {
+        "value": 0.0,
+        "numerator": 0.0,
+        "denominator": 50,
+        "coverage": 1.0,
+        "scored_cases": 50,
+        "skipped_cases": 0,
+        "skip_reasons": {},
+        "aggregation": "macro_case_mean",
+        "reason": null
+      },
+      "token_precision": {
+        "value": 0.1367,
+        "numerator": 6.8331,
+        "denominator": 50,
+        "coverage": 1.0,
+        "scored_cases": 50,
+        "skipped_cases": 0,
+        "skip_reasons": {},
+        "aggregation": "macro_case_mean",
+        "reason": null
+      },
+      "token_recall": {
+        "value": 0.9577,
+        "numerator": 47.8874,
+        "denominator": 50,
+        "coverage": 1.0,
+        "scored_cases": 50,
+        "skipped_cases": 0,
+        "skip_reasons": {},
+        "aggregation": "macro_case_mean",
+        "reason": null
+      },
+      "token_f1": {
+        "value": 0.2323,
+        "numerator": 11.6138,
+        "denominator": 50,
+        "coverage": 1.0,
+        "scored_cases": 50,
+        "skipped_cases": 0,
+        "skip_reasons": {},
+        "aggregation": "macro_case_mean",
+        "reason": null
+      },
+      "char_f1": {
+        "value": 0.2291,
+        "numerator": 11.4539,
+        "denominator": 50,
+        "coverage": 1.0,
+        "scored_cases": 50,
+        "skipped_cases": 0,
+        "skip_reasons": {},
+        "aggregation": "macro_case_mean",
+        "reason": null
+      },
+      "rouge_l": {
+        "value": 0.2241,
+        "numerator": 11.2056,
+        "denominator": 50,
+        "coverage": 1.0,
+        "scored_cases": 50,
+        "skipped_cases": 0,
+        "skip_reasons": {},
+        "aggregation": "macro_case_mean",
+        "reason": null
+      },
+      "chrf": {
+        "value": 0.3836,
+        "numerator": 19.1786,
+        "denominator": 50,
+        "coverage": 1.0,
+        "scored_cases": 50,
+        "skipped_cases": 0,
+        "skip_reasons": {},
+        "aggregation": "macro_case_mean",
+        "reason": null
+      },
+      "number_precision": {
+        "value": null,
+        "numerator": 0,
+        "denominator": 0,
+        "coverage": 0.0,
+        "scored_cases": 0,
+        "skipped_cases": 50,
+        "skip_reasons": {
+          "no_expected_numbers": 50
+        },
+        "aggregation": "macro_case_mean",
+        "reason": "no_applicable_values"
+      },
+      "number_recall": {
+        "value": null,
+        "numerator": 0,
+        "denominator": 0,
+        "coverage": 0.0,
+        "scored_cases": 0,
+        "skipped_cases": 50,
+        "skip_reasons": {
+          "no_expected_numbers": 50
+        },
+        "aggregation": "macro_case_mean",
+        "reason": "no_applicable_values"
+      },
+      "date_precision": {
+        "value": null,
+        "numerator": 0,
+        "denominator": 0,
+        "coverage": 0.0,
+        "scored_cases": 0,
+        "skipped_cases": 50,
+        "skip_reasons": {
+          "no_expected_dates": 50
+        },
+        "aggregation": "macro_case_mean",
+        "reason": "no_applicable_values"
+      },
+      "date_recall": {
+        "value": null,
+        "numerator": 0,
+        "denominator": 0,
+        "coverage": 0.0,
+        "scored_cases": 0,
+        "skipped_cases": 50,
+        "skip_reasons": {
+          "no_expected_dates": 50
+        },
+        "aggregation": "macro_case_mean",
+        "reason": "no_applicable_values"
+      },
+      "entity_precision": {
+        "value": null,
+        "numerator": 0,
+        "denominator": 0,
+        "coverage": 0.0,
+        "scored_cases": 0,
+        "skipped_cases": 50,
+        "skip_reasons": {
+          "no_expected_entities": 50
+        },
+        "aggregation": "macro_case_mean",
+        "reason": "no_applicable_values"
+      },
+      "entity_recall": {
+        "value": null,
+        "numerator": 0,
+        "denominator": 0,
+        "coverage": 0.0,
+        "scored_cases": 0,
+        "skipped_cases": 50,
+        "skip_reasons": {
+          "no_expected_entities": 50
+        },
+        "aggregation": "macro_case_mean",
+        "reason": "no_applicable_values"
+      },
+      "citation_precision": {
+        "value": 0.9679,
+        "numerator": 47.4277,
+        "denominator": 49,
+        "coverage": 0.98,
+        "scored_cases": 49,
+        "skipped_cases": 1,
+        "skip_reasons": {
+          "no_retrieved_evidence_citations": 1
+        },
+        "aggregation": "macro_case_mean",
+        "reason": null
+      },
+      "citation_recall": {
+        "value": 1.0,
+        "numerator": 1.0,
+        "denominator": 1,
+        "coverage": 0.02,
+        "scored_cases": 1,
+        "skipped_cases": 49,
+        "skip_reasons": {
+          "no_reference_citations": 49
+        },
+        "aggregation": "macro_case_mean",
+        "reason": null
+      },
+      "citation_coverage": {
+        "value": 1.0,
+        "numerator": 1.0,
+        "denominator": 1,
+        "coverage": 0.02,
+        "scored_cases": 1,
+        "skipped_cases": 49,
+        "skip_reasons": {
+          "no_reference_citations": 49
+        },
+        "aggregation": "macro_case_mean",
+        "reason": null
+      },
+      "invalid_citation_rate": {
+        "value": 0.0321,
+        "numerator": 1.5723,
+        "denominator": 49,
+        "coverage": 0.98,
+        "scored_cases": 49,
+        "skipped_cases": 1,
+        "skip_reasons": {
+          "no_retrieved_evidence_citations": 1
+        },
+        "aggregation": "macro_case_mean",
+        "reason": null
+      },
+      "answer_similarity_pass_rate": {
+        "value": 0.0,
+        "numerator": 0,
+        "denominator": 50,
+        "coverage": 1.0,
+        "scored_cases": 50,
+        "skipped_cases": 0,
+        "skip_reasons": {},
+        "aggregation": "case_count_ratio",
+        "reason": null
+      },
+      "unanswerable_accuracy": {
+        "value": null,
+        "numerator": 0,
+        "denominator": 0,
+        "coverage": 0.0,
+        "scored_cases": 0,
+        "skipped_cases": 50,
+        "skip_reasons": {
+          "answerable_case": 50
+        },
+        "aggregation": "case_count_ratio",
+        "reason": "no_unanswerable_cases"
+      },
+      "refusal_precision": {
+        "value": 0.0,
+        "numerator": 0,
+        "denominator": 1,
+        "coverage": 0.02,
+        "scored_cases": 1,
+        "skipped_cases": 49,
+        "skip_reasons": {
+          "not_predicted_refusal": 49
+        },
+        "aggregation": "case_count_ratio",
+        "reason": null
+      },
+      "refusal_recall": {
+        "value": null,
+        "numerator": 0,
+        "denominator": 0,
+        "coverage": 0.0,
+        "scored_cases": 0,
+        "skipped_cases": 50,
+        "skip_reasons": {
+          "answerable_case": 50
+        },
+        "aggregation": "case_count_ratio",
+        "reason": "no_unanswerable_cases"
+      },
+      "mixed_claim_refusal_rate": {
+        "value": 0.0,
+        "numerator": 0,
+        "denominator": 50,
+        "coverage": 1.0,
+        "scored_cases": 50,
+        "skipped_cases": 0,
+        "skip_reasons": {},
+        "aggregation": "case_count_ratio",
+        "reason": null
+      }
+    },
+    "refusal_precision": 0.0,
+    "refusal_recall": null,
+    "unanswerable_accuracy": null,
+    "answer_similarity_pass_rate": 0.0,
+    "exact_match": 0.0,
+    "token_precision": 0.1367,
+    "token_recall": 0.9577,
+    "token_f1": 0.2323,
+    "char_f1": 0.2291,
+    "rouge_l": 0.2241,
+    "chrf": 0.3836,
+    "number_precision": null,
+    "number_recall": null,
+    "date_precision": null,
+    "date_recall": null,
+    "entity_precision": null,
+    "entity_recall": null,
+    "citation_precision": 0.9679,
+    "citation_recall": 1.0,
+    "citation_coverage": 1.0,
+    "invalid_citation_rate": 0.0321
+  },
+  "retrieval_summary": {
+    "metric_version": "3.0.0",
+    "total_cases": 50,
+    "scored_cases": 40,
+    "skipped_cases": 10,
+    "coverage": {
+      "macro": 0.8,
+      "micro": 0.8,
+      "numerator": 40.0,
+      "denominator": 50.0,
+      "scored_cases": 50,
+      "skipped_cases": 0,
+      "skip_reasons": {
+        "no_verified_gold_label": 10
+      },
+      "reason": null
+    },
+    "skip_reason_counts": {
+      "no_verified_gold_label": 10
+    },
+    "document_recall": {
+      "1": {
+        "macro": 0.9,
+        "micro": 0.8679,
+        "numerator": 46.0,
+        "denominator": 53.0,
+        "scored_cases": 40,
+        "skipped_cases": 10,
+        "skip_reasons": {
+          "no_verified_gold_label": 10
+        },
+        "reason": null
+      },
+      "3": {
+        "macro": 1.0,
+        "micro": 1.0,
+        "numerator": 53.0,
+        "denominator": 53.0,
+        "scored_cases": 40,
+        "skipped_cases": 10,
+        "skip_reasons": {
+          "no_verified_gold_label": 10
+        },
+        "reason": null
+      },
+      "5": {
+        "macro": 1.0,
+        "micro": 1.0,
+        "numerator": 53.0,
+        "denominator": 53.0,
+        "scored_cases": 40,
+        "skipped_cases": 10,
+        "skip_reasons": {
+          "no_verified_gold_label": 10
+        },
+        "reason": null
+      },
+      "10": {
+        "macro": 1.0,
+        "micro": 1.0,
+        "numerator": 53.0,
+        "denominator": 53.0,
+        "scored_cases": 40,
+        "skipped_cases": 10,
+        "skip_reasons": {
+          "no_verified_gold_label": 10
+        },
+        "reason": null
+      },
+      "24": {
+        "macro": 1.0,
+        "micro": 1.0,
+        "numerator": 53.0,
+        "denominator": 53.0,
+        "scored_cases": 40,
+        "skipped_cases": 10,
+        "skip_reasons": {
+          "no_verified_gold_label": 10
+        },
+        "reason": null
+      }
+    },
+    "article_recall": {
+      "1": {
+        "macro": 0.8148,
+        "micro": 0.8,
+        "numerator": 24.0,
+        "denominator": 30.0,
+        "scored_cases": 27,
+        "skipped_cases": 23,
+        "skip_reasons": {
+          "no_applicable_gold": 13,
+          "no_verified_gold_label": 10
+        },
+        "reason": null
+      },
+      "3": {
+        "macro": 0.9815,
+        "micro": 0.9667,
+        "numerator": 29.0,
+        "denominator": 30.0,
+        "scored_cases": 27,
+        "skipped_cases": 23,
+        "skip_reasons": {
+          "no_applicable_gold": 13,
+          "no_verified_gold_label": 10
+        },
+        "reason": null
+      },
+      "6": {
+        "macro": null,
+        "micro": null,
+        "numerator": 0.0,
+        "denominator": 0.0,
+        "scored_cases": 0,
+        "skipped_cases": 50,
+        "skip_reasons": {
+          "k_exceeds_configured_capacity": 40,
+          "no_verified_gold_label": 10
+        },
+        "reason": "no_applicable_values"
+      }
+    },
+    "clause_recall": {
+      "1": {
+        "macro": 0.6538,
+        "micro": 0.6429,
+        "numerator": 9.0,
+        "denominator": 14.0,
+        "scored_cases": 13,
+        "skipped_cases": 37,
+        "skip_reasons": {
+          "no_applicable_gold": 27,
+          "no_verified_gold_label": 10
+        },
+        "reason": null
+      },
+      "3": {
+        "macro": 0.9231,
+        "micro": 0.9286,
+        "numerator": 13.0,
+        "denominator": 14.0,
+        "scored_cases": 13,
+        "skipped_cases": 37,
+        "skip_reasons": {
+          "no_applicable_gold": 27,
+          "no_verified_gold_label": 10
+        },
+        "reason": null
+      },
+      "6": {
+        "macro": null,
+        "micro": null,
+        "numerator": 0.0,
+        "denominator": 0.0,
+        "scored_cases": 0,
+        "skipped_cases": 50,
+        "skip_reasons": {
+          "k_exceeds_configured_capacity": 40,
+          "no_verified_gold_label": 10
+        },
+        "reason": "no_applicable_values"
+      }
+    },
+    "mrr": {
+      "article": {
+        "macro": 0.9198,
+        "micro": 0.9198,
+        "numerator": 24.833333,
+        "denominator": 27.0,
+        "scored_cases": 27,
+        "skipped_cases": 23,
+        "skip_reasons": {
+          "no_applicable_gold": 13,
+          "no_verified_gold_label": 10
+        },
+        "reason": null
+      },
+      "clause": {
+        "macro": 0.7949,
+        "micro": 0.7949,
+        "numerator": 10.333333,
+        "denominator": 13.0,
+        "scored_cases": 13,
+        "skipped_cases": 37,
+        "skip_reasons": {
+          "no_applicable_gold": 27,
+          "no_verified_gold_label": 10
+        },
+        "reason": null
+      },
+      "document": {
+        "macro": 0.9458,
+        "micro": 0.9458,
+        "numerator": 37.833333,
+        "denominator": 40.0,
+        "scored_cases": 40,
+        "skipped_cases": 10,
+        "skip_reasons": {
+          "no_verified_gold_label": 10
+        },
+        "reason": null
+      }
+    },
+    "ndcg_at_10": {
+      "macro": 0.8832,
+      "micro": 0.8647,
+      "numerator": 41.67837,
+      "denominator": 48.20209,
+      "scored_cases": 40,
+      "skipped_cases": 10,
+      "skip_reasons": {
+        "no_verified_gold_label": 10
+      },
+      "reason": null
+    },
+    "exact_reference_hit": {
+      "macro": 0.975,
+      "micro": 0.975,
+      "numerator": 39.0,
+      "denominator": 40.0,
+      "scored_cases": 40,
+      "skipped_cases": 10,
+      "skip_reasons": {
+        "no_verified_gold_label": 10
+      },
+      "reason": null
+    },
+    "multi_hop_all_required": {
+      "macro": 0.95,
+      "micro": 0.95,
+      "numerator": 38.0,
+      "denominator": 40.0,
+      "scored_cases": 40,
+      "skipped_cases": 10,
+      "skip_reasons": {
+        "no_verified_gold_label": 10
+      },
+      "reason": null
+    },
+    "multi_hop_partial": {
+      "macro": 0.9625,
+      "micro": 0.9623,
+      "numerator": 51.0,
+      "denominator": 53.0,
+      "scored_cases": 40,
+      "skipped_cases": 10,
+      "skip_reasons": {
+        "no_verified_gold_label": 10
+      },
+      "reason": null
+    },
+    "no_candidate_rate": {
+      "macro": 0.0,
+      "micro": 0.0,
+      "numerator": 0.0,
+      "denominator": 50.0,
+      "scored_cases": 50,
+      "skipped_cases": 0,
+      "skip_reasons": {},
+      "reason": null
+    },
+    "retrieval_technical_error_rate": {
+      "macro": 0.0,
+      "micro": 0.0,
+      "numerator": 0.0,
+      "denominator": 50.0,
+      "scored_cases": 50,
+      "skipped_cases": 0,
+      "skip_reasons": {},
+      "reason": null
+    },
+    "reranker_technical_error_rate": {
+      "macro": 0.0,
+      "micro": 0.0,
+      "numerator": 0.0,
+      "denominator": 50.0,
+      "scored_cases": 50,
+      "skipped_cases": 0,
+      "skip_reasons": {},
+      "reason": null
+    },
+    "stages": {
+      "pinecone_document_metrics": {
+        "configured_capacity": null,
+        "scored_case_count": 40,
+        "applicable_gold_counts": {
+          "document": 53,
+          "article": 0,
+          "clause": 0
+        },
+        "matched_gold_counts": {
+          "document": 0,
+          "article": 0,
+          "clause": 0
+        },
+        "recall": {
+          "article": {
+            "1": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "3": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "6": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            }
+          },
+          "clause": {
+            "1": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "3": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "6": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            }
+          },
+          "document": {
+            "1": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "configured_capacity_unknown": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "3": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "configured_capacity_unknown": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "5": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "configured_capacity_unknown": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "10": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "configured_capacity_unknown": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "24": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "configured_capacity_unknown": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            }
+          }
+        },
+        "mrr": {
+          "article": {
+            "macro": null,
+            "micro": null,
+            "numerator": 0.0,
+            "denominator": 0.0,
+            "scored_cases": 0,
+            "skipped_cases": 50,
+            "skip_reasons": {
+              "stage_does_not_expose_structural_locators": 40,
+              "no_verified_gold_label": 10
+            },
+            "reason": "no_applicable_values"
+          },
+          "clause": {
+            "macro": null,
+            "micro": null,
+            "numerator": 0.0,
+            "denominator": 0.0,
+            "scored_cases": 0,
+            "skipped_cases": 50,
+            "skip_reasons": {
+              "stage_does_not_expose_structural_locators": 40,
+              "no_verified_gold_label": 10
+            },
+            "reason": "no_applicable_values"
+          },
+          "document": {
+            "macro": 0.0,
+            "micro": 0.0,
+            "numerator": 0.0,
+            "denominator": 40.0,
+            "scored_cases": 40,
+            "skipped_cases": 10,
+            "skip_reasons": {
+              "no_verified_gold_label": 10
+            },
+            "reason": null
+          }
+        },
+        "candidates": {
+          "count": 50,
+          "min": 0.0,
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "max": 0.0
+        },
+        "first_loss_evidence_count": 0,
+        "null_reason_counts": {
+          "configured_capacity_unknown": 200,
+          "stage_does_not_expose_structural_locators": 320,
+          "no_verified_gold_label": 140
+        }
+      },
+      "fts_document_metrics": {
+        "configured_capacity": null,
+        "scored_case_count": 40,
+        "applicable_gold_counts": {
+          "document": 53,
+          "article": 0,
+          "clause": 0
+        },
+        "matched_gold_counts": {
+          "document": 0,
+          "article": 0,
+          "clause": 0
+        },
+        "recall": {
+          "article": {
+            "1": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "3": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "6": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            }
+          },
+          "clause": {
+            "1": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "3": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "6": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            }
+          },
+          "document": {
+            "1": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "configured_capacity_unknown": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "3": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "configured_capacity_unknown": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "5": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "configured_capacity_unknown": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "10": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "configured_capacity_unknown": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "24": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "configured_capacity_unknown": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            }
+          }
+        },
+        "mrr": {
+          "article": {
+            "macro": null,
+            "micro": null,
+            "numerator": 0.0,
+            "denominator": 0.0,
+            "scored_cases": 0,
+            "skipped_cases": 50,
+            "skip_reasons": {
+              "stage_does_not_expose_structural_locators": 40,
+              "no_verified_gold_label": 10
+            },
+            "reason": "no_applicable_values"
+          },
+          "clause": {
+            "macro": null,
+            "micro": null,
+            "numerator": 0.0,
+            "denominator": 0.0,
+            "scored_cases": 0,
+            "skipped_cases": 50,
+            "skip_reasons": {
+              "stage_does_not_expose_structural_locators": 40,
+              "no_verified_gold_label": 10
+            },
+            "reason": "no_applicable_values"
+          },
+          "document": {
+            "macro": 0.0,
+            "micro": 0.0,
+            "numerator": 0.0,
+            "denominator": 40.0,
+            "scored_cases": 40,
+            "skipped_cases": 10,
+            "skip_reasons": {
+              "no_verified_gold_label": 10
+            },
+            "reason": null
+          }
+        },
+        "candidates": {
+          "count": 50,
+          "min": 0.0,
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "max": 0.0
+        },
+        "first_loss_evidence_count": 0,
+        "null_reason_counts": {
+          "configured_capacity_unknown": 200,
+          "stage_does_not_expose_structural_locators": 320,
+          "no_verified_gold_label": 140
+        }
+      },
+      "source_retrieval_metrics": {
+        "configured_capacity": 24,
+        "scored_case_count": 40,
+        "applicable_gold_counts": {
+          "document": 53,
+          "article": 0,
+          "clause": 0
+        },
+        "matched_gold_counts": {
+          "document": 53,
+          "article": 0,
+          "clause": 0
+        },
+        "recall": {
+          "article": {
+            "1": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "3": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "6": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            }
+          },
+          "clause": {
+            "1": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "3": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "6": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            }
+          },
+          "document": {
+            "1": {
+              "macro": 0.9,
+              "micro": 0.8679,
+              "numerator": 46.0,
+              "denominator": 53.0,
+              "scored_cases": 40,
+              "skipped_cases": 10,
+              "skip_reasons": {
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "3": {
+              "macro": 1.0,
+              "micro": 1.0,
+              "numerator": 53.0,
+              "denominator": 53.0,
+              "scored_cases": 40,
+              "skipped_cases": 10,
+              "skip_reasons": {
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "5": {
+              "macro": 1.0,
+              "micro": 1.0,
+              "numerator": 53.0,
+              "denominator": 53.0,
+              "scored_cases": 40,
+              "skipped_cases": 10,
+              "skip_reasons": {
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "10": {
+              "macro": 1.0,
+              "micro": 1.0,
+              "numerator": 53.0,
+              "denominator": 53.0,
+              "scored_cases": 40,
+              "skipped_cases": 10,
+              "skip_reasons": {
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "24": {
+              "macro": 1.0,
+              "micro": 1.0,
+              "numerator": 53.0,
+              "denominator": 53.0,
+              "scored_cases": 40,
+              "skipped_cases": 10,
+              "skip_reasons": {
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            }
+          }
+        },
+        "mrr": {
+          "article": {
+            "macro": null,
+            "micro": null,
+            "numerator": 0.0,
+            "denominator": 0.0,
+            "scored_cases": 0,
+            "skipped_cases": 50,
+            "skip_reasons": {
+              "stage_does_not_expose_structural_locators": 40,
+              "no_verified_gold_label": 10
+            },
+            "reason": "no_applicable_values"
+          },
+          "clause": {
+            "macro": null,
+            "micro": null,
+            "numerator": 0.0,
+            "denominator": 0.0,
+            "scored_cases": 0,
+            "skipped_cases": 50,
+            "skip_reasons": {
+              "stage_does_not_expose_structural_locators": 40,
+              "no_verified_gold_label": 10
+            },
+            "reason": "no_applicable_values"
+          },
+          "document": {
+            "macro": 0.9458,
+            "micro": 0.9458,
+            "numerator": 37.833333,
+            "denominator": 40.0,
+            "scored_cases": 40,
+            "skipped_cases": 10,
+            "skip_reasons": {
+              "no_verified_gold_label": 10
+            },
+            "reason": null
+          }
+        },
+        "candidates": {
+          "count": 50,
+          "min": 24.0,
+          "mean": 24.0,
+          "p50": 24.0,
+          "p95": 24.0,
+          "max": 24.0
+        },
+        "first_loss_evidence_count": 0,
+        "null_reason_counts": {
+          "stage_does_not_expose_structural_locators": 320,
+          "no_verified_gold_label": 140
+        }
+      },
+      "merged_document_metrics": {
+        "configured_capacity": 24,
+        "scored_case_count": 40,
+        "applicable_gold_counts": {
+          "document": 53,
+          "article": 0,
+          "clause": 0
+        },
+        "matched_gold_counts": {
+          "document": 0,
+          "article": 0,
+          "clause": 0
+        },
+        "recall": {
+          "article": {
+            "1": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "3": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "6": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            }
+          },
+          "clause": {
+            "1": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "3": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "6": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            }
+          },
+          "document": {
+            "1": {
+              "macro": 0.0,
+              "micro": 0.0,
+              "numerator": 0.0,
+              "denominator": 53.0,
+              "scored_cases": 40,
+              "skipped_cases": 10,
+              "skip_reasons": {
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "3": {
+              "macro": 0.0,
+              "micro": 0.0,
+              "numerator": 0.0,
+              "denominator": 53.0,
+              "scored_cases": 40,
+              "skipped_cases": 10,
+              "skip_reasons": {
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "5": {
+              "macro": 0.0,
+              "micro": 0.0,
+              "numerator": 0.0,
+              "denominator": 53.0,
+              "scored_cases": 40,
+              "skipped_cases": 10,
+              "skip_reasons": {
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "10": {
+              "macro": 0.0,
+              "micro": 0.0,
+              "numerator": 0.0,
+              "denominator": 53.0,
+              "scored_cases": 40,
+              "skipped_cases": 10,
+              "skip_reasons": {
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "24": {
+              "macro": 0.0,
+              "micro": 0.0,
+              "numerator": 0.0,
+              "denominator": 53.0,
+              "scored_cases": 40,
+              "skipped_cases": 10,
+              "skip_reasons": {
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            }
+          }
+        },
+        "mrr": {
+          "article": {
+            "macro": null,
+            "micro": null,
+            "numerator": 0.0,
+            "denominator": 0.0,
+            "scored_cases": 0,
+            "skipped_cases": 50,
+            "skip_reasons": {
+              "stage_does_not_expose_structural_locators": 40,
+              "no_verified_gold_label": 10
+            },
+            "reason": "no_applicable_values"
+          },
+          "clause": {
+            "macro": null,
+            "micro": null,
+            "numerator": 0.0,
+            "denominator": 0.0,
+            "scored_cases": 0,
+            "skipped_cases": 50,
+            "skip_reasons": {
+              "stage_does_not_expose_structural_locators": 40,
+              "no_verified_gold_label": 10
+            },
+            "reason": "no_applicable_values"
+          },
+          "document": {
+            "macro": 0.0,
+            "micro": 0.0,
+            "numerator": 0.0,
+            "denominator": 40.0,
+            "scored_cases": 40,
+            "skipped_cases": 10,
+            "skip_reasons": {
+              "no_verified_gold_label": 10
+            },
+            "reason": null
+          }
+        },
+        "candidates": {
+          "count": 50,
+          "min": 0.0,
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "max": 0.0
+        },
+        "first_loss_evidence_count": 53,
+        "null_reason_counts": {
+          "stage_does_not_expose_structural_locators": 320,
+          "no_verified_gold_label": 140
+        }
+      },
+      "resolved_document_metrics": {
+        "configured_capacity": 24,
+        "scored_case_count": 40,
+        "applicable_gold_counts": {
+          "document": 53,
+          "article": 0,
+          "clause": 0
+        },
+        "matched_gold_counts": {
+          "document": 0,
+          "article": 0,
+          "clause": 0
+        },
+        "recall": {
+          "article": {
+            "1": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "3": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "6": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            }
+          },
+          "clause": {
+            "1": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "3": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "6": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "stage_does_not_expose_structural_locators": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            }
+          },
+          "document": {
+            "1": {
+              "macro": 0.0,
+              "micro": 0.0,
+              "numerator": 0.0,
+              "denominator": 53.0,
+              "scored_cases": 40,
+              "skipped_cases": 10,
+              "skip_reasons": {
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "3": {
+              "macro": 0.0,
+              "micro": 0.0,
+              "numerator": 0.0,
+              "denominator": 53.0,
+              "scored_cases": 40,
+              "skipped_cases": 10,
+              "skip_reasons": {
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "5": {
+              "macro": 0.0,
+              "micro": 0.0,
+              "numerator": 0.0,
+              "denominator": 53.0,
+              "scored_cases": 40,
+              "skipped_cases": 10,
+              "skip_reasons": {
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "10": {
+              "macro": 0.0,
+              "micro": 0.0,
+              "numerator": 0.0,
+              "denominator": 53.0,
+              "scored_cases": 40,
+              "skipped_cases": 10,
+              "skip_reasons": {
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "24": {
+              "macro": 0.0,
+              "micro": 0.0,
+              "numerator": 0.0,
+              "denominator": 53.0,
+              "scored_cases": 40,
+              "skipped_cases": 10,
+              "skip_reasons": {
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            }
+          }
+        },
+        "mrr": {
+          "article": {
+            "macro": null,
+            "micro": null,
+            "numerator": 0.0,
+            "denominator": 0.0,
+            "scored_cases": 0,
+            "skipped_cases": 50,
+            "skip_reasons": {
+              "stage_does_not_expose_structural_locators": 40,
+              "no_verified_gold_label": 10
+            },
+            "reason": "no_applicable_values"
+          },
+          "clause": {
+            "macro": null,
+            "micro": null,
+            "numerator": 0.0,
+            "denominator": 0.0,
+            "scored_cases": 0,
+            "skipped_cases": 50,
+            "skip_reasons": {
+              "stage_does_not_expose_structural_locators": 40,
+              "no_verified_gold_label": 10
+            },
+            "reason": "no_applicable_values"
+          },
+          "document": {
+            "macro": 0.0,
+            "micro": 0.0,
+            "numerator": 0.0,
+            "denominator": 40.0,
+            "scored_cases": 40,
+            "skipped_cases": 10,
+            "skip_reasons": {
+              "no_verified_gold_label": 10
+            },
+            "reason": null
+          }
+        },
+        "candidates": {
+          "count": 50,
+          "min": 0.0,
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "max": 0.0
+        },
+        "first_loss_evidence_count": 0,
+        "null_reason_counts": {
+          "stage_does_not_expose_structural_locators": 320,
+          "no_verified_gold_label": 140
+        }
+      },
+      "structural_chunk_metrics": {
+        "configured_capacity": 24,
+        "scored_case_count": 40,
+        "applicable_gold_counts": {
+          "document": 53,
+          "article": 30,
+          "clause": 14
+        },
+        "matched_gold_counts": {
+          "document": 53,
+          "article": 30,
+          "clause": 13
+        },
+        "recall": {
+          "article": {
+            "1": {
+              "macro": 0.8148,
+              "micro": 0.8,
+              "numerator": 24.0,
+              "denominator": 30.0,
+              "scored_cases": 27,
+              "skipped_cases": 23,
+              "skip_reasons": {
+                "no_applicable_gold": 13,
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "3": {
+              "macro": 1.0,
+              "micro": 1.0,
+              "numerator": 30.0,
+              "denominator": 30.0,
+              "scored_cases": 27,
+              "skipped_cases": 23,
+              "skip_reasons": {
+                "no_applicable_gold": 13,
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "6": {
+              "macro": 1.0,
+              "micro": 1.0,
+              "numerator": 30.0,
+              "denominator": 30.0,
+              "scored_cases": 27,
+              "skipped_cases": 23,
+              "skip_reasons": {
+                "no_applicable_gold": 13,
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            }
+          },
+          "clause": {
+            "1": {
+              "macro": 0.7308,
+              "micro": 0.7143,
+              "numerator": 10.0,
+              "denominator": 14.0,
+              "scored_cases": 13,
+              "skipped_cases": 37,
+              "skip_reasons": {
+                "no_applicable_gold": 27,
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "3": {
+              "macro": 0.9231,
+              "micro": 0.9286,
+              "numerator": 13.0,
+              "denominator": 14.0,
+              "scored_cases": 13,
+              "skipped_cases": 37,
+              "skip_reasons": {
+                "no_applicable_gold": 27,
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "6": {
+              "macro": 0.9231,
+              "micro": 0.9286,
+              "numerator": 13.0,
+              "denominator": 14.0,
+              "scored_cases": 13,
+              "skipped_cases": 37,
+              "skip_reasons": {
+                "no_applicable_gold": 27,
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            }
+          },
+          "document": {
+            "1": {
+              "macro": 0.9,
+              "micro": 0.8679,
+              "numerator": 46.0,
+              "denominator": 53.0,
+              "scored_cases": 40,
+              "skipped_cases": 10,
+              "skip_reasons": {
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "3": {
+              "macro": 1.0,
+              "micro": 1.0,
+              "numerator": 53.0,
+              "denominator": 53.0,
+              "scored_cases": 40,
+              "skipped_cases": 10,
+              "skip_reasons": {
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "5": {
+              "macro": 1.0,
+              "micro": 1.0,
+              "numerator": 53.0,
+              "denominator": 53.0,
+              "scored_cases": 40,
+              "skipped_cases": 10,
+              "skip_reasons": {
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "10": {
+              "macro": 1.0,
+              "micro": 1.0,
+              "numerator": 53.0,
+              "denominator": 53.0,
+              "scored_cases": 40,
+              "skipped_cases": 10,
+              "skip_reasons": {
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "24": {
+              "macro": 1.0,
+              "micro": 1.0,
+              "numerator": 53.0,
+              "denominator": 53.0,
+              "scored_cases": 40,
+              "skipped_cases": 10,
+              "skip_reasons": {
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            }
+          }
+        },
+        "mrr": {
+          "article": {
+            "macro": 0.9198,
+            "micro": 0.9198,
+            "numerator": 24.833333,
+            "denominator": 27.0,
+            "scored_cases": 27,
+            "skipped_cases": 23,
+            "skip_reasons": {
+              "no_applicable_gold": 13,
+              "no_verified_gold_label": 10
+            },
+            "reason": null
+          },
+          "clause": {
+            "macro": 0.8462,
+            "micro": 0.8462,
+            "numerator": 11.0,
+            "denominator": 13.0,
+            "scored_cases": 13,
+            "skipped_cases": 37,
+            "skip_reasons": {
+              "no_applicable_gold": 27,
+              "no_verified_gold_label": 10
+            },
+            "reason": null
+          },
+          "document": {
+            "macro": 0.9458,
+            "micro": 0.9458,
+            "numerator": 37.833333,
+            "denominator": 40.0,
+            "scored_cases": 40,
+            "skipped_cases": 10,
+            "skip_reasons": {
+              "no_verified_gold_label": 10
+            },
+            "reason": null
+          }
+        },
+        "candidates": {
+          "count": 50,
+          "min": 24.0,
+          "mean": 24.0,
+          "p50": 24.0,
+          "p95": 24.0,
+          "max": 24.0
+        },
+        "first_loss_evidence_count": 0,
+        "null_reason_counts": {
+          "no_applicable_gold": 160,
+          "no_verified_gold_label": 140
+        }
+      },
+      "local_selection_metrics": {
+        "configured_capacity": null,
+        "scored_case_count": 40,
+        "applicable_gold_counts": {
+          "document": 53,
+          "article": 30,
+          "clause": 14
+        },
+        "matched_gold_counts": {
+          "document": 17,
+          "article": 2,
+          "clause": 1
+        },
+        "recall": {
+          "article": {
+            "1": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "configured_capacity_unknown": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "3": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "configured_capacity_unknown": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "6": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "configured_capacity_unknown": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            }
+          },
+          "clause": {
+            "1": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "configured_capacity_unknown": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "3": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "configured_capacity_unknown": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "6": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "configured_capacity_unknown": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            }
+          },
+          "document": {
+            "1": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "configured_capacity_unknown": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "3": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "configured_capacity_unknown": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "5": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "configured_capacity_unknown": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "10": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "configured_capacity_unknown": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "24": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "configured_capacity_unknown": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            }
+          }
+        },
+        "mrr": {
+          "article": {
+            "macro": 0.0741,
+            "micro": 0.0741,
+            "numerator": 2.0,
+            "denominator": 27.0,
+            "scored_cases": 27,
+            "skipped_cases": 23,
+            "skip_reasons": {
+              "no_applicable_gold": 13,
+              "no_verified_gold_label": 10
+            },
+            "reason": null
+          },
+          "clause": {
+            "macro": 0.0769,
+            "micro": 0.0769,
+            "numerator": 1.0,
+            "denominator": 13.0,
+            "scored_cases": 13,
+            "skipped_cases": 37,
+            "skip_reasons": {
+              "no_applicable_gold": 27,
+              "no_verified_gold_label": 10
+            },
+            "reason": null
+          },
+          "document": {
+            "macro": 0.3,
+            "micro": 0.3,
+            "numerator": 12.0,
+            "denominator": 40.0,
+            "scored_cases": 40,
+            "skipped_cases": 10,
+            "skip_reasons": {
+              "no_verified_gold_label": 10
+            },
+            "reason": null
+          }
+        },
+        "candidates": {
+          "count": 50,
+          "min": 0.0,
+          "mean": 0.4,
+          "p50": 0.0,
+          "p95": 1.0,
+          "max": 1.0
+        },
+        "first_loss_evidence_count": 0,
+        "null_reason_counts": {
+          "configured_capacity_unknown": 440,
+          "no_applicable_gold": 40,
+          "no_verified_gold_label": 140
+        }
+      },
+      "reranker_input_metrics": {
+        "configured_capacity": 24,
+        "scored_case_count": 40,
+        "applicable_gold_counts": {
+          "document": 53,
+          "article": 30,
+          "clause": 14
+        },
+        "matched_gold_counts": {
+          "document": 53,
+          "article": 30,
+          "clause": 13
+        },
+        "recall": {
+          "article": {
+            "1": {
+              "macro": 0.8148,
+              "micro": 0.8,
+              "numerator": 24.0,
+              "denominator": 30.0,
+              "scored_cases": 27,
+              "skipped_cases": 23,
+              "skip_reasons": {
+                "no_applicable_gold": 13,
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "3": {
+              "macro": 1.0,
+              "micro": 1.0,
+              "numerator": 30.0,
+              "denominator": 30.0,
+              "scored_cases": 27,
+              "skipped_cases": 23,
+              "skip_reasons": {
+                "no_applicable_gold": 13,
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "6": {
+              "macro": 1.0,
+              "micro": 1.0,
+              "numerator": 30.0,
+              "denominator": 30.0,
+              "scored_cases": 27,
+              "skipped_cases": 23,
+              "skip_reasons": {
+                "no_applicable_gold": 13,
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            }
+          },
+          "clause": {
+            "1": {
+              "macro": 0.7308,
+              "micro": 0.7143,
+              "numerator": 10.0,
+              "denominator": 14.0,
+              "scored_cases": 13,
+              "skipped_cases": 37,
+              "skip_reasons": {
+                "no_applicable_gold": 27,
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "3": {
+              "macro": 0.9231,
+              "micro": 0.9286,
+              "numerator": 13.0,
+              "denominator": 14.0,
+              "scored_cases": 13,
+              "skipped_cases": 37,
+              "skip_reasons": {
+                "no_applicable_gold": 27,
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "6": {
+              "macro": 0.9231,
+              "micro": 0.9286,
+              "numerator": 13.0,
+              "denominator": 14.0,
+              "scored_cases": 13,
+              "skipped_cases": 37,
+              "skip_reasons": {
+                "no_applicable_gold": 27,
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            }
+          },
+          "document": {
+            "1": {
+              "macro": 0.9,
+              "micro": 0.8679,
+              "numerator": 46.0,
+              "denominator": 53.0,
+              "scored_cases": 40,
+              "skipped_cases": 10,
+              "skip_reasons": {
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "3": {
+              "macro": 1.0,
+              "micro": 1.0,
+              "numerator": 53.0,
+              "denominator": 53.0,
+              "scored_cases": 40,
+              "skipped_cases": 10,
+              "skip_reasons": {
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "5": {
+              "macro": 1.0,
+              "micro": 1.0,
+              "numerator": 53.0,
+              "denominator": 53.0,
+              "scored_cases": 40,
+              "skipped_cases": 10,
+              "skip_reasons": {
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "10": {
+              "macro": 1.0,
+              "micro": 1.0,
+              "numerator": 53.0,
+              "denominator": 53.0,
+              "scored_cases": 40,
+              "skipped_cases": 10,
+              "skip_reasons": {
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "24": {
+              "macro": 1.0,
+              "micro": 1.0,
+              "numerator": 53.0,
+              "denominator": 53.0,
+              "scored_cases": 40,
+              "skipped_cases": 10,
+              "skip_reasons": {
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            }
+          }
+        },
+        "mrr": {
+          "article": {
+            "macro": 0.9198,
+            "micro": 0.9198,
+            "numerator": 24.833333,
+            "denominator": 27.0,
+            "scored_cases": 27,
+            "skipped_cases": 23,
+            "skip_reasons": {
+              "no_applicable_gold": 13,
+              "no_verified_gold_label": 10
+            },
+            "reason": null
+          },
+          "clause": {
+            "macro": 0.8462,
+            "micro": 0.8462,
+            "numerator": 11.0,
+            "denominator": 13.0,
+            "scored_cases": 13,
+            "skipped_cases": 37,
+            "skip_reasons": {
+              "no_applicable_gold": 27,
+              "no_verified_gold_label": 10
+            },
+            "reason": null
+          },
+          "document": {
+            "macro": 0.9458,
+            "micro": 0.9458,
+            "numerator": 37.833333,
+            "denominator": 40.0,
+            "scored_cases": 40,
+            "skipped_cases": 10,
+            "skip_reasons": {
+              "no_verified_gold_label": 10
+            },
+            "reason": null
+          }
+        },
+        "candidates": {
+          "count": 50,
+          "min": 24.0,
+          "mean": 24.0,
+          "p50": 24.0,
+          "p95": 24.0,
+          "max": 24.0
+        },
+        "first_loss_evidence_count": 0,
+        "null_reason_counts": {
+          "no_applicable_gold": 160,
+          "no_verified_gold_label": 140
+        }
+      },
+      "reranker_output_metrics": {
+        "configured_capacity": 3,
+        "scored_case_count": 40,
+        "applicable_gold_counts": {
+          "document": 53,
+          "article": 30,
+          "clause": 14
+        },
+        "matched_gold_counts": {
+          "document": 53,
+          "article": 30,
+          "clause": 13
+        },
+        "recall": {
+          "article": {
+            "1": {
+              "macro": 0.8148,
+              "micro": 0.8,
+              "numerator": 24.0,
+              "denominator": 30.0,
+              "scored_cases": 27,
+              "skipped_cases": 23,
+              "skip_reasons": {
+                "no_applicable_gold": 13,
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "3": {
+              "macro": 1.0,
+              "micro": 1.0,
+              "numerator": 30.0,
+              "denominator": 30.0,
+              "scored_cases": 27,
+              "skipped_cases": 23,
+              "skip_reasons": {
+                "no_applicable_gold": 13,
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "6": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "k_exceeds_configured_capacity": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            }
+          },
+          "clause": {
+            "1": {
+              "macro": 0.7308,
+              "micro": 0.7143,
+              "numerator": 10.0,
+              "denominator": 14.0,
+              "scored_cases": 13,
+              "skipped_cases": 37,
+              "skip_reasons": {
+                "no_applicable_gold": 27,
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "3": {
+              "macro": 0.9231,
+              "micro": 0.9286,
+              "numerator": 13.0,
+              "denominator": 14.0,
+              "scored_cases": 13,
+              "skipped_cases": 37,
+              "skip_reasons": {
+                "no_applicable_gold": 27,
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "6": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "k_exceeds_configured_capacity": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            }
+          },
+          "document": {
+            "1": {
+              "macro": 0.9,
+              "micro": 0.8679,
+              "numerator": 46.0,
+              "denominator": 53.0,
+              "scored_cases": 40,
+              "skipped_cases": 10,
+              "skip_reasons": {
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "3": {
+              "macro": 1.0,
+              "micro": 1.0,
+              "numerator": 53.0,
+              "denominator": 53.0,
+              "scored_cases": 40,
+              "skipped_cases": 10,
+              "skip_reasons": {
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "5": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "k_exceeds_configured_capacity": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "10": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "k_exceeds_configured_capacity": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "24": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "k_exceeds_configured_capacity": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            }
+          }
+        },
+        "mrr": {
+          "article": {
+            "macro": 0.9198,
+            "micro": 0.9198,
+            "numerator": 24.833333,
+            "denominator": 27.0,
+            "scored_cases": 27,
+            "skipped_cases": 23,
+            "skip_reasons": {
+              "no_applicable_gold": 13,
+              "no_verified_gold_label": 10
+            },
+            "reason": null
+          },
+          "clause": {
+            "macro": 0.8462,
+            "micro": 0.8462,
+            "numerator": 11.0,
+            "denominator": 13.0,
+            "scored_cases": 13,
+            "skipped_cases": 37,
+            "skip_reasons": {
+              "no_applicable_gold": 27,
+              "no_verified_gold_label": 10
+            },
+            "reason": null
+          },
+          "document": {
+            "macro": 0.9458,
+            "micro": 0.9458,
+            "numerator": 37.833333,
+            "denominator": 40.0,
+            "scored_cases": 40,
+            "skipped_cases": 10,
+            "skip_reasons": {
+              "no_verified_gold_label": 10
+            },
+            "reason": null
+          }
+        },
+        "candidates": {
+          "count": 50,
+          "min": 3.0,
+          "mean": 3.0,
+          "p50": 3.0,
+          "p95": 3.0,
+          "max": 3.0
+        },
+        "first_loss_evidence_count": 0,
+        "null_reason_counts": {
+          "k_exceeds_configured_capacity": 200,
+          "no_applicable_gold": 120,
+          "no_verified_gold_label": 140
+        }
+      },
+      "final_evidence_metrics": {
+        "configured_capacity": 3,
+        "scored_case_count": 40,
+        "applicable_gold_counts": {
+          "document": 53,
+          "article": 30,
+          "clause": 14
+        },
+        "matched_gold_counts": {
+          "document": 53,
+          "article": 29,
+          "clause": 13
+        },
+        "recall": {
+          "article": {
+            "1": {
+              "macro": 0.8148,
+              "micro": 0.8,
+              "numerator": 24.0,
+              "denominator": 30.0,
+              "scored_cases": 27,
+              "skipped_cases": 23,
+              "skip_reasons": {
+                "no_applicable_gold": 13,
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "3": {
+              "macro": 0.9815,
+              "micro": 0.9667,
+              "numerator": 29.0,
+              "denominator": 30.0,
+              "scored_cases": 27,
+              "skipped_cases": 23,
+              "skip_reasons": {
+                "no_applicable_gold": 13,
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "6": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "k_exceeds_configured_capacity": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            }
+          },
+          "clause": {
+            "1": {
+              "macro": 0.6538,
+              "micro": 0.6429,
+              "numerator": 9.0,
+              "denominator": 14.0,
+              "scored_cases": 13,
+              "skipped_cases": 37,
+              "skip_reasons": {
+                "no_applicable_gold": 27,
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "3": {
+              "macro": 0.9231,
+              "micro": 0.9286,
+              "numerator": 13.0,
+              "denominator": 14.0,
+              "scored_cases": 13,
+              "skipped_cases": 37,
+              "skip_reasons": {
+                "no_applicable_gold": 27,
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "6": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "k_exceeds_configured_capacity": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            }
+          },
+          "document": {
+            "1": {
+              "macro": 0.9,
+              "micro": 0.8679,
+              "numerator": 46.0,
+              "denominator": 53.0,
+              "scored_cases": 40,
+              "skipped_cases": 10,
+              "skip_reasons": {
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "3": {
+              "macro": 1.0,
+              "micro": 1.0,
+              "numerator": 53.0,
+              "denominator": 53.0,
+              "scored_cases": 40,
+              "skipped_cases": 10,
+              "skip_reasons": {
+                "no_verified_gold_label": 10
+              },
+              "reason": null
+            },
+            "5": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "k_exceeds_configured_capacity": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "10": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "k_exceeds_configured_capacity": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            },
+            "24": {
+              "macro": null,
+              "micro": null,
+              "numerator": 0.0,
+              "denominator": 0.0,
+              "scored_cases": 0,
+              "skipped_cases": 50,
+              "skip_reasons": {
+                "k_exceeds_configured_capacity": 40,
+                "no_verified_gold_label": 10
+              },
+              "reason": "no_applicable_values"
+            }
+          }
+        },
+        "mrr": {
+          "article": {
+            "macro": 0.9198,
+            "micro": 0.9198,
+            "numerator": 24.833333,
+            "denominator": 27.0,
+            "scored_cases": 27,
+            "skipped_cases": 23,
+            "skip_reasons": {
+              "no_applicable_gold": 13,
+              "no_verified_gold_label": 10
+            },
+            "reason": null
+          },
+          "clause": {
+            "macro": 0.7949,
+            "micro": 0.7949,
+            "numerator": 10.333333,
+            "denominator": 13.0,
+            "scored_cases": 13,
+            "skipped_cases": 37,
+            "skip_reasons": {
+              "no_applicable_gold": 27,
+              "no_verified_gold_label": 10
+            },
+            "reason": null
+          },
+          "document": {
+            "macro": 0.9458,
+            "micro": 0.9458,
+            "numerator": 37.833333,
+            "denominator": 40.0,
+            "scored_cases": 40,
+            "skipped_cases": 10,
+            "skip_reasons": {
+              "no_verified_gold_label": 10
+            },
+            "reason": null
+          }
+        },
+        "candidates": {
+          "count": 50,
+          "min": 2.0,
+          "mean": 2.98,
+          "p50": 3.0,
+          "p95": 3.0,
+          "max": 3.0
+        },
+        "first_loss_evidence_count": 0,
+        "null_reason_counts": {
+          "k_exceeds_configured_capacity": 200,
+          "no_applicable_gold": 120,
+          "no_verified_gold_label": 140
+        }
+      }
+    }
+  },
+  "retrieval_gate": {
+    "passed": true,
+    "k": 3,
+    "thresholds": {
+      "document_recall@3": 1.0,
+      "article_recall@3": 0.95,
+      "clause_recall@3": 0.9,
+      "multi_hop_all_required": 0.95
+    },
+    "observed": {
+      "document_recall@3": 1.0,
+      "article_recall@3": 0.9667,
+      "clause_recall@3": 0.9286,
+      "multi_hop_all_required": 0.95,
+      "no_candidate_rate": 0.0,
+      "retrieval_technical_error_rate": 0.0,
+      "reranker_technical_error_rate": 0.0
+    },
+    "failures": []
+  },
+  "paired_cases": [
+    {
+      "case_id": "case_001",
+      "answer_sha256": "5fb630dd00549f92d2027fb924135450c4a741b6ef8f601cc21794fa2043adcb",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 0.8,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.2
+    },
+    {
+      "case_id": "case_002",
+      "answer_sha256": "075102b7fdf896d1b5aeeb71548bcbbe0a5f843aa22624d102f0cbbbe1d048af",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_003",
+      "answer_sha256": "97c0c8b85062720ca36afdad21b95c06c9e62867286246e5f40151151b107c13",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_004",
+      "answer_sha256": "080351c8423cab7c39d09aae1ed35589327206f87f6503ff12e68a272939819a",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 0.6667,
+      "new_citation_precision": 0.8571,
+      "old_invalid_rate": 0.3333,
+      "new_invalid_rate": 0.1429
+    },
+    {
+      "case_id": "case_005",
+      "answer_sha256": "a4acc0780d71e3b4c7bfaed953f71e61725487540085e23f5b59d740b39d0fa2",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 0.3333,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.6667,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_006",
+      "answer_sha256": "5bed05b037ceb53685ae1dcf697847990bfbd1679676cae483667b5731b98af8",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_007",
+      "answer_sha256": "a39433c196b8c00b2db5a3d024068ba1cf68ecb1beb4e6c563ce93dc59b616f1",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_008",
+      "answer_sha256": "c79d93f6fe73bda04594d0a23ac175332d1635abc5adfd7954014da44a8af7b6",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_009",
+      "answer_sha256": "8fc8bd451ae5f56271aeb0dfbfb754fd3609c8be1185230a2fb3b9481bca4cef",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 0.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 1.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_010",
+      "answer_sha256": "2a840024cfeea3e250e44b82ace7173ab7659947c7e31c3046614e1a69d4eadd",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_011",
+      "answer_sha256": "823b37bec63135f277f64f25df34db7af8293550791625ca1bb12da38462fa85",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_012",
+      "answer_sha256": "386a5b5c40852549010f79328878924772686a39f25bbb9e8674eb585a488325",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_013",
+      "answer_sha256": "b26f57ea6bbf0c816a02672ff3cddfe7ed4554e805d291585960f4bf06ed1f38",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": null,
+      "new_citation_precision": null,
+      "old_invalid_rate": null,
+      "new_invalid_rate": null
+    },
+    {
+      "case_id": "case_014",
+      "answer_sha256": "00a4c83d447022b86f8d096e13a8777c032818dbb9c7e26c0f2c5965ec40a6b2",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_015",
+      "answer_sha256": "efd7e655cbf37a16a068554978c54cf0e15ab103d085c1433238a5895247d86f",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_016",
+      "answer_sha256": "8f2dc931abbcc5fcd93bb385daf2c2cfbe432804f184531a075fe021789c94b2",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_017",
+      "answer_sha256": "e86b537d249dab22742d71ec880324661ead009ab5e1cebb8fe80f0b61d24c9e",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_018",
+      "answer_sha256": "c10721aebac604d4505e9802baeef499e1d19a01d94a310d008f9f9913ea51c1",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 0.5,
+      "new_citation_precision": 0.5,
+      "old_invalid_rate": 0.5,
+      "new_invalid_rate": 0.5
+    },
+    {
+      "case_id": "case_019",
+      "answer_sha256": "780e4b60e62bcbb8a163d9401fff5aec366b63978ff56ffa1d4082420f4afb35",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_020",
+      "answer_sha256": "bef610daef89672c1e4408eaedcc48a803bd519d80478db961b77f2bdef8e0f7",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_021",
+      "answer_sha256": "111fb1698c0262b1a2783746f6d28a9dca475ca29632838491fda018e2e8292e",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_022",
+      "answer_sha256": "8e64845d65d9d15bfefcd3c29bf3ed52a57c9ad2c743a04d0f542b3b4f275b59",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_023",
+      "answer_sha256": "bb84adaf3965c3cd835f533ac769df10c9ef882e8de9a19c3afcb1c477accf94",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 0.75,
+      "new_citation_precision": 0.875,
+      "old_invalid_rate": 0.25,
+      "new_invalid_rate": 0.125
+    },
+    {
+      "case_id": "case_024",
+      "answer_sha256": "22a4d1a0dcdcce17f6b21a02e8ee015d88dcaf1a8526bac4005cf6e034e6404b",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_025",
+      "answer_sha256": "55ec1e4514f07a388684b924d2e08512ae36856cadaeff2e0fb28b2f97e1d7ad",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_026",
+      "answer_sha256": "53e2fec3a6ab208368f54ad7741be074821cddc8139df3796eb092c999626c42",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_027",
+      "answer_sha256": "63921e2d71df48a8a50185f93b8ac1b0becfd33b6af30332bc4551acd010c884",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_028",
+      "answer_sha256": "deea5e7af78ce6dea242707a3c39166801c682c3746e2161930b6cda0cbd1bbc",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_029",
+      "answer_sha256": "7fe08b67c69bb45adb0c3da9eee74beab3b30c142c9275067371b64c62641c66",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 0.75,
+      "new_citation_precision": 0.5385,
+      "old_invalid_rate": 0.25,
+      "new_invalid_rate": 0.4615
+    },
+    {
+      "case_id": "case_030",
+      "answer_sha256": "91ebd51e0749faae060f00bae7f12119be2c999c22481581d7c90058a476dfcf",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_031",
+      "answer_sha256": "a4396aad88b63083782c5f15c70d02b714b2cb82bd37916fc0789a24ac65f8ac",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_032",
+      "answer_sha256": "92077d98f4692154a05cb1f53d8ee8cf438f7b25987f3126d4590f54ef419249",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_033",
+      "answer_sha256": "d2ca8c62ad6f761de95c27399678858393787bd5a895e2ffb235675d1e7315fc",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_034",
+      "answer_sha256": "af9557b719224a219c4c764818592b94761635345310b9af37984c2c0d59e230",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 0.25,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.75,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_035",
+      "answer_sha256": "f9338754489cce12014b0b1771abb6015a9ef17f166130d889950c59bbce876a",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_036",
+      "answer_sha256": "073702b5ec9ce76605b919acb97eadb7fc1a7666efa8ac3c6fb5d0f7c8e644ac",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_037",
+      "answer_sha256": "40eaa2ed264f14ee185dfa47ebb3ff694cefaeeea270b1d7b51324aa86fcdc1e",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 0.2,
+      "new_citation_precision": 0.8571,
+      "old_invalid_rate": 0.8,
+      "new_invalid_rate": 0.1429
+    },
+    {
+      "case_id": "case_038",
+      "answer_sha256": "725c99de9e405282f8aec514ef58710051b88c354ef521e254406914e36b89ea",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_039",
+      "answer_sha256": "7df10f544a7ddf3ac002480a74f2ba5866c5e56331db0ac12aca2abc953daf70",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_040",
+      "answer_sha256": "ba430b0368290bac87910888bf2215f59c34f6193e6bf293145a6116720374df",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_041",
+      "answer_sha256": "ac9f29c0b3731359e92f77d5e94fab8429ede1fe113627356f7790cff41968e7",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_042",
+      "answer_sha256": "723f278b9591f328f07c62709f74162c4953ec817be4ec84ea91b4e169a217aa",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_043",
+      "answer_sha256": "ed7c43491759f816c95d5a710e07e9bcb11aef5dc872b1f53f13a0fbf8343981",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 0.6667,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.3333,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_044",
+      "answer_sha256": "4d066242edb33bee0a91104075755eb53876dd0eb0877b4aff92af58520468bd",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_045",
+      "answer_sha256": "c7845df52617ac3e96bc98c4286b8c183eaf866daff5a528450995b9489447ff",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_046",
+      "answer_sha256": "b7b5521bb462e3ff7fee746b168e36cdc32a1dc2a8cdd9d4250a10d1d82cb73e",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_047",
+      "answer_sha256": "fe4cee4e099bdcb09552c5ab3936e58233d987d1ab0f99ddc1443cfbbb9eb490",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_048",
+      "answer_sha256": "e67516d2a6b5a5991656092dbcb540f9c729ed74f5223d9660f3a9fca2aa79ab",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_049",
+      "answer_sha256": "c1c4db9e3ab8f133ec9963b80505cf5ac2acfd60e5e8c8eb06d19a3badcf4ed1",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    },
+    {
+      "case_id": "case_050",
+      "answer_sha256": "f299d843fda8a309f544a99f9c9cbc99575f71ed3a3eff68c37ee6dc7fb8306d",
+      "prompt_hashes_unchanged": true,
+      "old_citation_precision": 1.0,
+      "new_citation_precision": 1.0,
+      "old_invalid_rate": 0.0,
+      "new_invalid_rate": 0.0
+    }
+  ],
+  "unchanged_non_citation_metrics": true,
+  "original_answers_contexts_metadata_unchanged": true
+}

@@ -1,0 +1,16 @@
+{
+  "id": "dpl_7Pc17TstdKKXyDKWrsx8oKBhZjRt",
+  "url": "vietlex-legal-rkjgl5cet-foxys-projects-5fe642e0.vercel.app",
+  "projectId": "prj_PZ1anb4DLevoKHI0ZRT39DtWCLrw",
+  "target": "production",
+  "readyState": "READY",
+  "createdAt": 1793718461362,
+  "ready": 1793718527440,
+  "autoAssignCustomDomains": false,
+  "source_metadata": {
+    "sourceSnapshotSha256": "c4e13d6b3d846edfacac69b5fe101ae08933c67bdbc822e7bcb2f61a4bdb2ef0",
+    "sourceManifestSha256": "0d15ac1dcfc7436fb1cdbb06e74f5c9a074e3e9bc885e753f23f9a7a5ea9dc33",
+    "sourceUploadSha256": "774ca862821ca30f196862c15786a84b0090c17da41691a3c83ba5663413a30e",
+    "sourceDirty": "true"
+  }
+}

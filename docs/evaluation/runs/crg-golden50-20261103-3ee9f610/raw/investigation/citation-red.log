@@ -1,0 +1,232 @@
+FFFF........FF.........                                                  [100%]
+================================== FAILURES ===================================
+_ test_non_year_document_number_keeps_its_own_article_identity[04/VBHN-NHNN] __
+
+number = '04/VBHN-NHNN'
+
+    @pytest.mark.parametrize("number", ["04/VBHN-NHNN", "5020/Q\u0110-UB"])
+    def test_non_year_document_number_keeps_its_own_article_identity(number):
+>       assert parse_legal_citations(f"Kho\u1ea3n 1 \u0110i\u1ec1u 7 v\u0103n b\u1ea3n {number}") == [
+            LegalCitation(number, "\u0110i\u1ec1u 7", "Kho\u1ea3n 1")
+        ]
+E       AssertionError: assert [LegalCitatio...se='Kho\u1ea3n 1')] == [LegalCitatio...se='Kho\u1ea3n 1')]
+E         
+E         At index 0 diff: LegalCitation(document_number='', article='\u0110i\u1ec1u 7', clause='Kho\u1ea3n 1') != LegalCitation(document_number='04/VBHN-NHNN', article='\u0110i\u1ec1u 7', clause='Kho\u1ea3n 1')
+E         Use -v to get more diff
+
+tests\evaluation\test_evidence_citation_scope.py:9: AssertionError
+_ test_non_year_document_number_keeps_its_own_article_identity[5020/Q\u0110-UB] _
+
+number = '5020/Q\u0110-UB'
+
+    @pytest.mark.parametrize("number", ["04/VBHN-NHNN", "5020/Q\u0110-UB"])
+    def test_non_year_document_number_keeps_its_own_article_identity(number):
+>       assert parse_legal_citations(f"Kho\u1ea3n 1 \u0110i\u1ec1u 7 v\u0103n b\u1ea3n {number}") == [
+            LegalCitation(number, "\u0110i\u1ec1u 7", "Kho\u1ea3n 1")
+        ]
+E       AssertionError: assert [LegalCitatio...se='Kho\u1ea3n 1')] == [LegalCitatio...se='Kho\u1ea3n 1')]
+E         
+E         At index 0 diff: LegalCitation(document_number='', article='\u0110i\u1ec1u 7', clause='Kho\u1ea3n 1') != LegalCitation(document_number='5020/Q\u0110-UB', article='\u0110i\u1ec1u 7', clause='Kho\u1ea3n 1')
+E         Use -v to get more diff
+
+tests\evaluation\test_evidence_citation_scope.py:9: AssertionError
+__ test_numbered_clause_in_whole_article_evidence_is_a_supported_locator[1] ___
+
+clause = 1
+
+    @pytest.mark.parametrize("clause", [1, 2])
+    def test_numbered_clause_in_whole_article_evidence_is_a_supported_locator(clause):
+        context = (
+            "[72/2020/QH14, \u0110i\u1ec1u 91]\\nNgu\u1ed3n: https://example.invalid/law\\n"
+            "\u0110i\u1ec1u 91. Gi\u1ea3m nh\u1eb9 ph\xe1t th\u1ea3i kh\xed nh\xe0 k\xednh\\n"
+            "1. C\xe1c kh\xed nh\xe0 k\xednh ch\xednh bao g\u1ed3m CO2 v\xe0 methane.\\n"
+            "2. T\u1ed5 ch\u1ee9c ki\u1ec3m k\xea kh\xed nh\xe0 k\xednh."
+        )
+        result = metric_for(f"Kho\u1ea3n {clause} \u0110i\u1ec1u 91 v\u0103n b\u1ea3n 72/2020/QH14.", context)
+>       assert result["citation_precision"] == 1.0
+E       assert 0.0 == 1.0
+
+tests\evaluation\test_evidence_citation_scope.py:29: AssertionError
+__ test_numbered_clause_in_whole_article_evidence_is_a_supported_locator[2] ___
+
+clause = 2
+
+    @pytest.mark.parametrize("clause", [1, 2])
+    def test_numbered_clause_in_whole_article_evidence_is_a_supported_locator(clause):
+        context = (
+            "[72/2020/QH14, \u0110i\u1ec1u 91]\\nNgu\u1ed3n: https://example.invalid/law\\n"
+            "\u0110i\u1ec1u 91. Gi\u1ea3m nh\u1eb9 ph\xe1t th\u1ea3i kh\xed nh\xe0 k\xednh\\n"
+            "1. C\xe1c kh\xed nh\xe0 k\xednh ch\xednh bao g\u1ed3m CO2 v\xe0 methane.\\n"
+            "2. T\u1ed5 ch\u1ee9c ki\u1ec3m k\xea kh\xed nh\xe0 k\xednh."
+        )
+        result = metric_for(f"Kho\u1ea3n {clause} \u0110i\u1ec1u 91 v\u0103n b\u1ea3n 72/2020/QH14.", context)
+>       assert result["citation_precision"] == 1.0
+E       assert 0.0 == 1.0
+
+tests\evaluation\test_evidence_citation_scope.py:29: AssertionError
+____ test_production_answer_uses_chat_service_once_and_defers_metrics[off] ____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000239C632F440>
+guardrails_mode = 'off'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("guardrails_mode", ["off", "enforce"])
+    async def test_production_answer_uses_chat_service_once_and_defers_metrics(monkeypatch, guardrails_mode):
+        import run_answer_eval as evaluation
+        from app.services import rag_pipeline as pipeline
+        from app.services.official_search_plan import ProfiledContexts, DEEP_READING
+        chunk = evidence()
+        contexts = ProfiledContexts([chunk.formatted_context(), "Ngu\u1ed3n b\u1ed5 sung"], DEEP_READING)
+        metadata = {"retrieval_outcome": RetrievalOutcome([chunk], {}, diagnostics={}),
+                    "retrieval_status": "ok", "generation_status": "success", "rewritten_query": case().question,
+                    "t_total": 0.2, "t_retrieval": 0.1,
+                    "provider_usage": {"answer_generation": {"provider": "google_vertex_ai", "model": "test", "observed": True, "status": "success"}},
+                    "retrieval_diagnostics": {"context_stages": [{"stage": "prompt", "count": 2}]}}
+        service = AsyncMock(return_value=("C\u0103n c\u1ee9 thu\u1ebf.", contexts, metadata))
+        monkeypatch.setattr(pipeline, "run_advanced_rag", service)
+        monkeypatch.setattr(evaluation, "evaluate_single_retrieval_case", AsyncMock(side_effect=AssertionError("duplicate/adapter retrieval")))
+        monkeypatch.setattr(evaluation, "calculate_case_retrieval_metrics", lambda *_a, **_k: pytest.fail("offline metrics under online semaphore"))
+        monkeypatch.setattr("app.services.serverless_guardrails.check_input_guardrails", AsyncMock(return_value=(True, "")))
+        output = AsyncMock(return_value=(True, ""))
+        monkeypatch.setattr("app.services.serverless_guardrails.check_output_guardrails", output)
+        monkeypatch.setattr("app.services.guardrails.check_input_guardrails", AsyncMock(side_effect=AssertionError("wrong guardrail engine")))
+        settings = Settings(_env_file=None, APP_ENV="test", SERVERLESS_ONLINE_ONLY=True)
+        result = await evaluation.run_stage_a_online(case(), settings, guardrails_mode, get_evaluation_profile("separated_intent"))
+        service.assert_awaited_once_with(case().question, rewrite_mode="off", profile=get_evaluation_profile("separated_intent"))
+        assert result["contexts"] is contexts
+        assert result["generation_metadata"]["observed"] is True
+        assert len(result["prompt_evidence"]) == 2
+        assert result["pipeline_diagnostics"]["context_stages"][-1]["count"] == 2
+        if guardrails_mode == "enforce":
+            assert output.await_args.args[1] is contexts
+        from app.evaluation.retrieval_metrics import calculate_case_retrieval_metrics
+        monkeypatch.setattr(evaluation, "calculate_case_retrieval_metrics", calculate_case_retrieval_metrics)
+        final = await evaluation.run_stage_b_offline(case(), result, settings, "none")
+        assert final.prompt_evidence == result["prompt_evidence"]
+>       assert final.prompt_contexts == list(contexts)
+               ^^^^^^^^^^^^^^^^^^^^^
+
+tests\evaluation\test_chat_pipeline_parity.py:92: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = AnswerCaseResult(case_id='case_001', question='\u0110i\u1ec1u ki\u1ec7n n\u1ed9p thu\u1ebf \u0111\u01b0\u1ee3c quy \u0111\u1ecbnh th\u1ebf n\xe0o?', question_type='factoid', an...ation_coverage': None, 'invalid_citation_rate': 0.0}, ragas_metrics=None, error=None, status='ok', technical_errors={})
+item = 'prompt_contexts'
+
+    def __getattr__(self, item: str) -> Any:
+        private_attributes = object.__getattribute__(self, '__private_attributes__')
+        if item in private_attributes:
+            attribute = private_attributes[item]
+            if hasattr(attribute, '__get__'):
+                return attribute.__get__(self, type(self))  # type: ignore
+    
+            try:
+                # Note: self.__pydantic_private__ cannot be None if self.__private_attributes__ has items
+                return self.__pydantic_private__[item]  # type: ignore
+            except KeyError as exc:
+                raise AttributeError(f'{type(self).__name__!r} object has no attribute {item!r}') from exc
+        else:
+            # `__pydantic_extra__` can fail to be set if the model is not yet fully initialized.
+            # See `BaseModel.__repr_args__` for more details
+            try:
+                pydantic_extra = object.__getattribute__(self, '__pydantic_extra__')
+            except AttributeError:
+                pydantic_extra = None
+    
+            if pydantic_extra and item in pydantic_extra:
+                return pydantic_extra[item]
+            else:
+                if hasattr(self.__class__, item):
+                    return super().__getattribute__(item)  # Raises AttributeError if appropriate
+                else:
+                    # this is the current error
+>                   raise AttributeError(f'{type(self).__name__!r} object has no attribute {item!r}')
+E                   AttributeError: 'AnswerCaseResult' object has no attribute 'prompt_contexts'
+
+.venv\Lib\site-packages\pydantic\main.py:1042: AttributeError
+__ test_production_answer_uses_chat_service_once_and_defers_metrics[enforce] __
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000239C72CB3E0>
+guardrails_mode = 'enforce'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("guardrails_mode", ["off", "enforce"])
+    async def test_production_answer_uses_chat_service_once_and_defers_metrics(monkeypatch, guardrails_mode):
+        import run_answer_eval as evaluation
+        from app.services import rag_pipeline as pipeline
+        from app.services.official_search_plan import ProfiledContexts, DEEP_READING
+        chunk = evidence()
+        contexts = ProfiledContexts([chunk.formatted_context(), "Ngu\u1ed3n b\u1ed5 sung"], DEEP_READING)
+        metadata = {"retrieval_outcome": RetrievalOutcome([chunk], {}, diagnostics={}),
+                    "retrieval_status": "ok", "generation_status": "success", "rewritten_query": case().question,
+                    "t_total": 0.2, "t_retrieval": 0.1,
+                    "provider_usage": {"answer_generation": {"provider": "google_vertex_ai", "model": "test", "observed": True, "status": "success"}},
+                    "retrieval_diagnostics": {"context_stages": [{"stage": "prompt", "count": 2}]}}
+        service = AsyncMock(return_value=("C\u0103n c\u1ee9 thu\u1ebf.", contexts, metadata))
+        monkeypatch.setattr(pipeline, "run_advanced_rag", service)
+        monkeypatch.setattr(evaluation, "evaluate_single_retrieval_case", AsyncMock(side_effect=AssertionError("duplicate/adapter retrieval")))
+        monkeypatch.setattr(evaluation, "calculate_case_retrieval_metrics", lambda *_a, **_k: pytest.fail("offline metrics under online semaphore"))
+        monkeypatch.setattr("app.services.serverless_guardrails.check_input_guardrails", AsyncMock(return_value=(True, "")))
+        output = AsyncMock(return_value=(True, ""))
+        monkeypatch.setattr("app.services.serverless_guardrails.check_output_guardrails", output)
+        monkeypatch.setattr("app.services.guardrails.check_input_guardrails", AsyncMock(side_effect=AssertionError("wrong guardrail engine")))
+        settings = Settings(_env_file=None, APP_ENV="test", SERVERLESS_ONLINE_ONLY=True)
+        result = await evaluation.run_stage_a_online(case(), settings, guardrails_mode, get_evaluation_profile("separated_intent"))
+        service.assert_awaited_once_with(case().question, rewrite_mode="off", profile=get_evaluation_profile("separated_intent"))
+        assert result["contexts"] is contexts
+        assert result["generation_metadata"]["observed"] is True
+        assert len(result["prompt_evidence"]) == 2
+        assert result["pipeline_diagnostics"]["context_stages"][-1]["count"] == 2
+        if guardrails_mode == "enforce":
+            assert output.await_args.args[1] is contexts
+        from app.evaluation.retrieval_metrics import calculate_case_retrieval_metrics
+        monkeypatch.setattr(evaluation, "calculate_case_retrieval_metrics", calculate_case_retrieval_metrics)
+        final = await evaluation.run_stage_b_offline(case(), result, settings, "none")
+        assert final.prompt_evidence == result["prompt_evidence"]
+>       assert final.prompt_contexts == list(contexts)
+               ^^^^^^^^^^^^^^^^^^^^^
+
+tests\evaluation\test_chat_pipeline_parity.py:92: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = AnswerCaseResult(case_id='case_001', question='\u0110i\u1ec1u ki\u1ec7n n\u1ed9p thu\u1ebf \u0111\u01b0\u1ee3c quy \u0111\u1ecbnh th\u1ebf n\xe0o?', question_type='factoid', an...ation_coverage': None, 'invalid_citation_rate': 0.0}, ragas_metrics=None, error=None, status='ok', technical_errors={})
+item = 'prompt_contexts'
+
+    def __getattr__(self, item: str) -> Any:
+        private_attributes = object.__getattribute__(self, '__private_attributes__')
+        if item in private_attributes:
+            attribute = private_attributes[item]
+            if hasattr(attribute, '__get__'):
+                return attribute.__get__(self, type(self))  # type: ignore
+    
+            try:
+                # Note: self.__pydantic_private__ cannot be None if self.__private_attributes__ has items
+                return self.__pydantic_private__[item]  # type: ignore
+            except KeyError as exc:
+                raise AttributeError(f'{type(self).__name__!r} object has no attribute {item!r}') from exc
+        else:
+            # `__pydantic_extra__` can fail to be set if the model is not yet fully initialized.
+            # See `BaseModel.__repr_args__` for more details
+            try:
+                pydantic_extra = object.__getattribute__(self, '__pydantic_extra__')
+            except AttributeError:
+                pydantic_extra = None
+    
+            if pydantic_extra and item in pydantic_extra:
+                return pydantic_extra[item]
+            else:
+                if hasattr(self.__class__, item):
+                    return super().__getattribute__(item)  # Raises AttributeError if appropriate
+                else:
+                    # this is the current error
+>                   raise AttributeError(f'{type(self).__name__!r} object has no attribute {item!r}')
+E                   AttributeError: 'AnswerCaseResult' object has no attribute 'prompt_contexts'
+
+.venv\Lib\site-packages\pydantic\main.py:1042: AttributeError
+=========================== short test summary info ===========================
+FAILED tests/evaluation/test_evidence_citation_scope.py::test_non_year_document_number_keeps_its_own_article_identity[04/VBHN-NHNN]
+FAILED tests/evaluation/test_evidence_citation_scope.py::test_non_year_document_number_keeps_its_own_article_identity[5020/Q\u0110-UB]
+FAILED tests/evaluation/test_evidence_citation_scope.py::test_numbered_clause_in_whole_article_evidence_is_a_supported_locator[1]
+FAILED tests/evaluation/test_evidence_citation_scope.py::test_numbered_clause_in_whole_article_evidence_is_a_supported_locator[2]
+FAILED tests/evaluation/test_chat_pipeline_parity.py::test_production_answer_uses_chat_service_once_and_defers_metrics[off]
+FAILED tests/evaluation/test_chat_pipeline_parity.py::test_production_answer_uses_chat_service_once_and_defers_metrics[enforce]
+6 failed, 17 passed in 27.40s

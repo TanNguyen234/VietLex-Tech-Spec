@@ -1,0 +1,7 @@
+# Modern VBPL portal follow-up
+
+Observed through an isolated ordinary Chrome page on 2026-11-03; public read only, no authentication or CAPTCHA bypass. Earlier DNS/403 receipts apply to those endpoints/tools, not to all access to VBPL. The migrated portal is accessible in the browser at https://vbpl.vn/van-ban/chi-tiet/luat-bao-ve-moi-truong-so-72-2020-qh14--146609 . Actual inline DOM responses are preserved in modern-law-history.json and modern-law-diagram.json; they are not screenshots or successful native file exports.
+
+History tab (tabs=lich-su) says partly expired, effective 01/01/2022, updated 08/05/2026. It lists amendment events for 54/2024,16/2023,09/2022 but omits 146/2025, whose actual official text and the April2026 consolidated law have already been collected. Diagram (tabs=luoc-do) also lists 47/2024 and35/2024; its consolidated list shows15/VBHN rather than the collected98/VBHN2026. Therefore this visible metadata is demonstrably incomplete relative to original legal sources. It cannot certify absence of subsequent changes up to frozen29/10/2026. This is an observed coverage conflict, not a legal finding that omitted laws do not apply.
+
+This resolves the access-method uncertainty and replaces the draft's blanket impression that the national inventory cannot be opened. It does not close complete legal-currentness or human approval. L04 remains a concrete source-based conditional dossier pending independent legal sign-off and any missing applicability facts. No gold labels or runtime legal status were promoted.

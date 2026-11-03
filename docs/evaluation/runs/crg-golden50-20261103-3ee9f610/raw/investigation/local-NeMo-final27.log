@@ -1,0 +1,2 @@
+Both an LLM was provided via constructor and a main LLM is specified in the config. The LLM provided via constructor will be used and the main LLM from config will be ignored.
+{"passed": true, "calls": 2}

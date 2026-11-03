@@ -1,0 +1,125 @@
+{
+  "meta": null,
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"status\":\"ambiguous\",\"summary\":\"'check_input_guardrails' matches 4 node(s). Re-run with a qualified_name from disambiguation.\",\"candidates\":[{\"id\":5948,\"kind\":\"Function\",\"name\":\"check_input_guardrails\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\api\\\\routes.py::check_input_guardrails\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\api\\\\routes.py\",\"line_start\":130,\"line_end\":139,\"language\":\"python\",\"parent_name\":null,\"is_test\":false},{\"id\":7024,\"kind\":\"Function\",\"name\":\"check_input_guardrails\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\services\\\\guardrails.py::check_input_guardrails\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\services\\\\guardrails.py\",\"line_start\":201,\"line_end\":235,\"language\":\"python\",\"parent_name\":null,\"is_test\":false},{\"id\":7375,\"kind\":\"Function\",\"name\":\"check_input_guardrails\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\services\\\\serverless_guardrails.py::check_input_guardrails\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\services\\\\serverless_guardrails.py\",\"line_start\":45,\"line_end\":49,\"language\":\"python\",\"parent_name\":null,\"is_test\":false},{\"id\":7593,\"kind\":\"Function\",\"name\":\"check_input_guardrails\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\run_eval_suite.py::check_input_guardrails\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\run_eval_suite.py\",\"line_start\":34,\"line_end\":37,\"language\":\"python\",\"parent_name\":null,\"is_test\":false}],\"disambiguation\":[{\"id\":5948,\"kind\":\"Function\",\"name\":\"check_input_guardrails\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\api\\\\routes.py::check_input_guardrails\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\api\\\\routes.py\",\"line_start\":130,\"line_end\":139,\"language\":\"python\",\"parent_name\":null,\"is_test\":false},{\"id\":7024,\"kind\":\"Function\",\"name\":\"check_input_guardrails\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\services\\\\guardrails.py::check_input_guardrails\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\services\\\\guardrails.py\",\"line_start\":201,\"line_end\":235,\"language\":\"python\",\"parent_name\":null,\"is_test\":false},{\"id\":7375,\"kind\":\"Function\",\"name\":\"check_input_guardrails\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\services\\\\serverless_guardrails.py::check_input_guardrails\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\services\\\\serverless_guardrails.py\",\"line_start\":45,\"line_end\":49,\"language\":\"python\",\"parent_name\":null,\"is_test\":false},{\"id\":7593,\"kind\":\"Function\",\"name\":\"check_input_guardrails\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\run_eval_suite.py::check_input_guardrails\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\run_eval_suite.py\",\"line_start\":34,\"line_end\":37,\"language\":\"python\",\"parent_name\":null,\"is_test\":false}],\"hint\":\"Use a qualified_name from disambiguation as the target parameter.\",\"_graph\":{\"updated_at\":\"2026-11-03T20:26:04\",\"age_seconds\":12,\"built_on_branch\":\"main\",\"built_at_sha\":\"7519cd1aea4a3639140b9188de1843ebf0ddb1c0\",\"head_sha\":\"7519cd1aea4a3639140b9188de1843ebf0ddb1c0\",\"head_matches_build\":true}}",
+      "annotations": null,
+      "meta": null
+    }
+  ],
+  "structuredContent": {
+    "status": "ambiguous",
+    "summary": "'check_input_guardrails' matches 4 node(s). Re-run with a qualified_name from disambiguation.",
+    "candidates": [
+      {
+        "id": 5948,
+        "kind": "Function",
+        "name": "check_input_guardrails",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\app\\api\\routes.py::check_input_guardrails",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\app\\api\\routes.py",
+        "line_start": 130,
+        "line_end": 139,
+        "language": "python",
+        "parent_name": null,
+        "is_test": false
+      },
+      {
+        "id": 7024,
+        "kind": "Function",
+        "name": "check_input_guardrails",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\app\\services\\guardrails.py::check_input_guardrails",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\app\\services\\guardrails.py",
+        "line_start": 201,
+        "line_end": 235,
+        "language": "python",
+        "parent_name": null,
+        "is_test": false
+      },
+      {
+        "id": 7375,
+        "kind": "Function",
+        "name": "check_input_guardrails",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\app\\services\\serverless_guardrails.py::check_input_guardrails",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\app\\services\\serverless_guardrails.py",
+        "line_start": 45,
+        "line_end": 49,
+        "language": "python",
+        "parent_name": null,
+        "is_test": false
+      },
+      {
+        "id": 7593,
+        "kind": "Function",
+        "name": "check_input_guardrails",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\run_eval_suite.py::check_input_guardrails",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\run_eval_suite.py",
+        "line_start": 34,
+        "line_end": 37,
+        "language": "python",
+        "parent_name": null,
+        "is_test": false
+      }
+    ],
+    "disambiguation": [
+      {
+        "id": 5948,
+        "kind": "Function",
+        "name": "check_input_guardrails",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\app\\api\\routes.py::check_input_guardrails",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\app\\api\\routes.py",
+        "line_start": 130,
+        "line_end": 139,
+        "language": "python",
+        "parent_name": null,
+        "is_test": false
+      },
+      {
+        "id": 7024,
+        "kind": "Function",
+        "name": "check_input_guardrails",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\app\\services\\guardrails.py::check_input_guardrails",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\app\\services\\guardrails.py",
+        "line_start": 201,
+        "line_end": 235,
+        "language": "python",
+        "parent_name": null,
+        "is_test": false
+      },
+      {
+        "id": 7375,
+        "kind": "Function",
+        "name": "check_input_guardrails",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\app\\services\\serverless_guardrails.py::check_input_guardrails",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\app\\services\\serverless_guardrails.py",
+        "line_start": 45,
+        "line_end": 49,
+        "language": "python",
+        "parent_name": null,
+        "is_test": false
+      },
+      {
+        "id": 7593,
+        "kind": "Function",
+        "name": "check_input_guardrails",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\run_eval_suite.py::check_input_guardrails",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\run_eval_suite.py",
+        "line_start": 34,
+        "line_end": 37,
+        "language": "python",
+        "parent_name": null,
+        "is_test": false
+      }
+    ],
+    "hint": "Use a qualified_name from disambiguation as the target parameter.",
+    "_graph": {
+      "updated_at": "2026-11-03T20:26:04",
+      "age_seconds": 12,
+      "built_on_branch": "main",
+      "built_at_sha": "7519cd1aea4a3639140b9188de1843ebf0ddb1c0",
+      "head_sha": "7519cd1aea4a3639140b9188de1843ebf0ddb1c0",
+      "head_matches_build": true
+    }
+  },
+  "isError": false
+}

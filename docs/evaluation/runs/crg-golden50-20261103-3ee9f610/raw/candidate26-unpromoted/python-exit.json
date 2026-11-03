@@ -1,0 +1,12 @@
+{
+  "command": [
+    "D:\\Download\\ProfessionalLegalRAG\\.venv\\Scripts\\python.exe",
+    "-m",
+    "pytest",
+    "-m",
+    "not live",
+    "-vv"
+  ],
+  "exit_code": 0,
+  "seconds": 982.1400000000003
+}

@@ -1,0 +1,27 @@
+{
+  "case_id": "case_032",
+  "metrics": {
+    "faithfulness": {
+      "status": "ok",
+      "value": 0.6666666666666666,
+      "seconds": 4.922
+    },
+    "answer_accuracy": {
+      "status": "ok",
+      "value": 0.5,
+      "seconds": 2.0
+    },
+    "context_precision": {
+      "status": "ok",
+      "value": 0.9999999999,
+      "seconds": 22.25
+    },
+    "context_recall": {
+      "status": "ok",
+      "value": 0.5,
+      "seconds": 4.797
+    }
+  },
+  "evidence": "live_judge",
+  "answer_sha256": "92077d98f4692154a05cb1f53d8ee8cf438f7b25987f3126d4590f54ef419249"
+}

@@ -1,0 +1,47 @@
+{
+  "meta": null,
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"status\":\"ok\",\"summary\":\"1568 nodes, 15426 edges across 90 files. Risk: high (0.85). 67 test gaps.\",\"key_entities\":[\"chat\",\"feedback\",\"new_session\",\"get_session_history\",\"remove_session\"],\"risk\":\"high\",\"communities\":[\"services-call\",\"app-session\",\"scripts-dataset\"],\"flows_affected\":[\"run_suite\",\"chat\",\"main\"],\"next_tool_suggestions\":[\"detect_changes\",\"get_affected_flows\",\"get_review_context\"],\"_graph\":{\"updated_at\":\"2026-08-11T21:12:31\",\"age_seconds\":7240266,\"built_on_branch\":\"main\",\"built_at_sha\":\"6e66cdbffbb5c30cfaf70c1620554a4509ca97e8\",\"head_sha\":\"7519cd1aea4a3639140b9188de1843ebf0ddb1c0\",\"head_matches_build\":false}}",
+      "annotations": null,
+      "meta": null
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "summary": "1568 nodes, 15426 edges across 90 files. Risk: high (0.85). 67 test gaps.",
+    "key_entities": [
+      "chat",
+      "feedback",
+      "new_session",
+      "get_session_history",
+      "remove_session"
+    ],
+    "risk": "high",
+    "communities": [
+      "services-call",
+      "app-session",
+      "scripts-dataset"
+    ],
+    "flows_affected": [
+      "run_suite",
+      "chat",
+      "main"
+    ],
+    "next_tool_suggestions": [
+      "detect_changes",
+      "get_affected_flows",
+      "get_review_context"
+    ],
+    "_graph": {
+      "updated_at": "2026-08-11T21:12:31",
+      "age_seconds": 7240266,
+      "built_on_branch": "main",
+      "built_at_sha": "6e66cdbffbb5c30cfaf70c1620554a4509ca97e8",
+      "head_sha": "7519cd1aea4a3639140b9188de1843ebf0ddb1c0",
+      "head_matches_build": false
+    }
+  },
+  "isError": false
+}

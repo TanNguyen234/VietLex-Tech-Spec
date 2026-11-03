@@ -1,0 +1,104 @@
+............FF.....                                                      [100%]
+================================== FAILURES ===================================
+__ test_default_deadline_allows_observed_provider_tail_without_retry[input] ___
+
+guard = (<module 'app.services.serverless_guardrails' from 'D:\\Download\\ProfessionalLegalRAG\\app\\services\\serverless_guardrails.py'>, <AsyncMock id='1543786707328'>)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000016770DBB770>
+stage = 'input'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('stage', ['input', 'output'])
+    async def test_default_deadline_allows_observed_provider_tail_without_retry(guard, monkeypatch, stage):
+        from app.config import Settings
+        service, generation = guard
+        settings = Settings(_env_file=None)
+        monkeypatch.setattr(service, 'get_settings', lambda: settings)
+        # Model a ten-second provider decision without sleeping or a live call.
+        async def provider_deadline(awaitable, *, timeout):
+            if timeout < 10:
+                awaitable.close()
+                raise TimeoutError
+            return await awaitable
+        monkeypatch.setattr(service.asyncio, 'wait_for', provider_deadline)
+        generation.return_value.text = 'no' if stage == 'input' else 'yes'
+>       result = await (service.check_input_guardrails('query') if stage == 'input'
+                        else service.check_output_guardrails('answer', ['evidence'], 'query'))
+
+tests\services\test_serverless_guardrails.py:81: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+app\services\serverless_guardrails.py:46: in check_input_guardrails
+    decision = await _decision("input", Template(INPUT_PROMPT).render(user_input=message))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+stage = 'input'
+prompt = 'B\u1ea1n l\xe0 tr\u1ee3 l\xfd ph\xe2n t\xedch an to\xe0n \u0111\u1ea7u v\xe0o cho VietLex (Tr\u1ee3 l\xfd Ph\xe1p lu\u1eadt Vi\u1ec7t Nam).\\nNhi\u1ec7m v\u1ee5 c\u1ee7a b\u1ea1n l\xe0 \u0111\xe1nh gi\xe1 xem c\xe2...o ph\xe9p \u0111i ti\u1ebfp).\\n\\nCh\u1ec9 tr\u1ea3 v\u1ec1 duy nh\u1ea5t m\u1ed9t t\u1eeb yes ho\u1eb7c no. Kh\xf4ng gi\u1ea3i th\xedch, kh\xf4ng d\xf9ng Markdown.\\n\u0110\xe1nh gi\xe1 (yes/no):'
+
+    async def _decision(stage: str, prompt: str) -> str:
+        try:
+            result = await asyncio.wait_for(
+                generate_llm_response_with_metadata(
+                    prompt, max_output_tokens=64, thinking_level="MINIMAL",
+                    use_case=LLMUseCase.GUARDRAIL,
+                    max_retries=0, allow_fallback=False,
+                ),
+                timeout=get_settings().GUARDRAIL_TIMEOUT_SECONDS,
+            )
+        except TimeoutError:
+>           raise GuardrailUnavailableError(stage, "timeout") from None
+E           app.services.runtime_errors.GuardrailUnavailableError: input guardrail unavailable: timeout
+
+app\services\serverless_guardrails.py:31: GuardrailUnavailableError
+__ test_default_deadline_allows_observed_provider_tail_without_retry[output] __
+
+guard = (<module 'app.services.serverless_guardrails' from 'D:\\Download\\ProfessionalLegalRAG\\app\\services\\serverless_guardrails.py'>, <AsyncMock id='1543786693744'>)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000016770DBAF00>
+stage = 'output'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('stage', ['input', 'output'])
+    async def test_default_deadline_allows_observed_provider_tail_without_retry(guard, monkeypatch, stage):
+        from app.config import Settings
+        service, generation = guard
+        settings = Settings(_env_file=None)
+        monkeypatch.setattr(service, 'get_settings', lambda: settings)
+        # Model a ten-second provider decision without sleeping or a live call.
+        async def provider_deadline(awaitable, *, timeout):
+            if timeout < 10:
+                awaitable.close()
+                raise TimeoutError
+            return await awaitable
+        monkeypatch.setattr(service.asyncio, 'wait_for', provider_deadline)
+        generation.return_value.text = 'no' if stage == 'input' else 'yes'
+>       result = await (service.check_input_guardrails('query') if stage == 'input'
+                        else service.check_output_guardrails('answer', ['evidence'], 'query'))
+
+tests\services\test_serverless_guardrails.py:81: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+app\services\serverless_guardrails.py:54: in check_output_guardrails
+    decision = await _decision("output", Template(OUTPUT_PROMPT).render(evidence=evidence, response=response))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+stage = 'output'
+prompt = 'Nhi\u1ec7m v\u1ee5 c\u1ee7a b\u1ea1n l\xe0 ki\u1ec3m tra xem c\xe2u tr\u1ea3 l\u1eddi c\u1ee7a tr\u1ee3 l\xfd c\xf3 ch\u1ee9a \u1ea3o gi\xe1c, sai l\u1ec7ch ho\u1eb7c th\xf4ng tin kh\xf4ng \u0111\u01b0\u1ee3c cung c\u1ea5p ...\u1ec7u.\\nTr\u1ea3 l\u1eddi "no" n\u1ebfu c\xe2u tr\u1ea3 l\u1eddi ch\u1ee9a th\xf4ng tin sai l\u1ec7ch, \u1ea3o gi\xe1c ho\u1eb7c kh\xf4ng c\xf3 trong t\xe0i li\u1ec7u.\\n\\n\u0110\xe1nh gi\xe1 (yes/no):'
+
+    async def _decision(stage: str, prompt: str) -> str:
+        try:
+            result = await asyncio.wait_for(
+                generate_llm_response_with_metadata(
+                    prompt, max_output_tokens=64, thinking_level="MINIMAL",
+                    use_case=LLMUseCase.GUARDRAIL,
+                    max_retries=0, allow_fallback=False,
+                ),
+                timeout=get_settings().GUARDRAIL_TIMEOUT_SECONDS,
+            )
+        except TimeoutError:
+>           raise GuardrailUnavailableError(stage, "timeout") from None
+E           app.services.runtime_errors.GuardrailUnavailableError: output guardrail unavailable: timeout
+
+app\services\serverless_guardrails.py:31: GuardrailUnavailableError
+=========================== short test summary info ===========================
+FAILED tests/services/test_serverless_guardrails.py::test_default_deadline_allows_observed_provider_tail_without_retry[input]
+FAILED tests/services/test_serverless_guardrails.py::test_default_deadline_allows_observed_provider_tail_without_retry[output]
+2 failed, 17 passed in 11.97s

@@ -1,0 +1,27 @@
+Chưa xác minh đầy đủ chuỗi sửa đổi, bãi bỏ, chuyển tiếp và phạm vi áp dụng tại ngày hỏi. Phần dưới chỉ giải thích nội dung nguồn được cung cấp và dữ kiện giả định; chưa kết luận hiệu lực hoặc thẩm quyền hiện hành.
+
+Dựa trên các tài liệu tham khảo được cung cấp, dưới đây là thông tin trả lời cho tình huống giả định của bạn:
+
+### 1. Mức lương thử việc tối thiểu
+*   **Mức lương thử việc tối thiểu theo quy định:** Tiền lương của người lao động trong thời gian thử việc do hai bên thỏa thuận nhưng ít nhất phải bằng **85%** mức lương của công việc đó (theo Điều 26 Bộ luật Lao động 2019 `[45/2019/QH14, Điều 26]`).
+*   **Tính toán theo dữ kiện giả định:** 
+    *   Mức lương của công việc: $12.000.000$ đồng/tháng.
+    *   Phép tính mức lương thử việc tối thiểu: $12.000.000 \times 85\% = 10.200.000$ đồng/tháng.
+    *   *So sánh:* Mức lương thử việc tối thiểu mà công ty phải trả là **10.200.000 đồng/tháng**. Đề xuất trả 70% lương của công ty (tương đương $12.000.000 \times 70\% = 8.400.000$ đồng/tháng) là thấp hơn mức tối thiểu theo quy định này.
+
+### 2. Thời gian thử việc tối đa
+*   **Thời gian thử việc tối đa theo quy định:** Thời gian thử việc do hai bên thỏa thuận căn cứ vào tính chất và mức độ phức tạp của công việc nhưng chỉ được thử việc một lần đối với một công việc và bảo đảm điều kiện không quá **60 ngày** đối với công việc có chức danh nghề nghiệp cần trình độ chuyên môn, kỹ thuật từ cao đẳng trở lên (theo đoạn mở đầu Điều 25 và Khoản 2 Điều 25 Bộ luật Lao động 2019 `[45/2019/QH14, Điều 25]`).
+*   **Đối chiếu với dữ kiện giả định:** 
+    *   Vị trí công việc yêu cầu trình độ cao đẳng, do đó thời gian thử việc tối đa không được quá **60 ngày** `[45/2019/QH14, Điều 25, Khoản 2]`.
+    *   Do dữ kiện không cung cấp đầy đủ mốc ngày kết thúc thử việc cụ thể hoặc lịch làm việc chi tiết để xác định chính xác số ngày của "hai tháng" mà công ty đề xuất (tháng lịch có số ngày khác nhau), bạn cần lưu ý đối chiếu tổng số ngày thử việc thực tế của phương án "hai tháng" này để đảm bảo không vượt quá giới hạn **60 ngày** nêu trên.
+
+### 3. Các điều khoản cần đối chiếu
+Để bảo vệ quyền lợi của mình, bạn cần đối chiếu các điều khoản sau trong Bộ luật Lao động 2019:
+*   **Về tiền lương thử việc:** Đối chiếu **Điều 26** để yêu cầu mức lương thử việc ít nhất bằng 85% mức lương công việc (tối thiểu là 10.200.000 đồng/tháng) `[45/2019/QH14, Điều 26]`.
+*   **Về thời gian thử việc:** Đối chiếu **đoạn mở đầu Điều 25** (về nguyên tắc chỉ thử việc 1 lần đối với 1 công việc) và **Khoản 2 Điều 25** (về giới hạn không quá 60 ngày đối với trình độ cao đẳng trở lên) `[45/2019/QH14, Điều 25]`.
+*   **Về quyền hủy bỏ thỏa thuận:** Đối chiếu **Khoản 2 Điều 27** để biết rằng trong thời gian thử việc, mỗi bên có quyền hủy bỏ hợp đồng thử việc hoặc hợp đồng lao động đã giao kết mà không cần báo trước và không phải bồi thường `[45/2019/QH14, Điều 27, Khoản 2]`.
+
+*Lưu ý: Các văn bản được trích dẫn trong tài liệu tham khảo (như Bộ luật Lao động 2019) chưa được xác minh hiệu lực tại thời điểm ngày hỏi (29/10/2026) do nguồn dữ liệu không phải cơ sở dữ liệu pháp luật chính thức. Bạn nên kiểm tra lại trên nguồn chính thức hiện hành hoặc tham vấn người có chuyên môn trước khi áp dụng.*
+
+**Đoạn mở đầu không đánh số — [45/2019/QH14, Điều 25]:**
+> Điều 25. Thời gian thử việc Thời gian thử việc do hai bên thỏa thuận căn cứ vào tính chất và mức độ phức tạp của công việc nhưng chỉ được thử việc một lần đối với một công việc và bảo đảm điều kiện sau đây:

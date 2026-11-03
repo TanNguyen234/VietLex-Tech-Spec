@@ -1,0 +1,8 @@
+{
+  "url": "https://vbpl.moj.gov.vn/TW/Pages/vbpq-lichsu.aspx?ItemID=146609",
+  "retrieved_utc": "2026-11-03T09:46:25.253811+00:00",
+  "evidence": "live public official inventory attempt",
+  "status": "error",
+  "type": "ConnectError",
+  "reason": "[Errno 11001] getaddrinfo failed"
+}

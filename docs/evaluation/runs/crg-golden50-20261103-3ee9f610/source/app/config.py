@@ -1,0 +1,374 @@
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field, field_validator
+from typing import Optional, Literal
+from functools import lru_cache
+from pathlib import Path
+from urllib.parse import urlparse
+import ssl
+import threading
+
+import truststore
+
+
+_SYSTEM_TRUST_INSTALLED = False
+_SYSTEM_TRUST_LOCK = threading.Lock()
+
+class Settings(BaseSettings):
+    APP_ENV: Literal["development", "test", "production"] = "development"
+    VERCEL_GIT_COMMIT_SHA: Optional[str] = None
+    VERCEL_DEPLOYMENT_ID: Optional[str] = None
+    HOST: str = "0.0.0.0"
+    PORT: int = 8000
+    FRONTEND_URL: str = "http://localhost:8000"
+    
+    # Qdrant staging remains the v1 inference path; the structural durable
+    # pilot is opt-in and does not change the Pinecone v1 production default.
+    QDRANT_URL: str = "http://localhost:6333"
+    QDRANT_API_KEY: Optional[str] = None
+    QDRANT_INFERENCE_COLLECTION_NAME: str = "vietlex-embedding-staging"
+    QDRANT_RERANK_COLLECTION_NAME: str = "vietlex-rerank-staging"
+    QDRANT_RERANK_MODEL: str = "answerdotai/answerai-colbert-small-v1"
+    QDRANT_RERANK_VECTOR_NAME: str = "colbert"
+    QDRANT_RERANK_VECTOR_SIZE: int = 96
+    QDRANT_RERANK_TIMEOUT_SECONDS: float = 12.0
+    QDRANT_RERANK_MAX_RETRIES: int = 2
+    QDRANT_RERANK_RETRY_BASE_SECONDS: float = 0.25
+    QDRANT_RERANK_RETRY_MAX_SECONDS: float = 1.0
+    QDRANT_RERANK_STALE_SECONDS: int = 120
+    QDRANT_RERANK_CLEANUP_INTERVAL_SECONDS: int = 30
+    QDRANT_RERANK_MAX_STAGING_POINTS: int = 256
+
+    # Opt-in Qdrant structural pilot.
+    STRUCTURAL_BACKEND_ENABLED: bool = False
+    CROSS_LANE_FINAL_RERANK_ENABLED: bool = False
+    STRUCTURAL_COLLECTION_NAME: str = "vietlex-legal-rag-v2-pilot-384"
+    STRUCTURAL_DENSE_VECTOR_NAME: str = "dense"
+    STRUCTURAL_SPARSE_VECTOR_NAME: str = "bm25"
+    STRUCTURAL_DENSE_MODEL: str = "intfloat/multilingual-e5-small"
+    STRUCTURAL_DENSE_MODEL_OPTIONS: dict[str, object] = Field(
+        default_factory=dict
+    )
+    STRUCTURAL_SPARSE_MODEL: str = "qdrant/bm25"
+    STRUCTURAL_SPARSE_MODEL_OPTIONS: dict[str, object] = Field(
+        default_factory=dict
+    )
+    STRUCTURAL_VECTOR_SIZE: int = 384
+    STRUCTURAL_DOCUMENT_TEXT_VERSION: str = "vietlex-structural-document-v2"
+    STRUCTURAL_QUERY_INSTRUCTION_VERSION: str = (
+        "vietlex-vn-legal-retrieval-v1"
+    )
+    STRUCTURAL_QUERY_INSTRUCTION: str = (
+        "Given a Vietnamese legal question, retrieve relevant statutory "
+        "provisions and preserve exact legal references."
+    )
+    STRUCTURAL_CHUNK_MAX_TOKENS: int = 420
+    STRUCTURAL_CHUNK_OVERLAP_TOKENS: int = 48
+    STRUCTURAL_DENSE_TOP_K: int = 48
+    STRUCTURAL_BM25_TOP_K: int = 48
+    STRUCTURAL_FUSED_LIMIT: int = 64
+    STRUCTURAL_RRF_K: int = 60
+    STRUCTURAL_PER_DOCUMENT_LIMIT: int = 8
+    STRUCTURAL_RERANKER_MODE: Literal[
+        "current", "pinecone-only", "qdrant-only"
+    ] = "pinecone-only"
+    STRUCTURAL_RERANK_INPUT_LIMIT: int = 64
+    STRUCTURAL_RERANK_RETURN_LIMIT: int = 6
+    STRUCTURAL_FINAL_EVIDENCE_LIMIT: int = 5
+    STRUCTURAL_CONTEXT_MAX_TOKENS: int = 720
+    STRUCTURAL_CONTEXT_PER_DOCUMENT_LIMIT: int = 2
+    STRUCTURAL_NEIGHBOR_EXPANSION_ENABLED: bool = False
+    STRUCTURAL_NEIGHBOR_READ_LIMIT: int = 64
+    STRUCTURAL_QDRANT_TIMEOUT_SECONDS: float = 120.0
+    STRUCTURAL_QDRANT_MAX_RETRIES: int = 5
+    STRUCTURAL_QDRANT_RETRY_BASE_SECONDS: float = 1.0
+    STRUCTURAL_QDRANT_RETRY_MAX_SECONDS: float = 30.0
+    STRUCTURAL_UPLOAD_BATCH_MIN: int = 64
+    STRUCTURAL_UPLOAD_BATCH_MAX: int = 256
+    STRUCTURAL_UPLOAD_MAX_WORKERS: int = 4
+    STRUCTURAL_UPLOAD_PREFER_GRPC: bool = True
+
+    # Pinecone vector storage. PIPECONE_API is retained for legacy deployments;
+    # PINECONE_API and PINECONE_API_KEY are both accepted compatibility names.
+    PIPECONE_API: Optional[str] = None
+    PINECONE_API: Optional[str] = None
+    PINECONE_API_KEY: Optional[str] = None
+    PINECONE_INDEX_NAME: str = "vietlex-legal-rag-v1"
+    PINECONE_NAMESPACE: str = "legal-documents-v1"
+    PINECONE_CACHE_NAMESPACE: str = "semantic-cache-v1"
+    PINECONE_CLOUD: str = "aws"
+    PINECONE_REGION: str = "us-east-1"
+    PINECONE_RERANK_MODEL: str = "bge-reranker-v2-m3"
+    PINECONE_RERANK_TIMEOUT_SECONDS: float = 12.0
+    HYBRID_EMBEDDING_TIMEOUT_SECONDS: float = 20.0
+    HYBRID_QUERY_TIMEOUT_SECONDS: float = 8.0
+    HYBRID_MAX_RETRIES: int = 2
+    HYBRID_RETRY_BASE_SECONDS: float = 0.25
+    HYBRID_RETRY_MAX_SECONDS: float = 1.0
+    
+    # LLM Gateway (OmniGate)
+    OMNIGATE_BASE_URL: str = "https://llmgateway.onrender.com"
+    LITELLM_MASTER_KEY: Optional[str] = None
+    
+    # Direct APIs (Gemini, Groq, OpenRouter, Nvidia NIM)
+    GEMINI_API_KEY: Optional[str] = None
+    GROQ_API_KEY: Optional[str] = None
+    OPENROUTER_API_KEY: Optional[str] = None
+    NVIDIA_API_KEY: Optional[str] = None
+
+    # Google Cloud Vertex AI via Application Default Credentials (ADC).
+    # GOOGLE_APPLICATION_CREDENTIALS is intentionally consumed by google-auth,
+    # not modeled or serialized by application settings.
+    GOOGLE_CLOUD_PROJECT: Optional[str] = None
+    GOOGLE_CLOUD_QUOTA_PROJECT: Optional[str] = None
+    GOOGLE_CLOUD_LOCATION: str = "global"
+    USE_LEGACY_FREE_PIPELINE: bool = False
+    SERVERLESS_ONLINE_ONLY: bool = False
+    VERTEX_LLM_MODEL: str = "gemini-3.5-flash"
+    ANSWER_PROMPT_VERSION: str = "legal-grounded-v4"
+    VERTEX_EMBEDDING_MODEL: str = "gemini-embedding-2"
+    VERTEX_QDRANT_COLLECTION_NAME: str = (
+        "vietlex-legal-rag-v3-vertex-1024"
+    )
+    VERTEX_QDRANT_VECTOR_SIZE: int = Field(default=1024, ge=768, le=3072)
+    V3_AVERAGE_SPARSE_DOCUMENT_LENGTH: float = Field(
+        default=979.1241640033913, gt=0
+    )
+    VERTEX_QDRANT_MAX_CHUNKS_PER_DOCUMENT: int = Field(
+        default=16, ge=1, le=256
+    )
+    VERTEX_QDRANT_CHECKPOINT_PATH: Path = Path(
+        "data/huggingface/vertex_qdrant_checkpoint.sqlite3"
+    )
+    VERTEX_QDRANT_SHADOW_ENABLED: bool = False
+    VERTEX_QDRANT_SHADOW_TIMEOUT_SECONDS: float = Field(default=5.0, gt=0)
+    VERTEX_REQUEST_TIMEOUT_SECONDS: float = Field(default=30.0, gt=0)
+    VERTEX_MAX_RETRIES: int = Field(default=2, ge=0, le=5)
+    PROVIDER_HTTP_ATTEMPT_LIMIT: Optional[int] = Field(default=None, ge=1)
+    OFFICIAL_WEB_RESEARCH_ENABLED: bool = True
+    OFFICIAL_BRAVE_SEARCH_ENABLED: bool = False
+    BRAVE_SEARCH_API_KEY: Optional[str] = None
+    OFFICIAL_WEB_SEARCH_TIMEOUT_SECONDS: float = Field(default=20.0, gt=0, le=60)
+    OFFICIAL_WEB_RESEARCH_RATE_LIMIT: str = "2/minute"
+    FREE_WEB_RESEARCH_ENABLED: bool = True
+    # Production must explicitly attest the foreground 180-second budget for
+    # the deployed runtime; a provider-free code path alone is not proof.
+    FREE_WEB_RESEARCH_PRODUCTION_LIMIT_VERIFIED: bool = False
+    FREE_WEB_RESEARCH_RATE_LIMIT: str = "2/minute"
+    FREE_WEB_RESEARCH_TOTAL_BUDGET_SECONDS: float = Field(default=180.0, gt=0, le=180)
+    FREE_WEB_RESEARCH_DISCOVERY_BUDGET_SECONDS: float = Field(default=60.0, gt=0, le=60)
+    FREE_WEB_RESEARCH_READ_BUDGET_SECONDS: float = Field(default=105.0, gt=0, le=105)
+    FREE_WEB_RESEARCH_SAVE_BUDGET_SECONDS: float = Field(default=15.0, gt=0, le=15)
+    FREE_WEB_RESEARCH_PROVIDER_TIMEOUT_SECONDS: float = Field(default=10.0, gt=0, le=10)
+    FREE_WEB_RESEARCH_NETWORK_CONCURRENCY: int = Field(default=2, ge=1, le=2)
+    FREE_WEB_RESEARCH_MAX_READ_ATTEMPTS: int = Field(default=3, ge=1, le=3)
+    FREE_WEB_RESEARCH_PAGE_LIMIT: int = Field(default=5, ge=1, le=5)
+    CHAT_OFFICIAL_WEB_SUPPLEMENT_ENABLED: bool = True
+    CHAT_OFFICIAL_DEEP_READING_ENABLED: bool = True
+    CHAT_OFFICIAL_WEB_SUPPLEMENT_TIMEOUT_SECONDS: float = Field(
+        default=8.0, gt=0, le=8.0
+    )
+    
+    # Logfire Token
+    LOGFIRE_TOKEN: Optional[str] = None
+    LOGFIRE_SERVICE_NAME: str = "vietlex"
+    
+    # MongoDB Connection URL
+    MONGO_URL: Optional[str] = None
+    MONGO_TIMEOUT_MS: int = Field(default=9_000, ge=1_000, le=30_000)
+
+    # Server-only Supabase target for explicit full-document export jobs.
+    SUPABASE_URL: Optional[str] = None
+    SUPABASE_PUBLISHABLE_KEY: Optional[str] = None
+    SUPABASE_SERVICE_ROLE_KEY: Optional[str] = None
+    SUPABASE_BODY_SEARCH_ENABLED: bool = False
+    QDRANT_FULL_DOC_BODY_SEARCH_ENABLED: bool = True
+    QDRANT_FULL_DOC_BODY_COLLECTION: str = "vietlex-legal-body-search-v1"
+
+    # Public web application security and opt-in evaluation controls.
+    REVIEWER_DEMO_MODE: bool = False
+    DEMO_AI_DAILY_LIMIT: int = Field(default=20, ge=1, le=100)
+    DEMO_AI_GLOBAL_DAILY_LIMIT: int = Field(default=100, ge=1, le=1000)
+    WEB_SESSION_SECRET: Optional[str] = None
+    DATA_RETENTION_DAYS: int = Field(default=30, ge=1, le=365)
+    ANONYMOUS_COOKIE_NAME: str = "vietlex_client"
+    ANONYMOUS_COOKIE_MAX_AGE_SECONDS: int = Field(
+        default=2_592_000, ge=3_600, le=31_536_000
+    )
+    ADMIN_USERNAME: Optional[str] = None
+    ADMIN_PASSWORD: Optional[str] = None
+    LEGACY_ADMIN_BASIC_ENABLED: bool = False
+    ACCOUNT_EMAIL_ENABLED: bool = False
+    EMAIL_USER: Optional[str] = None
+    EMAIL_PASS: Optional[str] = None
+    EMAIL_FROM: Optional[str] = None
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = Field(default=587, ge=1, le=65_535)
+    PUBLIC_BASE_URL: str = "http://localhost:8000"
+    AUTH_COOKIE_NAME: str = "vietlex_auth"
+    AUTH_SESSION_DAYS: int = Field(default=30, ge=1, le=365)
+    PUBLIC_NEMO_DEFAULT_ENABLED: bool = True
+    PUBLIC_GUARDRAIL_MODE: Literal["off", "shadow", "enforce"] | None = "enforce"
+
+    # Retain old environment names without allowing them to weaken public chat.
+    @field_validator("PUBLIC_NEMO_DEFAULT_ENABLED")
+    @classmethod
+    def _mandatory_guardrails_enabled(cls, value):
+        return True
+
+    @field_validator("PUBLIC_GUARDRAIL_MODE")
+    @classmethod
+    def _mandatory_guardrail_mode(cls, value):
+        return "enforce"
+    PUBLIC_RAGAS_ENABLED: bool = False
+    PUBLIC_RAGAS_CLIENT_DAILY_LIMIT: int = Field(default=3, ge=1, le=20)
+    PUBLIC_RAGAS_GLOBAL_DAILY_LIMIT: int = Field(default=20, ge=1, le=1_000)
+    CHAT_RATE_LIMIT: str = "6/minute"
+    PUBLIC_EVALUATION_RATE_LIMIT: str = "6/minute"
+    PUBLIC_PROGRESS_RATE_LIMIT: str = "180/minute"
+    SESSION_RATE_LIMIT: str = "30/minute"
+
+    # Pinned external legal corpus
+    DATASET_REPOSITORY: str = "vohuutridung/vietnamese-legal-documents"
+    DATASET_REVISION: str = "4d4e10b201544e8a4c49a1d3fa496595a7d486d0"
+    EXPECTED_DOCUMENT_COUNT: int = 518_255
+    DATASET_ROOT: Path = Path("data/huggingface")
+    CONTENT_STORE_PATH: Path = Path("data/huggingface/content_store.sqlite3")
+    CLEAN_CONTENT_STORE_PATH: Path = Path(
+        "data/huggingface/clean-v1/content_store.sqlite3"
+    )
+    V3_CONTENT_STORE_PATH: Path = Path("data/v3/content_store.sqlite3")
+    INGESTION_STATE_PATH: Path = Path("data/huggingface/ingestion_state.sqlite3")
+    INGESTION_REPORT_PATH: Path = Path("data/huggingface/ingestion_report.json")
+    PINECONE_INGESTION_STATE_PATH: Path = Path(
+        "data/huggingface/pinecone_ingestion_state.sqlite3"
+    )
+    PINECONE_INGESTION_REPORT_PATH: Path = Path(
+        "data/huggingface/pinecone_ingestion_report.json"
+    )
+    LEGAL_FTS_PATH: Path = Path("data/huggingface/legal_fts.sqlite3")
+    V3_LEGAL_FTS_PATH: Path = Path("data/v3/legal_fts.sqlite3")
+    LEGAL_FTS_RESULT_LIMIT: int = 12
+
+    # Capacity-bounded Pinecone schema and ingestion tuning
+    DENSE_INFERENCE_MODEL: str = "intfloat/multilingual-e5-small"
+    DENSE_VECTOR_SIZE: int = 384
+    DENSE_EMBEDDING_BACKEND: str = "qdrant"
+    QDRANT_INFERENCE_CONCURRENCY: int = 8
+    QDRANT_PREFER_GRPC: bool = False
+    QDRANT_INFERENCE_MAX_RETRIES: int = 8
+    QDRANT_INFERENCE_RETRY_BASE_SECONDS: float = 1.0
+    QDRANT_INFERENCE_RETRY_MAX_SECONDS: float = 30.0
+    UPLOAD_BATCH_SIZE: int = 128
+    INGESTION_BATCH_CONCURRENCY: int = 16
+    PINECONE_HYBRID_ALPHA: float = 0.75
+    PINECONE_SPARSE_MAX_NONZERO: int = 64
+
+    # Runtime two-stage retrieval
+    RETRIEVAL_DOCUMENT_LIMIT: int = 24
+    RESOLVED_DOCUMENT_LIMIT: int = 16
+    QUERY_CHUNK_MAX_TOKENS: int = 220
+    QUERY_CHUNK_OVERLAP_TOKENS: int = 24
+    RERANK_CANDIDATE_LIMIT: int = 12
+    RERANK_INPUT_LIMIT: int = 24
+    RERANK_PER_DOCUMENT_LIMIT: int = 4
+    LOCAL_CHUNKS_PER_DOCUMENT: int = 4
+    RERANK_RETURN_LIMIT: int = 6
+    FINAL_EVIDENCE_LIMIT: int = 3
+    RERANK_MIN_SCORE: float = 0.05
+    RERANK_TOP_K: int = 3
+    RERANK_CIRCUIT_BREAKER_FAILURES: int = 2
+    RERANK_CIRCUIT_BREAKER_COOLDOWN_SECONDS: float = 30.0
+    LLM_CONTEXT_MAX_TOKENS: int = 720
+    RESEARCH_CONTEXT_MAX_WORDS: int = Field(default=4000, ge=720, le=12000)
+    LLM_CONTEXT_PER_DOCUMENT_LIMIT: int = 2
+    LLM_MAX_OUTPUT_TOKENS: int = 1536
+    QUERY_REWRITE_MAX_CHARACTERS: int = 2_000
+    QUERY_REWRITE_MAX_OUTPUT_TOKENS: int = 96
+    QUERY_REWRITE_TIMEOUT_SECONDS: float = 8.0
+    # Bound each mandatory check while allowing measured provider latency tails.
+    GUARDRAIL_TIMEOUT_SECONDS: float = 20.0
+
+    # Online Ragas evaluation control (off | sample | all)
+    RAGAS_EVALUATION_MODE: Literal["off", "sample", "all"] = "off"
+    RAGAS_SAMPLE_RATE: float = Field(default=0.1, ge=0.0, le=1.0)
+
+    # Retained for deployments that still provide the old environment name.
+    LEXICAL_CHUNK_LIMIT: int = 64
+
+    @field_validator("PROVIDER_HTTP_ATTEMPT_LIMIT", mode="before")
+    @classmethod
+    def _reject_boolean_provider_http_attempt_limit(cls, value):
+        if isinstance(value, bool):
+            raise ValueError("provider_http_attempt_limit_must_be_positive_integer")
+        return value
+
+    @property
+    def pinecone_api_key(self) -> Optional[str]:
+        return self.PINECONE_API_KEY or self.PINECONE_API or self.PIPECONE_API
+
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+
+def validate_production_settings(settings: Settings) -> None:
+    if settings.APP_ENV != "production":
+        return
+    if not settings.WEB_SESSION_SECRET or len(settings.WEB_SESSION_SECRET) < 32:
+        raise RuntimeError(
+            "WEB_SESSION_SECRET must contain at least 32 characters in production"
+        )
+    frontend = urlparse(settings.FRONTEND_URL)
+    if (
+        frontend.scheme != "https"
+        or not frontend.netloc
+        or frontend.hostname in {"localhost", "127.0.0.1"}
+    ):
+        raise RuntimeError("FRONTEND_URL must be an explicit HTTPS origin in production")
+    if settings.ACCOUNT_EMAIL_ENABLED:
+        for name in ("EMAIL_USER", "EMAIL_PASS", "EMAIL_FROM"):
+            if not getattr(settings, name):
+                raise RuntimeError(f"{name} is required when account email is enabled")
+        public_base = urlparse(settings.PUBLIC_BASE_URL)
+        if public_base.scheme != "https" or not public_base.netloc:
+            raise RuntimeError(
+                "PUBLIC_BASE_URL must be HTTPS when account email is enabled"
+            )
+    if settings.LEGACY_ADMIN_BASIC_ENABLED and (
+        not settings.ADMIN_USERNAME or not settings.ADMIN_PASSWORD
+    ):
+        raise RuntimeError(
+            "ADMIN_USERNAME and ADMIN_PASSWORD are required when legacy Basic Auth is enabled"
+        )
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()
+
+
+def system_ssl_context() -> ssl.SSLContext:
+    return truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+
+
+def system_grpc_root_certificates() -> bytes | None:
+    """Return Windows trust roots in the PEM form expected by gRPC."""
+    enumerate_certificates = getattr(ssl, "enum_certificates", None)
+    if enumerate_certificates is None:
+        return None
+    pem_certificates: dict[str, None] = {}
+    for store_name in ("ROOT", "CA"):
+        for certificate, encoding, _trust in enumerate_certificates(store_name):
+            if encoding == "x509_asn":
+                pem_certificates[ssl.DER_cert_to_PEM_cert(certificate)] = None
+    if not pem_certificates:
+        return None
+    return "".join(pem_certificates).encode("ascii")
+
+
+def install_system_trust_store() -> None:
+    """Make third-party SDKs use the verified Windows trust store."""
+    global _SYSTEM_TRUST_INSTALLED
+    with _SYSTEM_TRUST_LOCK:
+        if _SYSTEM_TRUST_INSTALLED:
+            return
+        truststore.inject_into_ssl()
+        _SYSTEM_TRUST_INSTALLED = True

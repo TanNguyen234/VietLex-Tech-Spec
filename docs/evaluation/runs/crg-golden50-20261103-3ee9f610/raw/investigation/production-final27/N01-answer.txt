@@ -1,0 +1,19 @@
+Dựa trên các tài liệu tham khảo được cung cấp, tôi xin trả lời câu hỏi của bạn như sau:
+
+**1. Về mức tiền cụ thể của 85% mức lương công việc:**
+*   **Không đủ dữ liệu để tính toán:** Tài liệu tham khảo được cung cấp không đưa ra một con số cụ thể nào về "mức lương của công việc đó" (mức lương làm căn cứ tính toán). Do đó, không thể tính ra được 85% bằng bao nhiêu tiền cụ thể.
+*   **Để có thể tính toán chính xác:** Cần phải có thông tin về mức lương cụ thể của công việc đó (ví dụ: mức lương thỏa thuận của công việc chính thức là bao nhiêu tiền). 
+*   *Câu hỏi làm rõ:* Xin vui lòng cung cấp thêm thông tin: Mức lương cụ thể của công việc đó (hoặc công việc cũ) theo thỏa thuận là bao nhiêu tiền?
+
+**2. Quy định pháp lý liên quan đến tỷ lệ 85% tiền lương:**
+Mặc dù chưa thể tính ra số tiền cụ thể do thiếu dữ kiện đầu vào, tỷ lệ "ít nhất bằng 85%" được quy định trong các trường hợp sau:
+*   **Trong thời gian thử việc:** Tiền lương của người lao động trong thời gian thử việc do hai bên thỏa thuận nhưng ít nhất phải bằng 85% mức lương của công việc đó (theo Điều 26, Bộ luật Lao động 2019 [1]).
+*   **Khi chuyển người lao động làm công việc khác so với hợp đồng lao động:** Nếu tiền lương của công việc mới thấp hơn tiền lương của công việc cũ thì được giữ nguyên tiền lương của công việc cũ trong thời hạn 30 ngày làm việc. Tiền lương theo công việc mới ít nhất phải bằng 85% tiền lương của công việc cũ nhưng không thấp hơn mức lương tối thiểu (theo Khoản 3 Điều 29, Bộ luật Lao động 2019 [2]).
+*   **Giới hạn chung:** Mức lương theo công việc hoặc chức danh không được thấp hơn mức lương tối thiểu (theo Khoản 2 Điều 90, Bộ luật Lao động 2019 [3]).
+
+*Lưu ý: Nguồn dữ liệu này không phải cơ sở dữ liệu pháp luật chính thức và không xác nhận tình trạng hiệu lực của văn bản. Bạn vui lòng kiểm tra lại trên nguồn chính thức hiện hành hoặc tham khảo ý kiến của người có chuyên môn. Nội dung chỉ nhằm cung cấp thông tin, không phải tư vấn pháp lý.*
+
+**Nguồn trích dẫn:**
+* [1] Điều 26, Bộ luật Lao động 2019 (https://thuvienphapluat.vn/van-ban/Lao-dong-Tien-luong/Bo-Luat-lao-dong-2019-333670.aspx)
+* [2] Khoản 3 Điều 29, Bộ luật Lao động 2019 (https://thuvienphapluat.vn/van-ban/Lao-dong-Tien-luong/Bo-Luat-lao-dong-2019-333670.aspx)
+* [3] Khoản 2 Điều 90, Bộ luật Lao động 2019 (https://thuvienphapluat.vn/van-ban/Lao-dong-Tien-luong/Bo-Luat-lao-dong-2019-333670.aspx)

@@ -1,0 +1,39 @@
+{
+  "evidence": "live_production_readonly",
+  "passed": true,
+  "deployment_id": "dpl_7Pc17TstdKKXyDKWrsx8oKBhZjRt",
+  "checks": [
+    {
+      "label": "health",
+      "path": "/healthz",
+      "http": 200,
+      "seconds": 1.109000000000151,
+      "sha256": "5bdb5367a32f45159bc5d59403c0accc43e591456eedd7b23a05d7078ad92b8c",
+      "cache_control": "no-store"
+    },
+    {
+      "label": "ready",
+      "path": "/readyz",
+      "http": 200,
+      "seconds": 1.4220000000000255,
+      "sha256": "f3699949c8fd4c961b81c1235b3cb9df349ff3046150d3fbc1ca3a1b8b50d1b0",
+      "cache_control": "no-store"
+    },
+    {
+      "label": "home",
+      "path": "/",
+      "http": 200,
+      "seconds": 0.45299999999997453,
+      "sha256": "4e64efefe648618f8bc72f96ac55722eafaaff10927cdc66dd2be8563a251c0d",
+      "cache_control": "no-store"
+    },
+    {
+      "label": "admin-anonymous",
+      "path": "/admin",
+      "http": 401,
+      "seconds": 0.29700000000002547,
+      "sha256": "d548d35b2612e7b71e86cf4d3850a7871be8e1d440ee1780ab4f17b6ba22a66b",
+      "cache_control": "no-store"
+    }
+  ]
+}

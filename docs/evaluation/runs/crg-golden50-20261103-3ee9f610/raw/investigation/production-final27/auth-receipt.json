@@ -1,0 +1,9 @@
+{
+  "login_get": 200,
+  "login_post": 303,
+  "retry_after": null,
+  "location": "/",
+  "credential_presence": true,
+  "evidence": "live",
+  "secret_persisted": false
+}

@@ -1,0 +1,33 @@
+{
+  "status": "ok",
+  "deployment": {
+    "id": "dpl_7Pc17TstdKKXyDKWrsx8oKBhZjRt",
+    "url": "https://vietlex-legal-rkjgl5cet-foxys-projects-5fe642e0.vercel.app",
+    "inspectorUrl": "https://vercel.com/foxys-projects-5fe642e0/vietlex-legal-rag/7Pc17TstdKKXyDKWrsx8oKBhZjRt",
+    "readyState": "READY",
+    "target": "production",
+    "deploymentApiUrl": "https://api.vercel.com/v13/deployments/dpl_7Pc17TstdKKXyDKWrsx8oKBhZjRt",
+    "buildMachine": {
+      "cores": 2,
+      "memory": 8192,
+      "machine": "basic",
+      "selectionType": "fixed",
+      "selectionSource": "plan-default"
+    }
+  },
+  "message": "Deployment vietlex-legal-rkjgl5cet-foxys-projects-5fe642e0.vercel.app ready.",
+  "next": [
+    {
+      "command": "vercel curl https://vietlex-legal-rkjgl5cet-foxys-projects-5fe642e0.vercel.app",
+      "when": "Verify deployment, including when Deployment Protection is enabled"
+    },
+    {
+      "command": "vercel inspect vietlex-legal-rkjgl5cet-foxys-projects-5fe642e0.vercel.app --non-interactive --scope foxys-projects-5fe642e0",
+      "when": "Inspect deployment"
+    },
+    {
+      "command": "vercel deploy --prod --non-interactive --scope foxys-projects-5fe642e0",
+      "when": "Promote to production"
+    }
+  ]
+}

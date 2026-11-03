@@ -1,0 +1,88 @@
+{
+  "analysis_id": "e6129479-d128-4969-a2ad-c7ea6cab2b91",
+  "kind": "trusted_sources",
+  "status": "metadata_only",
+  "result": {
+    "sources": [
+      {
+        "url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2016/01/91_.pdf",
+        "attachment_url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2016/01/91_.pdf",
+        "title": "91_.pdf",
+        "document_sha256": "dd2c45f8dee4e0d7b0416786b236e9588092863edcef64db07ef2b74954bba50",
+        "parser_recovered": false,
+        "ocr_input_sha256": null,
+        "ocr_input_transform": null,
+        "retrieved_at": "2026-11-03T15:19:21.887010+00:00",
+        "method": "pdf_text",
+        "legal_effect_status": "unverified",
+        "document_number": null,
+        "pages": [
+          {
+            "page": 1,
+            "text": ""
+          },
+          {
+            "page": 2,
+            "text": ""
+          },
+          {
+            "page": 3,
+            "text": ""
+          },
+          {
+            "page": 4,
+            "text": ""
+          },
+          {
+            "page": 5,
+            "text": ""
+          }
+        ],
+        "page_count": 78,
+        "page_start": 1,
+        "page_end": 5,
+        "next_page_start": 6,
+        "truncated": true,
+        "inspected_pages": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "inspected_page_count": 5,
+        "extraction_version": "official-pdf-reader-v2",
+        "ocr_provider": null,
+        "ocr_model": null,
+        "text": "",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "extracted_characters": 0,
+        "stored_characters": 0,
+        "partial_read": true,
+        "content_status": "metadata_only",
+        "requires_ocr": true,
+        "unreadable_pages": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      }
+    ],
+    "duplicates": [],
+    "potential_text_conflicts": [],
+    "errors": [],
+    "coverage": {
+      "requested": 1,
+      "retrieved": 1,
+      "failed": 0,
+      "readable": 0,
+      "metadata_only": 1
+    }
+  },
+  "provider": "approved_public_document",
+  "model": null,
+  "provider_calls": []
+}

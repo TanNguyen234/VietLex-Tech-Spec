@@ -1,0 +1,24 @@
+{
+  "evidence": "live production source reader",
+  "existing_QA_workspace_http": 200,
+  "rows": [
+    {
+      "label": "g7-original",
+      "http": 200,
+      "seconds": 6.234000000000151,
+      "ocr": false,
+      "ADMIN_login_reused": true,
+      "url": "https://g7.cdnchinhphu.vn/api/download/stream?Url=tm-8mq6BhNw0NbrKRhTDAQWsKg3tuqaY0aWypnY78U6M2BY68Ekp0Gvvr483flbRyMvZDHmLExRqqYdacdYeFd4GwomCE4vvRlBXSX_AvxPP3fNTCS5DktCF9JVDsVwq&file_name=91_2015_QH13%2813017%29.pdf",
+      "body_sha256": "fb683102477e2d74b8fc380fb619687e603fd6d134006b98c968862a67538571"
+    },
+    {
+      "label": "datafiles-control",
+      "http": 200,
+      "seconds": 6.390999999999849,
+      "ocr": false,
+      "ADMIN_login_reused": true,
+      "url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2016/01/91_.pdf",
+      "body_sha256": "6f4d95adf2c61cf64e376b073dd043ae7a0da4ddb42cf2d62602cb153db9b8ac"
+    }
+  ]
+}

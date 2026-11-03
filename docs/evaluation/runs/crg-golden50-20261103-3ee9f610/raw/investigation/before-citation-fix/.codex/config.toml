@@ -1,0 +1,69 @@
+model = "gpt-6-luna"
+model_reasoning_effort = "xhigh"
+approval_policy = "on-request"
+approvals_reviewer = "auto_review"
+sandbox_mode = "workspace-write"
+service_tier = "fast"
+
+[features]
+fast_mode = true
+
+[sandbox_workspace_write]
+network_access = false
+
+[mcp_servers.crg]
+command = 'D:\Projects\AI_Paper\pythonProject\.venv\Scripts\python.exe'
+args = ["-m", "code_review_graph", "serve"]
+enabled = true
+required = false
+enabled_tools = ["get_minimal_context_tool", "build_or_update_graph_tool", "detect_changes_tool", "query_graph_tool", "semantic_search_nodes_tool", "list_graph_stats_tool", "get_affected_flows_tool", "get_review_context_tool", "get_impact_radius_tool"]
+default_tools_approval_mode = "auto"
+
+[mcp_servers.crg.env]
+HF_HUB_OFFLINE = "1"
+TRANSFORMERS_OFFLINE = "1"
+
+[mcp_servers.context7]
+enabled = true
+required = false
+enabled_tools = ["resolve-library-id", "query-docs"]
+default_tools_approval_mode = "auto"
+
+[mcp_servers.scrapling]
+enabled = false
+
+[plugins."browser@openai-bundled"]
+enabled = false
+
+[plugins."chrome@openai-bundled"]
+enabled = false
+
+[plugins."computer-use@openai-bundled"]
+enabled = false
+
+[plugins."sites@openai-bundled"]
+enabled = false
+
+[plugins."visualize@openai-bundled"]
+enabled = false
+
+[plugins."documents@openai-primary-runtime"]
+enabled = false
+
+[plugins."pdf@openai-primary-runtime"]
+enabled = false
+
+[plugins."spreadsheets@openai-primary-runtime"]
+enabled = false
+
+[plugins."presentations@openai-primary-runtime"]
+enabled = false
+
+[plugins."template-creator@openai-primary-runtime"]
+enabled = false
+
+[plugins."codex-research-automation@personal"]
+enabled = true
+
+[plugins."superpowers@openai-curated"]
+enabled = true

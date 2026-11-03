@@ -1,0 +1,52 @@
+# Ragas audit of saved Golden50 answers
+
+{
+  "faithfulness": {
+    "mean": 0.8332685455134434,
+    "numerator": 40.83015873015873,
+    "denominator": 49,
+    "total_cases": 50,
+    "coverage": 0.98,
+    "skipped": 1,
+    "skip_reasons": {
+      "no_prompt_contexts": 1
+    },
+    "technical_errors": []
+  },
+  "answer_accuracy": {
+    "mean": 0.9,
+    "numerator": 45.0,
+    "denominator": 50,
+    "total_cases": 50,
+    "coverage": 1.0,
+    "skipped": 0,
+    "skip_reasons": {},
+    "technical_errors": []
+  },
+  "context_precision": {
+    "mean": 0.8708292840227022,
+    "numerator": 42.67063491711241,
+    "denominator": 49,
+    "total_cases": 50,
+    "coverage": 0.98,
+    "skipped": 1,
+    "skip_reasons": {
+      "no_prompt_contexts": 1
+    },
+    "technical_errors": []
+  },
+  "context_recall": {
+    "mean": 0.9489795918367347,
+    "numerator": 46.5,
+    "denominator": 49,
+    "total_cases": 50,
+    "coverage": 0.98,
+    "skipped": 1,
+    "skip_reasons": {
+      "no_prompt_contexts": 1
+    },
+    "technical_errors": []
+  }
+}
+
+Same model family as generator; secondary evidence only. No independent human legal sign-off. No new answers/contexts or DB writes. Token usage/model response version UNKNOWN at this adapter boundary.

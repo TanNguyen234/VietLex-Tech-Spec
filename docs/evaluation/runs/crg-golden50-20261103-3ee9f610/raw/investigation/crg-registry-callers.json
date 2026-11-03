@@ -1,0 +1,56 @@
+{
+  "meta": null,
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"status\":\"ok\",\"pattern\":\"callers_of\",\"target\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\services\\\\legal_registry.py::publication_record\",\"description\":\"Find all functions that call a given function\",\"summary\":\"Found 7 result(s) for callers_of('D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\services\\\\legal_registry.py::publication_record') — showing 5, 2 omitted\",\"result_count\":7,\"results_omitted\":2,\"results\":[{\"name\":\"publish_legal_effect\",\"kind\":\"Function\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\api\\\\legal_registry_routes.py\"},{\"name\":\"test_finite_bound_survives_human_review_publication_and_registry\",\"kind\":\"Test\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\services\\\\test_legal_registry.py\"},{\"name\":\"test_published_projection_respects_as_of_and_hides_private_fields\",\"kind\":\"Test\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\services\\\\test_legal_registry.py\"},{\"name\":\"test_withdrawn_events_do_not_establish_status\",\"kind\":\"Test\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\services\\\\test_legal_registry.py\"},{\"name\":\"test_publication_revalidates_quote_and_requires_recorded_human_review\",\"kind\":\"Test\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\services\\\\test_legal_registry.py\"}],\"_graph\":{\"updated_at\":\"2026-11-03T16:24:44\",\"age_seconds\":244,\"built_on_branch\":\"main\",\"built_at_sha\":\"7519cd1aea4a3639140b9188de1843ebf0ddb1c0\",\"head_sha\":\"7519cd1aea4a3639140b9188de1843ebf0ddb1c0\",\"head_matches_build\":true}}",
+      "annotations": null,
+      "meta": null
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "pattern": "callers_of",
+    "target": "D:\\Download\\ProfessionalLegalRAG\\app\\services\\legal_registry.py::publication_record",
+    "description": "Find all functions that call a given function",
+    "summary": "Found 7 result(s) for callers_of('D:\\Download\\ProfessionalLegalRAG\\app\\services\\legal_registry.py::publication_record') — showing 5, 2 omitted",
+    "result_count": 7,
+    "results_omitted": 2,
+    "results": [
+      {
+        "name": "publish_legal_effect",
+        "kind": "Function",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\app\\api\\legal_registry_routes.py"
+      },
+      {
+        "name": "test_finite_bound_survives_human_review_publication_and_registry",
+        "kind": "Test",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\services\\test_legal_registry.py"
+      },
+      {
+        "name": "test_published_projection_respects_as_of_and_hides_private_fields",
+        "kind": "Test",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\services\\test_legal_registry.py"
+      },
+      {
+        "name": "test_withdrawn_events_do_not_establish_status",
+        "kind": "Test",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\services\\test_legal_registry.py"
+      },
+      {
+        "name": "test_publication_revalidates_quote_and_requires_recorded_human_review",
+        "kind": "Test",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\services\\test_legal_registry.py"
+      }
+    ],
+    "_graph": {
+      "updated_at": "2026-11-03T16:24:44",
+      "age_seconds": 244,
+      "built_on_branch": "main",
+      "built_at_sha": "7519cd1aea4a3639140b9188de1843ebf0ddb1c0",
+      "head_sha": "7519cd1aea4a3639140b9188de1843ebf0ddb1c0",
+      "head_matches_build": true
+    }
+  },
+  "isError": false
+}

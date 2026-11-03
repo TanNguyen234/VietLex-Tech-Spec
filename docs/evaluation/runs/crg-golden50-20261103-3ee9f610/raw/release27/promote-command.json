@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "C:/Program Files/nodejs/node.exe",
+    "D:/Download/AntigravityData/npm-cache/_npx/69f9afb961c37556/node_modules/vercel/dist/index.js",
+    "promote",
+    "https://vietlex-legal-rkjgl5cet-foxys-projects-5fe642e0.vercel.app",
+    "--yes",
+    "--timeout",
+    "3m",
+    "--scope",
+    "foxys-projects-5fe642e0",
+    "--non-interactive"
+  ],
+  "cwd": "D:\\Download\\ProfessionalLegalRAG\\tmp\\vercel-release-20261030-real-87db8673"
+}

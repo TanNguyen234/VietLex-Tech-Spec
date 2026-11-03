@@ -1,0 +1,30 @@
+{
+  "production_identity": {
+    "schema_version": "runtime-identity-v1",
+    "public_guardrail_policy": "enforce",
+    "build_git_sha": "unknown",
+    "deployment_id": "dpl_7Pc17TstdKKXyDKWrsx8oKBhZjRt",
+    "app_source_sha256": "ac39b936ae34a2a8ea5811225c22d91cd05fb9cd0d86c89ab95ddf22d9085b03",
+    "source_scope": "app:py,html,js,css,json,cjs",
+    "configuration_sha256": "7c7ff2bb40b6a722b00343e8529fe34a6071ff026dc7cc3450c4f11337a4a0c7",
+    "retrieval_backend": "vertex-qdrant-v3",
+    "chat_context_profile": "official-deep-reading"
+  },
+  "metric_version": "3.3.0",
+  "pipeline": "chat_service_v1",
+  "retrieval": "Vertex/Qdrant v3 rrf-dbsf",
+  "guardrails": "enforce input+output; public local/online mandatory",
+  "guardrail_timeout_seconds_source_default": 20.0,
+  "production_timeout_override_present": false,
+  "production_env_preflight": "raw/investigation/timeout-env-preflight-complete.json",
+  "judge": "none; zero Ragas calls",
+  "dataset": "unchanged Golden50-v3; 40 verified cases/53 items; 10 no_verified_gold_label retrieval skips",
+  "benchmark_execution": "live50/source26 plus offline3.3/source27 paired rescore; separately fresh deployed HTTP8/source27",
+  "offline_rescore_run": "answer-golden50-offline-metrics33-20261103-2349369e",
+  "live_parent_run": "answer-golden50-production-timeout20-20261103-f93a41fe",
+  "model_ids": [
+    "gemini-3.5-flash",
+    "gemini-embedding-2/1024",
+    "vietlex-legal-rag-v3-vertex-1024"
+  ]
+}

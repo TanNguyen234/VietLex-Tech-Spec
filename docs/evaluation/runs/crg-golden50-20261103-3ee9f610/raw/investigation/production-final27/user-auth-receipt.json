@@ -1,0 +1,8 @@
+{
+  "role": "USER",
+  "login_get": 200,
+  "login_post": 303,
+  "retry_after": null,
+  "credential_presence": true,
+  "secret_persisted": false
+}

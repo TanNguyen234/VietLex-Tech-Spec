@@ -1,0 +1,6 @@
+{
+  "status": "PASS",
+  "python_log": "python-full.log",
+  "node_log": "node-full.log",
+  "source_unchanged": true
+}

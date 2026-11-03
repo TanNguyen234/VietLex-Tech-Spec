@@ -1,0 +1,30 @@
+{
+  "meta": null,
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"status\":\"ok\",\"pattern\":\"tests_for\",\"target\":\"run_answer_eval.py\",\"description\":\"Find all tests for a given function or class\",\"summary\":\"Found 0 result(s) for tests_for('run_answer_eval.py')\",\"result_count\":0,\"results_omitted\":0,\"results\":[],\"_graph\":{\"updated_at\":\"2026-11-03T16:24:44\",\"age_seconds\":243,\"built_on_branch\":\"main\",\"built_at_sha\":\"7519cd1aea4a3639140b9188de1843ebf0ddb1c0\",\"head_sha\":\"7519cd1aea4a3639140b9188de1843ebf0ddb1c0\",\"head_matches_build\":true}}",
+      "annotations": null,
+      "meta": null
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "pattern": "tests_for",
+    "target": "run_answer_eval.py",
+    "description": "Find all tests for a given function or class",
+    "summary": "Found 0 result(s) for tests_for('run_answer_eval.py')",
+    "result_count": 0,
+    "results_omitted": 0,
+    "results": [],
+    "_graph": {
+      "updated_at": "2026-11-03T16:24:44",
+      "age_seconds": 243,
+      "built_on_branch": "main",
+      "built_at_sha": "7519cd1aea4a3639140b9188de1843ebf0ddb1c0",
+      "head_sha": "7519cd1aea4a3639140b9188de1843ebf0ddb1c0",
+      "head_matches_build": true
+    }
+  },
+  "isError": false
+}

@@ -1,0 +1,25 @@
+Dựa trên các tài liệu tham khảo được cung cấp, dưới đây là câu trả lời chi tiết cho câu hỏi của bạn:
+
+**1. Trả lời về việc áp dụng thử việc đối với hợp đồng lao động xác định thời hạn 20 ngày:**
+
+Một hợp đồng lao động xác định thời hạn 20 ngày **không được phép** áp dụng thử việc (kể cả thử việc 6 ngày làm việc hay bất kỳ thời gian nào khác). 
+
+*Căn cứ pháp lý:* Khoản 3 Điều 24 Bộ luật Lao động 2019 ([45/2019/QH14, Điều 24](https://thuvienphapluat.vn/van-ban/Lao-dong-Tien-luong/Bo-Luat-lao-dong-2019-333670.aspx)).
+
+---
+
+**2. Giải thích quy tắc và ngoại lệ áp dụng cho chính hợp đồng ngắn này:**
+
+*   **Quy tắc chung về thử việc:** 
+    Theo đoạn mở đầu Điều 25 Bộ luật Lao động 2019, thời gian thử việc do hai bên thỏa thuận căn cứ vào tính chất và mức độ phức tạp của công việc nhưng chỉ được thử việc một lần đối với một công việc ([45/2019/QH14, Điều 25](https://thuvienphapluat.vn/van-ban/Lao-dong-Tien-luong/Bo-Luat-lao-dong-2019-333670.aspx)). Đối với các "công việc khác" (không thuộc nhóm quản lý, trình độ cao đẳng trở lên, hoặc trung cấp/công nhân kỹ thuật/nhân viên nghiệp vụ), thời gian thử việc được giới hạn là không quá 06 ngày làm việc theo quy định tại Khoản 4 Điều 25 ([45/2019/QH14, Điều 25](https://thuvienphapluat.vn/van-ban/Lao-dong-Tien-luong/Bo-Luat-lao-dong-2019-333670.aspx)).
+*   **Ngoại lệ tuyệt đối cho hợp đồng ngắn dưới 01 tháng:** 
+    Mặc dù có quy định về thời gian thử việc đối với "công việc khác" là không quá 06 ngày làm việc, nhưng Khoản 3 Điều 24 Bộ luật Lao động 2019 đã đặt ra một ngoại lệ loại trừ tuyệt đối: *"Không áp dụng thử việc đối với người lao động giao kết hợp đồng lao động có thời hạn dưới 01 tháng."* ([45/2019/QH14, Điều 24](https://thuvienphapluat.vn/van-ban/Lao-dong-Tien-luong/Bo-Luat-lao-dong-2019-333670.aspx)). 
+
+Vì hợp đồng lao động trong trường hợp này có thời hạn là 20 ngày (dưới 01 tháng), hợp đồng này bắt buộc phải áp dụng quy định ngoại lệ tại Khoản 3 Điều 24. Do đó, người sử dụng lao động không được phép thỏa thuận hoặc áp dụng bất kỳ thời gian thử việc nào đối với người lao động trong hợp đồng này.
+
+---
+
+*Lưu ý: Nguồn dữ liệu này không phải cơ sở dữ liệu pháp luật chính thức và không xác nhận tình trạng hiệu lực hiện hành của văn bản. Bạn vui lòng kiểm tra lại trên nguồn chính thức hiện hành hoặc tham vấn ý kiến của người có chuyên môn pháp lý.*
+
+**Đoạn mở đầu không đánh số — [45/2019/QH14, Điều 25]:**
+> Điều 25. Thời gian thử việc Thời gian thử việc do hai bên thỏa thuận căn cứ vào tính chất và mức độ phức tạp của công việc nhưng chỉ được thử việc một lần đối với một công việc và bảo đảm điều kiện sau đây:

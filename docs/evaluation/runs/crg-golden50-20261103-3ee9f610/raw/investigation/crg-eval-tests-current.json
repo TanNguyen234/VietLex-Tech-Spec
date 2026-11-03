@@ -1,0 +1,188 @@
+{
+  "meta": null,
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"status\":\"ok\",\"pattern\":\"tests_for\",\"target\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\run_answer_eval.py::run_stage_a_online\",\"description\":\"Find all tests for a given function or class\",\"summary\":\"Found 31 result(s) for tests_for('D:\\\\Download\\\\ProfessionalLegalRAG\\\\run_answer_eval.py::run_stage_a_online') — showing 12, 19 omitted\",\"result_count\":31,\"results_omitted\":19,\"results\":[{\"id\":8219,\"kind\":\"Test\",\"name\":\"test_answer_stage_propagates_reranker_error_status\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py::test_answer_stage_propagates_reranker_error_status\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py\",\"line_start\":408,\"line_end\":445,\"language\":\"python\",\"parent_name\":null,\"is_test\":true,\"indirect\":false},{\"id\":8218,\"kind\":\"Test\",\"name\":\"test_answer_stage_uses_one_retrieval_and_three_generation_arguments\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py::test_answer_stage_uses_one_retrieval_and_three_generation_arguments\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py\",\"line_start\":322,\"line_end\":404,\"language\":\"python\",\"parent_name\":null,\"is_test\":true,\"indirect\":false},{\"id\":8225,\"kind\":\"Test\",\"name\":\"test_input_guardrail_error_in_shadow_keeps_pipeline_scoreable\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py::test_input_guardrail_error_in_shadow_keeps_pipeline_scoreable\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py\",\"line_start\":587,\"line_end\":631,\"language\":\"python\",\"parent_name\":null,\"is_test\":true,\"indirect\":false},{\"id\":8224,\"kind\":\"Test\",\"name\":\"test_input_guardrail_error_is_typed_and_runs_zero_retrieval\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py::test_input_guardrail_error_is_typed_and_runs_zero_retrieval\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py\",\"line_start\":564,\"line_end\":583,\"language\":\"python\",\"parent_name\":null,\"is_test\":true,\"indirect\":false},{\"id\":8227,\"kind\":\"Test\",\"name\":\"test_output_guardrail_error_in_shadow_keeps_pipeline_scoreable\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py::test_output_guardrail_error_in_shadow_keeps_pipeline_scoreable\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py\",\"line_start\":685,\"line_end\":729,\"language\":\"python\",\"parent_name\":null,\"is_test\":true,\"indirect\":false},{\"id\":8226,\"kind\":\"Test\",\"name\":\"test_output_guardrail_error_is_typed_not_a_hallucination_block\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py::test_output_guardrail_error_is_typed_not_a_hallucination_block\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py\",\"line_start\":635,\"line_end\":681,\"language\":\"python\",\"parent_name\":null,\"is_test\":true,\"indirect\":false},{\"id\":7916,\"kind\":\"Test\",\"name\":\"test_answer_default_stage_b_does_not_construct_ragas_evaluator\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_default_entrypoints.py::test_answer_default_stage_b_does_not_construct_ragas_evaluator\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_default_entrypoints.py\",\"line_start\":696,\"line_end\":745,\"language\":\"python\",\"parent_name\":null,\"is_test\":true,\"indirect\":true},{\"id\":8177,\"kind\":\"Test\",\"name\":\"test_colbert_reranks_the_persisted_candidate_pool\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_retrieval_backend_binding.py::test_colbert_reranks_the_persisted_candidate_pool\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_retrieval_backend_binding.py\",\"line_start\":539,\"line_end\":616,\"language\":\"python\",\"parent_name\":null,\"is_test\":true,\"indirect\":true},{\"id\":8221,\"kind\":\"Test\",\"name\":\"test_answer_stage_b_records_judge_failure_as_typed_technical_error\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py::test_answer_stage_b_records_judge_failure_as_typed_technical_error\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py\",\"line_start\":491,\"line_end\":532,\"language\":\"python\",\"parent_name\":null,\"is_test\":true,\"indirect\":true},{\"id\":8220,\"kind\":\"Test\",\"name\":\"test_answer_stage_b_skips_quality_and_judge_on_technical_status\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py::test_answer_stage_b_skips_quality_and_judge_on_technical_status\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py\",\"line_start\":449,\"line_end\":487,\"language\":\"python\",\"parent_name\":null,\"is_test\":true,\"indirect\":true},{\"id\":7816,\"kind\":\"Test\",\"name\":\"test_production_capacities_follow_boolean_pipeline_switch\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_capacities.py::test_production_capacities_follow_boolean_pipeline_switch\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_capacities.py\",\"line_start\":34,\"line_end\":56,\"language\":\"python\",\"parent_name\":null,\"is_test\":true,\"indirect\":true},{\"id\":7815,\"kind\":\"Test\",\"name\":\"test_structural_backend_reports_actual_stage_capacities\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_capacities.py::test_structural_backend_reports_actual_stage_capacities\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_capacities.py\",\"line_start\":7,\"line_end\":31,\"language\":\"python\",\"parent_name\":null,\"is_test\":true,\"indirect\":true}],\"edges\":[],\"_graph\":{\"updated_at\":\"2026-11-03T16:35:30\",\"age_seconds\":4,\"built_on_branch\":\"main\",\"built_at_sha\":\"7519cd1aea4a3639140b9188de1843ebf0ddb1c0\",\"head_sha\":\"7519cd1aea4a3639140b9188de1843ebf0ddb1c0\",\"head_matches_build\":true}}",
+      "annotations": null,
+      "meta": null
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "pattern": "tests_for",
+    "target": "D:\\Download\\ProfessionalLegalRAG\\run_answer_eval.py::run_stage_a_online",
+    "description": "Find all tests for a given function or class",
+    "summary": "Found 31 result(s) for tests_for('D:\\Download\\ProfessionalLegalRAG\\run_answer_eval.py::run_stage_a_online') — showing 12, 19 omitted",
+    "result_count": 31,
+    "results_omitted": 19,
+    "results": [
+      {
+        "id": 8219,
+        "kind": "Test",
+        "name": "test_answer_stage_propagates_reranker_error_status",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py::test_answer_stage_propagates_reranker_error_status",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py",
+        "line_start": 408,
+        "line_end": 445,
+        "language": "python",
+        "parent_name": null,
+        "is_test": true,
+        "indirect": false
+      },
+      {
+        "id": 8218,
+        "kind": "Test",
+        "name": "test_answer_stage_uses_one_retrieval_and_three_generation_arguments",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py::test_answer_stage_uses_one_retrieval_and_three_generation_arguments",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py",
+        "line_start": 322,
+        "line_end": 404,
+        "language": "python",
+        "parent_name": null,
+        "is_test": true,
+        "indirect": false
+      },
+      {
+        "id": 8225,
+        "kind": "Test",
+        "name": "test_input_guardrail_error_in_shadow_keeps_pipeline_scoreable",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py::test_input_guardrail_error_in_shadow_keeps_pipeline_scoreable",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py",
+        "line_start": 587,
+        "line_end": 631,
+        "language": "python",
+        "parent_name": null,
+        "is_test": true,
+        "indirect": false
+      },
+      {
+        "id": 8224,
+        "kind": "Test",
+        "name": "test_input_guardrail_error_is_typed_and_runs_zero_retrieval",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py::test_input_guardrail_error_is_typed_and_runs_zero_retrieval",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py",
+        "line_start": 564,
+        "line_end": 583,
+        "language": "python",
+        "parent_name": null,
+        "is_test": true,
+        "indirect": false
+      },
+      {
+        "id": 8227,
+        "kind": "Test",
+        "name": "test_output_guardrail_error_in_shadow_keeps_pipeline_scoreable",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py::test_output_guardrail_error_in_shadow_keeps_pipeline_scoreable",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py",
+        "line_start": 685,
+        "line_end": 729,
+        "language": "python",
+        "parent_name": null,
+        "is_test": true,
+        "indirect": false
+      },
+      {
+        "id": 8226,
+        "kind": "Test",
+        "name": "test_output_guardrail_error_is_typed_not_a_hallucination_block",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py::test_output_guardrail_error_is_typed_not_a_hallucination_block",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py",
+        "line_start": 635,
+        "line_end": 681,
+        "language": "python",
+        "parent_name": null,
+        "is_test": true,
+        "indirect": false
+      },
+      {
+        "id": 7916,
+        "kind": "Test",
+        "name": "test_answer_default_stage_b_does_not_construct_ragas_evaluator",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_default_entrypoints.py::test_answer_default_stage_b_does_not_construct_ragas_evaluator",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_default_entrypoints.py",
+        "line_start": 696,
+        "line_end": 745,
+        "language": "python",
+        "parent_name": null,
+        "is_test": true,
+        "indirect": true
+      },
+      {
+        "id": 8177,
+        "kind": "Test",
+        "name": "test_colbert_reranks_the_persisted_candidate_pool",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_retrieval_backend_binding.py::test_colbert_reranks_the_persisted_candidate_pool",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_retrieval_backend_binding.py",
+        "line_start": 539,
+        "line_end": 616,
+        "language": "python",
+        "parent_name": null,
+        "is_test": true,
+        "indirect": true
+      },
+      {
+        "id": 8221,
+        "kind": "Test",
+        "name": "test_answer_stage_b_records_judge_failure_as_typed_technical_error",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py::test_answer_stage_b_records_judge_failure_as_typed_technical_error",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py",
+        "line_start": 491,
+        "line_end": 532,
+        "language": "python",
+        "parent_name": null,
+        "is_test": true,
+        "indirect": true
+      },
+      {
+        "id": 8220,
+        "kind": "Test",
+        "name": "test_answer_stage_b_skips_quality_and_judge_on_technical_status",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py::test_answer_stage_b_skips_quality_and_judge_on_technical_status",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py",
+        "line_start": 449,
+        "line_end": 487,
+        "language": "python",
+        "parent_name": null,
+        "is_test": true,
+        "indirect": true
+      },
+      {
+        "id": 7816,
+        "kind": "Test",
+        "name": "test_production_capacities_follow_boolean_pipeline_switch",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_capacities.py::test_production_capacities_follow_boolean_pipeline_switch",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_capacities.py",
+        "line_start": 34,
+        "line_end": 56,
+        "language": "python",
+        "parent_name": null,
+        "is_test": true,
+        "indirect": true
+      },
+      {
+        "id": 7815,
+        "kind": "Test",
+        "name": "test_structural_backend_reports_actual_stage_capacities",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_capacities.py::test_structural_backend_reports_actual_stage_capacities",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_capacities.py",
+        "line_start": 7,
+        "line_end": 31,
+        "language": "python",
+        "parent_name": null,
+        "is_test": true,
+        "indirect": true
+      }
+    ],
+    "edges": [],
+    "_graph": {
+      "updated_at": "2026-11-03T16:35:30",
+      "age_seconds": 4,
+      "built_on_branch": "main",
+      "built_at_sha": "7519cd1aea4a3639140b9188de1843ebf0ddb1c0",
+      "head_sha": "7519cd1aea4a3639140b9188de1843ebf0ddb1c0",
+      "head_matches_build": true
+    }
+  },
+  "isError": false
+}

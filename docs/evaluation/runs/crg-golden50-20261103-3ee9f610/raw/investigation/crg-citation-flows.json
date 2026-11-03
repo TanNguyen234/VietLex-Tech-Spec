@@ -1,0 +1,46 @@
+{
+  "meta": null,
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"status\":\"ok\",\"summary\":\"0 flow(s) affected by changes in 4 file(s)\",\"changed_files\":[\"app/evaluation/legal_citations.py\",\"app/evaluation/answer_metrics.py\",\"app/evaluation/schemas.py\",\"run_answer_eval.py\"],\"affected_flows\":[],\"total\":0,\"_hints\":{\"next_steps\":[{\"tool\":\"get_flow\",\"suggestion\":\"Inspect a specific affected flow\"},{\"tool\":\"get_review_context\",\"suggestion\":\"Build a full review context for the changes\"}],\"related\":[],\"warnings\":[]},\"_graph\":{\"updated_at\":\"2026-11-03T19:40:24\",\"age_seconds\":12,\"built_on_branch\":\"main\",\"built_at_sha\":\"7519cd1aea4a3639140b9188de1843ebf0ddb1c0\",\"head_sha\":\"7519cd1aea4a3639140b9188de1843ebf0ddb1c0\",\"head_matches_build\":true}}",
+      "annotations": null,
+      "meta": null
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "summary": "0 flow(s) affected by changes in 4 file(s)",
+    "changed_files": [
+      "app/evaluation/legal_citations.py",
+      "app/evaluation/answer_metrics.py",
+      "app/evaluation/schemas.py",
+      "run_answer_eval.py"
+    ],
+    "affected_flows": [],
+    "total": 0,
+    "_hints": {
+      "next_steps": [
+        {
+          "tool": "get_flow",
+          "suggestion": "Inspect a specific affected flow"
+        },
+        {
+          "tool": "get_review_context",
+          "suggestion": "Build a full review context for the changes"
+        }
+      ],
+      "related": [],
+      "warnings": []
+    },
+    "_graph": {
+      "updated_at": "2026-11-03T19:40:24",
+      "age_seconds": 12,
+      "built_on_branch": "main",
+      "built_at_sha": "7519cd1aea4a3639140b9188de1843ebf0ddb1c0",
+      "head_sha": "7519cd1aea4a3639140b9188de1843ebf0ddb1c0",
+      "head_matches_build": true
+    }
+  },
+  "isError": false
+}

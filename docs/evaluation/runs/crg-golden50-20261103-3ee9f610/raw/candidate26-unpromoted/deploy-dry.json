@@ -1,0 +1,1538 @@
+{
+  "framework": {
+    "name": "FastAPI",
+    "slug": "fastapi"
+  },
+  "basePath": "D:\\Download\\ProfessionalLegalRAG\\tmp\\vercel-release-20261030-real-793e8201",
+  "fileCount": 237,
+  "totalSize": 12323690,
+  "ignoredCount": 3,
+  "ignored": [
+    ".vercel",
+    "app\\data\\namsyntax_legal_qa_420.json",
+    "app\\data\\namsyntax_legal_qa_420_curated_v1.json"
+  ],
+  "directories": [
+    {
+      "path": "docs",
+      "fileCount": 2,
+      "size": 7584442
+    },
+    {
+      "path": "app",
+      "fileCount": 230,
+      "size": 4613918
+    },
+    {
+      "path": "requirements-demo.lock",
+      "fileCount": 1,
+      "size": 115949
+    },
+    {
+      "path": "README.md",
+      "fileCount": 1,
+      "size": 7189
+    },
+    {
+      "path": "pyproject.toml",
+      "fileCount": 1,
+      "size": 1169
+    },
+    {
+      "path": ".vercelignore",
+      "fileCount": 1,
+      "size": 623
+    },
+    {
+      "path": "vercel.json",
+      "fileCount": 1,
+      "size": 400
+    }
+  ],
+  "largestFiles": [
+    {
+      "path": "docs/evaluation/runs/answer-v3-golden50-expanded14962-rrf-dbsf-20260903/answer_results.json",
+      "size": 7575426,
+      "mode": 33206,
+      "sha": "2f3c60475e1df2f17385b49bc3287cbb53b72c13"
+    },
+    {
+      "path": "app/static/fonts/NotoSerif-Variable.ttf",
+      "size": 1887192,
+      "mode": 33206,
+      "sha": "35f023a37f126313403845ac2a8a733baac79f8c"
+    },
+    {
+      "path": "app/static/fonts/NotoSerif-Regular.woff2",
+      "size": 163012,
+      "mode": 33206,
+      "sha": "51a18e691f0081fa438d1c9ae04fef9774b5442e"
+    },
+    {
+      "path": "app/static/fonts/BeVietnamPro-SemiBold.ttf",
+      "size": 136736,
+      "mode": 33206,
+      "sha": "a69527c7e5cf1066b2ee6bda77589c8de736f94b"
+    },
+    {
+      "path": "app/static/fonts/BeVietnamPro-Regular.ttf",
+      "size": 132948,
+      "mode": 33206,
+      "sha": "e4fa14cdd3d662b6373e6e8315831a4621df65aa"
+    },
+    {
+      "path": "requirements-demo.lock",
+      "size": 115949,
+      "mode": 33206,
+      "sha": "0f7f4d7a14a22e0ebc5ae831a785ef9c8c9b0b7f"
+    },
+    {
+      "path": "app/static/js/research-workspace.js",
+      "size": 72410,
+      "mode": 33206,
+      "sha": "8cb7c6fdcaa1d4a2769a31bdfd5fe1bb6f19df19"
+    },
+    {
+      "path": "app/evaluation/adjudication.py",
+      "size": 64774,
+      "mode": 33206,
+      "sha": "56b5e6dab55ea231147f1b5148355681e21d2a62"
+    },
+    {
+      "path": "app/evaluation/structural_model_probe.py",
+      "size": 63299,
+      "mode": 33206,
+      "sha": "d181f7e354c2eaa9ad56dd67b431ccf940b8e56a"
+    },
+    {
+      "path": "app/api/routes.py",
+      "size": 61504,
+      "mode": 33206,
+      "sha": "c1db57bc6dfa6e649f0729a99573cfc568c70954"
+    }
+  ],
+  "files": [
+    {
+      "path": ".vercelignore",
+      "size": 623,
+      "mode": 33206,
+      "sha": "0c625fbc3217eac3408fb1c58440c12cc6fa658e"
+    },
+    {
+      "path": "app/account_database.py",
+      "size": 13852,
+      "mode": 33206,
+      "sha": "95239d03fa8c75b7af3d4d870f355a763dcd6a83"
+    },
+    {
+      "path": "app/api/account_routes.py",
+      "size": 14785,
+      "mode": 33206,
+      "sha": "151786c0303e56b84bf52889856c43ed34357b4d"
+    },
+    {
+      "path": "app/api/claim_verification_routes.py",
+      "size": 4583,
+      "mode": 33206,
+      "sha": "dcdc58336b7616a5b9c8e1ea6f2cccac9046cf87"
+    },
+    {
+      "path": "app/api/dependencies.py",
+      "size": 4645,
+      "mode": 33206,
+      "sha": "5d159d09f299ef93bc8b4d40c89c62375772bae3"
+    },
+    {
+      "path": "app/api/document_redline_routes.py",
+      "size": 2212,
+      "mode": 33206,
+      "sha": "bb4e29dabbb5010d44891a5149d2a6b542c34026"
+    },
+    {
+      "path": "app/api/evaluation_lab_routes.py",
+      "size": 3382,
+      "mode": 33206,
+      "sha": "49ae66b19886b009bcd278dd84176673f0f05bbf"
+    },
+    {
+      "path": "app/api/finding_routes.py",
+      "size": 3572,
+      "mode": 33206,
+      "sha": "057aa943c62e34cceb4706561a47de005791f2fa"
+    },
+    {
+      "path": "app/api/free_web_research_routes.py",
+      "size": 21492,
+      "mode": 33206,
+      "sha": "fe5b47f95a156312a5e162431353f324ef618f9d"
+    },
+    {
+      "path": "app/api/full_document_review_routes.py",
+      "size": 7585,
+      "mode": 33206,
+      "sha": "29a0be5916d5a507f7105793ecd8be1de1c84cfd"
+    },
+    {
+      "path": "app/api/legal_effect_routes.py",
+      "size": 5387,
+      "mode": 33206,
+      "sha": "c52a8cd8dd1b3614ed70c446b93441ef3ca0247b"
+    },
+    {
+      "path": "app/api/legal_registry_routes.py",
+      "size": 5236,
+      "mode": 33206,
+      "sha": "a5e03fd5a0d057744d816689df8dcaa645bff10a"
+    },
+    {
+      "path": "app/api/legal_routes.py",
+      "size": 9755,
+      "mode": 33206,
+      "sha": "fc26cf647f990122a233d8c241413a24de1b8ae4"
+    },
+    {
+      "path": "app/api/legal_timeline_routes.py",
+      "size": 2004,
+      "mode": 33206,
+      "sha": "7565ff52ddf6ab3789a0a1266c241f78fc343a60"
+    },
+    {
+      "path": "app/api/model_comparison_routes.py",
+      "size": 5346,
+      "mode": 33206,
+      "sha": "94ab2ff6e2642453f3ab3c571a6efff6bb18cf12"
+    },
+    {
+      "path": "app/api/product_quality_routes.py",
+      "size": 5479,
+      "mode": 33206,
+      "sha": "6178f446dac5576be89bda6a962eaf8a56b64d25"
+    },
+    {
+      "path": "app/api/research_report_routes.py",
+      "size": 8408,
+      "mode": 33206,
+      "sha": "c984dd5f01e9bf9040ca45ca7de58c0f25a356e1"
+    },
+    {
+      "path": "app/api/retained_source_routes.py",
+      "size": 6997,
+      "mode": 33206,
+      "sha": "acd6c54d435e2f81ad7be4a15e9210abdeaab480"
+    },
+    {
+      "path": "app/api/routes.py",
+      "size": 61504,
+      "mode": 33206,
+      "sha": "c1db57bc6dfa6e649f0729a99573cfc568c70954"
+    },
+    {
+      "path": "app/api/trusted_source_routes.py",
+      "size": 9949,
+      "mode": 33206,
+      "sha": "0ead82d228b777e6285b587113c56dffbbb80d67"
+    },
+    {
+      "path": "app/api/workspace_routes.py",
+      "size": 35600,
+      "mode": 33206,
+      "sha": "d3c98ffb243cfebe740b59fa598f2c6672ba73ad"
+    },
+    {
+      "path": "app/config.py",
+      "size": 16572,
+      "mode": 33206,
+      "sha": "4bc20606d26b0be45be6d55690d5ff16ffbd30d8"
+    },
+    {
+      "path": "app/data/tls/issuer-certificates.json",
+      "size": 2310,
+      "mode": 33206,
+      "sha": "63bc2731a84f8069f1cd0f4406b770180d083ad6"
+    },
+    {
+      "path": "app/database.py",
+      "size": 31102,
+      "mode": 33206,
+      "sha": "170bf79ccbda57b4e9b12c5951808c01a77d6043"
+    },
+    {
+      "path": "app/evaluation/__init__.py",
+      "size": 90,
+      "mode": 33206,
+      "sha": "7ce9c82c82069707e665d4fa9c1054e390854d14"
+    },
+    {
+      "path": "app/evaluation/adjudication_candidates.py",
+      "size": 17109,
+      "mode": 33206,
+      "sha": "0c4b858364a7e7949b47d39044c2a4d4595dfc4c"
+    },
+    {
+      "path": "app/evaluation/adjudication.py",
+      "size": 64774,
+      "mode": 33206,
+      "sha": "56b5e6dab55ea231147f1b5148355681e21d2a62"
+    },
+    {
+      "path": "app/evaluation/answer_metrics.py",
+      "size": 25233,
+      "mode": 33206,
+      "sha": "9827ef6d6ed1e7ac04797e319625285d327c1c9f"
+    },
+    {
+      "path": "app/evaluation/artifact_io.py",
+      "size": 1123,
+      "mode": 33206,
+      "sha": "5d454c3ba9d0fd5527761575b7bb9acf09b46b05"
+    },
+    {
+      "path": "app/evaluation/candidate_pool.py",
+      "size": 2563,
+      "mode": 33206,
+      "sha": "74432bf668f8052737531c0aa5ffdf108a38f816"
+    },
+    {
+      "path": "app/evaluation/capacities.py",
+      "size": 2809,
+      "mode": 33206,
+      "sha": "809e6885cd7b9987e84213f36c0268a9457682d6"
+    },
+    {
+      "path": "app/evaluation/case_selection.py",
+      "size": 7015,
+      "mode": 33206,
+      "sha": "4a38f25e9d9ea809b7331d853c015c812cc52b35"
+    },
+    {
+      "path": "app/evaluation/decision_package.py",
+      "size": 53954,
+      "mode": 33206,
+      "sha": "c3e3738b95deeea7c208d50d0a5b3b841577c01b"
+    },
+    {
+      "path": "app/evaluation/gold_sidecar.py",
+      "size": 5313,
+      "mode": 33206,
+      "sha": "57c447cb213a3ef7d63f6e4d5c53cc93dd1a0e32"
+    },
+    {
+      "path": "app/evaluation/golden_bundle.py",
+      "size": 4479,
+      "mode": 33206,
+      "sha": "a1ce5de795274a13b014fedb31dde8039fe4737e"
+    },
+    {
+      "path": "app/evaluation/latency_metrics.py",
+      "size": 1545,
+      "mode": 33206,
+      "sha": "8cd26f49dd73603cc24f6c18f836241491d49dfe"
+    },
+    {
+      "path": "app/evaluation/legal_citations.py",
+      "size": 4414,
+      "mode": 33206,
+      "sha": "af5ee8015de4cf0520aaf8883cd5cd4b0b772074"
+    },
+    {
+      "path": "app/evaluation/online_metrics.py",
+      "size": 10319,
+      "mode": 33206,
+      "sha": "da79d658a2a710fd5eb9e14de33af0943e38f28c"
+    },
+    {
+      "path": "app/evaluation/pinecone_structural_canary.py",
+      "size": 6370,
+      "mode": 33206,
+      "sha": "7c2a5847e4b1fd3f89dd661fa443226c7f7307a5"
+    },
+    {
+      "path": "app/evaluation/preflight.py",
+      "size": 6204,
+      "mode": 33206,
+      "sha": "3f3c70652318f492a04655e3c547ae6f7e4f4649"
+    },
+    {
+      "path": "app/evaluation/profiles.py",
+      "size": 2511,
+      "mode": 33206,
+      "sha": "1ac15a7119c453dfd17284a01127eb50c687b47f"
+    },
+    {
+      "path": "app/evaluation/provenance.py",
+      "size": 9250,
+      "mode": 33206,
+      "sha": "f4543bd9d982edc710709da3b9f1d2307fd78a77"
+    },
+    {
+      "path": "app/evaluation/provider_catalog.py",
+      "size": 1133,
+      "mode": 33206,
+      "sha": "8cc956f28897fee9d7c66e5f1b55e7d8dd3da0be"
+    },
+    {
+      "path": "app/evaluation/qwen_lora_embedder.py",
+      "size": 5212,
+      "mode": 33206,
+      "sha": "1789f816f595d232baa4d1359d537f47d5db4204"
+    },
+    {
+      "path": "app/evaluation/reporting.py",
+      "size": 16932,
+      "mode": 33206,
+      "sha": "2e1302d5aa03f23565c76f79e7f8f54781a576a6"
+    },
+    {
+      "path": "app/evaluation/retrieval_backends.py",
+      "size": 13150,
+      "mode": 33206,
+      "sha": "a8a8bdc0fad4328acabf0c27c08b570d23d3aa74"
+    },
+    {
+      "path": "app/evaluation/retrieval_gate.py",
+      "size": 3589,
+      "mode": 33206,
+      "sha": "e9dfe4a6379d7e8b0eb4c71de227adb40eac2bba"
+    },
+    {
+      "path": "app/evaluation/retrieval_metrics.py",
+      "size": 43298,
+      "mode": 33206,
+      "sha": "a4152d7bd00c4e905504f497c8df03c2806313c7"
+    },
+    {
+      "path": "app/evaluation/run_manifest.py",
+      "size": 15335,
+      "mode": 33206,
+      "sha": "d97a54d1d4a4c0cf11e0b9a305d9409950c7ea4f"
+    },
+    {
+      "path": "app/evaluation/schemas.py",
+      "size": 12098,
+      "mode": 33206,
+      "sha": "10861ba1b396f1de19c5ad8dbd5a81e7cfd5479e"
+    },
+    {
+      "path": "app/evaluation/structural_model_probe.py",
+      "size": 63299,
+      "mode": 33206,
+      "sha": "d181f7e354c2eaa9ad56dd67b431ccf940b8e56a"
+    },
+    {
+      "path": "app/evaluation/structural_pilot_eval.py",
+      "size": 31075,
+      "mode": 33206,
+      "sha": "b7fdfe9afbf8e51a7581ff4938b3ab282887a91a"
+    },
+    {
+      "path": "app/evaluation/vertex_g0_probe.py",
+      "size": 3430,
+      "mode": 33206,
+      "sha": "07b5951a1f374d35339351c77f4c212dd5c3d8d2"
+    },
+    {
+      "path": "app/ingestion/body_fts.py",
+      "size": 1667,
+      "mode": 33206,
+      "sha": "36fecaa489f64344378fd79029464efefc8076b2"
+    },
+    {
+      "path": "app/ingestion/body_remote.py",
+      "size": 8383,
+      "mode": 33206,
+      "sha": "98d22373d70cc7dbd5d1ca1f3d847e92a20f84ab"
+    },
+    {
+      "path": "app/ingestion/checkpoint.py",
+      "size": 5706,
+      "mode": 33206,
+      "sha": "57940e3dbc11c5f4c9a416dcd36924822905ba15"
+    },
+    {
+      "path": "app/ingestion/content_store.py",
+      "size": 28841,
+      "mode": 33206,
+      "sha": "cc4c05887b725415d5af836e6135a8aa70cb70c4"
+    },
+    {
+      "path": "app/ingestion/corpus_cleaning.py",
+      "size": 5653,
+      "mode": 33206,
+      "sha": "16dbf71ec405ad17eb1b0dd2685e24ac16ddc887"
+    },
+    {
+      "path": "app/ingestion/dataset_snapshot.py",
+      "size": 12465,
+      "mode": 33206,
+      "sha": "b50eacd70d43de28994821bb4b0c276162ba60e4"
+    },
+    {
+      "path": "app/ingestion/hf_pipeline.py",
+      "size": 23949,
+      "mode": 33206,
+      "sha": "5fcc07ea28654f24ccaf15195e0d616b08af712f"
+    },
+    {
+      "path": "app/ingestion/legal_fts.py",
+      "size": 19656,
+      "mode": 33206,
+      "sha": "3e67c7f04d1db7ca38565a0f0d004775c65ea040"
+    },
+    {
+      "path": "app/ingestion/legal_text.py",
+      "size": 12179,
+      "mode": 33206,
+      "sha": "d0530504d319b91ad1ea102014c7eef167f3df0e"
+    },
+    {
+      "path": "app/ingestion/pinecone_store.py",
+      "size": 9803,
+      "mode": 33206,
+      "sha": "d8fcfeedcd4ed0eeb4143a8c639426b3b445e9c1"
+    },
+    {
+      "path": "app/ingestion/qdrant_inference.py",
+      "size": 7131,
+      "mode": 33206,
+      "sha": "e3004a2cb719d3e6d261ff28bdc85e405af12705"
+    },
+    {
+      "path": "app/ingestion/sparse_encoder.py",
+      "size": 3807,
+      "mode": 33206,
+      "sha": "6dd039d1651a49b2b10aa1a623256e661302029c"
+    },
+    {
+      "path": "app/ingestion/structural_checkpoint.py",
+      "size": 15557,
+      "mode": 33206,
+      "sha": "5785bbdeb7a5842936b4ad31bb54ab8e6ea685cd"
+    },
+    {
+      "path": "app/ingestion/structural_index.py",
+      "size": 15110,
+      "mode": 33206,
+      "sha": "77498371445fad7f045c0a53a86986176f9b5708"
+    },
+    {
+      "path": "app/ingestion/structural_pilot.py",
+      "size": 57875,
+      "mode": 33206,
+      "sha": "48f6c75bb4b34d2e3b262637e66fca59a9575ef8"
+    },
+    {
+      "path": "app/ingestion/structural_pinecone.py",
+      "size": 18403,
+      "mode": 33206,
+      "sha": "e5efcd22ea21650a6def84ffc2f7d67b18244349"
+    },
+    {
+      "path": "app/ingestion/structural_qdrant.py",
+      "size": 23135,
+      "mode": 33206,
+      "sha": "85ecce5ccf3f7b6dbd0b772e5a019ea44daaf3b7"
+    },
+    {
+      "path": "app/ingestion/structural_upload.py",
+      "size": 22437,
+      "mode": 33206,
+      "sha": "7fc404c658be0e181efc1951a728deb90642d8ae"
+    },
+    {
+      "path": "app/ingestion/supabase_full_doc.py",
+      "size": 10494,
+      "mode": 33206,
+      "sha": "f54336c23c30ccdd575fc00a671489b6cf1e0fa8"
+    },
+    {
+      "path": "app/ingestion/v3_data_bundle.py",
+      "size": 7079,
+      "mode": 33206,
+      "sha": "dcab781ef8ea272e69e4a1e2f64b14895d772cb6"
+    },
+    {
+      "path": "app/ingestion/vertex_qdrant_migration.py",
+      "size": 16162,
+      "mode": 33206,
+      "sha": "0b8e9eb3efff3249ce3cbeaa957232ea2fa845cd"
+    },
+    {
+      "path": "app/legal_registry_database.py",
+      "size": 3449,
+      "mode": 33206,
+      "sha": "d84ed3cfb95a2e0413bf5988276a6a489bbfc557"
+    },
+    {
+      "path": "app/main.py",
+      "size": 8035,
+      "mode": 33206,
+      "sha": "3921b7efb42873848315c451c80b6cec91ea43ed"
+    },
+    {
+      "path": "app/paths.py",
+      "size": 149,
+      "mode": 33206,
+      "sha": "17d8c1ed32b20756a90caf838bf1feddc28c8e54"
+    },
+    {
+      "path": "app/rate_limit.py",
+      "size": 141,
+      "mode": 33206,
+      "sha": "6eab2ee04f7cf36e772134e5980753d829099040"
+    },
+    {
+      "path": "app/research_database.py",
+      "size": 31917,
+      "mode": 33206,
+      "sha": "c2d1bb5e71dbda6911077d695662c7d4001e16f8"
+    },
+    {
+      "path": "app/server.py",
+      "size": 188,
+      "mode": 33206,
+      "sha": "7b700d208edf3f24edd58a42cd8c74b0d5e0173a"
+    },
+    {
+      "path": "app/services/accounts.py",
+      "size": 1974,
+      "mode": 33206,
+      "sha": "458e66f3ace0cdbdefb8e5bd8eb27f6600461a17"
+    },
+    {
+      "path": "app/services/admin_observability.py",
+      "size": 15940,
+      "mode": 33206,
+      "sha": "dd04eadc79473a315bae7ea6adefcae871fbeb1e"
+    },
+    {
+      "path": "app/services/body_search.py",
+      "size": 8470,
+      "mode": 33206,
+      "sha": "e88c2e82113307e2f6de696de1eb9577d599555c"
+    },
+    {
+      "path": "app/services/chat_intent.py",
+      "size": 2430,
+      "mode": 33206,
+      "sha": "8b05bac59fd124e9c568c7d870ac54a6e4440e77"
+    },
+    {
+      "path": "app/services/chat_official_supplement.py",
+      "size": 35136,
+      "mode": 33206,
+      "sha": "984b26be5d1bb09355833555ccaae473118366a5"
+    },
+    {
+      "path": "app/services/chat_progress.py",
+      "size": 2712,
+      "mode": 33206,
+      "sha": "b37519d60b7a6ef7d7da5ebd46a1fb0653051b26"
+    },
+    {
+      "path": "app/services/claim_verification.py",
+      "size": 8323,
+      "mode": 33206,
+      "sha": "50cacc0210d91ab10b6b8fa7b00b274fc488ab54"
+    },
+    {
+      "path": "app/services/clients.py",
+      "size": 3633,
+      "mode": 33206,
+      "sha": "3bd07ebe2cca0f632150ff8638ceb76298b579f3"
+    },
+    {
+      "path": "app/services/congbao_search.py",
+      "size": 4228,
+      "mode": 33206,
+      "sha": "705bea66dc363a0c44bba97a09c647efe8af50d2"
+    },
+    {
+      "path": "app/services/conversation_context.py",
+      "size": 1393,
+      "mode": 33206,
+      "sha": "9d569354fe7bf207b1fb82524c5a79e5344bfe19"
+    },
+    {
+      "path": "app/services/conversation_export.py",
+      "size": 1534,
+      "mode": 33206,
+      "sha": "911862efb196eaaa625ff8de97805b6b19eb9ef1"
+    },
+    {
+      "path": "app/services/deep_official_search.py",
+      "size": 21479,
+      "mode": 33206,
+      "sha": "381ae75dde8a26cc787b5d740d6caf22c8cc1ab4"
+    },
+    {
+      "path": "app/services/deep_research.py",
+      "size": 13623,
+      "mode": 33206,
+      "sha": "7d736c0eb3f0c3d61f1b0b721d0b6e3165db445d"
+    },
+    {
+      "path": "app/services/direct_llm.py",
+      "size": 17634,
+      "mode": 33206,
+      "sha": "6caa2559caaaba7775d163fe6b7bc1adc974d83e"
+    },
+    {
+      "path": "app/services/document_redline.py",
+      "size": 10975,
+      "mode": 33206,
+      "sha": "62d1c7f2676a6bd19af106367f4d5ba4b788d36f"
+    },
+    {
+      "path": "app/services/document_scope.py",
+      "size": 2360,
+      "mode": 33206,
+      "sha": "99ce4d6c00b5b040e7e80672cf5b6056152aa5e2"
+    },
+    {
+      "path": "app/services/document_structure.py",
+      "size": 1160,
+      "mode": 33206,
+      "sha": "0a3ef603528330441c528b6f02d85f22d68b6431"
+    },
+    {
+      "path": "app/services/document_worker.py",
+      "size": 4472,
+      "mode": 33206,
+      "sha": "b1a5ba2deea33ed6c5317aab0c5fc7bbfb3946ab"
+    },
+    {
+      "path": "app/services/email_delivery.py",
+      "size": 2092,
+      "mode": 33206,
+      "sha": "c6d2b1adbe28d401cdbf11ea7229db009b31b62d"
+    },
+    {
+      "path": "app/services/evaluation_lab.py",
+      "size": 11234,
+      "mode": 33206,
+      "sha": "57acabf18730720db1881efa43bc8cc1739140c5"
+    },
+    {
+      "path": "app/services/evaluator.py",
+      "size": 6408,
+      "mode": 33206,
+      "sha": "b7b14293e16eca3666fc7d745fdbc8b3ddd00862"
+    },
+    {
+      "path": "app/services/evidence_presenter.py",
+      "size": 14940,
+      "mode": 33206,
+      "sha": "df5633a4665df1ff5bc086190e2898cac35fe20f"
+    },
+    {
+      "path": "app/services/federated_official_search.py",
+      "size": 7563,
+      "mode": 33206,
+      "sha": "21053ab3cc225d805a8d6e56f6e4bdf7c7bf9bf6"
+    },
+    {
+      "path": "app/services/free_web_research.py",
+      "size": 32550,
+      "mode": 33206,
+      "sha": "7465a785bcf98930f9aa33e69fd4d385828943a1"
+    },
+    {
+      "path": "app/services/full_doc_body_search.py",
+      "size": 5876,
+      "mode": 33206,
+      "sha": "d9215d87a2aa2ceb230467c3c808126e56c5f360"
+    },
+    {
+      "path": "app/services/full_document_review.py",
+      "size": 5940,
+      "mode": 33206,
+      "sha": "29fa9c2a918dbe879500a6e701198e365b04683f"
+    },
+    {
+      "path": "app/services/guardrail_prompts.py",
+      "size": 5038,
+      "mode": 33206,
+      "sha": "31d028c81a358882c7a2740fbe89403f2a34ea1d"
+    },
+    {
+      "path": "app/services/guardrails.py",
+      "size": 10617,
+      "mode": 33206,
+      "sha": "60e11520ddd7e289c370819489288ecc5d2c12c3"
+    },
+    {
+      "path": "app/services/http_security.py",
+      "size": 4476,
+      "mode": 33206,
+      "sha": "93e9023ff2cdeef2cd330ea9a3c0ccf1409fcf71"
+    },
+    {
+      "path": "app/services/legal_browser.py",
+      "size": 24984,
+      "mode": 33206,
+      "sha": "568c4e6621a5ab6662057f99f01a112bca27300b"
+    },
+    {
+      "path": "app/services/legal_effect.py",
+      "size": 9466,
+      "mode": 33206,
+      "sha": "87388d6eaafac2bc3b01aa62187c2793f8c92fcd"
+    },
+    {
+      "path": "app/services/legal_registry.py",
+      "size": 6985,
+      "mode": 33206,
+      "sha": "8139aab82031a5f5fc570bfca6ba7fa50aef5be3"
+    },
+    {
+      "path": "app/services/legal_timeline.py",
+      "size": 3456,
+      "mode": 33206,
+      "sha": "51e5bac38970e68be6556d61b7f6990c4f411dcb"
+    },
+    {
+      "path": "app/services/legal_topic_terms.py",
+      "size": 6426,
+      "mode": 33206,
+      "sha": "7a7ba3f846cdac7780855f8849983d5abfbb2d51"
+    },
+    {
+      "path": "app/services/model_comparison.py",
+      "size": 9617,
+      "mode": 33206,
+      "sha": "03b6457ad25cc4e88b0a2144ddbee0f4c48042c1"
+    },
+    {
+      "path": "app/services/observability.py",
+      "size": 1274,
+      "mode": 33206,
+      "sha": "2b4775e8f158c9c4bf7d2afd5353ce27953f6c4a"
+    },
+    {
+      "path": "app/services/official_discovered_corpus_rescue.py",
+      "size": 13679,
+      "mode": 33206,
+      "sha": "55a1a8c31bdc8c8efb1bdba14d4ead3b592e19c0"
+    },
+    {
+      "path": "app/services/official_document_reader.py",
+      "size": 27576,
+      "mode": 33206,
+      "sha": "93c1f777d7d154db8cb3556223e26f79f0abd950"
+    },
+    {
+      "path": "app/services/official_pdf_worker.py",
+      "size": 2900,
+      "mode": 33206,
+      "sha": "d759a06f7b38c242aa451e37962dd7a3eae3a416"
+    },
+    {
+      "path": "app/services/official_query_planner.py",
+      "size": 4166,
+      "mode": 33206,
+      "sha": "974d4372acad9d66b97a1a73be3d69eb407cfc94"
+    },
+    {
+      "path": "app/services/official_search_plan.py",
+      "size": 6830,
+      "mode": 33206,
+      "sha": "19f7de88c5d9e115363121b2ba88c71c1ff2a992"
+    },
+    {
+      "path": "app/services/official_web_search.py",
+      "size": 8885,
+      "mode": 33206,
+      "sha": "7103f87165d31ebb81a38ffb041e33aecb4585a4"
+    },
+    {
+      "path": "app/services/pii.py",
+      "size": 404,
+      "mode": 33206,
+      "sha": "e9de8aa79c3b957bdf10ac6bc1ac7ba5ba88e7ca"
+    },
+    {
+      "path": "app/services/pinecone_structural_retrieval.py",
+      "size": 14093,
+      "mode": 33206,
+      "sha": "0e4a82674fd418c120a5aca5c47e307a6a0aa987"
+    },
+    {
+      "path": "app/services/portfolio_evidence.py",
+      "size": 1374,
+      "mode": 33206,
+      "sha": "9df071ac3aa2757307bd5e77b12f60530b021439"
+    },
+    {
+      "path": "app/services/primary_law_rescue.py",
+      "size": 22124,
+      "mode": 33206,
+      "sha": "552c3f768594a3604401998961172949eead92b7"
+    },
+    {
+      "path": "app/services/provider_http_budget.py",
+      "size": 17165,
+      "mode": 33206,
+      "sha": "bdf762a52c5b44d82760faeb83f084ffdfab6e08"
+    },
+    {
+      "path": "app/services/provider_runtime.py",
+      "size": 4422,
+      "mode": 33206,
+      "sha": "b45386f7b698f221308c6e10abb8bea151f5e926"
+    },
+    {
+      "path": "app/services/public_evaluation.py",
+      "size": 7752,
+      "mode": 33206,
+      "sha": "1c0094ddebc8674bb6a4f15ab8b512f7d8b6d851"
+    },
+    {
+      "path": "app/services/qdrant_full_doc_body_search.py",
+      "size": 6505,
+      "mode": 33206,
+      "sha": "406395b9159854a48cfd5c780e70704a66e7e7fb"
+    },
+    {
+      "path": "app/services/rag_pipeline.py",
+      "size": 56559,
+      "mode": 33206,
+      "sha": "e643958db7d63f5c2f5b1b4feebb1d01a1f9b1cc"
+    },
+    {
+      "path": "app/services/readiness.py",
+      "size": 11598,
+      "mode": 33206,
+      "sha": "38402d1671c3ed6b0c0a6a83e26e225e35775068"
+    },
+    {
+      "path": "app/services/remote_body_search.py",
+      "size": 3082,
+      "mode": 33206,
+      "sha": "655ffe83a3758fc26b204323d3463c90f54939a7"
+    },
+    {
+      "path": "app/services/remote_reranker.py",
+      "size": 17227,
+      "mode": 33206,
+      "sha": "64a98cd6875ec277484c4961218e3fd75605bd19"
+    },
+    {
+      "path": "app/services/report_deliverables.py",
+      "size": 11613,
+      "mode": 33206,
+      "sha": "3457719a6ccf87c2d71312477ba44ef345fe218f"
+    },
+    {
+      "path": "app/services/research_analysis.py",
+      "size": 18469,
+      "mode": 33206,
+      "sha": "a17f9fbafda38567668eaaa0feb03fea2fa43268"
+    },
+    {
+      "path": "app/services/research_presenter.py",
+      "size": 14112,
+      "mode": 33206,
+      "sha": "6e4a4aace5b2042bb18738e31d37ca128ac523b3"
+    },
+    {
+      "path": "app/services/research_report.py",
+      "size": 11036,
+      "mode": 33206,
+      "sha": "1e68dca4c40fb4b6d15ee796cb53c576c75c0db6"
+    },
+    {
+      "path": "app/services/retained_source_analysis.py",
+      "size": 16271,
+      "mode": 33206,
+      "sha": "a5b90173bafd96da4135eca8da4cd75c19974b4d"
+    },
+    {
+      "path": "app/services/retrieval.py",
+      "size": 36609,
+      "mode": 33206,
+      "sha": "70225fc8bd3ff9f707abfa28eb0f9754293c2b61"
+    },
+    {
+      "path": "app/services/reviewer_demo.py",
+      "size": 9870,
+      "mode": 33206,
+      "sha": "c5c4763ff720edf15e3c80729c8690b39048bd5c"
+    },
+    {
+      "path": "app/services/runtime_errors.py",
+      "size": 1562,
+      "mode": 33206,
+      "sha": "b6d4043c2e63cf8683e9227e83b3b9f450c86e4c"
+    },
+    {
+      "path": "app/services/runtime_identity.py",
+      "size": 3247,
+      "mode": 33206,
+      "sha": "a005f5ade486b56ffbbfa9378c5b1de3c8e745d8"
+    },
+    {
+      "path": "app/services/semantic_cache.py",
+      "size": 11408,
+      "mode": 33206,
+      "sha": "5566c7a87736eed78185d97aad71a9ec8abf4f00"
+    },
+    {
+      "path": "app/services/serverless_guardrails.py",
+      "size": 2575,
+      "mode": 33206,
+      "sha": "e13a91243da27dffd2bb7cfd338d91661407c00a"
+    },
+    {
+      "path": "app/services/source_quality.py",
+      "size": 1482,
+      "mode": 33206,
+      "sha": "177b324296a96eb3e2e87bac83013d24eda57563"
+    },
+    {
+      "path": "app/services/source_tls.py",
+      "size": 3300,
+      "mode": 33206,
+      "sha": "87d0c736999e91a8ca330c6e90e6cb1bb67f8747"
+    },
+    {
+      "path": "app/services/structural_retrieval.py",
+      "size": 38256,
+      "mode": 33206,
+      "sha": "298d508cf76099d6928f9a33552db7497f8b388b"
+    },
+    {
+      "path": "app/services/structured_diagnostics.py",
+      "size": 1914,
+      "mode": 33206,
+      "sha": "87256e942e94d06b0027977c1adc6951d97d8368"
+    },
+    {
+      "path": "app/services/trusted_source_reader.py",
+      "size": 16431,
+      "mode": 33206,
+      "sha": "c6897dbb7b6c26ff810326089608a83511a766a1"
+    },
+    {
+      "path": "app/services/v3_article_expansion.py",
+      "size": 24543,
+      "mode": 33206,
+      "sha": "5b49153a19b7ed2e56092235f92981df2891ab3b"
+    },
+    {
+      "path": "app/services/vbpl_search.py",
+      "size": 5198,
+      "mode": 33206,
+      "sha": "7a4de699ccf39a1ccfc73a6095493abde4fbd25a"
+    },
+    {
+      "path": "app/services/vertex_ai.py",
+      "size": 18903,
+      "mode": 33206,
+      "sha": "109a54a448da31ff523b9df81df98ba723cce5c0"
+    },
+    {
+      "path": "app/services/vertex_qdrant_retrieval.py",
+      "size": 7847,
+      "mode": 33206,
+      "sha": "5f2b2d304957f76f690756471f93f35a337cfe97"
+    },
+    {
+      "path": "app/services/web_security.py",
+      "size": 3960,
+      "mode": 33206,
+      "sha": "9f76cdea0c60d63e929ee16965b92eb26bb20c07"
+    },
+    {
+      "path": "app/services/workspace_documents.py",
+      "size": 10309,
+      "mode": 33206,
+      "sha": "4f4ac1f0830218cd3f4fc501913ba3ea3f65e4f3"
+    },
+    {
+      "path": "app/services/workspace_ocr.py",
+      "size": 5925,
+      "mode": 33206,
+      "sha": "e9c475a84856cea7415f33e17802283dcb8052ee"
+    },
+    {
+      "path": "app/services/workspace_presenter.py",
+      "size": 5608,
+      "mode": 33206,
+      "sha": "dd1625eeebbaed1514bf43fd852f82c43fa86cf9"
+    },
+    {
+      "path": "app/static/css/admin.css",
+      "size": 18322,
+      "mode": 33206,
+      "sha": "d71494f4cbc22e096e599b98f904c56ab41c2b7f"
+    },
+    {
+      "path": "app/static/css/research-workflow.css",
+      "size": 9815,
+      "mode": 33206,
+      "sha": "aa2d34cd642223195cb6879f29f36a522207bc5e"
+    },
+    {
+      "path": "app/static/css/vietlex-enhancements.css",
+      "size": 25493,
+      "mode": 33206,
+      "sha": "956f11fb2cdbb40135af8b1e49658bbc38c320ce"
+    },
+    {
+      "path": "app/static/css/vietlex-redesign.css",
+      "size": 20408,
+      "mode": 33206,
+      "sha": "c1ecb23a8224bc2afec11cfa12be0b3e4d68e56e"
+    },
+    {
+      "path": "app/static/css/vietlex.css",
+      "size": 8749,
+      "mode": 33206,
+      "sha": "65b5620c0e19e969ef3172e61a0120a09b1ab42e"
+    },
+    {
+      "path": "app/static/favicon.svg",
+      "size": 229,
+      "mode": 33206,
+      "sha": "64ba12e280b0ee74c35f03faca41752f571e32ee"
+    },
+    {
+      "path": "app/static/fonts/BeVietnamPro-Regular.ttf",
+      "size": 132948,
+      "mode": 33206,
+      "sha": "e4fa14cdd3d662b6373e6e8315831a4621df65aa"
+    },
+    {
+      "path": "app/static/fonts/BeVietnamPro-SemiBold.ttf",
+      "size": 136736,
+      "mode": 33206,
+      "sha": "a69527c7e5cf1066b2ee6bda77589c8de736f94b"
+    },
+    {
+      "path": "app/static/fonts/NotoSerif-OFL.txt",
+      "size": 4488,
+      "mode": 33206,
+      "sha": "0dc11c84588d181097c085f2f04f96492431e453"
+    },
+    {
+      "path": "app/static/fonts/NotoSerif-Regular.woff2",
+      "size": 163012,
+      "mode": 33206,
+      "sha": "51a18e691f0081fa438d1c9ae04fef9774b5442e"
+    },
+    {
+      "path": "app/static/fonts/NotoSerif-Variable.ttf",
+      "size": 1887192,
+      "mode": 33206,
+      "sha": "35f023a37f126313403845ac2a8a733baac79f8c"
+    },
+    {
+      "path": "app/static/fonts/OFL.txt",
+      "size": 4397,
+      "mode": 33206,
+      "sha": "3b1504b50f4fd2cf0cf5048cac19a92209cfc714"
+    },
+    {
+      "path": "app/static/fonts/README.md",
+      "size": 386,
+      "mode": 33206,
+      "sha": "c3f1f80ce183628a16ff954d869759a313e3acc1"
+    },
+    {
+      "path": "app/static/js/admin.js",
+      "size": 316,
+      "mode": 33206,
+      "sha": "220067361a7e76569c6c7e955bc6485cc28edbbf"
+    },
+    {
+      "path": "app/static/js/product.js",
+      "size": 5519,
+      "mode": 33206,
+      "sha": "647c14711a2834eb335b36634c05936c3b42289a"
+    },
+    {
+      "path": "app/static/js/research-workspace.js",
+      "size": 72410,
+      "mode": 33206,
+      "sha": "8cb7c6fdcaa1d4a2769a31bdfd5fe1bb6f19df19"
+    },
+    {
+      "path": "app/static/js/source-analysis.js",
+      "size": 569,
+      "mode": 33206,
+      "sha": "7643485c35f2cf6dc735fc60c091dec0bf35bedb"
+    },
+    {
+      "path": "app/static/js/vietlex.js",
+      "size": 23492,
+      "mode": 33206,
+      "sha": "80971764218ef403b3dec660d23babbd84cecdff"
+    },
+    {
+      "path": "app/static/js/workflow-controls.js",
+      "size": 4409,
+      "mode": 33206,
+      "sha": "4af3d43a53d8455490f2a32c1895b1f2fb6189d6"
+    },
+    {
+      "path": "app/templates/account_form.html",
+      "size": 3392,
+      "mode": 33206,
+      "sha": "cc4e1b437fe5552590dab8c6483728f6934ff155"
+    },
+    {
+      "path": "app/templates/account_quota.html",
+      "size": 1136,
+      "mode": 33206,
+      "sha": "4fa459959d0bf1c0ea69c9cc6c8f794ff7aa7c15"
+    },
+    {
+      "path": "app/templates/admin_admission.html",
+      "size": 929,
+      "mode": 33206,
+      "sha": "8a65b14ba4ea7373697c8140323f0a796fc29ce2"
+    },
+    {
+      "path": "app/templates/admin_audit_page.html",
+      "size": 1061,
+      "mode": 33206,
+      "sha": "7eb8cb7578d8378e83ba06e3561931cc4cb72a97"
+    },
+    {
+      "path": "app/templates/admin_audit.html",
+      "size": 510,
+      "mode": 33206,
+      "sha": "2df337425fceca1a1fd871b9ab6bae80e65add77"
+    },
+    {
+      "path": "app/templates/admin_base.html",
+      "size": 1477,
+      "mode": 33206,
+      "sha": "475ae95c93f348be704cf65047d40842815696d3"
+    },
+    {
+      "path": "app/templates/admin_corpus_queue.html",
+      "size": 1876,
+      "mode": 33206,
+      "sha": "3e5ad4e429e9d2e25aa455c9c76b544fee428583"
+    },
+    {
+      "path": "app/templates/admin_details.html",
+      "size": 12460,
+      "mode": 33206,
+      "sha": "fb29d35de838e1101ff619b3432c5384abb825f3"
+    },
+    {
+      "path": "app/templates/admin_error_page.html",
+      "size": 304,
+      "mode": 33206,
+      "sha": "a55ed74bd5d87dc0303b8d5e334b1ea1971471b8"
+    },
+    {
+      "path": "app/templates/admin_feedback_queue.html",
+      "size": 2431,
+      "mode": 33206,
+      "sha": "b2505a1c5031bbda1913024978edc15b4e9f5559"
+    },
+    {
+      "path": "app/templates/admin_filters.html",
+      "size": 2077,
+      "mode": 33206,
+      "sha": "d7e0a83076104fca14d23c696b03c7b414343854"
+    },
+    {
+      "path": "app/templates/admin_inventory.html",
+      "size": 1740,
+      "mode": 33206,
+      "sha": "8509f0f3bcfd7163911b8e336c10a3e94e45bc10"
+    },
+    {
+      "path": "app/templates/admin_legal_registry.html",
+      "size": 3061,
+      "mode": 33206,
+      "sha": "4ac187d7a8dd034b0011c8478149070c7fca46f3"
+    },
+    {
+      "path": "app/templates/admin_logs.html",
+      "size": 2136,
+      "mode": 33206,
+      "sha": "e9166e3b12e4a4d5f353a650fb45993f2983fd4b"
+    },
+    {
+      "path": "app/templates/admin_providers_page.html",
+      "size": 1259,
+      "mode": 33206,
+      "sha": "9b4dd34a5ab8ffdb952ea9ad44ff1126defbe6c9"
+    },
+    {
+      "path": "app/templates/admin_quality.html",
+      "size": 5342,
+      "mode": 33206,
+      "sha": "e6c38229b879946d2e55179faea3451f59d6cbb2"
+    },
+    {
+      "path": "app/templates/admin_requests_page.html",
+      "size": 675,
+      "mode": 33206,
+      "sha": "bd1f805ec6ed5c74af7c3006da56ce7645fd95ec"
+    },
+    {
+      "path": "app/templates/admin_sidebar.html",
+      "size": 1673,
+      "mode": 33206,
+      "sha": "6fc135d63e933d916b2eeb7d5f417a2480f89007"
+    },
+    {
+      "path": "app/templates/admin_stats.html",
+      "size": 1193,
+      "mode": 33206,
+      "sha": "055fe1199635cbbb9601606f60d7a76c94d59c70"
+    },
+    {
+      "path": "app/templates/admin_system_page.html",
+      "size": 2047,
+      "mode": 33206,
+      "sha": "97f03ee2965aff6693e4b9bd4b6f3dab8df8523a"
+    },
+    {
+      "path": "app/templates/admin_usage_page.html",
+      "size": 643,
+      "mode": 33206,
+      "sha": "35f2743e75ad35e855d0da39145f43e14c0149a4"
+    },
+    {
+      "path": "app/templates/admin_usage.html",
+      "size": 3403,
+      "mode": 33206,
+      "sha": "c05b4e4d2674bf6252617f3155ba2bc314ed4981"
+    },
+    {
+      "path": "app/templates/admin_users_page.html",
+      "size": 1915,
+      "mode": 33206,
+      "sha": "73ccdab0a1b434d7c78fb360a422cd939c8e1cce"
+    },
+    {
+      "path": "app/templates/admin_users.html",
+      "size": 1492,
+      "mode": 33206,
+      "sha": "30cd3ea8c2c93931ddbe0ad2bcd61ee77daf66ce"
+    },
+    {
+      "path": "app/templates/admin.html",
+      "size": 6540,
+      "mode": 33206,
+      "sha": "c6b6ff162dac0408f6f13ee87e8a7f21cf6c1cc9"
+    },
+    {
+      "path": "app/templates/chat_history_messages.html",
+      "size": 5187,
+      "mode": 33206,
+      "sha": "f958c3b0a3bd354ce0c73bedb8eb9de109907e39"
+    },
+    {
+      "path": "app/templates/chat_message.html",
+      "size": 5377,
+      "mode": 33206,
+      "sha": "c64d537db38119d74605be81b374b422c72feeb3"
+    },
+    {
+      "path": "app/templates/chat_recovery.html",
+      "size": 458,
+      "mode": 33206,
+      "sha": "3d2bf3bd91a22afcd06a40faefa4b24e3d621ad8"
+    },
+    {
+      "path": "app/templates/demo_notice.html",
+      "size": 917,
+      "mode": 33206,
+      "sha": "07459cf1752a955d3a346dac7a404a0c096b6bcd"
+    },
+    {
+      "path": "app/templates/evaluation_lab.html",
+      "size": 9593,
+      "mode": 33206,
+      "sha": "d6b23efd9d501c1ad1a59e97514f3876b68659c3"
+    },
+    {
+      "path": "app/templates/finding_board.html",
+      "size": 4998,
+      "mode": 33206,
+      "sha": "0553703e88f9131ca80e566e7004701e365c49b6"
+    },
+    {
+      "path": "app/templates/index.html",
+      "size": 7992,
+      "mode": 33206,
+      "sha": "efbb549f703950b2b7d0b67941507cc585c40ef0"
+    },
+    {
+      "path": "app/templates/legal_data_unavailable.html",
+      "size": 2260,
+      "mode": 33206,
+      "sha": "8ba5ee555bcdabd0e53edc2b9c7a6cb01140e187"
+    },
+    {
+      "path": "app/templates/legal_document.html",
+      "size": 5584,
+      "mode": 33206,
+      "sha": "cf0144c7c6397f5aa2997d8c07aca6b09f4f5032"
+    },
+    {
+      "path": "app/templates/legal_registry_summary.html",
+      "size": 1126,
+      "mode": 33206,
+      "sha": "c92be9344a9713b362dde13dfb31400d530cfe2b"
+    },
+    {
+      "path": "app/templates/legal_search.html",
+      "size": 6469,
+      "mode": 33206,
+      "sha": "e99f2f58bd04bf6a9033e8c965ce70d9b74605b7"
+    },
+    {
+      "path": "app/templates/legal_status.html",
+      "size": 3586,
+      "mode": 33206,
+      "sha": "9ca74fcd3bb15ee48366f011eac2ae4f3ccc515f"
+    },
+    {
+      "path": "app/templates/metric_guide.html",
+      "size": 3546,
+      "mode": 33206,
+      "sha": "569c09f8a6dbaa408944455c5ce9bdbc5e345efb"
+    },
+    {
+      "path": "app/templates/privacy.html",
+      "size": 1228,
+      "mode": 33206,
+      "sha": "f5b04546e3bfd7c41f220ecc09e29cd931103cd9"
+    },
+    {
+      "path": "app/templates/product_nav.html",
+      "size": 1197,
+      "mode": 33206,
+      "sha": "08f6641cbdb55bf8ebd2cb453e1c6d82973a016f"
+    },
+    {
+      "path": "app/templates/public_evaluation_base.html",
+      "size": 775,
+      "mode": 33206,
+      "sha": "7e6f0641aeb26cc0237a537da0f995e4e6e9e934"
+    },
+    {
+      "path": "app/templates/report_editor.html",
+      "size": 3183,
+      "mode": 33206,
+      "sha": "fb2af4c62877adcd6ce4a08200cd4cee1b61fbb3"
+    },
+    {
+      "path": "app/templates/research_tools.html",
+      "size": 7127,
+      "mode": 33206,
+      "sha": "52825a53b822e5928b63f3386e53bc093cb4ad52"
+    },
+    {
+      "path": "app/templates/research_workspace.html",
+      "size": 16038,
+      "mode": 33206,
+      "sha": "07bc37704be5e7f02896bb08712d56299f9b4d57"
+    },
+    {
+      "path": "app/templates/research_workspaces.html",
+      "size": 2635,
+      "mode": 33206,
+      "sha": "347e7cc4670ea28e97865551c1796ff58f8361ec"
+    },
+    {
+      "path": "app/templates/retained_source_answer.html",
+      "size": 5350,
+      "mode": 33206,
+      "sha": "2b2456a461c4adf3c85ee96701756ba80ebaa9e2"
+    },
+    {
+      "path": "app/templates/retained_source_error.html",
+      "size": 875,
+      "mode": 33206,
+      "sha": "33617c218533b65cd37f2d772dfe7fda59cd84c5"
+    },
+    {
+      "path": "app/templates/settings.html",
+      "size": 2571,
+      "mode": 33206,
+      "sha": "02b085a0b49d57b65885811cb05c59efb41fd99b"
+    },
+    {
+      "path": "app/templates/sidebar_sessions.html",
+      "size": 886,
+      "mode": 33206,
+      "sha": "aa6496ad4495c1b77b37129e2a1b35f95a471e72"
+    },
+    {
+      "path": "app/templates/source_reader.html",
+      "size": 1791,
+      "mode": 33206,
+      "sha": "a35e3f658f7a96678c84765959cbd3061514c5c6"
+    },
+    {
+      "path": "app/templates/terms.html",
+      "size": 1093,
+      "mode": 33206,
+      "sha": "f03552b1460d676553c687f9c0267c865e8b919a"
+    },
+    {
+      "path": "app/templates/workspace_evidence.html",
+      "size": 5417,
+      "mode": 33206,
+      "sha": "79516269e5770b3e1409609d7c79501c324baaaf"
+    },
+    {
+      "path": "app/templates/workspace_overview.html",
+      "size": 1977,
+      "mode": 33206,
+      "sha": "8541b15cf47d1553643ca3390136aff18f886957"
+    },
+    {
+      "path": "app/templates/workspace_source_library.html",
+      "size": 7059,
+      "mode": 33206,
+      "sha": "78a154cfcf90bdff91e76ffd9c8a91271f1a049b"
+    },
+    {
+      "path": "docs/evaluation/runs/answer-v3-golden50-expanded14962-rrf-dbsf-20260903/answer_results.json",
+      "size": 7575426,
+      "mode": 33206,
+      "sha": "2f3c60475e1df2f17385b49bc3287cbb53b72c13"
+    },
+    {
+      "path": "docs/evaluation/runs/answer-v3-golden50-expanded14962-rrf-dbsf-20260903/manifest.json",
+      "size": 9016,
+      "mode": 33206,
+      "sha": "9f12416a59d21ac77c370e29f3a59a6bd10c54ea"
+    },
+    {
+      "path": "pyproject.toml",
+      "size": 1169,
+      "mode": 33206,
+      "sha": "976eb304c58048f3d548612a4e234773cf13481d"
+    },
+    {
+      "path": "README.md",
+      "size": 7189,
+      "mode": 33206,
+      "sha": "1bb8e82a16adefa42cd4c6e54b33d5f5678aef60"
+    },
+    {
+      "path": "requirements-demo.lock",
+      "size": 115949,
+      "mode": 33206,
+      "sha": "0f7f4d7a14a22e0ebc5ae831a785ef9c8c9b0b7f"
+    },
+    {
+      "path": "vercel.json",
+      "size": 400,
+      "mode": 33206,
+      "sha": "8c19a238cb17a7fd063e13ad3c4269f31e5ae9c0"
+    }
+  ]
+}

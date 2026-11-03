@@ -1,0 +1,56 @@
+{
+  "meta": null,
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"status\":\"ok\",\"pattern\":\"callers_of\",\"target\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\run_answer_eval.py::run_stage_a_online\",\"description\":\"Find all functions that call a given function\",\"summary\":\"Found 7 result(s) for callers_of('D:\\\\Download\\\\ProfessionalLegalRAG\\\\run_answer_eval.py::run_stage_a_online') — showing 5, 2 omitted\",\"result_count\":7,\"results_omitted\":2,\"results\":[{\"name\":\"evaluate_case\",\"kind\":\"Function\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\run_answer_eval.py\"},{\"name\":\"test_answer_stage_uses_one_retrieval_and_three_generation_arguments\",\"kind\":\"Test\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py\"},{\"name\":\"test_answer_stage_propagates_reranker_error_status\",\"kind\":\"Test\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py\"},{\"name\":\"test_input_guardrail_error_is_typed_and_runs_zero_retrieval\",\"kind\":\"Test\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py\"},{\"name\":\"test_input_guardrail_error_in_shadow_keeps_pipeline_scoreable\",\"kind\":\"Test\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py\"}],\"_graph\":{\"updated_at\":\"2026-11-03T16:24:44\",\"age_seconds\":242,\"built_on_branch\":\"main\",\"built_at_sha\":\"7519cd1aea4a3639140b9188de1843ebf0ddb1c0\",\"head_sha\":\"7519cd1aea4a3639140b9188de1843ebf0ddb1c0\",\"head_matches_build\":true}}",
+      "annotations": null,
+      "meta": null
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "pattern": "callers_of",
+    "target": "D:\\Download\\ProfessionalLegalRAG\\run_answer_eval.py::run_stage_a_online",
+    "description": "Find all functions that call a given function",
+    "summary": "Found 7 result(s) for callers_of('D:\\Download\\ProfessionalLegalRAG\\run_answer_eval.py::run_stage_a_online') — showing 5, 2 omitted",
+    "result_count": 7,
+    "results_omitted": 2,
+    "results": [
+      {
+        "name": "evaluate_case",
+        "kind": "Function",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\run_answer_eval.py"
+      },
+      {
+        "name": "test_answer_stage_uses_one_retrieval_and_three_generation_arguments",
+        "kind": "Test",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py"
+      },
+      {
+        "name": "test_answer_stage_propagates_reranker_error_status",
+        "kind": "Test",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py"
+      },
+      {
+        "name": "test_input_guardrail_error_is_typed_and_runs_zero_retrieval",
+        "kind": "Test",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py"
+      },
+      {
+        "name": "test_input_guardrail_error_in_shadow_keeps_pipeline_scoreable",
+        "kind": "Test",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py"
+      }
+    ],
+    "_graph": {
+      "updated_at": "2026-11-03T16:24:44",
+      "age_seconds": 242,
+      "built_on_branch": "main",
+      "built_at_sha": "7519cd1aea4a3639140b9188de1843ebf0ddb1c0",
+      "head_sha": "7519cd1aea4a3639140b9188de1843ebf0ddb1c0",
+      "head_matches_build": true
+    }
+  },
+  "isError": false
+}

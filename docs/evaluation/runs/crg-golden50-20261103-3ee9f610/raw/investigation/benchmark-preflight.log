@@ -1,0 +1,12 @@
+D:\Download\ProfessionalLegalRAG\run_answer_eval.py:350: LogfireNotConfiguredWarning: No logs or spans will be created until `logfire.configure()` has been called. Set the environment variable LOGFIRE_IGNORE_NO_CONFIG=1 or add ignore_no_config=true in pyproject.toml to suppress this warning.
+  bot_response, contexts, metadata = await run_advanced_rag(
+============================================================
+FULL PIPELINE ANSWER EVALUATION RUN: answer-golden50-preflight-20261103-01470b4e
+cases=1 profile=separated_intent rewrite=off guardrails=enforce
+reranker=current concurrency=1 judge=none
+============================================================
+-> Completed Case [case_001]: category=disclaimer token_f1=0.12 latency=62.29s
+============================================================
+Full Answer Evaluation Completed. Report saved to:
+D:\Download\ProfessionalLegalRAG\docs\evaluation\runs\answer-golden50-preflight-20261103-01470b4e\report.md
+============================================================

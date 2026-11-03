@@ -1,0 +1,15 @@
+{
+  "status": "ok",
+  "service": "vietlex",
+  "identity": {
+    "schema_version": "runtime-identity-v1",
+    "public_guardrail_policy": "enforce",
+    "build_git_sha": "unknown",
+    "deployment_id": "dpl_B76tRoFgWybzu1kAbSi5CsrZ32w4",
+    "app_source_sha256": "d8887162c3e548c1ab8ed7e79bfbb85272d92cd91afa9f4ca8743bd8c6435c12",
+    "source_scope": "app:py,html,js,css,json,cjs",
+    "configuration_sha256": "f913d336122829e7f57eddd33b1b5ca1d449cdaa5ed505981f0af96124f61569",
+    "retrieval_backend": "vertex-qdrant-v3",
+    "chat_context_profile": "official-deep-reading"
+  }
+}

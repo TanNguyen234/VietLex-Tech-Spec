@@ -1,0 +1,146 @@
+[
+  {
+    "provider_binding": "google_vertex_ai",
+    "model_requested": "gemini-3.5-flash",
+    "response_model": "StatementGeneratorOutput",
+    "success": true,
+    "tokens": "UNKNOWN; production structured adapter does not expose raw response usage",
+    "latency_seconds": 5.563
+  },
+  {
+    "provider_binding": "google_vertex_ai",
+    "model_requested": "gemini-3.5-flash",
+    "response_model": "NLIStatementOutput",
+    "success": true,
+    "tokens": "UNKNOWN; production structured adapter does not expose raw response usage",
+    "latency_seconds": 3.515
+  },
+  {
+    "provider_binding": "google_vertex_ai",
+    "model_requested": "gemini-3.5-flash",
+    "response_model": "AnswerAccuracyOutput",
+    "success": true,
+    "tokens": "UNKNOWN; production structured adapter does not expose raw response usage",
+    "latency_seconds": 0.734
+  },
+  {
+    "provider_binding": "google_vertex_ai",
+    "model_requested": "gemini-3.5-flash",
+    "response_model": "AnswerAccuracyOutput",
+    "success": true,
+    "tokens": "UNKNOWN; production structured adapter does not expose raw response usage",
+    "latency_seconds": 0.735
+  },
+  {
+    "provider_binding": "google_vertex_ai",
+    "model_requested": "gemini-3.5-flash",
+    "response_model": "ContextPrecisionOutput",
+    "success": true,
+    "tokens": "UNKNOWN; production structured adapter does not expose raw response usage",
+    "latency_seconds": 1.0
+  },
+  {
+    "provider_binding": "google_vertex_ai",
+    "model_requested": "gemini-3.5-flash",
+    "response_model": "ContextPrecisionOutput",
+    "success": true,
+    "tokens": "UNKNOWN; production structured adapter does not expose raw response usage",
+    "latency_seconds": 1.547
+  },
+  {
+    "provider_binding": "google_vertex_ai",
+    "model_requested": "gemini-3.5-flash",
+    "response_model": "ContextPrecisionOutput",
+    "success": true,
+    "tokens": "UNKNOWN; production structured adapter does not expose raw response usage",
+    "latency_seconds": 1.421
+  },
+  {
+    "provider_binding": "google_vertex_ai",
+    "model_requested": "gemini-3.5-flash",
+    "response_model": "ContextPrecisionOutput",
+    "success": true,
+    "tokens": "UNKNOWN; production structured adapter does not expose raw response usage",
+    "latency_seconds": 1.282
+  },
+  {
+    "provider_binding": "google_vertex_ai",
+    "model_requested": "gemini-3.5-flash",
+    "response_model": "ContextPrecisionOutput",
+    "success": true,
+    "tokens": "UNKNOWN; production structured adapter does not expose raw response usage",
+    "latency_seconds": 1.156
+  },
+  {
+    "provider_binding": "google_vertex_ai",
+    "model_requested": "gemini-3.5-flash",
+    "response_model": "ContextPrecisionOutput",
+    "success": true,
+    "tokens": "UNKNOWN; production structured adapter does not expose raw response usage",
+    "latency_seconds": 1.859
+  },
+  {
+    "provider_binding": "google_vertex_ai",
+    "model_requested": "gemini-3.5-flash",
+    "response_model": "ContextPrecisionOutput",
+    "success": true,
+    "tokens": "UNKNOWN; production structured adapter does not expose raw response usage",
+    "latency_seconds": 1.782
+  },
+  {
+    "provider_binding": "google_vertex_ai",
+    "model_requested": "gemini-3.5-flash",
+    "response_model": "ContextPrecisionOutput",
+    "success": true,
+    "tokens": "UNKNOWN; production structured adapter does not expose raw response usage",
+    "latency_seconds": 1.203
+  },
+  {
+    "provider_binding": "google_vertex_ai",
+    "model_requested": "gemini-3.5-flash",
+    "response_model": "ContextPrecisionOutput",
+    "success": true,
+    "tokens": "UNKNOWN; production structured adapter does not expose raw response usage",
+    "latency_seconds": 1.39
+  },
+  {
+    "provider_binding": "google_vertex_ai",
+    "model_requested": "gemini-3.5-flash",
+    "response_model": "ContextPrecisionOutput",
+    "success": true,
+    "tokens": "UNKNOWN; production structured adapter does not expose raw response usage",
+    "latency_seconds": 1.125
+  },
+  {
+    "provider_binding": "google_vertex_ai",
+    "model_requested": "gemini-3.5-flash",
+    "response_model": "ContextPrecisionOutput",
+    "success": true,
+    "tokens": "UNKNOWN; production structured adapter does not expose raw response usage",
+    "latency_seconds": 1.453
+  },
+  {
+    "provider_binding": "google_vertex_ai",
+    "model_requested": "gemini-3.5-flash",
+    "response_model": "ContextPrecisionOutput",
+    "success": true,
+    "tokens": "UNKNOWN; production structured adapter does not expose raw response usage",
+    "latency_seconds": 1.063
+  },
+  {
+    "provider_binding": "google_vertex_ai",
+    "model_requested": "gemini-3.5-flash",
+    "response_model": "ContextPrecisionOutput",
+    "success": true,
+    "tokens": "UNKNOWN; production structured adapter does not expose raw response usage",
+    "latency_seconds": 1.094
+  },
+  {
+    "provider_binding": "google_vertex_ai",
+    "model_requested": "gemini-3.5-flash",
+    "response_model": "ContextRecallOutput",
+    "success": true,
+    "tokens": "UNKNOWN; production structured adapter does not expose raw response usage",
+    "latency_seconds": 1.5
+  }
+]

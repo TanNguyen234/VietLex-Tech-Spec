@@ -1,0 +1,51 @@
+{
+  "evidence": "live local NeMo/Vertex preflight after configuration validation; not HTTP authorization",
+  "guardrail_timeout_seconds": 20.0,
+  "input_safe": true,
+  "output_safe": true,
+  "engine_class": "nemoguardrails.rails.llm.llmrails.LLMRails",
+  "public_mode": "enforce",
+  "calls": [
+    {
+      "provider": "google_vertex_ai",
+      "model": "gemini-3.5-flash",
+      "use_case": "guardrail",
+      "success": true,
+      "error_kind": null,
+      "latency_ms": 3689.648,
+      "fallback_used": false,
+      "timestamp": "2026-11-03T15:01:11.152128+00:00",
+      "prompt_token_count": 622,
+      "output_token_count": 1,
+      "thinking_token_count": null,
+      "total_token_count": 623,
+      "call_kind": "llm",
+      "request_count": null
+    },
+    {
+      "provider": "google_vertex_ai",
+      "model": "gemini-3.5-flash",
+      "use_case": "guardrail",
+      "success": true,
+      "error_kind": null,
+      "latency_ms": 1036.353,
+      "fallback_used": false,
+      "timestamp": "2026-11-03T15:01:12.220283+00:00",
+      "prompt_token_count": 371,
+      "output_token_count": 1,
+      "thinking_token_count": null,
+      "total_token_count": 372,
+      "call_kind": "llm",
+      "request_count": null
+    }
+  ],
+  "passed": true,
+  "required_flows": {
+    "input": [
+      "self check input"
+    ],
+    "output": [
+      "self check facts custom"
+    ]
+  }
+}

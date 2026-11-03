@@ -1,0 +1,18 @@
+Chưa xác minh đầy đủ chuỗi sửa đổi, bãi bỏ, chuyển tiếp và phạm vi áp dụng tại ngày hỏi. Phần dưới chỉ giải thích nội dung nguồn được cung cấp và dữ kiện giả định; chưa kết luận hiệu lực hoặc thẩm quyền hiện hành.
+
+Dựa trên các tài liệu tham khảo được cung cấp, tôi xin giải đáp lần lượt từng ý trong câu hỏi của bạn như sau:
+
+**1. Với mức lương công việc ở trên (12 triệu đồng/tháng), 85% bằng bao nhiêu tiền?**
+*   **Tính toán:** Theo dữ kiện giả định bạn cung cấp, mức lương của công việc là $12.000.000$ đồng/tháng. 
+    *   Phép tính: $12.000.000 \text{ đồng/tháng} \times 85\%$
+    *   Kết quả: $10.200.000$ đồng/tháng.
+*   **Căn cứ pháp lý:** Tiền lương của người lao động trong thời gian thử việc do hai bên thỏa thuận nhưng ít nhất phải bằng 85% mức lương của công việc đó (theo Điều 26 Bộ luật Lao động 2019 [Tài liệu tham khảo #1]).
+
+**2. Công ty có được cho bạn thử việc lần hai cho chính công việc đó không?**
+*   **Trả lời:** Không. Công ty không được phép cho bạn thử việc lần thứ hai đối với chính công việc đó.
+*   **Căn cứ pháp lý:** Thời gian thử việc do hai bên thỏa thuận căn cứ vào tính chất và mức độ phức tạp của công việc nhưng **chỉ được thử việc một lần đối với một công việc** (theo đoạn mở đầu Điều 25 Bộ luật Lao động 2019 [Tài liệu tham khảo #3]).
+
+*Lưu ý từ nguồn dữ liệu:* Các văn bản quy phạm pháp luật được trích dẫn trong tài liệu tham khảo (Bộ luật Lao động 2019) chưa được xác minh hiệu lực tại thời điểm hiện tại từ cơ sở dữ liệu pháp luật chính thức. Bạn vui lòng kiểm tra lại trên nguồn chính thức hiện hành hoặc tham vấn người có chuyên môn trước khi áp dụng.
+
+**Đoạn mở đầu không đánh số — [45/2019/QH14, Điều 25]:**
+> Điều 25. Thời gian thử việc Thời gian thử việc do hai bên thỏa thuận căn cứ vào tính chất và mức độ phức tạp của công việc nhưng chỉ được thử việc một lần đối với một công việc và bảo đảm điều kiện sau đây:

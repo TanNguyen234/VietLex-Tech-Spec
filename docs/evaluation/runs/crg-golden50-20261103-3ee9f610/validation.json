@@ -1,0 +1,11 @@
+{
+  "source_snapshot_files": 447,
+  "source_mismatches": [],
+  "known_secret_values_checked": 14,
+  "secret_hits": [],
+  "benchmark_replay": 50,
+  "live_frozen_cases": 8,
+  "negative_controls": 2,
+  "roles": "ADMIN/USER",
+  "legal_human_promotion": false
+}

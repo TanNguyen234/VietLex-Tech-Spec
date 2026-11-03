@@ -1,0 +1,175 @@
+{
+  "meta": null,
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"status\":\"ok\",\"pattern\":\"tests_for\",\"target\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\answer_metrics.py::calculate_case_answer_metrics\",\"description\":\"Find all tests for a given function or class\",\"summary\":\"Found 11 result(s) for tests_for('D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\answer_metrics.py::calculate_case_answer_metrics')\",\"result_count\":11,\"results_omitted\":0,\"results\":[{\"id\":8239,\"kind\":\"Test\",\"name\":\"test_answer_summary_reports_metric_denominators_coverage_and_skip_reasons\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py::test_answer_summary_reports_metric_denominators_coverage_and_skip_reasons\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py\",\"line_start\":952,\"line_end\":1057,\"language\":\"python\",\"parent_name\":null,\"is_test\":true,\"indirect\":false},{\"id\":8233,\"kind\":\"Test\",\"name\":\"test_citation_precision_uses_retrieved_evidence_not_short_reference\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py::test_citation_precision_uses_retrieved_evidence_not_short_reference\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py\",\"line_start\":819,\"line_end\":838,\"language\":\"python\",\"parent_name\":null,\"is_test\":true,\"indirect\":false},{\"id\":8232,\"kind\":\"Test\",\"name\":\"test_number_metric_does_not_count_date_components\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py::test_number_metric_does_not_count_date_components\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py\",\"line_start\":800,\"line_end\":816,\"language\":\"python\",\"parent_name\":null,\"is_test\":true,\"indirect\":false},{\"id\":8231,\"kind\":\"Test\",\"name\":\"test_refusal_and_text_metrics_keep_distinct_contracts\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py::test_refusal_and_text_metrics_keep_distinct_contracts\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py\",\"line_start\":781,\"line_end\":796,\"language\":\"python\",\"parent_name\":null,\"is_test\":true,\"indirect\":false},{\"id\":13010,\"kind\":\"Test\",\"name\":\"test_answer_metrics_identify_the_changed_entity_contract\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_vietnamese_entity_metrics.py::test_answer_metrics_identify_the_changed_entity_contract\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_vietnamese_entity_metrics.py\",\"line_start\":35,\"line_end\":37,\"language\":\"python\",\"parent_name\":null,\"is_test\":true,\"indirect\":false},{\"id\":13008,\"kind\":\"Test\",\"name\":\"test_entity_metrics_count_extra_names_missing_labels_and_word_boundaries\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_vietnamese_entity_metrics.py::test_entity_metrics_count_extra_names_missing_labels_and_word_boundaries\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_vietnamese_entity_metrics.py\",\"line_start\":18,\"line_end\":32,\"language\":\"python\",\"parent_name\":null,\"is_test\":true,\"indirect\":false},{\"id\":13011,\"kind\":\"Test\",\"name\":\"test_entity_precision_does_not_hide_an_extra_name_next_to_a_gold_mention\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_vietnamese_entity_metrics.py::test_entity_precision_does_not_hide_an_extra_name_next_to_a_gold_mention\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_vietnamese_entity_metrics.py\",\"line_start\":38,\"line_end\":42,\"language\":\"python\",\"parent_name\":null,\"is_test\":true,\"indirect\":false},{\"id\":13007,\"kind\":\"Test\",\"name\":\"test_expected_vietnamese_entity_is_scored_when_present\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_vietnamese_entity_metrics.py::test_expected_vietnamese_entity_is_scored_when_present\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_vietnamese_entity_metrics.py\",\"line_start\":9,\"line_end\":15,\"language\":\"python\",\"parent_name\":null,\"is_test\":true,\"indirect\":false},{\"id\":8236,\"kind\":\"Test\",\"name\":\"test_legal_claim_that_something_is_unregulated_is_not_a_refusal\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py::test_legal_claim_that_something_is_unregulated_is_not_a_refusal\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py\",\"line_start\":865,\"line_end\":874,\"language\":\"python\",\"parent_name\":null,\"is_test\":true,\"indirect\":true},{\"id\":8235,\"kind\":\"Test\",\"name\":\"test_missing_evidence_does_not_turn_a_claim_into_a_refusal\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py::test_missing_evidence_does_not_turn_a_claim_into_a_refusal\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py\",\"line_start\":853,\"line_end\":862,\"language\":\"python\",\"parent_name\":null,\"is_test\":true,\"indirect\":true},{\"id\":8234,\"kind\":\"Test\",\"name\":\"test_technical_fallback_is_not_an_honest_refusal\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py::test_technical_fallback_is_not_an_honest_refusal\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_runtime_contracts.py\",\"line_start\":841,\"line_end\":850,\"language\":\"python\",\"parent_name\":null,\"is_test\":true,\"indirect\":true}],\"edges\":[],\"_graph\":{\"updated_at\":\"2026-11-03T21:26:49\",\"age_seconds\":7,\"built_on_branch\":\"main\",\"built_at_sha\":\"7519cd1aea4a3639140b9188de1843ebf0ddb1c0\",\"head_sha\":\"7519cd1aea4a3639140b9188de1843ebf0ddb1c0\",\"head_matches_build\":true}}",
+      "annotations": null,
+      "meta": null
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "pattern": "tests_for",
+    "target": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\answer_metrics.py::calculate_case_answer_metrics",
+    "description": "Find all tests for a given function or class",
+    "summary": "Found 11 result(s) for tests_for('D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\answer_metrics.py::calculate_case_answer_metrics')",
+    "result_count": 11,
+    "results_omitted": 0,
+    "results": [
+      {
+        "id": 8239,
+        "kind": "Test",
+        "name": "test_answer_summary_reports_metric_denominators_coverage_and_skip_reasons",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py::test_answer_summary_reports_metric_denominators_coverage_and_skip_reasons",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py",
+        "line_start": 952,
+        "line_end": 1057,
+        "language": "python",
+        "parent_name": null,
+        "is_test": true,
+        "indirect": false
+      },
+      {
+        "id": 8233,
+        "kind": "Test",
+        "name": "test_citation_precision_uses_retrieved_evidence_not_short_reference",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py::test_citation_precision_uses_retrieved_evidence_not_short_reference",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py",
+        "line_start": 819,
+        "line_end": 838,
+        "language": "python",
+        "parent_name": null,
+        "is_test": true,
+        "indirect": false
+      },
+      {
+        "id": 8232,
+        "kind": "Test",
+        "name": "test_number_metric_does_not_count_date_components",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py::test_number_metric_does_not_count_date_components",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py",
+        "line_start": 800,
+        "line_end": 816,
+        "language": "python",
+        "parent_name": null,
+        "is_test": true,
+        "indirect": false
+      },
+      {
+        "id": 8231,
+        "kind": "Test",
+        "name": "test_refusal_and_text_metrics_keep_distinct_contracts",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py::test_refusal_and_text_metrics_keep_distinct_contracts",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py",
+        "line_start": 781,
+        "line_end": 796,
+        "language": "python",
+        "parent_name": null,
+        "is_test": true,
+        "indirect": false
+      },
+      {
+        "id": 13010,
+        "kind": "Test",
+        "name": "test_answer_metrics_identify_the_changed_entity_contract",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_vietnamese_entity_metrics.py::test_answer_metrics_identify_the_changed_entity_contract",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_vietnamese_entity_metrics.py",
+        "line_start": 35,
+        "line_end": 37,
+        "language": "python",
+        "parent_name": null,
+        "is_test": true,
+        "indirect": false
+      },
+      {
+        "id": 13008,
+        "kind": "Test",
+        "name": "test_entity_metrics_count_extra_names_missing_labels_and_word_boundaries",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_vietnamese_entity_metrics.py::test_entity_metrics_count_extra_names_missing_labels_and_word_boundaries",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_vietnamese_entity_metrics.py",
+        "line_start": 18,
+        "line_end": 32,
+        "language": "python",
+        "parent_name": null,
+        "is_test": true,
+        "indirect": false
+      },
+      {
+        "id": 13011,
+        "kind": "Test",
+        "name": "test_entity_precision_does_not_hide_an_extra_name_next_to_a_gold_mention",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_vietnamese_entity_metrics.py::test_entity_precision_does_not_hide_an_extra_name_next_to_a_gold_mention",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_vietnamese_entity_metrics.py",
+        "line_start": 38,
+        "line_end": 42,
+        "language": "python",
+        "parent_name": null,
+        "is_test": true,
+        "indirect": false
+      },
+      {
+        "id": 13007,
+        "kind": "Test",
+        "name": "test_expected_vietnamese_entity_is_scored_when_present",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_vietnamese_entity_metrics.py::test_expected_vietnamese_entity_is_scored_when_present",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_vietnamese_entity_metrics.py",
+        "line_start": 9,
+        "line_end": 15,
+        "language": "python",
+        "parent_name": null,
+        "is_test": true,
+        "indirect": false
+      },
+      {
+        "id": 8236,
+        "kind": "Test",
+        "name": "test_legal_claim_that_something_is_unregulated_is_not_a_refusal",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py::test_legal_claim_that_something_is_unregulated_is_not_a_refusal",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py",
+        "line_start": 865,
+        "line_end": 874,
+        "language": "python",
+        "parent_name": null,
+        "is_test": true,
+        "indirect": true
+      },
+      {
+        "id": 8235,
+        "kind": "Test",
+        "name": "test_missing_evidence_does_not_turn_a_claim_into_a_refusal",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py::test_missing_evidence_does_not_turn_a_claim_into_a_refusal",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py",
+        "line_start": 853,
+        "line_end": 862,
+        "language": "python",
+        "parent_name": null,
+        "is_test": true,
+        "indirect": true
+      },
+      {
+        "id": 8234,
+        "kind": "Test",
+        "name": "test_technical_fallback_is_not_an_honest_refusal",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py::test_technical_fallback_is_not_an_honest_refusal",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_runtime_contracts.py",
+        "line_start": 841,
+        "line_end": 850,
+        "language": "python",
+        "parent_name": null,
+        "is_test": true,
+        "indirect": true
+      }
+    ],
+    "edges": [],
+    "_graph": {
+      "updated_at": "2026-11-03T21:26:49",
+      "age_seconds": 7,
+      "built_on_branch": "main",
+      "built_at_sha": "7519cd1aea4a3639140b9188de1843ebf0ddb1c0",
+      "head_sha": "7519cd1aea4a3639140b9188de1843ebf0ddb1c0",
+      "head_matches_build": true
+    }
+  },
+  "isError": false
+}

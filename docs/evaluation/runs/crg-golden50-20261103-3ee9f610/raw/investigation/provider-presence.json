@@ -1,0 +1,8 @@
+{
+  "QDRANT_URL": true,
+  "QDRANT_API_KEY": true,
+  "SUPABASE_URL": true,
+  "SUPABASE_PUBLISHABLE_KEY": true,
+  "Vertex_project_configured": true,
+  "credential_values_saved": false
+}

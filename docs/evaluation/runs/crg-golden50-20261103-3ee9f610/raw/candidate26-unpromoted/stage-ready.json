@@ -1,0 +1,22 @@
+{
+  "status": "ready",
+  "checks": {
+    "content_store": "not_required",
+    "legal_fts": "not_required",
+    "mongodb": "ready",
+    "online_retrieval": "ready",
+    "supabase_documents": "ready",
+    "body_search_index": "ready"
+  },
+  "runtime": {
+    "retrieval_backend": "vertex-qdrant-v3",
+    "google_cloud_calls_enabled": true,
+    "serverless_online_only": true,
+    "legal_document_source": "supabase",
+    "content_store_path": "data/v3/content_store.sqlite3",
+    "vertex_qdrant_shadow_enabled": false,
+    "pinecone_configured": true,
+    "qdrant_configured": true,
+    "vertex_project_configured": true
+  }
+}

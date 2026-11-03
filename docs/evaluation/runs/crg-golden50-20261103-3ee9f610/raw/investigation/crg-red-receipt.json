@@ -1,0 +1,7 @@
+{
+  "evidence": "integration; transcribed from actual configured stdio failure in this turn",
+  "command": "uvx --offline --system-certs --python D:/Projects/AI_Paper/pythonProject/.venv/Scripts/python.exe code-review-graph serve",
+  "failure": "No solution found: code-review-graph was not found in cache; MCP Connection closed",
+  "installed_version": "2.3.7",
+  "fix": "project command invokes installed Python module; HF cached-only mode; no install/global edit"
+}

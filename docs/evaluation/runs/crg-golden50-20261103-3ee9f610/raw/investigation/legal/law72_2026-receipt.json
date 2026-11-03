@@ -1,0 +1,13 @@
+{
+  "id": "law72_2026",
+  "landing_url": "https://congbaocdn.chinhphu.vn/180507251028987904/2026/4/28/469382-1777361599_v1_1777362029_signed.pdf",
+  "retrieved_utc": "2026-11-03T09:53:54.946434+00:00",
+  "evidence": "live official primary, no OCR/model",
+  "http": 200,
+  "pdf_url": "https://congbaocdn.chinhphu.vn/180507251028987904/2026/4/28/469382-1777361599_v1_1777362029_signed.pdf",
+  "sha256": "9eb2a4b73bbc4fc2d5ec8a6367c850aa63c2912ddaf86dba867398e46b349955",
+  "bytes": 5260367,
+  "pages": 146,
+  "chars": 374829,
+  "status": "downloaded"
+}

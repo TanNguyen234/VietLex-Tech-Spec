@@ -1,0 +1,47 @@
+{
+  "meta": null,
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"status\":\"ok\",\"summary\":\"4254 nodes, 46708 edges across 331 files. Risk: medium (0.60). 247 test gaps.\",\"key_entities\":[\"_form_response\",\"_development_account_page\",\"register_page\",\"register\",\"login_page\"],\"risk\":\"medium\",\"communities\":[\"services-call\",\"app-session\",\"scripts-dataset\"],\"flows_affected\":[\"run_suite\",\"chat\",\"main\"],\"next_tool_suggestions\":[\"detect_changes\",\"get_affected_flows\",\"get_review_context\"],\"_graph\":{\"updated_at\":\"2026-11-03T16:24:44\",\"age_seconds\":33,\"built_on_branch\":\"main\",\"built_at_sha\":\"7519cd1aea4a3639140b9188de1843ebf0ddb1c0\",\"head_sha\":\"7519cd1aea4a3639140b9188de1843ebf0ddb1c0\",\"head_matches_build\":true}}",
+      "annotations": null,
+      "meta": null
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "summary": "4254 nodes, 46708 edges across 331 files. Risk: medium (0.60). 247 test gaps.",
+    "key_entities": [
+      "_form_response",
+      "_development_account_page",
+      "register_page",
+      "register",
+      "login_page"
+    ],
+    "risk": "medium",
+    "communities": [
+      "services-call",
+      "app-session",
+      "scripts-dataset"
+    ],
+    "flows_affected": [
+      "run_suite",
+      "chat",
+      "main"
+    ],
+    "next_tool_suggestions": [
+      "detect_changes",
+      "get_affected_flows",
+      "get_review_context"
+    ],
+    "_graph": {
+      "updated_at": "2026-11-03T16:24:44",
+      "age_seconds": 33,
+      "built_on_branch": "main",
+      "built_at_sha": "7519cd1aea4a3639140b9188de1843ebf0ddb1c0",
+      "head_sha": "7519cd1aea4a3639140b9188de1843ebf0ddb1c0",
+      "head_matches_build": true
+    }
+  },
+  "isError": false
+}

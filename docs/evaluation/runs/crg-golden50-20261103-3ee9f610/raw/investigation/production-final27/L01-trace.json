@@ -1,0 +1,625 @@
+{
+  "status": "available",
+  "query": "Tình huống kiểm thử giả định. Tại ngày 29/10/2026, tôi nhận việc ở vị trí yêu cầu trình độ cao đẳng, mức lương của công việc là 12 triệu đồng/tháng. Công ty đề nghị thử việc hai tháng và chỉ trả 70% lương. Mức lương thử việc tối thiểu là bao nhiêu, thời gian thử việc tối đa được tính thế nào và cần đối chiếu điều khoản nào?",
+  "rewritten_query": "Tình huống kiểm thử giả định. Tại ngày 29/10/2026, tôi nhận việc ở vị trí yêu cầu trình độ cao đẳng, mức lương của công việc là 12 triệu đồng/tháng. Công ty đề nghị thử việc hai tháng và chỉ trả 70% lương. Mức lương thử việc tối thiểu là bao nhiêu, thời gian thử việc tối đa được tính thế nào và cần đối chiếu điều khoản nào?",
+  "runtime_mode": "vertex-qdrant-v3",
+  "backend": "vertex-qdrant-v3",
+  "collection": "vietlex-legal-rag-v3-vertex-1024",
+  "ranking": "rrf-dbsf",
+  "candidate_counts": {
+    "pinecone_hits": 0,
+    "fts_hits": 0,
+    "merged_document_candidates": 0,
+    "resolved_document_candidates": 0,
+    "structural_chunks_generated": 24,
+    "locally_selected_chunks": 0,
+    "reranker_input_chunks": 24,
+    "reranker_output_chunks": 3,
+    "retrieval_selected_chunks": 3,
+    "final_evidence_chunks": 14
+  },
+  "final_evidence_count": 14,
+  "prompt_context_count": 14,
+  "count_semantics": "prompt-contexts-v1",
+  "context_stages": [
+    {
+      "stage": "retrieval_selected",
+      "count": 3,
+      "sha256": [
+        "ddb3d7d56ac898ae0670732170a7b36416c0eba2fb2dfda83e7906cbcb2c8434",
+        "cf110b75ed3ce2fef76320bd5609a2cb16d448538c4f6807c7ea8d0c1c5152fb",
+        "9b7bc75ca177e0380e4f4ce45a3135fbf5ac956749349c3557a5ab3c12653df7"
+      ]
+    },
+    {
+      "stage": "expanded",
+      "count": 3,
+      "sha256": [
+        "ddb3d7d56ac898ae0670732170a7b36416c0eba2fb2dfda83e7906cbcb2c8434",
+        "cf110b75ed3ce2fef76320bd5609a2cb16d448538c4f6807c7ea8d0c1c5152fb",
+        "9b7bc75ca177e0380e4f4ce45a3135fbf5ac956749349c3557a5ab3c12653df7"
+      ]
+    },
+    {
+      "stage": "quality_filtered",
+      "count": 3,
+      "sha256": [
+        "ddb3d7d56ac898ae0670732170a7b36416c0eba2fb2dfda83e7906cbcb2c8434",
+        "cf110b75ed3ce2fef76320bd5609a2cb16d448538c4f6807c7ea8d0c1c5152fb",
+        "9b7bc75ca177e0380e4f4ce45a3135fbf5ac956749349c3557a5ab3c12653df7"
+      ]
+    },
+    {
+      "stage": "situation_filtered",
+      "count": 3,
+      "sha256": [
+        "ddb3d7d56ac898ae0670732170a7b36416c0eba2fb2dfda83e7906cbcb2c8434",
+        "cf110b75ed3ce2fef76320bd5609a2cb16d448538c4f6807c7ea8d0c1c5152fb",
+        "9b7bc75ca177e0380e4f4ce45a3135fbf5ac956749349c3557a5ab3c12653df7"
+      ]
+    },
+    {
+      "stage": "primary_rescue",
+      "count": 3,
+      "sha256": [
+        "122866f9bc93ac4865466124652d860ef49af433ade2e2a22097a197268011f1",
+        "1bba22153ec0733c2c2e71520c4df4348ba2e1a51c21fe3ae8219878447fc047",
+        "ab7d37f9a6acdfbc358aee22219920a144053ba3138b2b86bd808afd620ab89e"
+      ]
+    },
+    {
+      "stage": "official_supplement",
+      "count": 14,
+      "sha256": [
+        "122866f9bc93ac4865466124652d860ef49af433ade2e2a22097a197268011f1",
+        "1bba22153ec0733c2c2e71520c4df4348ba2e1a51c21fe3ae8219878447fc047",
+        "ab7d37f9a6acdfbc358aee22219920a144053ba3138b2b86bd808afd620ab89e",
+        "557a02ac2a6c92d1d7f34f3ced4ee95821359d4d9552e0edfb6355a7e9ff3cd9",
+        "5b3d161e18315fe2c05fd528186840f0ee3d14e29090dd9a1864da308cba57a6",
+        "9099f3584cba57b1d61eb2688f446f76a13e823897a38ef283eb311c6fe80a2b",
+        "b50b92be66b44ce6733b01320ec5390fcc72ddaca4b59b0ae6c7ceb64c51a3d4",
+        "6d60aa68cb25ce94a707d8704523fc342a4a7b2874a408aeb498f97fdf83533e",
+        "6e14576a956928cf6d26df68a50a8a49f8187e81e96c8b0fc12ffc6982216226",
+        "0ffd739316db68ce19903a6bf043438195745f137c067048cc51d609e2d6c103",
+        "24946fa5b59423bf77927c1610eb0e2fbf5cc1188b3359fe8601bbe6d630a317",
+        "87701bdeb7113ba554c77de3f84f65bbfe7e931df37636b8ff82c71ff713eb62",
+        "d08a406f6e108e29502fda498383ef2bdf399bc3c30e2f642185c3f799aeb146",
+        "7feed2e1f79924f00d17c4cf8cb368b5041be2ef136b6d2bfd4437cb42a7a213"
+      ]
+    },
+    {
+      "stage": "prompt",
+      "count": 14,
+      "sha256": [
+        "122866f9bc93ac4865466124652d860ef49af433ade2e2a22097a197268011f1",
+        "1bba22153ec0733c2c2e71520c4df4348ba2e1a51c21fe3ae8219878447fc047",
+        "ab7d37f9a6acdfbc358aee22219920a144053ba3138b2b86bd808afd620ab89e",
+        "557a02ac2a6c92d1d7f34f3ced4ee95821359d4d9552e0edfb6355a7e9ff3cd9",
+        "5b3d161e18315fe2c05fd528186840f0ee3d14e29090dd9a1864da308cba57a6",
+        "9099f3584cba57b1d61eb2688f446f76a13e823897a38ef283eb311c6fe80a2b",
+        "b50b92be66b44ce6733b01320ec5390fcc72ddaca4b59b0ae6c7ceb64c51a3d4",
+        "6d60aa68cb25ce94a707d8704523fc342a4a7b2874a408aeb498f97fdf83533e",
+        "6e14576a956928cf6d26df68a50a8a49f8187e81e96c8b0fc12ffc6982216226",
+        "0ffd739316db68ce19903a6bf043438195745f137c067048cc51d609e2d6c103",
+        "24946fa5b59423bf77927c1610eb0e2fbf5cc1188b3359fe8601bbe6d630a317",
+        "87701bdeb7113ba554c77de3f84f65bbfe7e931df37636b8ff82c71ff713eb62",
+        "d08a406f6e108e29502fda498383ef2bdf399bc3c30e2f642185c3f799aeb146",
+        "7feed2e1f79924f00d17c4cf8cb368b5041be2ef136b6d2bfd4437cb42a7a213"
+      ]
+    }
+  ],
+  "context_budget_tokens": 8000,
+  "official_search": {
+    "status": "partial",
+    "search_queries": 5,
+    "queries_completed": 4,
+    "provider_attempts": 14,
+    "urls_discovered": 49,
+    "urls_attempted": 8,
+    "sources_read": 6,
+    "sources_downloaded": 8,
+    "read_failures": 2,
+    "phase_seconds": {
+      "discovery": 15.002,
+      "read": 21.181,
+      "pack": 0.083
+    },
+    "budget_unit": "approx_whitespace_tokens",
+    "context_tokens": 7385,
+    "evidence_blocks": 11,
+    "legal_effect_status": "unverified",
+    "effect_as_of": "29/10/2026",
+    "effect_reason": "amendment_chain_not_verified",
+    "errors": [
+      {
+        "phase": "discovery",
+        "provider": "VbplClient",
+        "kind": "vbpl_http_403"
+      },
+      {
+        "phase": "discovery",
+        "provider": "VbplClient",
+        "kind": "vbpl_http_403"
+      },
+      {
+        "phase": "discovery",
+        "provider": "VbplClient",
+        "kind": "vbpl_http_403"
+      },
+      {
+        "phase": "discovery",
+        "provider": "VbplClient",
+        "kind": "vbpl_http_403"
+      },
+      {
+        "phase": "discovery",
+        "kind": "deadline"
+      },
+      {
+        "phase": "extraction",
+        "kind": "source_metadata_only"
+      },
+      {
+        "phase": "extraction",
+        "kind": "source_metadata_only"
+      }
+    ],
+    "source_reads": [
+      {
+        "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=218107",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "document_sha256": "dbbc1c4793f801f925e28fe53252285b95727e793faf4e83640dcb7ded7444b8",
+        "inspected_pages": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "retained_pages": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "partial_read": true
+      },
+      {
+        "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=218037",
+        "sha256": "359494f34c6f14485aca1e7effbe2fdd2f5d1b736c973553184fd4d46587cbb3",
+        "document_sha256": "7aa99b09259e3862acfb4678032ae671d2da922f675ef8fff3a3a06a8c60e20e",
+        "inspected_pages": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "retained_pages": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "partial_read": false
+      },
+      {
+        "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=220147",
+        "sha256": "ab9270a56e86125c43dbc1933f0ec4c5f8d82d1a265090e0252bbca7a7f673f0",
+        "document_sha256": "6f4b6e2b02ef7e2b13fbaa1922503935e71202cc831f91e417dc8b3d0ca03a3e",
+        "inspected_pages": [
+          1,
+          2,
+          3
+        ],
+        "retained_pages": [
+          1,
+          2,
+          3
+        ],
+        "partial_read": false
+      },
+      {
+        "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=218315",
+        "sha256": "900179c65596d1892dcb5eb871c4bf73c52b750931299a67048ded163653ec8e",
+        "document_sha256": "bc68fc7cc658a6fd2c99c9ec369bf08dcb475a6c663cb2e847a994224df9db0a",
+        "inspected_pages": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "retained_pages": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "partial_read": false
+      },
+      {
+        "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=220166",
+        "sha256": "1034a6333517c13ecb91b8b69f237ba78943d45f40ef78a282c275b951596a79",
+        "document_sha256": "760fbabf43a9ffddf7b80cbcc93cc03787a23c755a34bfb228fb76e14f3a380e",
+        "inspected_pages": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "retained_pages": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "partial_read": false
+      },
+      {
+        "url": "https://vanban.chinhphu.vn/?pageid=27160&docid=218534",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "document_sha256": "f8a25d462f7e3b4b8bfe63c7688355636980b02b962927b148bd098a6c91d65d",
+        "inspected_pages": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19
+        ],
+        "retained_pages": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19
+        ],
+        "partial_read": true
+      },
+      {
+        "url": "https://congbao.chinhphu.vn/van-ban/nghi-dinh-so-248-2025-nd-cp-46267.htm",
+        "sha256": "0a720551f4dedde6fb4218f3699d8156ed108ede3619593d5566a4fb45cb7892",
+        "document_sha256": "36a6b198bc694abcd314fe6d111ba2015975a16d5b562d449193409ae2730d3c",
+        "inspected_pages": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20
+        ],
+        "retained_pages": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20
+        ],
+        "partial_read": false
+      },
+      {
+        "url": "https://congbao.chinhphu.vn/van-ban/nghi-dinh-so-293-2025-nd-cp-46568.htm",
+        "sha256": "0a8632821445b0041454adba86f3818bf6acccbe50089fa0b37e3305e97acaea",
+        "document_sha256": "8ebf219debf9224796c98670d1eb5b8e5757d8ed74590c45ff5eab0dfc4fdbd0",
+        "inspected_pages": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17
+        ],
+        "retained_pages": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17
+        ],
+        "partial_read": false
+      }
+    ],
+    "discovered_urls": [
+      "https://congbao.chinhphu.vn/van-ban/luat-so-10-2012-qh13-2771.htm",
+      "https://congbao.chinhphu.vn/van-ban/nghi-dinh-so-103-2012-nd-cp-814.htm",
+      "https://congbao.chinhphu.vn/van-ban/nghi-dinh-so-108-2010-nd-cp-5014.htm",
+      "https://congbao.chinhphu.vn/van-ban/nghi-dinh-so-182-2013-nd-cp-1003.htm",
+      "https://congbao.chinhphu.vn/van-ban/nghi-dinh-so-248-2025-nd-cp-46267.htm",
+      "https://congbao.chinhphu.vn/van-ban/nghi-dinh-so-293-2025-nd-cp-46568.htm",
+      "https://congbao.chinhphu.vn/van-ban/nghi-dinh-so-70-2011-nd-cp-12256.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-lien-tich-so-49-2011-ttlt-bgtvt-bnv-btc-12814.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-02-2015-tt-bldtbxh-5221.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-02-2025-tt-bgtvt-43936.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-04-2018-tt-byt-26096.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-09-2025-tt-bgtvt-44290.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-12-2011-tt-bldtbxh-9979.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-15-2016-tt-bldtbxh-22238.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-17-2019-tt-bldtbxh-29932.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-18-2019-tt-bldtbxh-29933.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-25-2022-tt-bldtbxh-38771.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-27-2015-tt-bldtbxh-15946.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-29-2012-tt-bldtbxh-825.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-30-2017-tt-bct-25533.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-33-2013-tt-bldtbxh-1004.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-36-2010-tt-bldtbxh-6038.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-36-2012-tt-bldtbxh-1911.htm",
+      "https://congbao.chinhphu.vn/van-ban/thong-tu-so-54-2016-tt-bldtbxh-23923.htm",
+      "https://congbao.chinhphu.vn/van-ban/van-ban-hop-nhat-so-01-vbhn-bgtvt-26945.htm",
+      "https://congbao.chinhphu.vn/van-ban/van-ban-hop-nhat-so-125-vbhn-vpqh-46084.htm",
+      "https://congbao.chinhphu.vn/van-ban/van-ban-hop-nhat-so-1308-vbhn-bldtbxh-28839.htm",
+      "https://congbao.chinhphu.vn/van-ban/van-ban-hop-nhat-so-2651-vbhn-bldtbxh-42111.htm",
+      "https://congbao.chinhphu.vn/van-ban/van-ban-hop-nhat-so-50-vbhn-vpqh-44640.htm",
+      "https://congbao.chinhphu.vn/van-ban/van-ban-hop-nhat-so-5213-vbhn-bldtbxh-27972.htm",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=1172",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=14187",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=194764",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=195111",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=195224",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=196496",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=198540",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=201967",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=213678",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=215248",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=215832",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=215936",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=217002",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=218037",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=218107",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=218315",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=218534",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=220166",
+      "https://vanban.chinhphu.vn/?pageid=27160&docid=9203"
+    ],
+    "topic_coverage": {
+      "covered": [
+        "mức lương",
+        "thử việc"
+      ],
+      "missing": [],
+      "status": "known"
+    },
+    "excluded_blocks": [
+      {
+        "source": 3,
+        "reason": "metadata_only"
+      },
+      {
+        "source": 5,
+        "reason": "metadata_only"
+      },
+      {
+        "source": 0,
+        "article": "Điều 1. Phạm vi điều chỉnh",
+        "reason": "unrelated_topic"
+      },
+      {
+        "source": 0,
+        "article": "Điều 2. Đối tượng áp dụng",
+        "reason": "unrelated_topic"
+      },
+      {
+        "source": 0,
+        "article": "Điều 3. Nguyên tắc chun g thực hiện tiền lươ ng, thù lao, tiền th ưởng",
+        "reason": "unrelated_topic"
+      },
+      {
+        "source": 0,
+        "article": "Điều 6. Mức thù lao tối đa",
+        "reason": "unrelated_topic"
+      },
+      {
+        "source": 0,
+        "article": "Điều 7. Tạm ứng, chi trả  tiền lương, thù lao",
+        "reason": "unrelated_topic"
+      },
+      {
+        "source": 0,
+        "article": "Điều 8. Tiền thưởng",
+        "reason": "unrelated_topic"
+      },
+      {
+        "source": 0,
+        "article": "Điều 10. Hiệu lực thi hành",
+        "reason": "unrelated_topic"
+      },
+      {
+        "source": 0,
+        "article": "Điều 11. Điều khoản chuyển tiếp",
+        "reason": "unrelated_topic"
+      },
+      {
+        "source": 2,
+        "article": "Điều 2. Đối tượng áp dụng",
+        "reason": "unrelated_topic"
+      },
+      {
+        "source": 3,
+        "article": "Điều 2. Giải thích từ ngữ",
+        "reason": "unrelated_topic"
+      }
+    ]
+  },
+  "request_status": "ok",
+  "cached": false,
+  "observed_provider": "google_vertex_ai",
+  "observed_model": "gemini-3.5-flash",
+  "guardrail_state": {
+    "mode": "enforce",
+    "requested": true,
+    "executed": true,
+    "status": "passed",
+    "stages": {
+      "input": {
+        "status": "passed",
+        "safe": true,
+        "error": null
+      },
+      "output": {
+        "status": "passed",
+        "safe": true,
+        "error": null
+      }
+    },
+    "input_safe": true,
+    "output_safe": true
+  },
+  "latency": {
+    "t_total": 48.8782,
+    "t_cache": 0.0132,
+    "t_guardrails_input": 0.8464,
+    "t_guardrails_output": 0.7893,
+    "t_rewrite": 0.0,
+    "t_retrieval": 1.711,
+    "t_evidence_fallback": 40.547,
+    "vertex_qdrant": 0.8852093680000053,
+    "t_llm": 4.648
+  },
+  "evidence": [
+    {
+      "rank": 1,
+      "document_id": null,
+      "citation": "45/2019/QH14, Điều 26",
+      "excerpt": "Điều 26. Tiền lương thử việc Tiền lương của người lao động trong thời gian thử việc do hai bên thỏa thuận nhưng ít nhất phải bằng 85% mức lương của công việc đó."
+    },
+    {
+      "rank": 2,
+      "document_id": null,
+      "citation": "45/2019/QH14, Điều 27, Khoản 2",
+      "excerpt": "Điều 27. Kết thúc thời gian thử việc 2. Trong thời gian thử việc, mỗi bên có quyền hủy bỏ hợp đồng thử việc hoặc hợp đồng lao động đã giao kết mà không cần báo trước và không phải bồi thường."
+    },
+    {
+      "rank": 3,
+      "document_id": null,
+      "citation": "45/2019/QH14, Điều 25",
+      "excerpt": "Điều 25. Thời gian thử việc Thời gian thử việc do hai bên thỏa thuận căn cứ vào tính chất và mức độ phức tạp của công việc nhưng chỉ được thử việc một lần đối với một công việc và bảo đảm điều kiện sau đây: 1. Không quá 180 ngày đối với công việc của người quản lý doanh nghiệp theo quy định của Luật Doanh nghiệp, Luật Quản lý, sử dụng vốn nhà nước đầu tư vào sản xuất, kinh doanh tại doanh nghiệp; 2. Không quá 60 ngày đối với công việc có chức danh nghề nghiệp cần trình độ chuyên môn, kỹ thuật từ cao đẳng trở lên; 3. Không quá 30 ngày đối với công việc có chức danh nghề nghiệp cần trình độ chuyên môn, kỹ thuật trung cấp, công nhân kỹ thuật, nhân viên nghiệp vụ; 4. Không quá 06 ngày làm việc đối với công việc khác."
+    },
+    {
+      "rank": 4,
+      "document_id": null,
+      "citation": "7/2026/TT-BNV, Điều 3. Mức lương của chuyên gia tư vấn",
+      "excerpt": "Điều 3. Mức lương của chuyên gia tư vấn\n1. Mức lương theo tháng áp dụng đối với chuyên gia tư vấn  có thời gian\nlàm việc đủ 26 ngày được quy định như sau:\n2\na) Mức 1, không quá 70.000.000 đồng/tháng đối với một trong các trường\nhợp sau đây: chuyên gia t ư vấn có bằng đại học, có chuyên môn được đào tạo\nphù hợp với chuyên ngành tư vấn và có từ 15 năm kinh nghiệm trở lên trong\nchuyên ngành tư vấn; hoặc chuyên gia tư vấn có bằng thạc sĩ trở lên, có chuyên\nmôn được đào tạo phù hợp với chuyên ngành tư vấn và có từ 8 năm kinh nghiệm\ntrở lên trong chuyên ngành tư vấn ; hoặc c huyên gia tư vấn  đảm nhi ệm ch ức\ndanh Trưởng nhóm tư vấn hoặc chủ trì tổ chức, điều hành gói thầu tư vấn.\nb) Mức 2, không quá 55.000.000 đồng/tháng đối với một trong các trường\nhợp sau đây: chuyên gia tư vấn có bằng đại học, có chuyên môn được đào tạo phù\nhợp với chuyên ngành tư vấn  và có từ 10 đến dưới 15 năm kinh nghiệm trong\nchuyên ngành tư vấn; hoặc chuyên gia tư vấn có bằng thạc sĩ trở lên, có chuyên\nmôn được đào tạo phù hợp với ch uyên ngành tư vấn và có từ 5 đến dưới 8 năm\nkinh nghiệm trong chuyên ngành tư vấn; hoặc chuyên gia tư vấn đảm nhiệm chức\ndanh chủ trì triển khai một hoặc một số hạng mục thuộc gói thầu tư vấn.\nc) Mức 3, không quá 40.000.000 đồng/tháng đối với một trong các trường\nhợp sau đây: chuyên gia tư vấn có bằng đại học, có chuyên môn được đào tạo\nphù hợp với chuyên ngành tư vấn và có từ 5 đến dưới 10 năm kinh nghiệm trong\nchuyên ngành tư vấn; hoặc chuyên gia tư vấn có bằng thạc sĩ trở lên, có chuyên\nmôn được đào tạo phù hợp với chuyên ngành tư vấn  và có từ 3 đến dưới 5 năm\nkinh nghiệm trong chuyên ngành tư vấn.\nd) Mức 4, không quá 30.000.000 đồng/tháng đối với một trong các trường\nhợp sau đây:  chuyên gia tư vấn có bằng đại học, có chuyên môn được đ ào tạo\nphù hợp với chuyên ngành tư vấn và có dưới 5 năm kinh nghiệm trong chuyên\nngành tư vấn ; hoặc chuyên gia tư vấn có bằng thạc sĩ tr ở lên, có chuyên môn\nđược đào tạo phù hợp với chuyên ngành tư vấn và có dưới 3 năm kinh nghiệm\ntrong chuyên ngành tư vấn.\nđ) Đối với dự án, công tr ình có quy mô l ớn, kỹ thuật phức tạp, sử dụng\ncông nghệ hiện đại đòi hỏi chuyên gia t ư vấn có trình độ chuyên môn kỹ thuật\nđặc biệt, khả năng cung ứng của thị trường lao động còn hạn chế hoặc điều kiện\nlàm việc khó khăn, ở vùng sâu, vùng xa  mà chủ đầu tư hoặc bên mời thầu thấy\ncần thiết phải áp dụng mức lương của chuyên gia tư vấn cao hơn mức lương\ntheo khoản 1 Điều này thì chủ đầu tư hoặc bên mời thầu xác định, báo cáo người\ncó thẩm quyền xem xét, quyết định mức lương của chuyên gia tư v ấn cao hơn ,\nnhưng tối đa không quá 1,5 lần so với mức lương theo tháng tương ứng với tiêu\nchuẩn, điều kiện quy định tại điểm a, điểm b, điểm c và điểm d Khoản này.\n2. Mức lương theo tu ần áp dụng đối với chuyên gia tư vấn  có thời gian\nlàm việc đủ 6 ngày, được xác định trên cơ sở mức lương theo tháng quy định\ntại khoản 1 Điều này nhân với 12 tháng, chia cho 52 tuần.\n3\n3. Mức lương theo ngày áp dụng đối với chuyên gia tư vấn có thời gian\nlàm việc đủ 8 giờ,  được xác định trên  cơ sở mức lương theo tháng quy định tại\nkhoản 1 Điều này chia cho 26 ngày.\n4. Mức lương theo giờ áp dụng đối với chuyên gia tư vấn có thời gian làm\nviệc dưới 8 giờ, được xác định trên cơ sở mức lương theo tháng quy định tại\nkhoản 1 Điều này chia cho 26 ngày và chia cho 8 giờ.\n5. Mức lương đối với chuyên gia tư vấn quy định tại khoản 1, khoản 2,\nkhoản 3 và khoản 4  Điều này là mức tối đa, đã bao gồm tiền lương của những\nngày nghỉ lễ, nghỉ tết, ngày nghỉ làm việc h ưởng nguyên l ương theo quy định\ncủa Bộ lu ật Lao động, chi phí đóng bảo hiểm xã hội, bảo hiểm y tế, bảo hiểm\nthất nghiệp và thuế thu nhập cá nhân thuộc trách nhiệm của người lao động theo\nquy định của pháp luật hiện hành về bảo hiểm xã hội, bảo hiểm y tế, bảo hiểm\nthất nghiệp và thuế thu nhập c á nhân; chưa bao gồm chi phí đóng bảo hiểm xã\nhội, bảo hiểm y t ế, bảo hiểm thất nghiệp thuộc trách nhiệm của người sử dụng\nlao động theo quy định của pháp luật h iện hành về bảo"
+    },
+    {
+      "rank": 5,
+      "document_id": null,
+      "citation": "13/2026/TT-BNV, Điều 1. Đối tượng áp dụng",
+      "excerpt": "Điều 1. Đối tượng áp dụng\n1. Cán bộ, công chức hưởng lương từ ngân sách nhà nước làm việc trong các\ncơ quan Đảng, Nhà nước, Mặt trận Tổ quốc Việt Nam, tổ chức chính trị - xã hội\ntrực thuộc Mặt trận Tổ quốc Việt Nam và các tổ chức xã hội thực hiện các nhiệm\nvụ được nhà nước giao ở Trung ương; ở tỉnh, thành phố trực thuộc Trung ương; ở\nxã, phường, đặc khu trực thuộc cấp tỉnh; ở đơn vị hành chính - kinh tế đặc biệt.\n2. Viên chức hưởng lương từ quỹ lương của đơn vị sự nghiệp công lập theo\nquy định của pháp luật.\n3. Cán bộ, công chức, viên chức được cấp có thẩm quyền cử đến làm việc\ntại các hội, tổ chức phi Chính phủ, dự án và cơ quan, tổ chức quốc tế đặt tại Việt\nNam mà vẫn được hưởng lương theo b ảng lương ban hành kèm  theo Nghị định\nsố 204/2004/NĐ-CP ngày 14 tháng 12 năm 2004 c ủa Chính phủ về chế độ tiền\nlương đối với cán bộ, công chức, viên chức và lực lượng vũ trang được sửa đổi,\nbổ sung bởi Nghị định số 76/2009/NĐ-CP, Nghị định số 14/2012/NĐ-CP, Nghị\nđịnh s ố 17/2013/NĐ-CP, Nghị định s ố 117/2016/NĐ-CP và Ngh ị định s ố\n07/2026/NĐ-CP.\n2\n4. Người hưởng lương làm việc trong chỉ tiêu biên chế được cấp có thẩm\nquyền giao t ại các h ội do Đ ảng, Nhà nư ớc giao nhi ệm vụ được ngân sách nhà\nnước hỗ trợ kinh phí theo quy đ ịnh tại Nghị định số 126/2024/NĐ-CP ngày 08\ntháng 10 năm 2024 của Chính phủ quy định về tổ chức, hoạt động và quản lý hội.\n5. Người hoạt động không chuyên trách ở thôn, tổ dân phố theo quy định\ntại Nghị định của Chính phủ về tổ chức, hoạt động của thôn, tổ dân phố và chế độ,\nchính sách đối với người hoạt động không chuyên trách ở thôn, tổ dân phố.\n6. Đại biểu Hội đồng nhân dân các cấp hưởng hoạt động phí theo quy định\ncủa pháp luật hiện hành.\n7. Người làm việc trong tổ chức cơ yếu.\n8. Người làm các công việc theo chế độ hợp đồng lao động trong cơ quan\nhành chính và đơn v ị sự nghiệp công lập quy định tại Nghị định của Chính phủ\nthuộc trường hợp được áp dụng hoặc có thỏa thuận trong hợp đồng lao động áp\ndụng xếp lương theo Nghị định số 204/2004/NĐ-CP ngày 14 tháng 12 năm 2004\ncủa Chính phủ về chế độ tiền lương đối với cán bộ, công chức, viên chức và lực\nlượng vũ trang.\n9. Các đối tượng sau đây được áp dụng Thông tư này để tính toán xác định\nmức đóng, hưởng chế độ bảo hiểm xã hội và giải quyết các chế độ liên quan đến\ntiền lương theo quy định của pháp luật:\na) Cán bộ, công ch ức, viên ch ức đi h ọc, thực tập, công tác, đi ều trị, điều\ndưỡng (trong nước và ngoài nước) thuộc danh sách trả lương của cơ quan Đảng,\nNhà nước, tổ chức chính trị - xã hội, đơn vị sự nghiệp công lập và hội được ngân\nsách nhà nước hỗ trợ kinh phí hoạt động;\nb) Người đang trong thời gian thử việc theo quy định tại Điều 24 Bộ luật\nLao động trong cơ quan Đ ảng, Nhà nư ớc, tổ chức chính tr ị - xã hội, đơn v ị sự\nnghiệp công lập và hội được ngân sách nhà nước hỗ trợ kinh phí hoạt động;\nc) Cán bộ, công chức, viên chức đang bị tạm đình chỉ công tác, đang bị tạm\ngiữ, tạm giam."
+    },
+    {
+      "rank": 6,
+      "document_id": null,
+      "citation": "13/2026/TT-BNV, Điều 3. Cách tính mức lương, phụ cấp và hoạt động phí",
+      "excerpt": "Điều 3. Cách tính mức lương, phụ cấp và hoạt động phí\n1. Đối với cán bộ, công chức, viên chức và người lao động quy định tại các\nkhoản 1, 2, 3, 4, 8 và 9 Điều 1 Thông tư này:\nCăn cứ vào hệ số lương và phụ cấp hiện hưởng quy định tại các văn bản của\ncơ quan có thẩm quyền của Đảng, Nhà nước về chế độ tiền lương đối với cán bộ,\ncông chức, viên chức và lực lượng vũ trang, mức lương cơ sở quy định tại Nghị\nđịnh số 161/2026/NĐ-CP ngày 15 tháng 5 năm 2026 của Chính phủ quy định mức\nlương cơ sở và chế độ tiền thưởng đối với cán b ộ, công chức, viên chức và lực\nlượng vũ trang (sau đây vi ết tắt là Ngh ị định số 161/2026/NĐ-CP) để tính mức\nlương, mức phụ cấp và mức tiền của hệ số chênh lệch bảo lưu (nếu có) như sau:\na) Công thức tính mức lương:\nMức lương thực\nhiện từ ngày 01\ntháng 7 năm 2026\n=\nMức lương cơ sở\n2.530.000\nđồng/tháng\nx Hệ số lương\nhiện hưởng\nb) Công thức tính mức phụ cấp:\n- Đối với các khoản phụ cấp tính theo mức lương cơ sở:\nMức phụ cấp thực\nhiện từ ngày 01\ntháng 7 năm 2026\n=\nMức lương cơ sở\n2.530.000\nđồng/tháng\nx\nHệ số phụ cấp\nhiện hưởng\n- Đối với các khoản phụ cấp tính theo % mức lương hiện hưởng cộng phụ\ncấp chức vụ lãnh đạo và phụ cấp thâm niên vượt khung (nếu có):\nMức phụ\ncấp thực\nhiện từ\nngày 01\ntháng 7\nnăm 2026\n=\nMức lương\nthực hiện\ntừ ngày 01\ntháng 7\nnăm 2026\n+\nMức phụ cấp\nchức vụ lãnh\nđạo thực hiện\ntừ ngày 01\ntháng 7 năm\n2026 (nếu có)\n+\nMức phụ cấp\nthâm niên vượt\nkhung thực hiện\ntừ ngày 01\ntháng 7 năm\n2026 (nếu có)\nx\nTỷ lệ %\nphụ cấp\nđược\nhưởng\ntheo quy\nđịnh\n- Đối với các khoản phụ cấp quy định bằng mức tiền cụ thể thì giữ nguyên\ntheo quy định hiện hành.\n4\nc) Công thức tính mức tiền của hệ số chênh lệch bảo lưu (nếu có):\nMức tiền của hệ số\nchênh lệch bảo lưu\nthực hiện từ ngày 01\ntháng 7 năm 2026\n=\nMức lương cơ sở\n2.530.000\nđồng/tháng\nx\nHệ số chênh lệch\nbảo lưu hiện\nhưởng (nếu có)\n2. Đối với đại biểu Hội đồng nhân dân các cấp quy định tại khoản 6 Điều 1\nThông tư này:\nCăn cứ vào hệ số hoạt động phí đối với đại biểu Hội đồng nhân dân các cấp\ntheo quy định của pháp luật hiện hành để tính mức hoạt động phí theo công thức sau:\nMức hoạt động phí\nthực hiện từ ngày 01\ntháng 7 năm 2026\n=\nMức lương cơ sở\n2.530.000\nđồng/tháng\nx Hệ số hoạt\nđộng phí theo\nquy định\n3. Đối với những người hoạt động không chuyên trách ở thôn, tổ dân phố\nquy định tại khoản 5 Điều 1 Thông tư này, quỹ phụ cấp được ngân sách nhà nước\nkhoán đối với mỗi thôn, tổ dân phố theo quy định của Chính phủ được tính theo\nmức lương cơ sở 2.530.000 đồng/tháng.\n4. Đối với người làm việc trong tổ chức cơ yếu quy định tại khoản 7 Điều 1\nThông tư này:\na) Người làm việc trong tổ chức cơ yếu thuộc phạm vi quản lý của Bộ Quốc\nphòng và Bộ Công an thực hiện theo hướng dẫn của Bộ trưởng Bộ Quốc phòng\nvà Bộ trưởng Bộ Công an;\nb) Người làm việc trong tổ chức cơ yếu trong các cơ quan Đảng, Nhà nước,\ntổ chức chính trị - xã hội (không thuộc phạm vi quản lý của Bộ Quốc phòng và\nBộ Công an), thực hiện tính mức lương, mức phụ cấp và mức tiền của hệ số chênh\nlệch bảo lưu (nếu có) theo cách tính quy định tại khoản 1 Điều 3 Thông tư này."
+    },
+    {
+      "rank": 7,
+      "document_id": null,
+      "citation": "248/2025/NĐ-CP, Điều 4. Mức lương cơ bản",
+      "excerpt": "Điều 4. Mức lương cơ bản\n1. Mức lương cơ bản của Thành viên hội đồng, Kiểm soát viên chu yên trách\nđược quy định như sau:\nBẢNG MỨC LƯƠNG CƠ BẢN\nĐơn vị: triệu đồng/tháng\nNhóm I Nhóm II Mức lương\ncơ bản\nChức danh Mức\n1\nMức\n2\nMức\n3\nMức\n4\nMức\n1\nMức\n2\nMức\n3\n1. Chủ tịch Hội đồng thành\nviên (hoặc Chủ tịch công ty),\nChủ tịch Hội đồng quản trị\n80 70 62 53 48 42 37\n2. Trưởng Ban kiểm soát 66 58 51 44 41 36 31\n3. Thành viên Hội đồng thành\nviên, Thành viên Hội đồng\nquản trị, Kiểm soát viên\n65 57 50 43 40 35 30\n2. Việc áp dụng các mức lương cơ bản của nhóm I và nhóm II được  thực hiện\ntheo quy định tại Phụ lục II ban hành kèm theo Nghị định này."
+    },
+    {
+      "rank": 8,
+      "document_id": null,
+      "citation": "7/2026/TT-BNV, Điều 5. Trách nhiệm thực hiện",
+      "excerpt": "Điều 5. Trách nhiệm thực hiện\n1. Chủ đầu tư hoặc bên mời thầu căn cứ vào quy mô, tính chất của gói\nthầu, giá gói thầu, địa điểm thực hiện dịch vụ t ư vấn và mức lương của chuyên\ngia tư vấn theo tháng, tuần, ngày, giờ quy định tại Điều 3 Thông tư này  để xác\nđịnh mức lương cụ thể làm cơ sở lập, thẩm định, phê duyệt dự toán gói thầu áp\ndụng loại hợp đồng theo thời gian, hợp đồng trọn gói, hợp đồng theo đơn giá cố\nđịnh, hợp đồng theo đơn giá điều chỉnh, hợp đồng theo chi phí cộng phí, hợp\nđồng theo kết quả đầu ra hoặc hợp đồng hỗn hợp, đảm bảo tiết kiệm, hiệu quả.\n2. Đối với gói thầu đã được lập, thẩm định, phê duyệt dự toán trước khi\nThông tư này có hiệu lực thi hành thì việc điều chỉnh dự toán gói thầu và xử lý\ntình huống trong đấu thầu do  quy định tạ i Thông tư này được thực hiện theo\nquy định của Luật Đấu thầu và các văn bản có liên quan.\n4\n3. Bộ trưởng, Thủ trưởng cơ quan ngang bộ , Chủ tịch Ủy ban nhân dân\ncác tỉnh, thành phố trực thuộc trung ương, các cơ quan, tổ chức, đơn vị, doanh\nnghiệp, cá nhân có liên quan có trách nhiệm tổ chức thực hiện Thông tư này.\nTrong quá trình thực hiện nếu có vướng mắc, đề nghị các cơ quan, đơn vị,\ncá nhân phản ánh về Bộ Nội vụ để nghiên cứu giải quyết./."
+    },
+    {
+      "rank": 9,
+      "document_id": null,
+      "citation": "248/2025/NĐ-CP, Điều 9. Trách nhiệm thực hiện",
+      "excerpt": "Điều 9. Trách nhiệm thực hiện\n1. Hội đồng thành viên hoặc Chủ tịch công ty tại doanh nghiệp, tổ chức tín\ndụng do Nhà nước nắm giữ 100% vốn điều lệ có trách nhiệm:\na) Hằng năm, quyết định mức tiền lương, thù lao thực hiện năm t rước của\nThành viên hội đồng trước ngày 15 tháng 4, mức tiền thưởng năm trước trước\nngày 30 tháng 6; xác định và báo cáo cơ quan đại diện chủ sở hữ u (đồng thời gửi\nBộ Nội vụ để theo dõi, giám sát chung) mức tiền lương, thù lao,  tiền thưởng năm\ntrước của Trưởng Ban kiểm soát, Kiểm soát viên cùng thời điểm q uyết định tiền\nlương, thù lao, tiền thưởng  của Thành viên hội đồng;\nb) Trong vòng 15 ngày kể từ ngày quyết định mức tiền lương, thù  lao, tiền\nthưởng của Thành viên hội đồng thì gửi báo cáo (kèm theo thông tin về các chỉ\ntiêu sản xuất, kinh doanh kế hoạch và thực hiện của doanh nghiệ p theo quy định\nCÔNG BÁO/Số 1413 + 1414/Ngày 30-9-2025 9\ntại khoản 3 Điều 3 Nghị định này) về cơ quan đại diện chủ sở hữ u và Bộ Nội vụ\nđể giám sát, kiểm tra.\n2. Trưởng Ban kiểm soát, Kiểm soát viên tại doanh nghiệp, tổ ch ức tín dụng\ndo Nhà nước nắm giữ 100% vốn điều lệ có trách nhiệm giúp cơ qua n đại diện chủ\nsở hữu kiểm tra, giám sát việc thực hiện của Hội đồng thành viê n hoặc Chủ tịch\ncông ty theo quy định của pháp luật và quy định tại Nghị định n ày và định kỳ báo\ncáo cơ quan đại diện chủ sở hữu. Trường hợp phát hiện nội dung không đúng quy\nđịnh thì đề nghị Hội đồng thành viên hoặc Chủ tịch công ty chỉ đạo sửa đổi, điều\nchỉnh. Nếu đề nghị không được thự c hiện thì báo cáo cơ quan đại  diện chủ sở hữu\nbiết để kịp thời xử lý.\n3. Người đại diện vốn có trách nhiệm:\na) Tham gia ý kiến, biểu quyết trong Hội đồng quản trị, Hội đồn g thành viên\nhoặc Đại hội đồng cổ đông về mức tiền lương, thù lao, tiền thưở ng thực hiện của\nngười đại diện vốn;\nb) Trong vòng 15 ngày kể từ ngày Hội đồng quản trị, Hội đồng th ành viên\nhoặc Đại hội đồng cổ đông thông qua mức tiền lương, thù lao, ti ền thưởng của\nThành viên hội đồng, người đại di ện vốn thì gửi báo cáo (kèm th eo thông tin về\ncác chỉ tiêu sản xuất, kinh doanh kế hoạch và thực hiện của doa nh nghiệp, tổ\nchức tín dụng theo quy định tại khoản 3 Điều 3 Nghị định này) v ề cơ quan đại\ndiện chủ sở hữu và Bộ Nội vụ để giám sát, kiểm tra.\n4. Cơ quan đại diện chủ sở hữu có trách nhiệm:\na) Hằng năm, cho ý kiến và thông báo để doanh nghiệp chi trả ti ền lương, thù\nlao, tiền thưởng đối với Kiểm so át viên tại doanh nghiệp, tổ ch ức tín dụng do Nhà\nnước nắm giữ 100% vốn điều lệ trong vòng 15 ngày kể từ ngày Hội  đồng thành\nviên hoặc Chủ tịch công ty báo cáo;\nb) Tiếp nhận, rà soát báo cáo của Hội đồng thành viên hoặc Chủ tịch công ty,\nngười đại diện vốn về mức tiền lương, thù lao, tiền thưởng của Thành viên hội\nđồng. Trường hợp phát hiện nội d ung không đúng quy định thì yêu  cầu Hội đồng\nthành viên, Chủ tịch công ty sửa đổi, điều chỉnh; chỉ đạo người  đại diện vốn tham\ngia ý kiến để Hội đồng thành viên, Hội đồng quản trị hoặc Đại h ội đồng cổ đông\nsửa đổi, điều chỉnh bảo đảm quy định tại Nghị định này;\nc) Tổ chức thực hiện và kiểm tra, giám sát việc thực hiện các q uy định của\npháp luật về tiền lương, thù la o, tiền thưởng tại các doanh ngh iệp nhà nước, tổ\nchức tín dụng thuộ c quyền quản lý.\nCÔNG BÁO/Số 1413 + 1414/Ngày 30-9-2025 10\n5. Bộ Nội vụ có trách nhiệm:\na) Chủ trì, phối hợp với các bộ, ngành liên quan trình Chính ph ủ xem xét,\nđiều chỉnh mức lương cơ bản cho phù hợp với thực tế của từng th ời kỳ;\nb) Chủ trì, phối hợp với các bộ , ngành liên quan trình Chính ph ủ quy định về\ntiền lương, thù lao, tiền thưởng c ủa người đại diện chủ sở hữu trực tiếp, người đại\ndiện phần vốn nhà nước và Kiểm soát viên tại doanh nghiệp nhà n ước; tổ chức tín\ndụng do Nhà nước nắm giữ trên 50% vốn điều lệ;\nc) Phối hợp với các bộ, ngành liên quan và cơ quan đại diện chủ  sở hữu tổ\nchức kiểm tra, giám sát việc thực hiện các quy định của pháp lu ật về tiền lương,\nthù lao, tiền thưởng tại các doa nh nghiệp nhà nước, tổ chức tín  dụng."
+    },
+    {
+      "rank": 10,
+      "document_id": null,
+      "citation": "248/2025/NĐ-CP, Điều 12. Tổ chức thực hiện",
+      "excerpt": "Điều 12. Tổ chức thực hiện\n1. Cơ quan đại diện chủ sở hữu tổ chức quản lý tiền lương, thù lao, tiền thưởng\nđối với doanh nghiệp, tổ chức tín dụng được giao thực hiện quyề n đại diện chủ sở\nhữu theo quy định tại Nghị định này.\n2. Quỹ tài chính nhà nước ngoài  ngân sách đang áp dụng cơ chế t iền lương\ntheo mô hình công ty trách nhiệm hữu hạn một thành viên do nhà nước nắm giữ\n100% vốn điều lệ theo quy định của  cơ quan nhà nước có thẩm quy ền thì căn cứ\nquy định tại khoản 1, khoản 3, khoả n 4 Điều 24 Luật Quản lý và đầu tư vốn nhà\nnước tại doanh nghiệp và quy định tại Nghị định này để thực hiệ n chế độ tiền\nlương đối với người lao động, Tổng Giám đốc, Giám đốc, Phó Tổng  giám đốc,\nPhó Giám đốc, Kế toán trưởng và chế độ tiền lương, thù lao, tiề n thưởng đối với\nChủ tịch, thành viên  Hội đồng quản lý, Hội đồng thành viên, Hội  đồng quản trị\nvà Kiểm soát viên, trong đó mức lương cơ bản được xác định theo  lĩnh vực tài\nchính trong nhóm ngành, lĩnh vực hoạt động số 7 tại điểm a khoả n 2 Mục II Phụ\nlục II ban hành kèm theo Nghị định này; chỉ tiêu lợi nhuận được  tính theo lợi\nnhuận trước thuế hoặc tổng doanh thu trừ tổng chi phí; đối với Quỹ tài chính\ntheo mô hình Hội đồng quản lý thì Hội đồng quản lý được xác địn h tiền lương,\nthù lao tương đương Hộ i đồng thành viên.\n3. Sở giao dịch chứng khoán, Tổng công ty Lưu ký và Bù trừ chứn g khoán\nViệt Nam khi xác định mức tiền lương, thù lao tối đa của Thành viên hội đồng,\nKiểm soát viên, nếu có yếu tố khách quan quy định tại Phụ lục I  ban hành kèm\ntheo Nghị định này và điểm b, điểm c khoản 2 Điều 6 Nghị định số 59/2021/NĐ-CP\nngày 18 tháng 6 năm 2021 của Chí nh phủ quy định một số nội dung  đặc thù về cơ\nchế quản lý tài chính, đánh giá hiệu quả hoạt động đối với Sở G iao dịch chứng\nkhoán Việt Nam, Tổng công ty Lưu ký và Bù trừ chứng khoán Việt Nam, làm biến\nđộng doanh thu tăng trên 7% hoặc giảm trên 3% thì loại trừ phần  doanh thu tăng\ntrên 7% (đối với trường hợp doanh thu tăng trên 7%) hoặc được t ính phần doanh\nthu giảm trên 3% (đối với trườ ng hợp doanh thu giảm trên 3%) và o doanh thu để\nxác định lợi nhuận làm căn cứ xác định mức tiền lương, thù lao tối đa của Thành\nviên hội đồng, Kiểm soát viên.\n4 .  B ả o  h i ể m  t i ề n  g ử i  V i ệ t  N a m ,  N g â n  h à n g  P h á t  t r i ể n  V i ệ t  N a m ,  Ngân hàng\nChính sách xã hội căn cứ quy định tại khoản 1, khoản 3, khoản 4 Điều 24 Luật Quản\nlý và đầu tư vốn nhà nước tại doanh nghiệp và quy định tại Nghị  định này để thực\nhiện chế độ tiền lương đối với người lao động, Tổng Giám đốc, Phó Tổng giám đốc,\nKế toán trưởng và chế độ tiền lương, thù lao, tiền thưởng đối v ới Thành viên hội\nCÔNG BÁO/Số 1413 + 1414/Ngày 30-9-2025 13\nđồng, Kiểm soát viên, trong đó khi thực hiện chế độ tiền lương, thù lao thì chỉ tiêu lợi\nnhuận được thay bằng chỉ tiêu tổng doanh thu trừ tổng chi phí; nếu có yếu tố khách\nquan quy định tại Phụ lục I và yếu tố đặc thù quy định tại Phụ lục III ban hành kèm\ntheo Nghị định này tác động trực tiếp làm tăng hoặc giảm tổng doanh thu, tổng chi phí\nthì Hội đồng quản trị Bảo hiểm tiền gửi Việt Nam, Ngân hàng Phát triển Việt Nam, Ngân\nhàng Chính sách xã hội tính toán loại trừ, bảo đảm tiền lương, thù lao gắn với hiệu\nquả sản xuất, kinh doanh thực sự của đơn vị. Giao Hội đồng quản trị Ngân hàng Phát\ntriển Việt Nam, Ngân hàng Chính sách xã hội hằng năm xem xét, quyết định và chịu\ntrách nhiệm về mức tiền lương, thù lao, tiền thưởng của Chủ tịc h, thành viên Hội\nđồng quản trị, Trưởng Ban kiểm soát, Kiểm soát viên của Ngân hàng.\n5. Tổng giám đốc Đài Truyền hình Việt Nam căn cứ quy định của p háp luật về\ntiền lương đối với doanh nghiệp do Nhà nước nắm giữ 100% vốn đi ều lệ và pháp\nluật có liên quan để thực hiện chế độ tiền lương đối với viên chức, người lao động,\nTổng Giám đốc, Phó Tổng giám đốc g ắn với năng suất lao động, hi ệu quả hoạt\nđộng, bảo đảm doanh thu bù đắp chi phí sản xuất của Đài Truyền hình Việt Nam.\n6. Tổ chức chính trị, Mặt trận Tổ quốc Việt Nam và các tổ chức thành viên\nđược áp dụng quy định tại Nghị địn h này để"
+    }
+  ],
+  "displayed_evidence_count": 10
+}

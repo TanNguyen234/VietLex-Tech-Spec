@@ -1,0 +1,756 @@
+from __future__ import annotations
+
+import argparse
+import asyncio
+import dataclasses
+import hashlib
+import sys
+import time
+from pathlib import Path
+from typing import Any, Dict
+
+from app.config import get_settings
+from app.evaluation.answer_metrics import (
+    aggregate_answer_metrics,
+    calculate_case_answer_metrics,
+)
+from app.evaluation.capacities import build_stage_capacities
+from app.evaluation.latency_metrics import calculate_stage_latency_summary
+from app.evaluation.profiles import EvaluationProfile, get_evaluation_profile
+from app.evaluation.reporting import write_run_report
+from app.evaluation.retrieval_metrics import (
+    aggregate_retrieval_metrics,
+    calculate_case_retrieval_metrics,
+    calculate_stage_survival_rates,
+)
+from app.evaluation.run_manifest import (
+    atomic_write_json,
+    build_run_configuration,
+    calculate_configuration_fingerprint,
+    collect_artifact_files,
+    create_run_manifest,
+    generate_unique_run_id,
+    prepare_run_directory,
+)
+from app.evaluation.schemas import (
+    AnswerCaseResult,
+    CandidateChunk,
+    GoldenCase,
+    RetrievalCaseResult,
+    RetrievalStageTrace,
+)
+from run_retrieval_eval import (
+    DEFAULT_DATASET_PATH,
+    DEFAULT_SIDECAR_PATH,
+    DEFAULT_SUMMARY_PATH,
+    evaluate_single_retrieval_case,
+    perform_pre_execution_validation,
+)
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+PROJECT_ROOT = Path(__file__).resolve().parent
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="Run deterministic full pipeline answer evaluation over VietLex legal dataset."
+    )
+    parser.add_argument("--dataset", type=Path, default=DEFAULT_DATASET_PATH)
+    parser.add_argument("--sidecar", type=Path, default=DEFAULT_SIDECAR_PATH)
+    parser.add_argument(
+        "--audit-summary",
+        type=Path,
+        default=None,
+        help=(
+            "Optional machine-readable audit summary matching --sidecar. "
+            "The canonical evaluation manifest is used only with the default sidecar."
+        ),
+    )
+    parser.add_argument(
+        "--profile",
+        choices=["legacy", "separated_no_intent", "separated_intent"],
+        default="separated_intent",
+        help="Evaluation profile (default: separated_intent)",
+    )
+    parser.add_argument(
+        "--rewrite",
+        choices=["off", "on"],
+        default="off",
+        help="Query rewriting mode (default: off)",
+    )
+    parser.add_argument(
+        "--guardrails",
+        choices=["off", "shadow", "enforce"],
+        default="off",
+        help="Guardrails mode (default: off)",
+    )
+    parser.add_argument(
+        "--reranker",
+        choices=["current", "pinecone-only", "qdrant-only"],
+        default="current",
+        help="Reranker provider selection (default: current)",
+    )
+    parser.add_argument(
+        "--backend",
+        choices=[
+            "production",
+            "pinecone-v1",
+            "qdrant-v2-parallel",
+            "vertex-qdrant-v3",
+        ],
+        default="production",
+        help="Explicit retrieval backend identity (default: production)",
+    )
+    parser.add_argument(
+        "--ranking",
+        choices=["raw-rrf", "dbsf", "rrf-dbsf", "qdrant-colbert"],
+        default="raw-rrf",
+        help="Vertex/Qdrant v3 ranking mode (default: raw-rrf)",
+    )
+    parser.add_argument(
+        "--concurrency", type=int, default=1, help="Pipeline concurrency (default: 1)"
+    )
+    parser.add_argument(
+        "--limit", type=int, default=None, help="Limit maximum number of cases to evaluate"
+    )
+    parser.add_argument(
+        "--case-ids",
+        nargs="+",
+        default=None,
+        help="Evaluate exactly these case IDs in the supplied order",
+    )
+    parser.add_argument(
+        "--verified-only",
+        action="store_true",
+        help="Filter evaluation to cases with verified gold evidence in the current corpus",
+    )
+    parser.add_argument(
+        "--gold-policy",
+        choices=["all-required-verified", "any-verified", "all-verified", "none"],
+        default="all-required-verified",
+        help="Selection policy for verified cases (default: all-required-verified)",
+    )
+    parser.add_argument(
+        "--judge",
+        choices=["none", "ragas"],
+        default="none",
+        help="LLM judge mode (default: none)",
+    )
+    parser.add_argument(
+        "--retrieval-run",
+        type=Path,
+        default=None,
+        help="Passing immutable retrieval run required for Ragas or experimental backends",
+    )
+    parser.add_argument(
+        "--require-clean-git",
+        action="store_true",
+        help="Require clean git status before execution",
+    )
+    parser.add_argument("--run-id", type=str, default=None, help="Optional custom Run ID")
+    return parser
+
+
+def resolve_audit_summary_path(
+    sidecar_path: Path,
+    explicit_summary: Path | None,
+) -> Path | None:
+    if explicit_summary is not None:
+        return Path(explicit_summary).resolve()
+    if sidecar_path == DEFAULT_SIDECAR_PATH.resolve():
+        return DEFAULT_SUMMARY_PATH.resolve()
+    return None
+
+
+def format_candidate_context(chunk: CandidateChunk) -> str:
+    parts = []
+    if chunk.citation:
+        parts.append(f"Dẫn chiếu: {chunk.citation}")
+    elif chunk.document_number:
+        cite_str = f"Văn bản {chunk.document_number}"
+        if chunk.article:
+            cite_str = f"{chunk.article} {cite_str}"
+        if chunk.clause:
+            cite_str = f"{chunk.clause} {cite_str}"
+        parts.append(f"Dẫn chiếu: {cite_str}")
+
+    if chunk.title:
+        parts.append(f"Tiêu đề: {chunk.title}")
+    if chunk.source_url:
+        parts.append(f"URL: {chunk.source_url}")
+    parts.append(f"Nội dung: {chunk.text}")
+    return "\n".join(parts)
+
+
+def _chat_retrieval_result(case: GoldenCase, metadata: dict) -> RetrievalCaseResult:
+    """Adapt the already observed corpus retrieval; calculate metrics offline."""
+    from app.evaluation.schemas import RetrievalStageTrace
+
+    outcome = metadata.get("retrieval_outcome")
+    trace = (outcome.diagnostics.get("stage_trace") if outcome is not None else None)
+    return RetrievalCaseResult(
+        case_id=case.case_id, question=case.question, question_type=case.question_type,
+        answerable=case.answerable, original_query=case.question,
+        query_used=metadata.get("rewritten_query") or case.question,
+        status=metadata.get("retrieval_status", "not_run"),
+        retrieved_evidence=[CandidateChunk(
+            document_id=e.document_id, document_number=e.document_number, title=e.title,
+            source_url=e.source_url, citation=e.citation, article=e.article, clause=e.clause,
+            text=e.text, token_count=e.token_count,
+        ) for e in (outcome.evidence if outcome is not None else [])],
+        stage_trace=trace if isinstance(trace, RetrievalStageTrace) else RetrievalStageTrace(),
+        latency={k: metadata[k] for k in ("t_rewrite", "t_retrieval") if isinstance(metadata.get(k), (int, float))},
+        error=outcome.error if outcome is not None else None,
+        retrieval_diagnostics={"metric_scope": "corpus_retrieval_before_chat_augmentation"},
+    )
+
+
+def _prompt_evidence(contexts: list[str]) -> list[dict]:
+    from app.services.evidence_presenter import present_context
+
+    receipts = []
+    for context in contexts:
+        view = present_context(context)
+        receipts.append({
+            "sha256": hashlib.sha256(str(context).encode("utf-8")).hexdigest(),
+            "whitespace_tokens": len(context.split()), "document_id": view.document_id,
+            "document_number": view.document_number, "citation": view.citation,
+            "source_url": view.source_url, "source_type": view.source_type,
+        })
+    return receipts
+
+
+async def run_stage_a_online(
+    case: GoldenCase,
+    settings: Any,
+    guardrails_mode: str,
+    effective_profile: EvaluationProfile,
+    backend: str = "production",
+    ranking: str = "raw-rrf",
+    precomputed_retrieval: RetrievalCaseResult | None = None,
+) -> Dict[str, Any]:
+    if getattr(settings, "SERVERLESS_ONLINE_ONLY", False):
+        from app.services.serverless_guardrails import check_input_guardrails, check_output_guardrails
+    else:
+        from app.services.guardrails import check_input_guardrails, check_output_guardrails
+    from app.services.rag_pipeline import generate_response_with_metadata
+
+    started = time.perf_counter()
+    input_safe = True
+    output_safe = True
+    input_guardrail_latency = 0.0
+    output_guardrail_latency = 0.0
+    online_status = "ok"
+    technical_errors: Dict[str, str] = {}
+    capacities = build_stage_capacities(effective_profile, settings)
+
+    # Input guardrails execution
+    if guardrails_mode in ("shadow", "enforce"):
+        gr_start = time.perf_counter()
+        try:
+            input_safe, rejection = await check_input_guardrails(case.question)
+            input_guardrail_latency = time.perf_counter() - gr_start
+            if not input_safe and guardrails_mode == "enforce":
+                online_status = "input_guardrail_rejected"
+                # STRICT REQUIREMENT: Input guardrail rejection MUST NOT execute retrieval!
+                empty_retrieval_res = RetrievalCaseResult(
+                    case_id=case.case_id,
+                    question=case.question,
+                    original_query=case.question,
+                    question_type=case.question_type,
+                    answerable=case.answerable,
+                    query_used=case.question,
+                    status="input_guardrail_rejected",
+                    retrieved_evidence=[],
+                    stage_trace=RetrievalStageTrace(),
+                    latency={"t_total": round(time.perf_counter() - started, 4)},
+                    metrics=calculate_case_retrieval_metrics(
+                        case.gold_evidence,
+                        [],
+                        stage_trace=RetrievalStageTrace(),
+                        capacities=capacities,
+                        status=online_status,
+                    ),
+                )
+                return {
+                    "case_id": case.case_id,
+                    "raw_response": rejection,
+                    "final_response": rejection,
+                    "contexts": [],
+                    "input_safe": False,
+                    "output_safe": False,
+                    "status": online_status,
+                    "technical_errors": technical_errors,
+                    "latency": {"t_total": round(time.perf_counter() - started, 4)},
+                    "retrieval_result": empty_retrieval_res,
+                }
+        except Exception as error:
+            input_guardrail_latency = time.perf_counter() - gr_start
+            input_safe = False
+            message = f"{type(error).__name__}: {error}"
+            technical_errors["input_guardrail"] = message
+            if guardrails_mode == "enforce":
+                online_status = "input_guardrail_error"
+                fallback = (
+                    "Hệ thống chưa thể xử lý yêu cầu do guardrail error."
+                )
+                empty_retrieval_res = RetrievalCaseResult(
+                    case_id=case.case_id,
+                    question=case.question,
+                    original_query=case.question,
+                    question_type=case.question_type,
+                    answerable=case.answerable,
+                    query_used=case.question,
+                    status=online_status,
+                    retrieved_evidence=[],
+                    stage_trace=RetrievalStageTrace(),
+                    latency={
+                        "t_total": round(time.perf_counter() - started, 4)
+                    },
+                    metrics=calculate_case_retrieval_metrics(
+                        case.gold_evidence,
+                        [],
+                        stage_trace=RetrievalStageTrace(),
+                        capacities=capacities,
+                        status=online_status,
+                    ),
+                    error=message,
+                    technical_errors=technical_errors,
+                )
+                return {
+                    "case_id": case.case_id,
+                    "raw_response": fallback,
+                    "final_response": fallback,
+                    "contexts": [],
+                    "input_safe": False,
+                    "output_safe": False,
+                    "status": online_status,
+                    "technical_errors": technical_errors,
+                    "latency": {
+                        "t_input_guardrail": round(
+                            input_guardrail_latency, 4
+                        ),
+                        "t_total": round(
+                            time.perf_counter() - started, 4
+                        ),
+                    },
+                    "retrieval_result": empty_retrieval_res,
+                }
+
+    chat_service = (backend == "production" and precomputed_retrieval is None
+                    and getattr(settings, "USE_LEGACY_FREE_PIPELINE", None) is not None)
+    pipeline_diagnostics = {}
+    if chat_service:
+        from app.services.rag_pipeline import run_advanced_rag
+        from app.services.runtime_errors import RetrievalPipelineError
+        from app.services.provider_http_budget import ProviderHttpAttemptBudgetExceeded
+
+        try:
+            bot_response, contexts, metadata = await run_advanced_rag(
+                case.question, rewrite_mode=effective_profile.rewrite_mode, profile=effective_profile,
+            )
+        except (RetrievalPipelineError, ProviderHttpAttemptBudgetExceeded) as error:
+            online_status = error.status if isinstance(error, RetrievalPipelineError) else "generation_error"
+            technical_errors["pipeline"] = type(error).__name__
+            bot_response, contexts = "Hệ thống gặp lỗi kỹ thuật khi xử lý yêu cầu.", []
+            metadata = {"retrieval_status": online_status, "generation_status": "error"}
+        retrieval_res = _chat_retrieval_result(case, metadata)
+        generation_metadata = (metadata.get("provider_usage") or {}).get("answer_generation") or {
+            "provider": metadata.get("observed_provider", "unobserved"),
+            "model": metadata.get("observed_model", "unobserved"),
+            "observed": False, "status": metadata.get("generation_status", "not_run"),
+        }
+        if metadata.get("generation_status") not in {"success", "no_contexts"} and online_status == "ok":
+            online_status = "generation_error"
+            technical_errors["generation"] = str(metadata.get("generation_status", "unobserved"))
+        diagnostics = metadata.get("retrieval_diagnostics") or {}
+        pipeline_diagnostics = {k: diagnostics[k] for k in (
+            "backend", "ranking", "context_stages", "context_profile", "source_quality", "situation_filter",
+            "article_expansion", "v3_article_expansion", "topic_coverage",
+        ) if k in diagnostics}
+        pipeline_diagnostics["corpus_retrieval_profile"] = effective_profile.to_dict()
+        pipeline_diagnostics["pipeline"] = "chat_service_v1"
+    else:
+        if precomputed_retrieval is not None:
+            retrieval_res = precomputed_retrieval
+        elif backend == "production":
+            retrieval_res = await evaluate_single_retrieval_case(case, settings, effective_profile)
+        else:
+            retrieval_res = await evaluate_single_retrieval_case(
+                case, settings, effective_profile, backend=backend, ranking=ranking,
+            )
+        from app.services.rag_pipeline import fit_contexts_under_budget
+        contexts = fit_contexts_under_budget(
+            [format_candidate_context(c) for c in retrieval_res.retrieved_evidence],
+            max_evidence=len(retrieval_res.retrieved_evidence),
+            max_tokens=getattr(settings, "LLM_CONTEXT_MAX_TOKENS", effective_profile.final_context_token_limit),
+        )
+        rewritten_q = retrieval_res.rewritten_query or retrieval_res.query_used or case.question
+        generation = await generate_response_with_metadata(case.question, rewritten_q, contexts)
+        bot_response = generation.text
+        generation_metadata = {
+            "provider": generation.observed_provider, "model": generation.observed_model,
+            "observed": generation.observed, "status": generation.status,
+            "finish_reason": generation.finish_reason, "prompt_token_count": generation.prompt_token_count,
+            "output_token_count": generation.output_token_count, "thought_token_count": generation.thought_token_count,
+            "total_token_count": generation.total_token_count, "max_output_tokens": generation.max_output_tokens,
+            "thinking_level": generation.thinking_level,
+        }
+    technical_errors.update(retrieval_res.technical_errors)
+    if online_status == "ok" and retrieval_res.status in {"no_candidate", "retrieval_error", "reranker_error", "partial_retrieval_error"}:
+        online_status = retrieval_res.status
+        if chat_service and retrieval_res.error:
+            technical_errors["retrieval"] = retrieval_res.error
+
+    # Output guardrails execution
+    final_response = bot_response
+    if guardrails_mode in ("shadow", "enforce"):
+        gr_start = time.perf_counter()
+        try:
+            output_safe, fallback_response = await check_output_guardrails(
+                bot_response, contexts, case.question
+            )
+            output_guardrail_latency = time.perf_counter() - gr_start
+            if not output_safe and guardrails_mode == "enforce":
+                online_status = "output_guardrail_rejected"
+                final_response = fallback_response
+        except Exception as error:
+            output_guardrail_latency = time.perf_counter() - gr_start
+            output_safe = False
+            technical_errors["output_guardrail"] = (
+                f"{type(error).__name__}: {error}"
+            )
+            if guardrails_mode == "enforce":
+                online_status = "output_guardrail_error"
+
+    t_total = time.perf_counter() - started
+    raw_latency = {
+        **retrieval_res.latency,
+        **({k: v for k, v in metadata.items() if k.startswith("t_")} if chat_service else {}),
+        "t_input_guardrail": input_guardrail_latency,
+        "t_output_guardrail": output_guardrail_latency,
+        "t_total": t_total,
+    }
+
+    numeric_latency = {
+        k: round(float(v), 4)
+        for k, v in raw_latency.items()
+        if isinstance(v, (int, float)) and not isinstance(v, bool)
+    }
+
+    return {
+        "case_id": case.case_id,
+        "raw_response": bot_response,
+        "final_response": final_response,
+        "generation_metadata": generation_metadata,
+        "contexts": contexts,
+        "input_safe": input_safe,
+        "output_safe": output_safe,
+        "status": online_status,
+        "technical_errors": technical_errors,
+        "latency": numeric_latency,
+        "retrieval_result": retrieval_res,
+        "prompt_evidence": _prompt_evidence(contexts),
+        "pipeline_diagnostics": pipeline_diagnostics,
+    }
+
+
+async def run_stage_b_offline(
+    case: GoldenCase,
+    stage_a_result: Dict[str, Any],
+    settings: Any,
+    judge_mode: str,
+) -> AnswerCaseResult:
+    raw_response = stage_a_result["raw_response"]
+    final_response = stage_a_result["final_response"]
+    contexts = stage_a_result["contexts"]
+    latency = stage_a_result["latency"]
+    retrieval_case_res: RetrievalCaseResult = stage_a_result["retrieval_result"]
+    status = stage_a_result.get("status", "ok")
+
+    diagnostics = stage_a_result.get("pipeline_diagnostics", {})
+    if diagnostics.get("pipeline") == "chat_service_v1":
+        profile = EvaluationProfile(**diagnostics["corpus_retrieval_profile"])
+        retrieval_case_res.metrics = calculate_case_retrieval_metrics(
+            case.gold_evidence, retrieval_case_res.retrieved_evidence,
+            stage_trace=retrieval_case_res.stage_trace,
+            capacities=build_stage_capacities(profile, settings), status=retrieval_case_res.status,
+        )
+
+    det_metrics = calculate_case_answer_metrics(
+        pred_response=final_response,
+        ref_answer=case.reference_answer,
+        question_type=case.question_type,
+        retrieved_contexts=contexts,
+        expected_numbers=case.expected_numbers,
+        expected_dates=case.expected_dates,
+        expected_entities=case.expected_entities,
+        status=status,
+    )
+
+    ragas_scores = None
+    ragas_error = None
+    technical_errors = dict(stage_a_result.get("technical_errors", {}))
+
+    if (
+        judge_mode == "ragas"
+        and det_metrics["applicable"]
+        and contexts
+        and not det_metrics.get("is_refusal")
+    ):
+        try:
+            from run_eval_suite import build_ragas_evaluator
+
+            evaluator = build_ragas_evaluator(settings, judge_concurrency=1)
+            ragas_scores = await evaluator(
+                query=case.question,
+                response=final_response,
+                contexts=contexts,
+                reference=case.reference_answer,
+            )
+        except Exception as err:
+            ragas_error = f"{type(err).__name__}: {err}"
+            technical_errors["judge"] = ragas_error
+
+    return AnswerCaseResult(
+        case_id=case.case_id,
+        question=case.question,
+        question_type=case.question_type,
+        answerable=case.answerable,
+        retrieval_result=retrieval_case_res,
+        raw_response=raw_response,
+        final_response=final_response,
+        generation_metadata=stage_a_result.get("generation_metadata", {}),
+        prompt_evidence=stage_a_result.get("prompt_evidence", []),
+        pipeline_diagnostics=diagnostics,
+        input_safe=stage_a_result["input_safe"],
+        output_safe=stage_a_result["output_safe"],
+        refusal_category=det_metrics["refusal_category"],
+        latency=latency,
+        metrics=det_metrics,
+        ragas_metrics=ragas_scores,
+        error=(
+            "; ".join(
+                [
+                    *technical_errors.values(),
+                ]
+            )
+            or None
+        ),
+        status=status,
+        technical_errors=technical_errors,
+    )
+
+
+async def run_answer_evaluation(arguments=None) -> Dict[str, Any]:
+    args = arguments or build_parser().parse_args()
+    if args.concurrency <= 0:
+        raise ValueError("concurrency must be positive.")
+    if args.case_ids and args.limit is not None:
+        raise ValueError("--case-ids and --limit cannot be used together.")
+
+    settings = get_settings()
+    if args.guardrails in {"shadow", "enforce"} and not getattr(settings, "SERVERLESS_ONLINE_ONLY", False):
+        from app.services.guardrails import warm_guardrails
+
+        await warm_guardrails()
+    dataset_path = Path(args.dataset).resolve()
+    sidecar_path = Path(args.sidecar).resolve()
+    summary_path = resolve_audit_summary_path(
+        sidecar_path,
+        args.audit_summary,
+    )
+
+    base_profile = get_evaluation_profile(args.profile)
+    effective_profile = dataclasses.replace(
+        base_profile,
+        rewrite_mode=args.rewrite,
+        reranker_mode=args.reranker,
+    )
+
+    # Perform shared pre-execution validation
+    all_cases, selection, sidecar, audit_summary = perform_pre_execution_validation(
+        dataset_path=dataset_path,
+        sidecar_path=sidecar_path,
+        summary_path=summary_path,
+        gold_policy=args.gold_policy,
+        verified_only=args.verified_only,
+        require_clean_git=args.require_clean_git,
+        limit=args.limit,
+        requested_case_ids=args.case_ids,
+    )
+
+    if args.verified_only and selection.selected_case_count == 0:
+        raise ValueError("Cannot execute answer evaluation: selected case count is ZERO.")
+
+    cases = selection.selected_cases
+    selected_case_ids = selection.selected_case_ids
+
+    retrieval_run = getattr(args, "retrieval_run", None)
+    precomputed_retrieval: dict[str, RetrievalCaseResult] = {}
+    if args.judge == "ragas" or args.backend != "production":
+        if retrieval_run is None:
+            raise ValueError(
+                "--retrieval-run is required before Ragas or experimental answer evaluation"
+            )
+        from app.evaluation.retrieval_gate import validate_retrieval_run
+        from app.evaluation.run_manifest import calculate_dataset_sha256
+
+        bound_retrieval = validate_retrieval_run(
+            Path(retrieval_run),
+            expected_backend=args.backend,
+            expected_ranking=args.ranking,
+            expected_dataset_sha256=(
+                calculate_dataset_sha256(dataset_path) or "missing"
+            ),
+            expected_selected_case_ids_sha256=selection.selected_case_ids_sha256,
+            k=effective_profile.final_evidence_limit,
+        )
+        precomputed_retrieval = {
+            row.case_id: row
+            for row in (
+                RetrievalCaseResult.model_validate(item)
+                for item in bound_retrieval["results"]
+            )
+        }
+        if set(precomputed_retrieval) != set(selected_case_ids):
+            raise ValueError(
+                "retrieval run result case IDs do not match selected answer cases"
+            )
+
+    config_dict = build_run_configuration(
+        profile_name=effective_profile.name,
+        profile=effective_profile.to_dict(),
+        eval_mode="answer",
+        judge_mode=args.judge,
+        guardrail_mode=args.guardrails,
+        rewrite_mode=effective_profile.rewrite_mode,
+        reranker_provider=effective_profile.reranker_mode,
+        gold_policy=args.gold_policy,
+        selected_case_ids=selected_case_ids,
+        selected_case_ids_sha256=selection.selected_case_ids_sha256,
+        settings=settings,
+        requested_backend=args.backend,
+        ranking_mode=args.ranking,
+    )
+    fp = calculate_configuration_fingerprint(config_dict)
+
+    run_id = args.run_id or generate_unique_run_id(
+        prefix="answer", config_fingerprint=fp
+    )
+
+    manifest = create_run_manifest(
+        run_id=run_id,
+        eval_mode="answer",
+        judge_mode=args.judge,
+        guardrail_mode=args.guardrails,
+        rewrite_mode=effective_profile.rewrite_mode,
+        reranker_provider=effective_profile.reranker_mode,
+        dataset_path=dataset_path,
+        settings=settings,
+        command_str=" ".join(sys.argv),
+        selected_case_ids_sha256=selection.selected_case_ids_sha256,
+        profile_name=effective_profile.name,
+        gold_sidecar_path=sidecar_path,
+        profile_obj=effective_profile,
+        gold_policy=args.gold_policy,
+        selected_case_ids=selected_case_ids,
+        requested_backend=args.backend,
+        ranking_mode=args.ranking,
+    )
+
+    runs_base_dir = PROJECT_ROOT / "docs/evaluation/runs"
+    run_dir = prepare_run_directory(runs_base_dir, manifest.run_id)
+
+    print("=" * 60)
+    print(f"FULL PIPELINE ANSWER EVALUATION RUN: {manifest.run_id}")
+    print(
+        f"cases={len(cases)} profile={effective_profile.name} rewrite={effective_profile.rewrite_mode} guardrails={args.guardrails}"
+    )
+    print(
+        f"reranker={effective_profile.reranker_mode} concurrency={args.concurrency} judge={args.judge}"
+    )
+    print("=" * 60)
+
+    semaphore = asyncio.Semaphore(args.concurrency)
+    answer_results_map: Dict[str, AnswerCaseResult] = {}
+
+    async def evaluate_case(case: GoldenCase) -> AnswerCaseResult:
+        async with semaphore:
+            stage_a_res = await run_stage_a_online(
+                case,
+                settings,
+                args.guardrails,
+                effective_profile,
+                backend=args.backend,
+                ranking=args.ranking,
+                precomputed_retrieval=precomputed_retrieval.get(case.case_id),
+            )
+
+        return await run_stage_b_offline(
+            case, stage_a_res, settings, args.judge
+        )
+
+    tasks = [asyncio.create_task(evaluate_case(case)) for case in cases]
+    for completed_task in asyncio.as_completed(tasks):
+        res = await completed_task
+        answer_results_map[res.case_id] = res
+        print(
+            f"-> Completed Case [{res.case_id}]: category={res.refusal_category} "
+            f"token_f1={res.metrics.get('token_f1', 0.0):.2f} latency={res.latency['t_total']:.2f}s"
+        )
+
+    # Preserve dataset case ordering
+    ordered_answer_results = [answer_results_map[c.case_id] for c in cases]
+    retrieval_cases_dict = [res.retrieval_result.model_dump() for res in ordered_answer_results]
+    retrieval_summary = aggregate_retrieval_metrics(retrieval_cases_dict)
+    stage_traces = [res.retrieval_result.stage_trace for res in ordered_answer_results]
+    stage_survival_summary = calculate_stage_survival_rates(stage_traces)
+    latency_summary = calculate_stage_latency_summary([res.latency for res in ordered_answer_results])
+
+    answer_cases_dict = [res.model_dump() for res in ordered_answer_results]
+    answer_summary = aggregate_answer_metrics(answer_cases_dict)
+
+    atomic_write_json(run_dir / "manifest.json", manifest.model_dump())
+    atomic_write_json(run_dir / "configuration.json", manifest.configuration)
+    atomic_write_json(
+        run_dir / "evaluation_case_set.json",
+        {
+            "selected_case_count": selection.selected_case_count,
+            "selected_case_ids": selected_case_ids,
+            "selected_case_ids_sha256": selection.selected_case_ids_sha256,
+        },
+    )
+    atomic_write_json(run_dir / "retrieval_results.json", retrieval_cases_dict)
+    atomic_write_json(run_dir / "answer_results.json", answer_cases_dict)
+
+    report_path = write_run_report(
+        run_dir=run_dir,
+        manifest=manifest,
+        retrieval_summary=retrieval_summary,
+        stage_survival_summary=stage_survival_summary,
+        latency_summary=latency_summary,
+        answer_summary=answer_summary,
+        case_results=answer_cases_dict,
+    )
+    manifest = manifest.model_copy(
+        update={"artifact_files": collect_artifact_files(run_dir)}
+    )
+    atomic_write_json(run_dir / "manifest.json", manifest.model_dump(mode="json"))
+
+    print("=" * 60)
+    print(f"Full Answer Evaluation Completed. Report saved to:\n{report_path}")
+    print("=" * 60)
+
+    return {
+        "manifest": manifest.model_dump(),
+        "retrieval_summary": retrieval_summary,
+        "answer_summary": answer_summary,
+        "latency": latency_summary,
+        "report_path": str(report_path),
+    }
+
+
+if __name__ == "__main__":
+    asyncio.run(run_answer_evaluation())

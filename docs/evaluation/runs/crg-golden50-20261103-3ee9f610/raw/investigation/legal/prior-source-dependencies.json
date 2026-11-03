@@ -1,0 +1,142 @@
+[
+  {
+    "original_path": "D:\\Download\\ProfessionalLegalRAG\\docs\\evaluation\\runs\\effect-chain-pdf-acceptance-20261030-7adc0a02\\evidence\\legal-research\\receipts.json",
+    "copy": "legal\\prior-primary\\receipts.json",
+    "sha256": "e3b9e0505de97c06ef113a148a01354e4b6ac6caaeb1fe087613fc148bdc5389",
+    "bytes": 20411,
+    "provenance": "prior immutable official-primary acquisition; original timestamps/URLs remain in receipts; not a new live download"
+  },
+  {
+    "original_path": "D:\\Download\\ProfessionalLegalRAG\\docs\\evaluation\\runs\\effect-chain-pdf-acceptance-20261030-7adc0a02\\evidence\\legal-research\\artifact-index.json",
+    "copy": "legal\\prior-primary\\artifact-index.json",
+    "sha256": "fe0320e037ebea109725e840d4d904cbd50338df56b43e63cac080ef2e694dce",
+    "bytes": 17616,
+    "provenance": "prior immutable official-primary acquisition; original timestamps/URLs remain in receipts; not a new live download"
+  },
+  {
+    "original_path": "D:\\Download\\ProfessionalLegalRAG\\docs\\evaluation\\runs\\effect-chain-pdf-acceptance-20261030-7adc0a02\\evidence\\legal-research\\REPORT.md",
+    "copy": "legal\\prior-primary\\REPORT.md",
+    "sha256": "f67897c442bb444d98b0486583ddd5da76986fc6353c872a24308f1918f4b2e2",
+    "bytes": 12640,
+    "provenance": "prior immutable official-primary acquisition; original timestamps/URLs remain in receipts; not a new live download"
+  },
+  {
+    "original_path": "D:\\Download\\ProfessionalLegalRAG\\docs\\evaluation\\runs\\effect-chain-pdf-acceptance-20261030-7adc0a02\\evidence\\legal-research\\environment146_primary.docx",
+    "copy": "legal\\prior-primary\\environment146_primary.docx",
+    "sha256": "876585bc69174fc83b0c91a6dab98909627ebf8f9dfa1e4370db03c44b06a5e9",
+    "bytes": 178903,
+    "provenance": "prior immutable official-primary acquisition; original timestamps/URLs remain in receipts; not a new live download"
+  },
+  {
+    "original_path": "D:\\Download\\ProfessionalLegalRAG\\docs\\evaluation\\runs\\effect-chain-pdf-acceptance-20261030-7adc0a02\\evidence\\legal-research\\environment146_primary.txt",
+    "copy": "legal\\prior-primary\\environment146_primary.txt",
+    "sha256": "a79c8969e3ed636285f455793abb6b68de43e40945c67ef68fb23b2c0faff65c",
+    "bytes": 255001,
+    "provenance": "prior immutable official-primary acquisition; original timestamps/URLs remain in receipts; not a new live download"
+  },
+  {
+    "original_path": "D:\\Download\\ProfessionalLegalRAG\\docs\\evaluation\\runs\\effect-chain-pdf-acceptance-20261030-7adc0a02\\evidence\\legal-research\\environment_6619_2026_docx.docx",
+    "copy": "legal\\prior-primary\\environment_6619_2026_docx.docx",
+    "sha256": "62716fc939ae5f5789591301618c31a21b658033db0a57d814ab0f9737902073",
+    "bytes": 237293,
+    "provenance": "prior immutable official-primary acquisition; original timestamps/URLs remain in receipts; not a new live download"
+  },
+  {
+    "original_path": "D:\\Download\\ProfessionalLegalRAG\\docs\\evaluation\\runs\\effect-chain-pdf-acceptance-20261030-7adc0a02\\evidence\\legal-research\\environment_6619_2026_docx.txt",
+    "copy": "legal\\prior-primary\\environment_6619_2026_docx.txt",
+    "sha256": "3c12a029af5dca33106642455bc0ecaa3a516fde16fd0647fcde212e9f3bedd4",
+    "bytes": 240185,
+    "provenance": "prior immutable official-primary acquisition; original timestamps/URLs remain in receipts; not a new live download"
+  },
+  {
+    "original_path": "D:\\Download\\ProfessionalLegalRAG\\docs\\evaluation\\runs\\effect-chain-pdf-acceptance-20261030-7adc0a02\\evidence\\legal-research\\environment48_signed_primary.pdf",
+    "copy": "legal\\prior-primary\\environment48_signed_primary.pdf",
+    "sha256": "3902145d9d3fb8201b501076a5abb3c828a97e5d877206e2220456dc9a17abbb",
+    "bytes": 2668328,
+    "provenance": "prior immutable official-primary acquisition; original timestamps/URLs remain in receipts; not a new live download"
+  },
+  {
+    "original_path": "D:\\Download\\ProfessionalLegalRAG\\docs\\evaluation\\runs\\effect-chain-pdf-acceptance-20261030-7adc0a02\\evidence\\legal-research\\environment48_signed_primary.txt",
+    "copy": "legal\\prior-primary\\environment48_signed_primary.txt",
+    "sha256": "8c2b9f3e47f2b7f49f999e72242c728b15e562926638cdb0628d919356216dc3",
+    "bytes": 1043,
+    "provenance": "prior immutable official-primary acquisition; original timestamps/URLs remain in receipts; not a new live download"
+  },
+  {
+    "original_path": "D:\\Download\\ProfessionalLegalRAG\\docs\\evaluation\\runs\\effect-chain-pdf-acceptance-20261030-7adc0a02\\evidence\\legal-research\\environment48_signed_primary-pages.json",
+    "copy": "legal\\prior-primary\\environment48_signed_primary-pages.json",
+    "sha256": "9e27d7a020dd379d19cb101cff63bda0bc53d7d3cd9a81709889dec33f4f9771",
+    "bytes": 2722,
+    "provenance": "prior immutable official-primary acquisition; original timestamps/URLs remain in receipts; not a new live download"
+  },
+  {
+    "original_path": "D:\\Download\\ProfessionalLegalRAG\\docs\\evaluation\\runs\\effect-chain-pdf-acceptance-20261030-7adc0a02\\evidence\\legal-research\\environment6625_primary.pdf",
+    "copy": "legal\\prior-primary\\environment6625_primary.pdf",
+    "sha256": "3d7f6dd714bcebd22a70320d36985c4b309f0c15ee129124bd04ef3e2693fc5a",
+    "bytes": 9773383,
+    "provenance": "prior immutable official-primary acquisition; original timestamps/URLs remain in receipts; not a new live download"
+  },
+  {
+    "original_path": "D:\\Download\\ProfessionalLegalRAG\\docs\\evaluation\\runs\\effect-chain-pdf-acceptance-20261030-7adc0a02\\evidence\\legal-research\\environment6625_primary-pages.json",
+    "copy": "legal\\prior-primary\\environment6625_primary-pages.json",
+    "sha256": "c8c9931b5d0e6a163f6551e5164305ed1ec8ea6d5045c9028b90587694ba0733",
+    "bytes": 874,
+    "provenance": "prior immutable official-primary acquisition; original timestamps/URLs remain in receipts; not a new live download"
+  },
+  {
+    "original_path": "D:\\Download\\ProfessionalLegalRAG\\docs\\evaluation\\runs\\effect-chain-pdf-acceptance-20261030-7adc0a02\\evidence\\legal-research\\extension\\receipts.json",
+    "copy": "legal\\prior-primary\\extension\\receipts.json",
+    "sha256": "9b5ffbc9c9634548a82d814d41da0cdf59d1a582bf6e80af8565fa5b7be52571",
+    "bytes": 2975,
+    "provenance": "prior immutable official-primary acquisition; original timestamps/URLs remain in receipts; not a new live download"
+  },
+  {
+    "original_path": "D:\\Download\\ProfessionalLegalRAG\\docs\\evaluation\\runs\\effect-chain-pdf-acceptance-20261030-7adc0a02\\evidence\\legal-research\\extension\\REPORT.md",
+    "copy": "legal\\prior-primary\\extension\\REPORT.md",
+    "sha256": "623c5f88c123639b637beb440847204a74c7587a594df8870ba3a527fc5ea3a9",
+    "bytes": 2726,
+    "provenance": "prior immutable official-primary acquisition; original timestamps/URLs remain in receipts; not a new live download"
+  },
+  {
+    "original_path": "D:\\Download\\ProfessionalLegalRAG\\docs\\evaluation\\runs\\effect-chain-pdf-acceptance-20261030-7adc0a02\\evidence\\legal-research\\extension\\tt09.pdf",
+    "copy": "legal\\prior-primary\\extension\\tt09.pdf",
+    "sha256": "f3077e31f1907ecab02e8736bc5ae97b47f3295b5eb2b1934196e6105aad6b51",
+    "bytes": 1847105,
+    "provenance": "prior immutable official-primary acquisition; original timestamps/URLs remain in receipts; not a new live download"
+  },
+  {
+    "original_path": "D:\\Download\\ProfessionalLegalRAG\\docs\\evaluation\\runs\\effect-chain-pdf-acceptance-20261030-7adc0a02\\evidence\\legal-research\\extension\\tt09-pages.json",
+    "copy": "legal\\prior-primary\\extension\\tt09-pages.json",
+    "sha256": "4329340d01bd4bb9b0888693146bc44eaf3515877556235f09193d731bdfc6d8",
+    "bytes": 112425,
+    "provenance": "prior immutable official-primary acquisition; original timestamps/URLs remain in receipts; not a new live download"
+  },
+  {
+    "original_path": "D:\\Download\\ProfessionalLegalRAG\\docs\\evaluation\\runs\\effect-chain-pdf-acceptance-20261030-7adc0a02\\evidence\\legal-research\\extension\\tt09-passages.json",
+    "copy": "legal\\prior-primary\\extension\\tt09-passages.json",
+    "sha256": "3e05927c587628f9f03e939af222bed0d5a343749c1f793ab1b0d7e908c0cc70",
+    "bytes": 64880,
+    "provenance": "prior immutable official-primary acquisition; original timestamps/URLs remain in receipts; not a new live download"
+  },
+  {
+    "original_path": "D:\\Download\\ProfessionalLegalRAG\\docs\\evaluation\\runs\\effect-chain-pdf-acceptance-20261030-7adc0a02\\evidence\\legal-research\\extension\\tt22.pdf",
+    "copy": "legal\\prior-primary\\extension\\tt22.pdf",
+    "sha256": "0bea25a79fac66b8e4d2d7f5dbfa11d61470881f3a375cf2ef1ba34d2590c6e3",
+    "bytes": 2751842,
+    "provenance": "prior immutable official-primary acquisition; original timestamps/URLs remain in receipts; not a new live download"
+  },
+  {
+    "original_path": "D:\\Download\\ProfessionalLegalRAG\\docs\\evaluation\\runs\\effect-chain-pdf-acceptance-20261030-7adc0a02\\evidence\\legal-research\\extension\\tt22-pages.json",
+    "copy": "legal\\prior-primary\\extension\\tt22-pages.json",
+    "sha256": "793a512aa30bce81a031fd0491df5025b0555d584fa331b58bcf43591261bb5b",
+    "bytes": 209777,
+    "provenance": "prior immutable official-primary acquisition; original timestamps/URLs remain in receipts; not a new live download"
+  },
+  {
+    "original_path": "D:\\Download\\ProfessionalLegalRAG\\docs\\evaluation\\runs\\effect-chain-pdf-acceptance-20261030-7adc0a02\\evidence\\legal-research\\extension\\tt22-passages.json",
+    "copy": "legal\\prior-primary\\extension\\tt22-passages.json",
+    "sha256": "f9438433828d46770e299e0aa6e35386dedbc772de0a5f720f364f36022b09ba",
+    "bytes": 28980,
+    "provenance": "prior immutable official-primary acquisition; original timestamps/URLs remain in receipts; not a new live download"
+  }
+]

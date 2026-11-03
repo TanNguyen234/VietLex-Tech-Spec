@@ -1,0 +1,35 @@
+# Kiểm thử khả năng không...
+
+*2026-11-03T15:17*
+**Trace:** `de8929f2-0f82-4b57-962b-22f5db14f47e`
+
+## Người dùng
+
+Kiểm thử khả năng không bịa nguồn: hãy kiểm tra có Điều 9999 Bộ luật Lao động quy định doanh nghiệp luôn được trả 0% lương thử việc hay không. Không có chứng cứ thì nói không xác minh được điều khoản đó và không suy đoán số hiệu văn bản.
+
+## VietLex
+
+Dựa trên các tài liệu tham khảo được cung cấp, không có thông tin và không có chứng cứ nào về "Điều 9999 Bộ luật Lao động" quy định doanh nghiệp luôn được trả 0% lương thử việc. 
+
+Do đó, không xác minh được điều khoản đó và không thể suy đoán về số hiệu văn bản này từ nguồn dữ liệu đã cho.
+
+*Lưu ý: Nguồn dữ liệu được cung cấp không phải là cơ sở dữ liệu pháp luật chính thức và không xác nhận tình trạng hiệu lực của văn bản. Bạn vui lòng kiểm tra lại trên nguồn chính thức hiện hành hoặc tham khảo ý kiến của người có chuyên môn để có thông tin chính xác nhất.*
+
+### Nguồn tham chiếu
+
+> [45/2019/QH14, Điều 90, Khoản 2]
+> Nguồn: https://thuvienphapluat.vn/van-ban/Lao-dong-Tien-luong/Bo-Luat-lao-dong-2019-333670.aspx
+> Tiêu đề: Bộ luật Lao động 2019
+> Điều 90. Tiền lương 2. Mức lương theo công việc hoặc chức danh không được thấp hơn mức lương tối thiểu.
+
+> [01-LĐ-TT]
+> Nguồn: https://thuvienphapluat.vn/van-ban/Lao-dong-Tien-luong/Thong-tu-01-LD-TT-huong-dan-che-do-luong-cong-nhan-nhan-vien-xi-nghiep-Chinh-phu-doanh-nghiep-quoc-gia-cong-truong-21748.aspx
+> Tiêu đề: Thông tư 01-LĐ-TT năm 1956 hướng dẫn chế độ lương cho công nhân và nhân viên các xí nghiệp Chính phủ, doanh nghiệp quốc gia và công trường do Bộ Lao Động ban hành
+> năng suất lao động giảm giá thành, quản lý tốt các xí nghiệp. Muốn được như vậy trong việc sắp xếp phải lãnh đạo chặt chẽ, để cho mọi người được dùng đúng tài năng và thù lao đúng khả năng sản xuất. Nếu có người không dùng đúng chỗ thì phải điều chỉnh cho thích hợp. Không nên cố giữ lại mà trả lương thấp. Nói căn cứ thực tế mà trả lương là trước tiên nói đến việc dùng người, dùng nghề và đúng khả năng. Phải chú trọng lãnh đạo sắp xếp cho đúng, tránh suy bì rất có hại cho sản xuất, hoặc làm cho chán nản công tác. Kết quả việc sắp xếp và trả lương mới này là làm cho mọi người vui lòng phấn khởi sản xuất. Nhưng đồng thời cũng chú ý tránh bừa bãi mà nhất loạt xếp lên cao quá khả năng thực tế. Sau đây là những điểm chính về nhiệm vụ và kế hoạch thực hiện. Các ngành, các cấp sẽ dựa vào đó và căn cứ vào tình hình cụ thể của ngành mình, của địa phương mình mà vạch kế hoạch cụ thể thi hành. 1. – Lãnh đạo tư tưởng: Phải tuyên truyền giải thích, phổ biến rộng rãi, tổ chức học tập mục đích, ý nghĩa, nguyên tắc và nội dung của chế độ lương mới cho cán bộ và công nhân, nhân viên để quyết tâm và tin tưởng chấp hành. Cần quan niệm rõ, nếu làm được tốt, thì mỗi lần điều chỉnh lương bổng là một dịp giáo dục, nâng cao lập trường tư tưởng, khuyến khích nâng cao trình độ nghề nghiệp cho cán bộ và công nhân, nhân viên, do đó mà càng kích thích công cuộc thi đua phát triển sản xuất. Việc lãnh đạo tư tưởng phải chặt chẽ, kịp thời. Cần đề phòng những tư tưởng
+
+> [10-LĐ-TT]
+> Nguồn: https://thuvienphapluat.vn/van-ban/Lao-dong-Tien-luong/Thong-tu-10-LD-TT-huong-dan-muc-tien-cong-dia-phuong-sua-doi-Thong-tu-25-19188.aspx
+> Tiêu đề: Thông tư 10-LĐ-TT năm 1963 sửa đổi Thông tư 25-LĐ-TT ngày 12-08-1960 hướng dẫn thi hành các mức tiền công địa phương do Bộ Lao Động ban hành
+> định các mức tiền công bằng các mức lương của các thang lương hiện hành cùng ngành nghề và hướng dẫn áp dụng theo đúng tiêu chuẩn cấp bậc kỹ thuật đã ban hành. Ví dụ: Làm nề mộc ở công trường xây dựng cơ bản theo thang lương công nhân xây dựng cơ bản; làm việc ở xí nghiệp loại nào theo thang lương công nhân xí nghiệp loại đó. Các loại công nhân nói trên phải qua một thời gian thử nghề tùy theo yêu cầu của mỗi nghề và do Ủy ban hành chính địa phương quyết định, nhưng nhiều nhất không quá 30 ngày. Trong thời gian thử nghề, đương sự được hưởng mức lương tạm thời bằng 85% lương cấp bậc của công việc làm thử. Hết thời gian làm thử được trả đủ 100% tiền lương cấp bậc được sắp xếp và được tính lại tiền lương kể từ ngày đầu mới vào làm việc (được truy lĩnh hoặc truy hoàn số tiền lương tạm hưởng của thời kỳ làm thử). Riêng công nhân thuộc các đội, tổ thợ là lực lượng thường trực do Ủy ban hành chính hoặc cơ quan lao động quản lý thì không cần phải qua thời gian thử nghề, việc trả lương sẽ theo giấy giới thiệu của Ủy ban hành chính hoặc của cơ quan lao động địa phương. 3. Ngoài các mức tiền công của lao động phổ thông và của thợ thủ công có nghề nghiệp chuyên môn nói trên, nếu địa phương nào do đặc điểm riêng đối với một số thợ hoặc một số vùng quá khan hiếm nhân công, muốn có mức tiền công cao hơn nữa thì phải báo cáo bộ Lao động và phải có sự đồng ý của Bộ mới được thi hành. 4. Đối với thợ thủ công là xã viên hợp tác xã thủ công nghiệp: Nhà
+
+---

@@ -1,0 +1,407 @@
+{
+  "meta": null,
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"status\":\"ok\",\"pattern\":\"callers_of\",\"target\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\legal_citations.py::parse_legal_citations\",\"description\":\"Find all functions that call a given function\",\"summary\":\"Found 17 result(s) for callers_of('D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\legal_citations.py::parse_legal_citations')\",\"result_count\":17,\"results_omitted\":0,\"results\":[{\"id\":6071,\"kind\":\"Function\",\"name\":\"resolve_case_diversity_identity\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\adjudication.py::resolve_case_diversity_identity\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\adjudication.py\",\"line_start\":279,\"line_end\":355,\"language\":\"python\",\"parent_name\":null,\"is_test\":false},{\"id\":6078,\"kind\":\"Function\",\"name\":\"_normalize_citation_units\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\adjudication.py::_normalize_citation_units\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\adjudication.py\",\"line_start\":537,\"line_end\":576,\"language\":\"python\",\"parent_name\":null,\"is_test\":false},{\"id\":6103,\"kind\":\"Function\",\"name\":\"_case_query\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\adjudication_candidates.py::_case_query\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\adjudication_candidates.py\",\"line_start\":293,\"line_end\":301,\"language\":\"python\",\"parent_name\":null,\"is_test\":false},{\"id\":6187,\"kind\":\"Function\",\"name\":\"build_online_metrics\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\online_metrics.py::build_online_metrics\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\online_metrics.py\",\"line_start\":112,\"line_end\":268,\"language\":\"python\",\"parent_name\":null,\"is_test\":false},{\"id\":6235,\"kind\":\"Function\",\"name\":\"extract_citations_from_text\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\retrieval_metrics.py::extract_citations_from_text\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\retrieval_metrics.py\",\"line_start\":30,\"line_end\":38,\"language\":\"python\",\"parent_name\":null,\"is_test\":false},{\"id\":7168,\"kind\":\"Function\",\"name\":\"build_code_evaluation\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\services\\\\public_evaluation.py::build_code_evaluation\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\services\\\\public_evaluation.py\",\"line_start\":63,\"line_end\":125,\"language\":\"python\",\"parent_name\":null,\"is_test\":false},{\"id\":7537,\"kind\":\"Function\",\"name\":\"audit_golden_dataset\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\audit_golden_dataset.py::audit_golden_dataset\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\audit_golden_dataset.py\",\"line_start\":164,\"line_end\":530,\"language\":\"python\",\"parent_name\":null,\"is_test\":false},{\"id\":7713,\"kind\":\"Function\",\"name\":\"parse_golden_case\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\run_retrieval_eval.py::parse_golden_case\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\run_retrieval_eval.py\",\"line_start\":252,\"line_end\":313,\"language\":\"python\",\"parent_name\":null,\"is_test\":false},{\"id\":8048,\"kind\":\"Test\",\"name\":\"test_two_documents_are_paired_by_position\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_legal_citations.py::test_two_documents_are_paired_by_position\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_legal_citations.py\",\"line_start\":17,\"line_end\":34,\"language\":\"python\",\"parent_name\":null,\"is_test\":true},{\"id\":8049,\"kind\":\"Test\",\"name\":\"test_second_article_inherits_shared_document_number\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_legal_citations.py::test_second_article_inherits_shared_document_number\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_legal_citations.py\",\"line_start\":37,\"line_end\":46,\"language\":\"python\",\"parent_name\":null,\"is_test\":true},{\"id\":8050,\"kind\":\"Test\",\"name\":\"test_multiple_articles_without_document_are_preserved\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_legal_citations.py::test_multiple_articles_without_document_are_preserved\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_legal_citations.py\",\"line_start\":49,\"line_end\":55,\"language\":\"python\",\"parent_name\":null,\"is_test\":true},{\"id\":8051,\"kind\":\"Test\",\"name\":\"test_repeated_units_are_deduplicated_stably\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_legal_citations.py::test_repeated_units_are_deduplicated_stably\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_legal_citations.py\",\"line_start\":58,\"line_end\":63,\"language\":\"python\",\"parent_name\":null,\"is_test\":true},{\"id\":8052,\"kind\":\"Test\",\"name\":\"test_shared_trailing_document_applies_without_cartesian_product\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_legal_citations.py::test_shared_trailing_document_applies_without_cartesian_product\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_legal_citations.py\",\"line_start\":66,\"line_end\":75,\"language\":\"python\",\"parent_name\":null,\"is_test\":true},{\"id\":8053,\"kind\":\"Test\",\"name\":\"test_multiple_clauses_for_one_article_are_preserved\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_legal_citations.py::test_multiple_clauses_for_one_article_are_preserved\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_legal_citations.py\",\"line_start\":78,\"line_end\":84,\"language\":\"python\",\"parent_name\":null,\"is_test\":true},{\"id\":11914,\"kind\":\"Test\",\"name\":\"test_non_year_document_number_keeps_its_own_article_identity\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_evidence_citation_scope.py::test_non_year_document_number_keeps_its_own_article_identity\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_evidence_citation_scope.py\",\"line_start\":8,\"line_end\":11,\"language\":\"python\",\"parent_name\":null,\"is_test\":true},{\"id\":12907,\"kind\":\"Function\",\"name\":\"_parsed_citation_set\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\answer_metrics.py::_parsed_citation_set\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\answer_metrics.py\",\"line_start\":318,\"line_end\":319,\"language\":\"python\",\"parent_name\":null,\"is_test\":false},{\"id\":12908,\"kind\":\"Function\",\"name\":\"_evidence_citations\",\"qualified_name\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\answer_metrics.py::_evidence_citations\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\answer_metrics.py\",\"line_start\":322,\"line_end\":356,\"language\":\"python\",\"parent_name\":null,\"is_test\":false}],\"edges\":[{\"id\":62898,\"kind\":\"CALLS\",\"source\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\adjudication.py::resolve_case_diversity_identity\",\"target\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\legal_citations.py::parse_legal_citations\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\adjudication.py\",\"line\":294,\"confidence\":1.0,\"confidence_tier\":\"EXTRACTED\"},{\"id\":63006,\"kind\":\"CALLS\",\"source\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\adjudication.py::_normalize_citation_units\",\"target\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\legal_citations.py::parse_legal_citations\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\adjudication.py\",\"line\":554,\"confidence\":1.0,\"confidence_tier\":\"EXTRACTED\"},{\"id\":63545,\"kind\":\"CALLS\",\"source\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\adjudication_candidates.py::_case_query\",\"target\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\legal_citations.py::parse_legal_citations\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\adjudication_candidates.py\",\"line\":297,\"confidence\":1.0,\"confidence_tier\":\"EXTRACTED\"},{\"id\":64641,\"kind\":\"CALLS\",\"source\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\online_metrics.py::build_online_metrics\",\"target\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\legal_citations.py::parse_legal_citations\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\online_metrics.py\",\"line\":147,\"confidence\":1.0,\"confidence_tier\":\"EXTRACTED\"},{\"id\":65249,\"kind\":\"CALLS\",\"source\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\retrieval_metrics.py::extract_citations_from_text\",\"target\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\legal_citations.py::parse_legal_citations\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\retrieval_metrics.py\",\"line\":37,\"confidence\":1.0,\"confidence_tier\":\"EXTRACTED\"},{\"id\":74102,\"kind\":\"CALLS\",\"source\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\services\\\\public_evaluation.py::build_code_evaluation\",\"target\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\legal_citations.py::parse_legal_citations\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\services\\\\public_evaluation.py\",\"line\":72,\"confidence\":1.0,\"confidence_tier\":\"EXTRACTED\"},{\"id\":78143,\"kind\":\"CALLS\",\"source\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\audit_golden_dataset.py::audit_golden_dataset\",\"target\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\legal_citations.py::parse_legal_citations\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\audit_golden_dataset.py\",\"line\":276,\"confidence\":1.0,\"confidence_tier\":\"EXTRACTED\"},{\"id\":80616,\"kind\":\"CALLS\",\"source\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\run_retrieval_eval.py::parse_golden_case\",\"target\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\legal_citations.py::parse_legal_citations\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\run_retrieval_eval.py\",\"line\":266,\"confidence\":1.0,\"confidence_tier\":\"EXTRACTED\"},{\"id\":85432,\"kind\":\"CALLS\",\"source\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_legal_citations.py::test_two_documents_are_paired_by_position\",\"target\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\legal_citations.py::parse_legal_citations\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_legal_citations.py\",\"line\":23,\"confidence\":1.0,\"confidence_tier\":\"EXTRACTED\"},{\"id\":85436,\"kind\":\"CALLS\",\"source\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_legal_citations.py::test_second_article_inherits_shared_document_number\",\"target\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\legal_citations.py::parse_legal_citations\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_legal_citations.py\",\"line\":43,\"confidence\":1.0,\"confidence_tier\":\"EXTRACTED\"},{\"id\":85440,\"kind\":\"CALLS\",\"source\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_legal_citations.py::test_multiple_articles_without_document_are_preserved\",\"target\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\legal_citations.py::parse_legal_citations\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_legal_citations.py\",\"line\":50,\"confidence\":1.0,\"confidence_tier\":\"EXTRACTED\"},{\"id\":85444,\"kind\":\"CALLS\",\"source\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_legal_citations.py::test_repeated_units_are_deduplicated_stably\",\"target\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\legal_citations.py::parse_legal_citations\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_legal_citations.py\",\"line\":61,\"confidence\":1.0,\"confidence_tier\":\"EXTRACTED\"},{\"id\":85447,\"kind\":\"CALLS\",\"source\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_legal_citations.py::test_shared_trailing_document_applies_without_cartesian_product\",\"target\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\legal_citations.py::parse_legal_citations\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_legal_citations.py\",\"line\":72,\"confidence\":1.0,\"confidence_tier\":\"EXTRACTED\"},{\"id\":85451,\"kind\":\"CALLS\",\"source\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_legal_citations.py::test_multiple_clauses_for_one_article_are_preserved\",\"target\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\legal_citations.py::parse_legal_citations\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_legal_citations.py\",\"line\":81,\"confidence\":1.0,\"confidence_tier\":\"EXTRACTED\"},{\"id\":125774,\"kind\":\"CALLS\",\"source\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_evidence_citation_scope.py::test_non_year_document_number_keeps_its_own_article_identity\",\"target\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\legal_citations.py::parse_legal_citations\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\tests\\\\evaluation\\\\test_evidence_citation_scope.py\",\"line\":9,\"confidence\":1.0,\"confidence_tier\":\"EXTRACTED\"},{\"id\":134866,\"kind\":\"CALLS\",\"source\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\answer_metrics.py::_parsed_citation_set\",\"target\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\legal_citations.py::parse_legal_citations\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\answer_metrics.py\",\"line\":319,\"confidence\":1.0,\"confidence_tier\":\"EXTRACTED\"},{\"id\":134872,\"kind\":\"CALLS\",\"source\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\answer_metrics.py::_evidence_citations\",\"target\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\legal_citations.py::parse_legal_citations\",\"file_path\":\"D:\\\\Download\\\\ProfessionalLegalRAG\\\\app\\\\evaluation\\\\answer_metrics.py\",\"line\":331,\"confidence\":1.0,\"confidence_tier\":\"EXTRACTED\"}],\"_graph\":{\"updated_at\":\"2026-11-03T19:40:24\",\"age_seconds\":12,\"built_on_branch\":\"main\",\"built_at_sha\":\"7519cd1aea4a3639140b9188de1843ebf0ddb1c0\",\"head_sha\":\"7519cd1aea4a3639140b9188de1843ebf0ddb1c0\",\"head_matches_build\":true}}",
+      "annotations": null,
+      "meta": null
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "pattern": "callers_of",
+    "target": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\legal_citations.py::parse_legal_citations",
+    "description": "Find all functions that call a given function",
+    "summary": "Found 17 result(s) for callers_of('D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\legal_citations.py::parse_legal_citations')",
+    "result_count": 17,
+    "results_omitted": 0,
+    "results": [
+      {
+        "id": 6071,
+        "kind": "Function",
+        "name": "resolve_case_diversity_identity",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\adjudication.py::resolve_case_diversity_identity",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\adjudication.py",
+        "line_start": 279,
+        "line_end": 355,
+        "language": "python",
+        "parent_name": null,
+        "is_test": false
+      },
+      {
+        "id": 6078,
+        "kind": "Function",
+        "name": "_normalize_citation_units",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\adjudication.py::_normalize_citation_units",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\adjudication.py",
+        "line_start": 537,
+        "line_end": 576,
+        "language": "python",
+        "parent_name": null,
+        "is_test": false
+      },
+      {
+        "id": 6103,
+        "kind": "Function",
+        "name": "_case_query",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\adjudication_candidates.py::_case_query",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\adjudication_candidates.py",
+        "line_start": 293,
+        "line_end": 301,
+        "language": "python",
+        "parent_name": null,
+        "is_test": false
+      },
+      {
+        "id": 6187,
+        "kind": "Function",
+        "name": "build_online_metrics",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\online_metrics.py::build_online_metrics",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\online_metrics.py",
+        "line_start": 112,
+        "line_end": 268,
+        "language": "python",
+        "parent_name": null,
+        "is_test": false
+      },
+      {
+        "id": 6235,
+        "kind": "Function",
+        "name": "extract_citations_from_text",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\retrieval_metrics.py::extract_citations_from_text",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\retrieval_metrics.py",
+        "line_start": 30,
+        "line_end": 38,
+        "language": "python",
+        "parent_name": null,
+        "is_test": false
+      },
+      {
+        "id": 7168,
+        "kind": "Function",
+        "name": "build_code_evaluation",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\app\\services\\public_evaluation.py::build_code_evaluation",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\app\\services\\public_evaluation.py",
+        "line_start": 63,
+        "line_end": 125,
+        "language": "python",
+        "parent_name": null,
+        "is_test": false
+      },
+      {
+        "id": 7537,
+        "kind": "Function",
+        "name": "audit_golden_dataset",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\audit_golden_dataset.py::audit_golden_dataset",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\audit_golden_dataset.py",
+        "line_start": 164,
+        "line_end": 530,
+        "language": "python",
+        "parent_name": null,
+        "is_test": false
+      },
+      {
+        "id": 7713,
+        "kind": "Function",
+        "name": "parse_golden_case",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\run_retrieval_eval.py::parse_golden_case",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\run_retrieval_eval.py",
+        "line_start": 252,
+        "line_end": 313,
+        "language": "python",
+        "parent_name": null,
+        "is_test": false
+      },
+      {
+        "id": 8048,
+        "kind": "Test",
+        "name": "test_two_documents_are_paired_by_position",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_legal_citations.py::test_two_documents_are_paired_by_position",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_legal_citations.py",
+        "line_start": 17,
+        "line_end": 34,
+        "language": "python",
+        "parent_name": null,
+        "is_test": true
+      },
+      {
+        "id": 8049,
+        "kind": "Test",
+        "name": "test_second_article_inherits_shared_document_number",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_legal_citations.py::test_second_article_inherits_shared_document_number",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_legal_citations.py",
+        "line_start": 37,
+        "line_end": 46,
+        "language": "python",
+        "parent_name": null,
+        "is_test": true
+      },
+      {
+        "id": 8050,
+        "kind": "Test",
+        "name": "test_multiple_articles_without_document_are_preserved",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_legal_citations.py::test_multiple_articles_without_document_are_preserved",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_legal_citations.py",
+        "line_start": 49,
+        "line_end": 55,
+        "language": "python",
+        "parent_name": null,
+        "is_test": true
+      },
+      {
+        "id": 8051,
+        "kind": "Test",
+        "name": "test_repeated_units_are_deduplicated_stably",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_legal_citations.py::test_repeated_units_are_deduplicated_stably",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_legal_citations.py",
+        "line_start": 58,
+        "line_end": 63,
+        "language": "python",
+        "parent_name": null,
+        "is_test": true
+      },
+      {
+        "id": 8052,
+        "kind": "Test",
+        "name": "test_shared_trailing_document_applies_without_cartesian_product",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_legal_citations.py::test_shared_trailing_document_applies_without_cartesian_product",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_legal_citations.py",
+        "line_start": 66,
+        "line_end": 75,
+        "language": "python",
+        "parent_name": null,
+        "is_test": true
+      },
+      {
+        "id": 8053,
+        "kind": "Test",
+        "name": "test_multiple_clauses_for_one_article_are_preserved",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_legal_citations.py::test_multiple_clauses_for_one_article_are_preserved",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_legal_citations.py",
+        "line_start": 78,
+        "line_end": 84,
+        "language": "python",
+        "parent_name": null,
+        "is_test": true
+      },
+      {
+        "id": 11914,
+        "kind": "Test",
+        "name": "test_non_year_document_number_keeps_its_own_article_identity",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_evidence_citation_scope.py::test_non_year_document_number_keeps_its_own_article_identity",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_evidence_citation_scope.py",
+        "line_start": 8,
+        "line_end": 11,
+        "language": "python",
+        "parent_name": null,
+        "is_test": true
+      },
+      {
+        "id": 12907,
+        "kind": "Function",
+        "name": "_parsed_citation_set",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\answer_metrics.py::_parsed_citation_set",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\answer_metrics.py",
+        "line_start": 318,
+        "line_end": 319,
+        "language": "python",
+        "parent_name": null,
+        "is_test": false
+      },
+      {
+        "id": 12908,
+        "kind": "Function",
+        "name": "_evidence_citations",
+        "qualified_name": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\answer_metrics.py::_evidence_citations",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\answer_metrics.py",
+        "line_start": 322,
+        "line_end": 356,
+        "language": "python",
+        "parent_name": null,
+        "is_test": false
+      }
+    ],
+    "edges": [
+      {
+        "id": 62898,
+        "kind": "CALLS",
+        "source": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\adjudication.py::resolve_case_diversity_identity",
+        "target": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\legal_citations.py::parse_legal_citations",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\adjudication.py",
+        "line": 294,
+        "confidence": 1.0,
+        "confidence_tier": "EXTRACTED"
+      },
+      {
+        "id": 63006,
+        "kind": "CALLS",
+        "source": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\adjudication.py::_normalize_citation_units",
+        "target": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\legal_citations.py::parse_legal_citations",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\adjudication.py",
+        "line": 554,
+        "confidence": 1.0,
+        "confidence_tier": "EXTRACTED"
+      },
+      {
+        "id": 63545,
+        "kind": "CALLS",
+        "source": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\adjudication_candidates.py::_case_query",
+        "target": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\legal_citations.py::parse_legal_citations",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\adjudication_candidates.py",
+        "line": 297,
+        "confidence": 1.0,
+        "confidence_tier": "EXTRACTED"
+      },
+      {
+        "id": 64641,
+        "kind": "CALLS",
+        "source": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\online_metrics.py::build_online_metrics",
+        "target": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\legal_citations.py::parse_legal_citations",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\online_metrics.py",
+        "line": 147,
+        "confidence": 1.0,
+        "confidence_tier": "EXTRACTED"
+      },
+      {
+        "id": 65249,
+        "kind": "CALLS",
+        "source": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\retrieval_metrics.py::extract_citations_from_text",
+        "target": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\legal_citations.py::parse_legal_citations",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\retrieval_metrics.py",
+        "line": 37,
+        "confidence": 1.0,
+        "confidence_tier": "EXTRACTED"
+      },
+      {
+        "id": 74102,
+        "kind": "CALLS",
+        "source": "D:\\Download\\ProfessionalLegalRAG\\app\\services\\public_evaluation.py::build_code_evaluation",
+        "target": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\legal_citations.py::parse_legal_citations",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\app\\services\\public_evaluation.py",
+        "line": 72,
+        "confidence": 1.0,
+        "confidence_tier": "EXTRACTED"
+      },
+      {
+        "id": 78143,
+        "kind": "CALLS",
+        "source": "D:\\Download\\ProfessionalLegalRAG\\audit_golden_dataset.py::audit_golden_dataset",
+        "target": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\legal_citations.py::parse_legal_citations",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\audit_golden_dataset.py",
+        "line": 276,
+        "confidence": 1.0,
+        "confidence_tier": "EXTRACTED"
+      },
+      {
+        "id": 80616,
+        "kind": "CALLS",
+        "source": "D:\\Download\\ProfessionalLegalRAG\\run_retrieval_eval.py::parse_golden_case",
+        "target": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\legal_citations.py::parse_legal_citations",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\run_retrieval_eval.py",
+        "line": 266,
+        "confidence": 1.0,
+        "confidence_tier": "EXTRACTED"
+      },
+      {
+        "id": 85432,
+        "kind": "CALLS",
+        "source": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_legal_citations.py::test_two_documents_are_paired_by_position",
+        "target": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\legal_citations.py::parse_legal_citations",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_legal_citations.py",
+        "line": 23,
+        "confidence": 1.0,
+        "confidence_tier": "EXTRACTED"
+      },
+      {
+        "id": 85436,
+        "kind": "CALLS",
+        "source": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_legal_citations.py::test_second_article_inherits_shared_document_number",
+        "target": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\legal_citations.py::parse_legal_citations",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_legal_citations.py",
+        "line": 43,
+        "confidence": 1.0,
+        "confidence_tier": "EXTRACTED"
+      },
+      {
+        "id": 85440,
+        "kind": "CALLS",
+        "source": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_legal_citations.py::test_multiple_articles_without_document_are_preserved",
+        "target": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\legal_citations.py::parse_legal_citations",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_legal_citations.py",
+        "line": 50,
+        "confidence": 1.0,
+        "confidence_tier": "EXTRACTED"
+      },
+      {
+        "id": 85444,
+        "kind": "CALLS",
+        "source": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_legal_citations.py::test_repeated_units_are_deduplicated_stably",
+        "target": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\legal_citations.py::parse_legal_citations",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_legal_citations.py",
+        "line": 61,
+        "confidence": 1.0,
+        "confidence_tier": "EXTRACTED"
+      },
+      {
+        "id": 85447,
+        "kind": "CALLS",
+        "source": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_legal_citations.py::test_shared_trailing_document_applies_without_cartesian_product",
+        "target": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\legal_citations.py::parse_legal_citations",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_legal_citations.py",
+        "line": 72,
+        "confidence": 1.0,
+        "confidence_tier": "EXTRACTED"
+      },
+      {
+        "id": 85451,
+        "kind": "CALLS",
+        "source": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_legal_citations.py::test_multiple_clauses_for_one_article_are_preserved",
+        "target": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\legal_citations.py::parse_legal_citations",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_legal_citations.py",
+        "line": 81,
+        "confidence": 1.0,
+        "confidence_tier": "EXTRACTED"
+      },
+      {
+        "id": 125774,
+        "kind": "CALLS",
+        "source": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_evidence_citation_scope.py::test_non_year_document_number_keeps_its_own_article_identity",
+        "target": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\legal_citations.py::parse_legal_citations",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\tests\\evaluation\\test_evidence_citation_scope.py",
+        "line": 9,
+        "confidence": 1.0,
+        "confidence_tier": "EXTRACTED"
+      },
+      {
+        "id": 134866,
+        "kind": "CALLS",
+        "source": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\answer_metrics.py::_parsed_citation_set",
+        "target": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\legal_citations.py::parse_legal_citations",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\answer_metrics.py",
+        "line": 319,
+        "confidence": 1.0,
+        "confidence_tier": "EXTRACTED"
+      },
+      {
+        "id": 134872,
+        "kind": "CALLS",
+        "source": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\answer_metrics.py::_evidence_citations",
+        "target": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\legal_citations.py::parse_legal_citations",
+        "file_path": "D:\\Download\\ProfessionalLegalRAG\\app\\evaluation\\answer_metrics.py",
+        "line": 331,
+        "confidence": 1.0,
+        "confidence_tier": "EXTRACTED"
+      }
+    ],
+    "_graph": {
+      "updated_at": "2026-11-03T19:40:24",
+      "age_seconds": 12,
+      "built_on_branch": "main",
+      "built_at_sha": "7519cd1aea4a3639140b9188de1843ebf0ddb1c0",
+      "head_sha": "7519cd1aea4a3639140b9188de1843ebf0ddb1c0",
+      "head_matches_build": true
+    }
+  },
+  "isError": false
+}

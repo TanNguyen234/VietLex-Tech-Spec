@@ -1,0 +1,20 @@
+{
+  "evidence": "actual web search follow-up, official domains; discovery only, not exhaustive legal inventory",
+  "observed_date": "2026-11-03",
+  "queries": [
+    "site:vanban.chinhphu.vn \"2026\" \"nhập khẩu phế liệu\" \"giấy phép môi trường\"",
+    "site:congbao.chinhphu.vn \"2026\" \"66.19\" \"môi trường\"",
+    "site:vanban.chinhphu.vn \"2026\" \"sửa đổi\" \"08/2022/NĐ-CP\""
+  ],
+  "returned_source_urls": [
+    "https://vanban.chinhphu.vn/?classid=1&docid=216867&pageid=27160",
+    "https://congbao.chinhphu.vn/van-ban-dang-cong-bao/nghi-quyet-l6/trang-7.htm",
+    "https://congbao.chinhphu.vn/van-ban/nghi-quyet-so-6619-2026-nq-cp-469586.htm",
+    "https://congbao.chinhphu.vn/van-ban/nghi-quyet-so-6619-2026-nq-cp-469586/65186.htm",
+    "https://congbao.chinhphu.vn/cong-bao/cong-bao-so-298-ngay-01-06-2026-47217.htm",
+    "https://congbao.chinhphu.vn/cong-bao/trang-20.htm",
+    "https://vanban.chinhphu.vn/cong-dan",
+    "https://vanban.chinhphu.vn/thong-cao-bao-chi-vbqppl-do-chinh-phu-thu-tuong-chinh-phu-ban-hanh/thong-cao-bao-chi-thang-12-nam-2021-12091786"
+  ],
+  "interpretation": "Known48/2026 and66.19/2026 rediscovered; generic listings also include unrelated and post-frozen material. No new relevant operative change verified by this batch. This is not evidence that none exists; do not promote complete legal currentness or use post29October material retroactively. Original bytes/operative clauses are reviewed separately in the source dossier."
+}

@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "deployment_id": "dpl_A2STKVHPiQvobnVQxPwbBX3gfuUW",
+  "url": "https://vietlex-legal-ihugz5bhn-foxys-projects-5fe642e0.vercel.app",
+  "checks": {
+    "health": {
+      "http_status": 200,
+      "body_sha256": "2490e70721256d6b4bc1efe5170568c34560f34d2e7d833eedefb738f13b062e",
+      "body_length": 508
+    },
+    "ready": {
+      "http_status": 200,
+      "body_sha256": "f3699949c8fd4c961b81c1235b3cb9df349ff3046150d3fbc1ca3a1b8b50d1b0",
+      "body_length": 514
+    },
+    "home": {
+      "http_status": 200,
+      "body_sha256": "53a5c62eac7f7dd6893075e5b2831bdddeff44145bc69f17ef297f08bbb5b884",
+      "body_length": 6588,
+      "title": "VietLex \u00b7 Kh\u00f4ng gian nghi\u00ean c\u1ee9u ph\u00e1p lu\u1eadt"
+    },
+    "admin_auth_gate": {
+      "http_status": 401,
+      "body_sha256": "d548d35b2612e7b71e86cf4d3850a7871be8e1d440ee1780ab4f17b6ba22a66b",
+      "body_length": 51
+    }
+  }
+}

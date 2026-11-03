@@ -1,0 +1,202 @@
+Deploying vietlex-legal-rag
+Uploading [--------------------] (0.0B/16.2KB)
+Uploading [===================-] (16.0KB/16.2KB)
+Uploading [====================] (16.2KB/16.2KB)
+  Inspect         https://vercel.com/foxys-projects-5fe642e0/vietlex-legal-rag/A2STKVHPiQvobnVQxPwbBX3gfuUW
+▲ Production      https://vietlex-legal-ihugz5bhn-foxys-projects-5fe642e0.vercel.app
+Building…
+Building…
+Running build in Washington, D.C., USA (East) – iad1
+Build machine configuration: 2 cores, 8 GB
+Retrieving list of deployment files...
+Downloading 237 deployment files...
+Restored build cache from previous deployment (B76tRoFgWybzu1kAbSi5CsrZ32w4)
+Running "vercel build"
+Vercel CLI 65.4.0
+Using Python 3.12 from pyproject.toml
+Writing .python-version file with version 3.12
+Using uv 0.13.5 (x86_64-unknown-linux-gnu)
+Running "install" command: `python -m pip install -r requirements-demo.lock && python -m pip install . --no-deps`...
+Ignoring pywin32: markers 'sys_platform == "win32"' don't match your environment
+Collecting annotated-doc==0.0.5 (from -r requirements-demo.lock (line 3))
+Downloading annotated_doc-0.0.5-py3-none-any.whl (5.3 kB)
+Collecting annotated-types==0.8.0 (from -r requirements-demo.lock (line 7))
+Downloading annotated_types-0.8.0-py3-none-any.whl (13 kB)
+Collecting anyio==4.15.1 (from -r requirements-demo.lock (line 11))
+Downloading anyio-4.15.1-py3-none-any.whl (132 kB)
+Collecting asgiref==3.12.1 (from -r requirements-demo.lock (line 18))
+Downloading asgiref-3.12.1-py3-none-any.whl (25 kB)
+Collecting certifi==2026.7.22 (from -r requirements-demo.lock (line 22))
+Downloading certifi-2026.7.22-py3-none-any.whl (136 kB)
+Collecting cffi==2.1.1 (from -r requirements-demo.lock (line 29))
+Downloading cffi-2.1.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (221 kB)
+Collecting charset-normalizer==3.5.1 (from -r requirements-demo.lock (line 131))
+Downloading charset_normalizer-3.5.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (248 kB)
+Collecting click==8.5.0 (from -r requirements-demo.lock (line 305))
+Downloading click-8.5.0-py3-none-any.whl (125 kB)
+Collecting cryptography==50.0.1 (from -r requirements-demo.lock (line 309))
+Downloading cryptography-50.0.1-cp311-abi3-manylinux_2_34_x86_64.whl (4.7 MB)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.7/4.7 MB 388.4 MB/s  0:00:00
+Collecting deprecated==1.3.1 (from -r requirements-demo.lock (line 357))
+Downloading deprecated-1.3.1-py2.py3-none-any.whl (11 kB)
+Collecting distro==1.9.0 (from -r requirements-demo.lock (line 361))
+Downloading distro-1.9.0-py3-none-any.whl (20 kB)
+Collecting dnspython==2.8.0 (from -r requirements-demo.lock (line 365))
+Downloading dnspython-2.8.0-py3-none-any.whl (331 kB)
+Collecting executing==2.2.1 (from -r requirements-demo.lock (line 369))
+Downloading executing-2.2.1-py2.py3-none-any.whl (28 kB)
+Collecting fastapi==0.141.1 (from -r requirements-demo.lock (line 373))
+Downloading fastapi-0.141.1-py3-none-any.whl (131 kB)
+Collecting google-auth==2.57.1 (from -r requirements-demo.lock (line 377))
+Downloading google_auth-2.57.1-py3-none-any.whl (259 kB)
+Collecting google-genai==1.75.0 (from -r requirements-demo.lock (line 381))
+Downloading google_genai-1.75.0-py3-none-any.whl (793 kB)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 793.7/793.7 kB 147.1 MB/s  0:00:00
+Collecting googleapis-common-protos==1.75.3 (from -r requirements-demo.lock (line 385))
+Downloading googleapis_common_protos-1.75.3-py3-none-any.whl (306 kB)
+Collecting grpcio==1.83.1 (from -r requirements-demo.lock (line 389))
+Downloading grpcio-1.83.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (7.0 MB)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 7.0/7.0 MB 326.0 MB/s  0:00:00
+Collecting h11==0.16.0 (from -r requirements-demo.lock (line 442))
+Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+Collecting h2==4.4.1 (from -r requirements-demo.lock (line 448))
+Downloading h2-4.4.1-py3-none-any.whl (62 kB)
+Collecting hpack==4.2.0 (from -r requirements-demo.lock (line 452))
+Downloading hpack-4.2.0-py3-none-any.whl (34 kB)
+Collecting httpcore==1.0.9 (from -r requirements-demo.lock (line 456))
+Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+Collecting httpx==0.28.1 (from -r requirements-demo.lock (line 460))
+Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+Collecting hyperframe==6.1.0 (from -r requirements-demo.lock (line 468))
+Downloading hyperframe-6.1.0-py3-none-any.whl (13 kB)
+Collecting idna==3.19 (from -r requirements-demo.lock (line 472))
+Downloading idna-3.19-py3-none-any.whl (68 kB)
+Collecting itsdangerous==2.2.0 (from -r requirements-demo.lock (line 479))
+Downloading itsdangerous-2.2.0-py3-none-any.whl (16 kB)
+Collecting jinja2==3.1.6 (from -r requirements-demo.lock (line 483))
+Downloading jinja2-3.1.6-py3-none-any.whl (134 kB)
+Collecting limits==5.8.0 (from -r requirements-demo.lock (line 487))
+Downloading limits-5.8.0-py3-none-any.whl (60 kB)
+Collecting logfire==5.0.0 (from -r requirements-demo.lock (line 491))
+Downloading logfire-5.0.0-py3-none-any.whl (467 kB)
+Collecting markdown-it-py==4.2.0 (from -r requirements-demo.lock (line 495))
+Downloading markdown_it_py-4.2.0-py3-none-any.whl (91 kB)
+Collecting markupsafe==3.0.3 (from -r requirements-demo.lock (line 499))
+Downloading markupsafe-3.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (22 kB)
+Collecting mdurl==0.1.2 (from -r requirements-demo.lock (line 590))
+Downloading mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+Collecting motor==3.7.1 (from -r requirements-demo.lock (line 594))
+Downloading motor-3.7.1-py3-none-any.whl (74 kB)
+Collecting msgspec==0.21.1 (from -r requirements-demo.lock (line 598))
+Downloading msgspec-0.21.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (225 kB)
+Collecting numpy==2.5.3 (from -r requirements-demo.lock (line 649))
+Downloading numpy-2.5.3-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (16.7 MB)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.7/16.7 MB 412.9 MB/s  0:00:00
+Collecting opentelemetry-api==1.44.0 (from -r requirements-demo.lock (line 717))
+Downloading opentelemetry_api-1.44.0-py3-none-any.whl (60 kB)
+Collecting opentelemetry-exporter-otlp-proto-common==1.44.0 (from -r requirements-demo.lock (line 727))
+Downloading opentelemetry_exporter_otlp_proto_common-1.44.0-py3-none-any.whl (17 kB)
+Collecting opentelemetry-exporter-otlp-proto-http==1.44.0 (from -r requirements-demo.lock (line 731))
+Downloading opentelemetry_exporter_otlp_proto_http-1.44.0-py3-none-any.whl (21 kB)
+Collecting opentelemetry-instrumentation==0.65b0 (from -r requirements-demo.lock (line 735))
+Downloading opentelemetry_instrumentation-0.65b0-py3-none-any.whl (36 kB)
+Collecting opentelemetry-instrumentation-asgi==0.65b0 (from -r requirements-demo.lock (line 742))
+Downloading opentelemetry_instrumentation_asgi-0.65b0-py3-none-any.whl (15 kB)
+Collecting opentelemetry-instrumentation-fastapi==0.65b0 (from -r requirements-demo.lock (line 746))
+Downloading opentelemetry_instrumentation_fastapi-0.65b0-py3-none-any.whl (13 kB)
+Collecting opentelemetry-proto==1.44.0 (from -r requirements-demo.lock (line 750))
+Downloading opentelemetry_proto-1.44.0-py3-none-any.whl (72 kB)
+Collecting opentelemetry-sdk==1.44.0 (from -r requirements-demo.lock (line 756))
+Downloading opentelemetry_sdk-1.44.0-py3-none-any.whl (137 kB)
+Collecting opentelemetry-semantic-conventions==0.65b0 (from -r requirements-demo.lock (line 762))
+Downloading opentelemetry_semantic_conventions-0.65b0-py3-none-any.whl (204 kB)
+Collecting opentelemetry-util-http==0.65b0 (from -r requirements-demo.lock (line 770))
+Downloading opentelemetry_util_http-0.65b0-py3-none-any.whl (8.2 kB)
+Collecting orjson==3.12.0 (from -r requirements-demo.lock (line 776))
+Downloading orjson-3.12.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (131 kB)
+Collecting packaging==26.3 (from -r requirements-demo.lock (line 843))
+Downloading packaging-26.3-py3-none-any.whl (129 kB)
+Collecting pinecone==9.1.0 (from -r requirements-demo.lock (line 849))
+Downloading pinecone-9.1.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.0 MB)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.0/3.0 MB 199.6 MB/s  0:00:00
+Collecting portalocker==3.2.0 (from -r requirements-demo.lock (line 859))
+Downloading portalocker-3.2.0-py3-none-any.whl (22 kB)
+Collecting protobuf==7.36.1 (from -r requirements-demo.lock (line 863))
+Downloading protobuf-7.36.1-cp310-abi3-manylinux2014_x86_64.whl (343 kB)
+Collecting pyasn1==0.6.4 (from -r requirements-demo.lock (line 877))
+Downloading pyasn1-0.6.4-py3-none-any.whl (84 kB)
+Collecting pyasn1-modules==0.4.2 (from -r requirements-demo.lock (line 881))
+Downloading pyasn1_modules-0.4.2-py3-none-any.whl (181 kB)
+Collecting pycparser==3.0 (from -r requirements-demo.lock (line 885))
+Downloading pycparser-3.0-py3-none-any.whl (48 kB)
+Collecting pydantic==2.13.5 (from -r requirements-demo.lock (line 889))
+Downloading pydantic-2.13.5-py3-none-any.whl (472 kB)
+Collecting pydantic-core==2.46.5 (from -r requirements-demo.lock (line 897))
+Downloading pydantic_core-2.46.5-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.1 MB)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 298.6 MB/s  0:00:00
+Collecting pydantic-settings==2.15.0 (from -r requirements-demo.lock (line 1019))
+Downloading pydantic_settings-2.15.0-py3-none-any.whl (69 kB)
+Collecting pygments==2.21.0 (from -r requirements-demo.lock (line 1023))
+Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 216.7 MB/s  0:00:00
+Collecting pymongo==4.18.0 (from -r requirements-demo.lock (line 1027))
+Downloading pymongo-4.18.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (1.0 MB)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.0/1.0 MB 165.2 MB/s  0:00:00
+Collecting pypdf==6.17.0 (from -r requirements-demo.lock (line 1100))
+Downloading pypdf-6.17.0-py3-none-any.whl (388 kB)
+Collecting python-dotenv==1.2.3 (from -r requirements-demo.lock (line 1104))
+Downloading python_dotenv-1.2.3-py3-none-any.whl (22 kB)
+Collecting python-multipart==0.0.32 (from -r requirements-demo.lock (line 1110))
+Downloading python_multipart-0.0.32-py3-none-any.whl (30 kB)
+Collecting qdrant-client==1.19.0 (from -r requirements-demo.lock (line 1137))
+Downloading qdrant_client-1.19.0-py3-none-any.whl (396 kB)
+Collecting requests==2.34.2 (from -r requirements-demo.lock (line 1141))
+Downloading requests-2.34.2-py3-none-any.whl (73 kB)
+Collecting rich==15.0.0 (from -r requirements-demo.lock (line 1149))
+Downloading rich-15.0.0-py3-none-any.whl (310 kB)
+Collecting slowapi==0.1.10 (from -r requirements-demo.lock (line 1153))
+Downloading slowapi-0.1.10-py3-none-any.whl (14 kB)
+Collecting sniffio==1.3.1 (from -r requirements-demo.lock (line 1157))
+Downloading sniffio-1.3.1-py3-none-any.whl (10 kB)
+Collecting starlette==1.8.0 (from -r requirements-demo.lock (line 1161))
+Downloading starlette-1.8.0-py3-none-any.whl (79 kB)
+Collecting tenacity==9.1.4 (from -r requirements-demo.lock (line 1167))
+Downloading tenacity-9.1.4-py3-none-any.whl (28 kB)
+Collecting truststore==0.10.4 (from -r requirements-demo.lock (line 1171))
+Downloading truststore-0.10.4-py3-none-any.whl (18 kB)
+Collecting typing-extensions==4.16.0 (from -r requirements-demo.lock (line 1175))
+Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+Collecting typing-inspection==0.4.4 (from -r requirements-demo.lock (line 1193))
+Downloading typing_inspection-0.4.4-py3-none-any.whl (14 kB)
+Collecting urllib3==2.7.0 (from -r requirements-demo.lock (line 1200))
+Downloading urllib3-2.7.0-py3-none-any.whl (131 kB)
+Collecting uvicorn==0.52.4 (from -r requirements-demo.lock (line 1206))
+Downloading uvicorn-0.52.4-py3-none-any.whl (79 kB)
+Collecting websockets==16.1.1 (from -r requirements-demo.lock (line 1210))
+Downloading websockets-16.1.1-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (187 kB)
+Collecting wrapt==2.4.0 (from -r requirements-demo.lock (line 1321))
+Downloading wrapt-2.4.0-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (227 kB)
+Collecting zstandard==0.25.0 (from -r requirements-demo.lock (line 1426))
+Downloading zstandard-0.25.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (5.5 MB)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.5/5.5 MB 142.0 MB/s  0:00:00
+Installing collected packages: zstandard, wrapt, websockets, urllib3, typing-extensions, truststore, tenacity, sniffio, python-multipart, python-dotenv, pypdf, pygments, pycparser, pyasn1, protobuf, portalocker, packaging, orjson, opentelemetry-util-http, numpy, msgspec, mdurl, markupsafe, itsdangerous, idna, hyperframe, hpack, h11, executing, dnspython, distro, click, charset-normalizer, certifi, asgiref, annotated-types, annotated-doc, uvicorn, typing-inspection, requests, pymongo, pydantic-core, pyasn1-modules, opentelemetry-proto, opentelemetry-api, markdown-it-py, jinja2, httpcore, h2, grpcio, googleapis-common-protos, deprecated, cffi, anyio, starlette, rich, pydantic, opentelemetry-semantic-conventions, opentelemetry-exporter-otlp-proto-common, motor, limits, httpx, cryptography, slowapi, pydantic-settings, opentelemetry-sdk, opentelemetry-instrumentation, google-auth, fastapi, qdrant-client, pinecone, opentelemetry-instrumentation-asgi, opentelemetry-exporter-otlp-proto-http, opentelemetry-instrumentation-fastapi, logfire, google-genai
+Successfully installed annotated-doc-0.0.5 annotated-types-0.8.0 anyio-4.15.1 asgiref-3.12.1 certifi-2026.7.22 cffi-2.1.1 charset-normalizer-3.5.1 click-8.5.0 cryptography-50.0.1 deprecated-1.3.1 distro-1.9.0 dnspython-2.8.0 executing-2.2.1 fastapi-0.141.1 google-auth-2.57.1 google-genai-1.75.0 googleapis-common-protos-1.75.3 grpcio-1.83.1 h11-0.16.0 h2-4.4.1 hpack-4.2.0 httpcore-1.0.9 httpx-0.28.1 hyperframe-6.1.0 idna-3.19 itsdangerous-2.2.0 jinja2-3.1.6 limits-5.8.0 logfire-5.0.0 markdown-it-py-4.2.0 markupsafe-3.0.3 mdurl-0.1.2 motor-3.7.1 msgspec-0.21.1 numpy-2.5.3 opentelemetry-api-1.44.0 opentelemetry-exporter-otlp-proto-common-1.44.0 opentelemetry-exporter-otlp-proto-http-1.44.0 opentelemetry-instrumentation-0.65b0 opentelemetry-instrumentation-asgi-0.65b0 opentelemetry-instrumentation-fastapi-0.65b0 opentelemetry-proto-1.44.0 opentelemetry-sdk-1.44.0 opentelemetry-semantic-conventions-0.65b0 opentelemetry-util-http-0.65b0 orjson-3.12.0 packaging-26.3 pinecone-9.1.0 portalocker-3.2.0 protobuf-7.36.1 pyasn1-0.6.4 pyasn1-modules-0.4.2 pycparser-3.0 pydantic-2.13.5 pydantic-core-2.46.5 pydantic-settings-2.15.0 pygments-2.21.0 pymongo-4.18.0 pypdf-6.17.0 python-dotenv-1.2.3 python-multipart-0.0.32 qdrant-client-1.19.0 requests-2.34.2 rich-15.0.0 slowapi-0.1.10 sniffio-1.3.1 starlette-1.8.0 tenacity-9.1.4 truststore-0.10.4 typing-extensions-4.16.0 typing-inspection-0.4.4 urllib3-2.7.0 uvicorn-0.52.4 websockets-16.1.1 wrapt-2.4.0 zstandard-0.25.0
+Processing ./.
+Installing build dependencies: started
+Installing build dependencies: finished with status 'done'
+Getting requirements to build wheel: started
+Getting requirements to build wheel: finished with status 'done'
+Preparing metadata (pyproject.toml): started
+Preparing metadata (pyproject.toml): finished with status 'done'
+Building wheels for collected packages: vietlex-online-ssr
+Building wheel for vietlex-online-ssr (pyproject.toml): started
+Building wheel for vietlex-online-ssr (pyproject.toml): finished with status 'done'
+Created wheel for vietlex-online-ssr: filename=vietlex_online_ssr-0.1.0-py3-none-any.whl size=2026284 sha256=90ea00ff13917971f1d765f26d6f3358595976c976c160cc691ea345767af52b
+Stored in directory: /tmp/pip-ephem-wheel-cache-zdmgvszm/wheels/b7/e8/2b/cc7ab30b5a315abc2a5c4a8511cee5e99aa6332377f4930926
+Successfully built vietlex-online-ssr
+Installing collected packages: vietlex-online-ssr
+Successfully installed vietlex-online-ssr-0.1.0
+Build Completed in /vercel/output [33s]
+Deploying outputs...
+[2K[1A[2K[G▲ Production      https://vietlex-legal-ihugz5bhn-foxys-projects-5fe642e0.vercel.app
+Completing…

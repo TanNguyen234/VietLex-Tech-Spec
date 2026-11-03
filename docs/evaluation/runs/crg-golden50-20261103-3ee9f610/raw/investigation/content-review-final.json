@@ -1,0 +1,61 @@
+{
+  "evidence": "manual review of all eight fresh source27 HTTP answer texts against unchanged frozen rubric; not independent legal certification",
+  "summary": "Fresh8/8 executed and reviewed:7source-conditional/negative/isolation cases pass; L04 legal-currentness remainsDEFERRED(1/8). No frozen case or role check is NOT RUN. This is not a representative legal-correctness/faithfulness benchmark.",
+  "cases": [
+    {
+      "id": "L01",
+      "status": "PASS_SOURCE_CONDITIONAL",
+      "prompt_contexts": 14,
+      "observed": "12million x85%=10.2million;70%=8.4million;college60days;calendar2months not assumed60days;once-per-job correctly attributed to Article25opening;currentness qualified"
+    },
+    {
+      "id": "L02",
+      "status": "PASS_SOURCE_CONDITIONAL",
+      "prompt_contexts": 14,
+      "observed": "Owned followup retains12million, computes10.2million; secondtrial samejob denied using Article25opening;source/currentness qualification"
+    },
+    {
+      "id": "L03",
+      "status": "PASS_SCOPED_SOURCE",
+      "prompt_contexts": 1,
+      "observed": "Document333670 identifies45/2019/QH14;Article25(2),60days;explicit source-only/currentness limit"
+    },
+    {
+      "id": "L04",
+      "status": "DEFERRED",
+      "prompt_contexts": 10,
+      "observed": "Only qualified currentness deferral and source quotations; no present authority/effect certification. Fresh HTTP executed; separate official-source dossier and human-review handoff prepared; no promotion"
+    },
+    {
+      "id": "L05",
+      "status": "PASS_SOURCE_CONDITIONAL",
+      "prompt_contexts": 2,
+      "observed": "10million deposit returned plus10million equal-value penalty totals20million;unless otherwise agreed;Article328(2),source/currentness qualified"
+    },
+    {
+      "id": "L06",
+      "status": "PASS_SOURCE_CONDITIONAL",
+      "prompt_contexts": 2,
+      "observed": "20day contract under1month:Article24(3)excludes trial;does not mechanicallyapply6workingdays Article25(4);source/currentness qualified"
+    },
+    {
+      "id": "L07",
+      "status": "PASS_NEGATIVE_REFERENCE",
+      "prompt_contexts": 3,
+      "observed": "Cannotverify fabricatedArticle9999/always0%wages;does not invent confirming clause"
+    },
+    {
+      "id": "N01",
+      "status": "PASS_SESSION_ISOLATION",
+      "prompt_contexts": 3,
+      "observed": "Requests missing jobwage instead of importing12million/10.2million from another session;85%formula and source/currentness qualification"
+    }
+  ],
+  "denominator": 8,
+  "source_conditional_passes": 7,
+  "deferred": 1,
+  "skipped": 0,
+  "full_metric_live_parent": "answer-golden50-production-timeout20-20261103-f93a41fe",
+  "full_metric_offline_rescore": "answer-golden50-offline-metrics33-20261103-2349369e",
+  "independent_legal_expert_review": "UNKNOWN"
+}

@@ -1,0 +1,13 @@
+# Directed core-chain supplement
+
+Five additional official primary PDFs downloaded with UTC times, hashes and page counts in receipts.json, bringing the task to17 primaryattachments. No paidOCR/LLM, no applicationwrites, promotion or deployment. Original12-file researchpacket/index remains untouched.
+
+08/2022 (215pages),05/2025 (165pages) and136/2025 (78pages) are scanned: pypdf extracted zero characters. These downloads are byte/identity/availability evidence only. Their operative clauses have NOT been independently fully read in this supplement. Do not count successful downloads as closed amendment/authority edges.
+
+09/2026/TT-BNNMT: officialGovernment detaildoc216920 links the30-page primary PDF. Exact extracted source and page locators retained. Article27 on PDF29 continues handling received complete/valid files under receipt-time law unless applicant chooses the new circular, and follows amended/replaced cited rules. Article28(1) starts29January2026;28(2) explicitly ends07/2025/TT-BNNMT on that date. This is a concrete additional termination edge, not merely an amendment inferred from the title. The annex attachment was not downloaded here.
+
+22/2026/TT-BNNMT: officialDCC registry links82-page primary; downloaded and manually rendered pages1/22. Header/page1 confirms22/2026 and19May2026. On PDF22 Article17 replaces the environmental EIA report form04 under02/2022 as amended09/2026; it does not itself establish blanket scrap-licence delegation. Article18 preserves receipt-time rules/continuing issued documents and handles discontinued procedures. Article19(1), visually confirmed, starts19May2026 (textlayer puts19/5 onanotherline); Article19(4) on PDF23 has delayedJuly1 clauses for specifieddelegation. Rendereddate rather than textlayerblank is the source for19May. Exactpagenative text in tt22-pages.json and crops/images retained; fullcircumstance/supersession inventory is still notcomplete.
+
+Late search did not produce an authoritative complete amendment/repeal inventory through the as-ofcutoff or a verified erratum for113/2025's visible documentnumber discrepancy. Webcache/searchabsence is not proof. Original unresolvedcore-scannedclauses, earlier72 amendments, Hanoi special-lawfacts and all laterministerialchanges remain gaps. No change to complete_effect_chain=false or humanapproval=false.
+
+Commands: .venv/Scripts/python.exe .tmp-effect-pdf-20261030/extend_research.py ; parentinline pypdfium2 render oftt22pages1/22 andtt09page1. Reproductioninputs URLs are inreceipts; no blindretry. One terminalprinting attempt used Windowsdefault encoding and failed aftertt09passages werewritten; corrected UTF-8rerun producedbothpassagemaps. No sourcebytesorquotes invented.

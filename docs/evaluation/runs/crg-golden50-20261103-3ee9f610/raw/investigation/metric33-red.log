@@ -1,0 +1,77 @@
+FFFFF.F.F.                                                               [100%]
+================================== FAILURES ===================================
+_ test_explicit_source_index_prevents_later_disclaimer_document_misattribution _
+
+    def test_explicit_source_index_prevents_later_disclaimer_document_misattribution():
+        metrics = score('Th\xf4ng b\xe1o b\u1eb1ng v\u0103n b\u1ea3n [T\xe0i li\u1ec7u tham kh\u1ea3o #2, \u0110i\u1ec1u 34, Kho\u1ea3n 5].\\n\\n'
+                        'L\u01b0u \xfd: hi\u1ec7u l\u1ef1c Th\xf4ng t\u01b0 09/2026/TT-BNNMT ch\u01b0a \u0111\u01b0\u1ee3c x\xe1c minh.')
+>       assert metrics['citation_precision'] == 1.0
+E       assert 0.0 == 1.0
+
+tests\evaluation\test_answer_reference_citations.py:20: AssertionError
+_____ test_parenthetical_source_index_binds_preceding_article_and_clause ______
+
+    def test_parenthetical_source_index_binds_preceding_article_and_clause():
+        metrics = score('Theo Kho\u1ea3n 5 \u0110i\u1ec1u 34 Lu\u1eadt B\u1ea3o v\u1ec7 m\xf4i tr\u01b0\u1eddng 2020 '
+                        '(T\xe0i li\u1ec7u tham kh\u1ea3o #2).\\n\\nTh\xf4ng t\u01b0 09/2026/TT-BNNMT c\u1ea7n ki\u1ec3m tra hi\u1ec7u l\u1ef1c.')
+>       assert metrics['citation_precision'] == 1.0
+E       assert 0.0 == 1.0
+
+tests\evaluation\test_answer_reference_citations.py:27: AssertionError
+_ test_nonexistent_source_index_is_invalid_even_when_legal_locator_exists[0] __
+
+index = '0'
+
+    @pytest.mark.parametrize('index', ['0', '999', '-1'])
+    def test_nonexistent_source_index_is_invalid_even_when_legal_locator_exists(index):
+        metrics = score(f'Th\xf4ng b\xe1o [T\xe0i li\u1ec7u tham kh\u1ea3o #{index}, \u0110i\u1ec1u 34, Kho\u1ea3n 5].')
+>       assert metrics['invalid_citation_rate'] > 0
+E       assert 0.0 > 0
+
+tests\evaluation\test_answer_reference_citations.py:33: AssertionError
+_ test_nonexistent_source_index_is_invalid_even_when_legal_locator_exists[999] _
+
+index = '999'
+
+    @pytest.mark.parametrize('index', ['0', '999', '-1'])
+    def test_nonexistent_source_index_is_invalid_even_when_legal_locator_exists(index):
+        metrics = score(f'Th\xf4ng b\xe1o [T\xe0i li\u1ec7u tham kh\u1ea3o #{index}, \u0110i\u1ec1u 34, Kho\u1ea3n 5].')
+>       assert metrics['invalid_citation_rate'] > 0
+E       assert 0.0 > 0
+
+tests\evaluation\test_answer_reference_citations.py:33: AssertionError
+_ test_nonexistent_source_index_is_invalid_even_when_legal_locator_exists[-1] _
+
+index = '-1'
+
+    @pytest.mark.parametrize('index', ['0', '999', '-1'])
+    def test_nonexistent_source_index_is_invalid_even_when_legal_locator_exists(index):
+        metrics = score(f'Th\xf4ng b\xe1o [T\xe0i li\u1ec7u tham kh\u1ea3o #{index}, \u0110i\u1ec1u 34, Kho\u1ea3n 5].')
+>       assert metrics['invalid_citation_rate'] > 0
+E       assert 0.0 > 0
+
+tests\evaluation\test_answer_reference_citations.py:33: AssertionError
+________ test_pointer_conflicting_with_explicit_document_stays_invalid ________
+
+    def test_pointer_conflicting_with_explicit_document_stays_invalid():
+        metrics = score('Kho\u1ea3n 5 \u0110i\u1ec1u 34 c\u1ee7a 72/2020/QH14 [T\xe0i li\u1ec7u tham kh\u1ea3o #3].')
+>       assert metrics['invalid_citation_rate'] > 0
+E       assert 0.0 > 0
+
+tests\evaluation\test_answer_reference_citations.py:42: AssertionError
+_______ test_bare_source_pointer_resolves_only_supplied_header_identity _______
+
+    def test_bare_source_pointer_resolves_only_supplied_header_identity():
+>       assert score('Th\xf4ng b\xe1o b\u1eb1ng v\u0103n b\u1ea3n [T\xe0i li\u1ec7u tham kh\u1ea3o #2].')['citation_precision'] == 1.0
+E       assert 0.0 == 1.0
+
+tests\evaluation\test_answer_reference_citations.py:51: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/evaluation/test_answer_reference_citations.py::test_explicit_source_index_prevents_later_disclaimer_document_misattribution
+FAILED tests/evaluation/test_answer_reference_citations.py::test_parenthetical_source_index_binds_preceding_article_and_clause
+FAILED tests/evaluation/test_answer_reference_citations.py::test_nonexistent_source_index_is_invalid_even_when_legal_locator_exists[0]
+FAILED tests/evaluation/test_answer_reference_citations.py::test_nonexistent_source_index_is_invalid_even_when_legal_locator_exists[999]
+FAILED tests/evaluation/test_answer_reference_citations.py::test_nonexistent_source_index_is_invalid_even_when_legal_locator_exists[-1]
+FAILED tests/evaluation/test_answer_reference_citations.py::test_pointer_conflicting_with_explicit_document_stays_invalid
+FAILED tests/evaluation/test_answer_reference_citations.py::test_bare_source_pointer_resolves_only_supplied_header_identity
+7 failed, 3 passed in 1.98s

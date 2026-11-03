@@ -1,0 +1,15 @@
+{
+  "id": "dpl_A2STKVHPiQvobnVQxPwbBX3gfuUW",
+  "url": "https://vietlex-legal-ihugz5bhn-foxys-projects-5fe642e0.vercel.app",
+  "inspectorUrl": "https://vercel.com/foxys-projects-5fe642e0/vietlex-legal-rag/A2STKVHPiQvobnVQxPwbBX3gfuUW",
+  "readyState": "READY",
+  "target": "production",
+  "deploymentApiUrl": "https://api.vercel.com/v13/deployments/dpl_A2STKVHPiQvobnVQxPwbBX3gfuUW",
+  "buildMachine": {
+    "cores": 2,
+    "memory": 8192,
+    "machine": "basic",
+    "selectionType": "fixed",
+    "selectionSource": "plan-default"
+  }
+}

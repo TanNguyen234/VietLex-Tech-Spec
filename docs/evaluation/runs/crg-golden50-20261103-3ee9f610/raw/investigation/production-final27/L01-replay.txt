@@ -1,0 +1,512 @@
+
+<article class="message-row user"><div class="message-card">Tình huống kiểm thử giả định. Tại ngày 29/10/2026, tôi nhận việc ở vị trí yêu cầu trình độ cao đẳng, mức lương của công việc là 12 triệu đồng/tháng. Công ty đề nghị thử việc hai tháng và chỉ trả 70% lương. Mức lương thử việc tối thiểu là bao nhiêu, thời gian thử việc tối đa được tính thế nào và cần đối chiếu điều khoản nào?</div><div class="avatar" aria-hidden="true">Bạn</div></article>
+<article class="message-row assistant" data-trace-id="34c2a77b-af69-47f3-b1c2-9a38651efea6"><div class="avatar" aria-hidden="true">VL</div><div class="message-card">
+  <div class="answer-source sr-only">Chưa xác minh đầy đủ chuỗi sửa đổi, bãi bỏ, chuyển tiếp và phạm vi áp dụng tại ngày hỏi. Phần dưới chỉ giải thích nội dung nguồn được cung cấp và dữ kiện giả định; chưa kết luận hiệu lực hoặc thẩm quyền hiện hành.
+
+Dựa trên các tài liệu tham khảo được cung cấp, dưới đây là thông tin trả lời cho tình huống giả định của bạn:
+
+### 1. Mức lương thử việc tối thiểu
+*   **Mức lương thử việc tối thiểu theo quy định:** Tiền lương của người lao động trong thời gian thử việc do hai bên thỏa thuận nhưng ít nhất phải bằng **85%** mức lương của công việc đó (theo Điều 26 Bộ luật Lao động 2019 `[45/2019/QH14, Điều 26]`).
+*   **Tính toán theo dữ kiện giả định:** 
+    *   Mức lương của công việc: $12.000.000$ đồng/tháng.
+    *   Phép tính mức lương thử việc tối thiểu: $12.000.000 \times 85\% = 10.200.000$ đồng/tháng.
+    *   *So sánh:* Mức lương thử việc tối thiểu mà công ty phải trả là **10.200.000 đồng/tháng**. Đề xuất trả 70% lương của công ty (tương đương $12.000.000 \times 70\% = 8.400.000$ đồng/tháng) là thấp hơn mức tối thiểu theo quy định này.
+
+### 2. Thời gian thử việc tối đa
+*   **Thời gian thử việc tối đa theo quy định:** Thời gian thử việc do hai bên thỏa thuận căn cứ vào tính chất và mức độ phức tạp của công việc nhưng chỉ được thử việc một lần đối với một công việc và bảo đảm điều kiện không quá **60 ngày** đối với công việc có chức danh nghề nghiệp cần trình độ chuyên môn, kỹ thuật từ cao đẳng trở lên (theo đoạn mở đầu Điều 25 và Khoản 2 Điều 25 Bộ luật Lao động 2019 `[45/2019/QH14, Điều 25]`).
+*   **Đối chiếu với dữ kiện giả định:** 
+    *   Vị trí công việc yêu cầu trình độ cao đẳng, do đó thời gian thử việc tối đa không được quá **60 ngày** `[45/2019/QH14, Điều 25, Khoản 2]`.
+    *   Do dữ kiện không cung cấp đầy đủ mốc ngày kết thúc thử việc cụ thể hoặc lịch làm việc chi tiết để xác định chính xác số ngày của &#34;hai tháng&#34; mà công ty đề xuất (tháng lịch có số ngày khác nhau), bạn cần lưu ý đối chiếu tổng số ngày thử việc thực tế của phương án &#34;hai tháng&#34; này để đảm bảo không vượt quá giới hạn **60 ngày** nêu trên.
+
+### 3. Các điều khoản cần đối chiếu
+Để bảo vệ quyền lợi của mình, bạn cần đối chiếu các điều khoản sau trong Bộ luật Lao động 2019:
+*   **Về tiền lương thử việc:** Đối chiếu **Điều 26** để yêu cầu mức lương thử việc ít nhất bằng 85% mức lương công việc (tối thiểu là 10.200.000 đồng/tháng) `[45/2019/QH14, Điều 26]`.
+*   **Về thời gian thử việc:** Đối chiếu **đoạn mở đầu Điều 25** (về nguyên tắc chỉ thử việc 1 lần đối với 1 công việc) và **Khoản 2 Điều 25** (về giới hạn không quá 60 ngày đối với trình độ cao đẳng trở lên) `[45/2019/QH14, Điều 25]`.
+*   **Về quyền hủy bỏ thỏa thuận:** Đối chiếu **Khoản 2 Điều 27** để biết rằng trong thời gian thử việc, mỗi bên có quyền hủy bỏ hợp đồng thử việc hoặc hợp đồng lao động đã giao kết mà không cần báo trước và không phải bồi thường `[45/2019/QH14, Điều 27, Khoản 2]`.
+
+*Lưu ý: Các văn bản được trích dẫn trong tài liệu tham khảo (như Bộ luật Lao động 2019) chưa được xác minh hiệu lực tại thời điểm ngày hỏi (29/10/2026) do nguồn dữ liệu không phải cơ sở dữ liệu pháp luật chính thức. Bạn nên kiểm tra lại trên nguồn chính thức hiện hành hoặc tham vấn người có chuyên môn trước khi áp dụng.*
+
+**Đoạn mở đầu không đánh số — [45/2019/QH14, Điều 25]:**
+&gt; Điều 25. Thời gian thử việc Thời gian thử việc do hai bên thỏa thuận căn cứ vào tính chất và mức độ phức tạp của công việc nhưng chỉ được thử việc một lần đối với một công việc và bảo đảm điều kiện sau đây:</div><div class="answer-text" data-markdown></div>
+  <section class="claim-support"><div class="section-rule"><h3>Liên kết bằng chứng</h3><span>12 nhận định được hiển thị</span></div><ol><li><span class="support-state unresolved">Chưa xác định liên kết bằng chứng</span><p>Chưa xác minh đầy đủ chuỗi sửa đổi, bãi bỏ, chuyển tiếp và phạm vi áp dụng tại ngày hỏi.</p></li><li><span class="support-state unresolved">Chưa xác định liên kết bằng chứng</span><p>Phần dưới chỉ giải thích nội dung nguồn được cung cấp và dữ kiện giả định; chưa kết luận hiệu lực hoặc thẩm quyền hiện hành.</p></li><li><span class="support-state unresolved">Chưa xác định liên kết bằng chứng</span><p>Dựa trên các tài liệu tham khảo được cung cấp, dưới đây là thông tin trả lời cho tình huống giả định của bạn:</p></li><li><span class="support-state unresolved">Chưa xác định liên kết bằng chứng</span><p>Mức lương thử việc tối thiểu</p></li><li><span class="support-state directly_supported">Có dẫn chiếu trực tiếp</span><p>Mức lương thử việc tối thiểu theo quy định:** Tiền lương của người lao động trong thời gian thử việc do hai bên thỏa thuận nhưng ít nhất phải bằng **85%** mức lương của công việc đó (theo Điều 26 Bộ luật Lao động 2019 `[45/2019/QH14, Điều 26]`).</p><button type="button" data-action="open-source" data-source-target="source-34c2a77b-af69-47f3-b1c2-9a38651efea6-1">Mở bằng chứng 1</button></li><li><span class="support-state unresolved">Chưa xác định liên kết bằng chứng</span><p>Tính toán theo dữ kiện giả định:</p></li><li><span class="support-state unresolved">Chưa xác định liên kết bằng chứng</span><p>Mức lương của công việc: $12.000.000$ đồng/tháng.</p></li><li><span class="support-state unresolved">Chưa xác định liên kết bằng chứng</span><p>Phép tính mức lương thử việc tối thiểu: $12.000.000 \times 85\% = 10.200.000$ đồng/tháng.</p></li><li><span class="support-state unresolved">Chưa xác định liên kết bằng chứng</span><p>So sánh:* Mức lương thử việc tối thiểu mà công ty phải trả là **10.200.000 đồng/tháng**.</p></li><li><span class="support-state unresolved">Chưa xác định liên kết bằng chứng</span><p>Đề xuất trả 70% lương của công ty (tương đương $12.000.000 \times 70\% = 8.400.000$ đồng/tháng) là thấp hơn mức tối thiểu theo quy định này.</p></li><li><span class="support-state unresolved">Chưa xác định liên kết bằng chứng</span><p>Thời gian thử việc tối đa</p></li><li><span class="support-state unresolved">Chưa xác định liên kết bằng chứng</span><p>Thời gian thử việc tối đa theo quy định:** Thời gian thử việc do hai bên thỏa thuận căn cứ vào tính chất và mức độ phức tạp của công việc nhưng chỉ được thử việc một lần đối với một công việc và bảo đảm điều kiện không quá **60 ngày** đối với công việc có chức danh nghề nghiệp cần trình độ chuyên môn, kỹ thuật từ cao đẳng trở lên (theo đoạn mở đầu Điều 25 và Khoản 2 Điều 25 Bộ luật Lao động 2019 `[45/2019/QH14, Điều 25]`).</p></li></ol><p class="muted">Tín hiệu neo dẫn chiếu, không phải điểm tin cậy.</p></section>
+  <section class="sources"><h3>Nguồn pháp lý truy xuất</h3><div class="source-list"><button type="button" class="source-button" data-action="open-source" data-source-target="source-34c2a77b-af69-47f3-b1c2-9a38651efea6-1">45/2019/QH14, Điều 26</button><template id="source-34c2a77b-af69-47f3-b1c2-9a38651efea6-1"><article class="evidence-detail"><p class="citation"><strong>45/2019/QH14, Điều 26</strong></p><p>Bộ luật Lao động 2019</p><p>Số hiệu: 45/2019/QH14</p><p><a href="https://thuvienphapluat.vn/van-ban/Lao-dong-Tien-luong/Bo-Luat-lao-dong-2019-333670.aspx" target="_blank" rel="noopener noreferrer">Mở nguồn dữ liệu ↗</a></p><pre>Điều 26. Tiền lương thử việc Tiền lương của người lao động trong thời gian thử việc do hai bên thỏa thuận nhưng ít nhất phải bằng 85% mức lương của công việc đó.</pre><button type="button" class="button button-primary" data-action="pin-evidence" data-trace-id="34c2a77b-af69-47f3-b1c2-9a38651efea6" data-evidence-index="0">Lưu vào hồ sơ</button></article></template><button type="button" class="source-button" data-action="open-source" data-source-target="source-34c2a77b-af69-47f3-b1c2-9a38651efea6-2">45/2019/QH14, Điều 27, Khoản 2</button><template id="source-34c2a77b-af69-47f3-b1c2-9a38651efea6-2"><article class="evidence-detail"><p class="citation"><strong>45/2019/QH14, Điều 27, Khoản 2</strong></p><p>Bộ luật Lao động 2019</p><p>Số hiệu: 45/2019/QH14</p><p><a href="https://thuvienphapluat.vn/van-ban/Lao-dong-Tien-luong/Bo-Luat-lao-dong-2019-333670.aspx" target="_blank" rel="noopener noreferrer">Mở nguồn dữ liệu ↗</a></p><pre>Điều 27. Kết thúc thời gian thử việc 2. Trong thời gian thử việc, mỗi bên có quyền hủy bỏ hợp đồng thử việc hoặc hợp đồng lao động đã giao kết mà không cần báo trước và không phải bồi thường.</pre><button type="button" class="button button-primary" data-action="pin-evidence" data-trace-id="34c2a77b-af69-47f3-b1c2-9a38651efea6" data-evidence-index="1">Lưu vào hồ sơ</button></article></template><button type="button" class="source-button" data-action="open-source" data-source-target="source-34c2a77b-af69-47f3-b1c2-9a38651efea6-3">45/2019/QH14, Điều 25</button><template id="source-34c2a77b-af69-47f3-b1c2-9a38651efea6-3"><article class="evidence-detail"><p class="citation"><strong>45/2019/QH14, Điều 25</strong></p><p>Bộ luật Lao động 2019</p><p>Số hiệu: 45/2019/QH14</p><p><a href="https://thuvienphapluat.vn/van-ban/Lao-dong-Tien-luong/Bo-Luat-lao-dong-2019-333670.aspx" target="_blank" rel="noopener noreferrer">Mở nguồn dữ liệu ↗</a></p><pre>Điều 25. Thời gian thử việc Thời gian thử việc do hai bên thỏa thuận căn cứ vào tính chất và mức độ phức tạp của công việc nhưng chỉ được thử việc một lần đối với một công việc và bảo đảm điều kiện sau đây: 1. Không quá 180 ngày đối với công việc của người quản lý doanh nghiệp theo quy định của Luật Doanh nghiệp, Luật Quản lý, sử dụng vốn nhà nước đầu tư vào sản xuất, kinh doanh tại doanh nghiệp; 2. Không quá 60 ngày đối với công việc có chức danh nghề nghiệp cần trình độ chuyên môn, kỹ thuật từ cao đẳng trở lên; 3. Không quá 30 ngày đối với công việc có chức danh nghề nghiệp cần trình độ chuyên môn, kỹ thuật trung cấp, công nhân kỹ thuật, nhân viên nghiệp vụ; 4. Không quá 06 ngày làm việc đối với công việc khác.</pre><button type="button" class="button button-primary" data-action="pin-evidence" data-trace-id="34c2a77b-af69-47f3-b1c2-9a38651efea6" data-evidence-index="2">Lưu vào hồ sơ</button></article></template><button type="button" class="source-button" data-action="open-source" data-source-target="source-34c2a77b-af69-47f3-b1c2-9a38651efea6-4">7/2026/TT-BNV, Điều 3. Mức lương của chuyên gia tư vấn</button><template id="source-34c2a77b-af69-47f3-b1c2-9a38651efea6-4"><article class="evidence-detail"><p class="citation"><strong>7/2026/TT-BNV, Điều 3. Mức lương của chuyên gia tư vấn</strong></p><p>Thông tư số 7/2026/TT-BNV của Bộ Nội vụ: Quy định mức lương của chuyên gia tư vấn trong nước làm cơ sở cho việc xác định giá gói thầu</p><p>Số hiệu: 7/2026/TT-BNV</p><p><strong>Nguồn chính thức ngoài VietLex</strong> · Hiệu lực chưa xác minh</p><p>SHA-256 nội dung trích xuất: 359494f34c6f14485aca1e7effbe2fdd2f5d1b736c973553184fd4d46587cbb3</p><p>SHA-256 tệp PDF: 7aa99b09259e3862acfb4678032ae671d2da922f675ef8fff3a3a06a8c60e20e</p><p>Phạm vi trang PDF: 1-4/4</p><p>Đọc một phần PDF: không</p><p><a href="https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/4/07-bnv.pdf" target="_blank" rel="noopener noreferrer">Mở tệp PDF ↗</a></p><p>Thời điểm đọc: 2026-11-03T15:13:28.528030+00:00</p><p>Phương thức đọc: pdf_text</p><p><a href="https://vanban.chinhphu.vn/?pageid=27160&amp;docid=218037" target="_blank" rel="noopener noreferrer">Mở nguồn dữ liệu ↗</a></p><pre>Điều 3. Mức lương của chuyên gia tư vấn
+1. Mức lương theo tháng áp dụng đối với chuyên gia tư vấn  có thời gian
+làm việc đủ 26 ngày được quy định như sau:
+2
+a) Mức 1, không quá 70.000.000 đồng/tháng đối với một trong các trường
+hợp sau đây: chuyên gia t ư vấn có bằng đại học, có chuyên môn được đào tạo
+phù hợp với chuyên ngành tư vấn và có từ 15 năm kinh nghiệm trở lên trong
+chuyên ngành tư vấn; hoặc chuyên gia tư vấn có bằng thạc sĩ trở lên, có chuyên
+môn được đào tạo phù hợp với chuyên ngành tư vấn và có từ 8 năm kinh nghiệm
+trở lên trong chuyên ngành tư vấn ; hoặc c huyên gia tư vấn  đảm nhi ệm ch ức
+danh Trưởng nhóm tư vấn hoặc chủ trì tổ chức, điều hành gói thầu tư vấn.
+b) Mức 2, không quá 55.000.000 đồng/tháng đối với một trong các trường
+hợp sau đây: chuyên gia tư vấn có bằng đại học, có chuyên môn được đào tạo phù
+hợp với chuyên ngành tư vấn  và có từ 10 đến dưới 15 năm kinh nghiệm trong
+chuyên ngành tư vấn; hoặc chuyên gia tư vấn có bằng thạc sĩ trở lên, có chuyên
+môn được đào tạo phù hợp với ch uyên ngành tư vấn và có từ 5 đến dưới 8 năm
+kinh nghiệm trong chuyên ngành tư vấn; hoặc chuyên gia tư vấn đảm nhiệm chức
+danh chủ trì triển khai một hoặc một số hạng mục thuộc gói thầu tư vấn.
+c) Mức 3, không quá 40.000.000 đồng/tháng đối với một trong các trường
+hợp sau đây: chuyên gia tư vấn có bằng đại học, có chuyên môn được đào tạo
+phù hợp với chuyên ngành tư vấn và có từ 5 đến dưới 10 năm kinh nghiệm trong
+chuyên ngành tư vấn; hoặc chuyên gia tư vấn có bằng thạc sĩ trở lên, có chuyên
+môn được đào tạo phù hợp với chuyên ngành tư vấn  và có từ 3 đến dưới 5 năm
+kinh nghiệm trong chuyên ngành tư vấn.
+d) Mức 4, không quá 30.000.000 đồng/tháng đối với một trong các trường
+hợp sau đây:  chuyên gia tư vấn có bằng đại học, có chuyên môn được đ ào tạo
+phù hợp với chuyên ngành tư vấn và có dưới 5 năm kinh nghiệm trong chuyên
+ngành tư vấn ; hoặc chuyên gia tư vấn có bằng thạc sĩ tr ở lên, có chuyên môn
+được đào tạo phù hợp với chuyên ngành tư vấn và có dưới 3 năm kinh nghiệm
+trong chuyên ngành tư vấn.
+đ) Đối với dự án, công tr ình có quy mô l ớn, kỹ thuật phức tạp, sử dụng
+công nghệ hiện đại đòi hỏi chuyên gia t ư vấn có trình độ chuyên môn kỹ thuật
+đặc biệt, khả năng cung ứng của thị trường lao động còn hạn chế hoặc điều kiện
+làm việc khó khăn, ở vùng sâu, vùng xa  mà chủ đầu tư hoặc bên mời thầu thấy
+cần thiết phải áp dụng mức lương của chuyên gia tư vấn cao hơn mức lương
+theo khoản 1 Điều này thì chủ đầu tư hoặc bên mời thầu xác định, báo cáo người
+có thẩm quyền xem xét, quyết định mức lương của chuyên gia tư v ấn cao hơn ,
+nhưng tối đa không quá 1,5 lần so với mức lương theo tháng tương ứng với tiêu
+chuẩn, điều kiện quy định tại điểm a, điểm b, điểm c và điểm d Khoản này.
+2. Mức lương theo tu ần áp dụng đối với chuyên gia tư vấn  có thời gian
+làm việc đủ 6 ngày, được xác định trên cơ sở mức lương theo tháng quy định
+tại khoản 1 Điều này nhân với 12 tháng, chia cho 52 tuần.
+3
+3. Mức lương theo ngày áp dụng đối với chuyên gia tư vấn có thời gian
+làm việc đủ 8 giờ,  được xác định trên  cơ sở mức lương theo tháng quy định tại
+khoản 1 Điều này chia cho 26 ngày.
+4. Mức lương theo giờ áp dụng đối với chuyên gia tư vấn có thời gian làm
+việc dưới 8 giờ, được xác định trên cơ sở mức lương theo tháng quy định tại
+khoản 1 Điều này chia cho 26 ngày và chia cho 8 giờ.
+5. Mức lương đối với chuyên gia tư vấn quy định tại khoản 1, khoản 2,
+khoản 3 và khoản 4  Điều này là mức tối đa, đã bao gồm tiền lương của những
+ngày nghỉ lễ, nghỉ tết, ngày nghỉ làm việc h ưởng nguyên l ương theo quy định
+của Bộ lu ật Lao động, chi phí đóng bảo hiểm xã hội, bảo hiểm y tế, bảo hiểm
+thất nghiệp và thuế thu nhập cá nhân thuộc trách nhiệm của người lao động theo
+quy định của pháp luật hiện hành về bảo hiểm xã hội, bảo hiểm y tế, bảo hiểm
+thất nghiệp và thuế thu nhập c á nhân; chưa bao gồm chi phí đóng bảo hiểm xã
+hội, bảo hiểm y t ế, bảo hiểm thất nghiệp thuộc trách nhiệm của người sử dụng
+lao động theo quy định của pháp luật h iện hành về bảo hiểm xã hội, bảo hiểm y
+tế, bảo hiểm thất nghiệp và chi phí quản lý của đơn vị quản lý, sử dụng chuyên
+gia (nếu có), chi phí đi lại, khảo sát, thuê v ăn phòng làm việc, thông tin liên lạc
+và các chi phí khác để đảm bảo chuyên gia tư vấn thực hiện nhiệm vụ.</pre><button type="button" class="button button-primary" data-action="pin-evidence" data-trace-id="34c2a77b-af69-47f3-b1c2-9a38651efea6" data-evidence-index="3">Lưu vào hồ sơ</button></article></template><button type="button" class="source-button" data-action="open-source" data-source-target="source-34c2a77b-af69-47f3-b1c2-9a38651efea6-5">13/2026/TT-BNV, Điều 1. Đối tượng áp dụng</button><template id="source-34c2a77b-af69-47f3-b1c2-9a38651efea6-5"><article class="evidence-detail"><p class="citation"><strong>13/2026/TT-BNV, Điều 1. Đối tượng áp dụng</strong></p><p>Thông tư số 13/2026/TT-BNV của Bộ Nội vụ: Hướng dẫn thực hiện mức lương cơ sở đối với các đối tượng hưởng lương, phụ cấp trong các cơ quan, tổ chức, đơn vị sự nghiệp công lập của Đảng, Nhà nước, Mặt trận Tổ quốc Việt Nam, tổ chức chính trị - xã hội và hội</p><p>Số hiệu: 13/2026/TT-BNV</p><p><strong>Nguồn chính thức ngoài VietLex</strong> · Hiệu lực chưa xác minh</p><p>SHA-256 nội dung trích xuất: 900179c65596d1892dcb5eb871c4bf73c52b750931299a67048ded163653ec8e</p><p>SHA-256 tệp PDF: bc68fc7cc658a6fd2c99c9ec369bf08dcb475a6c663cb2e847a994224df9db0a</p><p>Phạm vi trang PDF: 1-5/5</p><p>Đọc một phần PDF: không</p><p><a href="https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/6/13-bnv.pdf" target="_blank" rel="noopener noreferrer">Mở tệp PDF ↗</a></p><p>Thời điểm đọc: 2026-11-03T15:13:33.192770+00:00</p><p>Phương thức đọc: pdf_text</p><p><a href="https://vanban.chinhphu.vn/?pageid=27160&amp;docid=218315" target="_blank" rel="noopener noreferrer">Mở nguồn dữ liệu ↗</a></p><pre>Điều 1. Đối tượng áp dụng
+1. Cán bộ, công chức hưởng lương từ ngân sách nhà nước làm việc trong các
+cơ quan Đảng, Nhà nước, Mặt trận Tổ quốc Việt Nam, tổ chức chính trị - xã hội
+trực thuộc Mặt trận Tổ quốc Việt Nam và các tổ chức xã hội thực hiện các nhiệm
+vụ được nhà nước giao ở Trung ương; ở tỉnh, thành phố trực thuộc Trung ương; ở
+xã, phường, đặc khu trực thuộc cấp tỉnh; ở đơn vị hành chính - kinh tế đặc biệt.
+2. Viên chức hưởng lương từ quỹ lương của đơn vị sự nghiệp công lập theo
+quy định của pháp luật.
+3. Cán bộ, công chức, viên chức được cấp có thẩm quyền cử đến làm việc
+tại các hội, tổ chức phi Chính phủ, dự án và cơ quan, tổ chức quốc tế đặt tại Việt
+Nam mà vẫn được hưởng lương theo b ảng lương ban hành kèm  theo Nghị định
+số 204/2004/NĐ-CP ngày 14 tháng 12 năm 2004 c ủa Chính phủ về chế độ tiền
+lương đối với cán bộ, công chức, viên chức và lực lượng vũ trang được sửa đổi,
+bổ sung bởi Nghị định số 76/2009/NĐ-CP, Nghị định số 14/2012/NĐ-CP, Nghị
+định s ố 17/2013/NĐ-CP, Nghị định s ố 117/2016/NĐ-CP và Ngh ị định s ố
+07/2026/NĐ-CP.
+2
+4. Người hưởng lương làm việc trong chỉ tiêu biên chế được cấp có thẩm
+quyền giao t ại các h ội do Đ ảng, Nhà nư ớc giao nhi ệm vụ được ngân sách nhà
+nước hỗ trợ kinh phí theo quy đ ịnh tại Nghị định số 126/2024/NĐ-CP ngày 08
+tháng 10 năm 2024 của Chính phủ quy định về tổ chức, hoạt động và quản lý hội.
+5. Người hoạt động không chuyên trách ở thôn, tổ dân phố theo quy định
+tại Nghị định của Chính phủ về tổ chức, hoạt động của thôn, tổ dân phố và chế độ,
+chính sách đối với người hoạt động không chuyên trách ở thôn, tổ dân phố.
+6. Đại biểu Hội đồng nhân dân các cấp hưởng hoạt động phí theo quy định
+của pháp luật hiện hành.
+7. Người làm việc trong tổ chức cơ yếu.
+8. Người làm các công việc theo chế độ hợp đồng lao động trong cơ quan
+hành chính và đơn v ị sự nghiệp công lập quy định tại Nghị định của Chính phủ
+thuộc trường hợp được áp dụng hoặc có thỏa thuận trong hợp đồng lao động áp
+dụng xếp lương theo Nghị định số 204/2004/NĐ-CP ngày 14 tháng 12 năm 2004
+của Chính phủ về chế độ tiền lương đối với cán bộ, công chức, viên chức và lực
+lượng vũ trang.
+9. Các đối tượng sau đây được áp dụng Thông tư này để tính toán xác định
+mức đóng, hưởng chế độ bảo hiểm xã hội và giải quyết các chế độ liên quan đến
+tiền lương theo quy định của pháp luật:
+a) Cán bộ, công ch ức, viên ch ức đi h ọc, thực tập, công tác, đi ều trị, điều
+dưỡng (trong nước và ngoài nước) thuộc danh sách trả lương của cơ quan Đảng,
+Nhà nước, tổ chức chính trị - xã hội, đơn vị sự nghiệp công lập và hội được ngân
+sách nhà nước hỗ trợ kinh phí hoạt động;
+b) Người đang trong thời gian thử việc theo quy định tại Điều 24 Bộ luật
+Lao động trong cơ quan Đ ảng, Nhà nư ớc, tổ chức chính tr ị - xã hội, đơn v ị sự
+nghiệp công lập và hội được ngân sách nhà nước hỗ trợ kinh phí hoạt động;
+c) Cán bộ, công chức, viên chức đang bị tạm đình chỉ công tác, đang bị tạm
+giữ, tạm giam.</pre><button type="button" class="button button-primary" data-action="pin-evidence" data-trace-id="34c2a77b-af69-47f3-b1c2-9a38651efea6" data-evidence-index="4">Lưu vào hồ sơ</button></article></template><button type="button" class="source-button" data-action="open-source" data-source-target="source-34c2a77b-af69-47f3-b1c2-9a38651efea6-6">13/2026/TT-BNV, Điều 3. Cách tính mức lương, phụ cấp và hoạt động phí</button><template id="source-34c2a77b-af69-47f3-b1c2-9a38651efea6-6"><article class="evidence-detail"><p class="citation"><strong>13/2026/TT-BNV, Điều 3. Cách tính mức lương, phụ cấp và hoạt động phí</strong></p><p>Thông tư số 13/2026/TT-BNV của Bộ Nội vụ: Hướng dẫn thực hiện mức lương cơ sở đối với các đối tượng hưởng lương, phụ cấp trong các cơ quan, tổ chức, đơn vị sự nghiệp công lập của Đảng, Nhà nước, Mặt trận Tổ quốc Việt Nam, tổ chức chính trị - xã hội và hội</p><p>Số hiệu: 13/2026/TT-BNV</p><p><strong>Nguồn chính thức ngoài VietLex</strong> · Hiệu lực chưa xác minh</p><p>SHA-256 nội dung trích xuất: 900179c65596d1892dcb5eb871c4bf73c52b750931299a67048ded163653ec8e</p><p>SHA-256 tệp PDF: bc68fc7cc658a6fd2c99c9ec369bf08dcb475a6c663cb2e847a994224df9db0a</p><p>Phạm vi trang PDF: 1-5/5</p><p>Đọc một phần PDF: không</p><p><a href="https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/6/13-bnv.pdf" target="_blank" rel="noopener noreferrer">Mở tệp PDF ↗</a></p><p>Thời điểm đọc: 2026-11-03T15:13:33.192770+00:00</p><p>Phương thức đọc: pdf_text</p><p><a href="https://vanban.chinhphu.vn/?pageid=27160&amp;docid=218315" target="_blank" rel="noopener noreferrer">Mở nguồn dữ liệu ↗</a></p><pre>Điều 3. Cách tính mức lương, phụ cấp và hoạt động phí
+1. Đối với cán bộ, công chức, viên chức và người lao động quy định tại các
+khoản 1, 2, 3, 4, 8 và 9 Điều 1 Thông tư này:
+Căn cứ vào hệ số lương và phụ cấp hiện hưởng quy định tại các văn bản của
+cơ quan có thẩm quyền của Đảng, Nhà nước về chế độ tiền lương đối với cán bộ,
+công chức, viên chức và lực lượng vũ trang, mức lương cơ sở quy định tại Nghị
+định số 161/2026/NĐ-CP ngày 15 tháng 5 năm 2026 của Chính phủ quy định mức
+lương cơ sở và chế độ tiền thưởng đối với cán b ộ, công chức, viên chức và lực
+lượng vũ trang (sau đây vi ết tắt là Ngh ị định số 161/2026/NĐ-CP) để tính mức
+lương, mức phụ cấp và mức tiền của hệ số chênh lệch bảo lưu (nếu có) như sau:
+a) Công thức tính mức lương:
+Mức lương thực
+hiện từ ngày 01
+tháng 7 năm 2026
+=
+Mức lương cơ sở
+2.530.000
+đồng/tháng
+x Hệ số lương
+hiện hưởng
+b) Công thức tính mức phụ cấp:
+- Đối với các khoản phụ cấp tính theo mức lương cơ sở:
+Mức phụ cấp thực
+hiện từ ngày 01
+tháng 7 năm 2026
+=
+Mức lương cơ sở
+2.530.000
+đồng/tháng
+x
+Hệ số phụ cấp
+hiện hưởng
+- Đối với các khoản phụ cấp tính theo % mức lương hiện hưởng cộng phụ
+cấp chức vụ lãnh đạo và phụ cấp thâm niên vượt khung (nếu có):
+Mức phụ
+cấp thực
+hiện từ
+ngày 01
+tháng 7
+năm 2026
+=
+Mức lương
+thực hiện
+từ ngày 01
+tháng 7
+năm 2026
++
+Mức phụ cấp
+chức vụ lãnh
+đạo thực hiện
+từ ngày 01
+tháng 7 năm
+2026 (nếu có)
++
+Mức phụ cấp
+thâm niên vượt
+khung thực hiện
+từ ngày 01
+tháng 7 năm
+2026 (nếu có)
+x
+Tỷ lệ %
+phụ cấp
+được
+hưởng
+theo quy
+định
+- Đối với các khoản phụ cấp quy định bằng mức tiền cụ thể thì giữ nguyên
+theo quy định hiện hành.
+4
+c) Công thức tính mức tiền của hệ số chênh lệch bảo lưu (nếu có):
+Mức tiền của hệ số
+chênh lệch bảo lưu
+thực hiện từ ngày 01
+tháng 7 năm 2026
+=
+Mức lương cơ sở
+2.530.000
+đồng/tháng
+x
+Hệ số chênh lệch
+bảo lưu hiện
+hưởng (nếu có)
+2. Đối với đại biểu Hội đồng nhân dân các cấp quy định tại khoản 6 Điều 1
+Thông tư này:
+Căn cứ vào hệ số hoạt động phí đối với đại biểu Hội đồng nhân dân các cấp
+theo quy định của pháp luật hiện hành để tính mức hoạt động phí theo công thức sau:
+Mức hoạt động phí
+thực hiện từ ngày 01
+tháng 7 năm 2026
+=
+Mức lương cơ sở
+2.530.000
+đồng/tháng
+x Hệ số hoạt
+động phí theo
+quy định
+3. Đối với những người hoạt động không chuyên trách ở thôn, tổ dân phố
+quy định tại khoản 5 Điều 1 Thông tư này, quỹ phụ cấp được ngân sách nhà nước
+khoán đối với mỗi thôn, tổ dân phố theo quy định của Chính phủ được tính theo
+mức lương cơ sở 2.530.000 đồng/tháng.
+4. Đối với người làm việc trong tổ chức cơ yếu quy định tại khoản 7 Điều 1
+Thông tư này:
+a) Người làm việc trong tổ chức cơ yếu thuộc phạm vi quản lý của Bộ Quốc
+phòng và Bộ Công an thực hiện theo hướng dẫn của Bộ trưởng Bộ Quốc phòng
+và Bộ trưởng Bộ Công an;
+b) Người làm việc trong tổ chức cơ yếu trong các cơ quan Đảng, Nhà nước,
+tổ chức chính trị - xã hội (không thuộc phạm vi quản lý của Bộ Quốc phòng và
+Bộ Công an), thực hiện tính mức lương, mức phụ cấp và mức tiền của hệ số chênh
+lệch bảo lưu (nếu có) theo cách tính quy định tại khoản 1 Điều 3 Thông tư này.</pre><button type="button" class="button button-primary" data-action="pin-evidence" data-trace-id="34c2a77b-af69-47f3-b1c2-9a38651efea6" data-evidence-index="5">Lưu vào hồ sơ</button></article></template><button type="button" class="source-button" data-action="open-source" data-source-target="source-34c2a77b-af69-47f3-b1c2-9a38651efea6-7">248/2025/NĐ-CP, Điều 4. Mức lương cơ bản</button><template id="source-34c2a77b-af69-47f3-b1c2-9a38651efea6-7"><article class="evidence-detail"><p class="citation"><strong>248/2025/NĐ-CP, Điều 4. Mức lương cơ bản</strong></p><p>Nghị định số 248/2025/NĐ-CP quy định chế độ tiền lương, thù lao, tiền thưởng của người đại diện chủ sở hữu trực tiếp, người đại diện phần vốn nhà nước và Kiểm soát viên trong doanh nghiệp nhà nước.</p><p>Số hiệu: 248/2025/NĐ-CP</p><p><strong>Nguồn chính thức ngoài VietLex</strong> · Hiệu lực chưa xác minh</p><p>SHA-256 nội dung trích xuất: 0a720551f4dedde6fb4218f3699d8156ed108ede3619593d5566a4fb45cb7892</p><p>SHA-256 tệp PDF: 36a6b198bc694abcd314fe6d111ba2015975a16d5b562d449193409ae2730d3c</p><p>Phạm vi trang PDF: 1-20/20</p><p>Đọc một phần PDF: không</p><p><a href="https://congbaocdn.chinhphu.vn/CongBaoCP/VanBan/2025/9/46267/59072-1-20251413-1414248-2025-nd-cp.pdf" target="_blank" rel="noopener noreferrer">Mở tệp PDF ↗</a></p><p>Thời điểm đọc: 2026-11-03T15:13:42.625869+00:00</p><p>Phương thức đọc: pdf_text</p><p><a href="https://congbao.chinhphu.vn/van-ban/nghi-dinh-so-248-2025-nd-cp-46267.htm" target="_blank" rel="noopener noreferrer">Mở nguồn dữ liệu ↗</a></p><pre>Điều 4. Mức lương cơ bản
+1. Mức lương cơ bản của Thành viên hội đồng, Kiểm soát viên chu yên trách
+được quy định như sau:
+BẢNG MỨC LƯƠNG CƠ BẢN
+Đơn vị: triệu đồng/tháng
+Nhóm I Nhóm II Mức lương
+cơ bản
+Chức danh Mức
+1
+Mức
+2
+Mức
+3
+Mức
+4
+Mức
+1
+Mức
+2
+Mức
+3
+1. Chủ tịch Hội đồng thành
+viên (hoặc Chủ tịch công ty),
+Chủ tịch Hội đồng quản trị
+80 70 62 53 48 42 37
+2. Trưởng Ban kiểm soát 66 58 51 44 41 36 31
+3. Thành viên Hội đồng thành
+viên, Thành viên Hội đồng
+quản trị, Kiểm soát viên
+65 57 50 43 40 35 30
+2. Việc áp dụng các mức lương cơ bản của nhóm I và nhóm II được  thực hiện
+theo quy định tại Phụ lục II ban hành kèm theo Nghị định này.</pre><button type="button" class="button button-primary" data-action="pin-evidence" data-trace-id="34c2a77b-af69-47f3-b1c2-9a38651efea6" data-evidence-index="6">Lưu vào hồ sơ</button></article></template><button type="button" class="source-button" data-action="open-source" data-source-target="source-34c2a77b-af69-47f3-b1c2-9a38651efea6-8">7/2026/TT-BNV, Điều 5. Trách nhiệm thực hiện</button><template id="source-34c2a77b-af69-47f3-b1c2-9a38651efea6-8"><article class="evidence-detail"><p class="citation"><strong>7/2026/TT-BNV, Điều 5. Trách nhiệm thực hiện</strong></p><p>Thông tư số 7/2026/TT-BNV của Bộ Nội vụ: Quy định mức lương của chuyên gia tư vấn trong nước làm cơ sở cho việc xác định giá gói thầu</p><p>Số hiệu: 7/2026/TT-BNV</p><p><strong>Nguồn chính thức ngoài VietLex</strong> · Hiệu lực chưa xác minh</p><p>SHA-256 nội dung trích xuất: 359494f34c6f14485aca1e7effbe2fdd2f5d1b736c973553184fd4d46587cbb3</p><p>SHA-256 tệp PDF: 7aa99b09259e3862acfb4678032ae671d2da922f675ef8fff3a3a06a8c60e20e</p><p>Phạm vi trang PDF: 1-4/4</p><p>Đọc một phần PDF: không</p><p><a href="https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/4/07-bnv.pdf" target="_blank" rel="noopener noreferrer">Mở tệp PDF ↗</a></p><p>Thời điểm đọc: 2026-11-03T15:13:28.528030+00:00</p><p>Phương thức đọc: pdf_text</p><p><a href="https://vanban.chinhphu.vn/?pageid=27160&amp;docid=218037" target="_blank" rel="noopener noreferrer">Mở nguồn dữ liệu ↗</a></p><pre>Điều 5. Trách nhiệm thực hiện
+1. Chủ đầu tư hoặc bên mời thầu căn cứ vào quy mô, tính chất của gói
+thầu, giá gói thầu, địa điểm thực hiện dịch vụ t ư vấn và mức lương của chuyên
+gia tư vấn theo tháng, tuần, ngày, giờ quy định tại Điều 3 Thông tư này  để xác
+định mức lương cụ thể làm cơ sở lập, thẩm định, phê duyệt dự toán gói thầu áp
+dụng loại hợp đồng theo thời gian, hợp đồng trọn gói, hợp đồng theo đơn giá cố
+định, hợp đồng theo đơn giá điều chỉnh, hợp đồng theo chi phí cộng phí, hợp
+đồng theo kết quả đầu ra hoặc hợp đồng hỗn hợp, đảm bảo tiết kiệm, hiệu quả.
+2. Đối với gói thầu đã được lập, thẩm định, phê duyệt dự toán trước khi
+Thông tư này có hiệu lực thi hành thì việc điều chỉnh dự toán gói thầu và xử lý
+tình huống trong đấu thầu do  quy định tạ i Thông tư này được thực hiện theo
+quy định của Luật Đấu thầu và các văn bản có liên quan.
+4
+3. Bộ trưởng, Thủ trưởng cơ quan ngang bộ , Chủ tịch Ủy ban nhân dân
+các tỉnh, thành phố trực thuộc trung ương, các cơ quan, tổ chức, đơn vị, doanh
+nghiệp, cá nhân có liên quan có trách nhiệm tổ chức thực hiện Thông tư này.
+Trong quá trình thực hiện nếu có vướng mắc, đề nghị các cơ quan, đơn vị,
+cá nhân phản ánh về Bộ Nội vụ để nghiên cứu giải quyết./.</pre><button type="button" class="button button-primary" data-action="pin-evidence" data-trace-id="34c2a77b-af69-47f3-b1c2-9a38651efea6" data-evidence-index="7">Lưu vào hồ sơ</button></article></template><button type="button" class="source-button" data-action="open-source" data-source-target="source-34c2a77b-af69-47f3-b1c2-9a38651efea6-9">248/2025/NĐ-CP, Điều 9. Trách nhiệm thực hiện</button><template id="source-34c2a77b-af69-47f3-b1c2-9a38651efea6-9"><article class="evidence-detail"><p class="citation"><strong>248/2025/NĐ-CP, Điều 9. Trách nhiệm thực hiện</strong></p><p>Nghị định số 248/2025/NĐ-CP quy định chế độ tiền lương, thù lao, tiền thưởng của người đại diện chủ sở hữu trực tiếp, người đại diện phần vốn nhà nước và Kiểm soát viên trong doanh nghiệp nhà nước.</p><p>Số hiệu: 248/2025/NĐ-CP</p><p><strong>Nguồn chính thức ngoài VietLex</strong> · Hiệu lực chưa xác minh</p><p>SHA-256 nội dung trích xuất: 0a720551f4dedde6fb4218f3699d8156ed108ede3619593d5566a4fb45cb7892</p><p>SHA-256 tệp PDF: 36a6b198bc694abcd314fe6d111ba2015975a16d5b562d449193409ae2730d3c</p><p>Phạm vi trang PDF: 1-20/20</p><p>Đọc một phần PDF: không</p><p><a href="https://congbaocdn.chinhphu.vn/CongBaoCP/VanBan/2025/9/46267/59072-1-20251413-1414248-2025-nd-cp.pdf" target="_blank" rel="noopener noreferrer">Mở tệp PDF ↗</a></p><p>Thời điểm đọc: 2026-11-03T15:13:42.625869+00:00</p><p>Phương thức đọc: pdf_text</p><p><a href="https://congbao.chinhphu.vn/van-ban/nghi-dinh-so-248-2025-nd-cp-46267.htm" target="_blank" rel="noopener noreferrer">Mở nguồn dữ liệu ↗</a></p><pre>Điều 9. Trách nhiệm thực hiện
+1. Hội đồng thành viên hoặc Chủ tịch công ty tại doanh nghiệp, tổ chức tín
+dụng do Nhà nước nắm giữ 100% vốn điều lệ có trách nhiệm:
+a) Hằng năm, quyết định mức tiền lương, thù lao thực hiện năm t rước của
+Thành viên hội đồng trước ngày 15 tháng 4, mức tiền thưởng năm trước trước
+ngày 30 tháng 6; xác định và báo cáo cơ quan đại diện chủ sở hữ u (đồng thời gửi
+Bộ Nội vụ để theo dõi, giám sát chung) mức tiền lương, thù lao,  tiền thưởng năm
+trước của Trưởng Ban kiểm soát, Kiểm soát viên cùng thời điểm q uyết định tiền
+lương, thù lao, tiền thưởng  của Thành viên hội đồng;
+b) Trong vòng 15 ngày kể từ ngày quyết định mức tiền lương, thù  lao, tiền
+thưởng của Thành viên hội đồng thì gửi báo cáo (kèm theo thông tin về các chỉ
+tiêu sản xuất, kinh doanh kế hoạch và thực hiện của doanh nghiệ p theo quy định
+CÔNG BÁO/Số 1413 + 1414/Ngày 30-9-2025 9
+tại khoản 3 Điều 3 Nghị định này) về cơ quan đại diện chủ sở hữ u và Bộ Nội vụ
+để giám sát, kiểm tra.
+2. Trưởng Ban kiểm soát, Kiểm soát viên tại doanh nghiệp, tổ ch ức tín dụng
+do Nhà nước nắm giữ 100% vốn điều lệ có trách nhiệm giúp cơ qua n đại diện chủ
+sở hữu kiểm tra, giám sát việc thực hiện của Hội đồng thành viê n hoặc Chủ tịch
+công ty theo quy định của pháp luật và quy định tại Nghị định n ày và định kỳ báo
+cáo cơ quan đại diện chủ sở hữu. Trường hợp phát hiện nội dung không đúng quy
+định thì đề nghị Hội đồng thành viên hoặc Chủ tịch công ty chỉ đạo sửa đổi, điều
+chỉnh. Nếu đề nghị không được thự c hiện thì báo cáo cơ quan đại  diện chủ sở hữu
+biết để kịp thời xử lý.
+3. Người đại diện vốn có trách nhiệm:
+a) Tham gia ý kiến, biểu quyết trong Hội đồng quản trị, Hội đồn g thành viên
+hoặc Đại hội đồng cổ đông về mức tiền lương, thù lao, tiền thưở ng thực hiện của
+người đại diện vốn;
+b) Trong vòng 15 ngày kể từ ngày Hội đồng quản trị, Hội đồng th ành viên
+hoặc Đại hội đồng cổ đông thông qua mức tiền lương, thù lao, ti ền thưởng của
+Thành viên hội đồng, người đại di ện vốn thì gửi báo cáo (kèm th eo thông tin về
+các chỉ tiêu sản xuất, kinh doanh kế hoạch và thực hiện của doa nh nghiệp, tổ
+chức tín dụng theo quy định tại khoản 3 Điều 3 Nghị định này) v ề cơ quan đại
+diện chủ sở hữu và Bộ Nội vụ để giám sát, kiểm tra.
+4. Cơ quan đại diện chủ sở hữu có trách nhiệm:
+a) Hằng năm, cho ý kiến và thông báo để doanh nghiệp chi trả ti ền lương, thù
+lao, tiền thưởng đối với Kiểm so át viên tại doanh nghiệp, tổ ch ức tín dụng do Nhà
+nước nắm giữ 100% vốn điều lệ trong vòng 15 ngày kể từ ngày Hội  đồng thành
+viên hoặc Chủ tịch công ty báo cáo;
+b) Tiếp nhận, rà soát báo cáo của Hội đồng thành viên hoặc Chủ tịch công ty,
+người đại diện vốn về mức tiền lương, thù lao, tiền thưởng của Thành viên hội
+đồng. Trường hợp phát hiện nội d ung không đúng quy định thì yêu  cầu Hội đồng
+thành viên, Chủ tịch công ty sửa đổi, điều chỉnh; chỉ đạo người  đại diện vốn tham
+gia ý kiến để Hội đồng thành viên, Hội đồng quản trị hoặc Đại h ội đồng cổ đông
+sửa đổi, điều chỉnh bảo đảm quy định tại Nghị định này;
+c) Tổ chức thực hiện và kiểm tra, giám sát việc thực hiện các q uy định của
+pháp luật về tiền lương, thù la o, tiền thưởng tại các doanh ngh iệp nhà nước, tổ
+chức tín dụng thuộ c quyền quản lý.
+CÔNG BÁO/Số 1413 + 1414/Ngày 30-9-2025 10
+5. Bộ Nội vụ có trách nhiệm:
+a) Chủ trì, phối hợp với các bộ, ngành liên quan trình Chính ph ủ xem xét,
+điều chỉnh mức lương cơ bản cho phù hợp với thực tế của từng th ời kỳ;
+b) Chủ trì, phối hợp với các bộ , ngành liên quan trình Chính ph ủ quy định về
+tiền lương, thù lao, tiền thưởng c ủa người đại diện chủ sở hữu trực tiếp, người đại
+diện phần vốn nhà nước và Kiểm soát viên tại doanh nghiệp nhà n ước; tổ chức tín
+dụng do Nhà nước nắm giữ trên 50% vốn điều lệ;
+c) Phối hợp với các bộ, ngành liên quan và cơ quan đại diện chủ  sở hữu tổ
+chức kiểm tra, giám sát việc thực hiện các quy định của pháp lu ật về tiền lương,
+thù lao, tiền thưởng tại các doa nh nghiệp nhà nước, tổ chức tín  dụng.</pre><button type="button" class="button button-primary" data-action="pin-evidence" data-trace-id="34c2a77b-af69-47f3-b1c2-9a38651efea6" data-evidence-index="8">Lưu vào hồ sơ</button></article></template><button type="button" class="source-button" data-action="open-source" data-source-target="source-34c2a77b-af69-47f3-b1c2-9a38651efea6-10">248/2025/NĐ-CP, Điều 12. Tổ chức thực hiện</button><template id="source-34c2a77b-af69-47f3-b1c2-9a38651efea6-10"><article class="evidence-detail"><p class="citation"><strong>248/2025/NĐ-CP, Điều 12. Tổ chức thực hiện</strong></p><p>Nghị định số 248/2025/NĐ-CP quy định chế độ tiền lương, thù lao, tiền thưởng của người đại diện chủ sở hữu trực tiếp, người đại diện phần vốn nhà nước và Kiểm soát viên trong doanh nghiệp nhà nước.</p><p>Số hiệu: 248/2025/NĐ-CP</p><p><strong>Nguồn chính thức ngoài VietLex</strong> · Hiệu lực chưa xác minh</p><p>SHA-256 nội dung trích xuất: 0a720551f4dedde6fb4218f3699d8156ed108ede3619593d5566a4fb45cb7892</p><p>SHA-256 tệp PDF: 36a6b198bc694abcd314fe6d111ba2015975a16d5b562d449193409ae2730d3c</p><p>Phạm vi trang PDF: 1-20/20</p><p>Đọc một phần PDF: không</p><p><a href="https://congbaocdn.chinhphu.vn/CongBaoCP/VanBan/2025/9/46267/59072-1-20251413-1414248-2025-nd-cp.pdf" target="_blank" rel="noopener noreferrer">Mở tệp PDF ↗</a></p><p>Thời điểm đọc: 2026-11-03T15:13:42.625869+00:00</p><p>Phương thức đọc: pdf_text</p><p><a href="https://congbao.chinhphu.vn/van-ban/nghi-dinh-so-248-2025-nd-cp-46267.htm" target="_blank" rel="noopener noreferrer">Mở nguồn dữ liệu ↗</a></p><pre>Điều 12. Tổ chức thực hiện
+1. Cơ quan đại diện chủ sở hữu tổ chức quản lý tiền lương, thù lao, tiền thưởng
+đối với doanh nghiệp, tổ chức tín dụng được giao thực hiện quyề n đại diện chủ sở
+hữu theo quy định tại Nghị định này.
+2. Quỹ tài chính nhà nước ngoài  ngân sách đang áp dụng cơ chế t iền lương
+theo mô hình công ty trách nhiệm hữu hạn một thành viên do nhà nước nắm giữ
+100% vốn điều lệ theo quy định của  cơ quan nhà nước có thẩm quy ền thì căn cứ
+quy định tại khoản 1, khoản 3, khoả n 4 Điều 24 Luật Quản lý và đầu tư vốn nhà
+nước tại doanh nghiệp và quy định tại Nghị định này để thực hiệ n chế độ tiền
+lương đối với người lao động, Tổng Giám đốc, Giám đốc, Phó Tổng  giám đốc,
+Phó Giám đốc, Kế toán trưởng và chế độ tiền lương, thù lao, tiề n thưởng đối với
+Chủ tịch, thành viên  Hội đồng quản lý, Hội đồng thành viên, Hội  đồng quản trị
+và Kiểm soát viên, trong đó mức lương cơ bản được xác định theo  lĩnh vực tài
+chính trong nhóm ngành, lĩnh vực hoạt động số 7 tại điểm a khoả n 2 Mục II Phụ
+lục II ban hành kèm theo Nghị định này; chỉ tiêu lợi nhuận được  tính theo lợi
+nhuận trước thuế hoặc tổng doanh thu trừ tổng chi phí; đối với Quỹ tài chính
+theo mô hình Hội đồng quản lý thì Hội đồng quản lý được xác địn h tiền lương,
+thù lao tương đương Hộ i đồng thành viên.
+3. Sở giao dịch chứng khoán, Tổng công ty Lưu ký và Bù trừ chứn g khoán
+Việt Nam khi xác định mức tiền lương, thù lao tối đa của Thành viên hội đồng,
+Kiểm soát viên, nếu có yếu tố khách quan quy định tại Phụ lục I  ban hành kèm
+theo Nghị định này và điểm b, điểm c khoản 2 Điều 6 Nghị định số 59/2021/NĐ-CP
+ngày 18 tháng 6 năm 2021 của Chí nh phủ quy định một số nội dung  đặc thù về cơ
+chế quản lý tài chính, đánh giá hiệu quả hoạt động đối với Sở G iao dịch chứng
+khoán Việt Nam, Tổng công ty Lưu ký và Bù trừ chứng khoán Việt Nam, làm biến
+động doanh thu tăng trên 7% hoặc giảm trên 3% thì loại trừ phần  doanh thu tăng
+trên 7% (đối với trường hợp doanh thu tăng trên 7%) hoặc được t ính phần doanh
+thu giảm trên 3% (đối với trườ ng hợp doanh thu giảm trên 3%) và o doanh thu để
+xác định lợi nhuận làm căn cứ xác định mức tiền lương, thù lao tối đa của Thành
+viên hội đồng, Kiểm soát viên.
+4 .  B ả o  h i ể m  t i ề n  g ử i  V i ệ t  N a m ,  N g â n  h à n g  P h á t  t r i ể n  V i ệ t  N a m ,  Ngân hàng
+Chính sách xã hội căn cứ quy định tại khoản 1, khoản 3, khoản 4 Điều 24 Luật Quản
+lý và đầu tư vốn nhà nước tại doanh nghiệp và quy định tại Nghị  định này để thực
+hiện chế độ tiền lương đối với người lao động, Tổng Giám đốc, Phó Tổng giám đốc,
+Kế toán trưởng và chế độ tiền lương, thù lao, tiền thưởng đối v ới Thành viên hội
+CÔNG BÁO/Số 1413 + 1414/Ngày 30-9-2025 13
+đồng, Kiểm soát viên, trong đó khi thực hiện chế độ tiền lương, thù lao thì chỉ tiêu lợi
+nhuận được thay bằng chỉ tiêu tổng doanh thu trừ tổng chi phí; nếu có yếu tố khách
+quan quy định tại Phụ lục I và yếu tố đặc thù quy định tại Phụ lục III ban hành kèm
+theo Nghị định này tác động trực tiếp làm tăng hoặc giảm tổng doanh thu, tổng chi phí
+thì Hội đồng quản trị Bảo hiểm tiền gửi Việt Nam, Ngân hàng Phát triển Việt Nam, Ngân
+hàng Chính sách xã hội tính toán loại trừ, bảo đảm tiền lương, thù lao gắn với hiệu
+quả sản xuất, kinh doanh thực sự của đơn vị. Giao Hội đồng quản trị Ngân hàng Phát
+triển Việt Nam, Ngân hàng Chính sách xã hội hằng năm xem xét, quyết định và chịu
+trách nhiệm về mức tiền lương, thù lao, tiền thưởng của Chủ tịc h, thành viên Hội
+đồng quản trị, Trưởng Ban kiểm soát, Kiểm soát viên của Ngân hàng.
+5. Tổng giám đốc Đài Truyền hình Việt Nam căn cứ quy định của p háp luật về
+tiền lương đối với doanh nghiệp do Nhà nước nắm giữ 100% vốn đi ều lệ và pháp
+luật có liên quan để thực hiện chế độ tiền lương đối với viên chức, người lao động,
+Tổng Giám đốc, Phó Tổng giám đốc g ắn với năng suất lao động, hi ệu quả hoạt
+động, bảo đảm doanh thu bù đắp chi phí sản xuất của Đài Truyền hình Việt Nam.
+6. Tổ chức chính trị, Mặt trận Tổ quốc Việt Nam và các tổ chức thành viên
+được áp dụng quy định tại Nghị địn h này để thực hiện tiền lương , thù lao, tiền
+thưởng đối với doanh nghiệp do tổ chức chính trị, tổ chức chính  trị - xã hội nắm
+giữ 100% vốn điều lệ hoặc nắm giữ trên 50% đến dưới 100% vốn điều lệ.
+7. Bộ trưởng, Thủ trưởng cơ quan ngang bộ, Thủ trưởng cơ quan t huộc Chính
+phủ, Chủ tịch Ủy ban nhân dân tỉ nh, thành phố trực thuộc Trung ương và tổ chức,
+cá nhân có liên quan chịu trách nhiệm thi hành Nghị định này./.</pre><button type="button" class="button button-primary" data-action="pin-evidence" data-trace-id="34c2a77b-af69-47f3-b1c2-9a38651efea6" data-evidence-index="9">Lưu vào hồ sơ</button></article></template><button type="button" class="source-button" data-action="open-source" data-source-target="source-34c2a77b-af69-47f3-b1c2-9a38651efea6-11">7/2026/TT-BNV, Điều 4. Hiệu lực thi hành</button><template id="source-34c2a77b-af69-47f3-b1c2-9a38651efea6-11"><article class="evidence-detail"><p class="citation"><strong>7/2026/TT-BNV, Điều 4. Hiệu lực thi hành</strong></p><p>Thông tư số 7/2026/TT-BNV của Bộ Nội vụ: Quy định mức lương của chuyên gia tư vấn trong nước làm cơ sở cho việc xác định giá gói thầu</p><p>Số hiệu: 7/2026/TT-BNV</p><p><strong>Nguồn chính thức ngoài VietLex</strong> · Hiệu lực chưa xác minh</p><p>SHA-256 nội dung trích xuất: 359494f34c6f14485aca1e7effbe2fdd2f5d1b736c973553184fd4d46587cbb3</p><p>SHA-256 tệp PDF: 7aa99b09259e3862acfb4678032ae671d2da922f675ef8fff3a3a06a8c60e20e</p><p>Phạm vi trang PDF: 1-4/4</p><p>Đọc một phần PDF: không</p><p><a href="https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/4/07-bnv.pdf" target="_blank" rel="noopener noreferrer">Mở tệp PDF ↗</a></p><p>Thời điểm đọc: 2026-11-03T15:13:28.528030+00:00</p><p>Phương thức đọc: pdf_text</p><p><a href="https://vanban.chinhphu.vn/?pageid=27160&amp;docid=218037" target="_blank" rel="noopener noreferrer">Mở nguồn dữ liệu ↗</a></p><pre>Điều 4. Hiệu lực thi hành
+1. Thông tư này có hiệu lực thi hành kể từ ngày 01 tháng 7 năm 2026.
+2. Thông tư số 004/2025/TT-BNV ngày 07 tháng 5 năm 20 25 của Bộ
+trưởng Bộ Nội vụ quy định mức lương của chuyên gia tư vấn trong nước làm cơ
+sở cho việc xác định giá gói thầu hết hiệu lực kể từ ngày Thông tư này có hiệu
+lực thi hành.</pre><button type="button" class="button button-primary" data-action="pin-evidence" data-trace-id="34c2a77b-af69-47f3-b1c2-9a38651efea6" data-evidence-index="10">Lưu vào hồ sơ</button></article></template><button type="button" class="source-button" data-action="open-source" data-source-target="source-34c2a77b-af69-47f3-b1c2-9a38651efea6-12">13/2026/TT-BNV, Điều 4. Hiệu lực thi hành</button><template id="source-34c2a77b-af69-47f3-b1c2-9a38651efea6-12"><article class="evidence-detail"><p class="citation"><strong>13/2026/TT-BNV, Điều 4. Hiệu lực thi hành</strong></p><p>Thông tư số 13/2026/TT-BNV của Bộ Nội vụ: Hướng dẫn thực hiện mức lương cơ sở đối với các đối tượng hưởng lương, phụ cấp trong các cơ quan, tổ chức, đơn vị sự nghiệp công lập của Đảng, Nhà nước, Mặt trận Tổ quốc Việt Nam, tổ chức chính trị - xã hội và hội</p><p>Số hiệu: 13/2026/TT-BNV</p><p><strong>Nguồn chính thức ngoài VietLex</strong> · Hiệu lực chưa xác minh</p><p>SHA-256 nội dung trích xuất: 900179c65596d1892dcb5eb871c4bf73c52b750931299a67048ded163653ec8e</p><p>SHA-256 tệp PDF: bc68fc7cc658a6fd2c99c9ec369bf08dcb475a6c663cb2e847a994224df9db0a</p><p>Phạm vi trang PDF: 1-5/5</p><p>Đọc một phần PDF: không</p><p><a href="https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/6/13-bnv.pdf" target="_blank" rel="noopener noreferrer">Mở tệp PDF ↗</a></p><p>Thời điểm đọc: 2026-11-03T15:13:33.192770+00:00</p><p>Phương thức đọc: pdf_text</p><p><a href="https://vanban.chinhphu.vn/?pageid=27160&amp;docid=218315" target="_blank" rel="noopener noreferrer">Mở nguồn dữ liệu ↗</a></p><pre>Điều 4. Hiệu lực thi hành
+1. Thông tư này có hiệu lực thi hành kể từ ngày 01 tháng 7 năm 2026.
+2. Thông tư này thay th ế Thông tư số 07/2024/TT-BNV ngày 05 tháng 7
+năm 2024 của Bộ trưởng Bộ Nội vụ hướng dẫn thực hiện mức lương cơ s ở đối
+với các đ ối tượng hưởng lương, ph ụ cấp trong các cơ quan, t ổ chức, đơn v ị sự
+nghiệp công lập của Đảng, Nhà nước, Mặt trận Tổ quốc Việt Nam, tổ chức chính
+trị - xã hội và hội.
+3. Các khoản trích và các ch ế độ được hưởng tính theo m ức lương cơ s ở
+được tính lại tương ứng từ ngày 01 tháng 7 năm 2026.
+5</pre><button type="button" class="button button-primary" data-action="pin-evidence" data-trace-id="34c2a77b-af69-47f3-b1c2-9a38651efea6" data-evidence-index="11">Lưu vào hồ sơ</button></article></template><button type="button" class="source-button" data-action="open-source" data-source-target="source-34c2a77b-af69-47f3-b1c2-9a38651efea6-13">7/2026/TT-BNV, Điều 1. Phạm vi điều chỉnh</button><template id="source-34c2a77b-af69-47f3-b1c2-9a38651efea6-13"><article class="evidence-detail"><p class="citation"><strong>7/2026/TT-BNV, Điều 1. Phạm vi điều chỉnh</strong></p><p>Thông tư số 7/2026/TT-BNV của Bộ Nội vụ: Quy định mức lương của chuyên gia tư vấn trong nước làm cơ sở cho việc xác định giá gói thầu</p><p>Số hiệu: 7/2026/TT-BNV</p><p><strong>Nguồn chính thức ngoài VietLex</strong> · Hiệu lực chưa xác minh</p><p>SHA-256 nội dung trích xuất: 359494f34c6f14485aca1e7effbe2fdd2f5d1b736c973553184fd4d46587cbb3</p><p>SHA-256 tệp PDF: 7aa99b09259e3862acfb4678032ae671d2da922f675ef8fff3a3a06a8c60e20e</p><p>Phạm vi trang PDF: 1-4/4</p><p>Đọc một phần PDF: không</p><p><a href="https://datafiles.chinhphu.vn/cpp/files/vbpq/2026/4/07-bnv.pdf" target="_blank" rel="noopener noreferrer">Mở tệp PDF ↗</a></p><p>Thời điểm đọc: 2026-11-03T15:13:28.528030+00:00</p><p>Phương thức đọc: pdf_text</p><p><a href="https://vanban.chinhphu.vn/?pageid=27160&amp;docid=218037" target="_blank" rel="noopener noreferrer">Mở nguồn dữ liệu ↗</a></p><pre>Điều 1. Phạm vi điều chỉnh
+Thông tư này quy định mức lương của chuyên gia tư vấn trong nước
+(sau đây gọi tắt là chuyên gia tư vấn) làm cơ sở lập, thẩm định, phê duyệt dự
+toán gói thầu thuộc dự án đầu tư, dự toán mua sắm, cung cấp sản phẩm, dịch
+vụ công , mua thuốc, hóa chất, vật tư xét nghiệm, thiết bị y tế, mua hàng dự
+trữ quốc gia, thuê bảo quản hàng dự trữ quốc gia hoặc các công việc khác
+phải tổ chức đấu thầu theo quy định tại khoản 1  Điều 2 của Luật Đấu thầu
+(được sửa đổi, bổ sung bởi Điều 1 Luật sử a đổi, bổ sung một số điều của Luật
+Đấu thầu, Luật Đầu tư theo phương thức đối tác công tư, Luật Hải quan, Luật
+Thuế giá trị gia tăng,  Luật Thuế xuất khẩu, thuế nhập khẩu, Luật Đầu tư, Luật
+Đầu tư công, Luật Quản lý, sử dụng tài sản công số 90/2025/QH15 ) và khoản
+3 Điều 2 của Luật Đấu thầu  số 22/2023/QH15.</pre><button type="button" class="button button-primary" data-action="pin-evidence" data-trace-id="34c2a77b-af69-47f3-b1c2-9a38651efea6" data-evidence-index="12">Lưu vào hồ sơ</button></article></template><button type="button" class="source-button" data-action="open-source" data-source-target="source-34c2a77b-af69-47f3-b1c2-9a38651efea6-14">248/2025/NĐ-CP, Điều 5. Mức tiền lương tối đa</button><template id="source-34c2a77b-af69-47f3-b1c2-9a38651efea6-14"><article class="evidence-detail"><p class="citation"><strong>248/2025/NĐ-CP, Điều 5. Mức tiền lương tối đa</strong></p><p>Nghị định số 248/2025/NĐ-CP quy định chế độ tiền lương, thù lao, tiền thưởng của người đại diện chủ sở hữu trực tiếp, người đại diện phần vốn nhà nước và Kiểm soát viên trong doanh nghiệp nhà nước.</p><p>Số hiệu: 248/2025/NĐ-CP</p><p><strong>Nguồn chính thức ngoài VietLex</strong> · Hiệu lực chưa xác minh</p><p>SHA-256 nội dung trích xuất: 0a720551f4dedde6fb4218f3699d8156ed108ede3619593d5566a4fb45cb7892</p><p>SHA-256 tệp PDF: 36a6b198bc694abcd314fe6d111ba2015975a16d5b562d449193409ae2730d3c</p><p>Phạm vi trang PDF: 1-20/20</p><p>Đọc một phần PDF: không</p><p><a href="https://congbaocdn.chinhphu.vn/CongBaoCP/VanBan/2025/9/46267/59072-1-20251413-1414248-2025-nd-cp.pdf" target="_blank" rel="noopener noreferrer">Mở tệp PDF ↗</a></p><p>Thời điểm đọc: 2026-11-03T15:13:42.625869+00:00</p><p>Phương thức đọc: pdf_text</p><p><a href="https://congbao.chinhphu.vn/van-ban/nghi-dinh-so-248-2025-nd-cp-46267.htm" target="_blank" rel="noopener noreferrer">Mở nguồn dữ liệu ↗</a></p><pre>Điều 5. Mức tiền lương tối đa
+Mức tiền lương tối đa của Thành viên hội đồng, Kiểm soát viên c huyên trách
+được xác định trên cơ sở mức lương cơ bản quy định tại Điều 4 N ghị định này và
+lợi nhuận thực hiện của doanh nghiệp như sau:
+1. Doanh nghiệp có lợi nhuận và lợ i nhuận thực hiện không thấp hơn kế
+hoạch thì mức tiền lương tối đa bằng 02 lần mức lương cơ bản, n ếu lợi nhuận
+thực hiện vượt kế hoạch thì thực hiện theo nguyên tắc 1% lợi nh uận vượt so với
+kế hoạch, được tính thêm 2% mức tiền lương nhưng không quá 20% mức tiền
+lương tính trên cơ sở 02 lần mức lương cơ bản. Trường hợp lợi n huận thực hiện
+thấp hơn kế hoạch thì mức tiền lương tối đa được tính bằng 80% nhân với 02 lần
+mức lương cơ bản và nhân với tỷ lệ lợi nhuận thực  hiện so với lợi nhuận kế hoạch ,
+nhưng không thấp hơn 80% mức lương cơ bản.
+CÔNG BÁO/Số 1413 + 1414/Ngày 30-9-2025 6
+2. Doanh nghiệp không có lợi nhuậ n thì mức tiền lương tối đa bằ ng 70% mức
+lương cơ bản.
+3. Doanh nghiệp lỗ hoặc giảm lỗ thì mức tiền lương tối đa được  xác định
+theo quy định sau:
+a) Trường hợp lỗ thì mức tiền lư ơng tối đa bằng 50% mức lương c ơ bản;
+b) Trường hợp giảm lỗ (kể cả không có lợi nhuận) thì căn cứ mức  độ giảm lỗ
+so với kế hoạch để xác định mức tiền lương tối đa bằng 80% mức lương cơ bản;
+c) Đối với trường hợp Thành viên hội đồng, Kiểm soát viên chuyê n trách được
+cơ quan đại diện chủ sở hữu cử thực hiện nhiệm vụ tại doanh ngh iệp lỗ do đang
+thực hiện tái cơ cấu, xử lý tồn tại, lỗ kế hoạch thì mức tiền l ương tối đa sau khi xác
+định theo điểm a hoặc điểm b khoản này, được tính thêm không qu á 50% mức tiền
+lương tối đa đã xác định.
+4. Doanh nghiệp có lợi nhuận thực hiện cao hơn từ 02 lần trở lên so với chỉ tiêu
+lợi nhuận tối thiểu theo quy định đối với mức 1 của nhóm I tươn g ứng với nhóm
+ngành, lĩnh vực hoạt động tại Phụ lục II ban hành kèm theo Nghị định này (sau đây
+gọi tắt là lợi nhuận tối thiểu) mà mức tiền lương sau khi tính theo khoản 1 Điều này
+vẫn thấp hơn mức tiền lương của chức danh tương đương ở các doanh nghiệp cùng
+ngành, lĩnh vực hoạt động trên thị trường thì mức tiền lương tố i đa được xác định
+theo quy định sau:
+a) Trường hợp lợi nhuận thực hiện không thấp hơn kế hoạch thì mức tiền lương
+tối đa bằng: 2,5 lần mức lương cơ bản, nếu lợi nhuận thực hiện cao hơn từ 02 lần so
+với lợi nhuận tối thiểu; 3,0 lần mức lương cơ bản, nếu lợi nhuậ n thực hiện cao hơn
+từ 03 lần so với lợi nhuận tối thiểu; 4,0 lần mức lương cơ bản,  nếu lợi nhuận thực
+hiện cao hơn từ 04 lần trở lên so với lợi nhuận tối thiểu;
+b) Trường hợp lợi nhuận thực hiện thấp hơn kế hoạch thì mức tiền lương tối đa
+được tính bằng 80% nhân với số l ần mức lương cơ bản tương ứng v ới lợi nhuận
+thực hiện cao hơn so với lợi nhuận tối thiểu quy định tại điểm a khoản này  và nhân
+với tỷ lệ lợi nhuận thực hiện so với lợi nhuận kế hoạch, nhưng không thấp hơn
+mức lương cơ bản.
+5. Doanh nghiệp mới thành lập hoặc mới đi vào hoạt động thì mức  tiền lương
+trong năm đầu thành lập hoặc mới đi vào hoạt động tối đa không vượt quá mức
+lương cơ bản; doanh nghiệp mới thành lập trên cơ sở hợp nhất cá c doanh nghiệp,
+nếu mức tiền lương thấp hơn mức tiền lương thực tế cao nhất của  các chức danh
+tương ứng ở doanh nghiệp thành viên trước khi hợp nhất thì được  tính bằng mức
+tiền lương của các chức  danh tương ứng đó.
+CÔNG BÁO/Số 1413 + 1414/Ngày 30-9-2025 7
+6. Doanh nghiệp chỉ có hoạt động thực hiện sản phẩm, dịch vụ cô ng thì được
+xác định mức tiền lương gắn với chỉ tiêu khối lượng sản phẩm, d ịch vụ công theo
+quy định sau:
+a) Khối lượng sản phẩm, dịch vụ công thực hiện không thấp hơn k ế hoạch thì
+mức tiền lương tối đa bằng 1,5 lần mức lương cơ bản, trong đó đ ối với doanh
+nghiệp thực hiện sản phẩm, dịch vụ công giữ vai trò đặc biệt qu an trọng trong lĩnh
+vực then chốt, thiết yếu của nền kinh tế quốc dân theo quy định  của Chính phủ thì
+mức tiền lương tối đa bằng 02 lần mức lương cơ bản;
+b) Khối lượng sản phẩm, dịch vụ công thực hiện thấp hơn kế hoạc h, trong đó
+phần khối lượng sản phẩm, dịch vụ công thấp hơn kế hoạch này do  doanh nghiệp
+thực hiện chính sách của Nhà nước hoặc bị tác động bởi yếu tố khách quan thì mức
+tiền lương tối đa bằng 1,5 lần mức lương cơ bản;
+c) Khối lượng sản phẩm, dịch vụ công thấp hơn kế hoạch (ngoài t rường hợp
+tại điểm b khoản này) thì mức tiền lương tối đa bằng 80%  nhân với 1,5 lần mức
+lương cơ bản nhân với tỷ lệ giữa khối lượng sản phẩm, dịch vụ c ông thực hiện và
+khối lượng sản phẩm, dịch vụ côn g kế hoạch, nhưng không thấp hơ n 50% mức
+lương cơ bản.
+7. Doanh nghiệp vừa hoạt động thực  hiện sản phẩm, dịch vụ công,  vừa hoạt
+động sản xuất, kinh doanh (ngoài thực hiện sản phẩm, dịch vụ cô ng) thì được lựa
+chọn xác định mức tiền lương theo  hoạt động sản xuất, kinh doan h quy định tại
+khoản 1, khoản 2, khoản 3, khoản 4 và khoản 5 Điều này hoặc the o hoạt động thực
+hiện sản phẩm, dịch vụ công theo quy định tại khoản 6 Điều này.
+8. Mức tiền lương của Thành viên hội đồng, Kiểm soát viên là sĩ  quan, quân
+nhân chuyên nghiệp, viên chức quốc phòng, sĩ quan, hạ sĩ quan, người làm công tác
+cơ yếu khi xác định theo quy định tại khoản 1, khoản 2, khoản 3, khoản 6 và khoản 7
+Điều này không thấp hơn mức tiền lương theo chức vụ, chức danh, cấp hàm, ngạch,
+bậc, các khoản phụ cấp lương theo quy định của Chính phủ đối vớ i Thành viên hội
+đồng, Kiểm soát viên là sĩ quan, quân nhân chuyên nghiệp, viên chức quốc phòng, sĩ
+quan, hạ sĩ quan, người làm công tác cơ yếu.</pre><button type="button" class="button button-primary" data-action="pin-evidence" data-trace-id="34c2a77b-af69-47f3-b1c2-9a38651efea6" data-evidence-index="13">Lưu vào hồ sơ</button></article></template></div></section>
+  <p class="legal-warning">Khi bằng chứng trong VietLex chưa đủ cho chủ đề pháp lý đã nhận diện, hệ thống tra cứu có giới hạn tại cổng văn bản chính thức; hiệu lực cần được đối chiếu. <a href="/workspaces?question=T%C3%ACnh%20hu%E1%BB%91ng%20ki%E1%BB%83m%20th%E1%BB%AD%20gi%E1%BA%A3%20%C4%91%E1%BB%8Bnh.%20T%E1%BA%A1i%20ng%C3%A0y%2029/10/2026%2C%20t%C3%B4i%20nh%E1%BA%ADn%20vi%E1%BB%87c%20%E1%BB%9F%20v%E1%BB%8B%20tr%C3%AD%20y%C3%AAu%20c%E1%BA%A7u%20tr%C3%ACnh%20%C4%91%E1%BB%99%20cao%20%C4%91%E1%BA%B3ng%2C%20m%E1%BB%A9c%20l%C6%B0%C6%A1ng%20c%E1%BB%A7a%20c%C3%B4ng%20vi%E1%BB%87c%20l%C3%A0%2012%20tri%E1%BB%87u%20%C4%91%E1%BB%93ng/th%C3%A1ng.%20C%C3%B4ng%20ty%20%C4%91%E1%BB%81%20ngh%E1%BB%8B%20th%E1%BB%AD%20vi%E1%BB%87c%20hai%20th%C3%A1ng%20v%C3%A0%20ch%E1%BB%89%20tr%E1%BA%A3%2070%25%20l%C6%B0%C6%A1ng.%20M%E1%BB%A9c%20l%C6%B0%C6%A1ng%20th%E1%BB%AD%20vi%E1%BB%87c%20t%E1%BB%91i%20thi%E1%BB%83u%20l%C3%A0%20bao%20nhi%C3%AAu%2C%20th%E1%BB%9Di%20gian%20th%E1%BB%AD%20vi%E1%BB%87c%20t%E1%BB%91i%20%C4%91a%20%C4%91%C6%B0%E1%BB%A3c%20t%C3%ADnh%20th%E1%BA%BF%20n%C3%A0o%20v%C3%A0%20c%E1%BA%A7n%20%C4%91%E1%BB%91i%20chi%E1%BA%BFu%20%C4%91i%E1%BB%81u%20kho%E1%BA%A3n%20n%C3%A0o%3F">Tìm nguồn chính thức trong hồ sơ</a>.</p>
+  <div class="retrieval-panel" hidden></div><div class="evaluation-panel" hidden></div><footer class="message-meta"><span>Mã tra cứu 34c2a77b</span><div class="message-actions"><button type="button" data-action="copy-answer">Sao chép</button><button type="button" data-action="retry" data-query="Tình huống kiểm thử giả định. Tại ngày 29/10/2026, tôi nhận việc ở vị trí yêu cầu trình độ cao đẳng, mức lương của công việc là 12 triệu đồng/tháng. Công ty đề nghị thử việc hai tháng và chỉ trả 70% lương. Mức lương thử việc tối thiểu là bao nhiêu, thời gian thử việc tối đa được tính thế nào và cần đối chiếu điều khoản nào?">Thử lại</button><button type="button" data-action="inspect-retrieval" data-trace-id="34c2a77b-af69-47f3-b1c2-9a38651efea6">Xem cách tìm nguồn</button><button type="button" data-action="evaluate" data-trace-id="34c2a77b-af69-47f3-b1c2-9a38651efea6">Đánh giá</button><form data-feedback-form><input type="hidden" name="csrf_token" value="[REDACTED]"><input type="hidden" name="trace_id" value="34c2a77b-af69-47f3-b1c2-9a38651efea6"><input type="hidden" name="rating" value="up"><button type="submit">Hữu ích</button></form><form data-feedback-form><input type="hidden" name="csrf_token" value="[REDACTED]"><input type="hidden" name="trace_id" value="34c2a77b-af69-47f3-b1c2-9a38651efea6"><input type="hidden" name="rating" value="down"><button type="submit">Chưa tốt</button></form></div></footer>
+</div></article><input type="hidden" name="session_id" value="d5d451f7-f5e2-4720-98cb-38b9a33edb58" id="session-id-input">

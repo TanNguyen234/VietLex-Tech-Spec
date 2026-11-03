@@ -1,0 +1,16 @@
+{
+  "evidence": "offline replay of saved live case014 answer and byte-identical original corpus prompt context; no provider calls",
+  "baseline_run": "answer-golden50-production-enforce-20261103-82280547",
+  "case": "case_014",
+  "context_sha256": "facfa7e256e9fb4bb1c90637ea567fef1e14148b5b9163251500e43d5318c942",
+  "original_context_hash_matched": true,
+  "before": {
+    "citation_precision": 0.0,
+    "invalid_citation_rate": 1.0
+  },
+  "after": {
+    "citation_precision": 1.0,
+    "invalid_citation_rate": 0.0
+  },
+  "limits": "Only this original corpus context was reconstructed and hash-proven; baseline full external contexts were not saved, so this is not a50case same-answer replay"
+}
