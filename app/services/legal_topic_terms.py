@@ -60,6 +60,8 @@ LEGAL_TOPIC_PHRASES = (
 _TOPIC_ALIASES = {
     "thuê trọ": "thuê nhà", "nhà trọ": "thuê nhà", "phòng trọ": "thuê nhà",
     "thuê phòng": "thuê nhà", "tiền cọc": "đặt cọc", "cọc thuê": "đặt cọc",
+    "nghỉ hằng năm": "nghỉ phép năm", "nghỉ hàng năm": "nghỉ phép năm",
+    "nghỉ thường niên": "nghỉ phép năm",
 }
 
 _LOCAL_STOPWORDS = frozenset(

@@ -520,7 +520,7 @@ async def chat(
         )
         cached_response = (
             await check_semantic_cache(message)
-            if cacheable_query and not nemo_enabled
+            if cacheable_query
             else None
         )
         t_cache = round(time.perf_counter() - cache_started, 4)
@@ -954,7 +954,7 @@ async def chat(
         )
         
         # Cache only grounded, output-approved answers and preserve their evidence.
-        if req_status == "ok" and context_used and cacheable_query and not nemo_enabled:
+        if req_status == "ok" and context_used and cacheable_query:
             background_tasks.add_task(
                 save_to_semantic_cache,
                 message,

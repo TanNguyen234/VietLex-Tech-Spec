@@ -18,14 +18,16 @@ from app.services.runtime_errors import GuardrailUnavailableError
 
 
 async def _decision(stage: str, prompt: str) -> str:
+    current_settings = get_settings()
+    allow_fallback = bool(getattr(current_settings, "USE_LEGACY_FREE_PIPELINE", False))
     try:
         result = await asyncio.wait_for(
             generate_llm_response_with_metadata(
                 prompt, max_output_tokens=64, thinking_level="MINIMAL",
                 use_case=LLMUseCase.GUARDRAIL,
-                max_retries=0, allow_fallback=False,
+                max_retries=0, allow_fallback=allow_fallback,
             ),
-            timeout=get_settings().GUARDRAIL_TIMEOUT_SECONDS,
+            timeout=current_settings.GUARDRAIL_TIMEOUT_SECONDS,
         )
     except TimeoutError:
         raise GuardrailUnavailableError(stage, "timeout") from None

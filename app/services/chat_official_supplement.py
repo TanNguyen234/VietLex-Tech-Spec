@@ -372,20 +372,39 @@ def corpus_evidence_covers_topic(query: str, contexts: list[str]) -> bool:
     topics = derive_official_search_queries(query, corpus_contexts=contexts)
     if not topics:
         return False
-    topic_groups = tuple(
-        extract_official_topic_phrases(topic, limit=4) for topic in topics
-    )
     evidence = [
         _topic_evidence_body(context)
         for context in contexts
         if matches_legal_situation(query, context)
     ]
-    return bool(topic_groups) and all(bool(group) for group in topic_groups) and all(
-        any(
-            all(contains_topic_phrase(body, phrase) for phrase in group)
-            for body in evidence
+    if not evidence:
+        return False
+    topic_groups = tuple(
+        extract_official_topic_phrases(topic, limit=4) for topic in topics
+    )
+    if all(bool(group) for group in topic_groups):
+        return all(
+            any(
+                all(contains_topic_phrase(body, phrase) for phrase in group)
+                for body in evidence
+            )
+            for group in topic_groups
         )
-        for group in topic_groups
+    from app.services.legal_topic_terms import local_rescue_terms
+    from app.services.official_search_plan import DOCUMENT_REFERENCE
+
+    ref_match = DOCUMENT_REFERENCE.search(query)
+    if ref_match:
+        ref_key = re.sub(r"\s+", "", ref_match.group()).upper()
+        if any(ref_key in re.sub(r"\s+", "", str(ctx)).upper() for ctx in contexts):
+            return True
+    subject_terms = local_rescue_terms(topics[0], limit=8)
+    if not subject_terms:
+        return False
+    required = max(1, min(2, len(subject_terms)))
+    return any(
+        len(set(subject_terms) & set(_tokens(body))) >= required
+        for body in evidence
     )
 
 

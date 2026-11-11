@@ -90,7 +90,12 @@ class PrimaryLawRescueResult:
     diagnostics: dict[str, Any]
 
 
-_LABOR = _LawTitle("Bộ luật Lao động", "2019", ("thử việc", "tiền lương", "mức lương", "lương"), "45/2019/QH14")
+_LABOR = _LawTitle(
+    "Bộ luật Lao động",
+    "2019",
+    ("thử việc", "tiền lương", "mức lương", "lương", "chấm dứt hợp đồng", "hợp đồng lao động", "nghỉ phép năm"),
+    "45/2019/QH14",
+)
 _CIVIL = _LawTitle("Bộ luật Dân sự", "2015", ("đặt cọc", "thuê nhà"), "91/2015/QH13")
 
 
@@ -115,7 +120,10 @@ def _is_explicitly_scoped(query: str, titles: tuple[_LawTitle, ...]) -> bool:
         if folded[:match.start()].endswith("phap "):
             continue
         remainder = folded[match.end():].strip()
-        if re.match(r"(?:nay|hien hanh|quy dinh|ve|co|khong|nhu|thi|la|ap dung)\b|\d", remainder) or not remainder:
+        if re.match(
+            r"(?:nay|hien hanh|hien nay|hien tai|viet nam|khac|co lien quan|quy dinh|ve|co|khong|nhu|thi|la|ap dung)\b|\d",
+            remainder,
+        ) or not remainder:
             continue
         named = folded[match.start():]
         target = next((title for title in titles

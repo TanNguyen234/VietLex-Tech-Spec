@@ -33,10 +33,12 @@ settings = get_settings()
 
 class _ProviderText(str):
     """Keep the public text API while retaining usage for the metadata router."""
-    def __new__(cls, text: str, usage: dict):
+    def __new__(cls, text: str, usage: dict, finish_reason: str | None = "STOP"):
         result = super().__new__(cls, text)
         result.usage = {key: value for key, value in usage.items()
                         if type(value) is int and 0 <= value <= 10**12}
+        if isinstance(finish_reason, str) and finish_reason:
+            result.usage["finish_reason"] = finish_reason
         return result
 
 _cooldowns = {
@@ -162,6 +164,7 @@ async def _call_openai_compatible_api(
         choices = body.get("choices", [])
         if choices:
             text = choices[0].get("message", {}).get("content") or ""
+            finish_reason = choices[0].get("finish_reason") or "STOP"
             usage = body.get('usage') or {}
             details = usage.get('completion_tokens_details') or {}
             return _ProviderText(text.strip(), {
@@ -169,7 +172,7 @@ async def _call_openai_compatible_api(
                 'output_token_count': usage.get('completion_tokens'),
                 'thought_token_count': details.get('reasoning_tokens'),
                 'total_token_count': usage.get('total_tokens'),
-            }) if text.strip() else None
+            }, finish_reason=finish_reason) if text.strip() else None
     except ProviderHttpAttemptBudgetExceeded:
         raise
     except Exception as error:
@@ -209,15 +212,18 @@ async def call_gemini_api(
     api_key = settings.GEMINI_API_KEY
     if not api_key:
         return None
-    contents = []
+    contents = [{"role": "user", "parts": [{"text": prompt}]}]
+    payload: dict[str, object] = {
+        "contents": contents,
+        "generationConfig": {
+            "temperature": 0.2,
+            "maxOutputTokens": max_output_tokens,
+        },
+    }
     if system_prompt:
-        contents.append(
-            {
-                "role": "user",
-                "parts": [{"text": f"System Instruction: {system_prompt}"}],
-            }
-        )
-    contents.append({"role": "user", "parts": [{"text": prompt}]})
+        payload["system_instruction"] = {
+            "parts": [{"text": system_prompt}],
+        }
     try:
         with provider_identity_scope("gemini"):
             response = await get_direct_client().post(
@@ -229,13 +235,7 @@ async def call_gemini_api(
                     "Content-Type": "application/json",
                     "x-goog-api-key": api_key,
                 },
-                json={
-                    "contents": contents,
-                    "generationConfig": {
-                        "temperature": 0.2,
-                        "maxOutputTokens": max_output_tokens,
-                    },
-                },
+                json=payload,
                 timeout=25.0,
             )
         if response.status_code in {429, 502, 503, 504}:
@@ -252,13 +252,14 @@ async def call_gemini_api(
             parts = candidates[0]["content"].get("parts", [])
             if parts:
                 text = (parts[0].get('text') or '').strip()
+                finish_reason = candidates[0].get("finishReason") or "STOP"
                 usage = body.get('usageMetadata') or {}
                 return _ProviderText(text, {
                     'prompt_token_count': usage.get('promptTokenCount'),
                     'output_token_count': usage.get('candidatesTokenCount'),
                     'thought_token_count': usage.get('thoughtsTokenCount'),
                     'total_token_count': usage.get('totalTokenCount'),
-                }) if text else None
+                }, finish_reason=finish_reason) if text else None
     except ProviderHttpAttemptBudgetExceeded:
         raise
     except Exception as error:
@@ -357,60 +358,46 @@ async def _run_secondary_fallbacks(
     primary_error_kind: str,
     started: float,
 ) -> LLMGenerationResult | None:
-    now = time.time()
     attempts = (
         (
             "openrouter",
             OPENROUTER_PRIMARY_MODEL,
             settings.OPENROUTER_API_KEY,
             call_openrouter_api,
-            now >= _cooldowns["openrouter"],
         ),
         (
             "gemini",
             GEMINI_PRIMARY_MODEL,
             settings.GEMINI_API_KEY,
             call_gemini_api,
-            now >= _cooldowns["gemini"],
         ),
         (
             "nvidia",
             NVIDIA_PRIMARY_MODEL,
             settings.NVIDIA_API_KEY,
             call_nvidia_api,
-            now >= _cooldowns["nvidia"],
         ),
         (
             "groq",
             GROQ_PRIMARY_MODEL,
             settings.GROQ_API_KEY,
             call_groq_api,
-            now >= _cooldowns["groq"],
-        ),
-        (
-            "openrouter",
-            OPENROUTER_PRIMARY_MODEL,
-            settings.OPENROUTER_API_KEY,
-            call_openrouter_api,
-            now >= _cooldowns["openrouter"],
         ),
         (
             "gemini",
             GEMINI_SECONDARY_MODEL,
             settings.GEMINI_API_KEY,
             call_gemini_api,
-            now >= _cooldowns["gemini"],
         ),
         (
             "groq",
             GROQ_SECONDARY_MODEL,
             settings.GROQ_API_KEY,
             call_groq_api,
-            now >= _cooldowns["groq"],
         ),
     )
-    for provider, model, api_key, operation, available in attempts:
-        if not api_key or not available:
+    for provider, model, api_key, operation in attempts:
+        if not api_key or time.time() < _cooldowns.get(provider, 0.0):
             continue
         text = await operation(
             prompt,
@@ -419,6 +406,8 @@ async def _run_secondary_fallbacks(
             max_output_tokens=max_output_tokens,
         )
         if text:
+            usage_meta = dict(getattr(text, "usage", {}) or {})
+            finish_reason = usage_meta.pop("finish_reason", "STOP")
             return LLMGenerationResult(
                 text=text,
                 observed_provider=provider,
@@ -431,7 +420,8 @@ async def _run_secondary_fallbacks(
                 ),
                 fallback_used=True,
                 primary_error_kind=primary_error_kind,
-                **getattr(text, 'usage', {}),
+                finish_reason=finish_reason,
+                **usage_meta,
             )
     return None
 

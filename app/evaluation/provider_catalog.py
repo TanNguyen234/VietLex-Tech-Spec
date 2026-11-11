@@ -10,18 +10,17 @@ class ProviderModel:
 
 
 OPENROUTER_PRIMARY_MODEL = "meta-llama/llama-3.3-70b-instruct"
-GEMINI_PRIMARY_MODEL = "gemini-2.0-flash"
+GEMINI_PRIMARY_MODEL = "gemini-2.5-flash"
 NVIDIA_PRIMARY_MODEL = "meta/llama-3.3-70b-instruct"
 GROQ_PRIMARY_MODEL = "qwen/qwen3.8-27b"
-GEMINI_SECONDARY_MODEL = "gemini-1.5-flash"
-GROQ_SECONDARY_MODEL = "llama3-8b-8192"
+GEMINI_SECONDARY_MODEL = "gemini-2.5-flash-lite"
+GROQ_SECONDARY_MODEL = "openai/gpt-oss-20b"
 
 GENERATION_PROVIDER_MODELS = (
     ProviderModel("OpenRouter", OPENROUTER_PRIMARY_MODEL),
     ProviderModel("Gemini", GEMINI_PRIMARY_MODEL),
     ProviderModel("NVIDIA NIM", NVIDIA_PRIMARY_MODEL),
     ProviderModel("Groq", GROQ_PRIMARY_MODEL),
-    ProviderModel("OpenRouter", OPENROUTER_PRIMARY_MODEL),
     ProviderModel("Gemini", GEMINI_SECONDARY_MODEL),
     ProviderModel("Groq", GROQ_SECONDARY_MODEL),
 )

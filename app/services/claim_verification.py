@@ -122,8 +122,13 @@ def _validated_claims(
         raise ValueError("claim_coverage_invalid")
 
     excerpts = {
-        str(item.get("evidence_id") or ""): str(
-            item.get("excerpt") or item.get("original") or ""
+        str(item.get("evidence_id") or ""): "\n".join(
+            part
+            for part in (
+                str(item.get("original") or "").strip(),
+                str(item.get("excerpt") or "").strip(),
+            )
+            if part
         )
         for item in evidence
     }

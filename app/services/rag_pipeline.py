@@ -498,102 +498,29 @@ async def retrieve_configured_legal_evidence(
     profile: Any,
 ) -> RetrievalOutcome:
     settings = get_settings()
-    legacy_free = getattr(settings, "USE_LEGACY_FREE_PIPELINE", None)
-    if legacy_free is True:
+    if bool(getattr(settings, "USE_LEGACY_FREE_PIPELINE", False)):
         return await _legacy_retrieval_outcome(
             rewritten_query,
             user_query,
             profile,
         )
-    if legacy_free is False:
-        try:
-            return await _run_vertex_shadow(
-                rewritten_query,
-                user_query,
-                profile,
-            )
-        except Exception as error:
-            return RetrievalOutcome(
-                evidence=[],
-                latency={},
-                status="retrieval_error",
-                diagnostics={
-                    "retrieval_backend": "vertex-qdrant-v3",
-                    "error_type": type(error).__name__,
-                },
-                error="Vertex/Qdrant v3 retrieval initialization failed.",
-            )
-    if not settings.STRUCTURAL_BACKEND_ENABLED:
-        production = await _legacy_retrieval_outcome(
+    try:
+        return await _run_vertex_shadow(
             rewritten_query,
             user_query,
             profile,
         )
-        return await _attach_vertex_shadow(
-            production,
-            rewritten_query=rewritten_query,
-            user_query=user_query,
-            profile=profile,
-            settings=settings,
+    except Exception as error:
+        return RetrievalOutcome(
+            evidence=[],
+            latency={},
+            status="retrieval_error",
+            diagnostics={
+                "retrieval_backend": "vertex-qdrant-v3",
+                "error_type": type(error).__name__,
+            },
+            error="Vertex/Qdrant v3 retrieval initialization failed.",
         )
-    async def run_structural() -> RetrievalOutcome:
-        try:
-            return _structural_retrieval_outcome(
-                await get_structural_legal_retriever().retrieve(
-                    rewritten_query,
-                    sparse_query=user_query,
-                )
-            )
-        except Exception as error:
-            return RetrievalOutcome(
-                evidence=[],
-                latency={},
-                status="retrieval_error",
-                diagnostics={
-                    "retrieval_backend": "qdrant_structural_v2",
-                    "structural_technical_errors": {
-                        "initialization": {
-                            "category": type(error).__name__,
-                        }
-                    },
-                },
-                error="Structural retrieval initialization failed.",
-            )
-
-    async def run_legacy() -> RetrievalOutcome:
-        try:
-            return await _legacy_retrieval_outcome(
-                rewritten_query,
-                user_query,
-                profile,
-            )
-        except Exception as error:
-            return RetrievalOutcome(
-                evidence=[],
-                latency={},
-                status="retrieval_error",
-                diagnostics={
-                    "retrieval_backend": "pinecone_v1",
-                    "full_corpus_technical_error": {
-                        "category": type(error).__name__,
-                    },
-                },
-                error="Full-corpus retrieval initialization failed.",
-            )
-
-    structural, legacy = await asyncio.gather(run_structural(), run_legacy())
-    production = await _parallel_retrieval_outcome(
-        structural,
-        legacy,
-        query=rewritten_query,
-    )
-    return await _attach_vertex_shadow(
-        production,
-        rewritten_query=rewritten_query,
-        user_query=user_query,
-        profile=profile,
-        settings=settings,
-    )
 
 
 async def _run_vertex_shadow(
@@ -851,25 +778,33 @@ async def run_advanced_rag(
         and not retrieval_failed
         and not bool(getattr(settings, "USE_LEGACY_FREE_PIPELINE", False))
     ):
-        try:
-            expansion = await expand_v3_evidence(
-                user_query,
-                getattr(retrieval_outcome, "candidate_evidence", None) or evidence,
-                evidence,
-                settings=settings,
-                max_documents=3,
-                max_evidence=evidence_limit,
-            )
-            evidence = expansion.selected_evidence
-            retrieval_diagnostics["v3_article_expansion"] = {
-                **expansion.diagnostics,
-                "status": expansion.status,
-            }
-        except Exception as error:
-            retrieval_diagnostics["v3_article_expansion"] = {
-                "status": "unavailable",
-                "error_type": type(error).__name__,
-            }
+        existing_expansion = retrieval_diagnostics.get("article_expansion")
+        if (
+            isinstance(existing_expansion, dict)
+            and existing_expansion.get("status") in {"expanded", "not_needed"}
+            and len(evidence) <= evidence_limit
+        ):
+            retrieval_diagnostics["v3_article_expansion"] = existing_expansion
+        else:
+            try:
+                expansion = await expand_v3_evidence(
+                    user_query,
+                    getattr(retrieval_outcome, "candidate_evidence", None) or evidence,
+                    evidence,
+                    settings=settings,
+                    max_documents=3,
+                    max_evidence=evidence_limit,
+                )
+                evidence = expansion.selected_evidence
+                retrieval_diagnostics["v3_article_expansion"] = {
+                    **expansion.diagnostics,
+                    "status": expansion.status,
+                }
+            except Exception as error:
+                retrieval_diagnostics["v3_article_expansion"] = {
+                    "status": "unavailable",
+                    "error_type": type(error).__name__,
+                }
 
     contexts = [
         ((f"ID tài liệu: {chunk.document_id}\n" if scoped_outcome is not None else "")
@@ -939,9 +874,12 @@ async def run_advanced_rag(
     )
     if search_plan is not None and scoped_outcome is None:
         from app.services.legal_topic_terms import contains_topic_phrase
+        recognized_plan_topics = (
+            search_plan.topics if search_plan.status == "recognized" else ()
+        )
         supplement_needed = supplement_needed or search_plan.current_required or any(
             not any(contains_topic_phrase(context, topic) for context in contexts)
-            for topic in (*search_plan.topics, *search_plan.jurisdictions)
+            for topic in (*recognized_plan_topics, *search_plan.jurisdictions)
         )
     if supplement_needed and retrieval_failed:
         retrieval_diagnostics["official_supplement"] = {
@@ -1150,7 +1088,12 @@ async def run_advanced_rag(
     else:
         latency["observed_provider"] = "unobserved"
         latency["observed_model"] = "unobserved"
-    return llm_result.text, contexts, latency
+    from app.services.citation_clause_guard import correct_clause_citations
+
+    corrected_text, clause_changes = correct_clause_citations(llm_result.text, contexts)
+    if clause_changes:
+        latency["citation_clause_changes"] = clause_changes
+    return corrected_text, contexts, latency
 
 
 

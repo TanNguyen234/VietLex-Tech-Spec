@@ -183,7 +183,7 @@ def build_selected_evidence_prompt(question: str, evidence: list[dict]) -> str:
         blocks.append(
             f"[{str(item.get('evidence_id', ''))[:80]}] "
             f"{str(item.get('citation') or 'Không có dẫn chiếu')[:300]}\n"
-            f"{str(item.get('excerpt') or item.get('original') or '')}"
+            f"{str(item.get('original') or item.get('excerpt') or '')}"
             + _source_metadata(item)
         )
     if (
