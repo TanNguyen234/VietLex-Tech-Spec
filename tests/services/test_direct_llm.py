@@ -247,7 +247,7 @@ async def test_generate_llm_response_uses_gemini_api_after_vertex_failure(
     assert result.text == "Kết quả Gemini API"
     assert result.observed is True
     assert result.observed_provider == "gemini"
-    assert result.observed_model == "gemini-2.0-flash"
+    assert result.observed_model == "gemini-2.5-flash"
     assert result.status == "success"
     assert result.fallback_used is True
     assert result.primary_error_kind == "quota"
@@ -310,3 +310,26 @@ async def test_fallback_retains_provider_reported_usage(monkeypatch):
     assert result.prompt_token_count == 11
     assert result.output_token_count == 5
     assert result.total_token_count == 16
+    assert result.finish_reason == 'STOP'
+
+
+@pytest.mark.asyncio
+async def test_cooldown_set_on_primary_skips_secondary_attempt_for_same_provider(monkeypatch):
+    calls = []
+
+    async def gemini_call(prompt, system_prompt="", model="", *, max_output_tokens=1024):
+        calls.append(model)
+        direct_llm._cooldowns["gemini"] = direct_llm.time.time() + 30.0
+        return None
+
+    monkeypatch.setattr(direct_llm, "settings", SimpleNamespace(
+        OPENROUTER_API_KEY=None, GEMINI_API_KEY="test-gemini", NVIDIA_API_KEY=None, GROQ_API_KEY=None,
+    ))
+    monkeypatch.setattr(direct_llm, "call_gemini_api", gemini_call)
+    monkeypatch.setitem(direct_llm._cooldowns, "gemini", 0.0)
+
+    result = await direct_llm._run_secondary_fallbacks(
+        "q", "", 100, primary_error_kind="quota", started=direct_llm.time.perf_counter()
+    )
+    assert result is None
+    assert calls == ["gemini-2.5-flash"]
