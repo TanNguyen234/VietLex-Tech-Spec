@@ -63,3 +63,9 @@ data/migration/
 
 # Local resumable provider checkpoints (never durable evaluation evidence)
 .superpowers/runtime/
+
+.vercel
+.env*
+scratch/
+.tmp-*
+
