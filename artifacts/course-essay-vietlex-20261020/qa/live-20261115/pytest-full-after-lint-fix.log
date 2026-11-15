@@ -1,0 +1,133 @@
+........................................................................ [  3%]
+........................................................................ [  6%]
+........................................................................ [  9%]
+........................................................................ [ 12%]
+........................................................................ [ 15%]
+........................................................................ [ 19%]
+........................................................................ [ 22%]
+........................................................................ [ 25%]
+........................................................................ [ 28%]
+........................................................................ [ 31%]
+.....................FFFFFFFFFFF........................................ [ 34%]
+........................................................................ [ 38%]
+........................................................................ [ 41%]
+........................................................................ [ 44%]
+........................................................................ [ 47%]
+........................................................................ [ 50%]
+........................................................................ [ 53%]
+........................................................................ [ 57%]
+........................................................................ [ 60%]
+........................................................................ [ 63%]
+........................................................................ [ 66%]
+........................................................................ [ 69%]
+........................................................................ [ 73%]
+........................................................................ [ 76%]
+........................................................................ [ 79%]
+........................................................................ [ 82%]
+........................................................................ [ 85%]
+........................................................................ [ 88%]
+........................................................................ [ 92%]
+........................................................................ [ 95%]
+........................................................................ [ 98%]
+...................................                                      [100%]
+================================== FAILURES ===================================
+___ test_materializes_atomic_clean_full_store_and_refreshes_only_body_delta ___
+tests\scripts\test_materialize_clean_store.py:226: in test_materializes_atomic_clean_full_store_and_refreshes_only_body_delta
+    report = materialize_clean_store(
+scripts\materialize_clean_store.py:508: in materialize_clean_store
+    raise ValueError("local_disk_reserve_below_required_output")
+E   ValueError: local_disk_reserve_below_required_output
+____ test_materializer_rejects_overlay_base_hash_drift_without_publishing _____
+tests\scripts\test_materialize_clean_store.py:298: in test_materializer_rejects_overlay_base_hash_drift_without_publishing
+    with pytest.raises(ValueError, match="overlay_base_hash_mismatch"):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'overlay_base_hash_mismatch'
+E     Actual message: 'local_disk_reserve_below_required_output'
+_____________ test_materializer_rejects_wrong_candidate_revision ______________
+tests\scripts\test_materialize_clean_store.py:335: in test_materializer_rejects_wrong_candidate_revision
+    with pytest.raises(ValueError, match="candidate_plan_revision_mismatch"):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'candidate_plan_revision_mismatch'
+E     Actual message: 'local_disk_reserve_below_required_output'
+_______________ test_clean_delta_preserves_base_and_reads_back ________________
+tests\scripts\test_prepare_clean_corpus.py:27: in test_clean_delta_preserves_base_and_reads_back
+    with pytest.raises(ValueError, match='raw_parquet_hash_mismatch'):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'raw_parquet_hash_mismatch'
+E     Actual message: 'local_disk_reserve_below_1GB'
+______ test_prepares_exact_plan_and_payloads_without_remote_side_effects ______
+tests\scripts\test_prepare_corpus_migration.py:238: in test_prepares_exact_plan_and_payloads_without_remote_side_effects
+    paths = _fixture(tmp_path)
+            ^^^^^^^^^^^^^^^^^^
+tests\scripts\test_prepare_corpus_migration.py:123: in _fixture
+    prepare_delta(base, source_inventory, clean_overlay, source_dir=source_dir)
+scripts\prepare_clean_corpus.py:64: in prepare_delta
+    raise ValueError('local_disk_reserve_below_1GB')
+E   ValueError: local_disk_reserve_below_1GB
+_______ test_rejects_overlay_artifact_hash_drift_before_creating_output _______
+tests\scripts\test_prepare_corpus_migration.py:275: in test_rejects_overlay_artifact_hash_drift_before_creating_output
+    paths = _fixture(tmp_path)
+            ^^^^^^^^^^^^^^^^^^
+tests\scripts\test_prepare_corpus_migration.py:123: in _fixture
+    prepare_delta(base, source_inventory, clean_overlay, source_dir=source_dir)
+scripts\prepare_clean_corpus.py:64: in prepare_delta
+    raise ValueError('local_disk_reserve_below_1GB')
+E   ValueError: local_disk_reserve_below_1GB
+___________________ test_rejects_remote_affected_hash_drift ___________________
+tests\scripts\test_prepare_corpus_migration.py:289: in test_rejects_remote_affected_hash_drift
+    paths = _fixture(tmp_path)
+            ^^^^^^^^^^^^^^^^^^
+tests\scripts\test_prepare_corpus_migration.py:123: in _fixture
+    prepare_delta(base, source_inventory, clean_overlay, source_dir=source_dir)
+scripts\prepare_clean_corpus.py:64: in prepare_delta
+    raise ValueError('local_disk_reserve_below_1GB')
+E   ValueError: local_disk_reserve_below_1GB
+____ test_rejects_overlap_or_unusable_candidate_without_silently_skipping _____
+tests\scripts\test_prepare_corpus_migration.py:304: in test_rejects_overlap_or_unusable_candidate_without_silently_skipping
+    paths = _fixture(tmp_path)
+            ^^^^^^^^^^^^^^^^^^
+tests\scripts\test_prepare_corpus_migration.py:123: in _fixture
+    prepare_delta(base, source_inventory, clean_overlay, source_dir=source_dir)
+scripts\prepare_clean_corpus.py:64: in prepare_delta
+    raise ValueError('local_disk_reserve_below_1GB')
+E   ValueError: local_disk_reserve_below_1GB
+_____________________ test_rejects_candidate_quality_flag _____________________
+tests\scripts\test_prepare_corpus_migration.py:332: in test_rejects_candidate_quality_flag
+    paths = _fixture(tmp_path)
+            ^^^^^^^^^^^^^^^^^^
+tests\scripts\test_prepare_corpus_migration.py:123: in _fixture
+    prepare_delta(base, source_inventory, clean_overlay, source_dir=source_dir)
+scripts\prepare_clean_corpus.py:64: in prepare_delta
+    raise ValueError('local_disk_reserve_below_1GB')
+E   ValueError: local_disk_reserve_below_1GB
+______________ test_rejects_confirmed_ad_in_candidate_base_text _______________
+tests\scripts\test_prepare_corpus_migration.py:349: in test_rejects_confirmed_ad_in_candidate_base_text
+    paths = _fixture(tmp_path)
+            ^^^^^^^^^^^^^^^^^^
+tests\scripts\test_prepare_corpus_migration.py:123: in _fixture
+    prepare_delta(base, source_inventory, clean_overlay, source_dir=source_dir)
+scripts\prepare_clean_corpus.py:64: in prepare_delta
+    raise ValueError('local_disk_reserve_below_1GB')
+E   ValueError: local_disk_reserve_below_1GB
+______ test_fails_if_record_builder_silently_skips_an_expected_candidate ______
+tests\scripts\test_prepare_corpus_migration.py:390: in test_fails_if_record_builder_silently_skips_an_expected_candidate
+    paths = _fixture(tmp_path)
+            ^^^^^^^^^^^^^^^^^^
+tests\scripts\test_prepare_corpus_migration.py:123: in _fixture
+    prepare_delta(base, source_inventory, clean_overlay, source_dir=source_dir)
+scripts\prepare_clean_corpus.py:64: in prepare_delta
+    raise ValueError('local_disk_reserve_below_1GB')
+E   ValueError: local_disk_reserve_below_1GB
+=========================== short test summary info ===========================
+FAILED tests/scripts/test_materialize_clean_store.py::test_materializes_atomic_clean_full_store_and_refreshes_only_body_delta
+FAILED tests/scripts/test_materialize_clean_store.py::test_materializer_rejects_overlay_base_hash_drift_without_publishing
+FAILED tests/scripts/test_materialize_clean_store.py::test_materializer_rejects_wrong_candidate_revision
+FAILED tests/scripts/test_prepare_clean_corpus.py::test_clean_delta_preserves_base_and_reads_back
+FAILED tests/scripts/test_prepare_corpus_migration.py::test_prepares_exact_plan_and_payloads_without_remote_side_effects
+FAILED tests/scripts/test_prepare_corpus_migration.py::test_rejects_overlay_artifact_hash_drift_before_creating_output
+FAILED tests/scripts/test_prepare_corpus_migration.py::test_rejects_remote_affected_hash_drift
+FAILED tests/scripts/test_prepare_corpus_migration.py::test_rejects_overlap_or_unusable_candidate_without_silently_skipping
+FAILED tests/scripts/test_prepare_corpus_migration.py::test_rejects_candidate_quality_flag
+FAILED tests/scripts/test_prepare_corpus_migration.py::test_rejects_confirmed_ad_in_candidate_base_text
+FAILED tests/scripts/test_prepare_corpus_migration.py::test_fails_if_record_builder_silently_skips_an_expected_candidate
+11 failed, 2256 passed, 6 deselected in 276.10s (0:04:36)

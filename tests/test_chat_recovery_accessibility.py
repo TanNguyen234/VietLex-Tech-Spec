@@ -3,7 +3,6 @@ from __future__ import annotations
 from html.parser import HTMLParser
 import re
 from urllib.parse import parse_qs, urlsplit
-from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest

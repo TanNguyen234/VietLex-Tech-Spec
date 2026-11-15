@@ -35,6 +35,10 @@ include = ["app*"]
 [tool.setuptools.package-data]
 app = ["templates/*.html", "static/**/*", "data/*.json", "data/tls/*.json"]
 
+[tool.ruff]
+# Archived run evidence keeps its exact bytes; run manifests reference these files by hash.
+extend-exclude = ["docs/evaluation/runs"]
+
 # Immutable benchmark capture: retain exact executed bytes, including original style.
 [tool.ruff.lint.per-file-ignores]
 "docs/evaluation/runs/retained-source-ten-20260919T163801Z/run_capture.py" = ["E401", "E402", "E701", "E702"]

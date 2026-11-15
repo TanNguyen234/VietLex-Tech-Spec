@@ -19,7 +19,6 @@ import json
 import os
 from pathlib import Path
 import re
-import sys
 import threading
 from typing import Any, Callable, Iterator
 from urllib.parse import urlsplit, urlunsplit

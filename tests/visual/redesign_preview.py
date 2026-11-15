@@ -69,27 +69,38 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         path = urlsplit(self.path).path
         if path == '/__pages':
-            data = json.dumps(list(PAGES), ensure_ascii=False).encode(); kind='application/json'
+            data = json.dumps(list(PAGES), ensure_ascii=False).encode()
+            kind = 'application/json'
         elif path.startswith('/static/'):
             target = (ROOT / 'app' / path.lstrip('/')).resolve()
             if not target.is_relative_to(ROOT / 'app/static') or not target.is_file():
-                self.send_error(404); return
-            data=target.read_bytes(); kind={'.css':'text/css','.js':'text/javascript','.ttf':'font/ttf'}.get(target.suffix,'application/octet-stream')
+                self.send_error(404)
+                return
+            data = target.read_bytes()
+            kind = {'.css':'text/css','.js':'text/javascript','.ttf':'font/ttf'}.get(target.suffix,'application/octet-stream')
         elif path == '/sessions':
-            data='<p class="muted">Lịch sử minh họa trống.</p>'.encode(); kind='text/html'
+            data = '<p class="muted">Lịch sử minh họa trống.</p>'.encode()
+            kind = 'text/html'
         elif path == '/readyz':
-            data=b'{"status":"not_ready"}'; kind='application/json'
+            data = b'{"status":"not_ready"}'
+            kind = 'application/json'
         elif path in PAGES:
             try:
                 html=ENV.get_template(PAGES[path]).render(**context(path))
                 if urlsplit(self.path).query == 'figma':
                     html=html.replace('</head>', '<script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script></head>')
-                data=html.encode(); kind='text/html'
+                data = html.encode()
+                kind = 'text/html'
             except Exception as exc:
-                self.send_error(500, str(exc)); return
+                self.send_error(500, str(exc))
+                return
         else:
-            self.send_error(404); return
-        self.send_response(200); self.send_header('Content-Type',kind+'; charset=utf-8'); self.end_headers(); self.wfile.write(data)
+            self.send_error(404)
+            return
+        self.send_response(200)
+        self.send_header('Content-Type', kind + '; charset=utf-8')
+        self.end_headers()
+        self.wfile.write(data)
 
 
 if __name__ == '__main__':

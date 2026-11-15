@@ -887,7 +887,7 @@ async def test_local_cap_denial_does_not_degrade_remote_provider_health(monkeypa
 async def test_vertex_custom_clients_are_closed_by_provider_lifecycle(monkeypatch) -> None:
     from google.oauth2.credentials import Credentials
 
-    api = _api()
+    _api()
     import app.services.vertex_ai as vertex_ai
 
     _install_vertex_mock_transport(

@@ -19,7 +19,8 @@ from app.services.direct_llm import (
 from app.services.retrieval import (
     RetrievalOutcome,
     get_legal_retriever,
-    get_structural_legal_retriever,
+    # Kept importable from this module: tests monkeypatch rag_pipeline.get_structural_legal_retriever.
+    get_structural_legal_retriever,  # noqa: F401
     select_ranked_evidence,
 )
 from app.services.clients import get_remote_reranker
