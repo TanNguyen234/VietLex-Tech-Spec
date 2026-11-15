@@ -1,13 +1,7 @@
 import pytest
 
-from app.evaluation.schemas import RetrievalStageTrace
 from app.ingestion.legal_text import EvidenceChunk
 from app.services import rag_pipeline
-from app.services.structural_retrieval import (
-    StructuralRetrievalOutcome,
-    StructuralRetrievalTrace,
-    StructuralTechnicalError,
-)
 from app.services.remote_reranker import RerankOutcome, RerankResult
 
 
@@ -151,7 +145,7 @@ async def test_pipeline_fails_closed_without_calling_answer_model(
         lambda: type(
             "RuntimeSettings",
             (),
-            {"STRUCTURAL_BACKEND_ENABLED": False},
+            {"STRUCTURAL_BACKEND_ENABLED": False, "USE_LEGACY_FREE_PIPELINE": True},
         )(),
     )
     monkeypatch.setattr(rag_pipeline, "rewrite_query_with_metadata", fake_rewrite)
@@ -920,126 +914,26 @@ async def test_pipeline_uses_local_sibling_expansion_before_official_search(
 
 
 @pytest.mark.asyncio
-async def test_pipeline_searches_structural_and_full_corpus_when_enabled(
-    monkeypatch,
-) -> None:
+async def test_pipeline_uses_legacy_corpus_only_when_legacy_flag_enabled(monkeypatch) -> None:
     evidence = _evidence()
-
-    class StructuralRetriever:
-        def __init__(self) -> None:
-            self.queries = []
-
-        async def retrieve(self, query: str, *, sparse_query: str | None = None):
-            self.queries.append((query, sparse_query))
-            return StructuralRetrievalOutcome(
-                status="ok",
-                evidence=[evidence],
-                trace=StructuralRetrievalTrace(),
-                latency={"total": 0.02},
-                technical_errors={},
-                provider_usage={"intfloat/multilingual-e5-small": 8},
-            )
-
-    structural = StructuralRetriever()
-    legacy_evidence = EvidenceChunk(
-        document_id=2,
-        document_number="99/2026/NĐ-CP",
-        title="Văn bản ngoài structural pilot",
-        source_url="https://example.invalid/2",
-        heading_path="Điều 9",
-        article="Điều 9",
-        clause="2",
-        citation="99/2026/NĐ-CP, Điều 9, Khoản 2",
-        text="Bằng chứng từ corpus đầy đủ.",
-        token_count=6,
-    )
-    legacy = FakeRetriever([legacy_evidence])
+    legacy = FakeRetriever([evidence])
 
     monkeypatch.setattr(
         rag_pipeline,
         "get_settings",
-        lambda: type(
-            "RuntimeSettings",
-            (),
-            {
-                "STRUCTURAL_BACKEND_ENABLED": True,
-                "CROSS_LANE_FINAL_RERANK_ENABLED": True,
-            },
-        )(),
+        lambda: type("RuntimeSettings", (), {"USE_LEGACY_FREE_PIPELINE": True})(),
     )
-    monkeypatch.setattr(
-        rag_pipeline,
-        "get_structural_legal_retriever",
-        lambda: structural,
-    )
-    class FinalReranker:
-        async def rerank(self, _query, documents, **kwargs):
-            assert kwargs["mode"] == "pinecone-only"
-            assert len(documents) == 2
-            return RerankOutcome(
-                results=[
-                    RerankResult(index=1, score=0.9),
-                    RerankResult(index=0, score=0.4),
-                ],
-                provider="pinecone",
-                model="bge-reranker-v2-m3",
-                latency=0.01,
-                input_count=2,
-                output_count=2,
-            )
+    monkeypatch.setattr(rag_pipeline, "get_legal_retriever", lambda: legacy)
 
-    monkeypatch.setattr(
-        rag_pipeline,
-        "get_legal_retriever",
-        lambda: legacy,
-    )
-    monkeypatch.setattr(
-        rag_pipeline,
-        "get_remote_reranker",
-        lambda: FinalReranker(),
-    )
+    async def unexpected_vertex(*_args, **_kwargs):
+        raise AssertionError("legacy-free mode must not call the vertex v3 retriever")
 
-    async def fake_answer(*_args, **_kwargs):
-        return rag_pipeline.LLMGenerationResult(
-            text="Câu trả lời structural.",
-            observed_provider="google_vertex_ai",
-            observed_model="gemini-3.5-flash",
-            observed=True,
-        )
+    monkeypatch.setattr(rag_pipeline, "_run_vertex_shadow", unexpected_vertex)
 
-    monkeypatch.setattr(
-        rag_pipeline,
-        "generate_response_with_metadata",
-        fake_answer,
-    )
+    outcome = await rag_pipeline.retrieve_configured_legal_evidence("dense", "original", None)
 
-    response, contexts, latency = await rag_pipeline.run_advanced_rag(
-        "điều kiện thuế"
-    )
-
-    assert response == "Câu trả lời structural."
-    assert contexts == [
-        legacy_evidence.formatted_context(),
-        evidence.formatted_context(),
-    ]
-    assert structural.queries == [("điều kiện thuế", "điều kiện thuế")]
-    assert legacy.queries == [("điều kiện thuế", "điều kiện thuế")]
-    assert latency["retrieval_diagnostics"]["retrieval_backend"] == (
-        "parallel_structural_full_corpus_v1"
-    )
-    assert isinstance(
-        latency["retrieval_diagnostics"]["stage_trace"],
-        RetrievalStageTrace,
-    )
-    assert [
-        item.document_id
-        for item in latency["retrieval_diagnostics"][
-            "stage_trace"
-        ].final_evidence_chunks
-    ] == [2, 1]
-    assert latency["retrieval_diagnostics"]["final_reranker_provider"] == (
-        "pinecone"
-    )
+    assert outcome.evidence == [evidence]
+    assert outcome.status == "ok"
 
 
 def test_parallel_pool_keeps_distinct_windows_of_same_provision() -> None:
@@ -1176,131 +1070,63 @@ def test_canonical_identity_does_not_merge_clause_without_article() -> None:
 
 
 @pytest.mark.asyncio
-async def test_pipeline_observes_structural_error_when_legacy_fallback_succeeds(
-    monkeypatch,
-) -> None:
-    evidence = _evidence()
-    legacy = FakeRetriever([evidence])
+async def test_vertex_v3_error_is_not_masked_by_legacy_evidence(monkeypatch) -> None:
+    legacy_calls: list[bool] = []
 
-    class FailedStructuralRetriever:
-        async def retrieve(
-            self,
-            _query: str,
-            *,
-            sparse_query: str | None = None,
-        ):
-            return StructuralRetrievalOutcome(
-                status="retrieval_error",
-                evidence=[],
-                trace=StructuralRetrievalTrace(),
-                latency={"total": 0.02},
-                technical_errors={
-                    "dense": StructuralTechnicalError(
-                        stage="dense",
-                        category="unavailable",
-                        error_type="ProviderUnavailable",
-                        transient=True,
-                    )
-                },
-                provider_usage={},
-            )
+    def legacy_factory():
+        legacy_calls.append(True)
+        return FakeRetriever([_evidence()])
+
+    async def failing_vertex(*_args, **_kwargs):
+        raise RuntimeError("vertex unavailable")
 
     monkeypatch.setattr(
         rag_pipeline,
         "get_settings",
-        lambda: type(
-            "RuntimeSettings",
-            (),
-            {"STRUCTURAL_BACKEND_ENABLED": True},
-        )(),
+        lambda: type("RuntimeSettings", (), {"USE_LEGACY_FREE_PIPELINE": False})(),
     )
-    monkeypatch.setattr(
-        rag_pipeline,
-        "get_structural_legal_retriever",
-        lambda: FailedStructuralRetriever(),
-    )
-    monkeypatch.setattr(
-        rag_pipeline,
-        "get_legal_retriever",
-        lambda: legacy,
-    )
+    monkeypatch.setattr(rag_pipeline, "get_legal_retriever", legacy_factory)
+    monkeypatch.setattr(rag_pipeline, "_run_vertex_shadow", failing_vertex)
 
-    async def fake_answer(*_args, **_kwargs):
-        return rag_pipeline.LLMGenerationResult(
-            text="Câu trả lời fallback.",
-            observed_provider="google_vertex_ai",
-            observed_model="gemini-3.5-flash",
-            observed=True,
-        )
+    outcome = await rag_pipeline.retrieve_configured_legal_evidence("dense", "original", None)
 
-    monkeypatch.setattr(
-        rag_pipeline,
-        "generate_response_with_metadata",
-        fake_answer,
-    )
-
-    response, contexts, latency = await rag_pipeline.run_advanced_rag(
-        "điều kiện thuế"
-    )
-
-    assert response == "Câu trả lời fallback."
-    assert contexts == [evidence.formatted_context()]
-    assert legacy.queries == [("điều kiện thuế", "điều kiện thuế")]
-    assert latency["retrieval_status"] == "partial_retrieval_error"
-    diagnostics = latency["retrieval_diagnostics"]
-    assert diagnostics["retrieval_backend"] == (
-        "parallel_structural_full_corpus_v1"
-    )
-    assert diagnostics["structural_status"] == "retrieval_error"
-    assert diagnostics["failed_lanes"] == ["structural"]
-    assert diagnostics["structural_diagnostics"][
-        "structural_technical_errors"
-    ]["dense"][
-        "category"
-    ] == "unavailable"
+    assert outcome.status == "retrieval_error"
+    assert outcome.evidence == []
+    assert outcome.diagnostics["retrieval_backend"] == "vertex-qdrant-v3"
+    assert legacy_calls == []
 
 
 @pytest.mark.asyncio
-async def test_vertex_shadow_never_changes_production_evidence(monkeypatch) -> None:
+async def test_vertex_v3_primary_evidence_is_not_mixed_with_legacy(monkeypatch) -> None:
     evidence = _evidence()
-    legacy = FakeRetriever([evidence])
+    legacy_calls: list[bool] = []
+
+    def legacy_factory():
+        legacy_calls.append(True)
+        return FakeRetriever([_evidence()])
 
     monkeypatch.setattr(
         rag_pipeline,
         "get_settings",
-        lambda: type(
-            "RuntimeSettings",
-            (),
-            {
-                "STRUCTURAL_BACKEND_ENABLED": False,
-                "VERTEX_QDRANT_SHADOW_ENABLED": True,
-                "VERTEX_QDRANT_SHADOW_TIMEOUT_SECONDS": 1.0,
-            },
-        )(),
+        lambda: type("RuntimeSettings", (), {"USE_LEGACY_FREE_PIPELINE": False})(),
     )
-    monkeypatch.setattr(rag_pipeline, "get_legal_retriever", lambda: legacy)
+    monkeypatch.setattr(rag_pipeline, "get_legal_retriever", legacy_factory)
 
-    async def shadow(*_args, **_kwargs):
+    async def vertex(*_args, **_kwargs):
         return rag_pipeline.RetrievalOutcome(
-            evidence=[],
+            evidence=[evidence],
             latency={"vertex_qdrant": 0.1},
-            status="no_candidate",
-            diagnostics={"candidate_pool": {"candidate_ids_sha256": "a" * 64}},
+            status="ok",
+            diagnostics={"retrieval_backend": "vertex-qdrant-v3"},
         )
 
-    monkeypatch.setattr(rag_pipeline, "_run_vertex_shadow", shadow)
+    monkeypatch.setattr(rag_pipeline, "_run_vertex_shadow", vertex)
 
-    outcome = await rag_pipeline.retrieve_configured_legal_evidence(
-        "dense", "original", None
-    )
+    outcome = await rag_pipeline.retrieve_configured_legal_evidence("dense", "original", None)
 
     assert outcome.evidence == [evidence]
     assert outcome.status == "ok"
-    assert outcome.diagnostics["vertex_shadow"] == {
-        "status": "no_candidate",
-        "candidate_ids_sha256": "a" * 64,
-        "latency": {"vertex_qdrant": 0.1},
-    }
+    assert legacy_calls == []
 
 
 @pytest.mark.asyncio
