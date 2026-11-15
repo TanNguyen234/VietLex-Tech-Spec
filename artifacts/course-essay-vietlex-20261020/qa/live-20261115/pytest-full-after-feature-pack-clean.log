@@ -1,0 +1,102 @@
+........................................................................ [  3%]
+........................................................................ [  6%]
+........................................................................ [  9%]
+........................................................................ [ 12%]
+...............................................................F........ [ 15%]
+........................................................................ [ 19%]
+........................................................................ [ 22%]
+........................................................................ [ 25%]
+........................................................................ [ 28%]
+...........................................................ssss......... [ 31%]
+........................................................................ [ 34%]
+........................................................................ [ 38%]
+........................................................................ [ 41%]
+........................................................................ [ 44%]
+........................................................................ [ 47%]
+........................................................................ [ 50%]
+........................................................................ [ 53%]
+........................................................................ [ 57%]
+........................................................................ [ 60%]
+........................................................................ [ 63%]
+........................................................................ [ 66%]
+........................................................................ [ 69%]
+........................................................................ [ 72%]
+........................................................................ [ 76%]
+......................F................................................. [ 79%]
+........................................................................ [ 82%]
+..............F.F....................................................... [ 85%]
+........................................................................ [ 88%]
+........................................................................ [ 91%]
+....ss..F........................F....FF................................ [ 95%]
+........................................................................ [ 98%]
+.........................................                                [100%]
+================================== FAILURES ===================================
+___________ test_provider_catalog_preserves_current_fallback_orders ___________
+tests\evaluation\test_provenance.py:466: in test_provider_catalog_preserves_current_fallback_orders
+    assert [
+E   AssertionError: assert [('OpenRouter...gpt-oss-20b')] == [('OpenRouter...-flash'), ...]
+E     
+E     At index 1 diff: ('Gemini', 'gemini-2.5-flash') != ('Gemini', 'gemini-2.0-flash')
+E     Right contains one more item: ('Groq', 'llama3-8b-8192')
+E     Use -v to get more diff
+_ test_chat_mandatory_guards_bypass_unchecked_cache_and_measure_real_latency __
+tests\test_api_routes.py:236: in test_chat_mandatory_guards_bypass_unchecked_cache_and_measure_real_latency
+    assert "Fresh checked answer" in resp.text
+E   assert 'Fresh checked answer' in '\\n<article class="message-row user">\\n  <div class="message-card">C\xe2u h\u1ecfi cache</div><div class="avatar" aria-hidden=.../div></footer>\\n  </div>\\n</article><input type="hidden" name="session_id" value="test-session" id="session-id-input">'
+E    +  where '\\n<article class="message-row user">\\n  <div class="message-card">C\xe2u h\u1ecfi cache</div><div class="avatar" aria-hidden=.../div></footer>\\n  </div>\\n</article><input type="hidden" name="session_id" value="test-session" id="session-id-input">' = <Response [200 OK]>.text
+____ test_legacy_shadow_request_is_enforced_without_cache[rejected-output] ____
+tests\test_guardrail_route_state.py:116: in test_legacy_shadow_request_is_enforced_without_cache
+    cache.assert_not_awaited()
+D:\VI TINH THANH AN\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py:2400: in assert_not_awaited
+    raise AssertionError(msg)
+E   AssertionError: Expected mock to not have been awaited. Awaited 1 times.
+_____ test_legacy_shadow_request_is_enforced_without_cache[error-output] ______
+tests\test_guardrail_route_state.py:116: in test_legacy_shadow_request_is_enforced_without_cache
+    cache.assert_not_awaited()
+D:\VI TINH THANH AN\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py:2400: in assert_not_awaited
+    raise AssertionError(msg)
+E   AssertionError: Expected mock to not have been awaited. Awaited 1 times.
+___________ test_pipeline_fails_closed_without_calling_answer_model ___________
+tests\test_rag_pipeline.py:164: in test_pipeline_fails_closed_without_calling_answer_model
+    response, contexts, latency = await rag_pipeline.run_advanced_rag(
+.venv\Lib\site-packages\logfire\_internal\instrument.py:102: in wrapper
+    result = await func(*func_args, **func_kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\services\rag_pipeline.py:1016: in run_advanced_rag
+    raise RetrievalPipelineError(
+E   app.services.runtime_errors.RetrievalPipelineError: Legal retrieval failed.
+_______ test_pipeline_searches_structural_and_full_corpus_when_enabled ________
+tests\test_rag_pipeline.py:1016: in test_pipeline_searches_structural_and_full_corpus_when_enabled
+    response, contexts, latency = await rag_pipeline.run_advanced_rag(
+.venv\Lib\site-packages\logfire\_internal\instrument.py:102: in wrapper
+    result = await func(*func_args, **func_kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\services\rag_pipeline.py:1016: in run_advanced_rag
+    raise RetrievalPipelineError(
+E   app.services.runtime_errors.RetrievalPipelineError: Legal retrieval failed.
+____ test_pipeline_observes_structural_error_when_legacy_fallback_succeeds ____
+tests\test_rag_pipeline.py:1242: in test_pipeline_observes_structural_error_when_legacy_fallback_succeeds
+    response, contexts, latency = await rag_pipeline.run_advanced_rag(
+.venv\Lib\site-packages\logfire\_internal\instrument.py:102: in wrapper
+    result = await func(*func_args, **func_kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\services\rag_pipeline.py:1016: in run_advanced_rag
+    raise RetrievalPipelineError(
+E   app.services.runtime_errors.RetrievalPipelineError: Legal retrieval failed.
+____________ test_vertex_shadow_never_changes_production_evidence _____________
+tests\test_rag_pipeline.py:1297: in test_vertex_shadow_never_changes_production_evidence
+    assert outcome.evidence == [evidence]
+E   AssertionError: assert [] == [EvidenceChun...oken_count=8)]
+E     
+E     Right contains one more item: EvidenceChunk(document_id=1, document_number='12/2026/N\u0110-CP', title='Ngh\u1ecb \u0111\u1ecbnh thu\u1ebf', source_url='https://example.inva...clause='1', citation='12/2026/N\u0110-CP, \u0110i\u1ec1u 1, Kho\u1ea3n 1', text='C\xe1 nh\xe2n \u0111\u01b0\u1ee3c kh\u1ea5u tr\u1eeb thu\u1ebf theo quy \u0111\u1ecbnh.', token_count=8)
+E     Use -v to get more diff
+=========================== short test summary info ===========================
+FAILED tests/evaluation/test_provenance.py::test_provider_catalog_preserves_current_fallback_orders
+FAILED tests/test_api_routes.py::test_chat_mandatory_guards_bypass_unchecked_cache_and_measure_real_latency
+FAILED tests/test_guardrail_route_state.py::test_legacy_shadow_request_is_enforced_without_cache[rejected-output]
+FAILED tests/test_guardrail_route_state.py::test_legacy_shadow_request_is_enforced_without_cache[error-output]
+FAILED tests/test_rag_pipeline.py::test_pipeline_fails_closed_without_calling_answer_model
+FAILED tests/test_rag_pipeline.py::test_pipeline_searches_structural_and_full_corpus_when_enabled
+FAILED tests/test_rag_pipeline.py::test_pipeline_observes_structural_error_when_legacy_fallback_succeeds
+FAILED tests/test_rag_pipeline.py::test_vertex_shadow_never_changes_production_evidence
+8 failed, 2259 passed, 6 skipped in 573.32s (0:09:33)

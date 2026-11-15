@@ -13,6 +13,7 @@ from fastapi import APIRouter, HTTPException, Request, Query, Form, Depends
 from app.api.dependencies import optional_user, verify_csrf
 from app.rate_limit import limiter
 from app.services.legal_browser import SearchFilters, LegalBrowserBackendError
+from app.services.source_currency import currency_note, format_citation, sector_matches
 from app.services.document_structure import document_sections
 from app.services.source_quality import assess_source_quality
 from app.services.body_search import BodySearchUnavailable
@@ -83,11 +84,11 @@ async def _registry_context(numbers, day):
 async def legal_search(request: Request, q: str = "", legal_type: str = Query("", max_length=100),
                        authority: str = Query("", max_length=200), issued_from: str = "", issued_to: str = "", sort: str = "default",
                        scope: Literal["metadata", "body"] = "metadata", offset: int = Query(0, ge=0, le=1000),
-                       as_of: str = Query("", max_length=10)):
+                       as_of: str = Query("", max_length=10), sector: str = Query("", max_length=100)):
     day = _registry_day(as_of)
     query = q.strip()[:200]
     try:
-        filters = SearchFilters(legal_type.strip(), authority.strip(), issued_from, issued_to, sort)
+        filters = SearchFilters(legal_type.strip(), authority.strip(), issued_from, issued_to, sort, sector.strip())
     except ValueError:
         raise HTTPException(422, "Bộ lọc ngày hoặc thứ tự không hợp lệ.") from None
     current = _get_browser()
@@ -113,7 +114,7 @@ async def legal_search(request: Request, q: str = "", legal_type: str = Query(""
             if offset:
                 params["offset"] = str(max(0, offset - 20))
                 previous_page = "/search?" + urlencode(params)
-            results = results[:20]
+            results = [item for item in results if not filters.sector or sector_matches(getattr(item, "legal_sectors", ""), filters.sector)][:20]
     except BodySearchUnavailable:
         return _legal_unavailable(request, "Chưa truy cập được chỉ mục toàn văn trong môi trường này.", query=query, body_missing=True)
     except LegalBrowserBackendError:
@@ -123,6 +124,7 @@ async def legal_search(request: Request, q: str = "", legal_type: str = Query(""
         "legal_search.html",
         {"query": query, "results": results, "filters": filters, "scope": scope, "body_coverage": coverage,
          "next_page": next_page, "previous_page": previous_page, "as_of_query": as_of,
+         "currency_note": currency_note, "format_citation": format_citation,
          **await _registry_context([result["document_number"] if scope == "body" else result.document_number for result in results], day)},
     )
 

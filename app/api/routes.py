@@ -1078,6 +1078,9 @@ async def list_sessions(
     search: str = "",
     current_user=Depends(optional_user),
 ):
+    if request.headers.get("sec-fetch-dest") == "document":
+        # Danh sách hội thoại chỉ là đoạn HTML của thanh bên; mở trực tiếp thì về trang chính.
+        return RedirectResponse("/", status_code=303)
     client_id = getattr(request.state, "client_id", "legacy")
     sessions = await get_sessions(
         client_id,

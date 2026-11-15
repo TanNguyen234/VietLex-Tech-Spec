@@ -36,6 +36,7 @@ class LegalSearchResult:
     legal_type: str
     issuing_authority: str
     issuance_date: str | None
+    legal_sectors: str = ""
 
 
 @dataclass(frozen=True)
@@ -45,6 +46,7 @@ class SearchFilters:
     issued_from: str = ""
     issued_to: str = ""
     sort: str = "default"
+    sector: str = ""
 
     def __post_init__(self):
         for value in (self.issued_from, self.issued_to):
@@ -54,6 +56,8 @@ class SearchFilters:
             raise ValueError("invalid_date_range")
         if self.sort not in {"default", "newest", "oldest"}:
             raise ValueError("invalid_sort")
+        if len(self.sector) > 100:
+            raise ValueError("invalid_sector")
 
     @property
     def active(self):
@@ -518,6 +522,7 @@ class LegalBrowser:
                 legal_type=item.legal_type,
                 issuing_authority=item.issuing_authority,
                 issuance_date=item.issuance_date,
+                legal_sectors=item.legal_sectors,
             )
             for document_id in document_ids
             if (item := metadata.get(document_id)) is not None
