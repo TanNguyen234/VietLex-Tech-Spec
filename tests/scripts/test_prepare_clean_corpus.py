@@ -1,5 +1,4 @@
 import hashlib
-from pathlib import Path
 import sqlite3
 
 import pyarrow.parquet as pq

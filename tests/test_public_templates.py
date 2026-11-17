@@ -195,6 +195,63 @@ def test_missing_evidence_has_explicit_online_handoff():
     assert 'Tìm nguồn chính thức trong hồ sơ' in html
 
 
+def test_claim_support_lists_linked_claims_and_collapses_unlinked_ones() -> None:
+    from jinja2 import Environment, FileSystemLoader, select_autoescape
+    from types import SimpleNamespace
+
+    env = Environment(loader=FileSystemLoader(ROOT / "app/templates"), autoescape=select_autoescape())
+    claims = [
+        {"claim_id": "claim-1", "text": "Nhận định có căn cứ.",
+         "support_state": "directly_supported", "evidence_indices": [0]},
+        {"claim_id": "claim-2", "text": "Nhận định chưa có neo.",
+         "support_state": "unresolved", "evidence_indices": []},
+    ]
+
+    html = env.get_template("chat_message.html").render(
+        user_msg="Câu hỏi", bot_msg="Trả lời", trace_id="trace-1", session_id="s",
+        evidence_views=[], claim_support=claims, request=SimpleNamespace(cookies={}),
+    )
+
+    assert html.count("<details") == 1
+    assert html.index("Nhận định có căn cứ.") < html.index("<details")
+    assert html.index("Nhận định chưa có neo.") > html.index("<details")
+    assert "Chưa xác định liên kết bằng chứng" in html
+
+    history = env.get_template("chat_history_messages.html").render(
+        messages=[{"user_query": "Câu hỏi", "bot_response": "Trả lời", "trace_id": "trace-1",
+                   "evidence_views": [], "claim_support": claims, "feedback": None, "cached": False}],
+        session_id="s", request=SimpleNamespace(cookies={}),
+    )
+
+    assert history.count("<details") == 1
+    assert history.index("Nhận định có căn cứ.") < history.index("<details")
+    assert history.index("Nhận định chưa có neo.") > history.index("<details")
+
+
+def test_claim_support_truncates_long_claim_text_in_the_panel() -> None:
+    from jinja2 import Environment, FileSystemLoader, select_autoescape
+    from types import SimpleNamespace
+
+    env = Environment(loader=FileSystemLoader(ROOT / "app/templates"), autoescape=select_autoescape())
+    long_claim = ("Nhận định dài để kiểm tra việc rút gọn trong bảng liên kết. " * 8).strip()
+    claims = [{"claim_id": "claim-1", "text": long_claim,
+               "support_state": "partially_supported", "evidence_indices": [0]}]
+
+    html = env.get_template("chat_message.html").render(
+        user_msg="Câu hỏi", bot_msg="Trả lời", trace_id="trace-1", session_id="s",
+        evidence_views=[], claim_support=claims, request=SimpleNamespace(cookies={}),
+    )
+    history = env.get_template("chat_history_messages.html").render(
+        messages=[{"user_query": "Câu hỏi", "bot_response": "Trả lời", "trace_id": "trace-1",
+                   "evidence_views": [], "claim_support": claims, "feedback": None, "cached": False}],
+        session_id="s", request=SimpleNamespace(cookies={}),
+    )
+
+    for page in (html, history):
+        assert "…" in page
+        assert long_claim not in page
+
+
 def test_local_css_covers_focus_touch_and_reduced_motion() -> None:
     css = "\n".join(
         path.read_text(encoding="utf-8")

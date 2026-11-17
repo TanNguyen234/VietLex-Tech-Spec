@@ -8,11 +8,19 @@ import hashlib
 import re
 import time
 
+from app.services.instrument_registry import drop_superseded_contexts
 from app.services.legal_topic_terms import contains_topic_phrase, fold_topic_text, local_rescue_terms
 from app.services.official_search_plan import DEEP_READING, DOCUMENT_REFERENCE, build_official_search_plan
 from app.services.trusted_source_reader import SourceReadError, is_official_document_url, validate_source_url
 
 _NETWORK = asyncio.Semaphore(2)
+
+
+def _is_superseded(question, title, document_number):
+    """Old versions are skipped before reading or packing; they never consume read time or evidence slots."""
+    header = f"[{document_number or ''}]\nTiêu đề: {title or ''}"
+    _, dropped = drop_superseded_contexts(question, [header])
+    return bool(dropped)
 _ARTICLE = re.compile(r"^\s*(?:Điều|Dieu)\s+\d+[a-zđ]?[.:][^\n]*", re.M | re.I)
 _REQUESTED_ARTICLE = re.compile(r'\bdieu\s+(\d+)(?![\da-zđ])(?:\s*[-–]\s*(\d+)(?![\da-zđ]))?')
 _TAIL = re.compile(r"^\s*(?:Nơi nhận\s*:|TM\.\s|KT\.\s|PHỤ LỤC\b)", re.M)
@@ -110,6 +118,8 @@ def pack_sources(sources, plan, profile=DEEP_READING, *, deadline=None):
         reason = None
         if _organization_only(item.get("title", ""), plan.original_question):
             reason = "organization_instrument"
+        elif _is_superseded(plan.original_question, item.get("title", ""), item.get("document_number", "")):
+            reason = "superseded_version"
         elif not isinstance(text, str) or not text.strip() or item.get("content_status") == "metadata_only":
             reason = "metadata_only"
         elif hashlib.sha256(text.encode()).hexdigest() != item.get("sha256"):
@@ -224,10 +234,22 @@ def pack_sources(sources, plan, profile=DEEP_READING, *, deadline=None):
     }
 
 
-async def search_and_read(question, *, settings=None, providers=None, reader=None, profile=DEEP_READING):
+async def search_and_read(question, *, settings=None, providers=None, reader=None, profile=DEEP_READING,
+                          explicit_queries=None, explicit_topics=None, reader_hint=""):
+    from dataclasses import replace as _replace
+
     from app.services.chat_official_supplement import OfficialSupplementResult
     from app.services.trusted_source_reader import read_source
     plan = build_official_search_plan(question)
+    if explicit_queries:
+        # Registry-driven queries name the current instrument directly; they replace the derived plan.
+        plan = _replace(
+            plan,
+            queries=tuple(" ".join(str(query).split())[:220] for query in explicit_queries[:profile.query_limit] if str(query).strip()),
+            topics=tuple(explicit_topics) or plan.topics,
+            status="registry",
+            current_required=True,
+        )
     started = time.perf_counter()
     loop = asyncio.get_running_loop()
     overall_deadline = loop.time() + min(60, profile.total_seconds)
@@ -289,18 +311,21 @@ async def search_and_read(question, *, settings=None, providers=None, reader=Non
         metadata = record.title + " " + getattr(record, "snippet", "")
         return (sum(contains_topic_phrase(metadata, t) for t in plan.topics),
                 len(terms.intersection(local_rescue_terms(metadata, limit=128))))
+    superseded_urls = {u for u, r in records.items() if _is_superseded(question, r.title, getattr(r, "document_number", ""))}
+    diagnostics["superseded_skipped"] = sorted(superseded_urls)[:40]
     queue = [(u, r) for u, r in sorted(records.items(), key=lambda pair: (-rank(pair[1])[0], -_year(pair[1]), -rank(pair[1])[1], pair[0]))
-             if not _organization_only(r.title, question)]
+             if not _organization_only(r.title, question) and u not in superseded_urls]
     sources, attempted, pending = [], set(), set()
     phase_started = loop.time()
     pack_reserve = min(5, profile.total_seconds / 12)
     cleanup_reserve = min(3, profile.read_seconds / 10)
     read_deadline = min(overall_deadline - pack_reserve - cleanup_reserve,
                         loop.time() + profile.read_seconds - cleanup_reserve)
+    reader_question = " ".join(part for part in (plan.original_question, str(reader_hint or "").strip()) if part)
     async def read_one(url, record):
         try:
             async with _NETWORK:
-                item = await reader(url, question=plan.original_question, smart_pages=True, deep_read=True,
+                item = await reader(url, question=reader_question, smart_pages=True, deep_read=True,
                                     use_ocr=False, page_limit=20)
             if not isinstance(item, dict) or item.get("url") != url:
                 raise SourceReadError("source_url_mismatch")

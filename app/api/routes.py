@@ -44,7 +44,7 @@ from app.services.conversation_context import followup_context, is_explicit_foll
 from app.rate_limit import limiter
 from app.services.evidence_presenter import present_context
 from app.services.provider_runtime import provider_status_snapshot, capture_provider_usage
-from app.services.admin_observability import present_interaction, AdminDataUnavailable
+from app.services.admin_observability import clean_text, present_interaction, summarize_usage, AdminDataUnavailable
 from app.services.direct_llm import provider_cooldown_snapshot
 from app.services.provider_http_budget import ProviderHttpAttemptBudgetExceeded
 from app.services.chat_progress import chat_progress
@@ -54,6 +54,7 @@ from app.services.research_presenter import (
     sanitize_retrieval_trace,
 )
 
+from app.services.answer_cleanup import strip_context_echo
 from app.services.pii import redact_pii
 from app.services.runtime_errors import (
     GUARDRAIL_UNAVAILABLE_MESSAGE,
@@ -520,7 +521,7 @@ async def chat(
         )
         cached_response = (
             await check_semantic_cache(message)
-            if cacheable_query
+            if cacheable_query and not nemo_enabled
             else None
         )
         t_cache = round(time.perf_counter() - cache_started, 4)
@@ -872,7 +873,7 @@ async def chat(
             )
 
         final_response = bot_response if output_safe else fallback_response
-        final_response = redact_pii(final_response)
+        final_response = strip_context_echo(redact_pii(final_response))
         rejection_reason = None if output_safe else "Hallucination or unsafe output detected"
         
         # Build online operational metrics
@@ -954,7 +955,7 @@ async def chat(
         )
         
         # Cache only grounded, output-approved answers and preserve their evidence.
-        if req_status == "ok" and context_used and cacheable_query:
+        if req_status == "ok" and context_used and cacheable_query and not nemo_enabled:
             background_tasks.add_task(
                 save_to_semantic_cache,
                 message,
@@ -1078,6 +1079,9 @@ async def list_sessions(
     search: str = "",
     current_user=Depends(optional_user),
 ):
+    if request.headers.get("sec-fetch-dest") == "document":
+        # Danh sách hội thoại chỉ là đoạn HTML của thanh bên; mở trực tiếp thì về trang chính.
+        return RedirectResponse("/", status_code=303)
     client_id = getattr(request.state, "client_id", "legacy")
     sessions = await get_sessions(
         client_id,
@@ -1338,11 +1342,22 @@ async def admin_export(request: Request, filters: dict = Depends(admin_filters),
         text = str(value) if value is not None else ''
         return "'" + text if text.lstrip().startswith(('=', '+', '-', '@', '\t', '\r', '\n')) else text
     for raw in logs:
-        log = present_interaction(raw)
-        metrics = log['metrics']
-        writer.writerow([cell(value) for value in (log['trace_id'], log['user_query'], metrics.get('request_status'),
-            metrics.get('observed_provider'), metrics.get('observed_model'), log['stored_context_count'],
-            log['usage']['total_token_count'], log['usage']['measured_calls'], log['usage']['calls'], metrics.get('ragas_status'))])
+        raw_metrics = raw.get('metrics') if isinstance(raw.get('metrics'), dict) else {}
+        calls = raw_metrics.get('llm_calls') if isinstance(raw_metrics.get('llm_calls'), list) else []
+        usage = summarize_usage([c for c in calls if isinstance(c, dict)])
+        raw_contexts = raw.get('contexts') if isinstance(raw.get('contexts'), list) else []
+        writer.writerow([cell(value) for value in (
+            clean_text(raw.get('trace_id', raw.get('_id', '')), 100),
+            clean_text(raw.get('user_query', ''), 2000),
+            raw_metrics.get('request_status'),
+            raw_metrics.get('observed_provider'),
+            raw_metrics.get('observed_model'),
+            len(raw_contexts),
+            usage.get('total_token_count'),
+            usage.get('measured_calls'),
+            usage.get('calls'),
+            raw_metrics.get('ragas_status', 'unobserved'),
+        )])
     await write_admin_audit(str(_admin['_id']), 'request_export', 'evaluation_logs', 'bounded-export',
                             metadata={'rows': len(logs), 'skip': skip, 'limit': 100})
     return Response('\ufeff' + output.getvalue(), media_type='text/csv; charset=utf-8', headers={

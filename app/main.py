@@ -108,6 +108,25 @@ if settings.APP_ENV != "test":
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+
+async def _browser_auth_redirect(request: Request, exc: HTTPException):
+    """Khách mở trang HTML (điều hướng trên trình duyệt) bị 401 thì chuyển tới đăng nhập.
+
+    API và fetch() của giao diện (Sec-Fetch-Dest khác "document") vẫn nhận JSON 401 như cũ.
+    """
+    if (
+        exc.status_code == 401
+        and request.method == "GET"
+        and request.headers.get("sec-fetch-dest") == "document"
+    ):
+        return RedirectResponse("/login", status_code=303)
+    from fastapi.exception_handlers import http_exception_handler
+
+    return await http_exception_handler(request, exc)
+
+
+app.add_exception_handler(HTTPException, _browser_auth_redirect)
+
 # CORS Middleware
 origins = [str(settings.FRONTEND_URL)] if settings.FRONTEND_URL else ["*"]
 app.add_middleware(

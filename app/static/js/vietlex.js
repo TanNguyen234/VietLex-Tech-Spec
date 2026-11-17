@@ -4,15 +4,40 @@
   const csrf = () => $('#chat-form input[name="csrf_token"]')?.value || '';
   const toast = message => { const node=$('#toast'); node.textContent=message; node.hidden=false; clearTimeout(node._timer); node._timer=setTimeout(()=>node.hidden=true,2200); };
 
-  function renderInlineMarkdown(text, parent) {
-    const normalized=text.replace(/\\([*`_#-])/g,'$1');
-    const pattern=/(\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*)/g; let last=0;
+  function appendSafeFormattedText(text, parent) {
+    const normalized = String(text || '').replace(/\\([*`_#-])/g, '$1');
+    const pattern = /(\*\*[^*\n]+\*\*|`[^`\n]+`|\*[^*\n]+\*)/g;
+    let last = 0;
     for (const match of normalized.matchAll(pattern)) {
-      parent.append(document.createTextNode(normalized.slice(last,match.index)));
-      const token=match[0]; const node=document.createElement(token.startsWith('**')?'strong':token.startsWith('`')?'code':'em');
-      node.textContent=token.startsWith('**')?token.slice(2,-2):token.slice(1,-1); parent.append(node); last=match.index+token.length;
+      const plain = normalized.slice(last, match.index).replace(/\*\*/g, '');
+      if (plain) parent.append(document.createTextNode(plain));
+      const token = match[0];
+      const tag = token.startsWith('**') ? 'strong' : token.startsWith('`') ? 'code' : 'em';
+      const node = document.createElement(tag);
+      node.textContent = token.startsWith('**') ? token.slice(2, -2) : token.slice(1, -1);
+      parent.append(node);
+      last = match.index + token.length;
     }
-    parent.append(document.createTextNode(normalized.slice(last)));
+    const tail = normalized.slice(last).replace(/\*\*/g, '');
+    if (tail) parent.append(document.createTextNode(tail));
+  }
+
+  function renderInlineMarkdown(text, parent) {
+    const linkPattern = /\[([^\]\n]+)\]\((https?:\/\/[^\s)]+|\/[^\s)]+)\)/g;
+    let last = 0;
+    for (const match of String(text || '').matchAll(linkPattern)) {
+      appendSafeFormattedText(text.slice(last, match.index), parent);
+      const anchor = document.createElement('a');
+      anchor.href = match[2];
+      if (match[2].startsWith('http')) {
+        anchor.target = '_blank';
+        anchor.rel = 'noopener noreferrer';
+      }
+      appendSafeFormattedText(match[1], anchor);
+      parent.append(anchor);
+      last = match.index + match[0].length;
+    }
+    appendSafeFormattedText(String(text || '').slice(last), parent);
   }
 
   function renderMarkdownTarget(target) {
@@ -21,11 +46,12 @@
     while(index<lines.length){
       const line=lines[index].trim(); if(!line){index++;continue;}
       if(/^---+$/.test(line)){target.append(document.createElement('hr'));index++;continue;}
+      if(/^>\s?/.test(line)){const quote=document.createElement('blockquote');const parts=[];while(index<lines.length&&/^\s*>\s?/.test(lines[index])){parts.push(lines[index].replace(/^\s*>\s?/,'').trim());index++;}const p=document.createElement('p');renderInlineMarkdown(parts.join(' '),p);quote.append(p);target.append(quote);continue;}
       const heading=line.match(/^(#{1,3})\s+(.+)$/);
       if(heading){const node=document.createElement(`h${heading[1].length}`);renderInlineMarkdown(heading[2],node);target.append(node);index++;continue;}
       if(/^[-*]\s+/.test(line)){const list=document.createElement('ul');while(index<lines.length&&/^\s*[-*]\s+/.test(lines[index])){const li=document.createElement('li');renderInlineMarkdown(lines[index].replace(/^\s*[-*]\s+/,''),li);list.append(li);index++;}target.append(list);continue;}
       if(/^\d+\.\s+/.test(line)){const list=document.createElement('ol');list.className='ordered-list';while(index<lines.length&&/^\s*\d+\.\s+/.test(lines[index])){const li=document.createElement('li');renderInlineMarkdown(lines[index].replace(/^\s*\d+\.\s+/,''),li);list.append(li);index++;}target.append(list);continue;}
-      const parts=[];while(index<lines.length&&lines[index].trim()&&!/^(#{1,3})\s+|^\s*[-*]\s+|^\s*\d+\.\s+|^---+$/.test(lines[index])){parts.push(lines[index].trim());index++;}
+      const parts=[];while(index<lines.length&&lines[index].trim()&&!/^(#{1,3})\s+|^\s*[-*]\s+|^\s*\d+\.\s+|^\s*>\s?|^---+$/.test(lines[index])){parts.push(lines[index].trim());index++;}
       const paragraph=document.createElement('p');renderInlineMarkdown(parts.join(' '),paragraph);target.append(paragraph);
     }
     target.dataset.rendered='true';

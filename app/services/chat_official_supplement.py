@@ -618,6 +618,9 @@ async def supplement_official_evidence(
     reader=None,
     browser=None,
     corpus_contexts: list[str] | None = None,
+    explicit_queries: tuple[str, ...] | None = None,
+    explicit_topics: tuple[str, ...] | None = None,
+    explicit_reader_hint: str | None = None,
 ) -> OfficialSupplementResult:
     started = time.perf_counter()
     settings = settings or get_settings()
@@ -636,10 +639,12 @@ async def supplement_official_evidence(
             and not getattr(settings, "USE_LEGACY_FREE_PIPELINE", False)):
         from app.services.deep_official_search import search_and_read
         return await search_and_read(query, settings=settings,
-                                     providers=[provider] if provider is not None else None, reader=reader)
+                                     providers=[provider] if provider is not None else None, reader=reader,
+                                     explicit_queries=explicit_queries, explicit_topics=explicit_topics,
+                                     reader_hint=explicit_reader_hint or "")
     corpus_contexts = corpus_contexts or []
     topic_coverage = topic_coverage_diagnostics(query, corpus_contexts)
-    queries = derive_official_search_queries(
+    queries = tuple(explicit_queries) if explicit_queries else derive_official_search_queries(
         query,
         corpus_contexts=corpus_contexts,
     )

@@ -14,7 +14,7 @@ from app.services.official_document_reader import SMART_WORKER_TIMEOUT_SECONDS
 unneeded = [name for name in ('httpx', 'pydantic', 'app.services.workspace_documents')
             if name in sys.modules]
 assert not unneeded, f'PDF worker imports unrelated dependencies: {unneeded}'
-assert SMART_WORKER_TIMEOUT_SECONDS == 15
+assert SMART_WORKER_TIMEOUT_SECONDS == 30  # measured under concurrent search load; see official_document_reader.py
 """
     result = subprocess.run(
         [getattr(sys, "_base_executable", sys.executable), "-I", "-S", "-c", code,

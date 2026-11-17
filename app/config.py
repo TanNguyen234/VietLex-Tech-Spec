@@ -167,7 +167,14 @@ class Settings(BaseSettings):
     CHAT_OFFICIAL_WEB_SUPPLEMENT_TIMEOUT_SECONDS: float = Field(
         default=8.0, gt=0, le=8.0
     )
-    
+    # LLM instrument hypotheses: propose candidate instrument titles and legal points that steer
+    # official search and reading. Model output is never evidence; see official_instrument_hypotheses.py.
+    # Off by default: probe round 7 showed no net gain (4/15 vs 4/15 marker hits) and lost NĐ 168/2024
+    # on two traffic questions. Enable only after end-to-end measurement.
+    CHAT_INSTRUMENT_HYPOTHESIS_ENABLED: bool = False
+    CHAT_INSTRUMENT_HYPOTHESIS_TIMEOUT_SECONDS: float = Field(default=20.0, gt=0, le=60)
+    CHAT_INSTRUMENT_HYPOTHESIS_MAX_OUTPUT_TOKENS: int = Field(default=768, ge=128, le=2048)
+
     # Logfire Token
     LOGFIRE_TOKEN: Optional[str] = None
     LOGFIRE_SERVICE_NAME: str = "vietlex"
@@ -281,12 +288,14 @@ class Settings(BaseSettings):
     LLM_CONTEXT_MAX_TOKENS: int = 720
     RESEARCH_CONTEXT_MAX_WORDS: int = Field(default=4000, ge=720, le=12000)
     LLM_CONTEXT_PER_DOCUMENT_LIMIT: int = 2
-    LLM_MAX_OUTPUT_TOKENS: int = 1536
+    LLM_MAX_OUTPUT_TOKENS: int = 3072
     QUERY_REWRITE_MAX_CHARACTERS: int = 2_000
     QUERY_REWRITE_MAX_OUTPUT_TOKENS: int = 96
     QUERY_REWRITE_TIMEOUT_SECONDS: float = 8.0
     # Bound each mandatory check while allowing measured provider latency tails.
-    GUARDRAIL_TIMEOUT_SECONDS: float = 20.0
+    # Must cover two Vertex requests (first attempt + one transient quota/network retry, each up to
+    # VERTEX_REQUEST_TIMEOUT_SECONDS) plus the retry backoff, so a retry is not cut off by this deadline.
+    GUARDRAIL_TIMEOUT_SECONDS: float = 75.0
 
     # Online Ragas evaluation control (off | sample | all)
     RAGAS_EVALUATION_MODE: Literal["off", "sample", "all"] = "off"

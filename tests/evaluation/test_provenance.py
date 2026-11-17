@@ -467,17 +467,16 @@ def test_provider_catalog_preserves_current_fallback_orders() -> None:
         (item.provider, item.model) for item in GENERATION_PROVIDER_MODELS
     ] == [
         ("OpenRouter", "meta-llama/llama-3.3-70b-instruct"),
-        ("Gemini", "gemini-2.0-flash"),
+        ("Gemini", "gemini-2.5-flash"),
         ("NVIDIA NIM", "meta/llama-3.3-70b-instruct"),
         ("Groq", "qwen/qwen3.8-27b"),
-        ("OpenRouter", "meta-llama/llama-3.3-70b-instruct"),
-        ("Gemini", "gemini-1.5-flash"),
-        ("Groq", "llama3-8b-8192"),
+        ("Gemini", "gemini-2.5-flash-lite"),
+        ("Groq", "openai/gpt-oss-20b"),
     ]
     assert [
         (item.provider, item.model) for item in JUDGE_PROVIDER_MODELS
     ] == [
-        ("Gemini", "gemini-2.0-flash"),
+        ("Gemini", "gemini-2.5-flash"),
         ("NVIDIA NIM", "meta/llama-3.3-70b-instruct"),
         ("Groq", "qwen/qwen3.8-27b"),
         ("OpenRouter", "meta-llama/llama-3.3-70b-instruct"),
