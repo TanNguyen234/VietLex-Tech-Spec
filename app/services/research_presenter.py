@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from collections.abc import Mapping
 from typing import Any
 
@@ -26,46 +27,117 @@ _STAGES = (
 )
 
 
+_MAX_CLAIMS = 12
+_MAX_CANDIDATE_CLAIMS = 80
+
+
 def _claims(answer: str) -> list[str]:
-    cleaned = re.sub(r"^\s*(?:[-*]|\d+\.)\s+", "", str(answer), flags=re.MULTILINE)
+    cleaned = re.sub(r"^\s*(?:[-*]|\d+\.|>+)\s+", "", str(answer), flags=re.MULTILINE)
+    cleaned = re.sub(r"\[([^\]\n]+)\]\((https?://[^\s)]+|/[^\s)]+)\)", r"\1", cleaned)
+    cleaned = re.sub(r"\*\*|\*", "", cleaned)
     values = []
     for part in _CLAIM_SPLIT.split(cleaned):
         value = re.sub(r"\s+", " ", part).strip(" #*`-_\t")
         if len(value) >= 5 and "lưu ý" not in value.casefold():
             values.append(value[:500])
-        if len(values) == 12:
+        if len(values) == _MAX_CANDIDATE_CLAIMS:
             break
     return values
 
 
+def _select_claims(values: list[str]) -> list[str]:
+    """Keep at most _MAX_CLAIMS claims, preferring those that cite an article or a document."""
+    anchored = [
+        index
+        for index, value in enumerate(values)
+        if _ARTICLE.search(value) or _DOCUMENT.search(value)
+    ]
+    chosen = anchored[:_MAX_CLAIMS]
+    for index in range(len(values)):
+        if len(chosen) >= _MAX_CLAIMS:
+            break
+        if index not in chosen:
+            chosen.append(index)
+    return [values[index] for index in sorted(chosen)]
+
+
+_TITLE_NUMBER = re.compile(r"\s+số\s+\d{1,4}/\d{4}/[^\s,;]+", re.IGNORECASE)
+_NUMBER_YEAR = re.compile(r"^\d{1,4}/(\d{4})/")
+
+
+def _fold(value: str) -> str:
+    return re.sub(r"\s+", " ", unicodedata.normalize("NFC", value)).strip().casefold()
+
+
+def _document_aliases(evidence: list[Any]) -> dict[str, set[str]]:
+    """Map each name a claim may use for an evidence document to the document numbers it can mean.
+
+    Names are the full title, the title without its "số ..." number, and that bare title
+    followed by the year in the number (for example "Bộ luật Dân sự 2015"). A name shared
+    by several documents keeps all of them, so the caller can refuse to anchor on it.
+    """
+    aliases: dict[str, set[str]] = {}
+    for item in evidence:
+        number = (item.document_number or "").casefold()
+        if not number or not item.title:
+            continue
+        base = _TITLE_NUMBER.sub("", item.title).strip(" .,;:")
+        names = {_fold(item.title), _fold(base)}
+        year = _NUMBER_YEAR.match(number)
+        if year and base and not _fold(base).endswith(year.group(1)):
+            names.add(_fold(f"{base} {year.group(1)}"))
+        for name in names:
+            if name:
+                aliases.setdefault(name, set()).add(number)
+    return aliases
+
+
+def _titled_documents(claim: str, aliases: Mapping[str, set[str]]) -> set[str]:
+    """Return the document numbers a claim names by title, only when that title is unambiguous."""
+    folded = _fold(claim)
+    found: set[str] = set()
+    for name, numbers in aliases.items():
+        if len(numbers) != 1:
+            continue
+        # The name must stand alone: "Luật Đất đai" must not match inside "Luật Đất đai 2024".
+        if re.search(rf"(?<!\w){re.escape(name)}(?!\w)(?!\s*\d)", folded):
+            found |= numbers
+    return found
+
+
 def build_claim_support(answer: str, contexts: list[str]) -> list[dict[str, Any]]:
     evidence = [present_context(item) for item in contexts[:10]]
+    aliases = _document_aliases(evidence)
     result = []
-    for index, claim in enumerate(_claims(answer), start=1):
+    for index, claim in enumerate(_select_claims(_claims(answer)), start=1):
         documents = {value.casefold() for value in _DOCUMENT.findall(claim)}
+        documents |= _titled_documents(claim, aliases)
         articles = {value.casefold() for value in _ARTICLE.findall(claim)}
         clauses = {value.casefold() for value in _CLAUSE.findall(claim)}
-        matched = []
+        matched: list[int] = []
+        verified: list[int] = []
         for evidence_index, item in enumerate(evidence):
             citation = item.citation or ""
             if documents and (item.document_number or "").casefold() not in documents:
                 continue
-            if articles and not articles.intersection(
-                value.casefold() for value in _ARTICLE.findall(citation)
-            ):
+            citation_articles = {value.casefold() for value in _ARTICLE.findall(citation)}
+            if articles and not articles.intersection(citation_articles):
                 continue
-            if clauses and not clauses.intersection(
-                value.casefold() for value in _CLAUSE.findall(citation)
-            ):
-                continue
+            citation_clauses = {value.casefold() for value in _CLAUSE.findall(citation)}
+            if clauses and citation_clauses and not clauses.intersection(citation_clauses):
+                continue  # the evidence names a different clause of the same article
             if documents or articles:
                 matched.append(evidence_index)
+                # Article-level evidence without a clause cannot verify a claim that names one.
+                if articles and (not clauses or citation_clauses):
+                    verified.append(evidence_index)
         # An article number alone cannot distinguish two different legal documents.
         if not documents and len({evidence[i].document_number for i in matched}) > 1:
             matched = []
+            verified = []
         state = (
             "directly_supported"
-            if matched and articles
+            if verified
             else "partially_supported"
             if matched
             else "unresolved"

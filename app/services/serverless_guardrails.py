@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import asyncio
 
+import logfire
 from jinja2 import Template
 
 from app.config import get_settings
@@ -17,22 +18,43 @@ from app.services.guardrail_prompts import (
 from app.services.runtime_errors import GuardrailUnavailableError
 
 
+# Vertex quota (429) and connection failures are transient: retry them inside the same
+# GUARDRAIL_TIMEOUT_SECONDS budget. Timeouts and other statuses are never retried, and the
+# last attempt still fails closed.
+GUARDRAIL_TRANSIENT_STATUSES = frozenset({"quota", "network"})
+GUARDRAIL_MAX_ATTEMPTS = 3
+GUARDRAIL_RETRY_BACKOFF_SECONDS = (1.0, 2.0)
+
+
 async def _decision(stage: str, prompt: str) -> str:
     current_settings = get_settings()
     allow_fallback = bool(getattr(current_settings, "USE_LEGACY_FREE_PIPELINE", False))
-    try:
-        result = await asyncio.wait_for(
-            generate_llm_response_with_metadata(
-                prompt, max_output_tokens=64, thinking_level="MINIMAL",
-                use_case=LLMUseCase.GUARDRAIL,
-                max_retries=0, allow_fallback=allow_fallback,
-            ),
-            timeout=current_settings.GUARDRAIL_TIMEOUT_SECONDS,
-        )
-    except TimeoutError:
-        raise GuardrailUnavailableError(stage, "timeout") from None
-    except Exception as error:
-        raise GuardrailUnavailableError(stage, type(error).__name__) from None
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + current_settings.GUARDRAIL_TIMEOUT_SECONDS
+    attempt = 0
+    while True:
+        attempt += 1
+        try:
+            result = await asyncio.wait_for(
+                generate_llm_response_with_metadata(
+                    prompt, max_output_tokens=64, thinking_level="MINIMAL",
+                    use_case=LLMUseCase.GUARDRAIL,
+                    max_retries=0, allow_fallback=allow_fallback,
+                ),
+                timeout=deadline - loop.time(),
+            )
+        except TimeoutError:
+            raise GuardrailUnavailableError(stage, "timeout") from None
+        except Exception as error:
+            raise GuardrailUnavailableError(stage, type(error).__name__) from None
+        status = getattr(result, "status", None)
+        if status not in GUARDRAIL_TRANSIENT_STATUSES or attempt >= GUARDRAIL_MAX_ATTEMPTS:
+            break
+        backoff = GUARDRAIL_RETRY_BACKOFF_SECONDS[attempt - 1]
+        if loop.time() + backoff >= deadline:
+            break
+        logfire.warning("Guardrail provider transient failure; retrying", stage=stage, status=status, attempt=attempt)
+        await asyncio.sleep(backoff)
     if (
         not isinstance(getattr(result, "text", None), str)
         or not isinstance(getattr(result, "status", None), str)

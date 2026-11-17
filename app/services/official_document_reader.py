@@ -18,7 +18,11 @@ from app.services.runtime_errors import SourceReadError
 PDF_MAX_BYTES = 20_000_000
 PAGE_WINDOW = 5
 TEXT_LIMIT = 20_000
-SMART_WORKER_TIMEOUT_SECONDS = 15
+# Deep reads: 20 probes + up to 6 neighbour pages + up to 20 retained-window pages.
+DEEP_INSPECTION_LIMIT = 48
+# Measured: Luật BHXH 2024 (88+ pages inspected) extracts in ~10 s alone; the former 15 s cap
+# timed out under concurrent search load (source_processing_timeout).
+SMART_WORKER_TIMEOUT_SECONDS = 30
 EXTRACTION_VERSION = "official-pdf-reader-v2"
 _WORKER_OUTPUT_LIMIT = PDF_MAX_BYTES + 2_000_000
 _WORKER_CLEANUP_STEP_TIMEOUT_SECONDS = 1.0
@@ -64,9 +68,33 @@ def _page_count(reader) -> int:
     return count
 
 
+def _fragment_ratio(text: str) -> float:
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    if not lines:
+        return 0.0
+    return sum(1 for line in lines if len(line) <= 2) / len(lines)
+
+
+def _page_text_from(page) -> str:
+    """Plain pypdf mode splits some Công báo words into one-glyph lines ("Quy đ/ịnh"), which hides
+    article headings from the packer. Layout mode keeps words whole; use it only when plain output is
+    visibly fragmented and layout output is less fragmented."""
+    plain = page.extract_text() or ""
+    if _fragment_ratio(plain) < 0.2:
+        return plain
+    try:
+        layout = page.extract_text(extraction_mode="layout") or ""
+    except Exception:
+        return plain
+    if not layout or _fragment_ratio(layout) >= _fragment_ratio(plain):
+        return plain
+    lines = (re.sub(r"[ \t]{2,}", " ", line).strip() for line in layout.splitlines())
+    return "\n".join(line for line in lines if line)
+
+
 def _page_text(reader, page_number: int) -> str:
     try:
-        text = reader.pages[page_number - 1].extract_text() or ""
+        text = _page_text_from(reader.pages[page_number - 1])
     except Exception:
         raise SourceReadError("source_malformed_pdf") from None
     if len(text) > TEXT_LIMIT:
@@ -199,6 +227,29 @@ def _best_window(page_count: int, window_size: int, scores: dict[int, int]) -> i
     return best_start
 
 
+def _strongest_window(page_count: int, window_size: int, scores: dict[int, int]) -> int:
+    """Deep reads: the window must hold the strongest page and its preceding page (article heading)."""
+    length = min(window_size, page_count)
+    positive = [(page, score) for page, score in scores.items() if score > 0]
+    if not positive:
+        return 1
+    best_page = max(positive, key=lambda item: (item[1], -item[0]))[0]
+    lowest = max(1, best_page - length + 1)
+    highest = min(page_count - length + 1, best_page)
+    if best_page > 1:
+        highest = min(highest, best_page - 1)
+    if highest < lowest:
+        lowest = highest = max(1, min(best_page, page_count - length + 1))
+    best_start, best_key = lowest, None
+    for start in range(lowest, highest + 1):
+        end = start + length - 1
+        inside = sum(score for page, score in positive if start <= page <= end)
+        key = (inside, -abs((start + end) / 2 - best_page))
+        if best_key is None or key > best_key:
+            best_key, best_start = key, start
+    return best_start
+
+
 def _probe_pages(page_count: int) -> list[int]:
     return sorted(
         {
@@ -224,7 +275,7 @@ def _smart_window(payload: bytes, question: str, use_ocr: bool, page_limit: int,
 
     def inspect(page_number: int):
         if page_number not in page_texts:
-            if len(inspected) >= (40 if deep_read else 10):
+            if len(inspected) >= (DEEP_INSPECTION_LIMIT if deep_read else 10):
                 raise SourceReadError("source_inspection_limit")
             page_texts[page_number] = _page_text(reader, page_number)
             inspected.append(page_number)
@@ -239,7 +290,17 @@ def _smart_window(payload: bytes, question: str, use_ocr: bool, page_limit: int,
             inspect(page_number)
         scores = {number: _relevance_score(text, profile) + outline_scores.get(number, 0)
                   for number, text in page_texts.items()}
-        start = _best_window(count, page_limit, scores)
+        # A clause often sits one page from its strongest probe, and its article heading one page
+        # before that: inspect the neighbours of the three strongest probes before choosing the window.
+        for centre in sorted(scores, key=scores.get, reverse=True)[:3]:
+            if scores[centre] <= 0:
+                break
+            for neighbour in (centre - 1, centre + 1):
+                if 1 <= neighbour <= count:
+                    inspect(neighbour)
+        scores = {number: _relevance_score(text, profile) + outline_scores.get(number, 0)
+                  for number, text in page_texts.items()}
+        start = _strongest_window(count, page_limit, scores)
         selection_status = "probe_match" if max(scores.values(), default=0) else "no_evidence_in_probe"
     elif outline_scores:
         start = _best_window(count, page_limit, outline_scores)

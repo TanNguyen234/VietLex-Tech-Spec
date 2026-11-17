@@ -123,6 +123,7 @@ def semantic_cache_pipeline_revision(*, identity: dict | None = None) -> str:
         "final_evidence_limit": settings.FINAL_EVIDENCE_LIMIT,
         "context_limit": settings.LLM_CONTEXT_MAX_TOKENS,
         "official_deep_reading_enabled": getattr(settings, "CHAT_OFFICIAL_DEEP_READING_ENABLED", False),
+        "instrument_hypothesis_enabled": getattr(settings, "CHAT_INSTRUMENT_HYPOTHESIS_ENABLED", False),
         "official_deep_profile": asdict(DEEP_READING),
     }
     encoded = json.dumps(

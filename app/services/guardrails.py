@@ -198,7 +198,7 @@ async def warm_guardrails() -> None:
         raise
 
 @logfire.instrument("Kiểm tra an toàn Input Guardrails", extract_args=False)
-async def check_input_guardrails(message: str) -> Tuple[bool, str]:
+async def _check_input_guardrails_once(message: str) -> Tuple[bool, str]:
     logfire.info(
         "Đang kiểm tra bảo mật đầu vào",
         message_length=len(message),
@@ -234,8 +234,38 @@ async def check_input_guardrails(message: str) -> Tuple[bool, str]:
         )
         raise _guardrail_failure("input", e) from None
 
+GUARDRAIL_TIMEOUT_ATTEMPTS = 2
+
+
+async def _with_timeout_retries(stage: str, check) -> Tuple[bool, str]:
+    """Retry a guardrail stage only after a per-attempt timeout; exhausted attempts still block (fail-closed)."""
+    for attempt in range(1, GUARDRAIL_TIMEOUT_ATTEMPTS + 1):
+        try:
+            return await check()
+        except GuardrailUnavailableError as error:
+            if getattr(error, "reason", None) != "timeout" or attempt == GUARDRAIL_TIMEOUT_ATTEMPTS:
+                raise
+            logfire.warning(
+                "Guardrail timed out; retrying.",
+                stage=stage,
+                attempt=attempt,
+                max_attempts=GUARDRAIL_TIMEOUT_ATTEMPTS,
+            )
+    raise AssertionError("unreachable: every attempt either returns or raises")
+
+
+async def check_input_guardrails(message: str) -> Tuple[bool, str]:
+    return await _with_timeout_retries("input", lambda: _check_input_guardrails_once(message))
+
+
 @logfire.instrument("Kiểm tra an toàn Output Guardrails", extract_args=False)
 async def check_output_guardrails(response: str, context: List[str], user_query: str = "") -> Tuple[bool, str]:
+    return await _with_timeout_retries(
+        "output", lambda: _check_output_guardrails_once(response, context, user_query)
+    )
+
+
+async def _check_output_guardrails_once(response: str, context: List[str], user_query: str = "") -> Tuple[bool, str]:
     logfire.info("Đang kiểm tra an toàn câu trả lời đầu ra")
     context_str = output_guardrail_evidence(context, user_query)
     try:

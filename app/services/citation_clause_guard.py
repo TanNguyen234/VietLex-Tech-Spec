@@ -166,3 +166,30 @@ def correct_clause_citations(answer: str, contexts: list[str]) -> tuple[str, lis
         return answer, []
     pieces.append(answer[last:])
     return "".join(pieces), changes
+
+
+_DOCUMENT_ID_TOKEN = re.compile(r"\b\d{1,5}/[A-Za-z0-9À-ỹ\-]+(?:/[A-Za-z0-9À-ỹ\-]+)*")
+_BRACKET_CITATION = re.compile(r"\[([^\[\]\n]{1,200})\]")
+
+
+def drop_ungrounded_document_citations(answer: str, contexts: list[str]) -> tuple[str, list[str]]:
+    """Remove bracketed citations whose document number never appears in the retrieved contexts.
+
+    A citation such as ``[122/VBHN-VPQH, Điều 5]`` is not grounded when that document number was not
+    retrieved; the claim stays, the unsupported reference is dropped. Title-style citations are kept.
+    """
+    if not answer or not contexts:
+        return answer, []
+    grounded = {token.casefold() for context in contexts for token in _DOCUMENT_ID_TOKEN.findall(context)}
+    removed: list[str] = []
+
+    def _check(match: re.Match[str]) -> str:
+        first = match.group(1).split(",")[0].strip()
+        if not _DOCUMENT_ID_TOKEN.fullmatch(first):
+            return match.group(0)
+        if first.casefold() in grounded:
+            return match.group(0)
+        removed.append(match.group(1).strip())
+        return ""
+
+    return _BRACKET_CITATION.sub(_check, answer), removed

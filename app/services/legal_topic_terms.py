@@ -51,6 +51,17 @@ LEGAL_TOPIC_PHRASES = (
     "ly hôn",
     "kết hôn",
     "quốc tịch",
+    "nuôi con",
+    "ngoại tình",
+    "lương hưu",
+    "lương tối thiểu",
+    "thực tập",
+    "sa thải",
+    "hòa giải",
+    "nghỉ phép",
+    "công chứng",
+    "mua bán đất",
+    "hồ sơ khởi kiện",
     "tạm giam",
     "tạm giữ",
     "lãi suất",
@@ -67,6 +78,48 @@ _TOPIC_ALIASES = {
 _LOCAL_STOPWORDS = frozenset(
     "a ai anh bao ban bang bi bo cac cai cho chinh chi chu co cong cung cua da dang day de den dieu do dong duoc em gi giua hai hay hon ho khi khong la lai lam len lieu ma moi mot muc nay neu ngay nhan nhieu nhu noi nua o phai phan qua ra rang rat roi sau se so su tai theo thi thang the thoi toi tram trong trieu tu tuong ty viec voi vua va van vi xuong y".split()
 )
+
+
+_COLLOQUIAL_REPLACEMENTS = (
+    (re.compile(r"\bh[đd]\s+lao\s+[đd][ộo]ng\b", re.I), "hợp đồng lao động"),
+    (re.compile(r"\bh[đd]\s+th[ửu]\s+vi[ệe]c\b", re.I), "hợp đồng thử việc"),
+    (re.compile(r"\b(?:hđ|hd)\b", re.I), "hợp đồng"),
+    (re.compile(r"\b(?:cty|c\.ty)\b", re.I), "công ty"),
+    (re.compile(r"\b(?:bhxh)\b", re.I), "bảo hiểm xã hội"),
+    (re.compile(r"\b(?:bhtn)\b", re.I), "bảo hiểm thất nghiệp"),
+    (re.compile(r"\b(?:tncn)\b", re.I), "thuế thu nhập cá nhân"),
+    (re.compile(r"\b(?:csgt)\b", re.I), "cảnh sát giao thông"),
+    (re.compile(r"\b(?:cccd|cmnd)\b", re.I), "căn cước công dân"),
+    (re.compile(r"\b(?:gplx)\b", re.I), "giấy phép lái xe"),
+    (re.compile(r"\b(?:tnhh)\b", re.I), "trách nhiệm hữu hạn"),
+    (re.compile(r"\b(?:đkkd|dkkd)\b", re.I), "đăng ký kinh doanh"),
+    (re.compile(r"\b(?:đt|dt)\b", re.I), "điện thoại"),
+    (re.compile(r"\b(?:ko|k)\b", re.I), "không"),
+    (re.compile(r"\b(?:đc|dc)\b", re.I), "được"),
+    (re.compile(r"\b(?:trc)\b", re.I), "trước"),
+    (re.compile(r"\b(?:bn)\b", re.I), "bao nhiêu"),
+    (re.compile(r"\b(\d+)\s*tr\b", re.I), r"\1 triệu"),
+    (re.compile(r"\bxe\s+m[aá]y\b", re.I), "xe mô tô xe gắn máy"),
+    (re.compile(r"\bngh[ỉi]\s+vi[ệe]c\s+ngang\b", re.I), "đơn phương chấm dứt hợp đồng lao động"),
+    (re.compile(r"\b[đd]u[ổo]i\s+ngang\b", re.I), "đơn phương chấm dứt hợp đồng lao động"),
+    (re.compile(r"\bv[ưự][ợo]t\s+[đd][èe]n\s+[đd][ỏo]\b", re.I), "đèn tín hiệu giao thông"),
+    (re.compile(r"\bkh[ôo]ng\s+ch[íi]nh\s+ch[ủu]\b", re.I), "chứng nhận đăng ký xe chuyển quyền sở hữu sang tên"),
+    (re.compile(r"\bgi[ấa]y\s+tay\b", re.I), "không có giấy tờ chuyển quyền sử dụng đất trước ngày 01 tháng 7 năm 2014"),
+    (re.compile(r"\bb[óo]c\s+ph[ốo]t\b", re.I), "xúc phạm danh dự nhân phẩm vu khống mạng xã hội"),
+    (re.compile(r"\bnh[ặa]t\s+[đd][ưự][ợo]c\b", re.I), "tài sản bị đánh rơi bỏ quên chiếm giữ trái phép tài sản"),
+    (re.compile(r"\b[đd]ưa\s+(?:(?:bạn|anh|chị|em|ông|bà|họ|cậu|nó)\s+)?vay\b", re.I), "cho vay"),
+    (re.compile(r"\bkhông\s+lập\s+văn\s+bản\b", re.I), "không lập thành văn bản"),
+    (re.compile(r"\b[đd]em\s+ra\s+t[òo]a\b", re.I), "khởi kiện ra Tòa án"),
+    (re.compile(r"\bgiờ\s+[đd]òi\s+không\s+được\b", re.I), "đòi nợ không được trả"),
+)
+
+
+def normalize_colloquial_query(value: str) -> str:
+    """Expand common Vietnamese chat abbreviations without altering legal structure."""
+    text = str(value or "")
+    for pattern, replacement in _COLLOQUIAL_REPLACEMENTS:
+        text = pattern.sub(replacement, text)
+    return re.sub(r"\s+", " ", text).strip()
 
 
 def fold_topic_text(value: str) -> str:

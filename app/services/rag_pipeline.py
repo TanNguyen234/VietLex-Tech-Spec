@@ -27,7 +27,7 @@ from app.services.clients import get_remote_reranker
 from app.evaluation.schemas import RetrievalStageTrace, StageCandidate
 from app.services.runtime_errors import RetrievalPipelineError
 from app.services.source_quality import assess_source_quality
-from app.services.legal_topic_terms import fold_topic_text
+from app.services.legal_topic_terms import fold_topic_text, normalize_colloquial_query
 from app.services.chat_official_supplement import (
     _current_applicability_intent,
     corpus_evidence_covers_topic,
@@ -75,14 +75,32 @@ def _effect_scope_query(query: str) -> str:
     )
 
 
+_INSTRUMENT_SUBJECT = (
+    r'(?:van ban (?:nay|do|tren|goc|dang|hien)|quy dinh|luat|bo luat|nghi dinh|thong tu|nghi quyet|'
+    r'phap lenh|quyet dinh|chi thi|hien phap|dieu \d+|khoan \d+)'
+)
+_INSTRUMENT_VALIDITY_TERM = (
+    r'(?:con hieu luc|het hieu luc|co hieu luc khong|tinh trang hieu luc|dang ap dung|con ap dung)'
+)
+# Validity of a named instrument ("Văn bản này còn hiệu lực không?"), not of a transaction type
+# ("giao dịch bằng lời nói có hiệu lực không?"): the instrument must be the subject of the clause.
+_INSTRUMENT_VALIDITY_RE = re.compile(
+    rf'\b{_INSTRUMENT_SUBJECT}\b[^?.!]{{0,60}}\b{_INSTRUMENT_VALIDITY_TERM}\b'
+    rf'|\b(?:tinh trang hieu luc|con hieu luc|het hieu luc|co hieu luc khong)\b[^?.!]{{0,40}}\b{_INSTRUMENT_SUBJECT}\b'
+)
+
+
+def _instrument_validity_requested(folded_query: str) -> bool:
+    return _INSTRUMENT_VALIDITY_RE.search(folded_query) is not None
+
+
 def _current_effect_conclusion_requested(query: str) -> bool:
     conclusion_query = _effect_scope_query(query)
     return bool(re.search(
-        r'\b(?:hien nay|hien tai|hien hanh|moi nhat|con hieu luc|con ap dung|'
-        r'dang ap dung|het hieu luc|tinh trang hieu luc|co hieu luc khong|current(?:ly)?|latest|today|'
+        r'\b(?:hien nay|hien tai|hien hanh|moi nhat|current(?:ly)?|latest|today|'
         r'(?:tai ngay|tinh den(?: ngay| nam)?|as of)\s+\d+)\b',
         conclusion_query, re.I,
-    ))
+    )) or _instrument_validity_requested(conclusion_query)
 
 
 def _requires_verified_effect_evidence(query: str, *, context_query: str | None = None) -> bool:
@@ -91,10 +109,9 @@ def _requires_verified_effect_evidence(query: str, *, context_query: str | None 
         r'\b(?:tham quyen|co quan(?:\s+\w+){0,3}\s+nao|'
         r'co quan\s+(?:cap(?:\s+phep)?|phe duyet|quyet dinh)\s+(?:la\s+)?ai|'
         r'ai\s+(?:cap|phe duyet|quyet dinh)|'
-        r'(?:con|het|dang)\s+(?:hieu luc|ap dung)|tinh trang hieu luc|co hieu luc khong|'
         r'competent authority|which (?:agency|authority|ministry)|who (?:issues|grants|approves)|'
         r'still in force|validity)\b', fresh, re.I,
-    )
+    ) or _instrument_validity_requested(fresh)
     if not authority_or_validity:
         return False
     current = _current_effect_conclusion_requested(query)
@@ -103,12 +120,19 @@ def _requires_verified_effect_evidence(query: str, *, context_query: str | None 
     return current
 
 
+_UNVERIFIED_EXCERPT_LIMIT = 4
+_UNVERIFIED_EXCERPT_TOKENS = 1200
+
+
 def _unverified_effect_excerpts(context: List[str]) -> LLMGenerationResult:
     settings = get_settings()
     profile = getattr(context, 'context_profile', None)
+    limit = profile.evidence_limit if profile else settings.RERANK_TOP_K
+    token_budget = profile.context_tokens if profile else settings.LLM_CONTEXT_MAX_TOKENS
+    # Bounded quote block: a long dump is not an answer and hides the conclusion the user asked for.
     excerpts = build_bounded_context(
-        list(context)[:profile.evidence_limit if profile else settings.RERANK_TOP_K],
-        max_tokens=profile.context_tokens if profile else settings.LLM_CONTEXT_MAX_TOKENS,
+        list(context)[:min(limit, _UNVERIFIED_EXCERPT_LIMIT)],
+        max_tokens=min(token_budget, _UNVERIFIED_EXCERPT_TOKENS),
     )
     text = UNVERIFIED_EFFECT_RESPONSE
     if excerpts:
@@ -247,6 +271,21 @@ async def _legacy_retrieval_outcome(
         rewritten_query,
         **retrieval_kwargs,
     )
+
+
+def _is_stale_historical_context(context: str, query: str) -> bool:
+    """Drop pre-2005 historical circulars/decrees when modern statutes exist unless asked."""
+    if re.search(r"\b(?:19\d{2}|200[0-4])\b", str(query or "")):
+        return False
+    header = "\n".join(str(context or "").splitlines()[:4])
+    first_line = header.splitlines()[0] if header else ""
+    if re.search(r"/(?:19\d{2}|200[0-4])/", first_line):
+        return True
+    if re.search(r"^\[\d+/(?:SL|TTLN|QĐ-UB)\b", first_line):
+        return True
+    if re.search(r"^\[\d+-(?:TTg|KH|LCT|CP|NV/TT|NH/TT|HĐBT|TC/TQD|ĐC/N|P3|LĐ/TT)\b", first_line):
+        return True
+    return bool(re.search(r"(?:^|\n)Tiêu đề:[^\n]*\b(?:19\d{2}|200[0-4])\b", header))
 
 
 def _evidence_identity(item: Any) -> tuple[Any, ...]:
@@ -729,7 +768,11 @@ async def run_advanced_rag(
             }
 
     if rewrite_mode == "off" or scoped_outcome is not None:
-        rewritten_query = user_query
+        rewritten_query = (
+            user_query
+            if scoped_outcome is not None or previous_user_query is not None
+            else normalize_colloquial_query(user_query)
+        )
         rewrite_seconds = 0.0
         rewrite_meta = {
             "provider": "none",
@@ -836,9 +879,16 @@ async def run_advanced_rag(
         and not bool(getattr(settings, "USE_LEGACY_FREE_PIPELINE", True))
     ):
         try:
+            rescue_kwargs: dict[str, Any] = {"settings": settings}
+            if context_profile is not None:
+                rescue_kwargs.update(
+                    max_documents=3,
+                    max_evidence=min(8, evidence_limit),
+                    max_tokens=min(3600, context_limit),
+                )
             primary_rescue = await rescue_primary_law_evidence(
                 user_query,
-                settings=settings,
+                **rescue_kwargs,
             )
             retrieval_diagnostics["primary_law_rescue"] = (
                 primary_rescue.diagnostics
@@ -848,9 +898,12 @@ async def run_advanced_rag(
                     chunk.formatted_context()
                     for chunk in primary_rescue.evidence
                 ]
+                filtered_corpus = [
+                    c for c in contexts if not _is_stale_historical_context(c, original_query)
+                ]
                 contexts = prefer_primary_topic_contexts(
                     user_query,
-                    contexts,
+                    filtered_corpus,
                     primary_contexts,
                     max_evidence=evidence_limit,
                 )
@@ -863,6 +916,13 @@ async def run_advanced_rag(
                 "current_effect_status": "unverified",
             }
     _record_context_stage(retrieval_diagnostics, "primary_rescue", contexts)
+    instrument_assessment = None
+    if scoped_outcome is None:
+        from app.services.instrument_registry import assess_expected_instruments
+
+        instrument_assessment = assess_expected_instruments(user_query, list(contexts))
+        contexts = list(instrument_assessment.kept_contexts)
+        retrieval_diagnostics["instrument_policy"] = instrument_assessment.diagnostics
     topic_coverage_before_supplement = topic_coverage_diagnostics(
         user_query, contexts
     )
@@ -873,6 +933,27 @@ async def run_advanced_rag(
         scoped_outcome is None
         and not corpus_evidence_covers_topic(user_query, contexts)
     )
+    registry_missing = bool(instrument_assessment is not None and instrument_assessment.missing)
+    if registry_missing:
+        supplement_needed = True
+    hypotheses = None
+    hypothesis_gap = False
+    if scoped_outcome is None:
+        from app.services.official_instrument_hypotheses import (
+            hypothesis_gaps,
+            propose_instrument_hypotheses,
+        )
+
+        hypotheses = await propose_instrument_hypotheses(user_query, settings=settings)
+        instrument_missing, uncovered_points = hypothesis_gaps(hypotheses, contexts)
+        hypothesis_gap = bool(instrument_missing or uncovered_points)
+        retrieval_diagnostics["instrument_hypotheses"] = {
+            **hypotheses.diagnostics,
+            "instrument_missing": instrument_missing,
+            "uncovered_points": list(uncovered_points),
+        }
+    if hypothesis_gap:
+        supplement_needed = True
     if search_plan is not None and scoped_outcome is None:
         from app.services.legal_topic_terms import contains_topic_phrase
         recognized_plan_topics = (
@@ -892,14 +973,39 @@ async def run_advanced_rag(
         supplement_retained = False
         protected_contexts = topic_supporting_contexts(user_query, contexts)
         try:
+            explicit_queries = explicit_topics = explicit_hint = None
+            if registry_missing:
+                explicit_queries = tuple(instrument_assessment.queries)
+                explicit_topics = tuple(instrument_assessment.topic_phrases)
+                explicit_hint = instrument_assessment.reader_hint
+            if hypothesis_gap:
+                from app.services.official_instrument_hypotheses import (
+                    explicit_inputs_from_hypotheses,
+                )
+
+                explicit_queries, explicit_topics, explicit_hint = explicit_inputs_from_hypotheses(
+                    hypotheses,
+                    base_queries=tuple(explicit_queries or ()),
+                    base_topics=tuple(explicit_topics or ()),
+                    base_hint=explicit_hint or "",
+                )
             supplement = await supplement_official_evidence(
                 user_query,
                 settings=settings,
                 corpus_contexts=contexts,
+                explicit_queries=explicit_queries or None,
+                explicit_topics=explicit_topics or None,
+                explicit_reader_hint=explicit_hint or None,
+            )
+            from app.services.instrument_registry import drop_superseded_contexts
+
+            supplement_contexts, dropped_supplement = drop_superseded_contexts(
+                user_query, list(supplement.contexts)
             )
             retrieval_diagnostics["official_supplement"] = {
                 **supplement.diagnostics,
                 "status": supplement.status,
+                "superseded_dropped": dropped_supplement,
             }
             corpus_rescue = supplement.diagnostics.get("official_corpus_rescue")
             if isinstance(corpus_rescue, dict):
@@ -909,24 +1015,24 @@ async def run_advanced_rag(
             )
             bounded_contexts = append_supplement_under_budget(
                 contexts,
-                supplement.contexts,
+                supplement_contexts,
                 max_evidence=evidence_limit,
                 max_tokens=context_limit,
                 protected_contexts=protected_contexts,
             )
             supplement_retained = any(
-                context in bounded_contexts for context in supplement.contexts
+                context in bounded_contexts for context in supplement_contexts
             )
             if current_source_required and context_profile is None:
                 supplement_retained = supplement_retained and evidence_covers_recognized_topics(
                     user_query,
-                    [context for context in supplement.contexts if context in bounded_contexts],
+                    [context for context in supplement_contexts if context in bounded_contexts],
                 )
             retrieval_diagnostics["official_supplement"][
                 "corpus_contexts_replaced"
             ] = max(
                 0,
-                len(contexts) + len(supplement.contexts) - len(bounded_contexts),
+                len(contexts) + len(supplement_contexts) - len(bounded_contexts),
             )
             contexts = bounded_contexts
         except Exception as error:
@@ -937,7 +1043,6 @@ async def run_advanced_rag(
         if current_source_required and not supplement_retained:
             conditional_explanation = (
                 context_profile is not None
-                and _current_effect_conclusion_requested(user_query)
                 and not _requires_verified_effect_evidence(
                     original_query, context_query=user_query,
                 )
@@ -1089,11 +1194,14 @@ async def run_advanced_rag(
     else:
         latency["observed_provider"] = "unobserved"
         latency["observed_model"] = "unobserved"
-    from app.services.citation_clause_guard import correct_clause_citations
+    from app.services.citation_clause_guard import correct_clause_citations, drop_ungrounded_document_citations
 
     corrected_text, clause_changes = correct_clause_citations(llm_result.text, contexts)
     if clause_changes:
         latency["citation_clause_changes"] = clause_changes
+    corrected_text, ungrounded = drop_ungrounded_document_citations(corrected_text, contexts)
+    if ungrounded:
+        latency["ungrounded_citations_removed"] = ungrounded
     return corrected_text, contexts, latency
 
 
@@ -1191,6 +1299,45 @@ async def rewrite_query(
     return rewritten
 
 
+ANSWER_CONCISE_RETRY_INSTRUCTION = (
+    "\nGiới hạn độ dài: lần trả lời này phải gọn; mỗi ý một đoạn ngắn, không lặp lại nội dung, "
+    "ưu tiên điều khoản trực tiếp trả lời câu hỏi và nêu rõ phần nào chưa đủ dữ liệu."
+)
+ANSWER_TRUNCATED_NOTICE = (
+    "\n\n*Câu trả lời đã bị giới hạn độ dài và chưa đầy đủ. Hãy hỏi tiếp phần còn thiếu.*"
+)
+
+
+_LATEX_TEXT_COMMAND = re.compile(r"\\text\{([^{}]*)\}")
+_LATEX_SYMBOLS = (("\\times", "×"), ("\\cdot", "·"), ("\\,", " "), ("\\ ", " "))
+
+
+def _strip_latex_markup(text: str) -> str:
+    """Render LaTeX math the chat UI cannot show as plain Vietnamese text (no raw $$ or \\text markers)."""
+    if "$" not in text and "\\" not in text:
+        return text
+
+    def _math_plain(inner: str) -> str:
+        for _ in range(3):
+            inner = _LATEX_TEXT_COMMAND.sub(lambda m: m.group(1), inner)
+        for command, symbol in _LATEX_SYMBOLS:
+            inner = inner.replace(command, symbol)
+        return re.sub(r"\s+", " ", inner).strip()
+
+    cleaned = re.sub(r"\$\$(.*?)\$\$", lambda m: _math_plain(m.group(1)), text, flags=re.S)
+    cleaned = re.sub(r"\\\((.*?)\\\)", lambda m: _math_plain(m.group(1)), cleaned, flags=re.S)
+    for _ in range(3):
+        cleaned = _LATEX_TEXT_COMMAND.sub(lambda m: m.group(1), cleaned)
+    for command, symbol in _LATEX_SYMBOLS:
+        cleaned = cleaned.replace(command, symbol)
+    return cleaned
+
+
+def _answer_truncated(result: LLMGenerationResult) -> bool:
+    """True when the provider stopped because the output-token budget ran out."""
+    return result.status == "success" and str(result.finish_reason or "").upper() in {"MAX_TOKENS", "LENGTH"}
+
+
 @logfire.instrument(
     "Generate grounded legal answer with metadata", extract_args=False
 )
@@ -1236,7 +1383,9 @@ async def generate_response_with_metadata(
         "nguồn chính thức hiện hành hoặc với người có chuyên môn. "
         "Nội dung chỉ nhằm cung cấp thông tin, không phải tư vấn pháp "
         "lý. Nếu bằng chứng không đủ, phải nói không đủ dữ liệu và "
-        "không suy đoán. Phân biệt dữ kiện giả định do người dùng cung cấp với quy phạm: "
+        "không suy đoán. Nếu bằng chứng có điều khoản trả lời trực tiếp một ý của câu hỏi, "
+        "phải trả lời ý đó bằng điều khoản ấy; chỉ nói không đủ dữ liệu cho ý mà không có điều khoản nào "
+        "trong bằng chứng trả lời. Phân biệt dữ kiện giả định do người dùng cung cấp với quy phạm: "
         "có thể tính toán trực tiếp theo dữ kiện đó, không yêu cầu nguồn luật xác nhận mức tiền giả định. "
         "Khi có các tỷ lệ hoặc phương án cần đối chiếu, tính rõ từng phương án từ dữ kiện đã cho, "
         "ghi phép tính, kết quả, đơn vị và so sánh với giới hạn trong bằng chứng; không chỉ tính mức giới hạn. "
@@ -1249,7 +1398,18 @@ async def generate_response_with_metadata(
         "Khi giải thích điều kiện hoặc thời hạn, nêu cả giới hạn chung ở đoạn mở đầu Điều; "
         "đoạn không đánh số phải dẫn Điều, không tự gán vào một Khoản. "
         "Nếu dùng cả đoạn mở đầu và khoản đánh số, dẫn riêng đoạn mở đầu Điều cho giới hạn chung "
-        "và dẫn Khoản cho điều kiện cụ thể, không gộp cả hai dưới một Khoản."
+        "và dẫn Khoản cho điều kiện cụ thể, không gộp cả hai dưới một Khoản. "
+        "Trả lời trực tiếp bằng tiếng Việt tự nhiên, súc tích; chỉ dẫn [Số hiệu, Điều, Khoản] có thật "
+        "trong bằng chứng (tuyệt đối không ghép số hiệu văn bản vào sau chữ Điều và không viết [[1]] hay URL thô). "
+        "Khi hỏi về thực tập hoặc công việc không có văn bản hợp đồng, phân biệt thỏa thuận dân sự/thực tập với hợp đồng lao động "
+        "và nêu dấu hiệu xác định khi thiếu dữ kiện. Nêu rõ điều kiện, ngoại lệ, hướng dẫn hành động cụ thể "
+        "(mọi số điều, khoản, cơ quan có thẩm quyền, thời hiệu và mức phạt phải dẫn trực tiếp từ nguồn; chỉ gợi ý lưu giữ chứng từ hoặc thương lượng như bước chuẩn bị thực tế khi nguồn không quy định chi tiết). "
+        "Viết phép tính bằng chữ và số tiếng Việt thông thường (ví dụ: 15,5 + 6,2 = 21,7 triệu đồng); tuyệt đối không dùng cú pháp LaTeX ($...$, \\text{...}). "
+        "Nếu câu hỏi viện dẫn điều, khoản hoặc văn bản không có trong bằng chứng, nói rõ là không tìm thấy trong nguồn "
+        "và không gán nội dung của điều khác. "
+        "Với tranh chấp lao động cá nhân mà người lao động muốn kiện ra Tòa án, nêu bước hòa giải viên lao động bắt buộc "
+        "trước khi yêu cầu Tòa án, và các trường hợp luật liệt kê không bắt buộc hòa giải, nếu bằng chứng có. "
+        "Luôn lưu ý thông tin chỉ để tham khảo, không thay thế tư vấn luật sư."
     )
     user_prompt = (
         f"Tài liệu tham khảo:\n{context_text}\n\n"
@@ -1273,6 +1433,19 @@ async def generate_response_with_metadata(
         use_case=LLMUseCase.ANSWER,
         thinking_level=thinking_level,
     )
+    if _answer_truncated(result):
+        # The output cap cut the answer: retry once with a larger budget and a concise instruction.
+        result = await generate_llm_response_with_metadata(
+            user_prompt,
+            system_prompt + ANSWER_CONCISE_RETRY_INSTRUCTION,
+            max_output_tokens=get_settings().LLM_MAX_OUTPUT_TOKENS * 2,
+            use_case=LLMUseCase.ANSWER,
+            thinking_level=thinking_level,
+        )
+        if _answer_truncated(result):
+            result = replace(result, text=result.text.rstrip() + ANSWER_TRUNCATED_NOTICE)
+    if result.status == 'success':
+        result = replace(result, text=_strip_latex_markup(result.text))
     unconfirmed_dates = (_unconfirmed_as_of_start_dates(original_query, result.text)
                          if result.status == 'success' else ())
     if unconfirmed_dates:
