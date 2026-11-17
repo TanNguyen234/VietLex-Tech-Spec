@@ -1395,7 +1395,7 @@ async def test_answer_model_receives_external_corpus_reliability_rules(
     ) -> rag_pipeline.LLMGenerationResult:
         nonlocal captured_system_prompt
         captured_system_prompt = system_prompt
-        assert max_output_tokens == 1536
+        assert max_output_tokens == 3072
         assert thinking_level == "MINIMAL"
         assert use_case is rag_pipeline.LLMUseCase.ANSWER
         return rag_pipeline.LLMGenerationResult(

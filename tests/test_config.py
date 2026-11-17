@@ -30,7 +30,7 @@ def test_migration_defaults_are_pinned_and_capacity_bounded() -> None:
     assert settings.RERANK_CANDIDATE_LIMIT == 12
     assert settings.RERANK_RETURN_LIMIT == 6
     assert settings.LLM_CONTEXT_MAX_TOKENS == 720
-    assert settings.LLM_MAX_OUTPUT_TOKENS == 1536
+    assert settings.LLM_MAX_OUTPUT_TOKENS == 3072
     assert settings.QDRANT_RERANK_MODEL == (
         "answerdotai/answerai-colbert-small-v1"
     )

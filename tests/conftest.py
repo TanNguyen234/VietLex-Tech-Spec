@@ -8,6 +8,8 @@ import pytest
 
 # Import-time application initialization must never export test telemetry.
 os.environ["APP_ENV"] = "test"
+# The instrument-hypothesis model call is opt-in in tests; its unit tests pass explicit settings.
+os.environ.setdefault("CHAT_INSTRUMENT_HYPOTHESIS_ENABLED", "false")
 
 _real_connect = socket.socket.connect
 _real_connect_ex = socket.socket.connect_ex
