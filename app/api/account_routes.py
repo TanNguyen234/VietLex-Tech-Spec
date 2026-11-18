@@ -29,7 +29,7 @@ from app.account_database import (
     update_password,
 )
 from app.api.dependencies import get_or_create_csrf_token, optional_user, require_user, verify_csrf
-from app.config import get_settings
+from app.config import get_settings, is_stateless_development
 from app.services.accounts import (
     hash_password,
     new_token,
@@ -94,7 +94,7 @@ def _valid_password(password: str) -> bool:
 
 
 def _development_account_page(request: Request, *, mode: str) -> HTMLResponse | None:
-    if settings.APP_ENV != "development":
+    if not is_stateless_development(settings):
         return None
     return _form_response(
         request,
@@ -111,7 +111,7 @@ async def register_page(request: Request):
     unavailable = _development_account_page(request, mode="register")
     if unavailable:
         return unavailable
-    if not settings.ACCOUNT_EMAIL_ENABLED:
+    if not settings.ACCOUNT_EMAIL_ENABLED and getattr(settings, "APP_ENV", "development") != "development":
         return _form_response(
             request,
             mode="register",
@@ -134,7 +134,7 @@ async def register(
     unavailable = _development_account_page(request, mode="register")
     if unavailable:
         return unavailable
-    if not settings.ACCOUNT_EMAIL_ENABLED:
+    if not settings.ACCOUNT_EMAIL_ENABLED and getattr(settings, "APP_ENV", "development") != "development":
         return _form_response(
             request,
             mode="register",
@@ -163,6 +163,13 @@ async def register(
         except DuplicateKeyError:
             user = await get_user_by_email(normalized)
     if user and not user.get("email_verified"):
+        if not settings.ACCOUNT_EMAIL_ENABLED and getattr(settings, "APP_ENV", "development") == "development":
+            await mark_user_verified(str(user["_id"]))
+            return _form_response(
+                request,
+                mode="login",
+                message="Tài khoản cục bộ đã được tạo và kích hoạt. Bạn có thể đăng nhập ngay.",
+            )
         token = new_token()
         await create_account_token(str(user["_id"]), "verify_email", token)
         try:

@@ -35,6 +35,7 @@ async def test_development_startup_skips_persistent_provider_initialization(monk
     import app.services.semantic_cache as semantic_cache
 
     monkeypatch.setattr(main.settings, "APP_ENV", "development")
+    monkeypatch.setattr(main.settings, "LOCAL_STATELESS_MODE", True, raising=False)
     monkeypatch.setattr(main.settings, "PUBLIC_NEMO_DEFAULT_ENABLED", False)
     init_db = AsyncMock()
     ensure_cache = AsyncMock()
@@ -69,6 +70,7 @@ def test_development_database_guard_never_constructs_motor(monkeypatch):
     import app.database as database
 
     monkeypatch.setattr(database.settings, "APP_ENV", "development")
+    monkeypatch.setattr(database.settings, "LOCAL_STATELESS_MODE", True, raising=False)
     monkeypatch.setattr(database.settings, "MONGO_URL", "mongodb://must-not-connect")
     monkeypatch.setattr(database, "client", None)
     monkeypatch.setattr(database, "db", None)
@@ -85,6 +87,7 @@ async def test_development_chat_session_and_interaction_are_not_persisted(monkey
     import app.database as database
 
     monkeypatch.setattr(database.settings, "APP_ENV", "development")
+    monkeypatch.setattr(database.settings, "LOCAL_STATELESS_MODE", True, raising=False)
     get_db = Mock(side_effect=AssertionError("local chat must not use Mongo"))
     monkeypatch.setattr(database, "get_db", get_db)
 
@@ -165,6 +168,7 @@ def test_main_workspace_and_account_routes_are_gated_in_local_mode(monkeypatch):
         lambda: SimpleNamespace(APP_ENV="development"),
     )
     monkeypatch.setattr(account_routes.settings, "APP_ENV", "development")
+    monkeypatch.setattr(account_routes.settings, "LOCAL_STATELESS_MODE", True, raising=False)
     client = TestClient(main.app, raise_server_exceptions=False)
 
     workspace = client.get("/workspaces")
@@ -227,6 +231,7 @@ async def test_local_readiness_does_not_probe_configured_mongo(tmp_path):
     result = await build_readiness(
         SimpleNamespace(
             APP_ENV="development",
+            LOCAL_STATELESS_MODE=True,
             CONTENT_STORE_PATH=tmp_path / "content.sqlite3",
             LEGAL_FTS_PATH=tmp_path / "fts.sqlite3",
             MONGO_URL="mongodb://must-not-connect",
@@ -244,6 +249,8 @@ def test_local_chat_returns_answer_without_mongo_or_history(monkeypatch):
     import app.database as database
 
     monkeypatch.setattr(routes.settings, "APP_ENV", "development")
+    monkeypatch.setattr(database.settings, "APP_ENV", "development")
+    monkeypatch.setattr(database.settings, "LOCAL_STATELESS_MODE", True, raising=False)
     get_db = Mock(side_effect=AssertionError("local chat must not use Mongo"))
     monkeypatch.setattr(database, "get_db", get_db)
     monkeypatch.setattr(routes, "check_semantic_cache", AsyncMock(return_value=None))
@@ -384,3 +391,31 @@ async def test_development_disables_inherited_demo_quota_without_database(monkey
     monkeypatch.setattr(demo, "get_db", Mock(side_effect=AssertionError("no local quota storage")))
 
     assert await demo.get_demo_quota("developer", config) == {"status": "disabled"}
+
+
+@pytest.mark.asyncio
+async def test_development_with_mongo_url_enables_online_persistence_and_navigation(monkeypatch):
+    from starlette.requests import Request
+    from app.api import dependencies
+    from app.config import is_stateless_development
+    import app.main as main
+
+    dev_settings = dependencies.get_settings().model_copy(
+        update={
+            "APP_ENV": "development",
+            "MONGO_URL": "mongodb://localhost:27017/vietlex",
+            "LOCAL_STATELESS_MODE": False,
+        }
+    )
+    assert is_stateless_development(dev_settings) is False
+
+    monkeypatch.setattr(dependencies, "get_settings", lambda: dev_settings)
+    request = Request({"type": "http", "method": "GET", "path": "/workspaces", "headers": []})
+    assert await dependencies.require_online_persistence(request) is None
+
+    monkeypatch.setitem(main.templates.env.globals, "local_stateless_mode", False)
+    html = TestClient(main.app, raise_server_exceptions=True).get("/").text
+    assert '<a href="/workspaces">Nghiên cứu</a>' in html
+    assert '<a class="button button-quiet" href="/login">Đăng nhập</a>' in html
+    assert "Nghiên cứu · online" not in html
+    assert "Tài khoản · online" not in html

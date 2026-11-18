@@ -8,7 +8,7 @@ from typing import Any
 
 import httpx
 
-from app.config import system_ssl_context
+from app.config import is_stateless_development, system_ssl_context
 
 
 logger = logging.getLogger(__name__)
@@ -199,13 +199,13 @@ async def build_readiness(
         "legal_fts": legal_fts_status,
         "mongodb": (
             "not_required"
-            if getattr(settings, "APP_ENV", None) == "development"
+            if is_stateless_development(settings)
             else "not_configured"
         ),
     }
     pending_probes: dict[str, Awaitable[str]] = {}
     if (
-        getattr(settings, "APP_ENV", None) != "development"
+        not is_stateless_development(settings)
         and getattr(settings, "MONGO_URL", None)
     ):
         pending_probes["mongodb"] = _run_probe("mongodb", mongo_ping)

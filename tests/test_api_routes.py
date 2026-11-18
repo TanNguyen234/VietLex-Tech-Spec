@@ -422,6 +422,7 @@ def test_chat_route_persists_provider_budget_exhaustion_after_contexts(
 
     monkeypatch.setattr(get_settings(), "PROVIDER_HTTP_ATTEMPT_LIMIT", 1)
     monkeypatch.setattr(database.settings, "APP_ENV", "development")
+    monkeypatch.setattr(database.settings, "LOCAL_STATELESS_MODE", True)
     monkeypatch.setattr("app.api.routes.check_semantic_cache", AsyncMock(return_value=None))
     monkeypatch.setattr("app.api.routes.check_input_guardrails", AsyncMock(return_value=(True, "")))
 

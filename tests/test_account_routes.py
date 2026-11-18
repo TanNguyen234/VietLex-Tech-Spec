@@ -59,6 +59,7 @@ def test_development_account_pages_are_explicitly_online_only(
     import app.api.account_routes as routes
 
     routes.settings.APP_ENV = "development"
+    routes.settings.LOCAL_STATELESS_MODE = True
     consume_token = AsyncMock(side_effect=AssertionError("local page accessed account storage"))
     monkeypatch.setattr(routes, "consume_account_token", consume_token)
 
@@ -467,3 +468,38 @@ def test_account_export_is_not_cached(client, monkeypatch):
     monkeypatch.setattr(routes, 'export_account', AsyncMock(return_value={'private': 'data'}))
     response = client.get('/account/export')
     assert response.headers['cache-control'] == 'no-store'
+
+
+def test_development_with_mongo_allows_local_registration_without_smtp(
+    client, monkeypatch
+) -> None:
+    import app.api.account_routes as routes
+
+    routes.settings.APP_ENV = "development"
+    routes.settings.MONGO_URL = "mongodb://localhost:27017/vietlex"
+    routes.settings.LOCAL_STATELESS_MODE = False
+    routes.settings.ACCOUNT_EMAIL_ENABLED = False
+
+    get_user = AsyncMock(return_value=None)
+    create_user = AsyncMock(return_value={"_id": "local-u1", "email_verified": False})
+    mark_verified = AsyncMock(return_value=True)
+    monkeypatch.setattr(routes, "get_user_by_email", get_user)
+    monkeypatch.setattr(routes, "create_user", create_user)
+    monkeypatch.setattr(routes, "mark_user_verified", mark_verified)
+
+    page = client.get("/register")
+    assert page.status_code == 200
+    assert "<form" in page.text
+
+    submit = client.post(
+        "/register",
+        data={
+            "email": "local-dev@example.com",
+            "password": "long-enough-password",
+            "csrf_token": "valid",
+        },
+    )
+    assert submit.status_code == 200
+    assert "Tài khoản cục bộ đã được tạo và kích hoạt" in submit.text
+    create_user.assert_awaited_once()
+    mark_verified.assert_awaited_once_with("local-u1")

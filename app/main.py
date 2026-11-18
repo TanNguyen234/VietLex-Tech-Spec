@@ -12,7 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-from app.config import get_settings, validate_production_settings
+from app.config import get_settings, is_stateless_development, validate_production_settings
 from app.database import init_db
 from app.api.routes import router as api_router
 from app.api.account_routes import router as account_router
@@ -79,10 +79,18 @@ app.add_middleware(
 )
 
 async def startup_event():
+    if settings.APP_ENV == "production" or not is_stateless_development(settings):
+        try:
+            await init_db()
+        except Exception as error:
+            if settings.APP_ENV == "production":
+                raise
+            logging.getLogger(__name__).warning(
+                "MongoDB initialization skipped in local mode (%s).",
+                type(error).__name__,
+            )
     if settings.APP_ENV == "production":
         from app.services.semantic_cache import ensure_semantic_cache_collection
-
-        await init_db()
         try:
             await ensure_semantic_cache_collection()
         except Exception as error:
@@ -161,7 +169,7 @@ app.state.free_web_research_enabled = bool(
 )
 
 templates = Jinja2Templates(directory=APP_ROOT / "templates")
-templates.env.globals["local_stateless_mode"] = settings.APP_ENV == "development"
+templates.env.globals["local_stateless_mode"] = is_stateless_development(settings)
 app.mount("/static", StaticFiles(directory=APP_ROOT / "static"), name="static")
 
 # CSRF helper function

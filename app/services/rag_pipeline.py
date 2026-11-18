@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Tuple
 
 import logfire
 
-from app.config import get_settings
+from app.config import get_settings, is_stateless_development
 from app.services.official_search_plan import DEEP_READING, ProfiledContexts, build_official_search_plan
 from app.services.direct_llm import (
     LLMGenerationResult,
@@ -222,7 +222,7 @@ def is_local_stateless_mode(settings: Any = None) -> bool:
     active = settings if settings is not None else get_settings()
     if not getattr(active, "MONGO_URL", None):
         return True
-    if getattr(active, "APP_ENV", None) in {"development", "test"} or "PYTEST_CURRENT_TEST" in os.environ:
+    if is_stateless_development(active) or getattr(active, "APP_ENV", None) == "test" or "PYTEST_CURRENT_TEST" in os.environ:
         import app.database as _db_mod
         import app.legal_registry_database as _reg_mod
 

@@ -135,6 +135,7 @@ async def test_request_only_official_context_is_still_filtered_from_history(
     from app.services.evidence_presenter import EphemeralOfficialEvidenceContext
 
     monkeypatch.setattr(database.settings, "APP_ENV", "development")
+    monkeypatch.setattr(database.settings, "LOCAL_STATELESS_MODE", True)
     stored = await database.log_interaction(
         trace_id="trace-ephemeral",
         user_query="Câu hỏi",

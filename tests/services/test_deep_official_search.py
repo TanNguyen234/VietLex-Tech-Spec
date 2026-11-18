@@ -294,6 +294,7 @@ async def test_deep_web_body_is_never_persisted_to_chat_log(monkeypatch):
     from app import database
     from app.services.evidence_presenter import EphemeralOfficialEvidenceContext
     monkeypatch.setattr(database.settings, "APP_ENV", "development")
+    monkeypatch.setattr(database.settings, "LOCAL_STATELESS_MODE", True)
     document = await database.log_interaction("deep-memory-only", "question", "answer", [
         "existing corpus context", EphemeralOfficialEvidenceContext("PRIVATE TRANSIENT WEB BODY")
     ], False)

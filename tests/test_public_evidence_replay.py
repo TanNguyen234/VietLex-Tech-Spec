@@ -78,6 +78,7 @@ async def test_public_snapshot_survives_owner_replay_and_export(monkeypatch, own
 async def test_rejected_snapshot_is_observable_without_retaining_body(monkeypatch, change, reason):
     import app.database as database
     monkeypatch.setattr(database.settings, "APP_ENV", "development")
+    monkeypatch.setattr(database.settings, "LOCAL_STATELESS_MODE", True)
     invalid = EphemeralOfficialEvidenceContext(change(str(official_context())))
     saved = await database.log_interaction("trace-invalid", "question", "answer", ["Corpus", invalid],
                                            False, client_id="owner-a")
@@ -90,6 +91,7 @@ async def test_rejected_snapshot_is_observable_without_retaining_body(monkeypatc
 async def test_public_snapshot_requires_owner_and_caps_count(monkeypatch):
     import app.database as database
     monkeypatch.setattr(database.settings, "APP_ENV", "development")
+    monkeypatch.setattr(database.settings, "LOCAL_STATELESS_MODE", True)
     contexts = [official_context()] * 17
     unowned = await database.log_interaction("unowned", "q", "a", contexts[:1], False)
     assert unowned["contexts"] == []
@@ -113,6 +115,7 @@ def test_snapshot_provenance_cannot_be_rebound_to_modified_text():
 async def test_log_keeps_explicit_unknown_guardrail_state(monkeypatch):
     import app.database as database
     monkeypatch.setattr(database.settings, "APP_ENV", "development")
+    monkeypatch.setattr(database.settings, "LOCAL_STATELESS_MODE", True)
     state = {"mode": "off", "requested": False, "executed": False, "status": "not_run",
              "input_safe": None, "output_safe": None, "stages": {}}
     saved = await database.log_interaction("off", "q", "a", [], False,

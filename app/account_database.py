@@ -5,7 +5,7 @@ import uuid
 import re
 from typing import Any
 
-from app.config import get_settings
+from app.config import get_settings, is_stateless_development
 from app.database import get_db
 from app.services.accounts import token_sha256
 
@@ -131,7 +131,7 @@ async def create_auth_session(
 
 
 async def resolve_auth_session(token: str | None) -> dict[str, Any] | None:
-    if not token or get_settings().APP_ENV == "development":
+    if not token or is_stateless_development(get_settings()):
         return None
     database = get_db()
     session = await database.auth_sessions.find_one(

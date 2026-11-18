@@ -15,6 +15,7 @@ _SYSTEM_TRUST_LOCK = threading.Lock()
 
 class Settings(BaseSettings):
     APP_ENV: Literal["development", "test", "production"] = "development"
+    LOCAL_STATELESS_MODE: bool = False
     VERCEL_GIT_COMMIT_SHA: Optional[str] = None
     VERCEL_DEPLOYMENT_ID: Optional[str] = None
     HOST: str = "0.0.0.0"
@@ -366,6 +367,16 @@ def validate_production_settings(settings: Settings) -> None:
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+def is_stateless_development(settings: object | None = None) -> bool:
+    """Return True only when running in development without MongoDB persistence enabled."""
+    active = settings if settings is not None else get_settings()
+    if getattr(active, "APP_ENV", None) != "development":
+        return False
+    if bool(getattr(active, "LOCAL_STATELESS_MODE", False)):
+        return True
+    return not bool((getattr(active, "MONGO_URL", None) or "").strip())
 
 
 def system_ssl_context() -> ssl.SSLContext:

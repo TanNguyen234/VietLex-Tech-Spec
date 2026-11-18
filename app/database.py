@@ -3,7 +3,7 @@ import re
 from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import UTC, datetime, timedelta
 from typing import Optional, List, Dict, Any
-from app.config import get_settings
+from app.config import get_settings, is_stateless_development
 from app.services.evidence_presenter import (
     EphemeralOfficialEvidenceContext,
     evidence_context_provenance,
@@ -27,7 +27,7 @@ class LocalPersistenceUnavailable(RuntimeError):
 
 def get_db():
     global client, db
-    if settings.APP_ENV == "development":
+    if is_stateless_development(settings):
         raise LocalPersistenceUnavailable("online_persistence_required")
     if client is None:
         if not settings.MONGO_URL:
@@ -238,7 +238,7 @@ async def log_interaction(
     provider_http_budget = current_provider_http_budget_snapshot()
     if provider_http_budget is not None:
         document["metrics"]["provider_http_budget"] = provider_http_budget
-    if settings.APP_ENV == "development":
+    if is_stateless_development(settings):
         return document
     collection = get_db().evaluation_logs
     try:
@@ -279,7 +279,7 @@ async def update_evaluation(
     executed: bool = True,
     provider_calls: Optional[List[Dict[str, Any]]] = None,
 ) -> bool:
-    if settings.APP_ENV == "development":
+    if is_stateless_development(settings):
         return False
     database = get_db()
     collection = database.evaluation_logs
@@ -329,7 +329,7 @@ async def update_feedback(
     *,
     user_id: Optional[str] = None,
 ) -> bool:
-    if settings.APP_ENV == "development":
+    if is_stateless_development(settings):
         return False
     database = get_db()
     collection = database.evaluation_logs
@@ -566,7 +566,7 @@ async def get_admin_inventory() -> dict:
         return {'status': 'unavailable', 'error_kind': type(error).__name__}
 
 async def get_interaction(trace_id: str, *, strict: bool = False) -> Optional[Dict[str, Any]]:
-    if settings.APP_ENV == "development":
+    if is_stateless_development(settings):
         return None
     try:
         collection = get_db().evaluation_logs
@@ -583,7 +583,7 @@ async def get_interaction(trace_id: str, *, strict: bool = False) -> Optional[Di
 async def get_owned_interaction(
     trace_id: str, client_id: str, *, user_id: Optional[str] = None
 ) -> Optional[Dict[str, Any]]:
-    if settings.APP_ENV == "development":
+    if is_stateless_development(settings):
         return None
     database = get_db()
     try:
@@ -624,7 +624,7 @@ async def create_session(
         "timestamp": now,
         "expires_at": now + timedelta(days=settings.DATA_RETENTION_DAYS),
     }
-    if settings.APP_ENV == "development":
+    if is_stateless_development(settings):
         return document
     collection = get_db().chat_sessions
     try:
@@ -643,7 +643,7 @@ async def get_sessions(
     *,
     user_id: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
-    if settings.APP_ENV == "development":
+    if is_stateless_development(settings):
         return []
     collection = get_db().chat_sessions
     try:
@@ -675,7 +675,7 @@ async def get_session_messages(
 ) -> List[Dict[str, Any]]:
     if recent_limit is not None and (type(recent_limit) is not int or not 1 <= recent_limit <= 8):
         raise ValueError("invalid_recent_history_limit")
-    if settings.APP_ENV == "development":
+    if is_stateless_development(settings):
         return []
     collection = get_db().evaluation_logs
     try:
@@ -712,7 +712,7 @@ async def delete_session(
     *,
     user_id: Optional[str] = None,
 ) -> bool:
-    if settings.APP_ENV == "development":
+    if is_stateless_development(settings):
         return False
     database = get_db()
     sessions_coll = database.chat_sessions
@@ -743,7 +743,7 @@ async def rename_session(
     *,
     user_id: Optional[str] = None,
 ) -> bool:
-    if settings.APP_ENV == "development":
+    if is_stateless_development(settings):
         return False
     database = get_db()
     collection = database.chat_sessions

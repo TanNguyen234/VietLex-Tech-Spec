@@ -3,7 +3,7 @@ import secrets
 from fastapi import Depends, Form, Header, HTTPException, Request, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from app.config import get_settings
+from app.config import get_settings, is_stateless_development
 from app.services.web_security import AdminAuthState, verify_admin_credentials
 from app.account_database import effective_role, effective_status, resolve_auth_session
 
@@ -55,7 +55,7 @@ async def verify_csrf_header(
 
 
 async def require_online_persistence(request: Request):
-    if get_settings().APP_ENV == "development" and not (
+    if is_stateless_development(get_settings()) and not (
         request.method == "GET"
         and request.url.path in _LOCAL_ACCOUNT_INFORMATION_PATHS
     ):
