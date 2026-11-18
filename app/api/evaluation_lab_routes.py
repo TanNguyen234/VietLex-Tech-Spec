@@ -92,13 +92,37 @@ async def admin_evaluations(
     )
 
 
+def _load_public_run_context(run: str, case: str) -> dict:
+    try:
+        runs = _available_runs()
+    except (OSError, RuntimeError):
+        runs = []
+    if run:
+        if run not in runs:
+            raise HTTPException(status_code=404, detail="Evaluation run not found")
+        target_path = RUNS_ROOT / run
+        selected = run
+    else:
+        target_path = CURRENT_ANSWER_RUN
+        selected = CURRENT_ANSWER_RUN.name
+    lab = load_evaluation_lab(target_path, case_id=case or None)
+    return {
+        "lab": lab,
+        "selected_case_id": case,
+        "runs": runs,
+        "selected_run": selected,
+    }
+
+
 @router.get("/evaluation-lab", response_class=HTMLResponse)
 async def evaluation_lab(
-    request: Request, case: str = Query(default="", max_length=100)
+    request: Request,
+    run: str = Query(default="", max_length=160),
+    case: str = Query(default="", max_length=100),
 ):
     lab = await asyncio.to_thread(
-        load_evaluation_lab, CURRENT_ANSWER_RUN, case_id=case or None
+        _load_public_run_context, run, case
     )
     return templates.TemplateResponse(
-        request, "evaluation_lab.html", {"lab": lab, "selected_case_id": case}
+        request, "evaluation_lab.html", lab
     )

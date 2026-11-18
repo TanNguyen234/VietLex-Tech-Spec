@@ -79,3 +79,31 @@ def test_admin_evaluations_reports_unreadable_catalog(monkeypatch):
     assert "run_catalog_unavailable" in response.text
     assert "private filesystem path" not in response.text
     assert response.headers["cache-control"] == "no-store"
+
+
+def test_public_evaluation_lab_supports_selecting_saved_run_and_rejects_traversal(
+    monkeypatch, tmp_path
+) -> None:
+    import app.api.evaluation_lab_routes as routes
+
+    run = tmp_path / "run-v4"
+    run.mkdir()
+    (run / "manifest.json").write_text('{"run_id":"run-v4"}', encoding="utf-8")
+    (run / "answer_results.json").write_text(
+        json.dumps([{"case_id": "a", "status": "ok", "metrics": {"token_f1": 0.35}}]),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(routes, "RUNS_ROOT", tmp_path)
+
+    app = FastAPI()
+    app.include_router(routes.router)
+    client = TestClient(app)
+
+    res = client.get("/evaluation-lab?run=run-v4")
+    assert res.status_code == 200
+    assert "run-v4" in res.text
+    assert "0.3500" in res.text
+    assert '<select id="evaluation-run" name="run">' in res.text
+
+    assert client.get("/evaluation-lab", params={"run": "../secret"}).status_code == 404
+    assert client.get("/evaluation-lab?run=missing").status_code == 404
