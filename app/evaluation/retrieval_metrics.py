@@ -38,6 +38,54 @@ def extract_citations_from_text(text: str) -> List[Dict[str, str]]:
     ]
 
 
+def _whole_article_contains_ordinal_clause(
+    article: str,
+    text: str,
+    gold_clause: str,
+) -> bool:
+    """Check whether a whole-article chunk sequentially contains an ordinal clause.
+
+    Mirrors answer_metrics._evidence_citations: requires the matched article heading
+    at the start of the text and uninterrupted sequential 1., 2., ... clause markers,
+    ignoring cross-references preceded by khoản/điều/mục/chương/số.
+    """
+    norm_gold = normalize_legal_identifier(gold_clause)
+    m_num = re.fullmatch(r"(?:khoản\s+)?(\d{1,2})", norm_gold)
+    if m_num is None or not article or not text:
+        return False
+    target_clause = int(m_num.group(1))
+    if target_clause < 1:
+        return False
+
+    heading = re.search(
+        rf"(?m)^\s*{re.escape(article.strip())}\s*[.:]\s*",
+        text,
+        re.IGNORECASE,
+    )
+    if heading is None:
+        return False
+    body = re.split(
+        r"(?mi)^\s*Điều\s+\d+[a-zđ]?\s*[.:]",
+        text[heading.end() :],
+        maxsplit=1,
+    )[0]
+    next_clause = 1
+    for marker in re.finditer(r"(?<!\S)(\d{1,2})\.\s+", body):
+        prefix_window = body[max(0, marker.start() - 20) : marker.start()]
+        if re.search(
+            r"\b(?:khoản|điều|mục|chương|số)\s*$",
+            prefix_window,
+            re.IGNORECASE,
+        ):
+            continue
+        if int(marker.group(1)) != next_clause:
+            continue
+        if next_clause == target_clause:
+            return True
+        next_clause += 1
+    return False
+
+
 def match_gold_to_stage_candidate(
     gold: GoldEvidence,
     candidate: Any,
@@ -75,6 +123,12 @@ def match_gold_to_stage_candidate(
             clause_match = (
                 normalize_legal_identifier(gold.clause) ==
                 normalize_legal_identifier(cand_clause)
+            )
+        elif gold.clause and cand_clause is None:
+            clause_match = _whole_article_contains_ordinal_clause(
+                str(cand_art or gold.article or ""),
+                str(getattr(candidate, "text", "") or ""),
+                str(gold.clause),
             )
         elif not gold.clause:
             clause_match = art_match

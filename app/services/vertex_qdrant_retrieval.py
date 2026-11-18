@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import re
 import time
 from typing import Any
 
@@ -9,7 +10,99 @@ from qdrant_client import models
 from app.evaluation.schemas import RetrievalStageTrace, StageCandidate
 from app.ingestion.legal_text import EvidenceChunk
 from app.ingestion.vertex_qdrant_migration import VertexQdrantContract
+from app.services.instrument_registry import SUPERSEDED_INSTRUMENTS
+from app.services.legal_topic_terms import fold_topic_text
 from app.services.retrieval import RetrievalOutcome
+
+_QUERY_YEAR_RE = re.compile(r"(?<!\d)(?:19|20)\d{2}(?!\d)")
+_HEADER_YEAR_RE = re.compile(r"\d{1,4}/((?:19|20)\d{2})/")
+
+
+def _is_point_superseded_for_query(payload: dict[str, Any], query_years: set[str]) -> bool:
+    raw_year = payload.get("issuance_year")
+    doc_year = (
+        int(raw_year)
+        if isinstance(raw_year, int) and not isinstance(raw_year, bool)
+        else None
+    )
+    if doc_year is None:
+        idate = payload.get("issuance_date")
+        if isinstance(idate, str) and len(idate) >= 4 and idate[:4].isdecimal():
+            doc_year = int(idate[:4])
+
+    if doc_year is not None and str(doc_year) in query_years:
+        return False
+
+    if payload.get("validity_hint") == "superseded":
+        return True
+
+    header = fold_topic_text(
+        f"{payload.get('document_number', '')} {payload.get('title', '')}"
+    )
+    if not header:
+        return False
+    if doc_year is None:
+        match = _HEADER_YEAR_RE.search(header)
+        doc_year = int(match.group(1)) if match else None
+    for item in SUPERSEDED_INSTRUMENTS:
+        if any(marker in header for marker in item.markers):
+            if item.before_year:
+                if (
+                    doc_year is not None
+                    and doc_year < int(item.before_year)
+                    and str(doc_year) not in query_years
+                ):
+                    return True
+            elif item.year not in query_years:
+                return True
+    return False
+
+
+def _apply_validity_and_recency_ranking(
+    points: list[object],
+    *,
+    query_years: set[str],
+    limit: int,
+) -> list[object]:
+    adjusted: list[tuple[bool, object]] = []
+    any_modified = False
+    for point in points:
+        payload = getattr(point, "payload", None) or {}
+        if not isinstance(payload, dict):
+            adjusted.append((False, point))
+            continue
+        base_score = float(getattr(point, "score", 0.0))
+        superseded = _is_point_superseded_for_query(payload, query_years)
+        raw_year = payload.get("issuance_year")
+        has_year = isinstance(raw_year, int) and not isinstance(raw_year, bool)
+        raw_rank = payload.get("normative_rank")
+        has_rank = isinstance(raw_rank, int) and not isinstance(raw_rank, bool)
+
+        if not superseded and not has_year and not has_rank:
+            adjusted.append((False, point))
+            continue
+
+        any_modified = True
+        new_score = base_score
+        if superseded:
+            new_score = base_score * 0.25 - 0.01
+        if has_rank:
+            new_score += 1e-5 * max(0, min(int(raw_rank), 6))
+        if has_year:
+            new_score += 2e-6 * max(0, min(int(raw_year) - 2000, 30)) / 30.0
+
+        ranked_point = copy.copy(point)
+        ranked_point.score = new_score
+        adjusted.append((True, ranked_point))
+
+    if not any_modified:
+        return points[:limit]
+
+    only_points = [item[1] for item in adjusted]
+    return sorted(
+        only_points,
+        key=lambda pt: (-float(getattr(pt, "score", 0.0)), str(getattr(pt, "id", ""))),
+    )[:limit]
 
 
 async def query_vertex_points(
@@ -34,6 +127,7 @@ async def query_vertex_points(
     )
     sparse = sparse_encoder.encode_query(sparse_query)
     prefetch_limit = max(20, limit * 4)
+    internal_limit = max(limit, min(prefetch_limit, 12))
     fusion_mode = {
         "rrf": models.Fusion.RRF,
         "dbsf": models.Fusion.DBSF,
@@ -62,14 +156,21 @@ async def query_vertex_points(
             collection_name=contract.collection_name,
             prefetch=prefetch,
             query=models.FusionQuery(fusion=mode),
-            limit=limit,
+            limit=internal_limit,
             with_payload=True,
             with_vectors=False,
         )
         return list(response.points)
 
+    query_years = set(_QUERY_YEAR_RE.findall(f"{dense_query} {sparse_query}"))
+
     if fusion_mode is not None:
-        return await query_with(fusion_mode)
+        raw_points = await query_with(fusion_mode)
+        return _apply_validity_and_recency_ranking(
+            raw_points,
+            query_years=query_years,
+            limit=limit,
+        )
 
     rrf_points = await query_with(models.Fusion.RRF)
     dbsf_points = await query_with(models.Fusion.DBSF)
@@ -77,7 +178,7 @@ async def query_vertex_points(
         str(getattr(point, "id")): point
         for point in (*rrf_points, *dbsf_points)
     }
-    missing_rank = limit + 1
+    missing_rank = internal_limit + 1
     rrf_rank = {
         str(getattr(point, "id")): rank
         for rank, point in enumerate(rrf_points, start=1)
@@ -93,10 +194,15 @@ async def query_vertex_points(
         ranked_point = copy.copy(point)
         ranked_point.score = score
         blended.append(ranked_point)
-    return sorted(
+    sorted_blended = sorted(
         blended,
         key=lambda point: (-float(getattr(point, "score")), str(getattr(point, "id"))),
-    )[:limit]
+    )
+    return _apply_validity_and_recency_ranking(
+        sorted_blended,
+        query_years=query_years,
+        limit=limit,
+    )
 
 
 class VertexQdrantRetriever:

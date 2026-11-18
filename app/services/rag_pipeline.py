@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import os
 import re
 import time
 from dataclasses import replace
@@ -214,6 +215,85 @@ def _record_context_stage(diagnostics: dict, stage: str, contexts: list[str]) ->
         "sha256": [hashlib.sha256(str(context).encode("utf-8")).hexdigest()
                    for context in contexts],
     })
+
+
+def is_local_stateless_mode(settings: Any = None) -> bool:
+    """True when MongoDB registry persistence is unavailable or offline unit-test isolated."""
+    active = settings if settings is not None else get_settings()
+    if not getattr(active, "MONGO_URL", None):
+        return True
+    if getattr(active, "APP_ENV", None) in {"development", "test"} or "PYTEST_CURRENT_TEST" in os.environ:
+        import app.database as _db_mod
+        import app.legal_registry_database as _reg_mod
+
+        if (
+            _db_mod.db is None
+            and getattr(_reg_mod.registry_records_batch, "__module__", "") == "app.legal_registry_database"
+            and getattr(_reg_mod.get_db, "__module__", "") == "app.database"
+        ):
+            return True
+    return False
+
+
+async def _lookup_published_registry_effects(
+    contexts: list[str],
+    *,
+    as_of: str | None = None,
+    settings: Any = None,
+) -> tuple[dict[str, dict[str, Any]], bool, str | None]:
+    """Query published human-reviewed legal_effect_registry entries without failing on DB errors."""
+    if not contexts or is_local_stateless_mode(settings):
+        return {}, False, None
+    from datetime import date, datetime
+    from app.services.evidence_presenter import present_context
+
+    numbers: list[str] = []
+    for ctx in contexts:
+        doc_num = present_context(ctx).document_number
+        if doc_num and doc_num not in numbers:
+            numbers.append(doc_num)
+        if len(numbers) >= 20:
+            break
+    if not numbers:
+        return {}, False, None
+
+    day = date.today().isoformat()
+    if as_of:
+        for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y", "%d.%m.%Y"):
+            try:
+                day = datetime.strptime(str(as_of).strip(), fmt).date().isoformat()
+                break
+            except ValueError:
+                continue
+
+    try:
+        from app.legal_registry_database import registry_records_batch
+        from app.services.legal_registry import registry_view
+
+        rows = await asyncio.wait_for(registry_records_batch(numbers), timeout=1.5)
+        if not rows:
+            return {}, False, None
+        documents: dict[str, dict[str, Any]] = {}
+        for num in numbers:
+            view = registry_view(num, day, rows)
+            if view.get("events"):
+                documents[num] = {
+                    "status": view["status"],
+                    "as_of": view["as_of"],
+                    "effective_from": view["effective_from"],
+                    "effective_to": view["effective_to"],
+                    "amended_by": view["amended_by"],
+                    "replaced_by": view["replaced_by"],
+                }
+        if not documents:
+            return {}, False, None
+        statuses = {info["status"] for info in documents.values()}
+        verified_active = bool(
+            statuses & {"effective", "amended", "partially_effective"}
+        ) and not bool(statuses & {"repealed", "replaced", "expired"})
+        return documents, verified_active, None
+    except Exception as exc:
+        return {}, False, type(exc).__name__
 
 
 class QueryRewriteError(RuntimeError):
@@ -739,16 +819,19 @@ def append_supplement_under_budget(
     )
 
 
-@logfire.instrument("Run advanced legal retrieval pipeline", extract_args=False)
-async def run_advanced_rag(
+async def _prepare_rag_contexts_internal(
     user_query: str,
     *,
     rewrite_mode: str = "off",
     profile: Any = None,
     scoped_outcome: RetrievalOutcome | None = None,
     previous_user_query: str | None = None,
-) -> Tuple[str, List[str], Dict[str, Any]]:
-    started = time.perf_counter()
+    web_mode: str = "auto",
+    stage_events: list[str] | None = None,
+    started: float | None = None,
+) -> Tuple[List[str], str, Dict[str, Any], str | None, str, Dict[str, Any]]:
+    if started is None:
+        started = time.perf_counter()
     original_query = user_query
     if previous_user_query and scoped_outcome is None:
         user_query = ("Tình huống trước do người dùng cung cấp (chỉ làm ngữ cảnh):\n"
@@ -759,13 +842,13 @@ async def run_advanced_rag(
         guidance = deterministic_guidance(user_query)
         if guidance is not None:
             kind, response = guidance
-            return response, [], {
+            return [], user_query, {
                 "t_total": round(time.perf_counter() - started, 3),
                 "t_llm": 0.0, "retrieval_status": "not_run",
                 "generation_status": "no_contexts", "response_kind": kind,
                 "observed_provider": "none", "observed_model": "none",
                 "retrieval_diagnostics": {"response_kind": kind},
-            }
+            }, response, user_query, {"provider": "none", "model": "none", "observed": False}
 
     if rewrite_mode == "off" or scoped_outcome is not None:
         rewritten_query = (
@@ -787,6 +870,8 @@ async def run_advanced_rag(
         )
         rewrite_seconds = time.perf_counter() - rewrite_started
 
+    if stage_events is not None:
+        stage_events.append("Đang truy xuất văn bản pháp luật trong kho nội bộ")
     retrieval_started = time.perf_counter()
     retrieval_outcome = scoped_outcome if scoped_outcome is not None else await retrieve_configured_legal_evidence(
         rewritten_query,
@@ -808,6 +893,8 @@ async def run_advanced_rag(
     search_plan = build_official_search_plan(user_query) if context_profile else None
     retrieval_diagnostics = dict(retrieval_outcome.diagnostics)
     retrieval_diagnostics["conversation_context_used"] = bool(previous_user_query and scoped_outcome is None)
+    if web_mode != "auto":
+        retrieval_diagnostics["web_mode"] = web_mode
     # These stages belong to this request, never to a cached/shared retriever object.
     retrieval_diagnostics["context_stages"] = []
     _record_context_stage(retrieval_diagnostics, "retrieval_selected",
@@ -879,7 +966,10 @@ async def run_advanced_rag(
         and not bool(getattr(settings, "USE_LEGACY_FREE_PIPELINE", True))
     ):
         try:
-            rescue_kwargs: dict[str, Any] = {"settings": settings}
+            rescue_kwargs: dict[str, Any] = {
+                "settings": settings,
+                "allow_unplanned_body_fallback": not bool(contexts),
+            }
             if context_profile is not None:
                 rescue_kwargs.update(
                     max_documents=3,
@@ -901,12 +991,21 @@ async def run_advanced_rag(
                 filtered_corpus = [
                     c for c in contexts if not _is_stale_historical_context(c, original_query)
                 ]
-                contexts = prefer_primary_topic_contexts(
-                    user_query,
-                    filtered_corpus,
-                    primary_contexts,
-                    max_evidence=evidence_limit,
-                )
+                if primary_rescue.diagnostics.get("method") == "qdrant_full_doc_body_search_fallback_v1":
+                    contexts = append_supplement_under_budget(
+                        filtered_corpus,
+                        primary_contexts,
+                        max_evidence=evidence_limit,
+                        max_tokens=context_limit,
+                        protected_contexts=filtered_corpus,
+                    )
+                else:
+                    contexts = prefer_primary_topic_contexts(
+                        user_query,
+                        filtered_corpus,
+                        primary_contexts,
+                        max_evidence=evidence_limit,
+                    )
         except Exception as error:
             retrieval_diagnostics["primary_law_rescue"] = {
                 "status": "unavailable",
@@ -938,7 +1037,7 @@ async def run_advanced_rag(
         supplement_needed = True
     hypotheses = None
     hypothesis_gap = False
-    if scoped_outcome is None:
+    if scoped_outcome is None and web_mode != "off":
         from app.services.official_instrument_hypotheses import (
             hypothesis_gaps,
             propose_instrument_hypotheses,
@@ -963,11 +1062,21 @@ async def run_advanced_rag(
             not any(contains_topic_phrase(context, topic) for context in contexts)
             for topic in (*recognized_plan_topics, *search_plan.jurisdictions)
         )
+    if web_mode == "off":
+        supplement_needed = False
+        retrieval_diagnostics["official_supplement"] = {
+            "status": "skipped_web_mode_off",
+        }
+    elif web_mode == "force" and scoped_outcome is None and not retrieval_failed:
+        supplement_needed = True
+    published_registry_docs: dict[str, dict[str, Any]] = {}
     if supplement_needed and retrieval_failed:
         retrieval_diagnostics["official_supplement"] = {
             "status": "skipped_retrieval_error",
         }
     elif supplement_needed:
+        if stage_events is not None:
+            stage_events.append("Đang tra cứu bổ sung nguồn chính thức & Tavily")
         current_source_required = search_plan.current_required if search_plan else _current_applicability_intent(user_query)
         original_context_count = len(contexts)
         supplement_retained = False
@@ -1040,12 +1149,40 @@ async def run_advanced_rag(
                 "status": "unavailable",
                 "error_type": type(error).__name__,
             }
+        registry_docs, registry_verified_effect, registry_err = (
+            await _lookup_published_registry_effects(
+                contexts,
+                as_of=search_plan.as_of if search_plan else None,
+                settings=settings,
+            )
+        )
+        if registry_docs:
+            published_registry_docs = registry_docs
+        if registry_docs or registry_err:
+            retrieval_diagnostics["legal_effect_registry"] = (
+                {"status": "checked", "documents": registry_docs}
+                if registry_docs
+                else {"status": "unavailable", "error_type": registry_err}
+            )
         if current_source_required and not supplement_retained:
-            conditional_explanation = (
-                context_profile is not None
-                and not _requires_verified_effect_evidence(
-                    original_query, context_query=user_query,
+            newer_source_missing = bool(
+                retrieval_diagnostics.get("official_supplement", {}).get(
+                    "newer_source_required"
                 )
+            )
+            unverified_authority = (
+                _requires_verified_effect_evidence(
+                    original_query, context_query=user_query
+                )
+                and not registry_verified_effect
+            )
+            legacy_mode = bool(getattr(settings, "USE_LEGACY_FREE_PIPELINE", False))
+            conditional_explanation = (
+                bool(contexts)
+                and not legacy_mode
+                and not newer_source_missing
+                and not registry_missing
+                and not unverified_authority
             )
             retrieval_diagnostics["official_supplement"].update(
                 incomplete=True,
@@ -1053,9 +1190,27 @@ async def run_advanced_rag(
                 corpus_contexts_replaced=0,
             )
             if conditional_explanation:
-                retrieval_diagnostics["official_supplement"]["corpus_retained_scope"] = 'source_text_only'
+                retrieval_diagnostics["official_supplement"]["corpus_retained_scope"] = (
+                    "registry_verified" if registry_verified_effect else "source_text_only"
+                )
             else:
                 contexts = []
+    elif scoped_outcome is None and contexts:
+        registry_docs, _registry_verified, registry_err = (
+            await _lookup_published_registry_effects(
+                contexts,
+                as_of=search_plan.as_of if search_plan else None,
+                settings=settings,
+            )
+        )
+        if registry_docs:
+            published_registry_docs = registry_docs
+        if registry_docs or registry_err:
+            retrieval_diagnostics["legal_effect_registry"] = (
+                {"status": "checked", "documents": registry_docs}
+                if registry_docs
+                else {"status": "unavailable", "error_type": registry_err}
+            )
     _record_context_stage(retrieval_diagnostics, "official_supplement", contexts)
     quality_contexts = [context for context in contexts if assess_source_quality(context)["usable_as_evidence"]]
     retrieval_diagnostics["source_quality"]["excluded_context_count"] += len(contexts) - len(quality_contexts)
@@ -1066,8 +1221,13 @@ async def run_advanced_rag(
         max_tokens=context_limit,
         max_sources=context_profile.source_limit if context_profile else None,
     )
+    if context_profile is not None or published_registry_docs:
+        contexts = ProfiledContexts(
+            contexts,
+            context_profile,
+            registry_effects=published_registry_docs or None,
+        )
     if context_profile is not None:
-        contexts = ProfiledContexts(contexts, context_profile)
         retrieval_diagnostics["context_profile"] = {
             "version": context_profile.version, "max_tokens": context_limit,
             "max_evidence": evidence_limit, "budget_unit": "approx_whitespace_tokens",
@@ -1125,6 +1285,60 @@ async def run_advanced_rag(
             retrieval_diagnostics,
             latency,
         )
+    latency["t_total"] = round(time.perf_counter() - started, 3)
+    return contexts, rewritten_query, latency, None, user_query, rewrite_meta
+
+
+async def prepare_rag_contexts(
+    user_query: str,
+    *,
+    rewrite_mode: str = "off",
+    profile: Any = None,
+    scoped_outcome: RetrievalOutcome | None = None,
+    previous_user_query: str | None = None,
+    web_mode: str = "auto",
+    stage_events: list[str] | None = None,
+) -> Tuple[List[str], str, Dict[str, Any], str | None]:
+    contexts, rewritten_query, latency, guidance_text, _, _ = (
+        await _prepare_rag_contexts_internal(
+            user_query,
+            rewrite_mode=rewrite_mode,
+            profile=profile,
+            scoped_outcome=scoped_outcome,
+            previous_user_query=previous_user_query,
+            web_mode=web_mode,
+            stage_events=stage_events,
+        )
+    )
+    return contexts, rewritten_query, latency, guidance_text
+
+
+@logfire.instrument("Run advanced legal retrieval pipeline", extract_args=False)
+async def run_advanced_rag(
+    user_query: str,
+    *,
+    rewrite_mode: str = "off",
+    profile: Any = None,
+    scoped_outcome: RetrievalOutcome | None = None,
+    previous_user_query: str | None = None,
+    web_mode: str = "auto",
+) -> Tuple[str, List[str], Dict[str, Any]]:
+    started = time.perf_counter()
+    original_query = user_query
+    contexts, rewritten_query, latency, guidance_text, user_query, rewrite_meta = (
+        await _prepare_rag_contexts_internal(
+            user_query,
+            rewrite_mode=rewrite_mode,
+            profile=profile,
+            scoped_outcome=scoped_outcome,
+            previous_user_query=previous_user_query,
+            web_mode=web_mode,
+            started=started,
+        )
+    )
+    if guidance_text is not None:
+        return guidance_text, [], latency
+    retrieval_diagnostics = latency["retrieval_diagnostics"]
     if not contexts:
         latency["t_total"] = round(
             time.perf_counter() - started,
@@ -1338,40 +1552,43 @@ def _answer_truncated(result: LLMGenerationResult) -> bool:
     return result.status == "success" and str(result.finish_reason or "").upper() in {"MAX_TOKENS", "LENGTH"}
 
 
-@logfire.instrument(
-    "Generate grounded legal answer with metadata", extract_args=False
-)
-async def generate_response_with_metadata(
-    original_query: str,
+def _format_registry_effects_block(registry_effects: dict[str, dict[str, Any]] | None) -> str:
+    if not registry_effects:
+        return ""
+    lines = [
+        "Sổ đăng ký hiệu lực pháp luật đã được quản trị viên xác minh (ưu tiên đối chiếu):"
+    ]
+    for doc_num, info in registry_effects.items():
+        parts = [f"{doc_num}: status={info.get('status')}", f"as_of={info.get('as_of')}"]
+        if info.get("effective_from"):
+            parts.append(f"effective_from={info['effective_from']}")
+        if info.get("effective_to"):
+            parts.append(f"effective_to={info['effective_to']}")
+        if info.get("amended_by"):
+            parts.append("amended_by=" + ",".join(str(x) for x in info["amended_by"]))
+        if info.get("replaced_by"):
+            parts.append("replaced_by=" + ",".join(str(x) for x in info["replaced_by"]))
+        lines.append("- " + "; ".join(parts))
+    return "\n".join(lines) + "\n\n"
+
+
+def build_answer_prompts(
+    query_for_prompt: str,
     rewritten_query: str,
     context: List[str],
     *,
-    thinking_level: Any = "MINIMAL",
-    current_question: str | None = None,
-) -> LLMGenerationResult:
-    if not context:
-        return LLMGenerationResult(
-            text=NO_EVIDENCE_RESPONSE,
-            observed_provider="none",
-            observed_model="none",
-        )
+    effect_check_query: str | None = None,
+    registry_effects: dict[str, dict[str, Any]] | None = None,
+) -> Tuple[str, str, str]:
+    profile_obj = getattr(context, "context_profile", None)
     context_text = build_bounded_context(
         context,
-        max_tokens=(context.context_profile.context_tokens
-                    if isinstance(context, ProfiledContexts)
-                    else get_settings().LLM_CONTEXT_MAX_TOKENS),
+        max_tokens=(
+            profile_obj.context_tokens
+            if profile_obj is not None
+            else get_settings().LLM_CONTEXT_MAX_TOKENS
+        ),
     )
-    if not context_text.strip():
-        return LLMGenerationResult(
-            text=NO_EVIDENCE_RESPONSE,
-            observed_provider="none",
-            observed_model="none",
-        )
-    if _requires_verified_effect_evidence(
-        original_query if current_question is None else current_question,
-        context_query=original_query,
-    ):
-        return _unverified_effect_excerpts(context)
     system_prompt = (
         "Bạn là trợ lý thông tin pháp luật Việt Nam. Nguồn dữ liệu "
         "bên thứ ba này không phải cơ sở dữ liệu pháp luật chính thức "
@@ -1411,10 +1628,17 @@ async def generate_response_with_metadata(
         "trước khi yêu cầu Tòa án, và các trường hợp luật liệt kê không bắt buộc hòa giải, nếu bằng chứng có. "
         "Luôn lưu ý thông tin chỉ để tham khảo, không thay thế tư vấn luật sư."
     )
+    eff_map = (
+        registry_effects
+        if registry_effects is not None
+        else getattr(context, "registry_effects", None)
+    )
+    registry_block = _format_registry_effects_block(eff_map)
     user_prompt = (
         f"Tài liệu tham khảo:\n{context_text}\n\n"
+        f"{registry_block}"
         f"Truy vấn tìm kiếm: {rewritten_query}\n"
-        f"Câu hỏi người dùng: {original_query}"
+        f"Câu hỏi người dùng: {query_for_prompt}"
     )
     if getattr(context, "context_profile", None) is not None:
         system_prompt += (
@@ -1424,8 +1648,39 @@ async def generate_response_with_metadata(
             "hiệu lực tại ngày hỏi và chỉ trình bày căn cứ có điều kiện. Nêu phần thiếu nguồn; "
             "nếu thiếu dữ kiện quyết định, đặt một câu hỏi làm rõ, không tự điền sự kiện."
         )
-    if _current_effect_conclusion_requested(original_query):
+    if _current_effect_conclusion_requested(effect_check_query or query_for_prompt):
         system_prompt += SOURCE_TEXT_ONLY_INSTRUCTION
+    return user_prompt, system_prompt, context_text
+
+
+@logfire.instrument(
+    "Generate grounded legal answer with metadata", extract_args=False
+)
+async def generate_response_with_metadata(
+    original_query: str,
+    rewritten_query: str,
+    context: List[str],
+    *,
+    thinking_level: Any = "MINIMAL",
+    current_question: str | None = None,
+) -> LLMGenerationResult:
+    if not context:
+        return LLMGenerationResult(
+            text=NO_EVIDENCE_RESPONSE,
+            observed_provider="none",
+            observed_model="none",
+        )
+    user_prompt, system_prompt, context_text = build_answer_prompts(
+        original_query,
+        rewritten_query,
+        context,
+    )
+    if not context_text.strip():
+        return LLMGenerationResult(
+            text=NO_EVIDENCE_RESPONSE,
+            observed_provider="none",
+            observed_model="none",
+        )
     result = await generate_llm_response_with_metadata(
         user_prompt,
         system_prompt,

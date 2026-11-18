@@ -9,7 +9,9 @@ import time
 from collections import Counter, OrderedDict
 from dataclasses import dataclass, replace
 from datetime import date, datetime, timezone
+from pathlib import Path
 from threading import Lock
+from types import SimpleNamespace
 from typing import Any
 
 from app.ingestion.legal_text import EvidenceChunk, chunk_document
@@ -344,11 +346,11 @@ _ENTERPRISE = _LawTitle(
     ),
 )
 _E_TRANSACTION = _LawTitle(
-    "Văn bản hợp nhất 42/VBHN-VPQH",
-    "2025",
-    ("chữ ký điện tử",),
-    "42/VBHN-VPQH",
-    legal_types=("van ban hop nhat",),
+    "Luật Giao dịch điện tử",
+    "2023",
+    ("chữ ký điện tử", "giao dịch điện tử"),
+    "20/2023/QH15",
+    legal_types=("luat",),
     exact_title_only=False,
     domain_rules=(
         (r"chu ky|scan|thong diep|zalo|gia tri phap ly", ("gia tri phap ly cua thong diep du lieu", "chu ky dien tu", "gia tri phap ly cua chu ky dien tu", "lam chung cu")),
@@ -714,8 +716,6 @@ def _search_and_load(
     max_evidence_override: int | None = None,
     max_tokens_override: int | None = None,
 ) -> tuple[list[EvidenceChunk], dict[str, Any]]:
-    from app.services.legal_browser import LegalBrowser
-
     diagnostics: dict[str, Any] = {
         "status": "no_evidence",
         "method": "curated_primary_law_title_metadata_v1",
@@ -739,7 +739,6 @@ def _search_and_load(
 
     normalized_query = normalize_colloquial_query(query)
     active_normalized = normalize_colloquial_query(_active_turn_text(query))
-    folded_active_query = fold_topic_text(active_normalized)
     max_documents = max(1, int(max_documents_override or _MAX_DOCUMENT_LOADS))
     loaded = 0
     chunks_with_scores: list[
@@ -1063,7 +1062,227 @@ def _search_and_load(
         selected_chunk_count=len(selected_chunks),
         selected_context_tokens=used_tokens,
     )
+    if not selected_chunks and _local_sqlite_absent(settings):
+        fb_chunks = _online_body_search_fallback(
+            query=query,
+            normalized_query=normalized_query,
+            settings=settings,
+            selected_browser=selected_browser,
+            deadline=deadline,
+            requested_articles=requested_articles,
+            requested_clauses=requested_clauses,
+            max_evidence=max_evidence,
+            max_tokens=max_tokens,
+            diagnostics=diagnostics,
+        )
+        if fb_chunks:
+            return fb_chunks, diagnostics
     return selected_chunks, diagnostics
+
+
+def _local_sqlite_absent(settings: Any) -> bool:
+    if bool(getattr(settings, "SERVERLESS_ONLINE_ONLY", False)):
+        return True
+    for attr in ("CLEAN_CONTENT_STORE_PATH", "CONTENT_STORE_PATH", "V3_CONTENT_STORE_PATH"):
+        candidate = getattr(settings, attr, None)
+        if candidate is not None:
+            try:
+                if Path(candidate).is_file():
+                    return False
+            except (OSError, TypeError):
+                continue
+    return True
+
+
+def _resolve_online_body_index(
+    settings: Any,
+    browser: Any | None,
+    diagnostics: dict[str, Any] | None = None,
+) -> tuple[Any, Any]:
+    from app.services.qdrant_full_doc_body_search import QdrantFullDocBodySearch
+
+    if browser is not None:
+        body_idx = getattr(browser, "_body_index", None)
+        if isinstance(body_idx, QdrantFullDocBodySearch):
+            return browser, body_idx
+    if not _local_sqlite_absent(settings):
+        return None, None
+    if not bool(getattr(settings, "QDRANT_FULL_DOC_BODY_SEARCH_ENABLED", False)):
+        return None, None
+    if not (
+        (getattr(settings, "QDRANT_URL", None) or "").strip()
+        and (getattr(settings, "QDRANT_API_KEY", None) or "").strip()
+        and (getattr(settings, "SUPABASE_URL", None) or "").strip()
+        and (getattr(settings, "SUPABASE_PUBLISHABLE_KEY", None) or "").strip()
+    ):
+        return None, None
+    try:
+        from app.services.legal_browser import LegalBrowser
+
+        online_browser = LegalBrowser.from_settings(settings)
+        body_idx = getattr(online_browser, "_body_index", None)
+        if isinstance(body_idx, QdrantFullDocBodySearch):
+            return online_browser, body_idx
+    except Exception as error:
+        if diagnostics is not None:
+            diagnostics.setdefault("online_body_fallback_errors", []).append(
+                {"stage": "resolve_browser", "error_type": type(error).__name__}
+            )
+        return None, None
+    return None, None
+
+
+def _online_body_search_fallback(
+    *,
+    query: str,
+    normalized_query: str,
+    settings: Any,
+    selected_browser: Any | None,
+    deadline: float,
+    requested_articles: list[tuple[int, int]],
+    requested_clauses: set[str],
+    max_evidence: int,
+    max_tokens: int,
+    diagnostics: dict[str, Any],
+) -> list[EvidenceChunk]:
+    from app.services.instrument_registry import SUPERSEDED_INSTRUMENTS
+
+    online_browser, body_index = _resolve_online_body_index(
+        settings, selected_browser, diagnostics
+    )
+    if online_browser is None or body_index is None or time.monotonic() >= deadline:
+        return []
+
+    phrases = list(extract_official_topic_phrases(normalized_query, limit=3))
+    terms = list(local_rescue_terms(normalized_query, limit=6))
+    if not phrases and len(terms) >= 2:
+        phrases.append(" ".join(terms[:3]))
+    if not phrases:
+        return []
+
+    query_years = set(re.findall(r"(?<!\d)(?:19|20)\d{2}(?!\d)", str(query or "")))
+    candidate_doc_ids: list[int] = []
+    for phrase in phrases[:2]:
+        if time.monotonic() >= deadline:
+            break
+        try:
+            rows = body_index.search(
+                phrase,
+                filters=SimpleNamespace(sort="newest"),
+                limit=4,
+                offset=0,
+            )
+        except Exception as error:
+            diagnostics.setdefault("online_body_fallback_errors", []).append(
+                {"stage": "body_search", "error_type": type(error).__name__}
+            )
+            continue
+        for row in rows or ():
+            doc_id = row.get("document_id") if isinstance(row, dict) else getattr(row, "document_id", None)
+            if not isinstance(doc_id, int) or doc_id <= 0 or doc_id in candidate_doc_ids:
+                continue
+            header_fold = fold_topic_text(
+                f"{_field(row, 'document_number', '')} {_field(row, 'title', '')}"
+            )
+            idate = str(_field(row, "issuance_date", "") or "")
+            doc_yr = int(idate[:4]) if len(idate) >= 4 and idate[:4].isdecimal() else None
+            is_superseded = any(
+                any(marker in header_fold for marker in item.markers)
+                and (
+                    (doc_yr is not None and doc_yr < int(item.before_year) and str(doc_yr) not in query_years)
+                    if item.before_year
+                    else item.year not in query_years
+                )
+                for item in SUPERSEDED_INSTRUMENTS
+            )
+            if is_superseded:
+                continue
+            candidate_doc_ids.append(doc_id)
+        if candidate_doc_ids:
+            break
+
+    if not candidate_doc_ids:
+        return []
+
+    query_term_set = set(terms)
+    scored: list[tuple[int, int, EvidenceChunk]] = []
+    loaded_count = 0
+    for doc_id in candidate_doc_ids[:2]:
+        if time.monotonic() >= deadline:
+            break
+        try:
+            doc = online_browser.get_document(doc_id)
+        except Exception as error:
+            diagnostics.setdefault("online_body_fallback_errors", []).append(
+                {"stage": "load_document", "error_type": type(error).__name__}
+            )
+            continue
+        if doc is None:
+            continue
+        meta = _field(doc, "metadata")
+        content = _field(doc, "content")
+        stored_sha = str(_field(doc, "content_sha256", "") or "").casefold()
+        if not isinstance(content, str) or not content.strip():
+            continue
+        actual_sha = hashlib.sha256(content.encode("utf-8")).hexdigest()
+        if actual_sha != stored_sha:
+            continue
+        if not assess_source_quality(content)["usable_as_evidence"]:
+            continue
+        loaded_count += 1
+        raw_chunks = chunk_document(
+            meta,
+            content,
+            max_tokens=max(1, int(getattr(settings, "QUERY_CHUNK_MAX_TOKENS", 220))),
+            overlap_tokens=max(0, int(getattr(settings, "QUERY_CHUNK_OVERLAP_TOKENS", 24))),
+            preserve_article_max_tokens=320 if not requested_clauses else None,
+        )
+        for pos, chunk in enumerate(raw_chunks):
+            if requested_articles:
+                art_m = _ARTICLE_REFERENCE.search(fold_topic_text(chunk.article or ""))
+                if art_m is None or not any(
+                    lo <= int(art_m.group(1)) <= hi for lo, hi in requested_articles
+                ):
+                    continue
+            if requested_clauses and str(chunk.clause) not in requested_clauses:
+                continue
+            folded_text = fold_topic_text(chunk.text)
+            phrase_hits = sum(1 for p in phrases if fold_topic_text(p) in folded_text)
+            chunk_tokens = set(_TOKEN.findall(folded_text))
+            overlap_hits = len(query_term_set.intersection(chunk_tokens))
+            if phrase_hits == 0 and overlap_hits < 2:
+                continue
+            scored.append(
+                (
+                    -(phrase_hits * 4 + overlap_hits),
+                    pos,
+                    replace(chunk, source_content_sha256=actual_sha),
+                )
+            )
+
+    scored.sort(key=lambda item: (item[0], item[1]))
+    chosen: list[EvidenceChunk] = []
+    used = 0
+    for _, _, chunk in scored:
+        if len(chosen) >= max_evidence:
+            break
+        cost = len(chunk.formatted_context().split()) + len(
+            f"[Tài liệu tham khảo #{len(chosen) + 1}]".split()
+        )
+        if used + cost > max_tokens:
+            continue
+        chosen.append(chunk)
+        used += cost
+
+    if chosen:
+        diagnostics.update(
+            status="evidence_selected",
+            method="qdrant_full_doc_body_search_fallback_v1",
+            corpus_documents_loaded=diagnostics.get("corpus_documents_loaded", 0) + loaded_count,
+            selected_chunk_count=len(chosen),
+            selected_context_tokens=used,
+        )
+    return chosen
 
 
 async def rescue_primary_law_evidence(
@@ -1074,6 +1293,7 @@ async def rescue_primary_law_evidence(
     max_documents: int | None = None,
     max_evidence: int | None = None,
     max_tokens: int | None = None,
+    allow_unplanned_body_fallback: bool = True,
 ) -> PrimaryLawRescueResult:
     """Search only curated law titles and verify source text from the selected store."""
     doc_limit = max(1, int(max_documents or _MAX_DOCUMENT_LOADS))
@@ -1094,6 +1314,35 @@ async def rescue_primary_law_evidence(
         diagnostics["status"] = "bypassed_legacy_lane"
         return PrimaryLawRescueResult((), diagnostics)
     if not planned:
+        if (
+            allow_unplanned_body_fallback
+            and _local_sqlite_absent(settings)
+            and _resolve_online_body_index(settings, browser)[1] is not None
+        ):
+            timeout = 14.0 if max_tokens is not None else _PRIMARY_RESCUE_TIMEOUT_SECONDS
+            deadline = time.monotonic() + timeout
+            norm_q = normalize_colloquial_query(query)
+            req_arts = [
+                (int(first), int(last or first))
+                for first, last in _ARTICLE_REFERENCE.findall(fold_topic_text(norm_q))
+            ]
+            req_cls = set(re.findall(r"\bkhoan\s+(\d+)\b", fold_topic_text(norm_q)))
+            ev_cap = max_evidence if max_evidence is not None else int(getattr(settings, "FINAL_EVIDENCE_LIMIT", _MAX_EVIDENCE))
+            tok_cap = max_tokens if max_tokens is not None else int(getattr(settings, "LLM_CONTEXT_MAX_TOKENS", _MAX_CONTEXT_TOKENS))
+            fb_evidence = await asyncio.to_thread(
+                _online_body_search_fallback,
+                query=query,
+                normalized_query=norm_q,
+                settings=settings,
+                selected_browser=browser,
+                deadline=deadline,
+                requested_articles=req_arts,
+                requested_clauses=req_cls,
+                max_evidence=ev_cap,
+                max_tokens=tok_cap,
+                diagnostics=diagnostics,
+            )
+            return PrimaryLawRescueResult(tuple(fb_evidence), diagnostics)
         return PrimaryLawRescueResult((), diagnostics)
     planned = tuple(title for title in planned if not _is_explicitly_scoped(query, (title,)))
     if not planned:
@@ -1151,6 +1400,12 @@ def prefer_primary_topic_contexts(
     )
 
     topics = extract_official_topic_phrases(query, limit=4)
+    if not topics:
+        merged: list[str] = []
+        for context in (*corpus_contexts, *primary_contexts):
+            if context not in merged and len(merged) < max(0, max_evidence):
+                merged.append(context)
+        return merged
 
     def supported(context: str) -> set[str]:
         body = _topic_evidence_body(context)
@@ -1162,6 +1417,12 @@ def prefer_primary_topic_contexts(
         }
 
     primary_topics = set().union(*(supported(context) for context in primary_contexts))
+    if not primary_topics and corpus_contexts:
+        merged = []
+        for context in (*corpus_contexts, *primary_contexts):
+            if context not in merged and len(merged) < max(0, max_evidence):
+                merged.append(context)
+        return merged
     retained = [
         context
         for context in corpus_contexts
