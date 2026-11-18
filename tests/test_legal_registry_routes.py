@@ -6,8 +6,11 @@ from app.api.dependencies import require_admin, optional_user
 
 
 @pytest.fixture
-def client():
+def client(monkeypatch):
+    import app.database as db_mod
     from app.api.legal_registry_routes import router
+
+    monkeypatch.setattr(db_mod, "db", None)
 
     app = FastAPI()
     app.include_router(router)
@@ -170,3 +173,65 @@ def test_admin_page_escapes_reviewed_quote(client, monkeypatch):
     assert response.status_code == 200
     assert "<script>alert(1)</script>" not in response.text
     assert "&lt;script&gt;" in response.text
+
+
+def test_registry_admin_enforces_workspace_owner_isolation_and_excludes_withdrawn_reviews(
+    client, monkeypatch
+):
+    from types import SimpleNamespace
+    import app.database as db_mod
+
+    list_ws = AsyncMock(
+        return_value=[
+            {
+                "_id": "ws-admin-owned",
+                "workspace_id": "ws-admin-owned",
+                "title": "Hồ sơ của Admin",
+                "analyses": [
+                    {
+                        "analysis_id": "rev-withdrawn",
+                        "kind": "legal_effect_review",
+                        "reviewed_at": "2026-11-18T00:00:00+00:00",
+                        "result": {"assertions": []},
+                    },
+                    {
+                        "analysis_id": "rev-pending",
+                        "kind": "legal_effect_review",
+                        "reviewed_at": "2026-11-18T01:00:00+00:00",
+                        "result": {
+                            "assertions": [
+                                {
+                                    "document_number": "168/2024/NĐ-CP",
+                                    "target_document_number": "100/2019/NĐ-CP",
+                                    "effective_date": "2025-01-01",
+                                    "scope": "partial",
+                                    "exact_quote": "Bãi bỏ một phần",
+                                    "source_url": "https://vanban.chinhphu.vn/?docid=168",
+                                }
+                            ]
+                        },
+                    },
+                ],
+            }
+        ]
+    )
+    monkeypatch.setattr("app.research_database.list_workspaces", list_ws)
+    fake_reg_cursor = SimpleNamespace(
+        to_list=AsyncMock(return_value=[{"_id": "rev-withdrawn"}])
+    )
+    fake_db = SimpleNamespace(
+        legal_effect_registry=SimpleNamespace(find=lambda *_a, **_kw: fake_reg_cursor),
+        research_workspaces=SimpleNamespace(
+            find=lambda *_a, **_kw: pytest.fail("Must not run unscoped cross-tenant find()")
+        ),
+    )
+    monkeypatch.setattr(db_mod, "db", fake_db)
+    monkeypatch.setattr("app.api.legal_registry_routes.registry_records", AsyncMock(return_value=[]))
+
+    resp = client.get("/admin/legal-registry")
+    assert resp.status_code == 200
+    list_ws.assert_awaited_once()
+    assert list_ws.await_args.kwargs.get("user_id") == "admin"
+    assert "/workspaces/ws-admin-owned/analyses/rev-pending/publish-legal-effect" in resp.text
+    assert "rev-withdrawn" not in resp.text
+

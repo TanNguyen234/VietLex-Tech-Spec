@@ -17,9 +17,10 @@
     </div></section>{% endif %}
     {% with question=user_msg, no_evidence=not evidence_views %}{% include "chat_recovery.html" %}{% endwith %}
     <div class="retrieval-panel" hidden></div><div class="evaluation-panel" hidden></div>
-    <footer class="message-meta"><span>Trace {{ trace_id[:8] }}{% if cached %} · Cache{% endif %}</span><div class="message-actions">
-      <button type="button" data-action="copy-answer">Sao chép</button><button type="button" data-action="retry" data-query="{{ user_msg }}">Thử lại</button><button type="button" data-action="inspect-retrieval" data-trace-id="{{ trace_id }}">Xem cách tìm nguồn</button><button type="button" data-action="evaluate" data-trace-id="{{ trace_id }}">Đánh giá</button>
+    <footer class="message-meta"><div class="message-actions">
+      <button type="button" data-action="copy-answer">Sao chép</button><button type="button" data-action="retry" data-query="{{ user_msg }}">Thử lại</button>
       <form data-feedback-form><input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}"><input type="hidden" name="trace_id" value="{{ trace_id }}"><input type="hidden" name="rating" value="up"><button type="submit" aria-label="Đánh giá hữu ích">Hữu ích</button></form><form data-feedback-form><input type="hidden" name="csrf_token" value="{{ request.cookies.get('csrf_token', '') }}"><input type="hidden" name="trace_id" value="{{ trace_id }}"><input type="hidden" name="rating" value="down"><button type="submit" aria-label="Đánh giá không hữu ích">Chưa tốt</button></form>
-    </div></footer>
+      <button type="button" data-action="toggle-tech-details" aria-expanded="false">Chi tiết kỹ thuật</button>
+    </div><div class="tech-details-bar" hidden><span>Trace {{ trace_id[:8] }}{% if cached %} · Cache{% endif %}</span><button type="button" data-action="inspect-retrieval" data-trace-id="{{ trace_id }}">Xem cách tìm nguồn</button><button type="button" data-action="evaluate" data-trace-id="{{ trace_id }}">Đánh giá</button></div></footer>
   </div>
 </article><input type="hidden" name="session_id" value="{{ session_id }}" id="session-id-input">

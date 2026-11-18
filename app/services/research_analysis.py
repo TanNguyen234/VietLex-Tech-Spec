@@ -260,7 +260,11 @@ async def generate_selected_evidence_answer(
             **_metadata(result),
         }
     try:
-        parsed = SelectedEvidenceResult.model_validate_json(result.text)
+        from app.services.direct_llm import strip_markdown_json_fence
+
+        parsed = SelectedEvidenceResult.model_validate_json(
+            strip_markdown_json_fence(result.text)
+        )
         if parsed.unanswered_parts:
             parsed.status = "insufficient_evidence"
         selected_ids = {item["evidence_id"] for item in evidence}
@@ -301,10 +305,12 @@ async def generate_comparison(
     )
     if result.status != "success":
         raise RuntimeError(result.status)
+    from app.services.direct_llm import strip_markdown_json_fence
+
     group_a_ids = {str(item["evidence_id"]) for item in evidence_a}
     group_b_ids = {str(item["evidence_id"]) for item in evidence_b}
     return parse_comparison(
-        result.text,
+        strip_markdown_json_fence(result.text),
         group_a_ids | group_b_ids,
         group_a_ids=group_a_ids,
         group_b_ids=group_b_ids,
@@ -335,8 +341,12 @@ async def generate_obligation_matrix(
     )
     if result.status != "success":
         raise RuntimeError(result.status)
+    from app.services.direct_llm import strip_markdown_json_fence
+
     selected_ids = {str(item["evidence_id"]) for item in evidence}
-    return parse_obligation_matrix(result.text, selected_ids), _metadata(result)
+    return parse_obligation_matrix(
+        strip_markdown_json_fence(result.text), selected_ids
+    ), _metadata(result)
 
 
 async def generate_contract_review(
@@ -386,7 +396,11 @@ async def generate_contract_review(
     )
     if result.status != "success":
         raise RuntimeError(result.status)
-    parsed = ContractReviewResult.model_validate_json(result.text)
+    from app.services.direct_llm import strip_markdown_json_fence
+
+    parsed = ContractReviewResult.model_validate_json(
+        strip_markdown_json_fence(result.text)
+    )
     normalized = normalize_contract_review(
         parsed,
         {str(item["clause_id"]) for item in clauses},

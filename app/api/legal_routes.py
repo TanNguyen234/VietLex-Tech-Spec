@@ -14,7 +14,12 @@ from app.api.dependencies import optional_user, verify_csrf
 from app.rate_limit import limiter
 from app.services.legal_browser import SearchFilters, LegalBrowserBackendError
 from app.services.source_currency import currency_note, format_citation, sector_matches
-from app.services.document_structure import document_sections
+from app.services.document_structure import (
+    SECTION_WINDOW_MAX,
+    SECTION_WINDOW_STEP,
+    document_sections,
+    reader_sections,
+)
 from app.services.source_quality import assess_source_quality
 from app.services.body_search import BodySearchUnavailable
 from fastapi.responses import HTMLResponse
@@ -146,7 +151,7 @@ async def legal_document(request: Request, document_id: int, as_of: str = Query(
         "legal_document.html",
         {
             "document": document,
-            "sections": document_sections(document.content),
+            "sections": reader_sections(document.content),
             "source_quality": assess_source_quality(document.content),
             "source_url": _safe_source_url(document.metadata.source_url),
             **await _registry_context([document.metadata.document_number], day),
@@ -159,6 +164,7 @@ async def legal_document(request: Request, document_id: int, as_of: str = Query(
 async def pin_document_section(
     request: Request, document_id: int, section_id: str,
     workspace_id: str = Form(..., max_length=100), note: str = Form("", max_length=500),
+    window_start: int = Form(0, ge=0),
     _csrf: str = Depends(verify_csrf), current_user=Depends(optional_user),
 ):
     from app.api import workspace_routes as workspaces
@@ -167,18 +173,51 @@ async def pin_document_section(
         document = await asyncio.to_thread(_get_browser().get_document, document_id)
     except LegalBrowserBackendError:
         raise HTTPException(503, "Không đọc được văn bản nguồn.") from None
-    section = next((item for item in document_sections(document.content) if item["id"] == section_id), None) if document else None
+    section = (
+        next(
+            (
+                item
+                for item in (
+                    *reader_sections(document.content),
+                    *document_sections(document.content),
+                )
+                if item["id"] == section_id
+            ),
+            None,
+        )
+        if document
+        else None
+    )
     if section is None:
         raise HTTPException(404, "Section not found")
-    if len(section["text"]) > 4000:
-        raise HTTPException(422, "Điều khoản vượt giới hạn 4.000 ký tự; hãy chọn trích đoạn qua câu trả lời có dẫn nguồn.")
+    full_text = section["text"]
+    if len(full_text) <= SECTION_WINDOW_MAX and window_start > 0:
+        raise HTTPException(422, "window_out_of_range")
+    if window_start >= len(full_text) or (
+        len(full_text) > SECTION_WINDOW_MAX and window_start % SECTION_WINDOW_STEP != 0
+    ):
+        raise HTTPException(422, "window_out_of_range")
+    is_windowed = len(full_text) > SECTION_WINDOW_MAX or window_start > 0
+    excerpt_text = (
+        full_text[window_start : window_start + SECTION_WINDOW_MAX]
+        if is_windowed
+        else full_text
+    )
+    if not excerpt_text.strip():
+        raise HTTPException(422, "empty_section_window")
     metadata = document.metadata
-    citation = f"{metadata.document_number} · {section['title']}"
+    if len(full_text) > SECTION_WINDOW_MAX:
+        window_index = (window_start // SECTION_WINDOW_STEP) + 1
+        citation = f"{metadata.document_number} · {section['title']} · đoạn {window_index}"
+        digest_seed = f"{document_id}:{section_id}:{window_start}:{excerpt_text}"
+    else:
+        citation = f"{metadata.document_number} · {section['title']}"
+        digest_seed = f"{document_id}:{section_id}:{excerpt_text}"
     evidence = {
-        "evidence_id": hashlib.sha256(f"{document_id}:{section_id}:{section['text']}".encode()).hexdigest()[:24],
+        "evidence_id": hashlib.sha256(digest_seed.encode()).hexdigest()[:24],
         "document_id": document_id, "document_number": metadata.document_number,
         "title": metadata.title, "citation": citation, "source_url": _safe_source_url(metadata.source_url),
-        "original": section["text"], "excerpt": section["text"], "note": note.strip(),
+        "original": excerpt_text, "excerpt": excerpt_text, "note": note.strip(),
         "trace_id": f"document-{document_id}", "source_kind": "legal_evidence",
         "introduced_by_claim": "", "section_id": section_id,
     }

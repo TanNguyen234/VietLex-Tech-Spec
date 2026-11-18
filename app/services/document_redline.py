@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from collections import defaultdict, deque
 from difflib import SequenceMatcher
+import re
 from typing import Any, Mapping
 
 
@@ -18,6 +19,14 @@ MAX_DOCUMENT_CHARACTERS = 250_000
 # represented by their exact common-prefix/common-suffix bounded coarse span.
 MAX_DETAILED_DIFF_WINDOW_CHARACTERS = 8_192
 MAX_DETAILED_DIFF_OPCODES = 128
+MAX_INLINE_DIFF_TOKENS = 600
+_STRUCTURAL_ID_RE = re.compile(
+    r"^\s*(?P<kind>điều|dieu|khoản|khoan|mục|muc|phụ\s+lục|phu\s+luc)\s+"
+    r"(?P<num>[IVXLCDM\d]+[a-zđ]?(?:\.\d+)*)\b",
+    re.IGNORECASE,
+)
+_WORD_RE = re.compile(r"\w+", re.UNICODE)
+_INLINE_TOKEN_RE = re.compile(r"\S+|\s+")
 
 
 def compare_documents(document_a: dict, document_b: dict) -> dict:
@@ -55,14 +64,17 @@ def compare_documents(document_a: dict, document_b: dict) -> dict:
             )
             continue
         comparison_mode, changes = _text_changes(before["text"], after["text"])
-        changed.append(
-            {
-                "before": _source(before),
-                "after": _source(after),
-                "comparison_mode": comparison_mode,
-                "changes": changes,
-            }
-        )
+        changed_entry: dict[str, Any] = {
+            "before": _source(before),
+            "after": _source(after),
+            "comparison_mode": comparison_mode,
+            "changes": changes,
+        }
+        if comparison_mode == "detailed":
+            changed_entry["inline_tokens"] = _inline_word_tokens(
+                before["text"], after["text"]
+            )
+        changed.append(changed_entry)
 
     removed = [
         {
@@ -202,15 +214,159 @@ def _match_clauses(
             key = _title_key(clause["title"])
             if key:
                 right_by_title[key].append(right_index)
+    still_unmatched_left: list[int] = []
     for left_index in remaining_left:
         key = _title_key(left[left_index]["title"])
         candidates = right_by_title[key] if key else deque()
+        while candidates and candidates[0] in paired_right:
+            candidates.popleft()
         if candidates:
             right_index = candidates.popleft()
             paired_right.add(right_index)
             pairs.append((left_index, right_index))
+        else:
+            still_unmatched_left.append(left_index)
+
+    # Pass 4a: leading structural identifier (Điều <N>, Khoản <N>, Mục <N>, Phụ lục <N>)
+    right_by_struct: dict[str, deque[int]] = defaultdict(deque)
+    for right_index, clause in enumerate(right):
+        if right_index not in paired_right:
+            struct_key = _structural_key(clause)
+            if struct_key:
+                right_by_struct[struct_key].append(right_index)
+
+    jaccard_left: list[int] = []
+    for left_index in still_unmatched_left:
+        struct_key = _structural_key(left[left_index])
+        candidates = right_by_struct[struct_key] if struct_key else deque()
+        while candidates and candidates[0] in paired_right:
+            candidates.popleft()
+        if candidates:
+            right_index = candidates.popleft()
+            paired_right.add(right_index)
+            pairs.append((left_index, right_index))
+        else:
+            jaccard_left.append(left_index)
+
+    # Pass 4b: normalized word-token Jaccard similarity >= 0.45
+    unmatched_right = [
+        idx for idx in range(len(right)) if idx not in paired_right
+    ]
+    if jaccard_left and unmatched_right:
+        left_tokens = {idx: _clause_word_set(left[idx]) for idx in jaccard_left}
+        right_tokens = {idx: _clause_word_set(right[idx]) for idx in unmatched_right}
+        scored_candidates: list[tuple[float, int, int]] = []
+        for l_idx in jaccard_left:
+            l_words = left_tokens[l_idx]
+            len_l = len(l_words)
+            if not len_l:
+                continue
+            for r_idx in unmatched_right:
+                r_words = right_tokens[r_idx]
+                len_r = len(r_words)
+                if not len_r:
+                    continue
+                if min(len_l, len_r) < 0.45 * max(len_l, len_r):
+                    continue
+                inter = len(l_words & r_words)
+                union_len = len_l + len_r - inter
+                if union_len <= 0:
+                    continue
+                score = inter / union_len
+                if score >= 0.45:
+                    scored_candidates.append((score, -l_idx, -r_idx))
+        scored_candidates.sort(reverse=True)
+        paired_left_p4: set[int] = set()
+        for _score, neg_l, neg_r in scored_candidates:
+            l_idx, r_idx = -neg_l, -neg_r
+            if l_idx in paired_left_p4 or r_idx in paired_right:
+                continue
+            paired_left_p4.add(l_idx)
+            paired_right.add(r_idx)
+            pairs.append((l_idx, r_idx))
 
     return sorted(pairs)
+
+
+def _structural_key(clause: Mapping[str, Any]) -> str:
+    for raw in (clause.get("title"), (clause.get("text") or "").splitlines()[0] if clause.get("text") else None):
+        if not raw:
+            continue
+        match = _STRUCTURAL_ID_RE.match(raw)
+        if match:
+            raw_kind = re.sub(r"\s+", " ", match.group("kind").casefold())
+            norm_kind = {
+                "điều": "dieu",
+                "dieu": "dieu",
+                "khoản": "khoan",
+                "khoan": "khoan",
+                "mục": "muc",
+                "muc": "muc",
+                "phụ lục": "phu_luc",
+                "phu luc": "phu_luc",
+            }.get(raw_kind, raw_kind)
+            return f"{norm_kind}:{match.group('num').casefold()}"
+    return ""
+
+
+def _clause_word_set(clause: Mapping[str, Any]) -> set[str]:
+    combined = f"{clause.get('title') or ''} {clause.get('text') or ''}".casefold()
+    return set(_WORD_RE.findall(combined))
+
+
+def _inline_word_tokens(before: str, after: str) -> list[dict[str, str]]:
+    before_tokens = _INLINE_TOKEN_RE.findall(before)
+    after_tokens = _INLINE_TOKEN_RE.findall(after)
+    prefix_len = 0
+    min_len = min(len(before_tokens), len(after_tokens))
+    while prefix_len < min_len and before_tokens[prefix_len] == after_tokens[prefix_len]:
+        prefix_len += 1
+    suffix_len = 0
+    rem_min = min_len - prefix_len
+    while (
+        suffix_len < rem_min
+        and before_tokens[len(before_tokens) - 1 - suffix_len]
+        == after_tokens[len(after_tokens) - 1 - suffix_len]
+    ):
+        suffix_len += 1
+
+    b_end = len(before_tokens) - suffix_len
+    a_end = len(after_tokens) - suffix_len
+    b_mid = before_tokens[prefix_len:b_end]
+    a_mid = after_tokens[prefix_len:a_end]
+
+    segments: list[dict[str, str]] = []
+
+    def _push(kind: str, text: str) -> None:
+        if not text:
+            return
+        if segments and segments[-1]["kind"] == kind:
+            segments[-1]["text"] += text
+        else:
+            segments.append({"kind": kind, "text": text})
+
+    if prefix_len:
+        _push("equal", "".join(before_tokens[:prefix_len]))
+
+    if len(b_mid) + len(a_mid) > MAX_INLINE_DIFF_TOKENS * 2:
+        _push("delete", "".join(b_mid))
+        _push("insert", "".join(a_mid))
+    else:
+        matcher = SequenceMatcher(None, b_mid, a_mid, autojunk=False)
+        for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+            if tag == "equal":
+                _push("equal", "".join(b_mid[i1:i2]))
+            elif tag == "delete":
+                _push("delete", "".join(b_mid[i1:i2]))
+            elif tag == "insert":
+                _push("insert", "".join(a_mid[j1:j2]))
+            elif tag == "replace":
+                _push("delete", "".join(b_mid[i1:i2]))
+                _push("insert", "".join(a_mid[j1:j2]))
+
+    if suffix_len:
+        _push("equal", "".join(before_tokens[b_end:]))
+    return segments
 
 
 def _title_key(title: str | None) -> str:

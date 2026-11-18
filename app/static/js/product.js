@@ -18,6 +18,12 @@
     finally { delete select.dataset.loading; }
   }));
   document.querySelectorAll('[data-print-report]').forEach(button => button.addEventListener('click', () => window.print()));
+  document.querySelectorAll('[data-outline-search]').forEach(input => input.addEventListener('input', () => {
+    const needle = input.value.trim().toLowerCase();
+    input.closest('.document-outline')?.querySelectorAll('a[href^="#"]').forEach(link => {
+      link.hidden = Boolean(needle) && !link.textContent.toLowerCase().includes(needle);
+    });
+  }));
   const views = [...document.querySelectorAll('[data-workspace-view]')];
   if (views.length) {
     const showView = () => {

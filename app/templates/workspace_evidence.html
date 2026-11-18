@@ -1,4 +1,4 @@
-<div class="evidence-board" id="sources" data-workspace-panel="sources">
+<div class="evidence-board" id="sources" data-workspace-panel="sources analysis review reports">
 <div class="section-rule"><div><span class="eyebrow">Căn cứ làm việc</span><h2>Bảng bằng chứng</h2></div><span>{{ workspace.evidence|length }} mục đã ghim</span></div>
 {% if workspace.evidence %}<div class="evidence-filter"><label>Tìm trong căn cứ đã ghim<input type="search" data-evidence-search placeholder="Tiêu đề, điều khoản hoặc ghi chú"></label><label>Trạng thái đối chiếu<select data-evidence-filter><option value="all">Tất cả</option><option value="to_check">Chưa đối chiếu</option><option value="follow_up">Cần làm rõ</option><option value="text_checked">Đã đối chiếu chữ</option></select></label></div><p class="muted" data-evidence-filter-count role="status"></p>{% endif %}
 {% for evidence in workspace.evidence %}{% set review = evidence.review|default({}) %}

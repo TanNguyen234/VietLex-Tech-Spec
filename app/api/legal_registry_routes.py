@@ -66,18 +66,76 @@ async def registry_admin(
     current_user=Depends(optional_user),
     admin=Depends(require_admin),
 ):
-    pending = []
-    if workspace_id:
-        workspace, _, _ = await _owned_workspace(request, workspace_id, current_user)
-        pending = [
-            row
-            for row in workspace.get("analyses", [])
-            if row.get("kind") == "legal_effect_review"
-        ]
     try:
         rows = await registry_records(skip=skip)
     except RegistryUnavailable:
         raise HTTPException(503, "legal_registry_unavailable") from None
+    existing_registry_ids = {
+        str(item.get("_id") or item.get("review_id") or "")
+        for item in rows
+    }
+    pending = []
+    if workspace_id:
+        workspace, _, _ = await _owned_workspace(request, workspace_id, current_user)
+        ws_title = str(workspace.get("title") or workspace_id)
+        pending = [
+            {**row, "workspace_id": workspace_id, "workspace_title": ws_title}
+            for row in workspace.get("analyses", [])
+            if row.get("kind") == "legal_effect_review"
+        ]
+    else:
+        from pymongo.errors import PyMongoError
+        import app.database as database_mod
+        from app.research_database import list_workspaces
+
+        motor_client = getattr(database_mod.db, "client", None)
+        get_loop = getattr(motor_client, "get_io_loop", None)
+        io_loop = get_loop() if callable(get_loop) else None
+        loop_closed = bool(io_loop is not None and getattr(io_loop, "is_closed", lambda: False)())
+        if database_mod.db is not None and not loop_closed:
+            client_id = getattr(request.state, "client_id", "legacy")
+            admin_user_id = str(admin.get("_id") or "") or None
+            try:
+                workspaces_list = await list_workspaces(
+                    client_id,
+                    user_id=admin_user_id,
+                    limit=100,
+                )
+                candidates: list[dict] = []
+                for ws in workspaces_list:
+                    ws_id = str(ws.get("workspace_id") or ws.get("_id") or "")
+                    if not ws_id:
+                        continue
+                    ws_title = str(ws.get("title") or ws_id)
+                    for row in ws.get("analyses") or []:
+                        if isinstance(row, dict) and row.get("kind") == "legal_effect_review":
+                            candidates.append(
+                                {
+                                    **row,
+                                    "workspace_id": ws_id,
+                                    "workspace_title": ws_title,
+                                }
+                            )
+                candidate_ids = [
+                    str(item.get("analysis_id") or "")
+                    for item in candidates
+                    if item.get("analysis_id")
+                ]
+                if candidate_ids and hasattr(database_mod.db, "legal_effect_registry"):
+                    reg_docs = await database_mod.db.legal_effect_registry.find(
+                        {"_id": {"$in": candidate_ids}},
+                        {"_id": 1},
+                    ).to_list(length=len(candidate_ids))
+                    existing_registry_ids.update(
+                        str(doc.get("_id") or "") for doc in reg_docs
+                    )
+                pending = [
+                    item
+                    for item in candidates
+                    if str(item.get("analysis_id") or "") not in existing_registry_ids
+                ]
+            except (PyMongoError, RegistryUnavailable):
+                raise HTTPException(503, "legal_registry_unavailable") from None
     return _admin_response(
         request,
         "admin_legal_registry.html",

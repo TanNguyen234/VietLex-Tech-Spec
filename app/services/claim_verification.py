@@ -212,9 +212,13 @@ async def verify_claims(claim_text: str, evidence: list[dict]) -> dict:
             "provenance": provenance,
         }
     try:
+        from app.services.direct_llm import strip_markdown_json_fence
+
         if getattr(generation, "finish_reason", None) == "MAX_TOKENS":
             raise ValueError("output_token_limit")
-        parsed = ClaimVerificationResponse.model_validate_json(generation.text)
+        parsed = ClaimVerificationResponse.model_validate_json(
+            strip_markdown_json_fence(generation.text)
+        )
         validated = _validated_claims(parsed, claims, evidence)
     except (ValidationError, ValueError) as error:
         return {

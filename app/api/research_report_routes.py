@@ -16,6 +16,7 @@ from app.config import get_settings
 from app.database import log_interaction, update_interaction_request_status
 from app.rate_limit import limiter
 from app.research_database import save_workspace_analysis
+from app.services.direct_llm import llm_route_scope, resolve_llm_route
 from app.services.provider_runtime import capture_provider_usage, current_provider_calls
 from app.services.research_report import generate_research_report
 
@@ -93,6 +94,8 @@ async def research_report(
     workspace_id: str,
     question: str = Form(..., min_length=1, max_length=2_000),
     evidence_ids: str = Form(..., min_length=1, max_length=2_000),
+    llm_provider: str = Form("auto"),
+    llm_model: str | None = Form(None),
     _csrf: str = Depends(verify_csrf),
     current_user=Depends(optional_user),
 ):
@@ -100,8 +103,12 @@ async def research_report(
         request, workspace_id, current_user
     )
     evidence = _selected(workspace, evidence_ids)
+    selected_route = resolve_llm_route(
+        llm_provider, llm_model, user=current_user, settings=settings
+    )
     try:
-        result = await generate_research_report(question, evidence)
+        with llm_route_scope(selected_route):
+            result = await generate_research_report(question, evidence)
     except ValueError as error:
         raise HTTPException(status_code=422, detail="invalid_report_request") from error
 

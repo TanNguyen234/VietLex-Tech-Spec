@@ -334,3 +334,46 @@ def test_empty_search_keeps_200_and_offers_explicit_official_research(monkeypatc
     assert 'Chuyển câu hỏi sang hồ sơ' in response.text
 
     assert "Registry chưa có lịch sử đầy đủ" not in response.text
+
+
+def test_search_and_reader_expose_datalists_optional_as_of_outline_filter_and_window_pin(monkeypatch):
+    from unittest.mock import AsyncMock
+    from app.api import workspace_routes
+    from app.api.dependencies import verify_csrf
+    import app.api.legal_routes as routes
+
+    client = _client(monkeypatch)
+    search_html = client.get("/search?q=lao").text
+    assert 'id="legal-type-options"' in search_html
+    assert 'id="authority-options"' in search_html
+    assert "(chọn hoặc nhập)" in search_html
+    assert 'name="as_of" value="' in search_html
+    assert "required" not in search_html.split('name="as_of"')[1].split(">")[0]
+
+    long_article = "Điều 10. Điều khoản rất dài\n" + ("Khoản chi tiết hợp đồng. " * 220)
+    assert len(long_article) > 5000
+    doc = routes.browser.get_document(7)
+    doc.content = long_article
+
+    reader_resp = client.get("/documents/7")
+    assert reader_resp.status_code == 200
+    assert "data-outline-search" in reader_resp.text
+    assert 'name="window_start"' in reader_resp.text
+    assert "required" not in reader_resp.text.split('name="as_of"')[1].split(">")[0]
+
+    app = FastAPI()
+    app.include_router(routes.router)
+    app.dependency_overrides[verify_csrf] = lambda: "ok"
+    monkeypatch.setattr(workspace_routes, "get_workspace", AsyncMock(return_value={}))
+    save = AsyncMock(return_value=True)
+    monkeypatch.setattr(workspace_routes, "pin_workspace_evidence", save)
+    pin_client = TestClient(app)
+
+    pin_resp = pin_client.post(
+        "/documents/7/sections/section-1/pin",
+        data={"workspace_id": "w-1", "note": "Đoạn 2", "window_start": "3500"},
+    )
+    assert pin_resp.status_code == 200
+    pinned = save.await_args.args[1]
+    assert pinned["excerpt"] == long_article[3500 : 3500 + 4000]
+    assert "· đoạn 2" in pinned["citation"]

@@ -13,6 +13,7 @@ from app.database import log_interaction, update_interaction_request_status
 from app.rate_limit import limiter
 from app.research_database import save_workspace_analysis
 from app.services.claim_verification import verify_claims
+from app.services.direct_llm import llm_route_scope, resolve_llm_route
 from app.services.provider_runtime import capture_provider_usage, current_provider_calls
 
 
@@ -38,6 +39,8 @@ async def claim_verification(
     workspace_id: str,
     claim_text: str = Form(..., min_length=1, max_length=2_000),
     evidence_ids: str = Form(..., min_length=1, max_length=2_000),
+    llm_provider: str = Form("auto"),
+    llm_model: str | None = Form(None),
     _csrf: str = Depends(verify_csrf),
     current_user=Depends(optional_user),
 ):
@@ -45,8 +48,12 @@ async def claim_verification(
         request, workspace_id, current_user
     )
     evidence = _selected(workspace, evidence_ids)
+    selected_route = resolve_llm_route(
+        llm_provider, llm_model, user=current_user, settings=settings
+    )
     try:
-        result = await verify_claims(claim_text, evidence)
+        with llm_route_scope(selected_route):
+            result = await verify_claims(claim_text, evidence)
     except ValueError as error:
         detail = str(error)
         if detail in {

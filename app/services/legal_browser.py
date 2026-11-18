@@ -61,7 +61,86 @@ class SearchFilters:
 
     @property
     def active(self):
-        return bool(self.legal_type or self.authority or self.issued_from or self.issued_to or self.sort != "default")
+        return bool(
+            self.legal_type
+            or self.authority
+            or self.issued_from
+            or self.issued_to
+            or self.sort != "default"
+            or self.sector
+        )
+
+
+_CANONICAL_LEGAL_TYPES = frozenset(
+    {
+        "Hiến pháp",
+        "Bộ luật",
+        "Luật",
+        "Pháp lệnh",
+        "Nghị quyết",
+        "Nghị định",
+        "Quyết định",
+        "Thông tư",
+        "Thông tư liên tịch",
+        "Chỉ thị",
+        "Công văn",
+        "Hướng dẫn",
+        "Văn bản hợp nhất",
+        "Điều ước quốc tế",
+    }
+)
+
+_CANONICAL_AUTHORITIES = frozenset(
+    {
+        "Quốc hội",
+        "Ủy ban Thường vụ Quốc hội",
+        "Chính phủ",
+        "Thủ tướng Chính phủ",
+        "Chủ tịch nước",
+        "Tòa án nhân dân tối cao",
+        "Hội đồng Thẩm phán Tòa án nhân dân tối cao",
+        "Viện kiểm sát nhân dân tối cao",
+        "Bộ Tư pháp",
+        "Bộ Tài chính",
+        "Bộ Lao động - Thương binh và Xã hội",
+        "Bộ Công an",
+        "Bộ Xây dựng",
+        "Bộ Tài nguyên và Môi trường",
+        "Bộ Kế hoạch và Đầu tư",
+        "Bộ Công Thương",
+        "Bộ Giao thông vận tải",
+        "Bộ Y tế",
+        "Bộ Giáo dục và Đào tạo",
+        "Bộ Nội vụ",
+        "Ngân hàng Nhà nước Việt Nam",
+    }
+)
+
+
+def _sanitize_postgrest_literal(value: str) -> str:
+    return " ".join(
+        value.replace("*", " ")
+        .replace("%", " ")
+        .replace("_", " ")
+        .replace("\\", " ")
+        .replace(",", " ")
+        .replace("(", " ")
+        .replace(")", " ")
+        .replace('"', " ")
+        .split()
+    )
+
+
+def _postgrest_text_match(value: str, canonical: frozenset[str]) -> str | None:
+    cleaned = value.strip()
+    if not cleaned:
+        return None
+    if cleaned in canonical:
+        return "eq." + cleaned
+    safe = _sanitize_postgrest_literal(cleaned)
+    if not safe:
+        return None
+    return "ilike." + safe
 
 
 class LegalBrowserBackendError(RuntimeError):
@@ -186,9 +265,24 @@ class SupabaseLegalStore:
             params["or"] = f"(document_number.ilike.*{safe_query}*,title.ilike.*{safe_query}*)"
         if filters:
             if filters.legal_type:
-                params["legal_type"] = "eq." + filters.legal_type
+                type_match = _postgrest_text_match(
+                    filters.legal_type, _CANONICAL_LEGAL_TYPES
+                )
+                if type_match is None:
+                    return []
+                params["legal_type"] = type_match
             if filters.authority:
-                params["issuing_authority"] = "eq." + filters.authority
+                auth_match = _postgrest_text_match(
+                    filters.authority, _CANONICAL_AUTHORITIES
+                )
+                if auth_match is None:
+                    return []
+                params["issuing_authority"] = auth_match
+            if filters.sector:
+                safe_sector = _sanitize_postgrest_literal(filters.sector)
+                if not safe_sector:
+                    return []
+                params["legal_sectors"] = f"ilike.*{safe_sector}*"
             dates = []
             if filters.issued_from:
                 dates.append("issuance_date.gte." + filters.issued_from)
@@ -563,14 +657,26 @@ class LegalBrowser:
             phrase = "%" + query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
             clauses.append("(document_number LIKE ? ESCAPE '\\' OR title LIKE ? ESCAPE '\\')")
             values.extend([phrase, phrase])
-        for column, operator, value in [("legal_type", "=", filters.legal_type), ("issuing_authority", "=", filters.authority), ("issuance_date", ">=", filters.issued_from), ("issuance_date", "<=", filters.issued_to)]:
-            if value:
-                clauses.append(f"{column} {operator} ?")
-                values.append(value)
+        if filters.legal_type:
+            clauses.append("VI_FOLD(legal_type) = ?")
+            values.append(filters.legal_type.casefold())
+        if filters.authority:
+            clauses.append("VI_FOLD(issuing_authority) = ?")
+            values.append(filters.authority.casefold())
+        if filters.issued_from:
+            clauses.append("issuance_date >= ?")
+            values.append(filters.issued_from)
+        if filters.issued_to:
+            clauses.append("issuance_date <= ?")
+            values.append(filters.issued_to)
+        if filters.sector:
+            clauses.append("INSTR(VI_FOLD(COALESCE(legal_sectors, '')), ?) > 0")
+            values.append(filters.sector.casefold())
         order = {"default": "document_id ASC", "newest": "issuance_date IS NULL, issuance_date DESC, document_id ASC", "oldest": "issuance_date IS NULL, issuance_date ASC, document_id ASC"}[filters.sort]
         sql = "SELECT document_id FROM metadata WHERE " + (" AND ".join(clauses) or "1") + f" ORDER BY {order} LIMIT ? OFFSET ?"
         try:
             with closing(sqlite3.connect(self._store.path.resolve().as_uri() + "?mode=ro", uri=True)) as connection:
+                connection.create_function("VI_FOLD", 1, lambda s: str(s).casefold() if s is not None else "")
                 deadline = time.monotonic() + 3.0
                 connection.set_progress_handler(lambda: time.monotonic() > deadline, 10_000)
                 return [row[0] for row in connection.execute(sql, [*values, limit, offset])]

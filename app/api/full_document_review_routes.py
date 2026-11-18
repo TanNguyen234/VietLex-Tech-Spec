@@ -20,6 +20,7 @@ from app.research_database import (
     save_full_document_review_batch,
     save_workspace_analysis,
 )
+from app.services.direct_llm import llm_route_scope, resolve_llm_route
 from app.services.full_document_review import (
     aggregate_full_document_review,
     plan_full_document_review,
@@ -90,6 +91,8 @@ async def run_full_document_review(
     batch_id: str = Form(..., min_length=1, max_length=40),
     input_sha256: str = Form(..., min_length=64, max_length=64),
     legal_evidence_ids: str = Form("", max_length=2_000),
+    llm_provider: str = Form("auto"),
+    llm_model: str | None = Form(None),
     _csrf: str = Depends(verify_csrf),
     current_user=Depends(optional_user),
 ):
@@ -114,8 +117,12 @@ async def run_full_document_review(
     }
     clauses = [clauses_by_id[item] for item in batch["clause_ids"]]
     analysis_id = str(uuid.uuid4())
+    selected_route = resolve_llm_route(
+        llm_provider, llm_model, user=current_user, settings=settings
+    )
     try:
-        review, metadata = await generate_contract_review(clauses, evidence)
+        with llm_route_scope(selected_route):
+            review, metadata = await generate_contract_review(clauses, evidence)
         status, result, error_type = "ok", review.model_dump(mode="json"), None
     except (ValidationError, ValueError):
         status, result, error_type, metadata = (

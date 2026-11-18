@@ -30,16 +30,43 @@
             <a href="/workspaces"><span>03 / Đối chiếu</span><strong>So sánh bằng chứng ↗</strong><small>Chọn hai nhóm nguồn trong hồ sơ để đối chiếu.</small></a>
             <a href="/workspaces"><span>04 / Phân tích</span><strong>Lập bảng nghĩa vụ ↗</strong><small>Tạo bảng từ nguồn đã ghim, lọc và xuất kết quả.</small></a>
           </div>
-          <p class="workflow-hint">Hoặc bắt đầu bằng một câu hỏi bên dưới. Nguồn hiện tại: kho VietLex; hiệu lực pháp lý chưa được xác minh.</p>
+          <div class="starter-prompts" aria-label="Câu hỏi pháp luật gợi ý">
+            <button type="button" class="starter-chip" data-prompt="Thời gian thử việc tối đa và mức lương thử việc theo Bộ luật Lao động 2019 là bao nhiêu?">Thử việc &amp; lương thử việc · BLLĐ 2019</button>
+            <button type="button" class="starter-chip" data-prompt="Mức phạt nồng độ cồn đối với người lái xe ô tô và xe máy theo Nghị định 168/2024/NĐ-CP?">Mức phạt nồng độ cồn · NĐ 168/2024</button>
+            <button type="button" class="starter-chip" data-prompt="Bên nhận đặt cọc thuê nhà từ chối giao kết hợp đồng thì xử lý tiền đặt cọc thế nào theo Bộ luật Dân sự 2015?">Đặt cọc thuê nhà · BLDS 2015</button>
+            <button type="button" class="starter-chip" data-prompt="Rà soát điều khoản phạt vi phạm 15% giá trị hợp đồng thương mại và bồi thường thiệt hại theo Luật Thương mại 2005?">Phạt vi phạm hợp đồng thương mại</button>
+          </div>
+          <p class="workflow-hint">Chọn một câu hỏi gợi ý hoặc nhập tình huống của bạn bên dưới.</p>
         </section>
       </div>
       <div id="chat-loading" class="loading-row" hidden><span class="spinner" aria-hidden="true"></span><div><strong id="pipeline-progress">Đã tiếp nhận câu hỏi</strong><small id="pipeline-elapsed">0.00 giây</small></div></div>
-      <form id="chat-form" class="composer" action="/chat" method="post">
-        {% if scoped_document %}<label>Nguồn tìm kiếm<select name="document_id"><option value="{{ scoped_document.metadata.document_id }}">Chỉ văn bản {{ scoped_document.metadata.document_number }}</option><option value="">Toàn bộ VietLex</option></select></label><p class="legal-note">Không tự mở rộng nguồn. Chỉ chọn tối đa 3 đoạn phù hợp trong văn bản; không phải rà soát toàn văn.</p>{% else %}<p class="legal-note">Nguồn tìm kiếm: Toàn bộ VietLex. Mở văn bản trong Tra cứu để hỏi riêng văn bản.</p>{% endif %}
+      <form id="chat-form" class="composer" action="/chat" data-stream-url="/chat/stream" method="post">
+        {% if scoped_document %}<label>Nguồn tìm kiếm<select name="document_id"><option value="{{ scoped_document.metadata.document_id }}">Chỉ văn bản {{ scoped_document.metadata.document_number }}</option><option value="">Toàn bộ VietLex</option></select></label><p class="legal-note">Không tự mở rộng nguồn. Chỉ chọn tối đa 3 đoạn phù hợp trong văn bản; không phải rà soát toàn văn.</p>{% endif %}
+        {% if can_select_llm_route %}
+        <div class="composer-dev-controls" aria-label="Tùy chọn mô hình và chế độ tra cứu">
+          <label>Mô hình AI
+            <select data-llm-target aria-label="Chọn mô hình AI">
+              <option value="auto|">Tự động (Auto Router)</option>
+              {% for target in llm_targets %}
+              <option value="{{ target.provider }}|{{ target.model }}">{{ target.label }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <input type="hidden" name="llm_provider" value="auto">
+          <input type="hidden" name="llm_model" value="">
+          <label>Tra cứu Web
+            <select name="web_mode" aria-label="Chế độ tra cứu Web">
+              <option value="auto">Tự động</option>
+              <option value="force">Ưu tiên duyệt Web + Tavily</option>
+              <option value="off">Chỉ kho nội bộ</option>
+            </select>
+          </label>
+        </div>
+        {% endif %}
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="session_id" value="default" id="session-id-input">
         <label for="chat-input" class="sr-only">Nhập câu hỏi pháp luật</label><textarea id="chat-input" name="message" rows="2" maxlength="2000" required placeholder="Ví dụ: Thời gian thử việc tối đa là bao lâu?">{{ prefill_question }}</textarea>
-        <div class="composer-actions"><button class="button button-primary" type="submit">Gửi câu hỏi →</button></div>
-        <p class="legal-note">Dữ liệu bên thứ ba, không tự xác nhận tình trạng hiệu lực và không thay thế tư vấn pháp lý. Luôn kiểm tra nguồn chính thức. <a href="/privacy">Quyền riêng tư</a> · <a href="/terms">Điều khoản</a></p>
+        <div class="composer-actions"><button id="chat-stop" class="button button-quiet" type="button" data-action="stop-chat" hidden>Dừng</button><button class="button button-primary" type="submit">Gửi câu hỏi →</button></div>
+        <p class="legal-note">Nguồn đối chiếu kho VietLex &amp; cổng chính thức; chưa thay thế tư vấn pháp lý hoặc chứng nhận hiệu lực hợp nhất. <a href="/privacy">Quyền riêng tư</a> · <a href="/terms">Điều khoản</a></p>
       </form>
     </section>
   </main>

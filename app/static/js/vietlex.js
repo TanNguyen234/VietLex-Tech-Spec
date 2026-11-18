@@ -2,7 +2,7 @@
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
   const csrf = () => $('#chat-form input[name="csrf_token"]')?.value || '';
-  const toast = message => { const node=$('#toast'); node.textContent=message; node.hidden=false; clearTimeout(node._timer); node._timer=setTimeout(()=>node.hidden=true,2200); };
+  const toast = message => { const node=$('#toast'); if(!node)return; node.textContent=message; node.hidden=false; clearTimeout(node._timer); node._timer=setTimeout(()=>node.hidden=true,2200); };
 
   function appendSafeFormattedText(text, parent) {
     const normalized = String(text || '').replace(/\\([*`_#-])/g, '$1');
@@ -61,11 +61,7 @@
 
   async function streamAnswer(target,isCurrent=()=>true){
     if(!isCurrent())return;
-    if(!target||matchMedia('(prefers-reduced-motion: reduce)').matches){renderMarkdownTarget(target);return;}
-    const source=target.previousElementSibling?.textContent||'';target.replaceChildren();target.dataset.rendered='streaming';
-    const text=document.createTextNode('');const cursor=document.createElement('span');cursor.className='streaming-cursor';cursor.setAttribute('aria-hidden','true');target.append(text,cursor);
-    for(let end=0;end<source.length;end+=12){if(!isCurrent())return;text.data=source.slice(0,end+12);await new Promise(resolve=>requestAnimationFrame(resolve));}
-    if(!isCurrent())return;delete target.dataset.rendered;renderMarkdownTarget(target);
+    if(target)renderMarkdownTarget(target);
   }
 
   async function loadSessions(search=''){const list=$('#sidebar-sessions-list');if(!list)return;try{const response=await fetch(`/sessions?search=${encodeURIComponent(search)}`,{credentials:'same-origin'});list.innerHTML=await response.text();}catch{list.textContent='Không thể tải lịch sử.';}}
@@ -111,30 +107,119 @@
   }
 
   async function submitChat(form){
-    const loading=$('#chat-loading');const status=$('#chat-status');const submit=form.querySelector('[type="submit"]');if(submit.disabled||chatNavigationPending)return;const revision=chatNavigationRevision;const isCurrent=()=>revision===chatNavigationRevision;const submittedMessage=form.querySelector('[name="message"]').value;const data=new FormData(form);const requestId=crypto.randomUUID?.()||`${Date.now()}-${Math.random()}`;data.set('request_id',requestId);
-    let completed=false;
-    loading.hidden=false;submit.disabled=true;status.textContent='Đang xử lý câu hỏi';$('#pipeline-progress').textContent='Đang tiếp nhận câu hỏi';$('#pipeline-elapsed').textContent='0.0s';$('#welcome-container')?.remove();const stopProgress=startProgress(requestId);
+    const loading=$('#chat-loading');const status=$('#chat-status');const submit=form.querySelector('[type="submit"]');const stopBtn=$('#chat-stop');if(submit.disabled||chatNavigationPending)return;
+    const llmPicker=$('#chat-form [data-llm-target]');if(llmPicker){const [prov,mod]=String(llmPicker.value||'auto|').split('|');const pIn=$('#chat-form input[name="llm_provider"]');const mIn=$('#chat-form input[name="llm_model"]');if(pIn)pIn.value=prov||'auto';if(mIn)mIn.value=mod||'';}
+    const revision=chatNavigationRevision;const isCurrent=()=>revision===chatNavigationRevision;const submittedMessage=form.querySelector('[name="message"]').value;const data=new FormData(form);const requestId=crypto.randomUUID?.()||`${Date.now()}-${Math.random()}`;data.set('request_id',requestId);
+    const endpoint=form.dataset?.streamUrl||'/chat';
+    const controller=typeof AbortController==='function'?new AbortController():null;
+    activeChatController=controller;
+    let completed=false;let aborted=false;const previewNodes=[];
+    const clearPreviews=()=>{while(previewNodes.length){const n=previewNodes.pop();n?.remove?.();}};
+    loading.hidden=false;submit.disabled=true;if(stopBtn)stopBtn.hidden=false;status.textContent='Đang xử lý câu hỏi';$('#pipeline-progress').textContent='Đang tiếp nhận câu hỏi';$('#pipeline-elapsed').textContent='0.0s';$('#welcome-container')?.remove();
+    const stopProgress=endpoint==='/chat'?startProgress(requestId):()=>{};
+    const startedAt=Date.now();
+    const timer=endpoint!=='/chat'?setInterval(()=>{const el=$('#pipeline-elapsed');if(el)el.textContent=`${((Date.now()-startedAt)/1000).toFixed(1)}s`;},200):null;
     try{
-      const response=await fetch('/chat',{method:'POST',body:data,credentials:'same-origin'});
-      const body=await response.text();if(!isCurrent())return;
-      if(response.ok){
-        await installPartial(body,'append',true,isCurrent);if(!isCurrent())return;
-        completed=true;
-        if(form.querySelector('[name="message"]').value===submittedMessage)form.querySelector('[name="message"]').value='';
-        await loadSessions($('#session-search').value);
+      const reqOpts={method:'POST',body:data,credentials:'same-origin',...(controller?{signal:controller.signal}:{})};
+      let response=await fetch(endpoint,reqOpts);
+      if(endpoint!=='/chat'&&(response.status===404||response.status===405))response=await fetch('/chat',reqOpts);
+      const isStream=response.ok&&response.body&&typeof response.body.getReader==='function'&&(endpoint==='/chat/stream'||String(response.headers?.get?.('content-type')||'').includes('application/x-ndjson'));
+      if(isStream){
+        const history=$('#chat-history');
+        let userPreview=null,assistantPreview=null,sourceEl=null,markdownEl=null,accumulated='';
+        const ensurePreview=()=>{
+          if(assistantPreview||!isCurrent())return;
+          userPreview=document.createElement('article');userPreview.className='message-row user streaming-preview';
+          const uCard=document.createElement('div');uCard.className='message-card';uCard.textContent=submittedMessage;
+          const uAv=document.createElement('div');uAv.className='avatar';uAv.setAttribute?.('aria-hidden','true');uAv.textContent='Bạn';
+          userPreview.append?.(uCard,uAv);
+          assistantPreview=document.createElement('article');assistantPreview.className='message-row assistant streaming-preview';
+          const aAv=document.createElement('div');aAv.className='avatar';aAv.setAttribute?.('aria-hidden','true');aAv.textContent='VL';
+          const aCard=document.createElement('div');aCard.className='message-card';
+          sourceEl=document.createElement('div');sourceEl.className='answer-source sr-only';
+          markdownEl=document.createElement('div');markdownEl.className='answer-text';markdownEl.dataset&&(markdownEl.dataset.markdown='');
+          aCard.append?.(sourceEl,markdownEl);assistantPreview.append?.(aAv,aCard);
+          history.append(userPreview,assistantPreview);
+          previewNodes.push(userPreview,assistantPreview);
+        };
+        const reader=response.body.getReader();const decoder=new TextDecoder();let buffer='';
+        let streamErrored=false;
+        const processLine=async rawLine=>{
+          const trimmed=rawLine.trim();if(!trimmed||!isCurrent())return;
+          let evt;try{evt=JSON.parse(trimmed);}catch{return;}
+          if(evt.type==='stage'){if(evt.session_id){const sIn=$('#session-id-input');if(sIn)sIn.value=evt.session_id;}if(evt.label)$('#pipeline-progress').textContent=evt.label;}
+          else if(evt.type==='delta'&&typeof evt.text==='string'){
+            ensurePreview();accumulated+=evt.text;
+            if(sourceEl)sourceEl.textContent=accumulated;
+            if(markdownEl){delete markdownEl.dataset?.rendered;if(typeof renderMarkdownTarget==='function')renderMarkdownTarget(markdownEl);else markdownEl.textContent=accumulated;}
+            history.scrollTop=history.scrollHeight;
+          }else if(evt.type==='complete'&&typeof evt.html==='string'){
+            clearPreviews();
+            if(evt.session_id){$('#session-id-input').value=evt.session_id;}
+            await installPartial(evt.html,'append',false,isCurrent);if(!isCurrent())return;
+            completed=true;
+            if(form.querySelector('[name="message"]').value===submittedMessage)form.querySelector('[name="message"]').value='';
+            await loadSessions($('#session-search')?.value||'');
+          }else if(evt.type==='error'){
+            streamErrored=true;clearPreviews();
+            appendChatErrorCard(evt.status||503,evt.message||'',null);
+          }
+        };
+        while(true){
+          const {value,done}=await reader.read();
+          buffer+=decoder.decode(value||new Uint8Array(),{stream:!done});
+          const lines=buffer.split('\n');buffer=lines.pop()||'';
+          for(const line of lines){await processLine(line);}
+          if(done||streamErrored)break;
+        }
+        if(!streamErrored&&buffer.trim())await processLine(buffer);
       }else{
-        const card=document.createElement('article');card.className='message-card error-message';
-        if(response.status===429){
-          const seconds=Number(response.headers?.get('Retry-After'));
-          const wait=Number.isFinite(seconds)&&seconds>0&&seconds<=86400
-            ? `Thử lại sau khoảng ${seconds<60?`${Math.ceil(seconds)} giây`:`${Math.ceil(seconds/60)} phút`}.`
-            : 'Vui lòng thử lại sau.';
-          card.textContent=`Đã chạm giới hạn lượt dùng. ${wait} Câu hỏi vẫn được giữ.`;
-        }else card.textContent='Yêu cầu chưa hoàn tất. Vui lòng thử lại sau.';
-        $('#chat-history').append(card);toast(card.textContent);
+        const body=await response.text();if(!isCurrent())return;
+        if(response.ok){
+          await installPartial(body,'append',true,isCurrent);if(!isCurrent())return;
+          completed=true;
+          if(form.querySelector('[name="message"]').value===submittedMessage)form.querySelector('[name="message"]').value='';
+          await loadSessions($('#session-search')?.value||'');
+        }else{
+          appendChatErrorCard(response.status,body,response.headers);
+        }
       }
-    }catch{if(isCurrent())toast('Không thể kết nối tới VietLex.');}
-    finally{stopProgress();loading.hidden=true;submit.disabled=false;if(isCurrent())status.textContent=completed?'Đã xử lý xong':'Chưa hoàn tất câu hỏi';}
+    }catch(error){
+      if(error?.name==='AbortError'){aborted=true;clearPreviews();if(isCurrent())toast('Đã dừng tạo câu trả lời.');}
+      else{clearPreviews();if(isCurrent())toast('Không thể kết nối tới VietLex.');}
+    }
+    finally{if(timer)clearInterval(timer);stopProgress();if(activeChatController===controller)activeChatController=null;loading.hidden=true;submit.disabled=false;if(stopBtn)stopBtn.hidden=true;if(isCurrent())status.textContent=completed?'Đã xử lý xong':aborted?'Đã dừng câu trả lời':'Chưa hoàn tất câu hỏi';}
+  }
+  var activeChatController=null;
+  function stopActiveChat(){if(activeChatController){activeChatController.abort();activeChatController=null;}const stopBtn=$('#chat-stop');if(stopBtn)stopBtn.hidden=true;}
+  function extractServerErrorMessage(rawText){
+    const text=String(rawText||'').trim();if(!text)return '';
+    try{const parsed=JSON.parse(text);const msg=parsed.message||parsed.detail;if(typeof msg==='string'&&msg.trim()&&!/^[a-z0-9_]+$/.test(msg.trim()))return msg.trim();}catch{}
+    const ansMatch=text.match(/class="answer-source[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
+    if(ansMatch&&ansMatch[1].trim())return ansMatch[1].replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+    const stripped=text.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+    return stripped.length<=280?stripped:'';
+  }
+  function appendChatErrorCard(statusCode,rawBody,headers){
+    const card=document.createElement('article');card.className='message-card error-message';
+    if(statusCode===401){
+      const serverMsg=extractServerErrorMessage(rawBody)||'Phiên dùng thử yêu cầu đăng nhập tài khoản đã xác minh.';
+      card.textContent=`${serverMsg} `;
+      if(typeof card.append==='function'){const link=document.createElement('a');link.href='/login';link.textContent='Đăng nhập ngay';card.append(link);}
+      toast(serverMsg);
+    }else if(statusCode===429){
+      const seconds=Number(headers?.get?.('Retry-After'));
+      const wait=Number.isFinite(seconds)&&seconds>0&&seconds<=86400
+        ? `Thử lại sau khoảng ${seconds<60?`${Math.ceil(seconds)} giây`:`${Math.ceil(seconds/60)} phút`}.`
+        : 'Vui lòng thử lại sau.';
+      card.textContent=`Đã chạm giới hạn lượt dùng. ${wait} Câu hỏi vẫn được giữ.`;
+      toast(card.textContent);
+    }else{
+      const serverMsg=extractServerErrorMessage(rawBody);
+      card.textContent=serverMsg||'Yêu cầu chưa hoàn tất. Vui lòng thử lại sau.';
+      toast(card.textContent);
+    }
+    $('#chat-history')?.append(card);
   }
 
   function openSource(button){const source=document.getElementById(button.dataset.sourceTarget);const drawer=$('#evidence-drawer');const content=$('#evidence-drawer-content');content.replaceChildren(source?.content?.cloneNode(true)||document.createTextNode('Không có nội dung nguồn.'));drawer.inert=false;drawer.classList.add('open');drawer.setAttribute('aria-hidden','false');$('#drawer-backdrop').hidden=false;drawer._returnFocus=button;drawer.querySelector('[data-action="close-drawer"]')?.focus();}
@@ -188,8 +273,9 @@
     try{const response=await fetch('/api/workspaces',{credentials:'same-origin'});if(!response.ok)throw new Error('workspace_unavailable');const payload=await response.json();form.querySelector('[name="note"]').value='';(payload.workspaces||[]).forEach(item=>{const option=document.createElement('option');option.value=item.workspace_id;option.textContent=item.title;select.append(option);});empty.hidden=select.options.length>0;form.querySelector('[type="submit"]').disabled=select.options.length===0;dialog.showModal();}catch{toast('Không thể tải workspace.');}
   }
 
+  document.addEventListener('change',event=>{const target=event.target;if(target?.matches?.('[data-llm-target]')){const [prov,mod]=String(target.value||'auto|').split('|');const pIn=$('#chat-form input[name="llm_provider"]');const mIn=$('#chat-form input[name="llm_model"]');if(pIn)pIn.value=prov||'auto';if(mIn)mIn.value=mod||'';}});
   document.addEventListener('submit',async event=>{const form=event.target;if(form.id==='pin-evidence-form'){event.preventDefault();const submit=form.querySelector('[type="submit"]');if(submit.disabled)return;submit.disabled=true;try{const workspaceId=form.querySelector('[name="workspace_id"]').value;const response=await fetch(`/workspaces/${encodeURIComponent(workspaceId)}/evidence`,{method:'POST',body:new FormData(form),credentials:'same-origin'});if(response.ok){$('#pin-evidence-dialog').close();toast('Đã ghim bằng chứng vào workspace.');}else toast(response.status===409?'Bằng chứng đã ghim hoặc workspace đã đạt giới hạn.':'Không thể ghim bằng chứng.');}catch{toast('Không thể kết nối workspace.');}finally{submit.disabled=false;}return;}if(form.id==='chat-form'){event.preventDefault();await submitChat(form);}if(form.matches('[data-feedback-form]')){event.preventDefault();const response=await fetch('/api/feedback',{method:'POST',body:new FormData(form),credentials:'same-origin'});if(response.ok){const actions=form.closest('.message-actions');const state=make('span',form.querySelector('[name="rating"]').value==='up'?'✓ Hữu ích':'✓ Đã ghi nhận');actions.querySelectorAll('[data-feedback-form]').forEach(node=>node.remove());actions.append(state);}else toast('Không thể ghi nhận phản hồi.');}});
-  document.addEventListener('click',async event=>{const target=event.target.closest('button,a');if(!target)return;if(target.dataset.prompt){$('#chat-input').value=target.dataset.prompt;$('#chat-form').requestSubmit();}const action=target.dataset.action;if(action==='new-session'){const data=new FormData();data.set('csrf_token',csrf());await navigateChat('/sessions',{method:'POST',body:data,credentials:'same-origin'});loadSessions();}if(action==='select-session'){await navigateChat(`/sessions/${encodeURIComponent(target.dataset.sessionId)}`);}if(action==='delete-session'&&confirm('Xóa hội thoại này?')){await fetch(`/sessions/${target.dataset.sessionId}`,{method:'DELETE',headers:{'X-CSRF-Token':csrf()},credentials:'same-origin'});loadSessions();}if(action==='rename-session'){const name=prompt('Tên mới cho hội thoại:',target.dataset.title||'');if(name){await fetch(`/sessions/${target.dataset.sessionId}/rename`,{method:'POST',headers:{'HX-Prompt':name},body:new URLSearchParams({csrf_token:csrf()}),credentials:'same-origin'});loadSessions();}}if(action==='open-source')openSource(target);if(action==='close-drawer')closeSource();if(action==='pin-evidence')await openPinEvidence(target);if(action==='close-pin-dialog')$('#pin-evidence-dialog').close();if(action==='copy-answer'){await navigator.clipboard.writeText(target.closest('.message-card').querySelector('.answer-source').textContent);toast('Đã sao chép câu trả lời');}if(action==='retry'){$('#chat-input').value=target.dataset.query||'';$('#chat-form').requestSubmit();}if(action==='inspect-retrieval')await inspectRetrieval(target);if(action==='evaluate')await evaluateAnswer(target,false);});
+  document.addEventListener('click',async event=>{const target=event.target.closest('button,a');if(!target)return;if(target.dataset.prompt){$('#chat-input').value=target.dataset.prompt;$('#chat-form').requestSubmit();}const action=target.dataset.action;if(action==='stop-chat'){stopActiveChat();return;}if(action==='toggle-tech-details'){const bar=target.closest('.message-meta')?.querySelector('.tech-details-bar');if(bar){bar.hidden=!bar.hidden;target.setAttribute('aria-expanded',String(!bar.hidden));}return;}if(action==='new-session'){stopActiveChat();const data=new FormData();data.set('csrf_token',csrf());await navigateChat('/sessions',{method:'POST',body:data,credentials:'same-origin'});loadSessions();}if(action==='select-session'){stopActiveChat();await navigateChat(`/sessions/${encodeURIComponent(target.dataset.sessionId)}`);}if(action==='delete-session'&&confirm('Xóa hội thoại này?')){await fetch(`/sessions/${target.dataset.sessionId}`,{method:'DELETE',headers:{'X-CSRF-Token':csrf()},credentials:'same-origin'});loadSessions();}if(action==='rename-session'){const name=prompt('Tên mới cho hội thoại:',target.dataset.title||'');if(name){await fetch(`/sessions/${target.dataset.sessionId}/rename`,{method:'POST',headers:{'HX-Prompt':name},body:new URLSearchParams({csrf_token:csrf()}),credentials:'same-origin'});loadSessions();}}if(action==='open-source')openSource(target);if(action==='close-drawer')closeSource();if(action==='pin-evidence')await openPinEvidence(target);if(action==='close-pin-dialog')$('#pin-evidence-dialog').close();if(action==='copy-answer'){await navigator.clipboard.writeText(target.closest('.message-card').querySelector('.answer-source').textContent);toast('Đã sao chép câu trả lời');}if(action==='retry'){$('#chat-input').value=target.dataset.query||'';$('#chat-form').requestSubmit();}if(action==='inspect-retrieval')await inspectRetrieval(target);if(action==='evaluate')await evaluateAnswer(target,false);});
   $('#drawer-backdrop')?.addEventListener('click',closeSource);document.addEventListener('keydown',event=>{if(event.key==='Escape'&&$('#evidence-drawer')?.classList.contains('open'))closeSource();});$('#chat-form')?.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();event.currentTarget.requestSubmit();}});let searchTimer;$('#session-search')?.addEventListener('input',event=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>loadSessions(event.target.value),180);});const savedTheme=localStorage.getItem('vietlex-theme');if(savedTheme)document.documentElement.dataset.theme=savedTheme;$('#theme-toggle')?.addEventListener('click',()=>{const next=document.documentElement.dataset.theme==='light'?'dark':'light';document.documentElement.dataset.theme=next;localStorage.setItem('vietlex-theme',next);});fetch('/readyz').then(async r=>({ok:r.ok,data:await r.json()})).then(({ok})=>{const node=$('#system-readiness');if(!node)return;node.textContent=ok?'Hệ thống sẵn sàng':'Hệ thống chưa sẵn sàng';node.classList.add(ok?'ready':'not-ready');}).catch(()=>{const node=$('#system-readiness');if(node)node.textContent='Không đọc được trạng thái';});loadSessions();renderMarkdown();
   const initialSession=new URLSearchParams(location.search).get('session');
   if(initialSession&&/^[A-Za-z0-9-]{1,100}$/.test(initialSession))void navigateChat('/sessions/'+encodeURIComponent(initialSession));

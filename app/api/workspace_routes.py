@@ -48,6 +48,7 @@ from app.services.deep_research import (
     build_research_plan,
     run_deep_research,
 )
+from app.services.direct_llm import llm_route_scope, resolve_llm_route
 from app.services.provider_runtime import capture_provider_usage, current_provider_calls
 from app.services.official_query_planner import prepare_research_plan
 from app.services.workspace_presenter import source_library, workspace_summary, search_saved_sources
@@ -195,7 +196,26 @@ async def workspace_detail(
     workspace, _client_id, _user_id = await _owned_workspace(
         request, workspace_id, current_user
     )
+    from app.api.routes import build_index_llm_controls
     from app.services.model_comparison import available_model_choices
+    from app.services.tavily_search import is_tavily_search_enabled
+
+    if is_tavily_search_enabled(settings):
+        coverage_text = (
+            "Tìm trên Cổng văn bản Chính phủ, Công báo và Tavily Search; "
+            "phân tầng nguồn cơ quan nhà nước (.gov.vn) và cổng tra cứu pháp luật. "
+            "Kết quả tìm kiếm chưa xác minh hiệu lực."
+        )
+    elif settings.OFFICIAL_BRAVE_SEARCH_ENABLED:
+        coverage_text = (
+            "Tìm trên Cổng văn bản Chính phủ, Công báo và Brave Search; chỉ giữ nguồn chính thức. "
+            "Kết quả tìm kiếm chưa xác minh hiệu lực."
+        )
+    else:
+        coverage_text = (
+            "Tìm trực tiếp trên Cổng văn bản Chính phủ và Công báo. Đoạn khớp giúp tìm tài liệu; "
+            "cần đọc toàn văn và kiểm tra hiệu lực trước khi sử dụng."
+        )
 
     return _workspace_page(
         request,
@@ -208,10 +228,11 @@ async def workspace_detail(
             "workspace_summary": workspace_summary(workspace),
             "workspace_user": current_user,
             "comparison_models": available_model_choices() if current_user and current_user.get("email_verified") else [],
-            "official_web_coverage": "Tìm trên Cổng văn bản Chính phủ, Công báo và Brave Search; chỉ giữ nguồn chính thức. Kết quả tìm kiếm chưa xác minh hiệu lực." if settings.OFFICIAL_BRAVE_SEARCH_ENABLED else "Tìm trực tiếp trên Cổng văn bản Chính phủ và Công báo. Đoạn khớp giúp tìm tài liệu; cần đọc toàn văn và kiểm tra hiệu lực trước khi sử dụng.",
+            "official_web_coverage": coverage_text,
             "official_research_enabled": (
                 settings.OFFICIAL_WEB_RESEARCH_ENABLED
             ),
+            **build_index_llm_controls(current_user, settings),
         },
     )
 
@@ -416,6 +437,8 @@ async def workspace_contract_review(
     document_id: str,
     clause_ids: str = Form(..., min_length=1, max_length=4_000),
     legal_evidence_ids: str = Form("", max_length=2_000),
+    llm_provider: str = Form("auto"),
+    llm_model: str | None = Form(None),
     _csrf: str = Depends(verify_csrf),
     current_user=Depends(optional_user),
 ):
@@ -453,8 +476,12 @@ async def workspace_contract_review(
     if len(legal_evidence) != len(requested_evidence):
         raise HTTPException(status_code=422, detail="invalid_evidence_id")
     analysis_id = str(uuid.uuid4())
+    selected_route = resolve_llm_route(
+        llm_provider, llm_model, user=current_user, settings=settings
+    )
     try:
-        result, metadata = await generate_contract_review(clauses, legal_evidence)
+        with llm_route_scope(selected_route):
+            result, metadata = await generate_contract_review(clauses, legal_evidence)
         analysis = {
             "analysis_id": analysis_id,
             "kind": "contract_review",
@@ -542,12 +569,18 @@ async def deep_research_plan(
     workspace_id: str,
     question: str = Form(..., min_length=1, max_length=2_000),
     suggest_keywords: bool = Form(False),
+    llm_provider: str = Form("auto"),
+    llm_model: str | None = Form(None),
     _csrf: str = Depends(verify_csrf),
     current_user=Depends(optional_user),
 ):
     _workspace, client_id, user_id = await _owned_workspace(request, workspace_id, current_user)
+    selected_route = resolve_llm_route(
+        llm_provider, llm_model, user=current_user, settings=settings
+    )
     try:
-        plan = await prepare_research_plan(question) if suggest_keywords else build_research_plan(question)
+        with llm_route_scope(selected_route):
+            plan = await prepare_research_plan(question) if suggest_keywords else build_research_plan(question)
         if suggest_keywords and plan.query_method != 'literal':
             await log_interaction(
                 trace_id=str(uuid.uuid4()), user_query=question,
@@ -762,6 +795,8 @@ async def selected_evidence_analysis(
     workspace_id: str,
     question: str = Form(..., min_length=1, max_length=2_000),
     evidence_ids: str = Form(..., max_length=2_000),
+    llm_provider: str = Form("auto"),
+    llm_model: str | None = Form(None),
     _csrf: str = Depends(verify_csrf),
     current_user=Depends(optional_user),
 ):
@@ -771,8 +806,12 @@ async def selected_evidence_analysis(
     evidence = _selected(workspace, evidence_ids)
     if not evidence:
         raise HTTPException(status_code=422, detail="insufficient_evidence")
+    selected_route = resolve_llm_route(
+        llm_provider, llm_model, user=current_user, settings=settings
+    )
     try:
-        result = await generate_selected_evidence_answer(question, evidence)
+        with llm_route_scope(selected_route):
+            result = await generate_selected_evidence_answer(question, evidence)
     except ValueError as error:
         raise HTTPException(
             status_code=422, detail="evidence_scope_too_large"
@@ -850,6 +889,8 @@ async def compare_evidence(
     workspace_id: str,
     evidence_a: str = Form(..., max_length=2_000),
     evidence_b: str = Form(..., max_length=2_000),
+    llm_provider: str = Form("auto"),
+    llm_model: str | None = Form(None),
     _csrf: str = Depends(verify_csrf),
     current_user=Depends(optional_user),
 ):
@@ -860,14 +901,18 @@ async def compare_evidence(
     group_b = _selected(workspace, evidence_b)
     if not group_a or not group_b:
         raise HTTPException(status_code=422, detail="insufficient_evidence")
-    return await _structured_response(
-        workspace_id=workspace_id,
-        client_id=client_id,
-        user_id=user_id,
-        kind="comparison",
-        evidence=group_a + group_b,
-        operation=generate_comparison(group_a, group_b),
+    selected_route = resolve_llm_route(
+        llm_provider, llm_model, user=current_user, settings=settings
     )
+    with llm_route_scope(selected_route):
+        return await _structured_response(
+            workspace_id=workspace_id,
+            client_id=client_id,
+            user_id=user_id,
+            kind="comparison",
+            evidence=group_a + group_b,
+            operation=generate_comparison(group_a, group_b),
+        )
 
 
 @router.post("/workspaces/{workspace_id}/analyses/obligations")
@@ -876,6 +921,8 @@ async def obligation_matrix(
     request: Request,
     workspace_id: str,
     evidence_ids: str = Form(..., max_length=2_000),
+    llm_provider: str = Form("auto"),
+    llm_model: str | None = Form(None),
     _csrf: str = Depends(verify_csrf),
     current_user=Depends(optional_user),
 ):
@@ -885,11 +932,15 @@ async def obligation_matrix(
     evidence = _selected(workspace, evidence_ids)
     if not evidence:
         raise HTTPException(status_code=422, detail="insufficient_evidence")
-    return await _structured_response(
-        workspace_id=workspace_id,
-        client_id=client_id,
-        user_id=user_id,
-        kind="obligation_matrix",
-        evidence=evidence,
-        operation=generate_obligation_matrix(evidence),
+    selected_route = resolve_llm_route(
+        llm_provider, llm_model, user=current_user, settings=settings
     )
+    with llm_route_scope(selected_route):
+        return await _structured_response(
+            workspace_id=workspace_id,
+            client_id=client_id,
+            user_id=user_id,
+            kind="obligation_matrix",
+            evidence=evidence,
+            operation=generate_obligation_matrix(evidence),
+        )

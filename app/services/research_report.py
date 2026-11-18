@@ -213,12 +213,16 @@ async def generate_research_report(question: str, evidence: list[dict]) -> dict:
             "provider_error", generation, error_type="ResearchReportProviderError"
         )
     try:
+        from app.services.direct_llm import strip_markdown_json_fence
+
         if getattr(generation, "finish_reason", None) == "MAX_TOKENS":
             return _failure(
                 "invalid_structured_response", generation,
                 error_type="ResearchReportValidationError", error_code="output_token_limit",
             )
-        report = ResearchReport.model_validate_json(generation.text)
+        report = ResearchReport.model_validate_json(
+            strip_markdown_json_fence(generation.text)
+        )
     except ValidationError as error:
         return _failure(
             "invalid_structured_response",
