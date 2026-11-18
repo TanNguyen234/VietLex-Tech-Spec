@@ -30,7 +30,7 @@ from app.api.dependencies import (
     verify_csrf,
     verify_csrf_header,
 )
-from app.config import get_settings
+from app.config import get_settings, is_stateless_development
 from app.services.public_evaluation import (
     DailyRagasQuota,
     build_code_evaluation,
@@ -86,6 +86,7 @@ from app.account_database import (
     get_user_by_id,
     list_users,
     revoke_all_auth_sessions,
+    set_user_role,
     set_user_status,
     write_admin_audit,
 )
@@ -93,7 +94,14 @@ from app.account_database import (
 router = APIRouter()
 templates = Jinja2Templates(directory=APP_ROOT / "templates")
 settings = get_settings()
-templates.env.globals["local_stateless_mode"] = settings.APP_ENV == "development"
+templates.env.globals["local_stateless_mode"] = is_stateless_development(settings)
+_NON_RECOVERY_STATUSES = {
+    "clarification",
+    "unsupported_intent",
+    "blocked_input",
+    "blocked_output",
+    "technical_error",
+}
 _public_ragas_quota = DailyRagasQuota(
     client_limit=settings.PUBLIC_RAGAS_CLIENT_DAILY_LIMIT,
     global_limit=settings.PUBLIC_RAGAS_GLOBAL_DAILY_LIMIT,
@@ -553,6 +561,7 @@ async def chat(
                     "bot_msg": GUARDRAIL_UNAVAILABLE_MESSAGE,
                     "trace_id": trace_id,
                     "session_id": session_id,
+                    "show_recovery": False,
                 },
                 status_code=503,
             )
@@ -603,7 +612,13 @@ async def chat(
             response = templates.TemplateResponse(
                 request,
                 "chat_message.html",
-                {"user_msg": message, "bot_msg": rejection_message, "trace_id": trace_id, "session_id": session_id}
+                {
+                    "user_msg": message,
+                    "bot_msg": rejection_message,
+                    "trace_id": trace_id,
+                    "session_id": session_id,
+                    "show_recovery": False,
+                },
             )
             if should_reload_sessions:
                 response.headers["HX-Trigger"] = "load-sessions"
@@ -747,7 +762,12 @@ async def chat(
                     "evidence_views": [
                         present_context(item) for item in cached_contexts
                     ],
-                    "claim_support": build_claim_support(cached_text, cached_contexts),
+                    "claim_support": (
+                        build_claim_support(cached_text, cached_contexts)
+                        if cached_contexts
+                        else []
+                    ),
+                    "show_recovery": bool(cached_contexts),
                 },
             )
             if should_reload_sessions:
@@ -856,6 +876,7 @@ async def chat(
                     "bot_msg": error_response,
                     "trace_id": trace_id,
                     "session_id": session_id,
+                    "show_recovery": False,
                 },
                 status_code=500,
             )
@@ -932,6 +953,8 @@ async def chat(
                     "session_id": session_id,
                     "contexts": context_used,
                     "evidence_views": [present_context(item) for item in context_used],
+                    "claim_support": [],
+                    "show_recovery": False,
                 },
                 status_code=503,
             )
@@ -1033,6 +1056,7 @@ async def chat(
                     "bot_msg": GUARDRAIL_UNAVAILABLE_MESSAGE,
                     "trace_id": trace_id,
                     "session_id": session_id,
+                    "show_recovery": False,
                 },
                 status_code=503,
             )
@@ -1152,7 +1176,20 @@ async def chat(
         response = templates.TemplateResponse(
             request,
             "chat_message.html",
-            {"user_msg": message, "bot_msg": final_response, "trace_id": trace_id, "session_id": session_id, "contexts": context_used, "evidence_views": [present_context(item) for item in context_used], "claim_support": build_claim_support(final_response, context_used)}
+            {
+                "user_msg": message,
+                "bot_msg": final_response,
+                "trace_id": trace_id,
+                "session_id": session_id,
+                "contexts": context_used,
+                "evidence_views": [present_context(item) for item in context_used],
+                "claim_support": (
+                    build_claim_support(final_response, context_used)
+                    if context_used
+                    else []
+                ),
+                "show_recovery": req_status not in _NON_RECOVERY_STATUSES,
+            },
         )
         if should_reload_sessions:
             response.headers["HX-Trigger"] = "load-sessions"
@@ -1259,6 +1296,7 @@ async def chat_stream(
         current_sess: str,
         *,
         cached: bool = False,
+        show_recovery: bool = True,
     ) -> str:
         return templates.env.get_template("chat_message.html").render(
             request=request,
@@ -1269,7 +1307,10 @@ async def chat_stream(
             session_id=current_sess,
             contexts=contexts_list,
             evidence_views=[present_context(item) for item in contexts_list],
-            claim_support=build_claim_support(bot_text, contexts_list),
+            claim_support=(
+                build_claim_support(bot_text, contexts_list) if contexts_list else []
+            ),
+            show_recovery=show_recovery,
         )
 
     async def stream_events():
@@ -1423,7 +1464,9 @@ async def chat_stream(
                     yield _ndjson_line(
                         {
                             "type": "complete",
-                            "html": render_message_card(rejection_message, [], current_session_id),
+                            "html": render_message_card(
+                                rejection_message, [], current_session_id, show_recovery=False
+                            ),
                             "session_id": current_session_id,
                             "title": updated_title,
                             "trace_id": trace_id,
@@ -1558,83 +1601,99 @@ async def chat_stream(
                     )
                     return
 
-                yield _ndjson_line(
-                    {
-                        "type": "stage",
-                        "stage": "corpus_retrieval",
-                        "label": "Đang truy xuất văn bản pháp luật trong kho nội bộ",
-                    }
+                guidance_hit = (
+                    deterministic_guidance(clean_query)
+                    if scoped_outcome is None
+                    else None
                 )
-                if effective_web_mode == "force":
+                if guidance_hit is not None:
+                    guidance_kind, guidance_text = guidance_hit
+                    context_used = []
+                    rewritten_query = ""
+                    latency_info = {
+                        "response_kind": guidance_kind,
+                        "retrieval_status": "skipped",
+                        "t_rewrite": 0.0,
+                        "t_retrieval": 0.0,
+                    }
+                else:
                     yield _ndjson_line(
                         {
                             "type": "stage",
-                            "stage": "web_supplement",
-                            "label": "Đang tra cứu bổ sung nguồn chính thức & Tavily",
+                            "stage": "corpus_retrieval",
+                            "label": "Đang truy xuất văn bản pháp luật trong kho nội bộ",
                         }
                     )
-
-                try:
-                    with llm_route_scope(selected_route):
-                        retrieve_kwargs: dict[str, Any] = {}
-                        if scoped_outcome is not None:
-                            retrieve_kwargs["scoped_outcome"] = scoped_outcome
-                        if previous_user_query:
-                            retrieve_kwargs["previous_user_query"] = previous_user_query
-                        if effective_web_mode != "auto":
-                            retrieve_kwargs["web_mode"] = effective_web_mode
-                        context_used, rewritten_query, latency_info, guidance_text = (
-                            await retrieve_stream_contexts(
-                                clean_query,
-                                **retrieve_kwargs,
-                            )
+                    if effective_web_mode == "force":
+                        yield _ndjson_line(
+                            {
+                                "type": "stage",
+                                "stage": "web_supplement",
+                                "label": "Đang tra cứu bổ sung nguồn chính thức & Tavily",
+                            }
                         )
-                except (RetrievalPipelineError, ProviderHttpAttemptBudgetExceeded) as error:
-                    t_total = round(time.perf_counter() - request_started, 4)
-                    tech_error = {
-                        "stage": (
-                            "answer_generation"
-                            if isinstance(error, ProviderHttpAttemptBudgetExceeded)
-                            else getattr(error, "status", "retrieval_error")
-                        ),
-                        "error_type": error.__class__.__name__,
-                        "message": sanitize_error_message(error),
-                    }
-                    error_response = "Hệ thống tra cứu văn bản pháp luật gặp sự cố kỹ thuật. Vui lòng thử lại sau."
-                    metrics = build_online_metrics(
-                        trace_id=trace_id,
-                        request_status="technical_error",
-                        latency={"t_total": t_total, "t_cache": t_cache, "t_guardrails_input": t_guardrails_input},
-                        context_used=[],
-                        bot_response=error_response,
-                        cached=False,
-                        technical_error=tech_error,
-                        ragas_mode="off",
-                        ragas_sample_rate=0.0,
-                    )
-                    await persist_interaction(
-                        trace_id=trace_id,
-                        user_query=clean_query,
-                        bot_response=error_response,
-                        contexts=[],
-                        cached=False,
-                        session_id=current_session_id,
-                        request_status="technical_error",
-                        technical_error=tech_error,
-                        latency=metrics.latency,
-                        observed_provider=metrics.observed_provider,
-                        observed_model=metrics.observed_model,
-                        provider_usage=metrics.provider_usage,
-                        ragas_mode=metrics.ragas_mode,
-                        ragas_status=metrics.ragas_status,
-                        ragas_selected=False,
-                        ragas_executed=False,
-                        citation_count=0,
-                        context_count=0,
-                        no_evidence=False,
-                    )
-                    yield _ndjson_line({"type": "error", "status": 503, "message": error_response})
-                    return
+
+                    try:
+                        with llm_route_scope(selected_route):
+                            retrieve_kwargs: dict[str, Any] = {}
+                            if scoped_outcome is not None:
+                                retrieve_kwargs["scoped_outcome"] = scoped_outcome
+                            if previous_user_query:
+                                retrieve_kwargs["previous_user_query"] = previous_user_query
+                            if effective_web_mode != "auto":
+                                retrieve_kwargs["web_mode"] = effective_web_mode
+                            context_used, rewritten_query, latency_info, guidance_text = (
+                                await retrieve_stream_contexts(
+                                    clean_query,
+                                    **retrieve_kwargs,
+                                )
+                            )
+                    except (RetrievalPipelineError, ProviderHttpAttemptBudgetExceeded) as error:
+                        t_total = round(time.perf_counter() - request_started, 4)
+                        tech_error = {
+                            "stage": (
+                                "answer_generation"
+                                if isinstance(error, ProviderHttpAttemptBudgetExceeded)
+                                else getattr(error, "status", "retrieval_error")
+                            ),
+                            "error_type": error.__class__.__name__,
+                            "message": sanitize_error_message(error),
+                        }
+                        error_response = "Hệ thống tra cứu văn bản pháp luật gặp sự cố kỹ thuật. Vui lòng thử lại sau."
+                        metrics = build_online_metrics(
+                            trace_id=trace_id,
+                            request_status="technical_error",
+                            latency={"t_total": t_total, "t_cache": t_cache, "t_guardrails_input": t_guardrails_input},
+                            context_used=[],
+                            bot_response=error_response,
+                            cached=False,
+                            technical_error=tech_error,
+                            ragas_mode="off",
+                            ragas_sample_rate=0.0,
+                        )
+                        await persist_interaction(
+                            trace_id=trace_id,
+                            user_query=clean_query,
+                            bot_response=error_response,
+                            contexts=[],
+                            cached=False,
+                            session_id=current_session_id,
+                            request_status="technical_error",
+                            technical_error=tech_error,
+                            latency=metrics.latency,
+                            observed_provider=metrics.observed_provider,
+                            observed_model=metrics.observed_model,
+                            provider_usage=metrics.provider_usage,
+                            ragas_mode=metrics.ragas_mode,
+                            ragas_status=metrics.ragas_status,
+                            ragas_selected=False,
+                            ragas_executed=False,
+                            citation_count=0,
+                            context_count=0,
+                            no_evidence=False,
+                        )
+                        yield _ndjson_line({"type": "error", "status": 503, "message": error_response})
+                        return
 
                 streamed_deltas: list[str] = []
                 citation_adjustments: dict[str, Any] = {}
@@ -2040,7 +2099,12 @@ async def chat_stream(
                 yield _ndjson_line(
                     {
                         "type": "complete",
-                        "html": render_message_card(final_response, context_used, current_session_id),
+                        "html": render_message_card(
+                            final_response,
+                            context_used,
+                            current_session_id,
+                            show_recovery=(req_status not in _NON_RECOVERY_STATUSES),
+                        ),
                         "session_id": current_session_id,
                         "title": updated_title,
                         "trace_id": trace_id,
@@ -2222,8 +2286,15 @@ async def get_session_history(
             "evidence_views": [
                 present_context(item) for item in (message.get("contexts") or [])
             ],
-            "claim_support": build_claim_support(
-                message.get("bot_response") or "", message.get("contexts") or []
+            "claim_support": (
+                build_claim_support(
+                    message.get("bot_response") or "", message.get("contexts") or []
+                )
+                if (message.get("contexts") or [])
+                else []
+            ),
+            "show_recovery": (
+                (message.get("request_status") or "ok") not in _NON_RECOVERY_STATUSES
             ),
         }
         for message in raw_messages
@@ -2500,6 +2571,36 @@ async def admin_set_user_status(
     await write_admin_audit(
         str(admin["_id"]),
         f"account_{account_status}",
+        "user",
+        user_id,
+        request_id=request.headers.get("x-request-id"),
+    )
+    return RedirectResponse("/admin/users", status_code=303)
+
+
+@router.post("/admin/users/{user_id}/role")
+@limiter.limit(settings.SESSION_RATE_LIMIT)
+async def admin_set_user_role(
+    request: Request,
+    user_id: str,
+    account_role: str = Form(...),
+    _csrf: str = Depends(verify_csrf),
+    admin: dict = Depends(require_admin),
+):
+    if str(admin["_id"]) == user_id:
+        raise HTTPException(
+            status_code=409,
+            detail="Administrators cannot change their own role.",
+        )
+    try:
+        changed = await set_user_role(user_id[:100], account_role)
+    except ValueError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from None
+    if not changed:
+        raise HTTPException(status_code=404, detail="User not found.")
+    await write_admin_audit(
+        str(admin["_id"]),
+        f"role_{account_role}",
         "user",
         user_id,
         request_id=request.headers.get("x-request-id"),

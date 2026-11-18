@@ -309,6 +309,9 @@ def test_index_renders_dev_admin_controls_starter_chips_stop_button_and_scroll_c
     css = (ROOT / "app/static/css/vietlex-redesign.css").read_text(encoding="utf-8")
     assert "min-width:761px" in css or "min-width: 761px" in css
     assert "overflow-y:auto" in css or "overflow-y: auto" in css
+    assert ".button[hidden]" in css and "display:none" in css
+    assert "justify-content:flex-end" in css or "justify-content: flex-end" in css
+    assert 'id="chat-input" name="message" rows="1"' in html
 
 
 def test_public_production_user_cannot_override_web_mode_or_see_dev_controls_and_all_templates_pass_csp(
@@ -446,4 +449,82 @@ def test_workspace_free_web_research_web_mode_off_disables_tavily(
     assert is_tavily_search_enabled(eff) is False
     assert is_tavily_extract_enabled(eff) is False
     assert "tavily" not in dict(_configured_provider(eff).providers)
+
+
+def test_greeting_in_chat_and_stream_skips_retrieval_and_hides_claim_support_and_recovery(
+    stream_client, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.services import direct_llm, rag_pipeline
+
+    client, log, _cache = stream_client
+    monkeypatch.setattr(routes, "check_input_guardrails", AsyncMock(return_value=(True, "")))
+    monkeypatch.setattr(routes, "check_output_guardrails", AsyncMock(return_value=(True, "")))
+    forbidden = AsyncMock(side_effect=AssertionError("retrieval/LLM forbidden for greeting"))
+    monkeypatch.setattr(routes, "retrieve_stream_contexts", forbidden)
+    monkeypatch.setattr(routes, "stream_llm_response_with_metadata", forbidden)
+    monkeypatch.setattr(direct_llm, "generate_llm_response_with_metadata", forbidden)
+    monkeypatch.setattr(rag_pipeline, "retrieve_configured_legal_evidence", forbidden)
+    monkeypatch.setattr(rag_pipeline, "generate_response_with_metadata", forbidden)
+
+    stream_resp = client.post(
+        "/chat/stream",
+        data={"message": "Xin chào", "csrf_token": "valid-csrf"},
+    )
+    assert stream_resp.status_code == 200
+    events = _parse_ndjson(stream_resp.text)
+    stages = [ev.get("stage") for ev in events if ev.get("type") == "stage"]
+    assert "corpus_retrieval" not in stages
+    assert "web_supplement" not in stages
+    complete = next(ev for ev in events if ev.get("type") == "complete")
+    stream_html = complete["html"]
+    assert "VietLex" in stream_html
+    assert "Liên kết bằng chứng" not in stream_html
+    assert "Nguồn pháp lý truy xuất" not in stream_html
+    assert "Tìm nguồn chính thức trong hồ sơ" not in stream_html
+    assert log.call_args.kwargs["request_status"] == "unsupported_intent"
+
+    chat_resp = client.post(
+        "/chat",
+        data={"message": "Xin chào", "csrf_token": "valid-csrf"},
+    )
+    assert chat_resp.status_code == 200
+    assert "VietLex" in chat_resp.text
+    assert "Liên kết bằng chứng" not in chat_resp.text
+    assert "Nguồn pháp lý truy xuất" not in chat_resp.text
+    assert "Tìm nguồn chính thức trong hồ sơ" not in chat_resp.text
+    assert log.call_args.kwargs["request_status"] == "unsupported_intent"
+    forbidden.assert_not_awaited()
+
+
+def test_history_replay_hides_claim_support_and_recovery_for_non_retrieval_statuses(
+    stream_client, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    client, _log, _cache = stream_client
+    monkeypatch.setattr(
+        routes,
+        "get_session_messages",
+        AsyncMock(
+            return_value=[
+                {
+                    "trace_id": "trace-hist-1",
+                    "user_query": "Xin chào",
+                    "bot_response": "Xin chào! Tôi là VietLex — trợ lý tra cứu và nghiên cứu pháp luật Việt Nam.",
+                    "contexts": [],
+                    "request_status": "unsupported_intent",
+                },
+                {
+                    "trace_id": "trace-hist-2",
+                    "user_query": "Tôi chỉ nói bên kia giữ tiền của tôi?",
+                    "bot_response": "Tôi chưa đủ dữ kiện để kết luận.",
+                    "contexts": [],
+                    "request_status": "clarification",
+                },
+            ]
+        ),
+    )
+    resp = client.get("/sessions/sess-greeting-1")
+    assert resp.status_code == 200
+    assert "Liên kết bằng chứng" not in resp.text
+    assert "Tìm nguồn chính thức trong hồ sơ" not in resp.text
+
 

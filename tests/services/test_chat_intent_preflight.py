@@ -23,6 +23,35 @@ def test_unambiguously_nonlegal_request_gets_short_unsupported_response(query):
 
 
 @pytest.mark.parametrize('query', [
+    'Xin chào',
+    'Chào bạn!',
+    'Hello',
+    'Hi VietLex',
+    'Alo',
+    'Cảm ơn bạn nhé',
+    'Bạn là ai?',
+    'VietLex là gì?',
+    'Hôm nay thời tiết thế nào?',
+])
+@pytest.mark.asyncio
+async def test_greeting_and_chitchat_return_unsupported_intent_without_retrieval(monkeypatch, query):
+    from app.services import rag_pipeline
+
+    kind, text = deterministic_guidance(query)
+    assert kind == 'unsupported_intent'
+    assert 'pháp luật' in text
+
+    forbidden = AsyncMock(side_effect=AssertionError('provider pipeline forbidden'))
+    for name in ('rewrite_query_with_metadata', 'retrieve_configured_legal_evidence', 'generate_response_with_metadata'):
+        monkeypatch.setattr(rag_pipeline, name, forbidden)
+    ans, contexts, latency = await rag_pipeline.run_advanced_rag(query, rewrite_mode='on')
+    assert contexts == []
+    assert latency['response_kind'] == 'unsupported_intent'
+    assert 'pháp luật' in ans
+    forbidden.assert_not_awaited()
+
+
+@pytest.mark.parametrize('query', [
     'Làm bánh chuối để bán cần giấy phép gì?',
     'Tôi thuê nhà, bên kia giữ tiền cọc không trả theo hợp đồng.',
     'Quy định mới về bảo vệ người mua hàng trên mạng là gì?',

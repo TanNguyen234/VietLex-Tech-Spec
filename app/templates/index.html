@@ -64,7 +64,7 @@
         </div>
         {% endif %}
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="session_id" value="default" id="session-id-input">
-        <label for="chat-input" class="sr-only">Nhập câu hỏi pháp luật</label><textarea id="chat-input" name="message" rows="2" maxlength="2000" required placeholder="Ví dụ: Thời gian thử việc tối đa là bao lâu?">{{ prefill_question }}</textarea>
+        <label for="chat-input" class="sr-only">Nhập câu hỏi pháp luật</label><textarea id="chat-input" name="message" rows="1" maxlength="2000" required placeholder="Ví dụ: Thời gian thử việc tối đa là bao lâu?">{{ prefill_question }}</textarea>
         <div class="composer-actions"><button id="chat-stop" class="button button-quiet" type="button" data-action="stop-chat" hidden>Dừng</button><button class="button button-primary" type="submit">Gửi câu hỏi →</button></div>
         <p class="legal-note">Nguồn đối chiếu kho VietLex &amp; cổng chính thức; chưa thay thế tư vấn pháp lý hoặc chứng nhận hiệu lực hợp nhất. <a href="/privacy">Quyền riêng tư</a> · <a href="/terms">Điều khoản</a></p>
       </form>
