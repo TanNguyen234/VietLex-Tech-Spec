@@ -6,23 +6,25 @@ from dataclasses import dataclass, field
 from uuid import NAMESPACE_URL, UUID, uuid5
 
 
+_HEADING_PREFIX = r"^(?:\s*(?:#{1,6}\s+|\*\*|__)?\s*)"
+
 CHAPTER_RE = re.compile(
-    r"^\s*(Chương\s+(?:[IVXLCDM]+|\d+))\b",
+    rf"{_HEADING_PREFIX}(Chương\s+(?:[IVXLCDM]+|\d+))\b",
     re.IGNORECASE,
 )
 SECTION_RE = re.compile(
-    r"^\s*((?:Mục|Tiểu mục)\s+\d+)\b",
+    rf"{_HEADING_PREFIX}((?:Mục|Tiểu mục)\s+\d+)\b",
     re.IGNORECASE,
 )
 ARTICLE_RE = re.compile(
-    r"^\s*(Điều\s+\d+[A-Za-z]?)\b",
+    rf"{_HEADING_PREFIX}(Điều\s+\d+[A-Za-zđĐ]?)\b",
     re.IGNORECASE,
 )
 CLAUSE_RE = re.compile(r"^\s*(\d+)\.\s+", re.MULTILINE)
 HEADING_RE = re.compile(
-    r"^\s*(?:Chương\s+(?:[IVXLCDM]+|\d+)|"
+    rf"{_HEADING_PREFIX}(?:Chương\s+(?:[IVXLCDM]+|\d+)|"
     r"(?:Mục|Tiểu mục)\s+\d+|"
-    r"Điều\s+\d+[A-Za-z]?)\b.*$",
+    r"Điều\s+\d+[A-Za-zđĐ]?)\b.*$",
     re.IGNORECASE | re.MULTILINE,
 )
 
@@ -77,7 +79,21 @@ class EvidenceChunk:
 
 
 def normalize_legal_text(text: str) -> str:
-    normalized = unicodedata.normalize("NFC", text or "")
+    if not text:
+        return ""
+    if (
+        unicodedata.is_normalized("NFC", text)
+        and "\r" not in text
+        and "\ufeff" not in text
+        and "\u00a0" not in text
+        and "\t" not in text
+        and "  " not in text
+        and " \n" not in text
+        and "\n " not in text
+        and "\n\n\n" not in text
+    ):
+        return text.strip()
+    normalized = unicodedata.normalize("NFC", text)
     normalized = normalized.replace("\ufeff", "").replace("\u00a0", " ")
     normalized = normalized.replace("\r\n", "\n").replace("\r", "\n")
     normalized = re.sub(r"[ \t]+", " ", normalized)
@@ -98,7 +114,7 @@ def deterministic_point_id(
 
 
 def _tokens(text: str) -> list[str]:
-    return re.findall(r"\S+", text)
+    return text.split()
 
 
 def _truncate_tokens(text: str, limit: int) -> str:

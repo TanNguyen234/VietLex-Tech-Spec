@@ -1,0 +1,172 @@
+{
+  "body_search_coverage": {
+    "document_count": 6541,
+    "index_version": 1
+  },
+  "cloud_state": {
+    "captured_at": "2026-11-18T04:45:12.434550+00:00",
+    "qdrant_collections": {
+      "vietlex-embedding-staging": {
+        "disk_bytes": 138520365,
+        "payload_schema_keys": [],
+        "points_count": 2049,
+        "ram_bytes": 172452,
+        "status": "green"
+      },
+      "vietlex-legal-body-search-v1": {
+        "disk_bytes": 485206933,
+        "payload_schema_keys": [
+          "body",
+          "issuance_date",
+          "issuing_authority",
+          "legal_type"
+        ],
+        "points_count": 6541,
+        "ram_bytes": 277844838,
+        "status": "green"
+      },
+      "vietlex-legal-rag-v3-vertex-1024": {
+        "disk_bytes": 1813507051,
+        "payload_schema_keys": [
+          "document_id",
+          "issuance_year",
+          "legal_type",
+          "validity_hint"
+        ],
+        "points_count": 224999,
+        "ram_bytes": 9518096,
+        "status": "green"
+      },
+      "vietlex-rerank-staging": {
+        "disk_bytes": 103025416,
+        "payload_schema_keys": [
+          "created_at",
+          "request_id"
+        ],
+        "points_count": 0,
+        "ram_bytes": 64,
+        "status": "green"
+      }
+    },
+    "qdrant_total_disk_bytes": 2540259765,
+    "qdrant_total_ram_bytes": 287535450,
+    "supabase_table_counts": {
+      "legal_body_active": 0,
+      "legal_body_passages": 0,
+      "legal_body_runs": 0,
+      "legal_documents": 6541
+    }
+  },
+  "expected_documents": 6541,
+  "expected_v3_points": 224999,
+  "live_article_checks": {
+    "296215": {
+      "expected": 689,
+      "label": "91/2015/QH13 (BLDS 2015)",
+      "live_distinct_articles": 689,
+      "ok": true,
+      "present": true
+    },
+    "296661": {
+      "expected": 425,
+      "label": "100/2015/QH13 (BLHS 2015)",
+      "live_distinct_articles": 425,
+      "ok": true,
+      "present": true
+    },
+    "333670": {
+      "expected": 220,
+      "label": "45/2019/QH14 (BLLĐ 2019)",
+      "live_distinct_articles": 220,
+      "ok": true,
+      "present": true
+    },
+    "523642": {
+      "expected": 260,
+      "label": "31/2024/QH15 (Luật Đất đai 2024)",
+      "live_distinct_articles": 260,
+      "ok": true,
+      "present": true
+    },
+    "557190": {
+      "expected": 141,
+      "label": "41/2024/QH15 (Luật BHXH 2024)",
+      "live_distinct_articles": 141,
+      "ok": true,
+      "present": true
+    },
+    "619502": {
+      "expected": ">=50",
+      "label": "168/2024/NĐ-CP",
+      "live_distinct_articles": 55,
+      "ok": true,
+      "present": true
+    },
+    "655275": {
+      "expected": 1,
+      "label": "203/2025/QH15",
+      "live_distinct_articles": 2,
+      "ok": true,
+      "present": true
+    },
+    "665865": {
+      "expected": 1,
+      "label": "110/2025/UBTVQH15",
+      "live_distinct_articles": 2,
+      "ok": true,
+      "present": true
+    },
+    "665866": {
+      "expected": 1,
+      "label": "293/2025/NĐ-CP",
+      "live_distinct_articles": 5,
+      "ok": true,
+      "present": true
+    },
+    "665872": {
+      "expected": 1,
+      "label": "52/VBHN-VPQH (Hiến pháp hợp nhất 2025)",
+      "live_distinct_articles": 120,
+      "ok": true,
+      "present": true
+    },
+    "675268": {
+      "expected": 1,
+      "label": "108/2025/QH15 (Luật Quản lý thuế 2025)",
+      "live_distinct_articles": 53,
+      "ok": true,
+      "present": true
+    }
+  },
+  "observed_body_search_documents": 6541,
+  "observed_supabase_documents": 6541,
+  "observed_v3_points": 224999,
+  "observed_v3_unique_documents": 6541,
+  "parity": {
+    "body_search_equals_curated": true,
+    "body_search_sha256_exact": true,
+    "english_387595_absent": true,
+    "supabase_equals_curated": true,
+    "supabase_sha256_exact": true,
+    "v3_equals_curated": true
+  },
+  "postgrest_observability": {
+    "gin_indexes_dropped": "requires_sql_admin_connection",
+    "supabase_db_size_bytes": "unobservable_via_postgrest"
+  },
+  "quotas": {
+    "qdrant_disk_under_2_8_gib": true,
+    "qdrant_ram_under_600_mib": true,
+    "qdrant_total_disk_bytes": 2540259765,
+    "qdrant_total_disk_gib": 2.366,
+    "qdrant_total_ram_bytes": 287535450,
+    "qdrant_total_ram_mib": 274.22,
+    "supabase_legal_body_passages": 0
+  },
+  "schema": "vietlex-curated-v4-verify-receipt-v1",
+  "selection_sha256": "219a5f1a69ad25d4820da6f2321a0ae35767727b507ba3cf083aae992b1fd7f8",
+  "status": "passed",
+  "v3_missing_v4_payload_fields": 0,
+  "verified_at": "2026-11-18T04:45:14.146037+00:00",
+  "wall_seconds": 335.37
+}

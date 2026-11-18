@@ -1,0 +1,132 @@
+{
+  "completed_at": "2026-11-18T00:43:03.380258+00:00",
+  "dropped_qdrant_collections": [
+    "vietlex-legal-rag-v2-pilot-384",
+    "vietlex-rerank-staging"
+  ],
+  "post_state": {
+    "captured_at": "2026-11-18T00:43:03.376610+00:00",
+    "qdrant_collections": {
+      "vietlex-embedding-staging": {
+        "disk_bytes": 138520365,
+        "payload_schema_keys": [],
+        "points_count": 2049,
+        "ram_bytes": 172452,
+        "status": "green"
+      },
+      "vietlex-legal-body-search-v1": {
+        "disk_bytes": 586146370,
+        "payload_schema_keys": [
+          "body",
+          "issuance_date",
+          "issuing_authority",
+          "legal_type"
+        ],
+        "points_count": 14982,
+        "ram_bytes": 311230506,
+        "status": "green"
+      },
+      "vietlex-legal-rag-v3-vertex-1024": {
+        "disk_bytes": 1312305379,
+        "payload_schema_keys": [
+          "document_id",
+          "issuance_year",
+          "legal_type",
+          "validity_hint"
+        ],
+        "points_count": 160177,
+        "ram_bytes": 8933388,
+        "status": "green"
+      },
+      "vietlex-rerank-staging": {
+        "disk_bytes": 103025416,
+        "payload_schema_keys": [
+          "created_at",
+          "request_id"
+        ],
+        "points_count": 0,
+        "ram_bytes": 64,
+        "status": "green"
+      }
+    },
+    "qdrant_total_disk_bytes": 2139997530,
+    "qdrant_total_ram_bytes": 320336410,
+    "supabase_table_counts": {
+      "legal_body_active": 0,
+      "legal_body_passages": 0,
+      "legal_body_runs": 0,
+      "legal_documents": 14982
+    }
+  },
+  "postgrest_observability": {
+    "gin_indexes_dropped": "requires_sql_admin_connection",
+    "supabase_db_size_bytes": "unobservable_via_postgrest"
+  },
+  "pre_reclaim_receipt": "data\\ingestion\\curated_v4_pre_reclaim_receipt.json",
+  "pre_state": {
+    "captured_at": "2026-11-17T22:46:40.664406+00:00",
+    "qdrant_collections": {
+      "vietlex-embedding-staging": {
+        "disk_bytes": 138520365,
+        "payload_schema_keys": [],
+        "points_count": 2049,
+        "ram_bytes": 172452,
+        "status": "green"
+      },
+      "vietlex-legal-body-search-v1": {
+        "disk_bytes": 586146370,
+        "payload_schema_keys": [
+          "body",
+          "issuance_date",
+          "issuing_authority",
+          "legal_type"
+        ],
+        "points_count": 14982,
+        "ram_bytes": 311230506,
+        "status": "green"
+      },
+      "vietlex-legal-rag-v2-pilot-384": {
+        "disk_bytes": 681771147,
+        "payload_schema_keys": [
+          "dataset_revision",
+          "document_id",
+          "legal_type"
+        ],
+        "points_count": 134334,
+        "ram_bytes": 25285690,
+        "status": "green"
+      },
+      "vietlex-legal-rag-v3-vertex-1024": {
+        "disk_bytes": 1112525404,
+        "payload_schema_keys": [],
+        "points_count": 142063,
+        "ram_bytes": 7389012,
+        "status": "green"
+      },
+      "vietlex-rerank-staging": {
+        "disk_bytes": 337953946,
+        "payload_schema_keys": [
+          "created_at",
+          "request_id"
+        ],
+        "points_count": 0,
+        "ram_bytes": 40064,
+        "status": "green"
+      }
+    },
+    "qdrant_total_disk_bytes": 2856917232,
+    "qdrant_total_ram_bytes": 344117724,
+    "supabase_table_counts": {
+      "legal_body_active": 0,
+      "legal_body_passages": 101573,
+      "legal_body_runs": 1,
+      "legal_documents": 14982
+    }
+  },
+  "reconstructed_post_state": true,
+  "reconstructed_reason": "Restored authentic live post-reclaim cloud snapshot after isolating pytest receipt defaults.",
+  "recreated_qdrant_collections": [
+    "vietlex-rerank-staging"
+  ],
+  "status": "reclaimed"
+}

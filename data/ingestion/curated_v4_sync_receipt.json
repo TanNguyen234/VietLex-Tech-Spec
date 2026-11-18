@@ -1,0 +1,16 @@
+{
+  "body_search_deleted_stale_docs": 14351,
+  "body_search_upserted_docs": 5910,
+  "completed_at": "2026-11-18T04:27:10.542505+00:00",
+  "curated_documents": 6541,
+  "curated_v3_points": 224999,
+  "reused_cached_hashes": 224638,
+  "selection_sha256": "219a5f1a69ad25d4820da6f2321a0ae35767727b507ba3cf083aae992b1fd7f8",
+  "status": "synced",
+  "supabase_deleted_stale_docs": 0,
+  "supabase_upserted_docs": 1047,
+  "v3_deleted_stale_points": 0,
+  "v3_upserted_points": 0,
+  "vertex_embedded_new_hashes": 0,
+  "wall_seconds": 857.58
+}

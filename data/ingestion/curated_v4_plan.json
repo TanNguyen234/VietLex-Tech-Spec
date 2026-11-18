@@ -1,0 +1,144 @@
+{
+  "dataset_revision": "4d4e10b201544e8a4c49a1d3fa496595a7d486d0",
+  "english_387595_excluded": true,
+  "estimates": {
+    "qdrant_body_search_disk_bytes": 358920495,
+    "qdrant_v3_disk_bytes": 1766242150,
+    "qdrant_v3_disk_gib": 1.645,
+    "supabase_estimated_bytes": 181349303,
+    "supabase_estimated_mb": 181.35
+  },
+  "generated_at": "2026-11-18T00:45:08.022389+00:00",
+  "key_documents": {
+    "296215": {
+      "chunk_count": 703,
+      "distinct_articles": 689,
+      "label": "91/2015/QH13 (BLDS 2015)",
+      "min_expected_articles": 689,
+      "present": true,
+      "tier": "A",
+      "validity_hint": "active_candidate"
+    },
+    "296661": {
+      "chunk_count": 644,
+      "distinct_articles": 425,
+      "label": "100/2015/QH13 (BLHS 2015)",
+      "min_expected_articles": 425,
+      "present": true,
+      "tier": "A",
+      "validity_hint": "active_candidate"
+    },
+    "333670": {
+      "chunk_count": 258,
+      "distinct_articles": 220,
+      "label": "45/2019/QH14 (BLLĐ 2019)",
+      "min_expected_articles": 220,
+      "present": true,
+      "tier": "A",
+      "validity_hint": "active_candidate"
+    },
+    "523642": {
+      "chunk_count": 583,
+      "distinct_articles": 260,
+      "label": "31/2024/QH15 (Luật Đất đai 2024)",
+      "min_expected_articles": 260,
+      "present": true,
+      "tier": "A",
+      "validity_hint": "active_candidate"
+    },
+    "557190": {
+      "chunk_count": 217,
+      "distinct_articles": 141,
+      "label": "41/2024/QH15 (Luật BHXH 2024)",
+      "min_expected_articles": 141,
+      "present": true,
+      "tier": "A",
+      "validity_hint": "active_candidate"
+    },
+    "619502": {
+      "chunk_count": 276,
+      "distinct_articles": 55,
+      "label": "168/2024/NĐ-CP",
+      "min_expected_articles": 50,
+      "present": true,
+      "tier": "B",
+      "validity_hint": "active_candidate"
+    },
+    "655275": {
+      "chunk_count": 7,
+      "distinct_articles": 2,
+      "label": "203/2025/QH15",
+      "min_expected_articles": 1,
+      "present": true,
+      "tier": "A",
+      "validity_hint": "active_candidate"
+    },
+    "665865": {
+      "chunk_count": 2,
+      "distinct_articles": 2,
+      "label": "110/2025/UBTVQH15",
+      "min_expected_articles": 1,
+      "present": true,
+      "tier": "D",
+      "validity_hint": "active_candidate"
+    },
+    "665866": {
+      "chunk_count": 30,
+      "distinct_articles": 5,
+      "label": "293/2025/NĐ-CP",
+      "min_expected_articles": 1,
+      "present": true,
+      "tier": "B",
+      "validity_hint": "active_candidate"
+    },
+    "665872": {
+      "chunk_count": 131,
+      "distinct_articles": 120,
+      "label": "52/VBHN-VPQH (Hiến pháp hợp nhất 2025)",
+      "min_expected_articles": 1,
+      "present": true,
+      "tier": "A",
+      "validity_hint": "active_candidate"
+    },
+    "675268": {
+      "chunk_count": 157,
+      "distinct_articles": 53,
+      "label": "108/2025/QH15 (Luật Quản lý thuế 2025)",
+      "min_expected_articles": 1,
+      "present": true,
+      "tier": "A",
+      "validity_hint": "active_candidate"
+    }
+  },
+  "repository": "vohuutridung/vietnamese-legal-documents",
+  "schema": "vietlex-curated-v4-plan-v1",
+  "selection_sha256": "219a5f1a69ad25d4820da6f2321a0ae35767727b507ba3cf083aae992b1fd7f8",
+  "skipped_counts": {
+    "empty_chunks": 0,
+    "english_untranslated": 77,
+    "excluded_quality_flag": 2,
+    "invalid_content_or_hash": 0,
+    "invalid_date": 0,
+    "invalid_metadata": 1,
+    "non_curated_tier": 0,
+    "tier_e_budget_capped": 1690
+  },
+  "superseded_tagged_documents": 44,
+  "tier_counts": {
+    "A": 627,
+    "B": 1712,
+    "D": 2288,
+    "E": 1914
+  },
+  "tier_points": {
+    "A": 52390,
+    "B": 114911,
+    "D": 28496,
+    "E": 29202
+  },
+  "total_documents": 6541,
+  "total_points": 224999,
+  "total_utf8_bytes": 377811048,
+  "total_utf8_mb": 377.81,
+  "wall_seconds": 112.76
+}

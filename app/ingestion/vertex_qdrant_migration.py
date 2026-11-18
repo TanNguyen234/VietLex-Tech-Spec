@@ -8,7 +8,7 @@ import sqlite3
 from dataclasses import dataclass
 from itertools import zip_longest
 from pathlib import Path
-from typing import Callable, Protocol, Sequence
+from typing import Callable, Mapping, Protocol, Sequence
 from uuid import NAMESPACE_URL, uuid5
 
 from qdrant_client import models
@@ -217,6 +217,7 @@ def build_vertex_point(
     dense_vector: Sequence[float],
     sparse_vector: object,
     contract: VertexQdrantContract,
+    extra_payload: Mapping[str, object] | None = None,
 ) -> models.PointStruct:
     if len(dense_vector) != contract.vector_size:
         raise ValueError("dense vector dimension does not match migration contract")
@@ -233,6 +234,13 @@ def build_vertex_point(
             "migration_schema": "vietlex-vertex-qdrant-v1",
         }
     )
+    if extra_payload is not None:
+        overlap = set(extra_payload).intersection(payload)
+        if overlap:
+            raise ValueError(
+                f"extra_payload cannot override core v3 payload fields: {sorted(overlap)}"
+            )
+        payload.update(extra_payload)
     return models.PointStruct(
         id=record.record_id,
         vector={
