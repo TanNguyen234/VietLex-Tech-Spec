@@ -1,0 +1,20 @@
+{
+  "run_id": "ragas-golden50-v4-remediated-20261118",
+  "created_at": "2026-11-18T07:46:03.892351+00:00",
+  "source_answer_run_id": "answer-golden50-v4-remediated-20261118",
+  "git_sha": "431003ace17e15c7b7bf3443b1d78c261840dc2b",
+  "git_dirty": true,
+  "git_diff_sha256": "9568b6ad9fc45ae1c42b538488cc1c082ebac71a1bb22ad83c97d93d7a2b5102",
+  "git_diff_hash_contract": "literal tracked git diff --binary HEAD",
+  "dataset_sha256": "caa3fc19cd22bcce4b87e96adf13544d0c3cc174cca2d0e365a848e0da9a981f",
+  "labels_sha256": "31f834696388545f13820e90766569ba95e8a8ed5bafe79dec2b35c6ad7a9dbe",
+  "configuration_fingerprint": "1adbb32c9fd7863bb11c5f6dd2103d0210fc8bfa8f9f7fb21590620b2cb62fc5",
+  "command": "C:\\Users\\VI TINH THANH AN\\.gemini\\antigravity\\brain\\4b60a4bd-0894-4d5a-8878-a7bf3139854f\\scratch\\run_ragas_saved_golden50.py --answer-run-dir docs/evaluation/runs/answer-golden50-v4-remediated-20261118 --run-id ragas-golden50-v4-remediated-20261118 --case-concurrency 3 --judge-concurrency 6",
+  "provider_model_ids": [
+    "gemini/gemini-2.5-flash",
+    "google_vertex_ai/gemini-3.5-flash",
+    "groq/openai/gpt-oss-20b"
+  ],
+  "metric_version": "ragas-0.4.3",
+  "evidence": "live judge; saved unchanged responses and contexts; no online retrieval/generation/guard rerun; no DB access"
+}

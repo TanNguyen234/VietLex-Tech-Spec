@@ -1,0 +1,17 @@
+{
+  "source_answer_run_id": "answer-golden50-v4-curated-20261118",
+  "dataset_path": "docs/evaluation/golden50-v3/cases.json",
+  "sidecar_path": "docs/evaluation/golden50-v3/labels.json",
+  "metric_version": "ragas-0.4.3",
+  "case_concurrency": 3,
+  "judge_call_concurrency": 6,
+  "configured_judges": [
+    "google_vertex_ai/gemini-3.5-flash",
+    "gemini/gemini-2.5-flash",
+    "openrouter/meta-llama/llama-3.3-70b-instruct",
+    "groq/openai/gpt-oss-20b"
+  ],
+  "observed_judges": [
+    "google_vertex_ai/gemini-3.5-flash"
+  ]
+}

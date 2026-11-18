@@ -1,0 +1,1602 @@
+[
+  {
+    "case_id": "case_001",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.5,
+        "seconds": 13.081,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 17.284,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 58.126,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 45.365,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 3,
+    "evidence": "live_judge",
+    "answer_sha256": "ee1450eadbe4ad17603c794e9345bb7658079c7804bc1d5398d3a93d74495588"
+  },
+  {
+    "case_id": "case_002",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.4444444444444444,
+        "seconds": 14.309,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 11.051,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 12.685,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 26.047,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 1,
+    "evidence": "live_judge",
+    "answer_sha256": "29dbeac6524d1f688cb5ca7c02229fa0c0835f1e25d64411a82b4a44bb012750"
+  },
+  {
+    "case_id": "case_003",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.5,
+        "seconds": 33.683,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 41.478,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 63.425,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 21.901,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 8,
+    "evidence": "live_judge",
+    "answer_sha256": "4087f257ba651f53d0db80431a3d7b0b354262949c8af4d9433cb0136e7ca151"
+  },
+  {
+    "case_id": "case_004",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.42857142857142855,
+        "seconds": 24.67,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 18.543,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 59.227,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 32.145,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 8,
+    "evidence": "live_judge",
+    "answer_sha256": "401a323de34d1c94ce3d0561544497dae5de78cc0c8d4325c1947c09f8ac2749"
+  },
+  {
+    "case_id": "case_005",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.625,
+        "seconds": 27.906,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 21.672,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 30.409,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 5.083,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 8,
+    "evidence": "live_judge",
+    "answer_sha256": "49087d75ce17788a23c5d400a23a1c3f9a0725daf63ca754195f585d1091381b"
+  },
+  {
+    "case_id": "case_006",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 6.185,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 22.987,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.9999999999,
+        "seconds": 39.479,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 22.393,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 3,
+    "evidence": "live_judge",
+    "answer_sha256": "256e8593b2b44a401061e734fecbb62cd05f1621d94becb297d5b15567564f33"
+  },
+  {
+    "case_id": "case_007",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.5,
+        "seconds": 14.579,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 3.488,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 22.83,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 4.604,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 9,
+    "evidence": "live_judge",
+    "answer_sha256": "bb6dba9078a0b9eea136b1e4713de1774cf591caf4b70a67806eae90486896c0"
+  },
+  {
+    "case_id": "case_008",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 9.507,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 8.649,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 21.113,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 9.991,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 6,
+    "evidence": "live_judge",
+    "answer_sha256": "4d4ccd2d8e775ca8234c2f524a6e967bc4b6d613bbcd37de9ffb21a434ae7e88"
+  },
+  {
+    "case_id": "case_009",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.4,
+        "seconds": 5.399,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 3.274,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 29.603,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 2.33,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 8,
+    "evidence": "live_judge",
+    "answer_sha256": "8696a738b8f0c313a2c3c67cdbb45d013648def3a0d5828b2b3bd3b14b188164"
+  },
+  {
+    "case_id": "case_010",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.2857142857142857,
+        "seconds": 5.346,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 5.99,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 27.028,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 8.099,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 8,
+    "evidence": "live_judge",
+    "answer_sha256": "e4ee2f6ad76b0596f5720837815960647f854fce308290567ae7368c05ab5ee9"
+  },
+  {
+    "case_id": "case_011",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 17.729,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.5,
+        "seconds": 5.647,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.99999999995,
+        "seconds": 12.682,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.6666666666666666,
+        "seconds": 28.365,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 3,
+    "evidence": "live_judge",
+    "answer_sha256": "ba1d77a6f2cfc5d744e38d930a8022748ca4db55a3c7e4f61b384a3beeb8cff6"
+  },
+  {
+    "case_id": "case_012",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.5714285714285714,
+        "seconds": 4.744,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 6.216,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 69.172,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 5.013,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 8,
+    "evidence": "live_judge",
+    "answer_sha256": "63d4b2265837fd56b79ea668a71cc38f22ffae6a28f8411365faac5cf626f6d2"
+  },
+  {
+    "case_id": "case_013",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 28.313,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 4.209,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.99999999995,
+        "seconds": 111.566,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 4.788,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 8,
+    "evidence": "live_judge",
+    "answer_sha256": "c279c3c80f78e5489377d95eb08fff16ef3118ea782d304dd4a165581531166a"
+  },
+  {
+    "case_id": "case_014",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 5.942,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 4.296,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.9999999999,
+        "seconds": 11.68,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 6.112,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 3,
+    "evidence": "live_judge",
+    "answer_sha256": "4424c49b1a9dd8bee5e5e103110464676b47ae27869f566e8b745290e8ae3048"
+  },
+  {
+    "case_id": "case_015",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 13.296,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 14.041,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 216.378,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 24.268,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 16,
+    "evidence": "live_judge",
+    "answer_sha256": "f08d375e67e31414643fdfbc9e49f761740368591c44974764d86c238e57e1db"
+  },
+  {
+    "case_id": "case_016",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 28.178,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.5,
+        "seconds": 16.175,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.49999999995,
+        "seconds": 30.228,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 8.368,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 3,
+    "evidence": "live_judge",
+    "answer_sha256": "1378222e17c150ce86f8465e22072fdd43a0ca6bce216505e8ec597652a47f6f"
+  },
+  {
+    "case_id": "case_017",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 19.505,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 10.833,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.9999999999,
+        "seconds": 16.518,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 2.397,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 3,
+    "evidence": "live_judge",
+    "answer_sha256": "b2fd92c0bdb6b1404e7aa0b9cf28155617fbb3c834828831528c34076a95344c"
+  },
+  {
+    "case_id": "case_018",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 17.09,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 4.34,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.9999999999,
+        "seconds": 31.225,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 4.594,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 3,
+    "evidence": "live_judge",
+    "answer_sha256": "86c86d9e96173fa175e5ab1dda9701dcdf9c8c1aac924941602d2dbbdf3dcf3c"
+  },
+  {
+    "case_id": "case_019",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.07692307692307693,
+        "seconds": 14.222,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 13.552,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 83.973,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 41.183,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 8,
+    "evidence": "live_judge",
+    "answer_sha256": "97b8eb12670edfbce4489ec17b975e0d1cb420f28371f62a86904b79e0152038"
+  },
+  {
+    "case_id": "case_020",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 9.359,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 18.682,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.99999999995,
+        "seconds": 31.587,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 13.498,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 3,
+    "evidence": "live_judge",
+    "answer_sha256": "ba1b5c847840f3f3a1629961b25f8262a77e6fb6827b2ca95c49495161badd35"
+  },
+  {
+    "case_id": "case_021",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 25.914,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 52.765,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 43.409,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 3.006,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 8,
+    "evidence": "live_judge",
+    "answer_sha256": "964a3a860d034ef219c6ef737de572b78094e3b14b41096dca7e118b09d2bce8"
+  },
+  {
+    "case_id": "case_022",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.5555555555555556,
+        "seconds": 54.981,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 12.646,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.9999999999,
+        "seconds": 23.4,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 16.868,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 3,
+    "evidence": "live_judge",
+    "answer_sha256": "971cc905879503a0087d28d5bd4a0b5642887d096306336a7ea9839f1a5c4b32"
+  },
+  {
+    "case_id": "case_023",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.42857142857142855,
+        "seconds": 16.185,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 9.267,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 40.34,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "error",
+        "value": null,
+        "seconds": 47.853,
+        "error": "InstructorRetryException: Connection error."
+      }
+    },
+    "context_count": 8,
+    "evidence": "live_judge",
+    "answer_sha256": "450873a871d2e7d3d7fe85a1dd6b86bdc3ff1c8057eac0dc5ec6c04e40d71623"
+  },
+  {
+    "case_id": "case_024",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.5,
+        "seconds": 8.241,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 16.431,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.9999999999,
+        "seconds": 18.515,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "error",
+        "value": null,
+        "seconds": 71.241,
+        "error": "InstructorRetryException: Connection error."
+      }
+    },
+    "context_count": 3,
+    "evidence": "live_judge",
+    "answer_sha256": "fd3a1ec3aa778b483f753cedda0458a61be550099a638c01e0a399303008c9de"
+  },
+  {
+    "case_id": "case_025",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.2857142857142857,
+        "seconds": 25.455,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 11.612,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 17.622,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 12.206,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 3,
+    "evidence": "live_judge",
+    "answer_sha256": "3a0ca1f5926f891fd7e88e1907a38b066b20f9bfa1dfd504a68412432187703e"
+  },
+  {
+    "case_id": "case_026",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.9166666666666666,
+        "seconds": 13.753,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.75,
+        "seconds": 7.278,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.5833333333041666,
+        "seconds": 17.536,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 4.0,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 3,
+    "evidence": "live_judge",
+    "answer_sha256": "5ea4462ddff9275650f4df3712a7cb25dd9dc3992a5e2f4a93780ed27d7d3a46"
+  },
+  {
+    "case_id": "case_027",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.4,
+        "seconds": 8.464,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 8.928,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 118.886,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "error",
+        "value": null,
+        "seconds": 64.965,
+        "error": "InstructorRetryException: Connection error."
+      }
+    },
+    "context_count": 8,
+    "evidence": "live_judge",
+    "answer_sha256": "d3be8cb9ce4423b7bc9d9a9d54384cd31e62739ece217af13fc1a08d0b477415"
+  },
+  {
+    "case_id": "case_028",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.5555555555555556,
+        "seconds": 7.189,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 9.093,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 93.157,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 10.397,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 8,
+    "evidence": "live_judge",
+    "answer_sha256": "79b1c56a78ff627c7c375154dbe452c103517932541de281b4397cba60a2ae15"
+  },
+  {
+    "case_id": "case_029",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.5714285714285714,
+        "seconds": 41.108,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 3.761,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 105.552,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 25.396,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 8,
+    "evidence": "live_judge",
+    "answer_sha256": "45eb41e5fb6855a9ba38605a2569b4741da9b3d912a0ece6de5b984bf26f8eda"
+  },
+  {
+    "case_id": "case_030",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 41.168,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 4.113,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 74.76,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 11.355,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 8,
+    "evidence": "live_judge",
+    "answer_sha256": "7356e8cd5b879044621df492eea6dfa2979ecaf82e0cb3c94b397b4dd8dfd5a0"
+  },
+  {
+    "case_id": "case_031",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.5714285714285714,
+        "seconds": 9.548,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 63.34,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 105.836,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "error",
+        "value": null,
+        "seconds": 85.652,
+        "error": "InstructorRetryException: Connection error."
+      }
+    },
+    "context_count": 8,
+    "evidence": "live_judge",
+    "answer_sha256": "1f75b8487ad4d2c2214a7ac403d0d1c63a93d02694def6ded89ecb878d534064"
+  },
+  {
+    "case_id": "case_032",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.5833333333333334,
+        "seconds": 34.61,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 6.932,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 34.604,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 8.698,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 3,
+    "evidence": "live_judge",
+    "answer_sha256": "816c99761b57f6be74d1a4d0cd419604bcd296f9a9038dd830b47f86d843b3c2"
+  },
+  {
+    "case_id": "case_033",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 18.445,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.25,
+        "seconds": 26.822,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 43.094,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 28.027,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 8,
+    "evidence": "live_judge",
+    "answer_sha256": "2e9a25ea434601a1179546a10450473f5e0a062320a61522dd77f824b461180b"
+  },
+  {
+    "case_id": "case_034",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.42857142857142855,
+        "seconds": 24.099,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 13.782,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 54.278,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 15.359,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 8,
+    "evidence": "live_judge",
+    "answer_sha256": "2a7a7fd038f45410848066a1c1f47fbd1728d767a7b923c57b329de0b2cdd7c3"
+  },
+  {
+    "case_id": "case_035",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.2,
+        "seconds": 8.531,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 4.512,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 77.113,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 5.532,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 14,
+    "evidence": "live_judge",
+    "answer_sha256": "c59ed71df74aef36c082f835b66032012d923c6eefeb32cae5b1c99b7be49a2c"
+  },
+  {
+    "case_id": "case_036",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.4,
+        "seconds": 9.451,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 8.712,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.249999999975,
+        "seconds": 43.374,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 5.737,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 8,
+    "evidence": "live_judge",
+    "answer_sha256": "a8fdfa3d76803145afda117f2dc8675698e27228674f42b2801b8c3ed33b1b98"
+  },
+  {
+    "case_id": "case_037",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.7,
+        "seconds": 6.618,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 9.632,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 42.483,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 2.065,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 8,
+    "evidence": "live_judge",
+    "answer_sha256": "5b24748b7cbe56a68aa5e2a0c5dded9d7d6ec862040a269824eb9d8e4c0709e8"
+  },
+  {
+    "case_id": "case_038",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.7,
+        "seconds": 22.584,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 4.322,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.9999999999,
+        "seconds": 14.289,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 22.853,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 3,
+    "evidence": "live_judge",
+    "answer_sha256": "fd566e17af03a1455d7f67efd07335991a8fa2e12348a04211050b8be8ce4b89"
+  },
+  {
+    "case_id": "case_039",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.4,
+        "seconds": 17.993,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 21.559,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 36.465,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 9.403,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 8,
+    "evidence": "live_judge",
+    "answer_sha256": "91da0dfcfea41828bae5e0874cd93e8507a2fd3dc771d542138ca135ba995c10"
+  },
+  {
+    "case_id": "case_040",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.5,
+        "seconds": 14.999,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 8.15,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 59.488,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 11.732,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 8,
+    "evidence": "live_judge",
+    "answer_sha256": "639edb4b6a0687478e5e812e4f2beb662a07ff6c8233b3033b760629b984a79b"
+  },
+  {
+    "case_id": "case_041",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.875,
+        "seconds": 9.651,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.75,
+        "seconds": 7.295,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.8333333332916666,
+        "seconds": 26.745,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 10.288,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 3,
+    "evidence": "live_judge",
+    "answer_sha256": "627af01b9eab55cad462d53215224af40bdac7c37fc6abaf13a1bfd11dd2cc84"
+  },
+  {
+    "case_id": "case_042",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.25,
+        "seconds": 51.156,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 6.062,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 132.227,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 3.197,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 16,
+    "evidence": "live_judge",
+    "answer_sha256": "89f0b0d59a370e0edb37c7470cdf0a5223a0823b01362bf5cd218f96f4162c0e"
+  },
+  {
+    "case_id": "case_043",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 5.882,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 42.756,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 19.865,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 8.677,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 8,
+    "evidence": "live_judge",
+    "answer_sha256": "6327bed022b29489d9cde3599e214614cbdfdcb668a9402aa8397433309f16b8"
+  },
+  {
+    "case_id": "case_044",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 7.116,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 5.5,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 41.475,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 14.204,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 8,
+    "evidence": "live_judge",
+    "answer_sha256": "d70485fc437acadd18859d0b7ec177617b9d8ef8360f6192b408b76b5e63533c"
+  },
+  {
+    "case_id": "case_045",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.6923076923076923,
+        "seconds": 33.672,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 12.128,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 38.184,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 7.691,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 8,
+    "evidence": "live_judge",
+    "answer_sha256": "955e2959d7768cd315587bf812f2ca5add464a49eea4557c91f1f03f2a1238e7"
+  },
+  {
+    "case_id": "case_046",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.5555555555555556,
+        "seconds": 10.102,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 13.231,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 85.353,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 19.45,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 8,
+    "evidence": "live_judge",
+    "answer_sha256": "f4611d55c31ff3cf4148fe1b3502ecf215ee66d363f72f59444fc508070c5cb1"
+  },
+  {
+    "case_id": "case_047",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.2857142857142857,
+        "seconds": 55.516,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 31.781,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "error",
+        "value": null,
+        "seconds": 129.737,
+        "error": "InstructorRetryException: Connection error."
+      },
+      "context_recall": {
+        "status": "error",
+        "value": null,
+        "seconds": 35.479,
+        "error": "InstructorRetryException: Connection error."
+      }
+    },
+    "context_count": 8,
+    "evidence": "live_judge",
+    "answer_sha256": "8a30c4668d340c68d2eaded67f1ec6b06f9c82ec0869390b7ddb08207da6b0db"
+  },
+  {
+    "case_id": "case_048",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 22.752,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.75,
+        "seconds": 13.535,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.9999999999,
+        "seconds": 42.859,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 7.469,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 3,
+    "evidence": "live_judge",
+    "answer_sha256": "48b34e64c78d622fa93d77009f8d67fe3955d66e396838abb0b28d43fd408a53"
+  },
+  {
+    "case_id": "case_049",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.16666666666666666,
+        "seconds": 9.99,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 7.104,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.9999999999,
+        "seconds": 55.565,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 1.0,
+        "seconds": 10.384,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 8,
+    "evidence": "live_judge",
+    "answer_sha256": "4f33bfccc6ffd1fefa97cbad3cc90c6874afbb9c80ef4677ecd0fb06aec55d96"
+  },
+  {
+    "case_id": "case_050",
+    "metrics": {
+      "faithfulness": {
+        "status": "ok",
+        "value": 0.42857142857142855,
+        "seconds": 13.873,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "answer_accuracy": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 5.052,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_precision": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 67.751,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      },
+      "context_recall": {
+        "status": "ok",
+        "value": 0.0,
+        "seconds": 16.838,
+        "judge": "google_vertex_ai/gemini-3.5-flash"
+      }
+    },
+    "context_count": 8,
+    "evidence": "live_judge",
+    "answer_sha256": "5ec3d67b715525a5d66e0f94c72af212a0b524240f00e25fd99ddbddf22129df"
+  }
+]
