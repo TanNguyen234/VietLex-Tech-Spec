@@ -23,6 +23,7 @@ DEEP_INSPECTION_LIMIT = 48
 # Measured: Luật BHXH 2024 (88+ pages inspected) extracts in ~10 s alone; the former 15 s cap
 # timed out under concurrent search load (source_processing_timeout).
 SMART_WORKER_TIMEOUT_SECONDS = 30
+DEEP_SMART_WORKER_TIMEOUT_SECONDS = 30
 EXTRACTION_VERSION = "official-pdf-reader-v2"
 _WORKER_OUTPUT_LIMIT = PDF_MAX_BYTES + 2_000_000
 _WORKER_CLEANUP_STEP_TIMEOUT_SECONDS = 1.0
@@ -133,6 +134,12 @@ def _window(payload: bytes, page_start: int, use_ocr: bool, page_limit: int):
         raise SourceReadError("source_malformed_pdf") from None
 
 
+_HINT_ARTICLES_RE = re.compile(
+    r"\[(?:gợi ý điều khoản|goi y dieu khoan|hint_articles)\s*:\s*([0-9,\s]+)\]",
+    re.I,
+)
+
+
 def _query_profile(question: str):
     from app.services.legal_topic_terms import (
         extract_official_topic_phrases,
@@ -140,7 +147,12 @@ def _query_profile(question: str):
         local_rescue_terms,
     )
 
-    query = str(question or "")[:2_000]
+    raw_query = str(question or "")[:2_000]
+    hint_articles: set[int] = set()
+    for match in _HINT_ARTICLES_RE.finditer(raw_query):
+        for token in re.findall(r"\d{1,4}", match.group(1)):
+            hint_articles.add(int(token))
+    query = _HINT_ARTICLES_RE.sub(" ", raw_query)
     terms = set(local_rescue_terms(query, limit=32))
     article_numbers = {
         int(number)
@@ -150,19 +162,21 @@ def _query_profile(question: str):
         fold_topic_text(phrase)
         for phrase in extract_official_topic_phrases(query, limit=8)
     )
-    return terms, article_numbers, phrases
+    return terms, article_numbers, phrases, hint_articles
 
 
 def _relevance_score(text: str, profile) -> int:
     from app.services.legal_topic_terms import fold_topic_text, local_rescue_terms
 
-    terms, article_numbers, phrases = profile
+    terms, article_numbers, phrases = profile[:3]
+    hint_articles = profile[3] if len(profile) > 3 else set()
+    target_articles = article_numbers | hint_articles
     candidate = fold_topic_text(text)
     score = 3 * len(terms & set(local_rescue_terms(text, limit=64)))
     score += 6 * sum(1 for phrase in phrases if phrase and phrase in candidate)
     score += 20 * sum(
         1
-        for number in article_numbers
+        for number in target_articles
         if re.search(rf"(?<![a-z0-9])dieu\s+{number}(?!\d)", candidate)
     )
     return score
@@ -260,8 +274,89 @@ def _probe_pages(page_count: int) -> list[int]:
     )
 
 
+def _page_article_bounds(text: str) -> tuple[int, int] | None:
+    from app.services.legal_topic_terms import fold_topic_text
+
+    folded = fold_topic_text(text)
+    nums = [
+        int(m.group(1))
+        for m in re.finditer(r"(?<![a-z0-9])dieu\s+(\d{1,4})(?!\d)", folded)
+    ]
+    return (min(nums), max(nums)) if nums else None
+
+
+def _select_deep_pages(
+    page_count: int,
+    page_limit: int,
+    scores: dict[int, int],
+    already_inspected: set[int],
+    remaining_inspections: int,
+) -> list[int]:
+    """Select up to page_limit sorted pages; split across distant high-scoring clusters when needed."""
+    length = min(page_limit, page_count)
+    positive = sorted(
+        ((page, score) for page, score in scores.items() if score > 0),
+        key=lambda item: (-item[1], item[0]),
+    )
+    if not positive:
+        start = 1
+        return list(range(start, min(page_count, start + length - 1) + 1))
+
+    # Pick up to 3 distinct cluster anchors separated by at least 6 pages.
+    anchors: list[int] = []
+    min_score = max(1, positive[0][1] // 3)
+    for page, score in positive:
+        if score < min_score and anchors:
+            break
+        if all(abs(page - existing) >= 6 for existing in anchors):
+            anchors.append(page)
+        if len(anchors) >= 3:
+            break
+
+    # Single-window fast path when all anchors fit comfortably inside one contiguous window.
+    if len(anchors) <= 1 or (max(anchors) - min(anchors) + 2 <= length):
+        start = _strongest_window(page_count, page_limit, scores)
+        candidate = list(range(start, min(page_count, start + length - 1) + 1))
+    else:
+        anchors.sort()
+        per_cluster = max(2, length // len(anchors))
+        extra = length - per_cluster * len(anchors)
+        chosen: set[int] = set()
+        for idx, anchor in enumerate(anchors):
+            quota = per_cluster + (1 if idx < extra else 0)
+            c_start = max(1, anchor - 1)
+            c_end = min(page_count, c_start + quota - 1)
+            if c_end - c_start + 1 < quota:
+                c_start = max(1, c_end - quota + 1)
+            chosen.update(range(c_start, c_end + 1))
+        candidate = sorted(chosen)[:length]
+
+    # Respect remaining inspection budget so inspect() never raises source_inspection_limit.
+    selected: list[int] = []
+    new_used = 0
+    # Priority 1: keep anchor pages and already-inspected pages first, then fill window pages.
+    anchor_set = {p for p, _ in positive[:6]}
+    prioritized = sorted(
+        candidate,
+        key=lambda p: (
+            p not in already_inspected and p not in anchor_set,
+            p not in anchor_set,
+            p,
+        ),
+    )
+    accepted: set[int] = set()
+    for page_num in prioritized:
+        if page_num in already_inspected:
+            accepted.add(page_num)
+        elif new_used < remaining_inspections:
+            accepted.add(page_num)
+            new_used += 1
+    selected = sorted(accepted)
+    return selected or [positive[0][0]]
+
+
 def _smart_window(payload: bytes, question: str, use_ocr: bool, page_limit: int, *, deep_read: bool = False):
-    """Extract a bounded contiguous window after navigation match or five-page probe."""
+    """Extract a bounded window after navigation match or probe."""
     from pypdf import PdfWriter
 
     reader, recovered = _pdf_reader(payload)
@@ -281,30 +376,67 @@ def _smart_window(payload: bytes, question: str, use_ocr: bool, page_limit: int,
             inspected.append(page_number)
 
     if deep_read:
-        # Reserve twenty inspections for the contiguous retained window.
+        # Reserve inspections for probes, bracket interpolation, neighbours, and retained pages.
         probes = (list(range(1, count + 1)) if count <= 40 else
                   sorted({1 + round(i * (count - 1) / 19) for i in range(20)}))
         if count > 40 and outline_scores:
             probes = list(dict.fromkeys([*sorted(outline_scores, key=outline_scores.get, reverse=True)[:10], *probes]))[:20]
         for page_number in probes:
             inspect(page_number)
+
+        # Monotonic article-bracket interpolation for requested/hinted Điều numbers on >40p PDFs.
+        target_articles = profile[1] | (profile[3] if len(profile) > 3 else set())
+        if count > 40 and target_articles:
+            from app.services.legal_topic_terms import fold_topic_text
+
+            probed_bounds = []
+            for p_num in sorted(page_texts):
+                bounds = _page_article_bounds(page_texts[p_num])
+                if bounds is not None:
+                    probed_bounds.append((p_num, bounds[0], bounds[1]))
+            for art_num in sorted(target_articles)[:4]:
+                if any(
+                    re.search(rf"(?<![a-z0-9])dieu\s+{art_num}(?!\d)", fold_topic_text(t))
+                    for t in page_texts.values()
+                ):
+                    continue
+                for (p1, _min1, max1), (p2, min2, _max2) in zip(probed_bounds, probed_bounds[1:]):
+                    if max1 <= art_num <= min2 and p2 - p1 > 1:
+                        span = max(1, min2 - max1)
+                        est = max(p1 + 1, min(p2 - 1, p1 + round((art_num - max1) / span * (p2 - p1))))
+                        for cand in (est, est - 1, est + 1):
+                            if p1 < cand < p2 and len(inspected) < DEEP_INSPECTION_LIMIT - 12:
+                                inspect(cand)
+                                if re.search(
+                                    rf"(?<![a-z0-9])dieu\s+{art_num}(?!\d)",
+                                    fold_topic_text(page_texts[cand]),
+                                ):
+                                    break
+                        break
+
         scores = {number: _relevance_score(text, profile) + outline_scores.get(number, 0)
                   for number, text in page_texts.items()}
-        # A clause often sits one page from its strongest probe, and its article heading one page
-        # before that: inspect the neighbours of the three strongest probes before choosing the window.
+        # Inspect neighbours of the three strongest probes before choosing the window(s).
         for centre in sorted(scores, key=scores.get, reverse=True)[:3]:
             if scores[centre] <= 0:
                 break
             for neighbour in (centre - 1, centre + 1):
-                if 1 <= neighbour <= count:
+                if 1 <= neighbour <= count and len(inspected) < DEEP_INSPECTION_LIMIT - 6:
                     inspect(neighbour)
         scores = {number: _relevance_score(text, profile) + outline_scores.get(number, 0)
                   for number, text in page_texts.items()}
-        start = _strongest_window(count, page_limit, scores)
+        selected = _select_deep_pages(
+            count,
+            page_limit,
+            scores,
+            set(page_texts),
+            DEEP_INSPECTION_LIMIT - len(inspected),
+        )
         selection_status = "probe_match" if max(scores.values(), default=0) else "no_evidence_in_probe"
     elif outline_scores:
         start = _best_window(count, page_limit, outline_scores)
         selection_status = "outline_match"
+        selected = list(range(start, min(count, start + page_limit - 1) + 1))
     else:
         probes = _probe_pages(count)
         for page_number in probes:
@@ -320,9 +452,8 @@ def _smart_window(payload: bytes, question: str, use_ocr: bool, page_limit: int,
             selection_status = "probe_match"
         else:
             selection_status = "no_evidence_in_probe"
+        selected = list(range(start, min(count, start + page_limit - 1) + 1))
 
-    end = min(count, start + page_limit - 1)
-    selected = list(range(start, end + 1))
     for page_number in selected:
         inspect(page_number)
     pages = [
@@ -544,7 +675,7 @@ def _decode_worker_output(stdout: bytes, *, deep_read: bool = False):
         or not isinstance(pages, list)
         or not 1 <= len(pages) <= (20 if deep_read else PAGE_WINDOW)
         or not isinstance(inspected, list)
-        or len(inspected) > (40 if deep_read else 10)
+        or len(inspected) > (DEEP_INSPECTION_LIMIT if deep_read else 10)
         or any(not isinstance(number, int) or isinstance(number, bool) for number in inspected)
         or len(set(inspected)) != len(inspected)
         or any(
@@ -567,7 +698,12 @@ def _decode_worker_output(stdout: bytes, *, deep_read: bool = False):
         ):
             raise SourceReadError("source_processing_output_invalid")
         numbers.append(page["page"])
-    if numbers != list(range(numbers[0], numbers[-1] + 1)) or any(
+    expected_numbers = (
+        sorted(set(numbers))
+        if deep_read
+        else list(range(numbers[0], numbers[-1] + 1))
+    )
+    if numbers != expected_numbers or any(
         number not in inspected for number in numbers
     ):
         raise SourceReadError("source_processing_output_invalid")
@@ -647,9 +783,14 @@ async def _extract_smart_isolated(
                 pass
             raise SourceReadError("source_processing_unavailable") from None
     communication = asyncio.create_task(process.communicate(input=worker_input))
+    worker_timeout = (
+        DEEP_SMART_WORKER_TIMEOUT_SECONDS
+        if deep_read
+        else SMART_WORKER_TIMEOUT_SECONDS
+    )
     try:
         stdout, _ = await asyncio.wait_for(
-            asyncio.shield(communication), timeout=SMART_WORKER_TIMEOUT_SECONDS
+            asyncio.shield(communication), timeout=worker_timeout
         )
     except TimeoutError:
         await _kill_and_reap(process, communication, windows_job)
@@ -698,7 +839,7 @@ def _make_result(
         "page_start": start,
         "page_end": end,
         "next_page_start": end + 1 if end < count else None,
-        "truncated": start > 1 or end < count,
+        "truncated": start > 1 or end < count or len(pages) < count,
         "inspected_pages": inspected_pages,
         "inspected_page_count": len(inspected_pages),
         "extraction_version": EXTRACTION_VERSION,

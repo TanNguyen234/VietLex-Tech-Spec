@@ -12,16 +12,16 @@ from urllib.parse import parse_qsl, urlsplit, urljoin
 import httpx
 
 from app.services.runtime_errors import SourceReadError
+from app.services.web_source_tiers import (
+    G7_STREAM_HOST as _G7_STREAM_HOST,
+    G7_STREAM_PATH as _G7_STREAM_PATH,
+    TIER1_OFFICIAL_DOMAINS,
+    classify_web_source_tier,
+)
 
-_G7_STREAM_HOST = "g7.cdnchinhphu.vn"
-_G7_STREAM_PATH = "/api/download/stream"
 APPROVED_HOSTS = frozenset({
-    "vbpl.vn",
-    "vanban.chinhphu.vn",
+    *TIER1_OFFICIAL_DOMAINS,
     "baochinhphu.vn",
-    "datafiles.chinhphu.vn",
-    "congbao.chinhphu.vn",
-    "congbaocdn.chinhphu.vn",
     _G7_STREAM_HOST,
 })
 _G7_STREAM_TOKEN = re.compile(r"[A-Za-z0-9_-]+~{0,2}")
@@ -74,32 +74,18 @@ def validate_source_url(url: str) -> str:
         len(url) > 2000
         or any(ord(c) < 33 for c in url)
         or parsed.scheme != "https"
-        or parsed.netloc not in APPROVED_HOSTS
+        or not parsed.hostname
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.port is not None
         or parsed.fragment
     ):
         raise ValueError("source_origin_not_approved")
-    if parsed.hostname == _G7_STREAM_HOST:
-        if parsed.path != _G7_STREAM_PATH:
-            raise ValueError("source_origin_not_approved")
-        try:
-            parameters = parse_qsl(
-                parsed.query,
-                keep_blank_values=True,
-                strict_parsing=True,
-                max_num_fields=2,
-            )
-        except ValueError:
-            raise ValueError("source_origin_not_approved") from None
-        values = dict(parameters)
-        if (
-            len(parameters) != 2
-            or set(values) != {"Url", "file_name"}
-            or not _G7_STREAM_TOKEN.fullmatch(values.get("Url", ""))
-            or not _G7_STREAM_FILENAME.fullmatch(
-                values.get("file_name", "")
-            )
-        ):
-            raise ValueError("source_origin_not_approved")
+    host = parsed.hostname.rstrip(".").casefold()
+    if host == "baochinhphu.vn":
+        return url
+    if classify_web_source_tier(url) != "official_primary":
+        raise ValueError("source_origin_not_approved")
     return url
 
 
@@ -118,13 +104,29 @@ def is_official_document_url(url: str) -> bool:
         return False
     if _is_pdf_attachment_url(url):
         return True
+    host = (parsed.hostname or "").rstrip(".").casefold()
     query = dict(parse_qsl(parsed.query))
-    if parsed.hostname == "vanban.chinhphu.vn":
+    if host == "vanban.chinhphu.vn":
         return any(key.lower() == "docid" and value.isdecimal() for key, value in query.items())
-    if parsed.hostname == "congbao.chinhphu.vn":
+    if host == "congbao.chinhphu.vn":
         return bool(re.fullmatch(r"/van-ban/[^/]+-\d+(?:/\d+)?\.htm", parsed.path))
-    if parsed.hostname == "vbpl.vn":
+    if host == "vbpl.vn":
         return "vbpq-" in parsed.path.lower() and any(key.lower() == "itemid" and value.isdecimal() for key, value in query.items())
+    if host == "vbpl.moj.gov.vn":
+        return "view_detail.aspx" in parsed.path.lower() or any(
+            key.lower() == "itemid" and value.isdecimal() for key, value in query.items()
+        )
+    if classify_web_source_tier(url) == "official_primary" and host not in {
+        "vanban.chinhphu.vn",
+        "congbao.chinhphu.vn",
+        "vbpl.vn",
+    }:
+        clean_path = (parsed.path or "").strip("/")
+        if len(clean_path) < 4:
+            return False
+        if re.search(r"(?:^|/)(?:tim-kiem|search|login|dang-nhap)(?:/|$|\.)", clean_path, re.I):
+            return False
+        return True
     return False
 
 
@@ -205,12 +207,84 @@ def extract_page(html: str, url: str) -> dict:
     }
 
 
-async def read_source(url: str, *, question: str = "", smart_pages: bool = False,
-                      page_start: int = 1, use_ocr: bool = False,
-                      page_limit: int = 5, client=None, deep_read: bool = False) -> dict:
+async def read_source(
+    url: str,
+    *,
+    question: str = "",
+    smart_pages: bool = False,
+    page_start: int = 1,
+    use_ocr: bool = False,
+    page_limit: int = 5,
+    client=None,
+    deep_read: bool = False,
+    tavily_client=None,
+    settings=None,
+) -> dict:
     validate_source_url(url)
     if deep_read and (use_ocr or not smart_pages or not 1 <= page_limit <= 20):
         raise SourceReadError("source_deep_read_mode_invalid")
+
+    async def _try_tavily_extract(base_metadata: dict | None = None) -> dict | None:
+        if classify_web_source_tier(url) != "official_primary":
+            return None
+        from app.services.tavily_search import (
+            TavilyOfficialClient,
+            _extract_doc_numbers,
+            is_tavily_extract_enabled,
+        )
+
+        active_tavily = tavily_client
+        if active_tavily is None:
+            # When an explicit HTTP client test double is passed without Tavily settings/client,
+            # do not instantiate a live Tavily client from ambient .env keys.
+            if client is not None and settings is None:
+                return None
+            from app.config import get_settings
+
+            active_settings = settings if settings is not None else get_settings()
+            if not is_tavily_extract_enabled(active_settings):
+                return None
+            active_tavily = TavilyOfficialClient(settings=active_settings)
+        try:
+            extracted = await active_tavily.extract([url], query=question or None)
+        except Exception:
+            return None
+        doc = extracted.get(url)
+        if doc is None and len(extracted) == 1:
+            candidate_doc = next(iter(extracted.values()))
+            req_host = (urlsplit(url).hostname or "").rstrip(".").casefold()
+            doc_host = (urlsplit(candidate_doc.url).hostname or "").rstrip(".").casefold()
+            if req_host and req_host == doc_host:
+                doc = candidate_doc
+        if doc is None or not doc.raw_content.strip():
+            return None
+        retained_text = doc.raw_content[:_MAX_TEXT]
+        digest = hashlib.sha256(retained_text.encode("utf-8")).hexdigest()
+        meta = dict(base_metadata or {})
+        doc_num = meta.get("document_number")
+        if not doc_num:
+            found_nums = _extract_doc_numbers(f"{doc.title}\n{retained_text[:1500]}")
+            doc_num = found_nums[0] if found_nums else None
+        payload = {
+            **meta,
+            "url": url,
+            "title": (doc.title or meta.get("title") or url)[:300],
+            "text": retained_text,
+            "sha256": digest,
+            "text_sha256": digest,
+            "document_sha256": doc.sha256 or digest,
+            "retrieved_at": datetime.now(timezone.utc).isoformat(),
+            "extracted_characters": len(doc.raw_content),
+            "stored_characters": len(retained_text),
+            "truncated": len(doc.raw_content) > _MAX_TEXT,
+            "method": "tavily_extract_tier1",
+            "content_status": "full_text",
+            "legal_effect_status": "unverified",
+            "document_number": doc_num,
+        }
+        if deep_read:
+            payload["related_urls"] = []
+        return payload
 
     async def fetch(session, target=url, *, title='', attachment=False, redirects=0):
         validate_source_url(target)
@@ -311,16 +385,41 @@ async def read_source(url: str, *, question: str = "", smart_pages: bool = False
     async with _SEMAPHORE:
         try:
             async with asyncio.timeout(100 if use_ocr else 30):
-                if client is not None:
-                    return await fetch(client)
-                from app.services.source_tls import source_ssl_context
-                async with httpx.AsyncClient(
-                    timeout=10,
-                    trust_env=False,
-                    verify=source_ssl_context(),
-                    headers={"User-Agent": "VietLex-Reviewer/1.0"},
-                ) as session:
-                    return await fetch(session)
+                try:
+                    if client is not None:
+                        fetched = await fetch(client)
+                    else:
+                        from app.services.source_tls import source_ssl_context
+                        async with httpx.AsyncClient(
+                            timeout=10,
+                            trust_env=False,
+                            verify=source_ssl_context(),
+                            headers={"User-Agent": "VietLex-Reviewer/1.0"},
+                        ) as session:
+                            fetched = await fetch(session)
+                except SourceReadError as read_err:
+                    if read_err.kind in {"source_http_403", "source_text_unavailable"}:
+                        rescued = await _try_tavily_extract()
+                        if rescued is not None:
+                            return rescued
+                    raise
+                if fetched.get("content_status") == "metadata_only" and not fetched.get("requires_ocr"):
+                    rescued = await _try_tavily_extract(
+                        {
+                            key: fetched[key]
+                            for key in (
+                                "title",
+                                "document_number",
+                                "issued_date",
+                                "reported_effective_from",
+                                "issuing_authority",
+                            )
+                            if fetched.get(key)
+                        }
+                    )
+                    if rescued is not None:
+                        return rescued
+                return fetched
         except (httpx.HTTPError, TimeoutError) as error:
             transport_kind = next((name for cls, name in (
                 (httpx.ConnectTimeout, 'connect_timeout'), (httpx.ReadTimeout, 'read_timeout'),

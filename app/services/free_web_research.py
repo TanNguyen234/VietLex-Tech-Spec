@@ -13,6 +13,7 @@ from app.config import get_settings
 from app.services.deep_research import build_research_plan, is_official_source
 from app.services.legal_topic_terms import (
     LEGAL_TOPIC_PHRASES,
+    contains_topic_phrase,
     extract_official_topic_phrases,
     fold_topic_text,
     local_rescue_terms,
@@ -106,6 +107,8 @@ def _official_topics(question: str) -> list[str]:
     recognized = list(extract_official_topic_phrases(clean, limit=8))
     topics: list[tuple[int, int, str]] = []
     for phrase in (*_SUPPLEMENTAL_TOPICS, *LEGAL_TOPIC_PHRASES):
+        if not contains_topic_phrase(clean, phrase):
+            continue
         normalized = fold_topic_text(phrase)
         match = re.search(rf"(?<![a-z0-9]){re.escape(normalized)}(?![a-z0-9])", folded)
         if not match:
@@ -297,26 +300,36 @@ class _BoundedProvider:
         self.provider = provider
         self.timeout = min(10.0, max(0.05, float(timeout)))
 
-    async def search(self, query: str, *, limit: int = 3):
+    async def search(self, query: str, *, limit: int = 3, **kwargs: Any):
         async with _NETWORK_SEMAPHORE:
             async with asyncio.timeout(self.timeout):
-                return await self.provider.search(query, limit=limit)
+                return await self.provider.search(query, limit=limit, **kwargs)
 
 
 def _configured_provider(settings):
     from app.services.congbao_search import CongBaoClient
     from app.services.federated_official_search import FederatedOfficialClient
     from app.services.official_web_search import OfficialPortalClient
+    from app.services.tavily_search import TavilyOfficialClient, is_tavily_search_enabled
 
     timeout = min(
         10.0,
         float(getattr(settings, "FREE_WEB_RESEARCH_PROVIDER_TIMEOUT_SECONDS", 10.0)),
     )
+    tavily = (
+        _BoundedProvider(TavilyOfficialClient(settings=settings), timeout)
+        if is_tavily_search_enabled(settings)
+        else None
+    )
+    timeouts = {"chinhphu": timeout, "congbao": timeout}
+    if tavily is not None:
+        timeouts["tavily"] = timeout
     return FederatedOfficialClient(
         portal=_BoundedProvider(OfficialPortalClient(settings=settings), timeout),
         gazette=_BoundedProvider(CongBaoClient(settings=settings), timeout),
+        tavily=tavily,
         max_wait_seconds=timeout,
-        provider_timeouts={"chinhphu": timeout, "congbao": timeout},
+        provider_timeouts=timeouts,
     )
 
 
@@ -547,9 +560,9 @@ async def stream_free_web_research(
 
     if provider is None:
         provider = _configured_provider(settings)
-    if reader is None:
-        from app.services.trusted_source_reader import read_source
+    from app.services.trusted_source_reader import read_source
 
+    if reader is None:
         reader = read_source
 
     total_budget = min(
@@ -716,6 +729,7 @@ async def stream_free_web_research(
                             5,
                             int(getattr(settings, "FREE_WEB_RESEARCH_PAGE_LIMIT", 5)),
                         ),
+                        **({"settings": settings} if reader is read_source and settings is not None else {}),
                     )
             if not isinstance(source, dict):
                 return url, None, "invalid_source_response", None

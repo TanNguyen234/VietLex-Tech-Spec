@@ -28,6 +28,7 @@ _MAX_CONTEXT_TOKENS = 720
 _SHA256 = re.compile(r"[0-9a-f]{64}", re.IGNORECASE)
 _SAFE_METHOD = re.compile(r"[a-zA-Z0-9_-]{1,80}")
 _PDF_METHODS = frozenset({"pdf_text", "vertex_ocr"})
+_TEXT_METHODS = frozenset({"visible_html_text", "tavily_extract_tier1", "tavily_raw_markdown_tier1"})
 _YEAR = re.compile(r"\b(?:19|20)\d{2}\b")
 _LEGAL_TITLE_PREFIX = re.compile(
     r"^(?:bo luat|luat|phap lenh|nghi dinh|thong tu|quyet dinh|nghi quyet|hien phap)\b"
@@ -459,8 +460,11 @@ def _relevant_excerpt(text: str, query: str) -> str | None:
 def _source_context(source_url: str, source: dict[str, Any], query: str, *, excerpt_override: str | None = None) -> str | None:
     try:
         from app.services.trusted_source_reader import validate_source_url
+        from app.services.web_source_tiers import classify_web_source_tier
 
         source_url = validate_source_url(source_url)
+        if classify_web_source_tier(source_url) != "official_primary":
+            return None
     except (ImportError, TypeError, ValueError):
         return None
     text = source.get("text")
@@ -492,7 +496,7 @@ def _source_context(source_url: str, source: dict[str, Any], query: str, *, exce
         return None
 
     document_sha256 = source.get("document_sha256")
-    is_pdf = method in _PDF_METHODS or (method != "visible_html_text" and document_sha256 is not None)
+    is_pdf = method in _PDF_METHODS or (method not in _TEXT_METHODS and document_sha256 is not None)
     attachment_url = source.get("attachment_url")
     if is_pdf:
         if not isinstance(attachment_url, str):
@@ -516,7 +520,8 @@ def _source_context(source_url: str, source: dict[str, Any], query: str, *, exce
         )
         or not 1 <= page_start <= page_end <= page_count <= 200
         or not isinstance(truncated, bool)
-        or truncated != (page_start > 1 or page_end < page_count)
+        or ((page_start > 1 or page_end < page_count) and not truncated)
+        or (page_count == 1 and truncated)
     ):
         return None
 
@@ -600,13 +605,17 @@ async def _default_provider(settings):
     from app.services.congbao_search import CongBaoClient
     from app.services.federated_official_search import FederatedOfficialClient
     from app.services.official_web_search import OfficialPortalClient
+    from app.services.tavily_search import TavilyOfficialClient, is_tavily_search_enabled
 
-    # Only the two public government discovery endpoints are used. Brave is
-    # deliberately excluded so this path needs no key and incurs no search fee.
+    tavily = TavilyOfficialClient(settings=settings) if is_tavily_search_enabled(settings) else None
+    timeouts = {"chinhphu": 1.75, "congbao": 3.5}
+    if tavily is not None:
+        timeouts["tavily"] = min(6.0, float(getattr(settings, "TAVILY_TIMEOUT_SECONDS", 6.0)))
     return FederatedOfficialClient(
         portal=OfficialPortalClient(settings=settings),
         gazette=CongBaoClient(settings=settings),
-        provider_timeouts={"chinhphu": 1.75, "congbao": 3.5},
+        tavily=tavily,
+        provider_timeouts=timeouts,
     )
 
 
@@ -640,6 +649,7 @@ async def supplement_official_evidence(
         from app.services.deep_official_search import search_and_read
         return await search_and_read(query, settings=settings,
                                      providers=[provider] if provider is not None else None, reader=reader,
+                                     browser=browser,
                                      explicit_queries=explicit_queries, explicit_topics=explicit_topics,
                                      reader_hint=explicit_reader_hint or "")
     corpus_contexts = corpus_contexts or []
@@ -665,12 +675,12 @@ async def supplement_official_evidence(
         8.0,
         max(0.1, float(getattr(settings, "CHAT_OFFICIAL_WEB_SUPPLEMENT_TIMEOUT_SECONDS", 8.0))),
     )
+    from app.services.trusted_source_reader import read_source
+
     try:
         if provider is None:
             provider = await _default_provider(settings)
         if reader is None:
-            from app.services.trusted_source_reader import read_source
-
             reader = read_source
     except Exception as error:
         diagnostics = {
@@ -884,7 +894,16 @@ async def supplement_official_evidence(
                 }
 
         async def read_one(url: str, topic: str):
-            return await reader(url, use_ocr=False, page_limit=5), url, topic
+            return (
+                await reader(
+                    url,
+                    use_ocr=False,
+                    page_limit=5,
+                    **({"settings": settings} if reader is read_source and settings is not None else {}),
+                ),
+                url,
+                topic,
+            )
 
         reads = await asyncio.gather(
             *(

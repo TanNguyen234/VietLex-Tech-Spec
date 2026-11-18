@@ -44,10 +44,22 @@ def _research_enabled(settings) -> bool:
     )
 
 
-def _request_hash(question: str, refresh: bool) -> str:
+def _request_hash(question: str, refresh: bool, web_mode: str = "auto") -> str:
     normalized = " ".join(question.split())
-    payload = json.dumps([normalized, bool(refresh)], ensure_ascii=False, separators=(",", ":"))
+    items = [normalized, bool(refresh)] if web_mode == "auto" else [normalized, bool(refresh), web_mode]
+    payload = json.dumps(items, ensure_ascii=False, separators=(",", ":"))
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+class _SettingsOverlay:
+    def __init__(self, base: Any, **overrides: Any) -> None:
+        self._base = base
+        self._overrides = overrides
+
+    def __getattr__(self, name: str) -> Any:
+        if name in self._overrides:
+            return self._overrides[name]
+        return getattr(self._base, name)
 
 
 def _ndjson(event: dict[str, Any]) -> bytes:
@@ -334,9 +346,12 @@ async def free_web_research_read(
     question: str = Form(..., min_length=1, max_length=2_000),
     run_id: str = Form(..., min_length=36, max_length=36),
     refresh: bool = Form(False),
+    web_mode: str = Form("auto"),
     _csrf: str = Depends(verify_csrf),
     current_user=Depends(optional_user),
 ):
+    from app.services.direct_llm import can_select_custom_llm_route
+
     settings = get_settings()
     if not _research_enabled(settings):
         raise HTTPException(status_code=503, detail="free_web_research_unavailable")
@@ -345,6 +360,18 @@ async def free_web_research_read(
     clean_question = " ".join(question.split())
     if not clean_question:
         raise HTTPException(status_code=422, detail="invalid_research_question")
+    normalized_mode = (web_mode or "auto").strip().lower()
+    effective_web_mode = (
+        normalized_mode
+        if can_select_custom_llm_route(current_user, settings=settings)
+        and normalized_mode in {"auto", "force", "off"}
+        else "auto"
+    )
+    effective_settings = (
+        _SettingsOverlay(settings, TAVILY_SEARCH_ENABLED=False, TAVILY_EXTRACT_ENABLED=False)
+        if effective_web_mode == "off"
+        else settings
+    )
     started_at = asyncio.get_running_loop().time()
     total_budget = min(
         180.0,
@@ -361,7 +388,7 @@ async def free_web_research_read(
         )
     except HTTPException:
         raise
-    request_sha256 = _request_hash(clean_question, refresh)
+    request_sha256 = _request_hash(clean_question, refresh, effective_web_mode)
     queries = build_free_web_queries(clean_question)
     if not queries:
         raise HTTPException(status_code=422, detail="invalid_research_question")
@@ -449,7 +476,7 @@ async def free_web_research_read(
             user_id=user_id,
             initial_state=initial_state,
             started_event=started_event,
-            settings=settings,
+            settings=effective_settings,
             remaining_total=total_remaining,
             lease_deadline=lease_expires,
             save_budget=save_budget,

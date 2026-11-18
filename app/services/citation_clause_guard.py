@@ -8,6 +8,7 @@ replaced with that clause. Ambiguous or unsupported cases are left unchanged.
 
 from __future__ import annotations
 
+from decimal import Decimal, InvalidOperation
 import re
 from typing import Any
 
@@ -23,26 +24,85 @@ _CLAUSE_MARK = re.compile(r"(?<![\w.,])(\d{1,2})\.\s+(?=\S)")
 _NOT_CLAUSE_PREFIX = re.compile(
     r"(?:điều|khoản|điểm|chương|mục|nghị định|thông tư|bộ luật|luật)\s*$", re.IGNORECASE)
 _CITATION = re.compile(r"Khoản\s+(\d{1,2})(\s+(?:của\s+)?Điều\s+(\d{1,3}))", re.IGNORECASE)
-_NUMBER_UNIT = re.compile(r"(?<![\d.,])(\d{1,4})\s*(ngày(?:\s+làm\s+việc)?|tháng|năm)(?!\w)", re.IGNORECASE)
+_NUMBER_UNIT = re.compile(
+    r"(?<![\d.,])(\d{1,3}(?:\.\d{3})+|\d{1,5}(?:[.,]\d{1,2})?)\s*"
+    r"(%|(?:ngày(?:\s+làm\s+việc)?|tháng|năm(?:\s+tù)?|tỷ(?:\s*đồng)?|triệu(?:\s*đồng)?|đồng|phần\s+trăm|tuổi|điểm|giờ)(?!\w))",
+    re.IGNORECASE,
+)
+_POINT_CITE_PREFIX = re.compile(r"(?:khoản|điều|mục|chương)\s*$", re.IGNORECASE)
+_POINT_LABEL_SUFFIX = re.compile(r"^\s+[a-zđ](?:\)|\b\s*(?:khoản|điều|,|;))", re.IGNORECASE)
 _BRACKETS = re.compile(r"\[[^\]]*\]")
 _URL = re.compile(r"https?://\S+")
 _NEXT_REFERENCE = re.compile(r"\b(?:Khoản|Điều)\s+\d", re.IGNORECASE)
 
 
 def _norm_num(value: str) -> str:
-    stripped = str(value or "").strip().lstrip("0")
+    raw = str(value or "").strip()
+    if re.fullmatch(r"\d{1,3}(?:\.\d{3})+", raw):
+        raw = raw.replace(".", "")
+    else:
+        raw = raw.replace(",", ".")
+        if "." in raw:
+            raw = raw.rstrip("0").rstrip(".")
+    stripped = raw.lstrip("0")
+    if not stripped or stripped.startswith("."):
+        stripped = "0" + stripped
     return stripped or "0"
 
 
 def _unit(value: str) -> str:
-    text = value.lower().strip()
+    text = re.sub(r"\s+", " ", value.lower().strip())
     if text.startswith("ngày"):
         return "ngày làm việc" if "làm việc" in text else "ngày"
+    if text.startswith("năm"):
+        return "năm tù" if "tù" in text else "năm"
+    if text in {"%", "phần trăm"}:
+        return "%"
+    if text.startswith("triệu"):
+        return "triệu"
+    if text.startswith("tỷ"):
+        return "tỷ"
     return text
 
 
-def _numbers(text: str) -> set[tuple[str, str]]:
-    return {(_norm_num(match.group(1)), _unit(match.group(2))) for match in _NUMBER_UNIT.finditer(text)}
+def _fmt_decimal(value: Decimal) -> str:
+    rendered = format(value, "f")
+    if "." in rendered:
+        rendered = rendered.rstrip("0").rstrip(".")
+    return rendered or "0"
+
+
+def _numbers(text: str, *, include_aliases: bool = False) -> set[tuple[str, str]]:
+    extracted: set[tuple[str, str]] = set()
+    for match in _NUMBER_UNIT.finditer(text):
+        unit = _unit(match.group(2))
+        if unit == "điểm":
+            if _POINT_CITE_PREFIX.search(text[max(0, match.start() - 16) : match.start()]):
+                continue
+            if _POINT_LABEL_SUFFIX.match(text[match.end() : match.end() + 20]):
+                continue
+        num = _norm_num(match.group(1))
+        extracted.add((num, unit))
+        if include_aliases:
+            try:
+                dec = Decimal(num)
+            except InvalidOperation:
+                dec = None
+            if dec is not None:
+                if unit == "đồng":
+                    if dec >= Decimal(100_000) and dec % Decimal(10_000) == 0:
+                        extracted.add((_fmt_decimal(dec / Decimal(1_000_000)), "triệu"))
+                    if dec >= Decimal(100_000_000) and dec % Decimal(10_000_000) == 0:
+                        extracted.add((_fmt_decimal(dec / Decimal(1_000_000_000)), "tỷ"))
+                elif unit == "triệu":
+                    dong_val = dec * Decimal(1_000_000)
+                    if dong_val == dong_val.to_integral_value():
+                        extracted.add((_fmt_decimal(dong_val), "đồng"))
+                elif unit == "tỷ":
+                    dong_val = dec * Decimal(1_000_000_000)
+                    if dong_val == dong_val.to_integral_value():
+                        extracted.add((_fmt_decimal(dong_val), "đồng"))
+    return extracted
 
 
 def _clause_starts(body: str) -> list[tuple[str, int]]:
@@ -106,7 +166,7 @@ def _claim_after(answer: str, position: int) -> str:
 def _claim_before(answer: str, position: int) -> str:
     """Text of the citing sentence before the citation, after any earlier clause citation."""
     head = answer[max(0, position - 300):position]
-    sentence = re.split(r"[.;\n]", head)[-1]
+    sentence = re.split(r"[.;](?=\s|$)|\n", head)[-1]
     citations = list(_CITATION.finditer(sentence))
     return sentence[citations[-1].end():] if citations else sentence
 
@@ -146,11 +206,15 @@ def correct_clause_citations(answer: str, contexts: list[str]) -> tuple[str, lis
             continue
         claim = _claim_before(answer, citation.start()) + " " + _claim_after(answer, citation.end())
         claim_numbers = _numbers(claim)
-        in_article = set().union(*(_numbers(text) for text in candidates.values()))
+        clause_number_sets = {
+            number: _numbers(text, include_aliases=True)
+            for number, text in candidates.items()
+        }
+        in_article = set().union(*clause_number_sets.values()) if clause_number_sets else set()
         required = claim_numbers & in_article
-        if not required or required <= _numbers(candidates.get(cited_clause, "")):
+        if not required or required <= clause_number_sets.get(cited_clause, set()):
             continue
-        matching = [number for number, text in candidates.items() if required <= _numbers(text)]
+        matching = [number for number, c_nums in clause_number_sets.items() if required <= c_nums]
         if len(matching) != 1 or matching[0] == cited_clause:
             continue
         pieces.append(answer[last:citation.start()])

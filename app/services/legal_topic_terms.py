@@ -130,12 +130,63 @@ def fold_topic_text(value: str) -> str:
     return re.sub(r"\s+", " ", unmarked.replace("đ", "d")).strip()
 
 
+_NON_SALARY_LUONG_PREFIXES = frozenset(
+    {
+        "khoi",
+        "chat",
+        "so",
+        "nang",
+        "thuong",
+        "dung",
+        "trong",
+        "luc",
+        "luu",
+        "uoc",
+        "ham",
+        "dinh",
+        "san",
+        "do",
+        "lieu",
+        "nhiet",
+        "dien",
+        "quang",
+        "am",
+        "tu",
+    }
+)
+_NON_SALARY_LUONG_SUFFIXES = frozenset({"thuc", "tam", "thien", "tri", "mua"})
+_ACCENTED_SALARY_LUONG_RE = re.compile(r"(?<![\w])lương(?![\w])", re.UNICODE)
+
+
+def _has_vietnamese_diacritics(value: str) -> bool:
+    nfc = unicodedata.normalize("NFC", str(value or ""))
+    return any(ord(ch) > 127 and unicodedata.category(ch).startswith("L") for ch in nfc)
+
+
+def _match_bare_luong_span(raw_text: str, folded: str) -> tuple[int, int] | None:
+    """Match bare 'lương' (salary) without colliding with 'lượng' (quantity/quality)."""
+    nfc_lower = unicodedata.normalize("NFC", str(raw_text or "")).casefold()
+    if _has_vietnamese_diacritics(raw_text) and not _ACCENTED_SALARY_LUONG_RE.search(nfc_lower):
+        return None
+    for match in re.finditer(r"(?<![a-z0-9])luong(?![a-z0-9])", folded):
+        prev_match = re.search(r"([a-z0-9]+)\s+$", folded[: match.start()])
+        next_match = re.match(r"\s+([a-z0-9]+)", folded[match.end() :])
+        prev_word = prev_match.group(1) if prev_match else ""
+        next_word = next_match.group(1) if next_match else ""
+        if prev_word in _NON_SALARY_LUONG_PREFIXES or next_word in _NON_SALARY_LUONG_SUFFIXES:
+            continue
+        return (match.start(), match.end())
+    return None
+
+
 def contains_topic_phrase(text: str, topic: str) -> bool:
     """Match a complete canonical phrase, including its curated aliases."""
     folded = fold_topic_text(text)
     canonical = fold_topic_text(topic)
     if not canonical:
         return False
+    if canonical == "luong":
+        return _match_bare_luong_span(text, folded) is not None
     phrases = (canonical, *(
         fold_topic_text(alias)
         for alias, target in _TOPIC_ALIASES.items()
@@ -161,6 +212,11 @@ def extract_official_topic_phrases(query: str, *, limit: int = 4) -> tuple[str, 
     alias_matches: list[tuple[int, int, str]] = []
     for phrase in LEGAL_TOPIC_PHRASES:
         normalized = fold_topic_text(phrase)
+        if normalized == "luong":
+            luong_span = _match_bare_luong_span(query, folded)
+            if luong_span is not None:
+                canonical_matches.append((luong_span[0], luong_span[1], phrase))
+            continue
         match = re.search(
             rf"(?<![a-z0-9]){re.escape(normalized)}(?![a-z0-9])",
             folded,

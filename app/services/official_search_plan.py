@@ -22,10 +22,17 @@ DEEP_READING = ReadingProfile()
 
 
 class ProfiledContexts(list):
-    """Carry the budget to the final prompt without changing HTTP or global state."""
-    def __init__(self, contexts, profile: ReadingProfile):
+    """Carry the budget and published registry overrides to the final prompt without changing HTTP or global state."""
+    def __init__(
+        self,
+        contexts,
+        profile: ReadingProfile | None = None,
+        *,
+        registry_effects: dict | None = None,
+    ):
         super().__init__(contexts)
         self.context_profile = profile
+        self.registry_effects = dict(registry_effects) if registry_effects else None
 
 
 @dataclass(frozen=True)

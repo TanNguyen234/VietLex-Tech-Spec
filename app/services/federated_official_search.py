@@ -20,7 +20,10 @@ _DOCUMENT_REFERENCE = re.compile(r"(?<![\w/-])\d{1,4}\s*/\s*\d{4}\s*/\s*[A-ZĐ][
 
 
 def _references(text: str) -> set[str]:
-    return {re.sub(r"\s+", "", match.group()) for match in _DOCUMENT_REFERENCE.finditer(text.upper())}
+    return {
+        re.sub(r"\s+", "", match.group()).replace("Ð", "Đ")
+        for match in _DOCUMENT_REFERENCE.finditer(text.upper().replace("Ð", "Đ"))
+    }
 
 
 class BraveOfficialClient:
@@ -84,6 +87,7 @@ class FederatedOfficialClient:
         portal,
         web=None,
         gazette=None,
+        tavily=None,
         max_wait_seconds: float | None = None,
         provider_timeouts: dict[str, float] | None = None,
     ):
@@ -92,6 +96,8 @@ class FederatedOfficialClient:
         self.providers = [("chinhphu", portal)]
         if gazette is not None:
             self.providers.append(("congbao", gazette))
+        if tavily is not None:
+            self.providers.append(("tavily", tavily))
         if web is not None:
             self.providers.append(("brave", web))
         provider_names = {name for name, _ in self.providers}
@@ -121,26 +127,108 @@ class FederatedOfficialClient:
             return_exceptions=True,
         )
         errors, records, count, seen = [], [], 0, set()
-        for (name, _), result in zip(self.providers, outcomes):
-            count += getattr(result, "request_count", 0) or 0
+        pivot_numbers: list[str] = []
+        pivot_superseded: set[str] = set()
+        for (_name, _), result in zip(self.providers, outcomes):
             if isinstance(result, BaseException):
-                errors.append(name + ":" + str(getattr(result, "kind", type(result).__name__)))
                 continue
-            errors.extend(name + ":" + error for error in result.errors)
-            for record in result.results:
+            pivot_hints = getattr(result, "pivot_hints", None)
+            if pivot_hints is not None:
+                for num in getattr(pivot_hints, "document_numbers", ()) or ():
+                    clean_num = re.sub(r"\s+", "", str(num)).upper().replace("Ð", "Đ")
+                    if clean_num and clean_num not in pivot_numbers:
+                        pivot_numbers.append(clean_num)
+                for sup in getattr(pivot_hints, "superseded_numbers", ()) or ():
+                    clean_sup = re.sub(r"\s+", "", str(sup)).upper().replace("Ð", "Đ")
+                    if clean_sup:
+                        pivot_superseded.add(clean_sup)
+
+        unrequested_superseded = pivot_superseded - requested
+
+        def _is_superseded_record(record) -> bool:
+            if not unrequested_superseded:
+                return False
+            rec_nums = (
+                _references(record.document_number)
+                if getattr(record, "document_number", "")
+                else _references(getattr(record, "title", ""))
+            )
+            return bool(rec_nums and rec_nums.issubset(unrequested_superseded))
+
+        def _ingest_records(rows, *, allowed_refs: set[str]):
+            for record in rows:
                 url = urldefrag(record.url)[0]
                 if not is_official_source(url, record.domain):
                     continue
+                if _is_superseded_record(record):
+                    continue
                 # Metadata establishes discovery relevance only; originals still
                 # need reading before an answer can cite legal evidence.
-                if requested and not requested.intersection(_references(
+                if allowed_refs and not allowed_refs.intersection(_references(
                     "\n".join((record.document_number, record.title, record.snippet))
                 )):
                     continue
                 if url not in seen:
                     records.append(record)
                     seen.add(url)
-        if all(isinstance(result, BaseException) for result in outcomes):
+
+        for (name, _), result in zip(self.providers, outcomes):
+            count += getattr(result, "request_count", 0) or 0
+            if isinstance(result, BaseException):
+                errors.append(name + ":" + str(getattr(result, "kind", type(result).__name__)))
+                continue
+            errors.extend(name + ":" + error for error in result.errors)
+            _ingest_records(result.results, allowed_refs=requested)
+
+        covered_refs = (
+            set().union(*(_references("\n".join((r.document_number, r.title))) for r in records))
+            if records
+            else set()
+        )
+        missing_pivots = [num for num in pivot_numbers[:2] if num not in covered_refs]
+        hop2_providers = [
+            (name, prov) for name, prov in self.providers if name in {"tavily", "congbao"}
+        ]
+        if missing_pivots and hop2_providers:
+            async def search_hop2(name: str, provider, doc_num: str):
+                rem = (
+                    self.max_wait_seconds - (time.perf_counter() - started)
+                    if self.max_wait_seconds is not None
+                    else None
+                )
+                prov_budget = self.provider_timeouts.get(name, self.max_wait_seconds)
+                if rem is not None and rem <= 0.02:
+                    raise asyncio.TimeoutError()
+                budget = (
+                    min(prov_budget, rem)
+                    if prov_budget is not None and rem is not None
+                    else (prov_budget if prov_budget is not None else (rem if rem is not None else 4.0))
+                )
+                if name == "tavily":
+                    coro = provider.search(doc_num, limit=limit, include_tier2=False)
+                else:
+                    coro = provider.search(doc_num, limit=limit)
+                return await asyncio.wait_for(coro, timeout=budget)
+
+            hop2_pairs = [
+                (name, prov, doc_num)
+                for doc_num in missing_pivots
+                for name, prov in hop2_providers
+            ]
+            hop2_outcomes = await asyncio.gather(
+                *(search_hop2(name, prov, doc_num) for name, prov, doc_num in hop2_pairs),
+                return_exceptions=True,
+            )
+            hop2_allowed = requested | set(missing_pivots) if requested else set()
+            for (name, _, _), hop_res in zip(hop2_pairs, hop2_outcomes):
+                count += getattr(hop_res, "request_count", 0) or 0
+                if isinstance(hop_res, BaseException):
+                    errors.append(name + ":" + str(getattr(hop_res, "kind", type(hop_res).__name__)))
+                    continue
+                errors.extend(name + ":" + err for err in getattr(hop_res, "errors", ()))
+                _ingest_records(hop_res.results, allowed_refs=hop2_allowed)
+
+        if all(isinstance(result, BaseException) for result in outcomes) and not records:
             raise OfficialPortalError(";".join(errors), request_count=count, latency_ms=(time.perf_counter()-started)*1000)
         if requested:
             records.sort(key=lambda record: not bool(requested.intersection(_references(record.document_number))))

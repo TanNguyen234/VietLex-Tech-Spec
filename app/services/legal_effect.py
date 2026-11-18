@@ -5,11 +5,10 @@ import re
 from collections import defaultdict
 from datetime import date
 from typing import Literal
-from urllib.parse import urlparse
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from app.services.deep_research import OFFICIAL_SOURCE_DOMAINS
+from app.services.web_source_tiers import classify_web_source_tier
 
 
 EventKind = Literal["effective", "repeal", "amend", "replace"]
@@ -34,9 +33,7 @@ def _normalize(value: str) -> str:
 
 
 def _is_official_source(value: object) -> bool:
-    parsed = urlparse(str(value or ""))
-    host = (parsed.hostname or "").casefold()
-    return parsed.scheme == "https" and host in OFFICIAL_SOURCE_DOMAINS
+    return classify_web_source_tier(str(value or "")) == "official_primary"
 
 
 def _source_text(item: dict) -> str:

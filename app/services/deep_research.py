@@ -10,18 +10,10 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.config import get_settings
 from app.services.provider_runtime import ProviderEvent, record_provider_event
+from app.services.web_source_tiers import TIER1_OFFICIAL_DOMAINS, classify_web_source_tier
 
 
-OFFICIAL_SOURCE_DOMAINS = (
-    "vbpl.vn",
-    "vbpl.moj.gov.vn",
-    "vanban.chinhphu.vn",
-    "datafiles.chinhphu.vn",
-    "congbao.chinhphu.vn",
-    "congbaocdn.chinhphu.vn",
-    "moj.gov.vn",
-    "phapdien.moj.gov.vn",
-)
+OFFICIAL_SOURCE_DOMAINS = TIER1_OFFICIAL_DOMAINS
 _PLAN_VERSION = "official-web-v3"
 _SPACE = re.compile(r"\s+")
 _QUERY_TOKEN = re.compile(r"[\w/-]+", re.UNICODE)
@@ -31,6 +23,16 @@ _QUERY_STOPWORDS = {
     "phải", "ra", "sao", "theo", "thì", "trong", "và", "về", "với",
 }
 _RELEVANCE_STOPWORDS = _QUERY_STOPWORDS | {"xét", "tại", "ngày", "tháng", "năm", "thế", "do", "nhà", "nước", "quản", "lý"}
+_TRAILING_INTERROGATIVE_RE = re.compile(
+    r"\s*(?:hiện\s+nay\s+|hiện\s+tại\s+|mới\s+nhất\s+)?(?:là\s+)?"
+    r"(?:bao\s+nhiêu(?:\s+\w+){0,2}|như\s+thế\s+nào|thế\s+nào|ra\s+sao|"
+    r"ở\s+đâu|cơ\s+quan\s+nào|có\s+được\s+không|được\s+không|"
+    r"phải\s+không|hay\s+không)\s*[?.!]*$",
+    re.IGNORECASE,
+)
+_TAIL_FILLER_WORDS = frozenset(
+    {"nhiêu", "tiền", "nay", "mới", "nhất", "đâu", "sao", "thế", "như", "không", "chưa", "mấy", "lâu"}
+)
 StepKind = Literal[
     "legal_basis",
     "conditions",
@@ -143,6 +145,30 @@ def _plan_id(question: str, steps: list[ResearchPlanStep]) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:24]
 
 
+def _natural_question_seed(issue: str, tokens: list[str]) -> str:
+    from app.services.legal_topic_terms import extract_official_topic_phrases
+    from app.services.official_search_plan import sanitized_subject
+
+    trailing_slice = tokens[-4:]
+    if not _TRAILING_INTERROGATIVE_RE.search(issue) and not (
+        set(trailing_slice) & _TAIL_FILLER_WORDS
+    ):
+        return " ".join(trailing_slice)
+
+    stripped = _TRAILING_INTERROGATIVE_RE.sub(" ", issue)
+    stripped = re.sub(r"\b(?:hiện nay|hiện tại|mới nhất)\b", " ", stripped, flags=re.I)
+    subj = sanitized_subject(stripped)
+    if subj:
+        subj_words = [w for w in subj.split() if w not in _TAIL_FILLER_WORDS]
+        if len(subj_words) >= 2:
+            return " ".join(subj_words[:5])
+    topics = extract_official_topic_phrases(stripped, limit=3)
+    if topics:
+        return " ".join(topics[:2])
+    clean_tokens = [t for t in tokens if t not in _TAIL_FILLER_WORDS]
+    return " ".join((clean_tokens[:4] or trailing_slice))
+
+
 def build_research_plan(question: str) -> ResearchPlan:
     question = _clean(question, 2_000)
     document_number = re.search(
@@ -159,8 +185,13 @@ def build_research_plan(question: str) -> ResearchPlan:
         for token in _QUERY_TOKEN.findall(issue.casefold())
         if token not in _QUERY_STOPWORDS and len(token) > 1
     ]
-    seed = (document_number.group(0) if document_number else
-            named_law.group(0) if named_law else " ".join(tokens[:4] if has_as_of else tokens[-4:]))
+    seed = (
+        document_number.group(0)
+        if document_number
+        else named_law.group(0)
+        if named_law
+        else (" ".join(tokens[:4]) if has_as_of else _natural_question_seed(issue, tokens))
+    )
     seed = seed or question
     verification = (" ".join(tokens[2:10]) if has_as_of and len(tokens) >= 8
                     and not document_number and not named_law else seed)
@@ -184,24 +215,7 @@ def build_research_plan(question: str) -> ResearchPlan:
 
 
 def is_official_source(url: str, declared_domain: str = "") -> bool:
-    try:
-        parsed = urlparse(str(url))
-    except ValueError:
-        return False
-    if parsed.scheme != "https" or not parsed.hostname or parsed.username:
-        return False
-    host = parsed.hostname.rstrip(".").casefold()
-    declared = str(declared_domain or "").strip().rstrip(".").casefold()
-
-    def allowed(value: str) -> bool:
-        return any(
-            value == root or value.endswith(f".{root}")
-            for root in OFFICIAL_SOURCE_DOMAINS
-        )
-
-    if declared and not allowed(declared):
-        return False
-    return allowed(host)
+    return classify_web_source_tier(url, declared_domain or None) == "official_primary"
 
 
 def _source_id(url: str) -> str:
@@ -219,17 +233,22 @@ async def run_deep_research(
         raise DeepResearchDisabled("official web research is disabled")
     if provider is None:
         from app.services.official_web_search import OfficialPortalClient
-
         from app.services.congbao_search import CongBaoClient
         from app.services.federated_official_search import BraveOfficialClient, FederatedOfficialClient
+        from app.services.tavily_search import TavilyOfficialClient, is_tavily_search_enabled
 
         web = None
         if getattr(settings, "OFFICIAL_BRAVE_SEARCH_ENABLED", False):
             if not getattr(settings, "BRAVE_SEARCH_API_KEY", None):
                 raise DeepResearchDisabled("brave_search_not_configured")
             web = BraveOfficialClient(settings=settings)
-        provider = FederatedOfficialClient(portal=OfficialPortalClient(settings=settings),
-                                           gazette=CongBaoClient(settings=settings), web=web)
+        tavily = TavilyOfficialClient(settings=settings) if is_tavily_search_enabled(settings) else None
+        provider = FederatedOfficialClient(
+            portal=OfficialPortalClient(settings=settings),
+            gazette=CongBaoClient(settings=settings),
+            tavily=tavily,
+            web=web,
+        )
 
     # User-edited queries receive a new immutable identity at execution time.
     plan_id = _plan_id(plan.question, plan.steps)

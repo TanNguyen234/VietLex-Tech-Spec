@@ -289,7 +289,8 @@ def _official_context_provenance(
             )
             or not 1 <= view.page_start <= view.page_end <= view.page_count <= 200
             or not isinstance(view.truncated, bool)
-            or view.truncated != (view.page_start > 1 or view.page_end < view.page_count)
+            or ((view.page_start > 1 or view.page_end < view.page_count) and not view.truncated)
+            or (view.page_count == 1 and view.truncated)
         ):
             return None
         provenance.update(
