@@ -114,6 +114,16 @@ class Settings(BaseSettings):
     GROQ_API_KEY: Optional[str] = None
     OPENROUTER_API_KEY: Optional[str] = None
     NVIDIA_API_KEY: Optional[str] = None
+    DEFAULT_LLM_PROVIDER: str = "auto"
+    GUARDED_ANSWER_CACHE_ENABLED: Optional[bool] = None
+
+    # Tavily Web Search & Extract (accepts both TAVILY_API and TAVILY_API_KEY)
+    TAVILY_API: Optional[str] = None
+    TAVILY_API_KEY: Optional[str] = None
+    TAVILY_SEARCH_ENABLED: bool = True
+    TAVILY_EXTRACT_ENABLED: bool = True
+    TAVILY_TIMEOUT_SECONDS: float = Field(default=8.0, gt=0, le=30.0)
+    TAVILY_SEARCH_DEPTH: Literal["basic", "advanced"] = "basic"
 
     # Google Cloud Vertex AI via Application Default Credentials (ADC).
     # GOOGLE_APPLICATION_CREDENTIALS is intentionally consumed by google-auth,
@@ -314,6 +324,10 @@ class Settings(BaseSettings):
     @property
     def pinecone_api_key(self) -> Optional[str]:
         return self.PINECONE_API_KEY or self.PINECONE_API or self.PIPECONE_API
+
+    @property
+    def tavily_api_key(self) -> Optional[str]:
+        return (self.TAVILY_API_KEY or "").strip() or (self.TAVILY_API or "").strip() or None
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

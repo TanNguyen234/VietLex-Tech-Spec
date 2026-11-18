@@ -28,7 +28,16 @@ GUARDRAIL_RETRY_BACKOFF_SECONDS = (1.0, 2.0)
 
 async def _decision(stage: str, prompt: str) -> str:
     current_settings = get_settings()
-    allow_fallback = bool(getattr(current_settings, "USE_LEGACY_FREE_PIPELINE", False))
+    has_secondary_keys = bool(
+        getattr(current_settings, "GEMINI_API_KEY", None)
+        or getattr(current_settings, "GROQ_API_KEY", None)
+        or getattr(current_settings, "OPENROUTER_API_KEY", None)
+        or getattr(current_settings, "NVIDIA_API_KEY", None)
+    )
+    allow_fallback = bool(
+        getattr(current_settings, "USE_LEGACY_FREE_PIPELINE", False)
+        or has_secondary_keys
+    )
     loop = asyncio.get_running_loop()
     deadline = loop.time() + current_settings.GUARDRAIL_TIMEOUT_SECONDS
     attempt = 0

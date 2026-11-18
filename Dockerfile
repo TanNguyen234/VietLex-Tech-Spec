@@ -21,7 +21,8 @@ COPY docs/evaluation/runs/answer-v3-golden50-expanded14962-rrf-dbsf-20260903/man
 COPY pyproject.toml requirements-demo.lock ./
 RUN pip install --no-cache-dir -r requirements-demo.lock && pip install --no-cache-dir . --no-deps
 RUN useradd --create-home --uid 10001 vietlex
-ENV REVIEWER_DEMO_MODE=true
+ENV REVIEWER_DEMO_MODE=true \
+    SERVERLESS_ONLINE_ONLY=true
 USER vietlex
 
 # The indexed corpus is mounted at runtime and is never baked into the image.

@@ -124,6 +124,8 @@ def semantic_cache_pipeline_revision(*, identity: dict | None = None) -> str:
         "context_limit": settings.LLM_CONTEXT_MAX_TOKENS,
         "official_deep_reading_enabled": getattr(settings, "CHAT_OFFICIAL_DEEP_READING_ENABLED", False),
         "instrument_hypothesis_enabled": getattr(settings, "CHAT_INSTRUMENT_HYPOTHESIS_ENABLED", False),
+        "tavily_search_enabled": bool(getattr(settings, "TAVILY_SEARCH_ENABLED", False)),
+        "tavily_extract_enabled": bool(getattr(settings, "TAVILY_EXTRACT_ENABLED", False)),
         "official_deep_profile": asdict(DEEP_READING),
     }
     encoded = json.dumps(

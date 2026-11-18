@@ -1,19 +1,23 @@
 from __future__ import annotations
 
+import asyncio
+from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 import json
 import math
 import os
 from pathlib import Path
+import random
 import re
 import time
-from typing import Any, Callable
+from typing import Any, AsyncIterator, Callable
 
 import httpx
 import requests
 from google import auth as google_auth
 from google.auth import exceptions as google_auth_exceptions
 from google.auth.transport import mtls
+from google.auth.transport.requests import Request as GoogleAuthRequest
 from google import genai
 from google.genai import types
 from google.oauth2 import service_account
@@ -26,7 +30,9 @@ from app.config import (
     system_ssl_context,
 )
 from app.services.provider_http_budget import (
+    ProviderHttpAsyncTransport,
     ProviderHttpAttemptBudgetExceeded,
+    _wrap_client_transports,
     create_vertex_httpx_clients,
     current_provider_http_budget,
 )
@@ -198,6 +204,10 @@ class VertexAIProvider:
         self._uses_default_client_factory = self._client_factory is genai.Client
         self._client: Any | None = None
         self._project: str | None = None
+        self._credentials: Any | None = None
+        self._token_refreshed_at: float | None = None
+        self._token_lock: asyncio.Lock | None = None
+        self._batch_embed_http2_client: httpx.AsyncClient | None = None
         self._owned_httpx_clients: tuple[httpx.Client, httpx.AsyncClient] | None = None
 
     def _get_client(self) -> Any:
@@ -276,14 +286,20 @@ class VertexAIProvider:
         except Exception as error:
             raise _mapped_error(error) from None
         self._project = project
+        self._credentials = credentials
         return self._client
 
     async def close(self) -> None:
         client = self._client
         self._client = None
+        self._credentials = None
+        h2_client = self._batch_embed_http2_client
+        self._batch_embed_http2_client = None
         clients = self._owned_httpx_clients
         self._owned_httpx_clients = None
         try:
+            if h2_client is not None and not h2_client.is_closed:
+                await h2_client.aclose()
             if client is not None:
                 close = getattr(client, "close", None)
                 if callable(close):
@@ -325,6 +341,7 @@ class VertexAIProvider:
         self,
         prompt: str,
         *,
+        model: str | None = None,
         system_instruction: str = "",
         max_output_tokens: int = 1024,
         thinking_level: types.ThinkingLevel | None = None,
@@ -343,6 +360,7 @@ class VertexAIProvider:
         self._ensure_async_model_capacity()
         started = time.perf_counter()
         client = self._get_client()
+        effective_model = model or self.settings.VERTEX_LLM_MODEL
         config = types.GenerateContentConfig(
             system_instruction=system_instruction or None,
             temperature=0.2,
@@ -359,7 +377,7 @@ class VertexAIProvider:
         )
         try:
             response = await client.aio.models.generate_content(
-                model=self.settings.VERTEX_LLM_MODEL,
+                model=effective_model,
                 contents=prompt if pdf_bytes is None else [prompt, types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf")],
                 config=config,
             )
@@ -387,7 +405,7 @@ class VertexAIProvider:
         thinking_value = getattr(thinking_level, "value", thinking_level)
         return GenerationResult(
             text=text,
-            metadata=self._metadata(self.settings.VERTEX_LLM_MODEL, started),
+            metadata=self._metadata(effective_model, started),
             finish_reason=(str(finish_reason) if finish_reason else None),
             prompt_token_count=getattr(usage, "prompt_token_count", None),
             output_token_count=getattr(usage, "candidates_token_count", None),
@@ -397,6 +415,88 @@ class VertexAIProvider:
             thinking_level=(
                 str(thinking_value) if thinking_value else "DEFAULT"
             ),
+        )
+
+    async def generate_stream(
+        self,
+        prompt: str,
+        *,
+        model: str | None = None,
+        system_instruction: str = "",
+        max_output_tokens: int = 1024,
+        thinking_level: types.ThinkingLevel | None = None,
+        response_mime_type: str | None = None,
+        max_retries: int | None = None,
+    ) -> AsyncIterator[str | GenerationResult]:
+        if max_retries is not None and not 0 <= max_retries <= 5:
+            raise ValueError("invalid_retry_limit")
+        self._ensure_async_model_capacity()
+        started = time.perf_counter()
+        client = self._get_client()
+        effective_model = model or self.settings.VERTEX_LLM_MODEL
+        config = types.GenerateContentConfig(
+            system_instruction=system_instruction or None,
+            temperature=0.2,
+            max_output_tokens=max_output_tokens,
+            response_mime_type=response_mime_type,
+            http_options=(
+                types.HttpOptions(retry_options=types.HttpRetryOptions(attempts=max_retries + 1))
+                if max_retries is not None
+                else None
+            ),
+            thinking_config=(
+                types.ThinkingConfig(thinking_level=thinking_level)
+                if thinking_level is not None
+                else None
+            ),
+        )
+        pieces: list[str] = []
+        finish_reason: str | None = None
+        usage = None
+        stream = None
+        try:
+            stream = await client.aio.models.generate_content_stream(
+                model=effective_model,
+                contents=prompt,
+                config=config,
+            )
+            async for chunk in stream:
+                chunk_text = getattr(chunk, "text", None) or ""
+                if chunk_text:
+                    pieces.append(chunk_text)
+                    yield chunk_text
+                candidates = getattr(chunk, "candidates", None) or []
+                if candidates:
+                    fr = getattr(candidates[0], "finish_reason", None)
+                    fr_val = getattr(fr, "value", fr)
+                    if fr_val:
+                        finish_reason = str(fr_val)
+                chunk_usage = getattr(chunk, "usage_metadata", None)
+                if chunk_usage is not None:
+                    usage = chunk_usage
+        except ProviderHttpAttemptBudgetExceeded:
+            raise
+        except Exception as error:
+            raise _mapped_error(error) from None
+        finally:
+            if stream is not None and hasattr(stream, "aclose"):
+                await stream.aclose()
+        full_text = "".join(pieces).strip()
+        if not full_text:
+            raise VertexInvalidResponseError(
+                "Vertex AI returned an empty streaming generation response."
+            )
+        thinking_value = getattr(thinking_level, "value", thinking_level)
+        yield GenerationResult(
+            text=full_text,
+            metadata=self._metadata(effective_model, started),
+            finish_reason=finish_reason or "STOP",
+            prompt_token_count=getattr(usage, "prompt_token_count", None),
+            output_token_count=getattr(usage, "candidates_token_count", None),
+            thought_token_count=getattr(usage, "thoughts_token_count", None),
+            total_token_count=getattr(usage, "total_token_count", None),
+            max_output_tokens=max_output_tokens,
+            thinking_level=str(thinking_value) if thinking_value else "DEFAULT",
         )
 
     async def generate_structured(
@@ -467,6 +567,288 @@ class VertexAIProvider:
     ) -> EmbeddingResult:
         content = f"title: {title or 'none'} | text: {text}"
         return await self._embed(content, output_dimensionality)
+
+    async def _get_valid_bearer_token(self) -> str:
+        self._get_client()
+        if self._token_lock is None:
+            self._token_lock = asyncio.Lock()
+        async with self._token_lock:
+            creds = self._credentials
+            if creds is None:
+                raise VertexAuthenticationError(
+                    "Vertex AI credentials were not initialized."
+                )
+            now = time.monotonic()
+            token = getattr(creds, "token", None)
+            valid = bool(getattr(creds, "valid", False))
+            if (
+                not token
+                or not valid
+                or self._token_refreshed_at is None
+                or (now - self._token_refreshed_at) > 2400
+            ):
+                try:
+                    await asyncio.to_thread(creds.refresh, GoogleAuthRequest())
+                except Exception as error:
+                    raise _mapped_error(error) from None
+                self._token_refreshed_at = time.monotonic()
+                token = getattr(creds, "token", None)
+            if not token:
+                raise VertexAuthenticationError(
+                    "Vertex AI access token could not be refreshed."
+                )
+            return str(token)
+
+    def _get_batch_http2_client(self) -> httpx.AsyncClient:
+        if (
+            self._batch_embed_http2_client is not None
+            and not self._batch_embed_http2_client.is_closed
+        ):
+            return self._batch_embed_http2_client
+        try:
+            import h2  # noqa: F401
+
+            use_http2 = True
+        except ImportError:
+            use_http2 = False
+        h2_client = httpx.AsyncClient(
+            verify=system_ssl_context(),
+            http2=use_http2,
+            timeout=httpx.Timeout(self.settings.VERTEX_REQUEST_TIMEOUT_SECONDS),
+            limits=httpx.Limits(
+                max_connections=256,
+                max_keepalive_connections=192,
+            ),
+            follow_redirects=True,
+            trust_env=True,
+        )
+        _wrap_client_transports(
+            h2_client,
+            ProviderHttpAsyncTransport,
+            boundary="vertex_model_httpx_async",
+            provider="google_vertex_ai",
+        )
+        self._batch_embed_http2_client = h2_client
+        return self._batch_embed_http2_client
+
+    async def _embed_single_http2(
+        self,
+        formatted_content: str,
+        output_dimensionality: int,
+    ) -> EmbeddingResult:
+        location = str(self.settings.GOOGLE_CLOUD_LOCATION or "global").strip()
+        host = (
+            "aiplatform.googleapis.com"
+            if location == "global"
+            else f"{location}-aiplatform.googleapis.com"
+        )
+        model_name = self.settings.VERTEX_EMBEDDING_MODEL
+        url = (
+            f"https://{host}/v1/projects/{self._project}/locations/{location}"
+            f"/publishers/google/models/{model_name}:embedContent"
+        )
+        h2_client = self._get_batch_http2_client()
+        max_attempts = 6
+        started = time.perf_counter()
+        payload = {
+            "content": {
+                "role": "user",
+                "parts": [{"text": formatted_content}],
+            },
+            "outputDimensionality": output_dimensionality,
+        }
+        data: dict[str, Any] = {}
+        for attempt in range(max_attempts):
+            self._ensure_async_model_capacity()
+            token = await self._get_valid_bearer_token()
+            started = time.perf_counter()
+            try:
+                resp = await h2_client.post(
+                    url,
+                    headers={
+                        "Authorization": f"Bearer {token}",
+                        "Content-Type": "application/json",
+                    },
+                    json=payload,
+                )
+                if resp.status_code == 200:
+                    data = resp.json()
+                    break
+                if resp.status_code in {429, 408, 500, 502, 503, 504} and attempt + 1 < max_attempts:
+                    await asyncio.sleep(0.5 * (2**attempt) + random.uniform(0.0, 0.25))
+                    continue
+                if resp.status_code == 401 and attempt + 1 < max_attempts:
+                    self._token_refreshed_at = None
+                    await asyncio.sleep(0.05 * (attempt + 1))
+                    continue
+                if resp.status_code == 429:
+                    raise VertexQuotaError("Vertex AI embedding quota exceeded.", status_code=429)
+                if resp.status_code == 403:
+                    raise VertexPermissionError("Vertex AI embedding permission denied.", status_code=403)
+                if resp.status_code == 401:
+                    raise VertexAuthenticationError("Vertex AI embedding authentication failed.", status_code=401)
+                if resp.status_code in {400, 404}:
+                    raise VertexModelError(
+                        f"Vertex AI embedding model error ({resp.status_code}).",
+                        status_code=resp.status_code,
+                    )
+                raise VertexNetworkError(
+                    f"Vertex AI embedding HTTP {resp.status_code}.",
+                    status_code=resp.status_code,
+                )
+            except ProviderHttpAttemptBudgetExceeded:
+                raise
+            except VertexAIError:
+                raise
+            except Exception as error:
+                mapped = _mapped_error(error)
+                if isinstance(mapped, (VertexQuotaError, VertexNetworkError)) and attempt + 1 < max_attempts:
+                    await asyncio.sleep(0.5 * (2**attempt))
+                    continue
+                raise mapped from None
+
+        raw_values = (data.get("embedding") or {}).get("values") or []
+        values = tuple(float(v) for v in raw_values)
+        if len(values) != output_dimensionality or not all(
+            math.isfinite(value) for value in values
+        ):
+            raise VertexInvalidResponseError(
+                "Vertex AI returned an invalid embedding vector."
+            )
+        norm = math.sqrt(sum(value * value for value in values))
+        if not math.isclose(norm, 1.0, rel_tol=0.02, abs_tol=0.02):
+            raise VertexInvalidResponseError(
+                "Vertex AI embedding vector is not L2 normalized."
+            )
+        return EmbeddingResult(
+            values=values,
+            output_dimensionality=output_dimensionality,
+            l2_norm=norm,
+            metadata=self._metadata(model_name, started),
+        )
+
+    async def embed_documents_batch(
+        self,
+        items: Sequence[tuple[str, str | None]],
+        *,
+        output_dimensionality: int,
+    ) -> list[EmbeddingResult]:
+        if not 128 <= output_dimensionality <= 3072:
+            raise ValueError("output_dimensionality must be between 128 and 3072")
+        if not items:
+            return []
+        formatted = [
+            f"title: {title or 'none'} | text: {text}" for text, title in items
+        ]
+        # Multimodal `gemini-embedding-2` on Vertex AI accepts 1 content per `:embedContent`
+        # request (`list[str]` is treated by google-genai as a single multi-part Content).
+        # Multiplex up to 64 items concurrently over HTTP/2 keep-alive connections!
+        if (
+            self._uses_default_client_factory
+            and "gemini-embedding-2" in str(self.settings.VERTEX_EMBEDDING_MODEL)
+        ):
+            self._get_client()
+            await self._get_valid_bearer_token()
+            results: list[EmbeddingResult] = []
+            for offset in range(0, len(formatted), 64):
+                batch = formatted[offset : offset + 64]
+                batch_res = await asyncio.gather(
+                    *(
+                        self._embed_single_http2(text_item, output_dimensionality)
+                        for text_item in batch
+                    )
+                )
+                results.extend(batch_res)
+            return results
+
+        results = []
+        for offset in range(0, len(formatted), 64):
+            batch = formatted[offset : offset + 64]
+            results.extend(
+                await self._embed_contents_batch(batch, output_dimensionality)
+            )
+        return results
+
+    async def _embed_contents_batch(
+        self,
+        contents_list: list[str],
+        output_dimensionality: int,
+    ) -> list[EmbeddingResult]:
+        client = self._get_client()
+        response = None
+        started = time.perf_counter()
+        max_attempts = 4
+        for attempt in range(max_attempts):
+            self._ensure_async_model_capacity()
+            started = time.perf_counter()
+            try:
+                response = await client.aio.models.embed_content(
+                    model=self.settings.VERTEX_EMBEDDING_MODEL,
+                    contents=contents_list,
+                    config=types.EmbedContentConfig(
+                        output_dimensionality=output_dimensionality,
+                    ),
+                )
+                break
+            except ProviderHttpAttemptBudgetExceeded:
+                raise
+            except Exception as error:
+                mapped = _mapped_error(error)
+                if (
+                    isinstance(mapped, VertexModelError)
+                    and mapped.status_code == 400
+                    and len(contents_list) > 1
+                ):
+                    mid = len(contents_list) // 2
+                    left = await self._embed_contents_batch(
+                        contents_list[:mid],
+                        output_dimensionality,
+                    )
+                    right = await self._embed_contents_batch(
+                        contents_list[mid:],
+                        output_dimensionality,
+                    )
+                    return [*left, *right]
+                if (
+                    isinstance(mapped, (VertexQuotaError, VertexNetworkError))
+                    and attempt + 1 < max_attempts
+                ):
+                    await asyncio.sleep(0.5 * (2**attempt))
+                    continue
+                raise mapped from None
+
+        embeddings = getattr(response, "embeddings", None) or []
+        if len(embeddings) != len(contents_list):
+            raise VertexInvalidResponseError(
+                "Vertex AI returned mismatched batch embedding count."
+            )
+        meta = self._metadata(self.settings.VERTEX_EMBEDDING_MODEL, started)
+        batch_results: list[EmbeddingResult] = []
+        for item in embeddings:
+            values = tuple(
+                float(value)
+                for value in (getattr(item, "values", None) or [])
+            )
+            if len(values) != output_dimensionality or not all(
+                math.isfinite(value) for value in values
+            ):
+                raise VertexInvalidResponseError(
+                    "Vertex AI returned an invalid embedding vector."
+                )
+            norm = math.sqrt(sum(value * value for value in values))
+            if not math.isclose(norm, 1.0, rel_tol=0.02, abs_tol=0.02):
+                raise VertexInvalidResponseError(
+                    "Vertex AI embedding vector is not L2 normalized."
+                )
+            batch_results.append(
+                EmbeddingResult(
+                    values=values,
+                    output_dimensionality=output_dimensionality,
+                    l2_norm=norm,
+                    metadata=meta,
+                )
+            )
+        return batch_results
 
     async def _embed(
         self,

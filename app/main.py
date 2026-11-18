@@ -1,4 +1,6 @@
 import asyncio
+import logging
+import os
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Request, Query, HTTPException
@@ -45,7 +47,8 @@ from app.services.observability import configure_observability
 from app.services.reviewer_demo import ReviewerDemoMiddleware, is_reviewer_demo_enabled
 
 # Load environment variables from .env before settings/observability initialization.
-load_dotenv()
+if os.getenv("APP_ENV") != "test":
+    load_dotenv()
 
 settings = get_settings()
 validate_production_settings(settings)
@@ -80,7 +83,15 @@ async def startup_event():
         from app.services.semantic_cache import ensure_semantic_cache_collection
 
         await init_db()
-        await ensure_semantic_cache_collection()
+        try:
+            await ensure_semantic_cache_collection()
+        except Exception as error:
+            if settings.USE_LEGACY_FREE_PIPELINE:
+                raise
+            logging.getLogger(__name__).warning(
+                "Semantic cache disabled at startup (%s); continuing with V3 pipeline.",
+                type(error).__name__,
+            )
     if (
         settings.APP_ENV == "production"
         and settings.PUBLIC_NEMO_DEFAULT_ENABLED
@@ -207,6 +218,8 @@ async def get_index(request: Request, current_user=Depends(optional_user), docum
         if request.query_params.get("gateway") == "vercel"
         else "sse"
     )
+    from app.api.routes import build_index_llm_controls
+
     response = templates.TemplateResponse(
         request,
         "index.html",
@@ -216,6 +229,7 @@ async def get_index(request: Request, current_user=Depends(optional_user), docum
             "current_user": current_user,
             "prefill_question": request.query_params.get("question", "")[:2_000],
             "scoped_document": scoped_document,
+            **build_index_llm_controls(current_user, settings),
         },
     )
     # Save token in cookie for validation

@@ -37,8 +37,14 @@ def is_reviewer_demo_enabled(settings) -> bool:
     )
 
 
-def is_demo_daily_exempt(user: dict) -> bool:
-    return effective_role(user) == 'admin'
+def is_demo_daily_exempt(user: dict | None) -> bool:
+    return bool(user) and effective_role(user) == 'admin'
+
+
+def is_demo_exempt(user: dict | None, settings=None) -> bool:
+    if settings is not None and not is_reviewer_demo_enabled(settings):
+        return True
+    return is_demo_daily_exempt(user)
 
 
 async def get_demo_quota(subject: str, settings, *, is_admin: bool = False) -> dict:
@@ -141,14 +147,20 @@ class ReviewerDemoMiddleware:
                     await deny(401, 'demo_login_required', 'Đăng nhập tài khoản đã xác minh để dùng chức năng này.')
                     return
                 subject = str(user['_id'])
+                admin_exempt = is_demo_daily_exempt(user)
                 if _FREE_RESEARCH.fullmatch(path):
-                    category, personal, total, per_minute = 'free_research', 100, 1000, 2
+                    category, personal, total = 'free_research', 100, 1000
+                    per_minute = 60 if admin_exempt else 2
                 else:
-                    expensive = path == '/chat' or path.startswith('/api/evaluation/') or bool(_AI.fullmatch(path))
+                    expensive = (
+                        path in {'/chat', '/chat/stream'}
+                        or path.startswith('/api/evaluation/')
+                        or bool(_AI.fullmatch(path))
+                    )
                     category = 'ai' if expensive else 'write'
                     personal = self.settings.DEMO_AI_DAILY_LIMIT if expensive else 100
                     total = self.settings.DEMO_AI_GLOBAL_DAILY_LIMIT if expensive else 1000
-                    per_minute = 3 if expensive else 15
+                    per_minute = 60 if admin_exempt else (3 if expensive else 15)
             # Shared work quota must never lock users out of privacy/session controls.
             budgets = [] if _PROTECTIVE.fullmatch(path) else [(True, per_minute, 60)]
             if budgets and (path in _AUTH or not is_demo_daily_exempt(user)):
@@ -169,10 +181,10 @@ class ReviewerDemoMiddleware:
             if self.active_bodies >= 2:
                 await deny(503, 'demo_capacity_limit', 'Demo đang bận. Vui lòng thử lại sau.')
                 return
+            cap = 4_000_000 if _UPLOAD.fullmatch(path) else 65_536
+            messages, observed = [], 0
             self.active_bodies += 1
             try:
-                cap = 4_000_000 if _UPLOAD.fullmatch(path) else 65_536
-                messages, observed = [], 0
                 try:
                     async with asyncio.timeout(15):
                         while True:
@@ -189,13 +201,13 @@ class ReviewerDemoMiddleware:
                 except TimeoutError:
                     await deny(408, 'demo_body_timeout', 'Hết thời gian nhận dữ liệu.')
                     return
-    
-                async def replay():
-                    return messages.pop(0) if messages else await receive()
-    
-                await self.app(scope, replay, send)
             finally:
                 self.active_bodies -= 1
+
+            async def replay():
+                return messages.pop(0) if messages else await receive()
+
+            await self.app(scope, replay, send)
 
         else:
             await self.app(scope, receive, send)

@@ -7,7 +7,7 @@ import secrets
 import csv
 import io
 from datetime import date
-from typing import Dict, Literal
+from typing import Any, Dict, Literal
 import logfire
 
 from fastapi import APIRouter, Request, Depends, Form, BackgroundTasks, HTTPException, Query
@@ -45,7 +45,21 @@ from app.rate_limit import limiter
 from app.services.evidence_presenter import present_context
 from app.services.provider_runtime import provider_status_snapshot, capture_provider_usage
 from app.services.admin_observability import clean_text, present_interaction, summarize_usage, AdminDataUnavailable
-from app.services.direct_llm import provider_cooldown_snapshot
+from app.services.direct_llm import (
+    LLMGenerationResult,
+    LLMUseCase,
+    can_select_custom_llm_route,
+    list_available_llm_targets,
+    llm_route_scope,
+    provider_cooldown_snapshot,
+    resolve_llm_route,
+    stream_llm_response_with_metadata,
+)
+from app.services.guarded_answer_cache import (
+    guarded_answer_cache,
+    is_guarded_answer_cache_enabled,
+    is_guarded_cacheable_query,
+)
 from app.services.provider_http_budget import ProviderHttpAttemptBudgetExceeded
 from app.services.chat_progress import chat_progress
 from app.services.research_presenter import (
@@ -309,6 +323,90 @@ async def chat_progress_stream(request: Request, request_id: str):
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
 
+
+def build_index_llm_controls(
+    current_user: dict | None = None,
+    active_settings: Any = None,
+) -> dict[str, Any]:
+    s = active_settings if active_settings is not None else settings
+    allowed = can_select_custom_llm_route(current_user, settings=s)
+    return {
+        "can_select_llm_route": allowed,
+        "llm_targets": list_available_llm_targets(s) if allowed else [],
+    }
+
+
+def _resolve_web_mode(
+    web_mode: str | None,
+    current_user: dict | None = None,
+    active_settings: Any = None,
+) -> str:
+    s = active_settings if active_settings is not None else settings
+    if not can_select_custom_llm_route(current_user, settings=s):
+        return "auto"
+    normalized = (web_mode or "auto").strip().lower()
+    return normalized if normalized in {"auto", "force", "off"} else "auto"
+
+
+async def _maybe_autotitle_session(
+    session_id: str,
+    clean_query: str,
+    *,
+    client_id: str,
+    user_id: str | None = None,
+) -> str | None:
+    if not session_id or session_id == "default":
+        return None
+    sessions = await get_sessions(client_id, user_id=user_id)
+    matched = next(
+        (
+            item
+            for item in (sessions or [])
+            if (item.get("session_id") or item.get("_id")) == session_id
+        ),
+        None,
+    )
+    if not isinstance(matched, dict) or matched.get("title") != "Hội thoại mới":
+        return None
+    existing = await get_session_messages(
+        session_id,
+        client_id,
+        user_id=user_id,
+        recent_limit=1,
+    )
+    if existing:
+        return None
+    normalized_title = " ".join(clean_query.split())[:48]
+    if not normalized_title:
+        return None
+    await rename_session(
+        session_id,
+        normalized_title,
+        client_id,
+        user_id=user_id,
+    )
+    return normalized_title
+
+
+def verify_clause_citations(
+    answer: str,
+    contexts: list[str],
+) -> tuple[str, dict[str, Any]]:
+    from app.services.citation_clause_guard import (
+        correct_clause_citations,
+        drop_ungrounded_document_citations,
+    )
+
+    adjustments: dict[str, Any] = {}
+    corrected, clause_changes = correct_clause_citations(answer, contexts)
+    if clause_changes:
+        adjustments["citation_clause_changes"] = clause_changes
+    corrected, ungrounded = drop_ungrounded_document_citations(corrected, contexts)
+    if ungrounded:
+        adjustments["ungrounded_citations_removed"] = ungrounded
+    return corrected, adjustments
+
+
 @router.post("/chat", response_class=HTMLResponse)
 @limiter.limit(settings.CHAT_RATE_LIMIT)
 @capture_provider_usage
@@ -322,6 +420,9 @@ async def chat(
     guardrail_mode: Literal["off", "shadow", "enforce"] | None = Form(None),
     document_id: int | None = Form(None, ge=0),
     request_id: str = Form(""),
+    llm_provider: str = Form("auto"),
+    llm_model: str | None = Form(None),
+    web_mode: str = Form("auto"),
     csrf_valid: str = Depends(verify_csrf),
     current_user=Depends(optional_user),
 ):
@@ -330,6 +431,14 @@ async def chat(
     mode = "enforce"
     guardrail_state = _guardrail_state(mode)
     nemo_enabled = mode != "off"
+    selected_route = resolve_llm_route(
+        llm_provider,
+        llm_model,
+        user=current_user,
+        settings=settings,
+    )
+    effective_web_mode = _resolve_web_mode(web_mode, current_user, settings)
+    route_cache_key = selected_route.cache_key()
     message = redact_pii(message)
     trace_id = str(uuid.uuid4())
     client_id = getattr(request.state, "client_id", "legacy")
@@ -347,7 +456,8 @@ async def chat(
     if request_id:
         chat_progress.start(request_id, client_id, nemo_enabled=nemo_enabled)
     is_new_session = False
-    
+    autotitled = False
+
     if not session_id or session_id == "default":
         session_id = str(uuid.uuid4())
         words = message.split()
@@ -356,6 +466,17 @@ async def chat(
             session_id, title, client_id=client_id, user_id=user_id
         )
         is_new_session = True
+    else:
+        autotitled = (
+            await _maybe_autotitle_session(
+                session_id,
+                message,
+                client_id=client_id,
+                user_id=user_id,
+            )
+            is not None
+        )
+    should_reload_sessions = is_new_session or autotitled
         
     with logfire.span("Xử lý Chat Request", trace_id=trace_id, query_length=len(message)) as span:
         t_cache = 0.0
@@ -484,7 +605,7 @@ async def chat(
                 "chat_message.html",
                 {"user_msg": message, "bot_msg": rejection_message, "trace_id": trace_id, "session_id": session_id}
             )
-            if is_new_session:
+            if should_reload_sessions:
                 response.headers["HX-Trigger"] = "load-sessions"
             if request_id:
                 chat_progress.complete(request_id, client_id, status="blocked_input")
@@ -516,17 +637,47 @@ async def chat(
                 session_id, client_id, user_id=user_id, recent_limit=8,
             ))
         cacheable_query = (
-            scoped_outcome is None and deterministic_guidance(message) is None
+            scoped_outcome is None and effective_web_mode == "auto"
+            and deterministic_guidance(message) is None
             and not followup_requested and semantic_cache_query_allowed(message)
         )
-        cached_response = (
-            await check_semantic_cache(message)
-            if cacheable_query and not nemo_enabled
+        guarded_cacheable = (
+            scoped_outcome is None
+            and effective_web_mode == "auto"
+            and deterministic_guidance(message) is None
+            and not followup_requested
+            and is_guarded_answer_cache_enabled(settings)
+            and is_guarded_cacheable_query(message)
+        )
+        guarded_hit = (
+            guarded_answer_cache.get(
+                message,
+                settings=settings,
+                route_key=route_cache_key,
+            )
+            if guarded_cacheable
             else None
+        )
+        cached_response = (
+            guarded_hit
+            if guarded_hit is not None
+            else (
+                await check_semantic_cache(message)
+                if cacheable_query and not nemo_enabled
+                else None
+            )
         )
         t_cache = round(time.perf_counter() - cache_started, 4)
 
         if cached_response:
+            if guarded_hit is not None:
+                guardrail_state["output_safe"] = True
+                guardrail_state["stages"]["output"] = {
+                    "status": "passed",
+                    "safe": True,
+                    "error": None,
+                }
+                guardrail_state["status"] = "passed"
             cached_contexts = cached_response.contexts
             cached_text = cached_response.response
             span.set_attribute("cache_hit", True)
@@ -544,6 +695,13 @@ async def chat(
                 bot_response=cached_text,
                 cached=True,
                 input_safe=True,
+                output_safe=True if guarded_hit is not None else None,
+                observed_provider=(
+                    guarded_hit.observed_provider if guarded_hit is not None else None
+                ),
+                observed_model=(
+                    guarded_hit.observed_model if guarded_hit is not None else None
+                ),
                 ragas_mode="off",
                 ragas_sample_rate=0.0,
             )
@@ -592,7 +750,7 @@ async def chat(
                     "claim_support": build_claim_support(cached_text, cached_contexts),
                 },
             )
-            if is_new_session:
+            if should_reload_sessions:
                 response.headers["HX-Trigger"] = "load-sessions"
             if request_id:
                 chat_progress.complete(request_id, client_id, status="cache_hit")
@@ -609,10 +767,17 @@ async def chat(
                 "Đang retrieval, rerank và tạo câu trả lời",
             )
         try:
-            bot_response, context_used, latency_info = await run_advanced_rag(
-                message, **({"scoped_outcome": scoped_outcome} if scoped_outcome is not None else
-                            {"previous_user_query": previous_user_query} if previous_user_query else {})
-            )
+            rag_kwargs: dict[str, Any] = {}
+            if scoped_outcome is not None:
+                rag_kwargs["scoped_outcome"] = scoped_outcome
+            elif previous_user_query:
+                rag_kwargs["previous_user_query"] = previous_user_query
+            if effective_web_mode != "auto":
+                rag_kwargs["web_mode"] = effective_web_mode
+            with llm_route_scope(selected_route):
+                bot_response, context_used, latency_info = await run_advanced_rag(
+                    message, **rag_kwargs
+                )
         except (RetrievalPipelineError, ProviderHttpAttemptBudgetExceeded) as error:
             t_total = round(time.perf_counter() - request_started, 4)
             tech_error = {
@@ -770,7 +935,7 @@ async def chat(
                 },
                 status_code=503,
             )
-            if is_new_session:
+            if should_reload_sessions:
                 response.headers["HX-Trigger"] = "load-sessions"
             if request_id:
                 chat_progress.complete(request_id, client_id, status="technical_error")
@@ -955,6 +1120,25 @@ async def chat(
         )
         
         # Cache only grounded, output-approved answers and preserve their evidence.
+        if (
+            req_status == "ok"
+            and input_safe is True
+            and output_safe is True
+            and context_used
+            and guarded_cacheable
+        ):
+            guarded_answer_cache.put(
+                message,
+                final_response,
+                context_used,
+                settings=settings,
+                route_key=route_cache_key,
+                input_safe=input_safe,
+                output_safe=output_safe,
+                request_status=req_status,
+                observed_provider=observed_prov,
+                observed_model=observed_mod,
+            )
         if req_status == "ok" and context_used and cacheable_query and not nemo_enabled:
             background_tasks.add_task(
                 save_to_semantic_cache,
@@ -970,11 +1154,907 @@ async def chat(
             "chat_message.html",
             {"user_msg": message, "bot_msg": final_response, "trace_id": trace_id, "session_id": session_id, "contexts": context_used, "evidence_views": [present_context(item) for item in context_used], "claim_support": build_claim_support(final_response, context_used)}
         )
-        if is_new_session:
+        if should_reload_sessions:
             response.headers["HX-Trigger"] = "load-sessions"
         if request_id:
             chat_progress.complete(request_id, client_id, status=req_status)
         return response
+
+
+def _ndjson_line(payload: dict[str, Any]) -> str:
+    return json.dumps(payload, ensure_ascii=False) + "\n"
+
+
+async def retrieve_stream_contexts(
+    user_query: str,
+    *,
+    scoped_outcome: Any = None,
+    previous_user_query: str | None = None,
+    web_mode: str = "auto",
+    stage_events: list[str] | None = None,
+) -> tuple[list[str], str, dict[str, Any], str | None]:
+    from app.services.rag_pipeline import prepare_rag_contexts
+
+    return await prepare_rag_contexts(
+        user_query,
+        scoped_outcome=scoped_outcome,
+        previous_user_query=previous_user_query,
+        web_mode=web_mode,
+        stage_events=stage_events,
+    )
+
+
+@router.post("/chat/stream")
+@limiter.limit(settings.CHAT_RATE_LIMIT)
+async def chat_stream(
+    request: Request,
+    message: str = Form(...),
+    csrf_token: str = Form(...),
+    session_id: str = Form(None),
+    nemo_enabled: bool = Form(True),
+    guardrail_mode: Literal["off", "shadow", "enforce"] | None = Form(None),
+    document_id: int | None = Form(None, ge=0),
+    request_id: str = Form(""),
+    llm_provider: str = Form("auto"),
+    llm_model: str | None = Form(None),
+    web_mode: str = Form("auto"),
+    csrf_valid: str = Depends(verify_csrf),
+    current_user=Depends(optional_user),
+):
+    from dataclasses import replace
+    from app.services.provider_http_budget import provider_http_budget_scope
+    from app.services.provider_runtime import _request_calls
+    from app.services.direct_llm import generate_llm_response_with_metadata
+    from app.services.rag_pipeline import (
+        NO_EVIDENCE_RESPONSE,
+        _legal_effect_answer_diagnostics,
+        _scope_current_effect_answer,
+        _source_opening_excerpt,
+        _strip_latex_markup,
+        _unconfirmed_as_of_start_dates,
+        build_answer_prompts,
+    )
+
+    request_started = time.perf_counter()
+    mode = "enforce"
+    guardrail_state = _guardrail_state(mode)
+    effective_nemo = mode != "off"
+    selected_route = resolve_llm_route(
+        llm_provider,
+        llm_model,
+        user=current_user,
+        settings=settings,
+    )
+    effective_web_mode = _resolve_web_mode(web_mode, current_user, settings)
+    route_cache_key = selected_route.cache_key()
+    raw_trimmed = (message or "").strip()
+    clean_query = redact_pii(raw_trimmed)
+    trace_id = str(uuid.uuid4())
+    client_id = getattr(request.state, "client_id", "legacy")
+    user_id = str(current_user["_id"]) if current_user else None
+
+    async def persist_interaction(**kwargs):
+        kwargs.update(
+            input_safe=guardrail_state["input_safe"],
+            output_safe=guardrail_state["output_safe"],
+            guardrail_state=guardrail_state,
+        )
+        return await log_interaction(
+            **kwargs,
+            client_id=client_id,
+            user_id=user_id,
+            request_metadata={
+                "method": "POST",
+                "path": "/chat/stream",
+                "nemo_requested": effective_nemo,
+                "guardrail_engine": "direct_self_check" if settings.SERVERLESS_ONLINE_ONLY else "nemo",
+                "scope": "document" if document_id is not None else "corpus",
+                "document_id": document_id,
+            },
+        )
+
+    def render_message_card(
+        bot_text: str,
+        contexts_list: list[str],
+        current_sess: str,
+        *,
+        cached: bool = False,
+    ) -> str:
+        return templates.env.get_template("chat_message.html").render(
+            request=request,
+            user_msg=clean_query,
+            bot_msg=bot_text,
+            trace_id=trace_id,
+            cached=cached,
+            session_id=current_sess,
+            contexts=contexts_list,
+            evidence_views=[present_context(item) for item in contexts_list],
+            claim_support=build_claim_support(bot_text, contexts_list),
+        )
+
+    async def stream_events():
+        budget_limit = getattr(settings, "PROVIDER_HTTP_ATTEMPT_LIMIT", None)
+        with provider_http_budget_scope(limit=budget_limit):
+            calls_token = _request_calls.set([])
+            try:
+                if not clean_query or len(raw_trimmed) > 2000:
+                    yield _ndjson_line(
+                        {
+                            "type": "error",
+                            "status": 422,
+                            "message": "Câu hỏi phải có độ dài từ 1 đến 2.000 ký tự.",
+                        }
+                    )
+                    return
+
+                current_session_id = session_id
+                updated_title: str | None = None
+                is_new_session = False
+                if not current_session_id or current_session_id == "default":
+                    current_session_id = str(uuid.uuid4())
+                    words = clean_query.split()
+                    updated_title = " ".join(words[:5]) + ("..." if len(words) > 5 else "")
+                    await create_session(
+                        current_session_id,
+                        updated_title,
+                        client_id=client_id,
+                        user_id=user_id,
+                    )
+                    is_new_session = True
+                else:
+                    updated_title = await _maybe_autotitle_session(
+                        current_session_id,
+                        clean_query,
+                        client_id=client_id,
+                        user_id=user_id,
+                    )
+
+                yield _ndjson_line(
+                    {
+                        "type": "stage",
+                        "stage": "input_guardrail",
+                        "label": "Đang kiểm tra an toàn đầu vào",
+                        "session_id": current_session_id,
+                    }
+                )
+                t_cache = 0.0
+                try:
+                    input_safe, rejection_message, t_guardrails_input = await _run_guardrail(
+                        "input",
+                        mode,
+                        guardrail_state,
+                        check_input_guardrails,
+                        clean_query,
+                    )
+                except GuardrailUnavailableError as error:
+                    t_guardrails_input = round(time.perf_counter() - request_started, 4)
+                    t_total = round(time.perf_counter() - request_started, 4)
+                    tech_error = {
+                        "stage": "guardrails_input",
+                        "error_type": error.__class__.__name__,
+                        "message": sanitize_error_message(error),
+                    }
+                    metrics = build_online_metrics(
+                        trace_id=trace_id,
+                        request_status="technical_error",
+                        latency={
+                            "t_total": t_total,
+                            "t_cache": t_cache,
+                            "t_guardrails_input": t_guardrails_input,
+                        },
+                        context_used=[],
+                        bot_response=GUARDRAIL_UNAVAILABLE_MESSAGE,
+                        cached=False,
+                        technical_error=tech_error,
+                        ragas_mode="off",
+                        ragas_sample_rate=0.0,
+                    )
+                    await persist_interaction(
+                        trace_id=trace_id,
+                        user_query=clean_query,
+                        bot_response=GUARDRAIL_UNAVAILABLE_MESSAGE,
+                        contexts=[],
+                        cached=False,
+                        session_id=current_session_id,
+                        request_status="technical_error",
+                        technical_error=tech_error,
+                        latency=metrics.latency,
+                        observed_provider=metrics.observed_provider,
+                        observed_model=metrics.observed_model,
+                        provider_usage=metrics.provider_usage,
+                        ragas_mode=metrics.ragas_mode,
+                        ragas_status=metrics.ragas_status,
+                        ragas_selected=False,
+                        ragas_executed=False,
+                        citation_count=0,
+                        context_count=0,
+                        no_evidence=False,
+                    )
+                    yield _ndjson_line(
+                        {
+                            "type": "error",
+                            "status": 503,
+                            "message": GUARDRAIL_UNAVAILABLE_MESSAGE,
+                        }
+                    )
+                    return
+
+                if not input_safe:
+                    t_total = round(time.perf_counter() - request_started, 4)
+                    metrics = build_online_metrics(
+                        trace_id=trace_id,
+                        request_status="blocked_input",
+                        latency={
+                            "t_total": t_total,
+                            "t_cache": t_cache,
+                            "t_guardrails_input": t_guardrails_input,
+                        },
+                        context_used=[],
+                        bot_response=rejection_message,
+                        cached=False,
+                        input_safe=False,
+                        rejection_reason="Jailbreak or off-topic input blocked by guardrails",
+                        ragas_mode="off",
+                        ragas_sample_rate=0.0,
+                    )
+                    await persist_interaction(
+                        trace_id=trace_id,
+                        user_query=clean_query,
+                        bot_response=rejection_message,
+                        contexts=[],
+                        cached=False,
+                        input_safe=False,
+                        rejection_reason="Jailbreak or off-topic input blocked by guardrails",
+                        session_id=current_session_id,
+                        request_status="blocked_input",
+                        latency=metrics.latency,
+                        observed_provider=metrics.observed_provider,
+                        observed_model=metrics.observed_model,
+                        provider_usage=metrics.provider_usage,
+                        ragas_mode=metrics.ragas_mode,
+                        ragas_status=metrics.ragas_status,
+                        ragas_selected=metrics.ragas_selected,
+                        ragas_executed=metrics.ragas_executed,
+                        citation_count=metrics.citation_count,
+                        context_count=metrics.context_count,
+                        no_evidence=metrics.no_evidence,
+                        refusal_category=metrics.refusal_category,
+                    )
+                    yield _ndjson_line(
+                        {
+                            "type": "complete",
+                            "html": render_message_card(rejection_message, [], current_session_id),
+                            "session_id": current_session_id,
+                            "title": updated_title,
+                            "trace_id": trace_id,
+                            "guardrail_adjusted": True,
+                        }
+                    )
+                    return
+
+                scoped_outcome = None
+                if document_id is not None:
+                    from app.api.legal_routes import _get_browser
+                    from app.services.document_scope import document_evidence
+                    from app.services.legal_browser import LegalBrowserBackendError
+
+                    try:
+                        doc_obj = await asyncio.to_thread(_get_browser().get_document, document_id)
+                    except LegalBrowserBackendError:
+                        yield _ndjson_line(
+                            {"type": "error", "status": 503, "message": "Không đọc được văn bản đã chọn."}
+                        )
+                        return
+                    if doc_obj is None:
+                        yield _ndjson_line(
+                            {"type": "error", "status": 404, "message": "Không tìm thấy văn bản đã chọn."}
+                        )
+                        return
+                    scoped_outcome = await asyncio.to_thread(document_evidence, clean_query, doc_obj)
+
+                cache_started = time.perf_counter()
+                followup_requested = scoped_outcome is None and is_explicit_followup(clean_query)
+                previous_user_query = None
+                if followup_requested and not is_new_session and updated_title is None:
+                    previous_user_query = followup_context(
+                        clean_query,
+                        await get_session_messages(
+                            current_session_id,
+                            client_id,
+                            user_id=user_id,
+                            recent_limit=8,
+                        ),
+                    )
+                guarded_cacheable = (
+                    scoped_outcome is None
+                    and effective_web_mode == "auto"
+                    and deterministic_guidance(clean_query) is None
+                    and not followup_requested
+                    and is_guarded_answer_cache_enabled(settings)
+                    and is_guarded_cacheable_query(clean_query)
+                )
+                guarded_hit = (
+                    guarded_answer_cache.get(
+                        clean_query,
+                        settings=settings,
+                        route_key=route_cache_key,
+                    )
+                    if guarded_cacheable
+                    else None
+                )
+                t_cache = round(time.perf_counter() - cache_started, 4)
+
+                if guarded_hit is not None:
+                    guardrail_state["output_safe"] = True
+                    guardrail_state["stages"]["output"] = {
+                        "status": "passed",
+                        "safe": True,
+                        "error": None,
+                    }
+                    guardrail_state["status"] = "passed"
+                    cached_contexts = guarded_hit.contexts
+                    cached_text = guarded_hit.response
+                    t_total = round(time.perf_counter() - request_started, 4)
+                    metrics = build_online_metrics(
+                        trace_id=trace_id,
+                        request_status="cache_hit",
+                        latency={
+                            "t_total": t_total,
+                            "t_cache": t_cache,
+                            "t_guardrails_input": t_guardrails_input,
+                        },
+                        context_used=cached_contexts,
+                        bot_response=cached_text,
+                        cached=True,
+                        input_safe=True,
+                        output_safe=True,
+                        observed_provider=guarded_hit.observed_provider,
+                        observed_model=guarded_hit.observed_model,
+                        ragas_mode="off",
+                        ragas_sample_rate=0.0,
+                    )
+                    await persist_interaction(
+                        trace_id=trace_id,
+                        user_query=clean_query,
+                        bot_response=cached_text,
+                        contexts=cached_contexts,
+                        cached=True,
+                        input_safe=True,
+                        session_id=current_session_id,
+                        request_status="cache_hit",
+                        latency=metrics.latency,
+                        observed_provider=metrics.observed_provider,
+                        observed_model=metrics.observed_model,
+                        provider_usage=metrics.provider_usage,
+                        ragas_mode=metrics.ragas_mode,
+                        ragas_status=metrics.ragas_status,
+                        ragas_selected=metrics.ragas_selected,
+                        ragas_executed=metrics.ragas_executed,
+                        citation_count=metrics.citation_count,
+                        context_count=metrics.context_count,
+                        no_evidence=metrics.no_evidence,
+                        refusal_category=metrics.refusal_category,
+                        retrieval_trace=sanitize_retrieval_trace(
+                            {"retrieval_status": "cache_hit"},
+                            cached_contexts,
+                            settings,
+                            query=clean_query,
+                            cached=True,
+                        ),
+                    )
+                    yield _ndjson_line({"type": "delta", "text": cached_text})
+                    yield _ndjson_line(
+                        {
+                            "type": "complete",
+                            "html": render_message_card(
+                                cached_text, cached_contexts, current_session_id, cached=True
+                            ),
+                            "session_id": current_session_id,
+                            "title": updated_title,
+                            "trace_id": trace_id,
+                            "cached": True,
+                            "guardrail_adjusted": False,
+                        }
+                    )
+                    return
+
+                yield _ndjson_line(
+                    {
+                        "type": "stage",
+                        "stage": "corpus_retrieval",
+                        "label": "Đang truy xuất văn bản pháp luật trong kho nội bộ",
+                    }
+                )
+                if effective_web_mode == "force":
+                    yield _ndjson_line(
+                        {
+                            "type": "stage",
+                            "stage": "web_supplement",
+                            "label": "Đang tra cứu bổ sung nguồn chính thức & Tavily",
+                        }
+                    )
+
+                try:
+                    with llm_route_scope(selected_route):
+                        retrieve_kwargs: dict[str, Any] = {}
+                        if scoped_outcome is not None:
+                            retrieve_kwargs["scoped_outcome"] = scoped_outcome
+                        if previous_user_query:
+                            retrieve_kwargs["previous_user_query"] = previous_user_query
+                        if effective_web_mode != "auto":
+                            retrieve_kwargs["web_mode"] = effective_web_mode
+                        context_used, rewritten_query, latency_info, guidance_text = (
+                            await retrieve_stream_contexts(
+                                clean_query,
+                                **retrieve_kwargs,
+                            )
+                        )
+                except (RetrievalPipelineError, ProviderHttpAttemptBudgetExceeded) as error:
+                    t_total = round(time.perf_counter() - request_started, 4)
+                    tech_error = {
+                        "stage": (
+                            "answer_generation"
+                            if isinstance(error, ProviderHttpAttemptBudgetExceeded)
+                            else getattr(error, "status", "retrieval_error")
+                        ),
+                        "error_type": error.__class__.__name__,
+                        "message": sanitize_error_message(error),
+                    }
+                    error_response = "Hệ thống tra cứu văn bản pháp luật gặp sự cố kỹ thuật. Vui lòng thử lại sau."
+                    metrics = build_online_metrics(
+                        trace_id=trace_id,
+                        request_status="technical_error",
+                        latency={"t_total": t_total, "t_cache": t_cache, "t_guardrails_input": t_guardrails_input},
+                        context_used=[],
+                        bot_response=error_response,
+                        cached=False,
+                        technical_error=tech_error,
+                        ragas_mode="off",
+                        ragas_sample_rate=0.0,
+                    )
+                    await persist_interaction(
+                        trace_id=trace_id,
+                        user_query=clean_query,
+                        bot_response=error_response,
+                        contexts=[],
+                        cached=False,
+                        session_id=current_session_id,
+                        request_status="technical_error",
+                        technical_error=tech_error,
+                        latency=metrics.latency,
+                        observed_provider=metrics.observed_provider,
+                        observed_model=metrics.observed_model,
+                        provider_usage=metrics.provider_usage,
+                        ragas_mode=metrics.ragas_mode,
+                        ragas_status=metrics.ragas_status,
+                        ragas_selected=False,
+                        ragas_executed=False,
+                        citation_count=0,
+                        context_count=0,
+                        no_evidence=False,
+                    )
+                    yield _ndjson_line({"type": "error", "status": 503, "message": error_response})
+                    return
+
+                streamed_deltas: list[str] = []
+                citation_adjustments: dict[str, Any] = {}
+                observed_prov: str | None = "none"
+                observed_mod: str | None = "none"
+                provider_use: dict[str, Any] | None = None
+
+                if guidance_text is not None or not context_used:
+                    raw_answer = (
+                        guidance_text
+                        if guidance_text is not None
+                        else (
+                            "Không tìm thấy căn cứ phù hợp trong văn bản này."
+                            if scoped_outcome is not None
+                            else NO_EVIDENCE_RESPONSE
+                        )
+                    )
+                    if isinstance(latency_info, dict):
+                        latency_info["generation_status"] = "no_contexts"
+                    streamed_deltas.append(raw_answer)
+                    yield _ndjson_line({"type": "delta", "text": raw_answer})
+                    verified_answer = raw_answer
+                else:
+                    if (
+                        isinstance(latency_info, dict)
+                        and isinstance(latency_info.get("retrieval_diagnostics"), dict)
+                        and latency_info["retrieval_diagnostics"].get("official_supplement")
+                        and effective_web_mode != "force"
+                    ):
+                        yield _ndjson_line(
+                            {
+                                "type": "stage",
+                                "stage": "web_supplement",
+                                "label": "Đã đối chiếu nguồn chính thức bổ sung",
+                            }
+                        )
+                    yield _ndjson_line(
+                        {
+                            "type": "stage",
+                            "stage": "generation",
+                            "label": "Đang tổng hợp câu trả lời có dẫn chiếu",
+                        }
+                    )
+                    effective_query = (
+                        "Tình huống trước do người dùng cung cấp (chỉ làm ngữ cảnh):\n"
+                        + previous_user_query[:1000]
+                        + "\nCâu hỏi mới (ưu tiên dữ kiện mới):\n"
+                        + clean_query
+                        if previous_user_query and scoped_outcome is None
+                        else clean_query
+                    )
+                    user_prompt, system_prompt, packed_ctx = build_answer_prompts(
+                        effective_query,
+                        rewritten_query,
+                        context_used,
+                        effect_check_query=clean_query,
+                    )
+                    llm_started = time.perf_counter()
+                    llm_result: LLMGenerationResult | None = None
+                    with llm_route_scope(selected_route):
+                        async for item in stream_llm_response_with_metadata(
+                            user_prompt,
+                            system_prompt,
+                            max_output_tokens=settings.LLM_MAX_OUTPUT_TOKENS,
+                            thinking_level="MINIMAL",
+                            use_case=LLMUseCase.ANSWER,
+                            route=selected_route,
+                        ):
+                            if await request.is_disconnected():
+                                return
+                            if isinstance(item, str):
+                                if item:
+                                    streamed_deltas.append(item)
+                                    yield _ndjson_line({"type": "delta", "text": item})
+                            elif isinstance(item, LLMGenerationResult):
+                                llm_result = item
+
+                    t_llm = round(time.perf_counter() - llm_started, 3)
+                    if isinstance(latency_info, dict):
+                        latency_info["t_llm"] = t_llm
+                        latency_info["generation_status"] = (
+                            llm_result.status if llm_result is not None else "stream_interrupted"
+                        )
+
+                    if llm_result is None or llm_result.status != "success":
+                        err_msg = (
+                            llm_result.text
+                            if llm_result is not None and llm_result.text
+                            else "Không thể tạo câu trả lời lúc này. Vui lòng thử lại sau."
+                        )
+                        t_total = round(time.perf_counter() - request_started, 4)
+                        tech_error = {
+                            "stage": "answer_generation",
+                            "error_type": llm_result.status if llm_result else "stream_interrupted",
+                            "message": sanitize_error_message(err_msg),
+                        }
+                        metrics = build_online_metrics(
+                            trace_id=trace_id,
+                            request_status="technical_error",
+                            latency={
+                                "t_total": t_total,
+                                "t_cache": t_cache,
+                                "t_guardrails_input": t_guardrails_input,
+                                "t_llm": t_llm,
+                            },
+                            context_used=context_used,
+                            bot_response=err_msg,
+                            cached=False,
+                            input_safe=True,
+                            technical_error=tech_error,
+                            observed_provider=llm_result.observed_provider if llm_result else None,
+                            observed_model=llm_result.observed_model if llm_result else None,
+                            ragas_mode="off",
+                            ragas_sample_rate=0.0,
+                        )
+                        await persist_interaction(
+                            trace_id=trace_id,
+                            user_query=clean_query,
+                            bot_response=err_msg,
+                            contexts=context_used,
+                            cached=False,
+                            session_id=current_session_id,
+                            request_status="technical_error",
+                            technical_error=tech_error,
+                            latency=metrics.latency,
+                            observed_provider=metrics.observed_provider,
+                            observed_model=metrics.observed_model,
+                            provider_usage=metrics.provider_usage,
+                            ragas_mode=metrics.ragas_mode,
+                            ragas_status=metrics.ragas_status,
+                            ragas_selected=False,
+                            ragas_executed=False,
+                            citation_count=0,
+                            context_count=len(context_used),
+                            no_evidence=False,
+                        )
+                        yield _ndjson_line({"type": "error", "status": 503, "message": err_msg})
+                        return
+
+                    assembled = _strip_latex_markup(llm_result.text or "".join(streamed_deltas))
+                    unconfirmed_dates = _unconfirmed_as_of_start_dates(clean_query, assembled)
+                    if unconfirmed_dates:
+                        with llm_route_scope(selected_route):
+                            retry_res = await generate_llm_response_with_metadata(
+                                user_prompt,
+                                system_prompt
+                                + "\nKiểm tra dữ kiện bắt buộc: "
+                                + ", ".join(unconfirmed_dates)
+                                + " chỉ là mốc hỏi/tra cứu, chưa phải ngày bắt đầu sự kiện. "
+                                "Trả lời lại từ câu hỏi và nguồn gốc; bỏ giả định ngày bắt đầu chưa được người dùng xác nhận.",
+                                max_output_tokens=settings.LLM_MAX_OUTPUT_TOKENS,
+                                use_case=LLMUseCase.ANSWER,
+                                thinking_level="MINIMAL",
+                            )
+                        if retry_res.status != "success":
+                            err_msg = (
+                                retry_res.text
+                                or "Không thể tạo câu trả lời lúc này. Vui lòng thử lại sau."
+                            )
+                            yield _ndjson_line({"type": "error", "status": 503, "message": err_msg})
+                            return
+                        llm_result = retry_res
+                        assembled = _strip_latex_markup(retry_res.text)
+                        if _unconfirmed_as_of_start_dates(clean_query, assembled):
+                            scope_msg = (
+                                "Chưa thể trả lời tin cậy vì chưa xác nhận được vai trò của mốc ngày. "
+                                "Vui lòng cho biết ngày bắt đầu và ngày kết thúc sự kiện; ngày tra cứu không thay thế dữ kiện này."
+                            )
+                            citation_adjustments["unconfirmed_as_of_dates"] = list(unconfirmed_dates)
+                            assembled = scope_msg
+                    opening = (
+                        None
+                        if citation_adjustments.get("unconfirmed_as_of_dates")
+                        else _source_opening_excerpt(clean_query, context_used, packed_ctx)
+                    )
+                    if opening is not None and opening[1] not in assembled:
+                        assembled = (
+                            assembled
+                            + "\n\n**Đoạn mở đầu không đánh số — ["
+                            + opening[0]
+                            + "]:**\n"
+                            + "\n".join("> " + line for line in opening[1].splitlines())
+                        )
+                    scoped_res = _scope_current_effect_answer(
+                        clean_query,
+                        replace(llm_result, text=assembled),
+                    )
+                    effect_diag = _legal_effect_answer_diagnostics(clean_query, llm_result)
+                    if effect_diag is not None and isinstance(latency_info, dict):
+                        latency_info["response_kind"] = "source_text_unverified_currentness"
+                        if isinstance(latency_info.get("retrieval_diagnostics"), dict):
+                            latency_info["retrieval_diagnostics"]["legal_effect_answer"] = effect_diag
+                    observed_prov = llm_result.observed_provider
+                    observed_mod = llm_result.observed_model
+                    provider_use = {
+                        "query_rewrite": {"provider": "none", "model": "none", "observed": False},
+                        "answer_generation": {
+                            "provider": llm_result.observed_provider,
+                            "model": llm_result.observed_model,
+                            "observed": bool(llm_result.observed),
+                            "status": llm_result.status,
+                            "latency_ms": llm_result.provider_latency_ms,
+                            "fallback_used": llm_result.fallback_used,
+                            "prompt_token_count": llm_result.prompt_token_count,
+                            "output_token_count": llm_result.output_token_count,
+                            "thought_token_count": llm_result.thought_token_count,
+                            "total_token_count": llm_result.total_token_count,
+                        },
+                        "guardrails": {"provider": "unobserved", "model": "unobserved", "observed": False},
+                    }
+                    verified_answer, clause_adj = verify_clause_citations(
+                        scoped_res.text,
+                        context_used,
+                    )
+                    citation_adjustments.update(clause_adj)
+                    if citation_adjustments and isinstance(latency_info, dict):
+                        latency_info.update(citation_adjustments)
+
+                yield _ndjson_line(
+                    {
+                        "type": "stage",
+                        "stage": "output_verification",
+                        "label": "Đang đối chiếu dẫn chiếu điều khoản và kiểm tra an toàn đầu ra",
+                    }
+                )
+                guard_query = (
+                    f"Dữ kiện trước do người dùng cung cấp: {previous_user_query}\n"
+                    f"Câu hỏi tiếp theo: {clean_query}"
+                    if previous_user_query
+                    else clean_query
+                )
+                try:
+                    output_safe, fallback_response, t_guardrails_output = await _run_guardrail(
+                        "output",
+                        mode,
+                        guardrail_state,
+                        check_output_guardrails,
+                        verified_answer,
+                        context_used,
+                        guard_query,
+                    )
+                except GuardrailUnavailableError as error:
+                    t_guardrails_output = round(time.perf_counter() - request_started, 4)
+                    t_total = round(time.perf_counter() - request_started, 4)
+                    tech_error = {
+                        "stage": "guardrails_output",
+                        "error_type": error.__class__.__name__,
+                        "message": sanitize_error_message(error),
+                    }
+                    metrics = build_online_metrics(
+                        trace_id=trace_id,
+                        request_status="technical_error",
+                        latency={
+                            "t_total": t_total,
+                            "t_cache": t_cache,
+                            "t_guardrails_input": t_guardrails_input,
+                            "t_guardrails_output": t_guardrails_output,
+                        },
+                        context_used=context_used,
+                        bot_response=GUARDRAIL_UNAVAILABLE_MESSAGE,
+                        cached=False,
+                        technical_error=tech_error,
+                        observed_provider=observed_prov,
+                        observed_model=observed_mod,
+                        provider_usage=provider_use,
+                        ragas_mode="off",
+                        ragas_sample_rate=0.0,
+                    )
+                    await persist_interaction(
+                        trace_id=trace_id,
+                        user_query=clean_query,
+                        bot_response=GUARDRAIL_UNAVAILABLE_MESSAGE,
+                        contexts=context_used,
+                        cached=False,
+                        session_id=current_session_id,
+                        request_status="technical_error",
+                        technical_error=tech_error,
+                        latency=metrics.latency,
+                        observed_provider=metrics.observed_provider,
+                        observed_model=metrics.observed_model,
+                        provider_usage=metrics.provider_usage,
+                        ragas_mode=metrics.ragas_mode,
+                        ragas_status=metrics.ragas_status,
+                        ragas_selected=False,
+                        ragas_executed=False,
+                        citation_count=0,
+                        context_count=len(context_used),
+                        no_evidence=False,
+                    )
+                    yield _ndjson_line(
+                        {
+                            "type": "error",
+                            "status": 503,
+                            "message": GUARDRAIL_UNAVAILABLE_MESSAGE,
+                        }
+                    )
+                    return
+
+                final_response = verified_answer if output_safe else fallback_response
+                final_response = strip_context_echo(redact_pii(final_response))
+                rejection_reason = None if output_safe else "Hallucination or unsafe output detected"
+                response_kind = (
+                    latency_info.get("response_kind") if isinstance(latency_info, dict) else None
+                )
+                if not output_safe:
+                    req_status = "blocked_output"
+                elif response_kind in {"clarification", "unsupported_intent"}:
+                    req_status = response_kind
+                elif not context_used:
+                    req_status = "no_evidence"
+                else:
+                    req_status = "ok"
+
+                t_total = round(time.perf_counter() - request_started, 4)
+                full_latency: dict[str, float] = {
+                    "t_total": t_total,
+                    "t_cache": t_cache,
+                    "t_guardrails_input": t_guardrails_input,
+                    "t_guardrails_output": t_guardrails_output,
+                }
+                if isinstance(latency_info, dict):
+                    for k, v in latency_info.items():
+                        if isinstance(v, (int, float)):
+                            full_latency[k] = float(v)
+                    latency_info["observed_provider"] = observed_prov or "unobserved"
+                    latency_info["observed_model"] = observed_mod or "unobserved"
+                full_latency["t_total"] = t_total
+
+                metrics = build_online_metrics(
+                    trace_id=trace_id,
+                    request_status=req_status,
+                    latency=full_latency,
+                    context_used=context_used,
+                    bot_response=final_response,
+                    cached=False,
+                    input_safe=True,
+                    output_safe=output_safe,
+                    rejection_reason=rejection_reason,
+                    ragas_mode="off",
+                    ragas_sample_rate=0.0,
+                    observed_provider=observed_prov,
+                    observed_model=observed_mod,
+                    provider_usage=provider_use,
+                )
+                await persist_interaction(
+                    trace_id=trace_id,
+                    user_query=clean_query,
+                    bot_response=final_response,
+                    contexts=context_used,
+                    cached=False,
+                    input_safe=True,
+                    output_safe=output_safe,
+                    rejection_reason=rejection_reason,
+                    session_id=current_session_id,
+                    request_status=req_status,
+                    latency=metrics.latency,
+                    observed_provider=metrics.observed_provider,
+                    observed_model=metrics.observed_model,
+                    provider_usage=metrics.provider_usage,
+                    ragas_mode=metrics.ragas_mode,
+                    ragas_status=metrics.ragas_status,
+                    ragas_selected=metrics.ragas_selected,
+                    ragas_executed=metrics.ragas_executed,
+                    citation_count=metrics.citation_count,
+                    context_count=metrics.context_count,
+                    no_evidence=metrics.no_evidence,
+                    refusal_category=metrics.refusal_category,
+                    retrieval_trace=sanitize_retrieval_trace(
+                        latency_info if isinstance(latency_info, dict) else {},
+                        context_used,
+                        settings,
+                        query=clean_query,
+                        cached=False,
+                    ),
+                )
+
+                if (
+                    req_status == "ok"
+                    and input_safe is True
+                    and output_safe is True
+                    and context_used
+                    and guarded_cacheable
+                ):
+                    guarded_answer_cache.put(
+                        clean_query,
+                        final_response,
+                        context_used,
+                        settings=settings,
+                        route_key=route_cache_key,
+                        input_safe=input_safe,
+                        output_safe=output_safe,
+                        request_status=req_status,
+                        observed_provider=observed_prov,
+                        observed_model=observed_mod,
+                    )
+
+                streamed_preview = "".join(streamed_deltas).strip()
+                guardrail_adjusted = (
+                    (not output_safe)
+                    or bool(citation_adjustments)
+                    or (final_response.strip() != streamed_preview)
+                )
+                yield _ndjson_line(
+                    {
+                        "type": "complete",
+                        "html": render_message_card(final_response, context_used, current_session_id),
+                        "session_id": current_session_id,
+                        "title": updated_title,
+                        "trace_id": trace_id,
+                        "guardrail_adjusted": guardrail_adjusted,
+                    }
+                )
+            finally:
+                _request_calls.reset(calls_token)
+
+    return StreamingResponse(
+        stream_events(),
+        media_type="application/x-ndjson",
+        headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"},
+    )
 
 
 

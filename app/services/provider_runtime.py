@@ -102,6 +102,8 @@ def record_generation_result(result: Any, use_case: str) -> None:
 def provider_status_snapshot(
     settings: Any, cooldowns: dict[str, float] | None = None
 ) -> list[dict[str, Any]]:
+    from app.evaluation.provider_catalog import RUNTIME_PROVIDER_MODELS
+
     configured = {
         "google_vertex_ai": not bool(settings.USE_LEGACY_FREE_PIPELINE),
         "openrouter": bool(settings.OPENROUTER_API_KEY),
@@ -110,12 +112,19 @@ def provider_status_snapshot(
         "groq": bool(settings.GROQ_API_KEY),
         "omnigate": bool(settings.LITELLM_MASTER_KEY),
     }
+    now = time.time()
+    cooldown_map = cooldowns or {}
     with _lock:
         latest = {event.provider: event for event in _events}
     rows = []
     for provider, is_configured in configured.items():
         event = latest.get(provider)
-        in_cooldown = bool((cooldowns or {}).get(provider, 0) > time.time())
+        models = RUNTIME_PROVIDER_MODELS.get(provider, ())
+        all_models_cooling = bool(models) and all(
+            cooldown_map.get(f"{provider}:{model_id}", 0) > now
+            for model_id in models
+        )
+        in_cooldown = bool(cooldown_map.get(provider, 0) > now or all_models_cooling)
         if not is_configured:
             state = "NOT CONFIGURED"
         elif in_cooldown:

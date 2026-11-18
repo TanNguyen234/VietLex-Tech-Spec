@@ -3,6 +3,7 @@
 import os
 
 os.environ.setdefault("REVIEWER_DEMO_MODE", "true")
+os.environ.setdefault("SERVERLESS_ONLINE_ONLY", "true")
 
 from app.main import app
 
