@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+from collections import OrderedDict
+from contextlib import closing
 from dataclasses import dataclass
 from datetime import date
-from contextlib import closing
-from pathlib import Path
 import json
+from pathlib import Path
 import re
 import sqlite3
+import threading
 import time
 from typing import Any
 
@@ -25,6 +27,12 @@ from app.ingestion.content_store import (
 )
 from app.ingestion.legal_fts import LegalFtsIndex, extract_legal_references
 from app.ingestion.legal_text import DocumentMetadata
+
+
+LOCAL_QUALITY_QUEUE_TIMEOUT_SECONDS = 45.0
+_LOCAL_QUALITY_QUEUE_CACHE_MAX = 64
+_LOCAL_QUALITY_QUEUE_CACHE: OrderedDict[tuple[str, int, int, str, int], list[int]] = OrderedDict()
+_LOCAL_QUALITY_QUEUE_CACHE_LOCK = threading.Lock()
 
 
 @dataclass(frozen=True)
@@ -637,14 +645,35 @@ class LegalBrowser:
             return [self._store._metadata(row) for row in self._store._get(params)]
         condition = "issuance_date IS NULL OR issuance_date = ''" if issue == "missing_date" else "source_url IS NULL OR source_url = ''"
         try:
-            with closing(sqlite3.connect(self._store.path.resolve().as_uri() + "?mode=ro", uri=True)) as connection:
-                deadline = time.monotonic() + 3.0
-                connection.set_progress_handler(lambda: time.monotonic() > deadline, 10_000)
-                ids = [row[0] for row in connection.execute("SELECT document_id FROM metadata WHERE " + condition + " ORDER BY document_id LIMIT 50 OFFSET ?", (offset,))]
-            metadata = self._store.get_metadata_many(ids)
-            return [metadata[value] for value in ids if value in metadata]
-        except sqlite3.Error as error:
+            resolved = self._store.path.resolve()
+            stat_result = resolved.stat()
+        except OSError as error:
             raise LegalBrowserBackendError("Local quality queue unavailable.") from error
+        cache_key = (str(resolved), stat_result.st_mtime_ns, stat_result.st_size, issue, offset)
+        with _LOCAL_QUALITY_QUEUE_CACHE_LOCK:
+            cached = _LOCAL_QUALITY_QUEUE_CACHE.get(cache_key)
+            if cached is not None:
+                _LOCAL_QUALITY_QUEUE_CACHE.move_to_end(cache_key)
+                ids = list(cached)
+            else:
+                ids = None
+        if ids is None:
+            try:
+                with closing(sqlite3.connect(resolved.as_uri() + "?mode=ro", uri=True)) as connection:
+                    deadline = time.monotonic() + LOCAL_QUALITY_QUEUE_TIMEOUT_SECONDS
+                    connection.set_progress_handler(lambda: time.monotonic() > deadline, 10_000)
+                    ids = [row[0] for row in connection.execute("SELECT document_id FROM metadata WHERE " + condition + " ORDER BY document_id LIMIT 50 OFFSET ?", (offset,))]
+            except sqlite3.Error as error:
+                raise LegalBrowserBackendError("Local quality queue unavailable.") from error
+            with _LOCAL_QUALITY_QUEUE_CACHE_LOCK:
+                _LOCAL_QUALITY_QUEUE_CACHE[cache_key] = list(ids)
+                _LOCAL_QUALITY_QUEUE_CACHE.move_to_end(cache_key)
+                while len(_LOCAL_QUALITY_QUEUE_CACHE) > _LOCAL_QUALITY_QUEUE_CACHE_MAX:
+                    _LOCAL_QUALITY_QUEUE_CACHE.popitem(last=False)
+        if not ids:
+            return []
+        metadata = self._store.get_metadata_many(ids)
+        return [metadata[value] for value in ids if value in metadata]
 
     def _filtered_local_ids(self, query: str, filters: SearchFilters, limit: int, offset: int = 0) -> list[int]:
         # Filter the metadata relation before LIMIT; never scan/decompress bodies.

@@ -26,7 +26,14 @@ async def corpus_queue(request: Request, issue: Literal["missing_date", "missing
     try:
         rows = await asyncio.to_thread(_get_browser().quality_queue, issue, offset=skip)
     except LegalBrowserBackendError:
-        raise HTTPException(503, "corpus_metadata_unavailable") from None
+        return _admin_response(
+            request,
+            "admin_error_page.html",
+            "corpus",
+            "Chất lượng corpus",
+            {"message": "Không thể truy cập chỉ mục metadata corpus lúc này. Vui lòng thử lại sau."},
+            status_code=503,
+        )
     return _admin_response(request, "admin_corpus_queue.html", "corpus", "Chất lượng corpus", {
         "rows": rows, "issue": issue, "skip": skip, "has_next": len(rows) == 50,
         "backend": "Supabase online" if settings.SERVERLESS_ONLINE_ONLY else "SQLite local"})

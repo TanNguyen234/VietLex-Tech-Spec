@@ -1540,6 +1540,11 @@ def _strip_latex_markup(text: str) -> str:
 
     cleaned = re.sub(r"\$\$(.*?)\$\$", lambda m: _math_plain(m.group(1)), text, flags=re.S)
     cleaned = re.sub(r"\\\((.*?)\\\)", lambda m: _math_plain(m.group(1)), cleaned, flags=re.S)
+    cleaned = re.sub(
+        r"(?<!\$)\$(?!\s)([^$\n]*?(?:[=×·\\^_{}]|\s[+\-]\s)[^$\n]*?)(?<!\s)\$(?!\$)",
+        lambda m: _math_plain(m.group(1)),
+        cleaned,
+    )
     for _ in range(3):
         cleaned = _LATEX_TEXT_COMMAND.sub(lambda m: m.group(1), cleaned)
     for command, symbol in _LATEX_SYMBOLS:

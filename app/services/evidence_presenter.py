@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import re
 import hashlib
+import re
+import unicodedata
 from dataclasses import dataclass
 from datetime import datetime
 from collections.abc import Mapping, Sequence
@@ -76,6 +77,13 @@ def _approved_official_url(value: str) -> str | None:
         return validate_source_url(value)
     except (ImportError, TypeError, ValueError):
         return None
+
+
+def _normalize_meta_text(value: str | None) -> str | None:
+    if value is None:
+        return None
+    cleaned = " ".join(unicodedata.normalize("NFC", value).split())
+    return cleaned or None
 
 
 def present_context(text: str) -> EvidenceView:
@@ -216,6 +224,8 @@ def present_context(text: str) -> EvidenceView:
             metadata_section = False
         excerpt_lines.append(raw_line.strip())
 
+    citation = _normalize_meta_text(citation)
+    title = _normalize_meta_text(title)
     document_match = _DOCUMENT_NUMBER.search(citation or original)
     return EvidenceView(
         original=original,

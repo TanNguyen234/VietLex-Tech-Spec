@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import logfire
 import re
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -15,6 +16,43 @@ settings = get_settings()
 
 client: Optional[AsyncIOMotorClient] = None
 db = None
+_STATELESS_SESSION_TURNS: OrderedDict[str, List[Dict[str, Any]]] = OrderedDict()
+_MAX_STATELESS_SESSIONS = 32
+_MAX_STATELESS_TURNS_PER_SESSION = 16
+
+
+def _record_stateless_turn(document: Dict[str, Any]) -> None:
+    session_id = str(document.get("session_id") or "")
+    if not session_id:
+        return
+    turns = _STATELESS_SESSION_TURNS.get(session_id, [])
+    turns.append(
+        {
+            "_id": document.get("_id"),
+            "session_id": session_id,
+            "client_id": document.get("client_id"),
+            "user_id": document.get("user_id"),
+            "user_query": document.get("user_query", ""),
+            "bot_response": document.get("bot_response", ""),
+            "timestamp": document.get("timestamp"),
+        }
+    )
+    _STATELESS_SESSION_TURNS[session_id] = turns[-_MAX_STATELESS_TURNS_PER_SESSION:]
+    _STATELESS_SESSION_TURNS.move_to_end(session_id)
+    while len(_STATELESS_SESSION_TURNS) > _MAX_STATELESS_SESSIONS:
+        _STATELESS_SESSION_TURNS.popitem(last=False)
+
+
+def _match_stateless_owner(
+    entry: Dict[str, Any],
+    client_id: Optional[str],
+    user_id: Optional[str],
+) -> bool:
+    if user_id is not None:
+        return entry.get("user_id") == user_id
+    if client_id is not None:
+        return entry.get("client_id") == client_id
+    return True
 
 
 def _utc_now() -> datetime:
@@ -239,6 +277,7 @@ async def log_interaction(
     if provider_http_budget is not None:
         document["metrics"]["provider_http_budget"] = provider_http_budget
     if is_stateless_development(settings):
+        _record_stateless_turn(document)
         return document
     collection = get_db().evaluation_logs
     try:
@@ -676,7 +715,14 @@ async def get_session_messages(
     if recent_limit is not None and (type(recent_limit) is not int or not 1 <= recent_limit <= 8):
         raise ValueError("invalid_recent_history_limit")
     if is_stateless_development(settings):
-        return []
+        matched = [
+            dict(entry)
+            for entry in _STATELESS_SESSION_TURNS.get(session_id, [])
+            if _match_stateless_owner(entry, client_id, user_id)
+        ]
+        if recent_limit is not None:
+            matched = matched[-recent_limit:]
+        return matched
     collection = get_db().evaluation_logs
     try:
         query: Dict[str, Any] = {"session_id": session_id}
@@ -713,7 +759,17 @@ async def delete_session(
     user_id: Optional[str] = None,
 ) -> bool:
     if is_stateless_development(settings):
-        return False
+        existing = _STATELESS_SESSION_TURNS.get(session_id)
+        if not existing:
+            return False
+        kept = [e for e in existing if not _match_stateless_owner(e, client_id, user_id)]
+        if len(kept) == len(existing):
+            return False
+        if kept:
+            _STATELESS_SESSION_TURNS[session_id] = kept
+        else:
+            _STATELESS_SESSION_TURNS.pop(session_id, None)
+        return True
     database = get_db()
     sessions_coll = database.chat_sessions
     logs_coll = database.evaluation_logs
